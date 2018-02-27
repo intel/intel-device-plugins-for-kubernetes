@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: intelgpu-demo-job
+  labels:
+    jobgroup: intelgpu-demo
+spec:
+  template:
+    metadata:
+      labels:
+        jobgroup: intelgpu-demo
+    spec:
+      restartPolicy: Never
+      containers:
+        -
+          name: intelgpu-demo-job-1
+          image: ubuntu-demo-opencl:latest
+          imagePullPolicy: IfNotPresent
+          command: [ "/run-opencl-example.sh", "/root/6-1/fft" ]
+          resources:
+            limits:
+              intel.com/gpu: 1
