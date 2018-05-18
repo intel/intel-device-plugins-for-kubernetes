@@ -48,15 +48,15 @@ const (
 // deviceManager manages Intel FPGA devices.
 type deviceManager struct {
 	srv     deviceplugin.Server
-	afuID   string
+	fpgaId  string
 	name    string
 	devices map[string]deviceplugin.DeviceInfo
 	root    string
 }
 
-func newDeviceManager(resourceName string, afu string, rootDir string) *deviceManager {
+func newDeviceManager(resourceName string, fpgaId string, rootDir string) *deviceManager {
 	return &deviceManager{
-		afuID:   afu,
+		fpgaId:  fpgaId,
 		name:    resourceName,
 		devices: make(map[string]deviceplugin.DeviceInfo),
 		root:    rootDir,
@@ -83,7 +83,7 @@ func discoverFPGAs(sysfsDir string, devfsDir string) (map[string]map[string]devi
 			if err != nil {
 				return nil, err
 			}
-			afuNodes := make(map[string][]string)
+			fpgaNodes := make(map[string][]string)
 			for _, deviceFile := range deviceFiles {
 				name := deviceFile.Name()
 				if portReg.MatchString(name) {
@@ -93,13 +93,13 @@ func discoverFPGAs(sysfsDir string, devfsDir string) (map[string]map[string]devi
 						return nil, err
 					}
 					afuID := strings.TrimSpace(string(data))
-					afuNodes[afuID] = append(afuNodes[afuID], name)
+					fpgaNodes[afuID] = append(fpgaNodes[afuID], name)
 				}
 			}
-			if len(afuNodes) == 0 {
+			if len(fpgaNodes) == 0 {
 				return nil, fmt.Errorf("No device nodes found for %s", fname)
 			}
-			for afuID, nodes := range afuNodes {
+			for fpgaId, nodes := range fpgaNodes {
 				var devNodes []string
 				for _, node := range nodes {
 					devNode := path.Join(devfsDir, node)
@@ -109,10 +109,10 @@ func discoverFPGAs(sysfsDir string, devfsDir string) (map[string]map[string]devi
 					devNodes = append(devNodes, devNode)
 				}
 				sort.Strings(devNodes)
-				if _, ok := result[afuID]; !ok {
-					result[afuID] = make(map[string]deviceplugin.DeviceInfo)
+				if _, ok := result[fpgaId]; !ok {
+					result[fpgaId] = make(map[string]deviceplugin.DeviceInfo)
 				}
-				result[afuID][fname] = deviceplugin.DeviceInfo{
+				result[fpgaId][fname] = deviceplugin.DeviceInfo{
 					State: pluginapi.Healthy,
 					Nodes: devNodes,
 				}
@@ -138,10 +138,10 @@ func (dm *deviceManager) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.D
 			dm.srv.Stop()
 			return fmt.Errorf("Device discovery failed: %+v", err)
 		}
-		devinfos, ok := devs[dm.afuID]
+		devinfos, ok := devs[dm.fpgaId]
 		if !ok {
 			dm.srv.Stop()
-			return fmt.Errorf("AFU id %s disappeared", dm.afuID)
+			return fmt.Errorf("AFU id %s disappeared", dm.fpgaId)
 		}
 		if !reflect.DeepEqual(dm.devices, devinfos) {
 			dm.devices = devinfos
@@ -187,10 +187,10 @@ func main() {
 	}
 
 	ch := make(chan error)
-	for afuID, _ := range devs {
-		resourceName := resourceNamePrefix + "-" + afuID
-		pPrefix := pluginEndpointPrefix + "-" + afuID
-		dm := newDeviceManager(resourceName, afuID, "/")
+	for fpgaId, _ := range devs {
+		resourceName := resourceNamePrefix + "-" + fpgaId
+		pPrefix := pluginEndpointPrefix + "-" + fpgaId
+		dm := newDeviceManager(resourceName, fpgaId, "/")
 
 		go func() {
 			ch <- dm.srv.Serve(dm, resourceName, pPrefix)
