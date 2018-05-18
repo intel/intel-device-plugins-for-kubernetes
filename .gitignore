@@ -1,0 +1,5 @@
+*~
+*.swp
+
+cmd/gpu_plugin/gpu_plugin
+cmd/fpga_plugin/fpga_plugin
