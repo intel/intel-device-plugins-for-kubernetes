@@ -112,7 +112,10 @@ func discoverFPGAs(sysfsDir string, devfsDir string) (map[string]map[string]devi
 				if _, ok := result[afuID]; !ok {
 					result[afuID] = make(map[string]deviceplugin.DeviceInfo)
 				}
-				result[afuID][fname] = deviceplugin.DeviceInfo{pluginapi.Healthy, devNodes}
+				result[afuID][fname] = deviceplugin.DeviceInfo{
+					State: pluginapi.Healthy,
+					Nodes: devNodes,
+				}
 			}
 		}
 	}
