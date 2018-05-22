@@ -66,20 +66,24 @@ func TestDiscoverFPGAs(t *testing.T) {
 		sysfsfiles     map[string][]byte
 		expectedResult map[string]map[string]deviceplugin.DeviceInfo
 		expectedErr    bool
+		mode           pluginMode
 	}{
 		{
 			expectedResult: nil,
 			expectedErr:    true,
+			mode:           afMode,
 		},
 		{
 			sysfsdirs:      []string{"intel-fpga-dev.0"},
 			expectedResult: nil,
 			expectedErr:    true,
+			mode:           afMode,
 		},
 		{
 			sysfsdirs:      []string{"intel-fpga-dev.0/intel-fpga-port.0"},
 			expectedResult: nil,
 			expectedErr:    true,
+			mode:           afMode,
 		},
 		{
 			sysfsdirs: []string{
@@ -90,6 +94,7 @@ func TestDiscoverFPGAs(t *testing.T) {
 			},
 			expectedResult: nil,
 			expectedErr:    true,
+			mode:           afMode,
 		},
 		{
 			sysfsdirs: []string{
@@ -135,6 +140,81 @@ func TestDiscoverFPGAs(t *testing.T) {
 				},
 			},
 			expectedErr: false,
+			mode:        afMode,
+		},
+		{
+			sysfsdirs: []string{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
+				"intel-fpga-dev.0/intel-fpga-fme.1/pr",
+			},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"intel-fpga-dev.0/intel-fpga-fme.1/pr/interface_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+			},
+			expectedResult: nil,
+			expectedErr:    true,
+			mode:           regionMode,
+		},
+		{
+			sysfsdirs: []string{
+				"intel-fpga-dev.0/intel-fpga-port.0",
+				"intel-fpga-dev.1/intel-fpga-port.1",
+			},
+			expectedResult: nil,
+			expectedErr:    true,
+			mode:           regionMode,
+		},
+		{
+			sysfsdirs: []string{
+				"intel-fpga-dev.0/intel-fpga-port.0",
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
+				"intel-fpga-dev.1/intel-fpga-port.1",
+				"intel-fpga-dev.1/intel-fpga-fme.1/pr",
+				"intel-fpga-dev.2/intel-fpga-port.2",
+				"intel-fpga-dev.2/intel-fpga-fme.2/pr",
+			},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-port.0/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"intel-fpga-dev.1/intel-fpga-port.1/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"intel-fpga-dev.2/intel-fpga-port.2/afu_id":         []byte("47595d0fae972fbed0c51b4a41c7a349\n"),
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+				"intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+				"intel-fpga-dev.2/intel-fpga-fme.2/pr/interface_id": []byte("fd967345645f05f338462a0748be0091\n"),
+			},
+			devfsdirs: []string{
+				"intel-fpga-port.0", "intel-fpga-fme.0",
+				"intel-fpga-port.1", "intel-fpga-fme.1",
+				"intel-fpga-port.2", "intel-fpga-fme.2",
+			},
+			expectedResult: map[string]map[string]deviceplugin.DeviceInfo{
+				"ce48969398f05f33946d560708be108a": map[string]deviceplugin.DeviceInfo{
+					"intel-fpga-dev.0": deviceplugin.DeviceInfo{
+						State: "Healthy",
+						Nodes: []string{
+							path.Join(tmpdir, "/dev/intel-fpga-fme.0"),
+							path.Join(tmpdir, "/dev/intel-fpga-port.0"),
+						},
+					},
+					"intel-fpga-dev.1": deviceplugin.DeviceInfo{
+						State: "Healthy",
+						Nodes: []string{
+							path.Join(tmpdir, "/dev/intel-fpga-fme.1"),
+							path.Join(tmpdir, "/dev/intel-fpga-port.1"),
+						},
+					},
+				},
+				"fd967345645f05f338462a0748be0091": map[string]deviceplugin.DeviceInfo{
+					"intel-fpga-dev.2": deviceplugin.DeviceInfo{
+						State: "Healthy",
+						Nodes: []string{
+							path.Join(tmpdir, "/dev/intel-fpga-fme.2"),
+							path.Join(tmpdir, "/dev/intel-fpga-port.2"),
+						},
+					},
+				},
+			},
+			expectedErr: false,
+			mode:        regionMode,
 		},
 	}
 
@@ -144,7 +224,7 @@ func TestDiscoverFPGAs(t *testing.T) {
 			t.Error(err)
 		}
 
-		result, err := discoverFPGAs(sysfs, devfs)
+		result, err := discoverFPGAs(sysfs, devfs, tcase.mode)
 		if tcase.expectedErr && err == nil {
 			t.Error("Expected error hasn't been triggered")
 		}
@@ -257,7 +337,7 @@ func TestListAndWatch(t *testing.T) {
 	}
 
 	resourceName := resourceNamePrefix + "-" + afuID
-	testDM := newDeviceManager(resourceName, afuID, tmpdir)
+	testDM := newDeviceManager(resourceName, afuID, tmpdir, afMode)
 	if testDM == nil {
 		t.Fatal("Failed to create a deviceManager")
 	}
@@ -306,7 +386,7 @@ func TestListAndWatch(t *testing.T) {
 }
 
 func TestAllocate(t *testing.T) {
-	testDM := newDeviceManager("", "", "")
+	testDM := newDeviceManager("", "", "", afMode)
 	if testDM == nil {
 		t.Fatal("Failed to create a deviceManager")
 	}
@@ -327,5 +407,31 @@ func TestAllocate(t *testing.T) {
 
 	if len(resp.ContainerResponses[0].Devices) != 1 {
 		t.Fatal("Allocated wrong number of devices")
+	}
+}
+
+func TestParseMode(t *testing.T) {
+	tcases := []struct {
+		input  string
+		output pluginMode
+	}{
+		{
+			input:  "af",
+			output: afMode,
+		},
+		{
+			input:  "region",
+			output: regionMode,
+		},
+		{
+			input:  "unparsable",
+			output: wrongMode,
+		},
+	}
+
+	for _, tcase := range tcases {
+		if parseMode(tcase.input) != tcase.output {
+			t.Error("Wrong output", tcase.output, "for the given input", tcase.input)
+		}
 	}
 }
