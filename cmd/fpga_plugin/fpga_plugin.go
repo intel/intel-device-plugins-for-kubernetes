@@ -46,23 +46,15 @@ const (
 	resourceNamePrefix   = "intel.com/fpga"
 )
 
-type pluginMode int
+type pluginMode string
 
 const (
-	wrongMode pluginMode = iota
-	afMode
-	regionMode
+	afMode     pluginMode = "af"
+	regionMode pluginMode = "region"
 )
 
-func parseMode(input string) pluginMode {
-	switch input {
-	case "af":
-		return afMode
-	case "region":
-		return regionMode
-	}
-
-	return wrongMode
+func isValidPluginMode(m pluginMode) bool {
+	return m == afMode || m == regionMode
 }
 
 // deviceManager manages Intel FPGA devices.
@@ -122,7 +114,7 @@ func discoverFPGAs(sysfsDir string, devfsDir string, mode pluginMode) (map[strin
 						if err != nil {
 							return nil, err
 						}
-						interfaceId = strings.TrimSpace(string(data))
+						interfaceId = fmt.Sprintf("%s-%s", mode, strings.TrimSpace(string(data)))
 						fpgaNodes[interfaceId] = append(fpgaNodes[interfaceId], name)
 					}
 				}
@@ -143,7 +135,7 @@ func discoverFPGAs(sysfsDir string, devfsDir string, mode pluginMode) (map[strin
 						if err != nil {
 							return nil, err
 						}
-						afuID := strings.TrimSpace(string(data))
+						afuID := fmt.Sprintf("%s-%s", mode, strings.TrimSpace(string(data)))
 						fpgaNodes[afuID] = append(fpgaNodes[afuID], name)
 					default:
 						glog.Fatal("Unsupported mode")
@@ -229,16 +221,16 @@ func (dm *deviceManager) PreStartContainer(ctx context.Context, rqt *pluginapi.P
 func main() {
 	var modeStr string
 
-	flag.StringVar(&modeStr, "mode", "af", "device plugin mode: 'af' (default) or 'region'")
+	flag.StringVar(&modeStr, "mode", string(afMode), fmt.Sprintf("device plugin mode: '%s' (default) or '%s'", afMode, regionMode))
 	flag.Parse()
 
-	mode := parseMode(modeStr)
-	if mode == wrongMode {
+	mode := pluginMode(modeStr)
+	if !isValidPluginMode(mode) {
 		glog.Error("Wrong mode: ", modeStr)
 		os.Exit(1)
 	}
 
-	fmt.Println("FPGA device plugin started in", modeStr, "mode")
+	fmt.Println("FPGA device plugin started in", mode, "mode")
 
 	devs, err := discoverFPGAs(sysfsDirectory, devfsDirectory, mode)
 	if err != nil {
