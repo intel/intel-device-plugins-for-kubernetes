@@ -234,7 +234,8 @@ func main() {
 
 	mode := parseMode(modeStr)
 	if mode == wrongMode {
-		glog.Fatal("Wrong mode: ", modeStr)
+		glog.Error("Wrong mode: ", modeStr)
+		os.Exit(1)
 	}
 
 	fmt.Println("FPGA device plugin started in", modeStr, "mode")
