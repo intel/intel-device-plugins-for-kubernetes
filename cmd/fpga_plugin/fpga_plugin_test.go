@@ -116,22 +116,22 @@ func TestDiscoverFPGAs(t *testing.T) {
 				"intel-fpga-port.2", "intel-fpga-fme.2",
 			},
 			expectedResult: map[string]map[string]deviceplugin.DeviceInfo{
-				"d8424dc4a4a3c413f89e433683f9040b": map[string]deviceplugin.DeviceInfo{
-					"intel-fpga-dev.0": deviceplugin.DeviceInfo{
+				"d8424dc4a4a3c413f89e433683f9040b": {
+					"intel-fpga-dev.0": {
 						State: "Healthy",
 						Nodes: []string{
 							path.Join(tmpdir, "/dev/intel-fpga-port.0"),
 						},
 					},
-					"intel-fpga-dev.1": deviceplugin.DeviceInfo{
+					"intel-fpga-dev.1": {
 						State: "Healthy",
 						Nodes: []string{
 							path.Join(tmpdir, "/dev/intel-fpga-port.1"),
 						},
 					},
 				},
-				"47595d0fae972fbed0c51b4a41c7a349": map[string]deviceplugin.DeviceInfo{
-					"intel-fpga-dev.2": deviceplugin.DeviceInfo{
+				"47595d0fae972fbed0c51b4a41c7a349": {
+					"intel-fpga-dev.2": {
 						State: "Healthy",
 						Nodes: []string{
 							path.Join(tmpdir, "/dev/intel-fpga-port.2"),
@@ -187,15 +187,15 @@ func TestDiscoverFPGAs(t *testing.T) {
 				"intel-fpga-port.2", "intel-fpga-fme.2",
 			},
 			expectedResult: map[string]map[string]deviceplugin.DeviceInfo{
-				"ce48969398f05f33946d560708be108a": map[string]deviceplugin.DeviceInfo{
-					"intel-fpga-dev.0": deviceplugin.DeviceInfo{
+				"ce48969398f05f33946d560708be108a": {
+					"intel-fpga-dev.0": {
 						State: "Healthy",
 						Nodes: []string{
 							path.Join(tmpdir, "/dev/intel-fpga-fme.0"),
 							path.Join(tmpdir, "/dev/intel-fpga-port.0"),
 						},
 					},
-					"intel-fpga-dev.1": deviceplugin.DeviceInfo{
+					"intel-fpga-dev.1": {
 						State: "Healthy",
 						Nodes: []string{
 							path.Join(tmpdir, "/dev/intel-fpga-fme.1"),
@@ -203,8 +203,8 @@ func TestDiscoverFPGAs(t *testing.T) {
 						},
 					},
 				},
-				"fd967345645f05f338462a0748be0091": map[string]deviceplugin.DeviceInfo{
-					"intel-fpga-dev.2": deviceplugin.DeviceInfo{
+				"fd967345645f05f338462a0748be0091": {
+					"intel-fpga-dev.2": {
 						State: "Healthy",
 						Nodes: []string{
 							path.Join(tmpdir, "/dev/intel-fpga-fme.2"),
@@ -329,8 +329,8 @@ func TestListAndWatch(t *testing.T) {
 				"intel-fpga-port.2", "intel-fpga-fme.2",
 			},
 			expectedResult: []*pluginapi.Device{
-				&pluginapi.Device{"intel-fpga-dev.0", "Healthy"},
-				&pluginapi.Device{"intel-fpga-dev.1", "Healthy"},
+				{"intel-fpga-dev.0", "Healthy"},
+				{"intel-fpga-dev.1", "Healthy"},
 			},
 			expectedErr: false,
 		},
@@ -393,7 +393,7 @@ func TestAllocate(t *testing.T) {
 
 	rqt := &pluginapi.AllocateRequest{
 		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
-			&pluginapi.ContainerAllocateRequest{
+			{
 				DevicesIDs: []string{"dev1"},
 			},
 		},
