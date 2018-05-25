@@ -87,7 +87,7 @@ func (ps *pluginStub) GetDevicePluginOptions(ctx context.Context, empty *plugina
 	return new(pluginapi.DevicePluginOptions), nil
 }
 
-func (ps *pluginStub) ListAndWatch(emtpy *pluginapi.Empty, stream pluginapi.DevicePlugin_ListAndWatchServer) error {
+func (ps *pluginStub) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.DevicePlugin_ListAndWatchServer) error {
 	return nil
 }
 
