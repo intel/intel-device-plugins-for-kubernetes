@@ -187,7 +187,7 @@ func TestSetupAndServe(t *testing.T) {
 		kubelet.Unlock()
 		pluginSocket = path.Join(devicePluginPath, pEndpoint)
 		if pEndpoint != "" {
-			if _, err := os.Stat(pluginSocket); err == nil {
+			if _, err = os.Stat(pluginSocket); err == nil {
 				break
 			}
 		}
