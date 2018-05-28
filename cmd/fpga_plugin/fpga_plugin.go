@@ -251,7 +251,7 @@ func main() {
 	}
 
 	ch := make(chan error)
-	for fpgaId, _ := range devs {
+	for fpgaId := range devs {
 		resourceName := resourceNamePrefix + "-" + fpgaId
 		pPrefix := pluginEndpointPrefix + "-" + fpgaId
 		dm := newDeviceManager(resourceName, fpgaId, "/", mode)
