@@ -27,19 +27,23 @@ import (
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 )
 
+// DeviceInfo contains information about device maintained by Device Plugin
 type DeviceInfo struct {
 	State string
 	Nodes []string
 }
 
+// Server structure to keep server parameters
 type Server struct {
 	grpcServer *grpc.Server
 }
 
+// Serve serves starts gRPC server to serve Device Plugin functionality
 func (srv *Server) Serve(dm pluginapi.DevicePluginServer, resourceName string, pluginPrefix string) error {
 	return srv.setupAndServe(dm, resourceName, pluginPrefix, pluginapi.DevicePluginPath, pluginapi.KubeletSocket)
 }
 
+// Stop stops serving Device Plugin
 func (srv *Server) Stop() error {
 	if srv.grpcServer == nil {
 		return fmt.Errorf("Can't stop non-existing gRPC server. Calling Stop() before Serve()?")

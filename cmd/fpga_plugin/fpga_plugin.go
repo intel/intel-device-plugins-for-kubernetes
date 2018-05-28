@@ -60,16 +60,16 @@ func isValidPluginMode(m pluginMode) bool {
 // deviceManager manages Intel FPGA devices.
 type deviceManager struct {
 	srv     deviceplugin.Server
-	fpgaId  string
+	fpgaID  string
 	name    string
 	devices map[string]deviceplugin.DeviceInfo
 	root    string
 	mode    pluginMode
 }
 
-func newDeviceManager(resourceName string, fpgaId string, rootDir string, mode pluginMode) *deviceManager {
+func newDeviceManager(resourceName string, fpgaID string, rootDir string, mode pluginMode) *deviceManager {
 	return &deviceManager{
-		fpgaId:  fpgaId,
+		fpgaID:  fpgaID,
 		name:    resourceName,
 		devices: make(map[string]deviceplugin.DeviceInfo),
 		root:    rootDir,
@@ -93,7 +93,7 @@ func discoverFPGAs(sysfsDir string, devfsDir string, mode pluginMode) (map[strin
 	for _, fpgaFile := range fpgaFiles {
 		fname := fpgaFile.Name()
 		if deviceReg.MatchString(fname) {
-			var interfaceId string
+			var interfaceID string
 
 			deviceFolder := path.Join(sysfsDir, fname)
 			deviceFiles, err := ioutil.ReadDir(deviceFolder)
@@ -106,16 +106,16 @@ func discoverFPGAs(sysfsDir string, devfsDir string, mode pluginMode) (map[strin
 				for _, deviceFile := range deviceFiles {
 					name := deviceFile.Name()
 					if fmeReg.MatchString(name) {
-						if len(interfaceId) > 0 {
+						if len(interfaceID) > 0 {
 							return nil, fmt.Errorf("Detected more than one FPGA region for device %s. Only one region per FPGA device is supported", fname)
 						}
-						interfaceIdFile := path.Join(deviceFolder, name, "pr", "interface_id")
-						data, err := ioutil.ReadFile(interfaceIdFile)
+						interfaceIDFile := path.Join(deviceFolder, name, "pr", "interface_id")
+						data, err := ioutil.ReadFile(interfaceIDFile)
 						if err != nil {
 							return nil, err
 						}
-						interfaceId = fmt.Sprintf("%s-%s", mode, strings.TrimSpace(string(data)))
-						fpgaNodes[interfaceId] = append(fpgaNodes[interfaceId], name)
+						interfaceID = fmt.Sprintf("%s-%s", mode, strings.TrimSpace(string(data)))
+						fpgaNodes[interfaceID] = append(fpgaNodes[interfaceID], name)
 					}
 				}
 			}
@@ -125,10 +125,10 @@ func discoverFPGAs(sysfsDir string, devfsDir string, mode pluginMode) (map[strin
 				if portReg.MatchString(name) {
 					switch mode {
 					case regionMode:
-						if len(interfaceId) == 0 {
+						if len(interfaceID) == 0 {
 							return nil, fmt.Errorf("No FPGA region found for %s", fname)
 						}
-						fpgaNodes[interfaceId] = append(fpgaNodes[interfaceId], name)
+						fpgaNodes[interfaceID] = append(fpgaNodes[interfaceID], name)
 					case afMode:
 						afuFile := path.Join(deviceFolder, name, "afu_id")
 						data, err := ioutil.ReadFile(afuFile)
@@ -145,7 +145,7 @@ func discoverFPGAs(sysfsDir string, devfsDir string, mode pluginMode) (map[strin
 			if len(fpgaNodes) == 0 {
 				return nil, fmt.Errorf("No device nodes found for %s", fname)
 			}
-			for fpgaId, nodes := range fpgaNodes {
+			for fpgaID, nodes := range fpgaNodes {
 				var devNodes []string
 				for _, node := range nodes {
 					devNode := path.Join(devfsDir, node)
@@ -155,10 +155,10 @@ func discoverFPGAs(sysfsDir string, devfsDir string, mode pluginMode) (map[strin
 					devNodes = append(devNodes, devNode)
 				}
 				sort.Strings(devNodes)
-				if _, ok := result[fpgaId]; !ok {
-					result[fpgaId] = make(map[string]deviceplugin.DeviceInfo)
+				if _, ok := result[fpgaID]; !ok {
+					result[fpgaID] = make(map[string]deviceplugin.DeviceInfo)
 				}
-				result[fpgaId][fname] = deviceplugin.DeviceInfo{
+				result[fpgaID][fname] = deviceplugin.DeviceInfo{
 					State: pluginapi.Healthy,
 					Nodes: devNodes,
 				}
@@ -184,10 +184,10 @@ func (dm *deviceManager) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.D
 			dm.srv.Stop()
 			return fmt.Errorf("Device discovery failed: %+v", err)
 		}
-		devinfos, ok := devs[dm.fpgaId]
+		devinfos, ok := devs[dm.fpgaID]
 		if !ok {
 			dm.srv.Stop()
-			return fmt.Errorf("AFU id %s disappeared", dm.fpgaId)
+			return fmt.Errorf("AFU id %s disappeared", dm.fpgaID)
 		}
 		if !reflect.DeepEqual(dm.devices, devinfos) {
 			dm.devices = devinfos
@@ -243,10 +243,10 @@ func main() {
 	}
 
 	ch := make(chan error)
-	for fpgaId, _ := range devs {
-		resourceName := resourceNamePrefix + "-" + fpgaId
-		pPrefix := pluginEndpointPrefix + "-" + fpgaId
-		dm := newDeviceManager(resourceName, fpgaId, "/", mode)
+	for fpgaID := range devs {
+		resourceName := resourceNamePrefix + "-" + fpgaID
+		pPrefix := pluginEndpointPrefix + "-" + fpgaID
+		dm := newDeviceManager(resourceName, fpgaID, "/", mode)
 
 		go func() {
 			ch <- dm.srv.Serve(dm, resourceName, pPrefix)
