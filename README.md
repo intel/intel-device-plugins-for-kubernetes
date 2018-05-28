@@ -1,4 +1,4 @@
-![Alt text](.intel-logo.png?raw=true "Intel Device Plugins for Kubernetes")
+[![Build Status](https://travis-ci.org/intel/intel-device-plugins-for-kubernetes.svg?branch=master)](https://travis-ci.org/intel/intel-device-plugins-for-kubernetes)
 
 # Intel Device Plugins for Kubernetes
 
