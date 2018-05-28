@@ -163,7 +163,7 @@ func TestSetupAndServe(t *testing.T) {
 	client := pluginapi.NewDevicePluginClient(conn)
 	_, err = client.Allocate(context.Background(), &pluginapi.AllocateRequest{
 		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
-			&pluginapi.ContainerAllocateRequest{
+			{
 				DevicesIDs: []string{"dev1", "dev2"},
 			},
 		},
@@ -205,7 +205,7 @@ func TestSetupAndServe(t *testing.T) {
 	client = pluginapi.NewDevicePluginClient(conn)
 	_, err = client.Allocate(context.Background(), &pluginapi.AllocateRequest{
 		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
-			&pluginapi.ContainerAllocateRequest{
+			{
 				DevicesIDs: []string{"dev1", "dev2"},
 			},
 		},
@@ -226,7 +226,7 @@ func TestStop(t *testing.T) {
 func TestMakeAllocateResponse(t *testing.T) {
 	rqt := &pluginapi.AllocateRequest{
 		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
-			&pluginapi.ContainerAllocateRequest{
+			{
 				DevicesIDs: []string{"dev1"},
 			},
 		},
@@ -238,7 +238,7 @@ func TestMakeAllocateResponse(t *testing.T) {
 	}
 
 	devices := map[string]DeviceInfo{
-		"dev1": DeviceInfo{pluginapi.Unhealthy, []string{"/dev/dev1"}},
+		"dev1": {pluginapi.Unhealthy, []string{"/dev/dev1"}},
 	}
 
 	_, err = MakeAllocateResponse(rqt, devices)

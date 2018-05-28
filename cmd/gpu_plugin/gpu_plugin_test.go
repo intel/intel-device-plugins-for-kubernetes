@@ -101,7 +101,7 @@ func TestAllocate(t *testing.T) {
 
 	rqt := &pluginapi.AllocateRequest{
 		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
-			&pluginapi.ContainerAllocateRequest{
+			{
 				DevicesIDs: []string{"dev1"},
 			},
 		},
