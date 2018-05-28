@@ -116,7 +116,7 @@ func TestDiscoverFPGAs(t *testing.T) {
 				"intel-fpga-port.2", "intel-fpga-fme.2",
 			},
 			expectedResult: map[string]map[string]deviceplugin.DeviceInfo{
-				"d8424dc4a4a3c413f89e433683f9040b": map[string]deviceplugin.DeviceInfo{
+				fmt.Sprintf("%s-d8424dc4a4a3c413f89e433683f9040b", afMode): map[string]deviceplugin.DeviceInfo{
 					"intel-fpga-dev.0": deviceplugin.DeviceInfo{
 						State: "Healthy",
 						Nodes: []string{
@@ -130,7 +130,7 @@ func TestDiscoverFPGAs(t *testing.T) {
 						},
 					},
 				},
-				"47595d0fae972fbed0c51b4a41c7a349": map[string]deviceplugin.DeviceInfo{
+				fmt.Sprintf("%s-47595d0fae972fbed0c51b4a41c7a349", afMode): map[string]deviceplugin.DeviceInfo{
 					"intel-fpga-dev.2": deviceplugin.DeviceInfo{
 						State: "Healthy",
 						Nodes: []string{
@@ -187,7 +187,7 @@ func TestDiscoverFPGAs(t *testing.T) {
 				"intel-fpga-port.2", "intel-fpga-fme.2",
 			},
 			expectedResult: map[string]map[string]deviceplugin.DeviceInfo{
-				"ce48969398f05f33946d560708be108a": map[string]deviceplugin.DeviceInfo{
+				fmt.Sprintf("%s-ce48969398f05f33946d560708be108a", regionMode): map[string]deviceplugin.DeviceInfo{
 					"intel-fpga-dev.0": deviceplugin.DeviceInfo{
 						State: "Healthy",
 						Nodes: []string{
@@ -203,7 +203,7 @@ func TestDiscoverFPGAs(t *testing.T) {
 						},
 					},
 				},
-				"fd967345645f05f338462a0748be0091": map[string]deviceplugin.DeviceInfo{
+				fmt.Sprintf("%s-fd967345645f05f338462a0748be0091", regionMode): map[string]deviceplugin.DeviceInfo{
 					"intel-fpga-dev.2": deviceplugin.DeviceInfo{
 						State: "Healthy",
 						Nodes: []string{
@@ -336,8 +336,8 @@ func TestListAndWatch(t *testing.T) {
 		},
 	}
 
-	resourceName := resourceNamePrefix + "-" + afuID
-	testDM := newDeviceManager(resourceName, afuID, tmpdir, afMode)
+	resourceName := fmt.Sprintf("%s%s-%s", resourceNamePrefix, afMode, afuID)
+	testDM := newDeviceManager(resourceName, fmt.Sprintf("%s-%s", afMode, afuID), tmpdir, afMode)
 	if testDM == nil {
 		t.Fatal("Failed to create a deviceManager")
 	}
@@ -410,27 +410,27 @@ func TestAllocate(t *testing.T) {
 	}
 }
 
-func TestParseMode(t *testing.T) {
+func TestisValidPluginMode(t *testing.T) {
 	tcases := []struct {
-		input  string
-		output pluginMode
+		input  pluginMode
+		output bool
 	}{
 		{
-			input:  "af",
-			output: afMode,
+			input:  afMode,
+			output: true,
 		},
 		{
-			input:  "region",
-			output: regionMode,
+			input:  regionMode,
+			output: true,
 		},
 		{
-			input:  "unparsable",
-			output: wrongMode,
+			input:  pluginMode("unparsable"),
+			output: false,
 		},
 	}
 
 	for _, tcase := range tcases {
-		if parseMode(tcase.input) != tcase.output {
+		if isValidPluginMode(tcase.input) != tcase.output {
 			t.Error("Wrong output", tcase.output, "for the given input", tcase.input)
 		}
 	}
