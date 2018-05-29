@@ -410,7 +410,7 @@ func TestAllocate(t *testing.T) {
 	}
 }
 
-func TestisValidPluginMode(t *testing.T) {
+func TestIsValidPluginMode(t *testing.T) {
 	tcases := []struct {
 		input  pluginMode
 		output bool
