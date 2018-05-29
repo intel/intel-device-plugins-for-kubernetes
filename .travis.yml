@@ -1,7 +1,6 @@
 language: go
 
 go:
-  - 1.9.x
   - 1.10.x
 
 before_install:
@@ -15,3 +14,6 @@ script:
   - make
   - make vet
   - make test
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
