@@ -14,7 +14,7 @@ vet:
 	@$(GO) vet -v -shadow $(pkgs)
 
 test:
-	@$(GO) test -cover $(pkgs)
+	@$(GO) test -race -coverprofile=coverage.txt -covermode=atomic $(pkgs)
 
 lint:
 	@for f in $$(find ./cmd ./internal -name \*.go) ; do golint $$f ;done
