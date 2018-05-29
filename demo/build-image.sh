@@ -1,15 +1,26 @@
 #!/bin/sh -xe
 
 CWD=`dirname $0`
-IMG=$1
+DEVICEDIR=$1
+IMG=$2
 
-if [ -z "$IMG" ]; then
-    (>&2 echo "Usage: $0 <image directory>")
+if [ -z "$DEVICEDIR/$IMG" ]; then
+    (>&2 echo "Usage: $0 <device directory> <image directory>")
     exit 1
 fi
 
-if [ ! -d "$IMG" ]; then
+if [ ! -d "$DEVICEDIR/$IMG" ]; then
     (>&2 echo "Directory $IMG doesn't exist")
+    exit 1
+fi
+
+if [ -z "$DEVICEDIR" ]; then
+    (>&2 echo "Usage: $0 <device directory> <image directory>")
+    exit 1
+fi
+
+if [ ! -d "$DEVICEDIR" ]; then
+    (>&2 echo "Directory $DEVICEDIR doesn't exist")
     exit 1
 fi
 
@@ -25,4 +36,4 @@ for proxy in $PROXY_VARS; do
     fi
 done
 
-docker build -t $IMG $BUILD_ARGS "$CWD/$IMG/"
+docker build -t $IMG $BUILD_ARGS "$CWD/$DEVICEDIR/$IMG/"

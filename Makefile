@@ -22,11 +22,20 @@ lint:
 TAG?=$(shell git rev-parse HEAD)
 
 build:
-	cd cmd/gpu_plugin; go build
-	cd cmd/fpga_plugin; go build
+	cd plugins/gpu_plugin; go build
+	cd plugins/fpga_plugin; go build
 
 container:
-	docker build -f gpu.Dockerfile  $(DOCKER_ARGS) -t ${GPU_IMAGE}:${TAG} .
-	docker build -f fpga.Dockerfile $(DOCKER_ARGS) -t ${FPGA_IMAGE}:${TAG} .
+	docker build -f docker/gpu.Dockerfile  $(DOCKER_ARGS) -t ${GPU_IMAGE}:${TAG} .
+	docker build -f docker/fpga.Dockerfile $(DOCKER_ARGS) -t ${FPGA_IMAGE}:${TAG} .
+
+gpu_plugin:
+	cd plugins/gpu_plugin; go build
+	docker build -f docker/gpu.Dockerfile  $(DOCKER_ARGS) -t ${GPU_IMAGE}:${TAG} .
+
+fpga_plugin:
+	cd plugins/fpga_plugin; go build
+	docker build -f docker/fpga.Dockerfile $(DOCKER_ARGS) -t ${FPGA_IMAGE}:${TAG} .
+
 
 .PHONY: all format vet build container
