@@ -17,7 +17,7 @@ test:
 	@$(GO) test -cover $(pkgs)
 
 lint:
-	@for f in $$(find ./cmd ./internal -name \*.go) ; do golint $$f ;done
+	@rc=0 ; for f in $$(find -name \*.go | grep -v \.\/vendor) ; do golint -set_exit_status $$f || rc=1 ; done ; exit $$rc
 
 TAG?=$(shell git rev-parse HEAD)
 
