@@ -17,7 +17,13 @@ vet:
 	@$(GO) vet -v -shadow $(pkgs)
 
 test:
+ifndef WHAT
 	@$(GO) test -race -coverprofile=coverage.txt -covermode=atomic $(pkgs)
+else
+	@cd $(WHAT) && $(GO) test -v -cover -coverprofile cover.out
+	@cd $(WHAT) && $(GO) tool cover -html=cover.out -o coverage.html
+	@cd $(WHAT) && rm cover.out
+endif
 
 lint:
 	@rc=0 ; for f in $$(find -name \*.go | grep -v \.\/vendor) ; do golint -set_exit_status $$f || rc=1 ; done ; exit $$rc
