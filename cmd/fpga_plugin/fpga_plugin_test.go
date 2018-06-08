@@ -16,241 +16,30 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path"
-	"reflect"
 	"testing"
-	"time"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/devicecache"
 	"github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
 )
 
-func createTestDirs(devfs, sysfs string, devfsDirs, sysfsDirs []string, sysfsFiles map[string][]byte) error {
-	var err error
-
-	for _, devfsdir := range devfsDirs {
-		err = os.MkdirAll(path.Join(devfs, devfsdir), 0755)
-		if err != nil {
-			return fmt.Errorf("Failed to create fake device directory: %+v", err)
-		}
-	}
-	for _, sysfsdir := range sysfsDirs {
-		err = os.MkdirAll(path.Join(sysfs, sysfsdir), 0755)
-		if err != nil {
-			return fmt.Errorf("Failed to create fake device directory: %+v", err)
-		}
-	}
-	for filename, body := range sysfsFiles {
-		err = ioutil.WriteFile(path.Join(sysfs, filename), body, 0644)
-		if err != nil {
-			return fmt.Errorf("Failed to create fake vendor file: %+v", err)
-		}
-	}
-
-	return nil
-}
-
-func TestDiscoverFPGAs(t *testing.T) {
-	tmpdir := fmt.Sprintf("/tmp/fpgaplugin-TestDiscoverFPGAs-%d", time.Now().Unix())
-	sysfs := path.Join(tmpdir, "sys", "class", "fpga")
-	devfs := path.Join(tmpdir, "dev")
-	tcases := []struct {
-		devfsdirs      []string
-		sysfsdirs      []string
-		sysfsfiles     map[string][]byte
-		expectedResult map[string]map[string]deviceplugin.DeviceInfo
-		expectedErr    bool
-		mode           pluginMode
-	}{
-		{
-			expectedResult: nil,
-			expectedErr:    true,
-			mode:           afMode,
-		},
-		{
-			sysfsdirs:      []string{"intel-fpga-dev.0"},
-			expectedResult: nil,
-			expectedErr:    true,
-			mode:           afMode,
-		},
-		{
-			sysfsdirs:      []string{"intel-fpga-dev.0/intel-fpga-port.0"},
-			expectedResult: nil,
-			expectedErr:    true,
-			mode:           afMode,
-		},
-		{
-			sysfsdirs: []string{
-				"intel-fpga-dev.0/intel-fpga-port.0",
-			},
-			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-			},
-			expectedResult: nil,
-			expectedErr:    true,
-			mode:           afMode,
-		},
-		{
-			sysfsdirs: []string{
-				"intel-fpga-dev.0/intel-fpga-port.0",
-				"intel-fpga-dev.0/intel-fpga-fme.0",
-				"intel-fpga-dev.1/intel-fpga-port.1",
-				"intel-fpga-dev.1/intel-fpga-fme.1",
-				"intel-fpga-dev.2/intel-fpga-port.2",
-				"intel-fpga-dev.2/intel-fpga-fme.2",
-			},
-			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-				"intel-fpga-dev.1/intel-fpga-port.1/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-				"intel-fpga-dev.2/intel-fpga-port.2/afu_id": []byte("47595d0fae972fbed0c51b4a41c7a349\n"),
-			},
-			devfsdirs: []string{
-				"intel-fpga-port.0", "intel-fpga-fme.0",
-				"intel-fpga-port.1", "intel-fpga-fme.1",
-				"intel-fpga-port.2", "intel-fpga-fme.2",
-			},
-			expectedResult: map[string]map[string]deviceplugin.DeviceInfo{
-				fmt.Sprintf("%s-d8424dc4a4a3c413f89e433683f9040b", afMode): {
-					"intel-fpga-dev.0": {
-						State: "Healthy",
-						Nodes: []string{
-							path.Join(tmpdir, "/dev/intel-fpga-port.0"),
-						},
-					},
-					"intel-fpga-dev.1": {
-						State: "Healthy",
-						Nodes: []string{
-							path.Join(tmpdir, "/dev/intel-fpga-port.1"),
-						},
-					},
-				},
-				fmt.Sprintf("%s-47595d0fae972fbed0c51b4a41c7a349", afMode): {
-					"intel-fpga-dev.2": {
-						State: "Healthy",
-						Nodes: []string{
-							path.Join(tmpdir, "/dev/intel-fpga-port.2"),
-						},
-					},
-				},
-			},
-			expectedErr: false,
-			mode:        afMode,
-		},
-		{
-			sysfsdirs: []string{
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
-				"intel-fpga-dev.0/intel-fpga-fme.1/pr",
-			},
-			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-				"intel-fpga-dev.0/intel-fpga-fme.1/pr/interface_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-			},
-			expectedResult: nil,
-			expectedErr:    true,
-			mode:           regionMode,
-		},
-		{
-			sysfsdirs: []string{
-				"intel-fpga-dev.0/intel-fpga-port.0",
-				"intel-fpga-dev.1/intel-fpga-port.1",
-			},
-			expectedResult: nil,
-			expectedErr:    true,
-			mode:           regionMode,
-		},
-		{
-			sysfsdirs: []string{
-				"intel-fpga-dev.0/intel-fpga-port.0",
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
-				"intel-fpga-dev.1/intel-fpga-port.1",
-				"intel-fpga-dev.1/intel-fpga-fme.1/pr",
-				"intel-fpga-dev.2/intel-fpga-port.2",
-				"intel-fpga-dev.2/intel-fpga-fme.2/pr",
-			},
-			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-port.0/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-				"intel-fpga-dev.1/intel-fpga-port.1/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-				"intel-fpga-dev.2/intel-fpga-port.2/afu_id":         []byte("47595d0fae972fbed0c51b4a41c7a349\n"),
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
-				"intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
-				"intel-fpga-dev.2/intel-fpga-fme.2/pr/interface_id": []byte("fd967345645f05f338462a0748be0091\n"),
-			},
-			devfsdirs: []string{
-				"intel-fpga-port.0", "intel-fpga-fme.0",
-				"intel-fpga-port.1", "intel-fpga-fme.1",
-				"intel-fpga-port.2", "intel-fpga-fme.2",
-			},
-			expectedResult: map[string]map[string]deviceplugin.DeviceInfo{
-				fmt.Sprintf("%s-ce48969398f05f33946d560708be108a", regionMode): {
-					"intel-fpga-dev.0": {
-						State: "Healthy",
-						Nodes: []string{
-							path.Join(tmpdir, "/dev/intel-fpga-fme.0"),
-							path.Join(tmpdir, "/dev/intel-fpga-port.0"),
-						},
-					},
-					"intel-fpga-dev.1": {
-						State: "Healthy",
-						Nodes: []string{
-							path.Join(tmpdir, "/dev/intel-fpga-fme.1"),
-							path.Join(tmpdir, "/dev/intel-fpga-port.1"),
-						},
-					},
-				},
-				fmt.Sprintf("%s-fd967345645f05f338462a0748be0091", regionMode): {
-					"intel-fpga-dev.2": {
-						State: "Healthy",
-						Nodes: []string{
-							path.Join(tmpdir, "/dev/intel-fpga-fme.2"),
-							path.Join(tmpdir, "/dev/intel-fpga-port.2"),
-						},
-					},
-				},
-			},
-			expectedErr: false,
-			mode:        regionMode,
-		},
-	}
-
-	for _, tcase := range tcases {
-		err := createTestDirs(devfs, sysfs, tcase.devfsdirs, tcase.sysfsdirs, tcase.sysfsfiles)
-		if err != nil {
-			t.Error(err)
-		}
-
-		result, err := discoverFPGAs(sysfs, devfs, tcase.mode)
-		if tcase.expectedErr && err == nil {
-			t.Error("Expected error hasn't been triggered")
-		}
-
-		if tcase.expectedResult != nil && !reflect.DeepEqual(result, tcase.expectedResult) {
-			t.Logf("Expected result: %+v", tcase.expectedResult)
-			t.Logf("Actual result:   %+v", result)
-			t.Error("Got unexpeced result")
-		}
-
-		err = os.RemoveAll(tmpdir)
-		if err != nil {
-			t.Fatalf("Failed to remove fake device directory: %+v", err)
-		}
-	}
-}
-
 // Minimal implementation of pluginapi.DevicePlugin_ListAndWatchServer
 type listAndWatchServerStub struct {
-	testDM *deviceManager
-	t      *testing.T
-	cdata  chan []*pluginapi.Device
-	cerr   chan error
+	testDM      *deviceManager
+	generateErr bool
+	cdata       chan []*pluginapi.Device
 }
 
 func (s *listAndWatchServerStub) Send(resp *pluginapi.ListAndWatchResponse) error {
+	if s.generateErr {
+		fmt.Println("listAndWatchServerStub::Send returns error")
+		return fmt.Errorf("Fake error")
+	}
+
 	fmt.Println("listAndWatchServerStub::Send", resp.Devices)
 	s.cdata <- resp.Devices
 	return nil
@@ -279,114 +68,78 @@ func (s *listAndWatchServerStub) SetHeader(m metadata.MD) error {
 func (s *listAndWatchServerStub) SetTrailer(m metadata.MD) {
 }
 
-func TestListAndWatch(t *testing.T) {
-	afuID := "d8424dc4a4a3c413f89e433683f9040b"
-	tmpdir := fmt.Sprintf("/tmp/fpgaplugin-TestListAndWatch-%d", time.Now().Unix())
-	sysfs := path.Join(tmpdir, "sys", "class", "fpga")
-	devfs := path.Join(tmpdir, "dev")
+func TestGetDevicePluginOptions(t *testing.T) {
+	dm := &deviceManager{}
+	dm.GetDevicePluginOptions(nil, nil)
+}
 
+func TestPreStartContainer(t *testing.T) {
+	dm := &deviceManager{}
+	dm.PreStartContainer(nil, nil)
+}
+
+func TestListAndWatch(t *testing.T) {
 	tcases := []struct {
-		devfsdirs      []string
-		sysfsdirs      []string
-		sysfsfiles     map[string][]byte
-		expectedResult []*pluginapi.Device
-		expectedErr    bool
+		name        string
+		updates     []map[string]deviceplugin.DeviceInfo
+		expectedErr bool
 	}{
 		{
-			expectedResult: nil,
-			expectedErr:    true,
+			name: "No updates and close",
 		},
 		{
-			sysfsdirs: []string{
-				"intel-fpga-dev.0/intel-fpga-port.0",
+			name: "Send 1 update",
+			updates: []map[string]deviceplugin.DeviceInfo{
+				{
+					"fake_id": {
+						State: pluginapi.Healthy,
+						Nodes: []string{"/dev/intel-fpga-port.0"},
+					},
+				},
 			},
-			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"),
-			},
-			devfsdirs: []string{
-				"intel-fpga-port.0", "intel-fpga-fme.0",
-			},
-			expectedResult: nil,
-			expectedErr:    true,
 		},
 		{
-			sysfsdirs: []string{
-				"intel-fpga-dev.0/intel-fpga-port.0",
-				"intel-fpga-dev.0/intel-fpga-fme.0",
-				"intel-fpga-dev.1/intel-fpga-port.1",
-				"intel-fpga-dev.1/intel-fpga-fme.1",
-				"intel-fpga-dev.2/intel-fpga-port.2",
-				"intel-fpga-dev.2/intel-fpga-fme.2",
+			name: "Send 1 update, but expect streaming error",
+			updates: []map[string]deviceplugin.DeviceInfo{
+				{
+					"fake_id": {
+						State: pluginapi.Healthy,
+						Nodes: []string{"/dev/intel-fpga-port.0"},
+					},
+				},
 			},
-			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte(afuID),
-				"intel-fpga-dev.1/intel-fpga-port.1/afu_id": []byte(afuID),
-				"intel-fpga-dev.2/intel-fpga-port.2/afu_id": []byte("47595d0fae972fbed0c51b4a41c7a349\n"),
-			},
-			devfsdirs: []string{
-				"intel-fpga-port.0", "intel-fpga-fme.0",
-				"intel-fpga-port.1", "intel-fpga-fme.1",
-				"intel-fpga-port.2", "intel-fpga-fme.2",
-			},
-			expectedResult: []*pluginapi.Device{
-				{"intel-fpga-dev.0", "Healthy"},
-				{"intel-fpga-dev.1", "Healthy"},
-			},
-			expectedErr: false,
+			expectedErr: true,
 		},
 	}
 
-	resourceName := fmt.Sprintf("%s%s-%s", resourceNamePrefix, afMode, afuID)
-	testDM := newDeviceManager(resourceName, fmt.Sprintf("%s-%s", afMode, afuID), tmpdir, afMode)
-	if testDM == nil {
-		t.Fatal("Failed to create a deviceManager")
-	}
+	for _, tt := range tcases {
+		devCh := make(chan map[string]deviceplugin.DeviceInfo, len(tt.updates))
+		testDM := newDeviceManager("intel.com/fpgatest-fpgaID", "fpgaID", devCh)
 
-	server := &listAndWatchServerStub{
-		testDM: testDM,
-		t:      t,
-		cdata:  make(chan []*pluginapi.Device),
-		cerr:   make(chan error),
-	}
-
-	for _, tcase := range tcases {
-		err := createTestDirs(devfs, sysfs, tcase.devfsdirs, tcase.sysfsdirs, tcase.sysfsfiles)
-		if err != nil {
-			t.Error(err)
+		server := &listAndWatchServerStub{
+			testDM:      testDM,
+			generateErr: tt.expectedErr,
+			cdata:       make(chan []*pluginapi.Device, len(tt.updates)),
 		}
 
-		go func() {
-			err = testDM.ListAndWatch(&pluginapi.Empty{}, server)
-			if err != nil {
-				server.cerr <- err
-			}
-		}()
-
-		select {
-		case result := <-server.cdata:
-			if tcase.expectedErr {
-				t.Error("Expected error hasn't been triggered")
-			} else if tcase.expectedResult != nil && !reflect.DeepEqual(result, tcase.expectedResult) {
-				t.Logf("Expected result: %+v", tcase.expectedResult)
-				t.Logf("Actual result:   %+v", result)
-				t.Error("Got unexpeced result")
-			}
-			testDM.srv.Stop()
-		case err = <-server.cerr:
-			if !tcase.expectedErr {
-				t.Errorf("Unexpected error has been triggered: %+v", err)
-			}
+		// push device infos to DM's channel
+		for _, update := range tt.updates {
+			devCh <- update
 		}
+		close(devCh)
 
-		err = os.RemoveAll(tmpdir)
-		if err != nil {
-			t.Fatalf("Failed to remove fake device directory: %+v", err)
+		err := testDM.ListAndWatch(&pluginapi.Empty{}, server)
+		if err != nil && !tt.expectedErr {
+			t.Errorf("Test case '%s': got unexpected error %v", tt.name, err)
+		}
+		if err == nil && tt.expectedErr {
+			t.Errorf("Test case '%s': expected an error, but got nothing", tt.name)
 		}
 	}
 }
 
 func TestAllocate(t *testing.T) {
-	testDM := newDeviceManager("", "", "", afMode)
+	testDM := newDeviceManager("", "", nil)
 	if testDM == nil {
 		t.Fatal("Failed to create a deviceManager")
 	}
@@ -399,10 +152,13 @@ func TestAllocate(t *testing.T) {
 		},
 	}
 
-	testDM.devices["dev1"] = deviceplugin.DeviceInfo{pluginapi.Healthy, []string{"/dev/dev1"}}
+	testDM.devices["dev1"] = deviceplugin.DeviceInfo{
+		State: pluginapi.Healthy,
+		Nodes: []string{"/dev/dev1"},
+	}
 	resp, err := testDM.Allocate(nil, rqt)
 	if err != nil {
-		t.Fatalf("Failed to allocate healthy device: %+v", err)
+		t.Fatalf("Failed to allocate healthy device: %v", err)
 	}
 
 	if len(resp.ContainerResponses[0].Devices) != 1 {
@@ -410,28 +166,82 @@ func TestAllocate(t *testing.T) {
 	}
 }
 
-func TestIsValidPluginMode(t *testing.T) {
+func startDeviceManagerStub(dm *deviceManager, pluginPrefix string) {
+}
+
+func TestHandleUpdate(t *testing.T) {
 	tcases := []struct {
-		input  pluginMode
-		output bool
+		name        string
+		dms         map[string]*deviceManager
+		updateInfo  devicecache.UpdateInfo
+		expectedDMs int
 	}{
 		{
-			input:  afMode,
-			output: true,
+			name:        "Empty update",
+			updateInfo:  devicecache.UpdateInfo{},
+			expectedDMs: 0,
 		},
 		{
-			input:  regionMode,
-			output: true,
+			name: "Add device manager",
+			updateInfo: devicecache.UpdateInfo{
+				Added: map[string]map[string]deviceplugin.DeviceInfo{
+					"ce48969398f05f33946d560708be108a": {
+						"intel-fpga-fme.0": {
+							State: pluginapi.Healthy,
+							Nodes: []string{"/dev/intel-fpga-port.0", "/dev/intel-fpga-fme.0"},
+						},
+						"intel-fpga-fme.1": {
+							State: pluginapi.Healthy,
+							Nodes: []string{"/dev/intel-fpga-port.1", "/dev/intel-fpga-fme.1"},
+						},
+					},
+				},
+			},
+			expectedDMs: 1,
 		},
 		{
-			input:  pluginMode("unparsable"),
-			output: false,
+			name: "Update existing device manager",
+			dms: map[string]*deviceManager{
+				"ce48969398f05f33946d560708be108a": &deviceManager{
+					ch: make(chan map[string]deviceplugin.DeviceInfo, 1),
+				},
+			},
+			updateInfo: devicecache.UpdateInfo{
+				Updated: map[string]map[string]deviceplugin.DeviceInfo{
+					"ce48969398f05f33946d560708be108a": {
+						"intel-fpga-fme.1": {
+							State: pluginapi.Healthy,
+							Nodes: []string{"/dev/intel-fpga-port.1", "/dev/intel-fpga-fme.1"},
+						},
+					},
+				},
+			},
+			expectedDMs: 1,
+		},
+		{
+			name: "Remove device manager",
+			dms: map[string]*deviceManager{
+				"ce48969398f05f33946d560708be108a": &deviceManager{
+					ch: make(chan map[string]deviceplugin.DeviceInfo, 1),
+				},
+			},
+			updateInfo: devicecache.UpdateInfo{
+				Removed: map[string]map[string]deviceplugin.DeviceInfo{
+					"ce48969398f05f33946d560708be108a": {},
+				},
+			},
+			expectedDMs: 0,
 		},
 	}
 
-	for _, tcase := range tcases {
-		if isValidPluginMode(tcase.input) != tcase.output {
-			t.Error("Wrong output", tcase.output, "for the given input", tcase.input)
+	for _, tt := range tcases {
+		if tt.dms == nil {
+			tt.dms = make(map[string]*deviceManager)
+		}
+		handleUpdate(tt.dms, tt.updateInfo, startDeviceManagerStub)
+		if len(tt.dms) != tt.expectedDMs {
+			t.Errorf("Test case '%s': expected %d runnig device managers, but got %d",
+				tt.name, tt.expectedDMs, len(tt.dms))
 		}
 	}
 }
