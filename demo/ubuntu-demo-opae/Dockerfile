@@ -1,22 +1,15 @@
 FROM ubuntu:16.04
 
 # install OPAE build tools and dependencies
-RUN apt-get update && apt-get install -y cmake gcc g++ patch wget zip libboost-all-dev libjson-c-dev uuid-dev
+RUN apt-get update && apt-get install -y wget libjson0 uuid-dev
 
-COPY hello_fpga.diff /opt/build/
+ENV OPAE_URL https://github.com/OPAE/opae-sdk/releases/download/1.0.0-5
 
 # download OPAE sources
 RUN mkdir -p /opt/build && \
     cd /opt/build && \
-    wget https://github.com/OPAE/opae-sdk/archive/0.13.0.tar.gz -O- | tar -zx
+    wget $OPAE_URL/opae-libs-1.0.0.x86_64.deb $OPAE_URL/opae-tools-1.0.0.x86_64.deb \
+         $OPAE_URL/opae-tools-extra-1.0.0.x86_64.deb $OPAE_URL/opae-devel-1.0.0.x86_64.deb && \
+    dpkg -i *.deb
 
-# patch, build and install OPAE and hello_fpga
-RUN cd /opt/build/opae-sdk-0.13.0 && \
-    patch -p0 < ../hello_fpga.diff && \
-    mkdir mybuild && \
-    cd mybuild && \
-    cmake .. -DBUILD_ASE=1 && \
-    make install && \
-    cp ./bin/hello_fpga /usr/bin/
-
-COPY run_hello_fpga.sh /usr/bin/
+COPY test_fpga.sh /usr/bin/
