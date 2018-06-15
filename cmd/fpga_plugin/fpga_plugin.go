@@ -97,7 +97,7 @@ func startDeviceManager(dm *deviceManager, pluginPrefix string) {
 }
 
 func handleUpdate(dms map[string]*deviceManager, updateInfo devicecache.UpdateInfo, start func(*deviceManager, string)) {
-	glog.V(2).Info("Recieved dev updates: ", updateInfo)
+	glog.V(2).Info("Received dev updates: ", updateInfo)
 	for fpgaID, devices := range updateInfo.Added {
 		devCh := make(chan map[string]deviceplugin.DeviceInfo, 1)
 		resourceName := resourceNamePrefix + "-" + fpgaID
