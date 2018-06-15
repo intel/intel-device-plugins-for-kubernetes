@@ -33,8 +33,9 @@ import (
 
 // Device Cache's mode of operation
 const (
-	AfMode     = "af"
-	RegionMode = "region"
+	AfMode          = "af"
+	RegionMode      = "region"
+	RegionDevelMode = "regiondevel"
 )
 
 const (
@@ -54,7 +55,8 @@ type UpdateInfo struct {
 
 type getDevMapFunc func(devices []device) map[string]map[string]deviceplugin.DeviceInfo
 
-func getRegionMap(devices []device) map[string]map[string]deviceplugin.DeviceInfo {
+// getRegionMap returns mapping of region interface IDs to AF ports and FME devices
+func getRegionDevelMap(devices []device) map[string]map[string]deviceplugin.DeviceInfo {
 	regionMap := make(map[string]map[string]deviceplugin.DeviceInfo)
 
 	for _, dev := range devices {
@@ -77,6 +79,30 @@ func getRegionMap(devices []device) map[string]map[string]deviceplugin.DeviceInf
 	return regionMap
 }
 
+// getRegionMap returns mapping of region interface IDs to AF ports only
+func getRegionMap(devices []device) map[string]map[string]deviceplugin.DeviceInfo {
+	regionMap := make(map[string]map[string]deviceplugin.DeviceInfo)
+
+	for _, dev := range devices {
+		for _, region := range dev.regions {
+			if _, present := regionMap[region.interfaceID]; !present {
+				regionMap[region.interfaceID] = make(map[string]deviceplugin.DeviceInfo)
+			}
+			devNodes := make([]string, len(region.afus))
+			for num, afu := range region.afus {
+				devNodes[num] = afu.devNode
+			}
+			regionMap[region.interfaceID][region.id] = deviceplugin.DeviceInfo{
+				State: pluginapi.Healthy,
+				Nodes: devNodes,
+			}
+		}
+	}
+
+	return regionMap
+}
+
+// getAfuMap returns mapping of AFU IDs to AF ports
 func getAfuMap(devices []device) map[string]map[string]deviceplugin.DeviceInfo {
 	afuMap := make(map[string]map[string]deviceplugin.DeviceInfo)
 
@@ -138,6 +164,8 @@ func NewCache(sysfsDir string, devfsDir string, mode string, ch chan<- UpdateInf
 		getDevMap = getAfuMap
 	case RegionMode:
 		getDevMap = getRegionMap
+	case RegionDevelMode:
+		getDevMap = getRegionDevelMap
 	default:
 		return nil, fmt.Errorf("Wrong mode: '%s'", mode)
 	}
