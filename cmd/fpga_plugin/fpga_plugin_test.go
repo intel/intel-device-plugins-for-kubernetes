@@ -202,7 +202,7 @@ func TestHandleUpdate(t *testing.T) {
 		{
 			name: "Update existing device manager",
 			dms: map[string]*deviceManager{
-				"ce48969398f05f33946d560708be108a": &deviceManager{
+				"ce48969398f05f33946d560708be108a": {
 					ch: make(chan map[string]deviceplugin.DeviceInfo, 1),
 				},
 			},
@@ -221,7 +221,7 @@ func TestHandleUpdate(t *testing.T) {
 		{
 			name: "Remove device manager",
 			dms: map[string]*deviceManager{
-				"ce48969398f05f33946d560708be108a": &deviceManager{
+				"ce48969398f05f33946d560708be108a": {
 					ch: make(chan map[string]deviceplugin.DeviceInfo, 1),
 				},
 			},
