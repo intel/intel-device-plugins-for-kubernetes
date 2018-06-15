@@ -119,7 +119,8 @@ func handleUpdate(dms map[string]*deviceManager, updateInfo devicecache.UpdateIn
 func main() {
 	var mode string
 
-	flag.StringVar(&mode, "mode", string(devicecache.AfMode), fmt.Sprintf("device plugin mode: '%s' (default) or '%s'", devicecache.AfMode, devicecache.RegionMode))
+	flag.StringVar(&mode, "mode", string(devicecache.AfMode),
+		fmt.Sprintf("device plugin mode: '%s' (default), '%s' or '%s'", devicecache.AfMode, devicecache.RegionMode, devicecache.RegionDevelMode))
 	flag.Parse()
 
 	updatesCh := make(chan devicecache.UpdateInfo)

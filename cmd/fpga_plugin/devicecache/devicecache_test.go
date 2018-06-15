@@ -66,6 +66,9 @@ func TestNewCache(t *testing.T) {
 			mode: RegionMode,
 		},
 		{
+			mode: RegionDevelMode,
+		},
+		{
 			mode:        "unparsable",
 			expectedErr: true,
 		},
@@ -119,7 +122,7 @@ func getDevices() []device {
 	}
 }
 
-func TestGetRegionMap(t *testing.T) {
+func TestGetRegionDevelMap(t *testing.T) {
 	expected := map[string]map[string]deviceplugin.DeviceInfo{
 		"ce48969398f05f33946d560708be108a": {
 			"intel-fpga-fme.0": {
@@ -129,6 +132,26 @@ func TestGetRegionMap(t *testing.T) {
 			"intel-fpga-fme.1": {
 				State: pluginapi.Healthy,
 				Nodes: []string{"/dev/intel-fpga-port.1", "/dev/intel-fpga-fme.1"},
+			},
+		},
+	}
+
+	result := getRegionDevelMap(getDevices())
+	if !reflect.DeepEqual(result, expected) {
+		t.Error("Got unexpected result: ", result)
+	}
+}
+
+func TestGetRegionMap(t *testing.T) {
+	expected := map[string]map[string]deviceplugin.DeviceInfo{
+		"ce48969398f05f33946d560708be108a": {
+			"intel-fpga-fme.0": {
+				State: pluginapi.Healthy,
+				Nodes: []string{"/dev/intel-fpga-port.0"},
+			},
+			"intel-fpga-fme.1": {
+				State: pluginapi.Healthy,
+				Nodes: []string{"/dev/intel-fpga-port.1"},
 			},
 		},
 	}
