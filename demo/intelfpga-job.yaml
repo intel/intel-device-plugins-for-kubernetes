@@ -15,7 +15,7 @@ spec:
         - name: intelfpga-demo-job-1
           image: ubuntu-demo-opae:latest
           imagePullPolicy: IfNotPresent
-          command: ["/usr/bin/run_hello_fpga.sh"]
+          command: ["/usr/bin/test_fpga.sh"]
           securityContext:
             capabilities:
               add:
