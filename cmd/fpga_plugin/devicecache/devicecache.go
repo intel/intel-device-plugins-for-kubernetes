@@ -61,15 +61,16 @@ func getRegionDevelMap(devices []device) map[string]map[string]deviceplugin.Devi
 
 	for _, dev := range devices {
 		for _, region := range dev.regions {
-			if _, present := regionMap[region.interfaceID]; !present {
-				regionMap[region.interfaceID] = make(map[string]deviceplugin.DeviceInfo)
+			fpgaID := fmt.Sprintf("%s-%s", RegionMode, region.interfaceID)
+			if _, present := regionMap[fpgaID]; !present {
+				regionMap[fpgaID] = make(map[string]deviceplugin.DeviceInfo)
 			}
 			devNodes := make([]string, len(region.afus)+1)
 			for num, afu := range region.afus {
 				devNodes[num] = afu.devNode
 			}
 			devNodes[len(region.afus)] = region.devNode
-			regionMap[region.interfaceID][region.id] = deviceplugin.DeviceInfo{
+			regionMap[fpgaID][region.id] = deviceplugin.DeviceInfo{
 				State: pluginapi.Healthy,
 				Nodes: devNodes,
 			}
@@ -85,14 +86,15 @@ func getRegionMap(devices []device) map[string]map[string]deviceplugin.DeviceInf
 
 	for _, dev := range devices {
 		for _, region := range dev.regions {
-			if _, present := regionMap[region.interfaceID]; !present {
-				regionMap[region.interfaceID] = make(map[string]deviceplugin.DeviceInfo)
+			fpgaID := fmt.Sprintf("%s-%s", RegionMode, region.interfaceID)
+			if _, present := regionMap[fpgaID]; !present {
+				regionMap[fpgaID] = make(map[string]deviceplugin.DeviceInfo)
 			}
 			devNodes := make([]string, len(region.afus))
 			for num, afu := range region.afus {
 				devNodes[num] = afu.devNode
 			}
-			regionMap[region.interfaceID][region.id] = deviceplugin.DeviceInfo{
+			regionMap[fpgaID][region.id] = deviceplugin.DeviceInfo{
 				State: pluginapi.Healthy,
 				Nodes: devNodes,
 			}
@@ -109,10 +111,11 @@ func getAfuMap(devices []device) map[string]map[string]deviceplugin.DeviceInfo {
 	for _, dev := range devices {
 		for _, region := range dev.regions {
 			for _, afu := range region.afus {
-				if _, present := afuMap[afu.afuID]; !present {
-					afuMap[afu.afuID] = make(map[string]deviceplugin.DeviceInfo)
+				fpgaID := fmt.Sprintf("%s-%s", AfMode, afu.afuID)
+				if _, present := afuMap[fpgaID]; !present {
+					afuMap[fpgaID] = make(map[string]deviceplugin.DeviceInfo)
 				}
-				afuMap[afu.afuID][afu.id] = deviceplugin.DeviceInfo{
+				afuMap[fpgaID][afu.id] = deviceplugin.DeviceInfo{
 					State: pluginapi.Healthy,
 					Nodes: []string{afu.devNode},
 				}
