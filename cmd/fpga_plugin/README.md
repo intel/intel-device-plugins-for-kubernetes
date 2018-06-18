@@ -25,7 +25,7 @@ $ ls /var/lib/kubelet/device-plugins/kubelet.sock
 ```
 $ sudo $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode af
 FPGA device plugin started in af mode
-device-plugin start server at: /var/lib/kubelet/device-plugins/intel-fpga-f7df405cbd7acf7222f144b0b93acd18.sock
+device-plugin start server at: /var/lib/kubelet/device-plugins/intel-fpga-af-f7df405cbd7acf7222f144b0b93acd18.sock
 device-plugin registered
 ```
 
@@ -42,7 +42,7 @@ $ kubectl describe node <node name> | grep intel.com/fpga
 ```
 $ sudo $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode region
 FPGA device plugin started in region mode
-device-plugin start server at: /var/lib/kubelet/device-plugins/intel-fpga-ce48969398f05f33946d560708be108a.sock
+device-plugin start server at: /var/lib/kubelet/device-plugins/intel-fpga-region-ce48969398f05f33946d560708be108a.sock
 device-plugin registered
 ```
 

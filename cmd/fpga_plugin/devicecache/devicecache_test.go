@@ -124,7 +124,7 @@ func getDevices() []device {
 
 func TestGetRegionDevelMap(t *testing.T) {
 	expected := map[string]map[string]deviceplugin.DeviceInfo{
-		"ce48969398f05f33946d560708be108a": {
+		RegionMode + "-ce48969398f05f33946d560708be108a": {
 			"intel-fpga-fme.0": {
 				State: pluginapi.Healthy,
 				Nodes: []string{"/dev/intel-fpga-port.0", "/dev/intel-fpga-fme.0"},
@@ -144,7 +144,7 @@ func TestGetRegionDevelMap(t *testing.T) {
 
 func TestGetRegionMap(t *testing.T) {
 	expected := map[string]map[string]deviceplugin.DeviceInfo{
-		"ce48969398f05f33946d560708be108a": {
+		RegionMode + "-ce48969398f05f33946d560708be108a": {
 			"intel-fpga-fme.0": {
 				State: pluginapi.Healthy,
 				Nodes: []string{"/dev/intel-fpga-port.0"},
@@ -164,7 +164,7 @@ func TestGetRegionMap(t *testing.T) {
 
 func TestGetAfuMap(t *testing.T) {
 	expected := map[string]map[string]deviceplugin.DeviceInfo{
-		"d8424dc4a4a3c413f89e433683f9040b": {
+		AfMode + "-d8424dc4a4a3c413f89e433683f9040b": {
 			"intel-fpga-port.0": {
 				State: pluginapi.Healthy,
 				Nodes: []string{"/dev/intel-fpga-port.0"},
