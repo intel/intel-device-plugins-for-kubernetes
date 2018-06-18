@@ -1,4 +1,5 @@
 GO := go
+GOCYCLO := gocyclo
 
 pkgs  = $(shell $(GO) list ./... | grep -v vendor)
 cmds = $(shell ls cmd)
@@ -15,6 +16,9 @@ format:
 
 vet:
 	@$(GO) vet -v -shadow $(pkgs)
+
+cyclomatic-check:
+	@report=`$(GOCYCLO) -over 15 cmd internal`; if [ -n "$$report" ]; then echo "Complexity is over 15 in"; echo $$report; exit 1; fi
 
 test:
 ifndef WHAT
@@ -43,4 +47,4 @@ $(images):
 
 images: $(images)
 
-.PHONY: all format vet test lint build images $(cmds) $(images)
+.PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images)
