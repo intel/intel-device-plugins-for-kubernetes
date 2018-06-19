@@ -7,6 +7,7 @@
 - [About](#about)
 - [GPU device plugin](cmd/gpu_plugin/README.md)
 - [FPGA device plugin](cmd/fpga_plugin/README.md)
+- [FPGA admission controller webhook](cmd/fpga_admissionwebhook/README.md)
 
 ## About
 
