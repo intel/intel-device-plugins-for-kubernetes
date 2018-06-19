@@ -7,4 +7,4 @@ RUN chmod a+x /go/bin/fpga_plugin
 
 FROM alpine
 COPY --from=builder /go/bin/fpga_plugin /usr/bin/intel_fpga_device_plugin
-CMD ["/usr/bin/intel_fpga_device_plugin"]
+CMD ["/usr/bin/intel_fpga_device_plugin", "-logtostderr"]
