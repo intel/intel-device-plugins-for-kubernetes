@@ -22,7 +22,12 @@ import (
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
+	utilnode "k8s.io/kubernetes/pkg/util/node"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/devicecache"
 	"github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
@@ -118,10 +123,43 @@ func handleUpdate(dms map[string]*deviceManager, updateInfo devicecache.UpdateIn
 
 func main() {
 	var mode string
+	var kubeconfig string
+	var master string
+	var config *rest.Config
+	var err error
 
+	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
+	flag.StringVar(&master, "master", "", "master url")
 	flag.StringVar(&mode, "mode", string(devicecache.AfMode),
 		fmt.Sprintf("device plugin mode: '%s' (default), '%s' or '%s'", devicecache.AfMode, devicecache.RegionMode, devicecache.RegionDevelMode))
 	flag.Parse()
+
+	if kubeconfig == "" {
+		config, err = rest.InClusterConfig()
+	} else {
+		config, err = clientcmd.BuildConfigFromFlags(master, kubeconfig)
+	}
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	// if NODE_NAME is not set then try to use hostname
+	nodeName := utilnode.GetHostname(os.Getenv("NODE_NAME"))
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	node, err := clientset.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	if nodeMode, ok := node.ObjectMeta.Annotations["fpga.intel.com/device-plugin-mode"]; ok {
+		glog.Info("Overriding mode to ", nodeMode)
+		mode = nodeMode
+	}
 
 	updatesCh := make(chan devicecache.UpdateInfo)
 
