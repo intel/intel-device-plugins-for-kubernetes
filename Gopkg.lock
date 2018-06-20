@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/ghodss/yaml"
   packages = ["."]
   revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
@@ -230,11 +236,17 @@
 
 [[projects]]
   branch = "master"
+  name = "k8s.io/apiextensions-apiserver"
+  packages = ["pkg/features"]
+  revision = "003acb65be70b07acafe3b5eb4f13a6d0fe47154"
+
+[[projects]]
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/errors",
     "pkg/api/meta",
     "pkg/api/resource",
+    "pkg/apis/meta/internalversion",
     "pkg/apis/meta/v1",
     "pkg/apis/meta/v1/unstructured",
     "pkg/apis/meta/v1beta1",
@@ -257,18 +269,31 @@
     "pkg/util/framer",
     "pkg/util/intstr",
     "pkg/util/json",
+    "pkg/util/mergepatch",
     "pkg/util/net",
     "pkg/util/runtime",
     "pkg/util/sets",
+    "pkg/util/strategicpatch",
     "pkg/util/validation",
     "pkg/util/validation/field",
     "pkg/util/wait",
     "pkg/util/yaml",
     "pkg/version",
     "pkg/watch",
+    "third_party/forked/golang/json",
     "third_party/forked/golang/reflect"
   ]
-  revision = "5a0ac3ef2591b5fbf8659ab72e91c3bfac620615"
+  revision = "302974c03f7e50f16561ba237db776ab93594ef6"
+  version = "kubernetes-1.10.0"
+
+[[projects]]
+  branch = "master"
+  name = "k8s.io/apiserver"
+  packages = [
+    "pkg/features",
+    "pkg/util/feature"
+  ]
+  revision = "8f8ecf0776308a699047c16cd6fc9d98cd3e6505"
 
 [[projects]]
   name = "k8s.io/client-go"
@@ -327,14 +352,26 @@
   version = "v7.0.0"
 
 [[projects]]
+  branch = "master"
+  name = "k8s.io/kube-openapi"
+  packages = ["pkg/util/proto"]
+  revision = "bf40560368791a7dddfeea9b3cfcf89b34139f44"
+
+[[projects]]
   name = "k8s.io/kubernetes"
-  packages = ["pkg/kubelet/apis/deviceplugin/v1beta1"]
+  packages = [
+    "pkg/apis/core",
+    "pkg/features",
+    "pkg/kubelet/apis",
+    "pkg/kubelet/apis/deviceplugin/v1beta1",
+    "pkg/util/node"
+  ]
   revision = "fc32d2f3698e36b93322a3465f63a14e9f0eaead"
   version = "v1.10.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "481e372f64cc48abd8548d0f3668bda0d9cc72b26c8b2544861fcc1305e9496f"
+  inputs-digest = "dbcc6386ef763c4ddca92c5477abfc19a5ea44c5060c7894e1f1194245a89306"
   solver-name = "gps-cdcl"
   solver-version = 1

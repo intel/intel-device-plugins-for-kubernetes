@@ -1,5 +1,5 @@
 /*
-Copyright 2018 The Kubernetes Authors.
+Copyright 2017 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,19 +14,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package unstructured
+package main
 
 import (
-	"testing"
+	"flag"
+	"os"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/golang/glog"
+
+	"k8s.io/apiextensions-apiserver/pkg/cmd/server"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/util/logs"
 )
 
-func TestNilUnstructuredContent(t *testing.T) {
-	var u Unstructured
-	uCopy := u.DeepCopy()
-	content := u.UnstructuredContent()
-	expContent := make(map[string]interface{})
-	assert.EqualValues(t, expContent, content)
-	assert.Equal(t, uCopy, &u)
+func main() {
+	logs.InitLogs()
+	defer logs.FlushLogs()
+
+	stopCh := genericapiserver.SetupSignalHandler()
+	cmd := server.NewCommandStartCustomResourceDefinitionsServer(os.Stdout, os.Stderr, stopCh)
+	cmd.Flags().AddGoFlagSet(flag.CommandLine)
+	if err := cmd.Execute(); err != nil {
+		glog.Fatal(err)
+	}
 }
