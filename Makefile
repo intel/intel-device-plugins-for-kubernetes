@@ -44,6 +44,7 @@ build: $(cmds)
 
 $(images):
 	docker build -f build/docker/$@.Dockerfile $(DOCKER_ARGS) -t $@:$(TAG) .
+	docker tag $@:$(TAG) $@:devel
 
 images: $(images)
 
