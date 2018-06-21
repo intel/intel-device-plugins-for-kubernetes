@@ -1,0 +1,126 @@
+{
+	"ociVersion": "1.0.0",
+	"process": {
+		"user": {
+			"uid": 0,
+			"gid": 0
+		},
+		"args": [
+			"sh",
+			"/usr/bin/test_fpga.sh"
+		],
+		"oomScoreAdj": 999
+	},
+	"hostname": "test-fpga-region",
+	"mounts": [
+		{
+			"destination": "/proc",
+			"type": "proc",
+			"source": "proc"
+		},
+		{
+			"destination": "/dev",
+			"type": "tmpfs",
+			"source": "tmpfs",
+			"options": [
+				"nosuid",
+				"strictatime",
+				"mode=755",
+				"size=65536k"
+			]
+		},
+		{
+			"destination": "/sys",
+			"type": "sysfs",
+			"source": "sysfs",
+			"options": [
+				"nosuid",
+				"noexec",
+				"nodev",
+				"ro"
+			]
+		}
+	],
+	"hooks": {
+		"prestart": [
+			{
+				"path": "/usr/local/bin/fpga_crihook",
+				"args": [
+					"/usr/local/bin/fpga_crihook"
+				],
+				"env": [
+					"stage=prestart"
+				]
+			}
+		]
+	},
+	"annotations": {
+		"io.kubernetes.container.hash": "22e3c9bc",
+		"io.kubernetes.container.name": "test-container",
+		"io.kubernetes.container.restartCount": "0",
+		"io.kubernetes.container.terminationMessagePolicy": "File",
+		"io.kubernetes.cri-o.ContainerID": "a15ee43034ade4083279bdbb7cf656a971809cfb00eb97a7751bb46dd74c9150",
+		"io.kubernetes.cri-o.ContainerType": "container",
+		"io.kubernetes.cri-o.Created": "2018-06-20T15:08:41.361981842+03:00",
+		"io.kubernetes.cri-o.LogPath": "/var/log/pods/a869ac70-7482-11e8-a041-c81f66f62fcc/test-container/0.log",
+		"io.kubernetes.cri-o.Metadata": "{\"name\":\"test-container\"}",
+		"io.kubernetes.cri-o.SandboxID": "a30829b039e1c631432fe7ab5c748a393c105ed90ec42a6cc95bd7d33356b94e",
+		"io.kubernetes.cri-o.SandboxName": "k8s_POD_test-fpga-region_default_a869ac70-7482-11e8-a041-c81f66f62fcc_0",
+		"io.kubernetes.cri-o.SeccompProfilePath": "",
+		"io.kubernetes.cri-o.Stdin": "false",
+		"io.kubernetes.cri-o.StdinOnce": "false",
+		"io.kubernetes.cri-o.TTY": "false",
+		"io.kubernetes.pod.name": "test-fpga-region",
+		"io.kubernetes.pod.namespace": "default",
+		"io.kubernetes.pod.terminationGracePeriod": "30",
+		"io.kubernetes.pod.uid": "a869ac70-7482-11e8-a041-c81f66f62fcc"
+	},
+	"linux": {
+		"resources": {
+			"devices": [
+				{
+					"allow": false,
+					"access": "rwm"
+				},
+				{
+					"allow": true,
+					"type": "c",
+					"major": 243,
+					"minor": 0,
+					"access": "mrw"
+				}
+			],
+			"memory": {
+				"limit": 0
+			},
+			"cpu": {
+				"shares": 1024,
+				"quota": 100000,
+				"period": 100000
+			},
+			"pids": {
+				"limit": 1024
+			}
+		},
+		"cgroupsPath": "/kubepods/burstable/poda869ac70-7482-11e8-a041-c81f66f62fcc/crio-a15ee43034ade4083279bdbb7cf656a971809cfb00eb97a7751bb46dd74c9150",
+		"namespaces": [
+			{
+				"type": "pid"
+			},
+			{
+				"type": "mount"
+			}
+		],
+		"devices": [
+			{
+				"path": "/dev/intel-fpga-port.0",
+				"type": "c",
+				"major": 243,
+				"minor": 0,
+				"uid": 0,
+				"gid": 0
+			}
+		],
+		"rootfsPropagation": "rslave"
+	}
+}
