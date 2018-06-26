@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/golang/glog"
@@ -45,12 +46,26 @@ const (
                 "path": "/spec/containers/%d/resources/%s/%s",
                 "value": %s
         }`
+	envAddOp = `{
+                "op": "add",
+                "path": "/spec/containers/%d/env",
+                "value": [{
+                        "name": "FPGA_REGION",
+                        "value": "%s"
+                }, {
+                        "name": "FPGA_AFU",
+                        "value": "%s"
+                } %s]
+        }`
+	preprogrammed = "preprogrammed"
+	orchestrated  = "orchestrated"
 )
 
 var (
 	scheme         = runtime.NewScheme()
 	codecs         = serializer.NewCodecFactory(scheme)
 	rfc6901Escaper = strings.NewReplacer("~", "~0", "/", "~1")
+	resourceRe     = regexp.MustCompile(`intel.com/fpga-(?P<Region>[[:alnum:]]+)(-(?P<Af>[[:alnum:]]+))?`)
 )
 
 func init() {
@@ -63,8 +78,58 @@ func addToScheme(scheme *runtime.Scheme) {
 }
 
 // TODO: get rid of hardcoded translations of FPGA resource names to region interface IDs
+func region2interfaceID(regionName string) (string, error) {
+	switch strings.ToLower(regionName) {
+	case "arria10":
+		return "ce48969398f05f33946d560708be108a", nil
+	}
+
+	return "", fmt.Errorf("Unknown region name: %s", regionName)
+}
+
+// TODO: get rid of hardcoded translations of FPGA resource names to region interface IDs
+func af2afuID(afName string) (string, error) {
+	switch strings.ToLower(afName) {
+	case "nlb0":
+		return "d8424dc4a4a3c413f89e433683f9040b", nil
+	case "nlb3":
+		return "f7df405cbd7acf7222f144b0b93acd18", nil
+	}
+
+	return "", fmt.Errorf("Unknown AF name: %s", afName)
+}
+
+func parseResourceName(input string) (string, string, error) {
+	var interfaceID string
+	var afuID string
+	var err error
+
+	result := resourceRe.FindStringSubmatch(input)
+	if result == nil {
+		return "", "", nil
+	}
+
+	for num, group := range resourceRe.SubexpNames() {
+		switch group {
+		case "Region":
+			interfaceID, err = region2interfaceID(result[num])
+			if err != nil {
+				return "", "", err
+			}
+		case "Af":
+			afuID, err = af2afuID(result[num])
+			if err != nil {
+				return "", "", err
+			}
+		}
+	}
+
+	return interfaceID, afuID, nil
+}
+
+// TODO: get rid of hardcoded translations of FPGA resource names to region interface IDs
 func translateFpgaResourceName(oldname corev1.ResourceName) string {
-	switch string(oldname) {
+	switch strings.ToLower(string(oldname)) {
 	case "intel.com/fpga-arria10":
 		return rfc6901Escaper.Replace("intel.com/fpga-region-ce48969398f05f33946d560708be108a")
 	case "intel.com/fpga-arria10-nlb0":
@@ -86,7 +151,109 @@ func getTLSConfig(certFile string, keyFile string) *tls.Config {
 	}
 }
 
-func mutatePods(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func getPatchOpsPreprogrammed(containerIdx int, container corev1.Container) ([]string, error) {
+	var ops []string
+
+	for resourceName, resourceQuantity := range container.Resources.Limits {
+		newName := translateFpgaResourceName(resourceName)
+		if len(newName) > 0 {
+			op := fmt.Sprintf(resourceReplaceOp, containerIdx,
+				"limits", rfc6901Escaper.Replace(string(resourceName)),
+				containerIdx, "limits", newName, resourceQuantity.String())
+			ops = append(ops, op)
+		}
+	}
+	for resourceName, resourceQuantity := range container.Resources.Requests {
+		newName := translateFpgaResourceName(resourceName)
+		if len(newName) > 0 {
+			op := fmt.Sprintf(resourceReplaceOp, containerIdx,
+				"requests", rfc6901Escaper.Replace(string(resourceName)),
+				containerIdx, "requests", newName, resourceQuantity.String())
+			ops = append(ops, op)
+		}
+	}
+
+	return ops, nil
+}
+
+func getEnvVars(container corev1.Container) (string, error) {
+	var jsonstrings []string
+	for _, envvar := range container.Env {
+		if envvar.Name == "FPGA_REGION" || envvar.Name == "FPGA_AFU" {
+			return "", fmt.Errorf("The env var '%s' is not allowed", envvar.Name)
+		}
+		jsonbytes, err := json.Marshal(envvar)
+		if err != nil {
+			return "", err
+		}
+		jsonstrings = append(jsonstrings, string(jsonbytes))
+	}
+
+	if len(jsonstrings) == 0 {
+		return "", nil
+	}
+
+	return fmt.Sprintf(", %s", strings.Join(jsonstrings, ",")), nil
+}
+
+func getPatchOpsOrchestrated(containerIdx int, container corev1.Container) ([]string, error) {
+	var ops []string
+
+	mutated := false
+	for resourceName, resourceQuantity := range container.Resources.Limits {
+		interfaceID, afuID, err := parseResourceName(string(resourceName))
+		if err != nil {
+			return nil, err
+		}
+
+		if interfaceID == "" && afuID == "" {
+			continue
+		}
+
+		if mutated {
+			return nil, fmt.Errorf("Only one FPGA resource per container is supported in '%s' mode", orchestrated)
+		}
+
+		op := fmt.Sprintf(resourceReplaceOp, containerIdx, "limits", rfc6901Escaper.Replace(string(resourceName)),
+			containerIdx, "limits", rfc6901Escaper.Replace("intel.com/fpga-region-"+interfaceID), resourceQuantity.String())
+		ops = append(ops, op)
+
+		oldVars, err := getEnvVars(container)
+		if err != nil {
+			return nil, err
+		}
+		op = fmt.Sprintf(envAddOp, containerIdx, interfaceID, afuID, oldVars)
+		ops = append(ops, op)
+		mutated = true
+	}
+
+	mutated = false
+	for resourceName, resourceQuantity := range container.Resources.Requests {
+		interfaceID, _, err := parseResourceName(string(resourceName))
+		if err != nil {
+			return nil, err
+		}
+
+		if interfaceID == "" {
+			continue
+		}
+
+		if mutated {
+			return nil, fmt.Errorf("Only one FPGA resource per container is supported in '%s' mode", orchestrated)
+		}
+
+		op := fmt.Sprintf(resourceReplaceOp, containerIdx, "requests", rfc6901Escaper.Replace(string(resourceName)),
+			containerIdx, "requests", rfc6901Escaper.Replace("intel.com/fpga-region-"+interfaceID), resourceQuantity.String())
+		ops = append(ops, op)
+		mutated = true
+	}
+
+	return ops, nil
+}
+
+type getPatchOpsFunc func(int, corev1.Container) ([]string, error)
+
+func mutatePods(ar v1beta1.AdmissionReview, getPatchOps getPatchOpsFunc) *v1beta1.AdmissionResponse {
 	var ops []string
 
 	glog.V(2).Info("mutating pods")
@@ -108,24 +275,11 @@ func mutatePods(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	reviewResponse.Allowed = true
 
 	for containerIdx, container := range pod.Spec.Containers {
-		for resourceName, resourceQuantity := range container.Resources.Limits {
-			newName := translateFpgaResourceName(resourceName)
-			if len(newName) > 0 {
-				op := fmt.Sprintf(resourceReplaceOp, containerIdx,
-					"limits", rfc6901Escaper.Replace(string(resourceName)),
-					containerIdx, "limits", newName, resourceQuantity.String())
-				ops = append(ops, op)
-			}
+		patchOps, err := getPatchOps(containerIdx, container)
+		if err != nil {
+			return toAdmissionResponse(err)
 		}
-		for resourceName, resourceQuantity := range container.Resources.Requests {
-			newName := translateFpgaResourceName(resourceName)
-			if len(newName) > 0 {
-				op := fmt.Sprintf(resourceReplaceOp, containerIdx,
-					"requests", rfc6901Escaper.Replace(string(resourceName)),
-					containerIdx, "requests", newName, resourceQuantity.String())
-				ops = append(ops, op)
-			}
-		}
+		ops = append(ops, patchOps...)
 	}
 
 	if len(ops) > 0 {
@@ -204,23 +358,41 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 	resp, err := json.Marshal(response)
 	if err != nil {
 		glog.Error(err)
+		return
 	}
 	if _, err := w.Write(resp); err != nil {
 		glog.Error(err)
 	}
 }
 
-func servePods(w http.ResponseWriter, r *http.Request) {
-	serve(w, r, mutatePods)
+func makePodsHandler(mode string) (func(w http.ResponseWriter, r *http.Request), error) {
+	var getPatchOps getPatchOpsFunc
+
+	switch mode {
+	case preprogrammed:
+		getPatchOps = getPatchOpsPreprogrammed
+	case orchestrated:
+		getPatchOps = getPatchOpsOrchestrated
+	default:
+		return nil, fmt.Errorf("Wrong mode: %s", mode)
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		serve(w, r, func(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+			return mutatePods(ar, getPatchOps)
+		})
+	}, nil
 }
 
 func main() {
 	var certFile string
 	var keyFile string
+	var mode string
 
 	flag.StringVar(&certFile, "tls-cert-file", certFile,
 		"File containing the x509 Certificate for HTTPS. (CA cert, if any, concatenated after server cert).")
 	flag.StringVar(&keyFile, "tls-private-key-file", keyFile, "File containing the x509 private key matching --tls-cert-file.")
+	flag.StringVar(&mode, "mode", preprogrammed, fmt.Sprintf("webhook mode: '%s' (default) or '%s'", preprogrammed, orchestrated))
 
 	flag.Parse()
 
@@ -244,6 +416,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	servePods, err := makePodsHandler(mode)
+	if err != nil {
+		glog.Error(err)
+		os.Exit(1)
+	}
 	http.HandleFunc("/pods", servePods)
 
 	glog.V(2).Info("Webhook started")
