@@ -39,6 +39,14 @@ Then run the script `scripts/webhook-deploy.sh`.
     Register webhook
     mutatingwebhookconfiguration "fpga-mutator-webhook-cfg" created
 
+By default the script deploys the webhook in the preprogrammed mode (when
+requested FPGA resources get translated to AF resources, e.g.
+"intel.com/fpga-arria10-nlb0" -> "intel.com/fpga-af-d8424dc4a4a3c413f89e433683f9040b").
+You can command the script to deploy the webhook in the orchestrated mode with
+the option `--mode`.
+
+    $ ./scripts/webhook-deploy.sh --mode orchestrated
+
 Please note that the script needs the CA bundle used for signing cerificate
 requests in your cluster. By default it fetches the bundle stored
 in the configmap `extension-apiserver-authentication`. But it may differ from

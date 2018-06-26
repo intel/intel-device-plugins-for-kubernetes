@@ -16,11 +16,21 @@ while [[ $# -gt 0 ]]; do
 	    cabundlepath="$2"
             shift
             ;;
+	--mode)
+	    mode="$2"
+            shift
+            ;;
     esac
     shift
 done
 
 [ -z ${kubectl} ] && kubectl="kubectl"
+[ -z ${mode} ] && mode="preprogrammed"
+
+if [ "x${mode}" != "xpreprogrammed" -a "x${mode}" != "xorchestrated" ]; then
+    echo "ERROR: supported modes are 'preprogrammed' and 'orchestrated'"
+    exit 1
+fi
 
 if [ -z ${cabundlepath} ]; then
     CA_BUNDLE=$(${kubectl} get configmap -n kube-system extension-apiserver-authentication -o=jsonpath='{.data.client-ca-file}' | base64 -w 0)
@@ -32,7 +42,7 @@ echo "Create secret including signed key/cert pair for the webhook"
 ${srcroot}/scripts/webhook-create-signed-cert.sh --kubectl ${kubectl}
 
 echo "Create webhook deployment"
-kubectl create -f ${srcroot}/deployments/fpga_admissionwebhook/deployment.yaml
+cat ${srcroot}/deployments/fpga_admissionwebhook/deployment-tpl.yaml | sed -e "s/{MODE}/${mode}/g" | ${kubectl} create -f -
 
 echo "Create webhook service"
 kubectl create -f ${srcroot}/deployments/fpga_admissionwebhook/service.yaml
