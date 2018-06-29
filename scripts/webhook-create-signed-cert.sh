@@ -1,5 +1,8 @@
 #!/bin/bash
 
+which cfssl > /dev/null 2>&1 || (echo "Please install 'cfssl' (e.g. with 'go get -u github.com/cloudflare/cfssl/cmd/cfssl')"; exit 1)
+which jq > /dev/null 2>&1 || (echo "Please install 'jq'"; exit 1)
+
 while [[ $# -gt 0 ]]; do
     case ${1} in
         --service)
@@ -22,8 +25,8 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-[ -z ${service} ] && service="intel-fpga-webhook-svc"
-[ -z ${secret} ] && secret="intel-fpga-webhook-certs"
+[ -z ${service} ] && service="webhook-svc"
+[ -z ${secret} ] && secret="webhook-certs"
 [ -z ${namespace} ] && namespace="default"
 [ -z ${kubectl} ] && kubectl="kubectl"
 
@@ -96,6 +99,9 @@ if [[ ${serverCert} == '' ]]; then
 fi
 
 echo ${serverCert} | base64 --decode > ${tmpdir}/server-cert.pem
+
+# clean-up any previously created secret for our service. Ignore errors if not present.
+${kubectl} delete secret ${secret} 2>/dev/null || true
 
 # create the secret with CA cert and server cert/key
 ${kubectl} create secret generic ${secret} \
