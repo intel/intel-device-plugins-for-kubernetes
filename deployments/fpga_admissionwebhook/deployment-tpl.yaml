@@ -20,6 +20,7 @@ spec:
           args:
             - -tls-cert-file=/etc/webhook/certs/cert.pem
             - -tls-private-key-file=/etc/webhook/certs/key.pem
+            - -mode={MODE}
             - -alsologtostderr
             - -v=2
             - 2>&1

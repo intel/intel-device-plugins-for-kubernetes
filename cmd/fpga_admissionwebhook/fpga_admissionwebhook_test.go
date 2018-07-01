@@ -17,6 +17,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -29,6 +30,175 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+func TestParseResourceName(t *testing.T) {
+	tcases := []struct {
+		input       string
+		interfaceID string
+		afuID       string
+		expectedErr bool
+	}{
+		{
+			input:       "intel.com/fpga-arria10",
+			expectedErr: true,
+		},
+		{
+			input:       "intel.com/fpga-unknown",
+			expectedErr: true,
+		},
+		{
+			input: "example.com/fpga-something",
+		},
+		{
+			input:       "intel.com/fpga-arria10-nlb0",
+			interfaceID: "ce48969398f05f33946d560708be108a",
+			afuID:       "d8424dc4a4a3c413f89e433683f9040b",
+		},
+		{
+			input:       "intel.com/fpga-arria10-nlb3",
+			interfaceID: "ce48969398f05f33946d560708be108a",
+			afuID:       "f7df405cbd7acf7222f144b0b93acd18",
+		},
+	}
+
+	for num, tt := range tcases {
+		interfaceID, afuID, err := parseResourceName(tt.input)
+		if tt.expectedErr {
+			if err != nil {
+				continue
+			} else {
+				t.Errorf("In case %d we didn't get error", num)
+			}
+		}
+		if tt.interfaceID != interfaceID || tt.afuID != afuID {
+			t.Errorf("In case %d expected (%s, %s), but got (%s, %s)", num, tt.interfaceID, tt.afuID, interfaceID, afuID)
+		}
+	}
+}
+
+func TestGetPatchOpsOrchestrated(t *testing.T) {
+	tcases := []struct {
+		name        string
+		container   corev1.Container
+		expectedErr bool
+		expectedOps int
+	}{
+		{
+			name: "Successful handling",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"intel.com/fpga-arria10-nlb0": resource.MustParse("1"),
+						"cpu": resource.MustParse("1"),
+					},
+					Requests: corev1.ResourceList{
+						"intel.com/fpga-arria10-nlb0": resource.MustParse("1"),
+						"cpu": resource.MustParse("1"),
+					},
+				},
+			},
+			expectedOps: 3,
+		},
+		{
+			name: "More than one FPGA in Limits",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"intel.com/fpga-arria10-nlb0": resource.MustParse("1"),
+						"intel.com/fpga-arria10-nlb3": resource.MustParse("1"),
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "More than one FPGA in Requests",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						"intel.com/fpga-arria10-nlb0": resource.MustParse("1"),
+						"intel.com/fpga-arria10-nlb3": resource.MustParse("1"),
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "Unknown FPGA model in Requests",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						"intel.com/fpga-unknown-nlb0": resource.MustParse("1"),
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "Unknown AFU in Requests",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						"intel.com/fpga-arria10-unknown": resource.MustParse("1"),
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "Unknown FPGA model in Limitss",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"intel.com/fpga-unknown-nlb0": resource.MustParse("1"),
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "Unknown AFU in Limits",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"intel.com/fpga-arria10-unknown": resource.MustParse("1"),
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "Wrong ENV",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"intel.com/fpga-arria10-nlb0": resource.MustParse("1"),
+					},
+				},
+				Env: []corev1.EnvVar{
+					{
+						Name:  "FPGA_REGION",
+						Value: "fake value",
+					},
+				},
+			},
+			expectedErr: true,
+		},
+	}
+
+	for _, tt := range tcases {
+		ops, err := getPatchOpsOrchestrated(0, tt.container)
+		if tt.expectedErr && err == nil {
+			t.Errorf("Test case '%s': no error returned", tt.name)
+		}
+		if !tt.expectedErr && err != nil {
+			t.Errorf("Test case '%s': unexpected error %v", tt.name, err)
+		}
+		if len(ops) != tt.expectedOps {
+			t.Errorf("test case '%s': expected %d ops, but got %d\n%v", tt.name, tt.expectedOps, len(ops), ops)
+		}
+	}
+}
 
 func fakeMutatePods(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	reviewResponse := v1beta1.AdmissionResponse{}
@@ -144,6 +314,7 @@ func TestMutatePods(t *testing.T) {
 	tcases := []struct {
 		name             string
 		ar               v1beta1.AdmissionReview
+		getPatchOps      getPatchOpsFunc
 		expectedResponse bool
 		expectedPatchOps int
 	}{
@@ -152,6 +323,7 @@ func TestMutatePods(t *testing.T) {
 			ar: v1beta1.AdmissionReview{
 				Request: &v1beta1.AdmissionRequest{},
 			},
+			getPatchOps: getPatchOpsPreprogrammed,
 		},
 		{
 			name: "admission request without object",
@@ -160,6 +332,7 @@ func TestMutatePods(t *testing.T) {
 					Resource: metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
 				},
 			},
+			getPatchOps:      getPatchOpsPreprogrammed,
 			expectedResponse: true,
 		},
 		{
@@ -172,6 +345,7 @@ func TestMutatePods(t *testing.T) {
 					},
 				},
 			},
+			getPatchOps:      getPatchOpsPreprogrammed,
 			expectedResponse: true,
 		},
 		{
@@ -184,13 +358,29 @@ func TestMutatePods(t *testing.T) {
 					},
 				},
 			},
+			getPatchOps:      getPatchOpsPreprogrammed,
 			expectedResponse: true,
 			expectedPatchOps: 4,
+		},
+		{
+			name: "handle error after wrong getPatchOps()",
+			ar: v1beta1.AdmissionReview{
+				Request: &v1beta1.AdmissionRequest{
+					Resource: metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
+					Object: runtime.RawExtension{
+						Raw: podRaw,
+					},
+				},
+			},
+			getPatchOps: func(int, corev1.Container) ([]string, error) {
+				return nil, errors.New("Fake error returned from fake getPatchOps()")
+			},
+			expectedResponse: true,
 		},
 	}
 
 	for _, tcase := range tcases {
-		resp := mutatePods(tcase.ar)
+		resp := mutatePods(tcase.ar, tcase.getPatchOps)
 
 		if !tcase.expectedResponse && resp != nil {
 			t.Errorf("Test case '%s': got unexpected response", tcase.name)
@@ -207,5 +397,120 @@ func TestMutatePods(t *testing.T) {
 					tcase.name, tcase.expectedPatchOps, len(ops.([]interface{})))
 			}
 		}
+	}
+}
+
+type fakeResponseWriter struct {
+}
+
+func (*fakeResponseWriter) Header() http.Header {
+	return http.Header{}
+}
+
+func (*fakeResponseWriter) Write([]byte) (int, error) {
+	return 0, nil
+}
+
+func (*fakeResponseWriter) WriteHeader(int) {
+}
+
+func TestMakePodsHandler(t *testing.T) {
+	tcases := []struct {
+		name        string
+		mode        string
+		expectedErr bool
+	}{
+		{
+			name: "preprogrammed mode",
+			mode: preprogrammed,
+		},
+		{
+			name: "orchestrated mode",
+			mode: orchestrated,
+		},
+		{
+			name:        "wrong mode",
+			mode:        "unparsable",
+			expectedErr: true,
+		},
+	}
+
+	for _, tt := range tcases {
+		serveFunc, err := makePodsHandler(tt.mode)
+		if tt.expectedErr && err == nil {
+			t.Errorf("Test case '%s': no error returned", tt.name)
+		}
+		if !tt.expectedErr {
+			if err != nil {
+				t.Errorf("Test case '%s': unexpected error %v", tt.name, err)
+			} else {
+				serveFunc(&fakeResponseWriter{}, &http.Request{})
+			}
+		}
+	}
+}
+
+func TestGetEnvVars(t *testing.T) {
+	container := corev1.Container{
+		Name:  "test-container",
+		Image: "test-image",
+		Resources: corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				"cpu": resource.MustParse("1"),
+				"intel.com/fpga-arria10": resource.MustParse("1"),
+			},
+			Requests: corev1.ResourceList{
+				"cpu": resource.MustParse("1"),
+				"intel.com/fpga-arria10": resource.MustParse("1"),
+			},
+		},
+		Env: []corev1.EnvVar{
+			{
+				Name:  "VARNAME1",
+				Value: "2",
+				ValueFrom: &corev1.EnvVarSource{
+					ResourceFieldRef: &corev1.ResourceFieldSelector{
+						Resource: "limits.cpu",
+						Divisor:  resource.MustParse("1"),
+					},
+				},
+			},
+			{
+				Name:  "VARNAME2",
+				Value: "4",
+				ValueFrom: &corev1.EnvVarSource{
+					ResourceFieldRef: &corev1.ResourceFieldSelector{
+						Resource: "limits.cpu",
+						Divisor:  resource.MustParse("1"),
+					},
+				},
+			},
+		},
+	}
+	expected := `, {"name":"VARNAME1","value":"2","valueFrom":{"resourceFieldRef":{"resource":"limits.cpu","divisor":"1"}}},{"name":"VARNAME2","value":"4","valueFrom":{"resourceFieldRef":{"resource":"limits.cpu","divisor":"1"}}}`
+	output, _ := getEnvVars(container)
+
+	if output != expected {
+		t.Error("Wrong result: ", output)
+	}
+
+	container = corev1.Container{
+		Name:  "test-container",
+		Image: "test-image",
+		Env: []corev1.EnvVar{
+			{
+				Name:  "FPGA_REGION",
+				Value: "fake value",
+			},
+			{
+				Name:  "FPGA_AFU",
+				Value: "fake value",
+			},
+		},
+	}
+	output2, err := getEnvVars(container)
+
+	if len(output2) > 0 || err == nil {
+		t.Error("Expected empty string, but got ", output2)
 	}
 }
