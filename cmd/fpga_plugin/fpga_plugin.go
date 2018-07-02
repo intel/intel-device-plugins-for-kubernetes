@@ -40,6 +40,7 @@ const (
 	// Device plugin settings.
 	pluginEndpointPrefix = "intel-fpga"
 	resourceNamePrefix   = "intel.com/fpga"
+	annotationName       = "com.intel.fpga.mode"
 )
 
 // deviceManager manages Intel FPGA devices.
@@ -47,14 +48,16 @@ type deviceManager struct {
 	srv     deviceplugin.Server
 	fpgaID  string
 	name    string
+	mode    string
 	ch      chan map[string]deviceplugin.DeviceInfo
 	devices map[string]deviceplugin.DeviceInfo
 }
 
-func newDeviceManager(resourceName string, fpgaID string, ch chan map[string]deviceplugin.DeviceInfo) *deviceManager {
+func newDeviceManager(resourceName string, fpgaID string, mode string, ch chan map[string]deviceplugin.DeviceInfo) *deviceManager {
 	return &deviceManager{
 		fpgaID:  fpgaID,
 		name:    resourceName,
+		mode:    mode,
 		ch:      ch,
 		devices: make(map[string]deviceplugin.DeviceInfo),
 	}
@@ -86,7 +89,16 @@ func (dm *deviceManager) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.D
 }
 
 func (dm *deviceManager) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
-	return deviceplugin.MakeAllocateResponse(rqt, dm.devices)
+	response, err := deviceplugin.MakeAllocateResponse(rqt, dm.devices)
+	// Set container annotations when programming is allowed
+	if dm.mode == devicecache.RegionMode {
+		for _, containerResponse := range response.GetContainerResponses() {
+			containerResponse.Annotations = map[string]string{
+				annotationName: fmt.Sprintf("%s-%s", resourceNamePrefix, dm.mode),
+			}
+		}
+	}
+	return response, err
 }
 
 func (dm *deviceManager) PreStartContainer(ctx context.Context, rqt *pluginapi.PreStartContainerRequest) (*pluginapi.PreStartContainerResponse, error) {
@@ -101,13 +113,13 @@ func startDeviceManager(dm *deviceManager, pluginPrefix string) {
 	}
 }
 
-func handleUpdate(dms map[string]*deviceManager, updateInfo devicecache.UpdateInfo, start func(*deviceManager, string)) {
+func handleUpdate(dms map[string]*deviceManager, updateInfo devicecache.UpdateInfo, start func(*deviceManager, string), mode string) {
 	glog.V(2).Info("Received dev updates: ", updateInfo)
 	for fpgaID, devices := range updateInfo.Added {
 		devCh := make(chan map[string]deviceplugin.DeviceInfo, 1)
 		resourceName := resourceNamePrefix + "-" + fpgaID
 		pPrefix := pluginEndpointPrefix + "-" + fpgaID
-		dms[fpgaID] = newDeviceManager(resourceName, fpgaID, devCh)
+		dms[fpgaID] = newDeviceManager(resourceName, fpgaID, mode, devCh)
 		go start(dms[fpgaID], pPrefix)
 		devCh <- devices
 	}
@@ -180,6 +192,6 @@ func main() {
 
 	dms := make(map[string]*deviceManager)
 	for updateInfo := range updatesCh {
-		handleUpdate(dms, updateInfo, startDeviceManager)
+		handleUpdate(dms, updateInfo, startDeviceManager, mode)
 	}
 }

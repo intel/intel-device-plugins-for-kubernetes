@@ -114,7 +114,7 @@ func TestListAndWatch(t *testing.T) {
 
 	for _, tt := range tcases {
 		devCh := make(chan map[string]deviceplugin.DeviceInfo, len(tt.updates))
-		testDM := newDeviceManager("intel.com/fpgatest-fpgaID", "fpgaID", devCh)
+		testDM := newDeviceManager("intel.com/fpgatest-fpgaID", "fpgaID", devicecache.AfMode, devCh)
 
 		server := &listAndWatchServerStub{
 			testDM:      testDM,
@@ -139,7 +139,7 @@ func TestListAndWatch(t *testing.T) {
 }
 
 func TestAllocate(t *testing.T) {
-	testDM := newDeviceManager("", "", nil)
+	testDM := newDeviceManager("", "", devicecache.RegionMode, nil)
 	if testDM == nil {
 		t.Fatal("Failed to create a deviceManager")
 	}
@@ -163,6 +163,20 @@ func TestAllocate(t *testing.T) {
 
 	if len(resp.ContainerResponses[0].Devices) != 1 {
 		t.Fatal("Allocated wrong number of devices")
+	}
+
+	if len(resp.ContainerResponses[0].Annotations) != 1 {
+		t.Fatal("Set wrong number of annotations")
+	}
+
+	annotation, ok := resp.ContainerResponses[0].Annotations[annotationName]
+	if ok == false {
+		t.Fatalf("%s annotation is not set", annotationName)
+	}
+
+	expectedAnnotationValue := fmt.Sprintf("%s-%s", resourceNamePrefix, devicecache.RegionMode)
+	if annotation != expectedAnnotationValue {
+		t.Fatalf("Set wrong %s annotation value %s, should be %s", resourceNamePrefix, annotation, expectedAnnotationValue)
 	}
 }
 
@@ -238,7 +252,7 @@ func TestHandleUpdate(t *testing.T) {
 		if tt.dms == nil {
 			tt.dms = make(map[string]*deviceManager)
 		}
-		handleUpdate(tt.dms, tt.updateInfo, startDeviceManagerStub)
+		handleUpdate(tt.dms, tt.updateInfo, startDeviceManagerStub, devicecache.AfMode)
 		if len(tt.dms) != tt.expectedDMs {
 			t.Errorf("Test case '%s': expected %d runnig device managers, but got %d",
 				tt.name, tt.expectedDMs, len(tt.dms))
