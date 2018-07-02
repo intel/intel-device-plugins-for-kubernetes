@@ -22,6 +22,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/golang/glog"
@@ -269,6 +270,12 @@ func (c *Cache) scanFPGAs() error {
 				afuFile := path.Join(deviceFolder, name, "afu_id")
 				data, err := ioutil.ReadFile(afuFile)
 				if err != nil {
+					if perr, ok := err.(*os.PathError); ok {
+						if perr.Err.(syscall.Errno) == syscall.EBUSY {
+							glog.Warningf("afu_id is busy, skipping: %+v", err)
+							continue
+						}
+					}
 					return err
 				}
 				devNode, err := c.getDevNode(name)
