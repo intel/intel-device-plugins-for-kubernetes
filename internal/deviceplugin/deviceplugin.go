@@ -54,52 +54,51 @@ func (srv *Server) Stop() error {
 
 // setupAndServe binds given gRPC server to device manager, starts it and registers it with kubelet.
 func (srv *Server) setupAndServe(dm pluginapi.DevicePluginServer, resourceName string, pluginPrefix string, devicePluginPath string, kubeletSocket string) error {
-	for {
-		pluginEndpoint := pluginPrefix + ".sock"
-		pluginSocket := path.Join(devicePluginPath, pluginEndpoint)
+	pluginEndpoint := pluginPrefix + ".sock"
+	pluginSocket := path.Join(devicePluginPath, pluginEndpoint)
 
-		if err := waitForServer(pluginSocket, time.Second); err == nil {
-			return fmt.Errorf("Socket %s is already in use", pluginSocket)
-		}
-		os.Remove(pluginSocket)
-
-		lis, err := net.Listen("unix", pluginSocket)
-		if err != nil {
-			return fmt.Errorf("Failed to listen to plugin socket: %+v", err)
-		}
-
-		srv.grpcServer = grpc.NewServer()
-		pluginapi.RegisterDevicePluginServer(srv.grpcServer, dm)
-
-		// Starts device plugin service.
-		go func() {
-			fmt.Printf("device-plugin start server at: %s\n", pluginSocket)
-			srv.grpcServer.Serve(lis)
-		}()
-
-		// Wait for the server to start
-		if err = waitForServer(pluginSocket, 10*time.Second); err != nil {
-			return fmt.Errorf("Failed to wait for plugin socket: %+v", err)
-		}
-
-		// Register with Kubelet.
-		err = registerWithKubelet(kubeletSocket, pluginEndpoint, resourceName)
-		if err != nil {
-			return fmt.Errorf("Failed to register: %+v", err)
-		}
-		fmt.Println("device-plugin registered")
-
-		// Kubelet removes plugin socket when it (re)starts
-		// plugin must restart in this case
-		for {
-			if _, err := os.Stat(pluginSocket); os.IsNotExist(err) {
-				fmt.Println("plugin socket removed, stop server")
-				srv.grpcServer.Stop()
-				break
-			}
-			time.Sleep(1 * time.Second)
-		}
+	if err := waitForServer(pluginSocket, time.Second); err == nil {
+		return fmt.Errorf("Socket %s is already in use", pluginSocket)
 	}
+	os.Remove(pluginSocket)
+
+	lis, err := net.Listen("unix", pluginSocket)
+	if err != nil {
+		return fmt.Errorf("Failed to listen to plugin socket: %+v", err)
+	}
+
+	srv.grpcServer = grpc.NewServer()
+	pluginapi.RegisterDevicePluginServer(srv.grpcServer, dm)
+
+	// Starts device plugin service.
+	go func() {
+		fmt.Printf("device-plugin start server at: %s\n", pluginSocket)
+		srv.grpcServer.Serve(lis)
+	}()
+
+	// Wait for the server to start
+	if err = waitForServer(pluginSocket, 10*time.Second); err != nil {
+		return fmt.Errorf("Failed to wait for plugin socket: %+v", err)
+	}
+
+	// Register with Kubelet.
+	err = registerWithKubelet(kubeletSocket, pluginEndpoint, resourceName)
+	if err != nil {
+		return fmt.Errorf("Failed to register: %+v", err)
+	}
+	fmt.Println("device-plugin registered")
+
+	// Kubelet removes plugin socket when it (re)starts
+	// plugin must restart in this case
+	for {
+		if _, err := os.Stat(pluginSocket); os.IsNotExist(err) {
+			fmt.Println("plugin socket removed, stop server")
+			srv.grpcServer.Stop()
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+	return nil
 }
 
 func registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string) error {
