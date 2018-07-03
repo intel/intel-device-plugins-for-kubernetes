@@ -22,6 +22,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/golang/glog"
@@ -293,6 +294,12 @@ func (c *Cache) getSysFsInfo(deviceFolder string, deviceFiles []os.FileInfo, fna
 			afuFile := path.Join(deviceFolder, name, "afu_id")
 			data, err := ioutil.ReadFile(afuFile)
 			if err != nil {
+				if perr, ok := err.(*os.PathError); ok {
+					if perr.Err.(syscall.Errno) == syscall.EBUSY {
+						glog.Warningf("afu_id is busy, skipping: %+v", err)
+						continue
+					}
+				}
 				return nil, nil, err
 			}
 			devNode, err := c.getDevNode(name)
