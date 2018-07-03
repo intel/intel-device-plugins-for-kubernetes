@@ -22,6 +22,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/golang/glog"
@@ -242,45 +243,9 @@ func (c *Cache) scanFPGAs() error {
 			return err
 		}
 
-		var regions []region
-		var afus []afu
-		for _, deviceFile := range deviceFiles {
-			name := deviceFile.Name()
-
-			if c.fmeReg.MatchString(name) {
-				if len(regions) > 0 {
-					return fmt.Errorf("Detected more than one FPGA region for device %s. Only one region per FPGA device is supported", fname)
-				}
-				interfaceIDFile := path.Join(deviceFolder, name, "pr", "interface_id")
-				data, err := ioutil.ReadFile(interfaceIDFile)
-				if err != nil {
-					return err
-				}
-				devNode, err := c.getDevNode(name)
-				if err != nil {
-					return err
-				}
-				regions = append(regions, region{
-					id:          name,
-					interfaceID: strings.TrimSpace(string(data)),
-					devNode:     devNode,
-				})
-			} else if c.portReg.MatchString(name) {
-				afuFile := path.Join(deviceFolder, name, "afu_id")
-				data, err := ioutil.ReadFile(afuFile)
-				if err != nil {
-					return err
-				}
-				devNode, err := c.getDevNode(name)
-				if err != nil {
-					return err
-				}
-				afus = append(afus, afu{
-					id:      name,
-					afuID:   strings.TrimSpace(string(data)),
-					devNode: devNode,
-				})
-			}
+		regions, afus, err := c.getSysFsInfo(deviceFolder, deviceFiles, fname)
+		if err != nil {
+			return err
 		}
 
 		if len(regions) == 0 {
@@ -299,6 +264,57 @@ func (c *Cache) scanFPGAs() error {
 	c.devices = devices
 
 	return nil
+}
+
+func (c *Cache) getSysFsInfo(deviceFolder string, deviceFiles []os.FileInfo, fname string) ([]region, []afu, error) {
+	var regions []region
+	var afus []afu
+	for _, deviceFile := range deviceFiles {
+		name := deviceFile.Name()
+
+		if c.fmeReg.MatchString(name) {
+			if len(regions) > 0 {
+				return nil, nil, fmt.Errorf("Detected more than one FPGA region for device %s. Only one region per FPGA device is supported", fname)
+			}
+			interfaceIDFile := path.Join(deviceFolder, name, "pr", "interface_id")
+			data, err := ioutil.ReadFile(interfaceIDFile)
+			if err != nil {
+				return nil, nil, err
+			}
+			devNode, err := c.getDevNode(name)
+			if err != nil {
+				return nil, nil, err
+			}
+			regions = append(regions, region{
+				id:          name,
+				interfaceID: strings.TrimSpace(string(data)),
+				devNode:     devNode,
+			})
+		} else if c.portReg.MatchString(name) {
+			afuFile := path.Join(deviceFolder, name, "afu_id")
+			data, err := ioutil.ReadFile(afuFile)
+			if err != nil {
+				if perr, ok := err.(*os.PathError); ok {
+					if perr.Err.(syscall.Errno) == syscall.EBUSY {
+						glog.Warningf("afu_id is busy, skipping: %+v", err)
+						continue
+					}
+				}
+				return nil, nil, err
+			}
+			devNode, err := c.getDevNode(name)
+			if err != nil {
+				return nil, nil, err
+			}
+			afus = append(afus, afu{
+				id:      name,
+				afuID:   strings.TrimSpace(string(data)),
+				devNode: devNode,
+			})
+		}
+	}
+
+	return regions, afus, nil
 }
 
 // Run starts scanning of FPGA devices on the host
