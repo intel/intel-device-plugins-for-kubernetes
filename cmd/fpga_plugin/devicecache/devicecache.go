@@ -22,7 +22,6 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/golang/glog"
@@ -154,34 +153,39 @@ type Cache struct {
 	portReg   *regexp.Regexp
 	fmeReg    *regexp.Regexp
 
-	devices   []device
-	ch        chan<- UpdateInfo
-	getDevMap getDevMapFunc
+	devices      []device
+	ch           chan<- UpdateInfo
+	getDevMap    getDevMapFunc
+	ignoreAfuIDs bool
 }
 
 // NewCache returns new instance of Cache
 func NewCache(sysfsDir string, devfsDir string, mode string, ch chan<- UpdateInfo) (*Cache, error) {
 	var getDevMap getDevMapFunc
 
+	ignoreAfuIDs := false
 	switch mode {
 	case AfMode:
 		getDevMap = getAfuMap
 	case RegionMode:
 		getDevMap = getRegionMap
+		ignoreAfuIDs = true
 	case RegionDevelMode:
 		getDevMap = getRegionDevelMap
+		ignoreAfuIDs = true
 	default:
 		return nil, fmt.Errorf("Wrong mode: '%s'", mode)
 	}
 
 	return &Cache{
-		sysfsDir:  sysfsDir,
-		devfsDir:  devfsDir,
-		deviceReg: regexp.MustCompile(deviceRE),
-		portReg:   regexp.MustCompile(portRE),
-		fmeReg:    regexp.MustCompile(fmeRE),
-		ch:        ch,
-		getDevMap: getDevMap,
+		sysfsDir:     sysfsDir,
+		devfsDir:     devfsDir,
+		deviceReg:    regexp.MustCompile(deviceRE),
+		portReg:      regexp.MustCompile(portRE),
+		fmeReg:       regexp.MustCompile(fmeRE),
+		ch:           ch,
+		getDevMap:    getDevMap,
+		ignoreAfuIDs: ignoreAfuIDs,
 	}, nil
 }
 
@@ -291,16 +295,17 @@ func (c *Cache) getSysFsInfo(deviceFolder string, deviceFiles []os.FileInfo, fna
 				devNode:     devNode,
 			})
 		} else if c.portReg.MatchString(name) {
-			afuFile := path.Join(deviceFolder, name, "afu_id")
-			data, err := ioutil.ReadFile(afuFile)
-			if err != nil {
-				if perr, ok := err.(*os.PathError); ok {
-					if perr.Err.(syscall.Errno) == syscall.EBUSY {
-						glog.Warningf("afu_id is busy, skipping: %+v", err)
-						continue
-					}
+			var afuID string
+
+			if c.ignoreAfuIDs {
+				afuID = "unused_afu_id"
+			} else {
+				afuFile := path.Join(deviceFolder, name, "afu_id")
+				data, err := ioutil.ReadFile(afuFile)
+				if err != nil {
+					return nil, nil, err
 				}
-				return nil, nil, err
+				afuID = strings.TrimSpace(string(data))
 			}
 			devNode, err := c.getDevNode(name)
 			if err != nil {
@@ -308,7 +313,7 @@ func (c *Cache) getSysFsInfo(deviceFolder string, deviceFiles []os.FileInfo, fna
 			}
 			afus = append(afus, afu{
 				id:      name,
-				afuID:   strings.TrimSpace(string(data)),
+				afuID:   afuID,
 				devNode: devNode,
 			})
 		}

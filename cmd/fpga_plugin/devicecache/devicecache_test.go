@@ -300,23 +300,28 @@ func TestScanFPGAs(t *testing.T) {
 		sysfsfiles      map[string][]byte
 		errorContains   string
 		expectedDevices []device
+		mode            string
 	}{
 		{
 			name:          "No sysfs folder given",
+			mode:          AfMode,
 			errorContains: "Can't read sysfs folder",
 		},
 		{
 			name:          "FPGA device without FME and ports",
+			mode:          AfMode,
 			sysfsdirs:     []string{"intel-fpga-dev.0", "incorrect-file-name"},
 			errorContains: "No regions found",
 		},
 		{
 			name:          "AFU without ID",
+			mode:          AfMode,
 			sysfsdirs:     []string{"intel-fpga-dev.0/intel-fpga-port.0"},
 			errorContains: "afu_id: no such file or directory",
 		},
 		{
 			name:      "No device node for detected AFU",
+			mode:      AfMode,
 			sysfsdirs: []string{"intel-fpga-dev.0/intel-fpga-port.0"},
 			sysfsfiles: map[string][]byte{
 				"intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
@@ -325,6 +330,7 @@ func TestScanFPGAs(t *testing.T) {
 		},
 		{
 			name:      "AFU without corresponding FME",
+			mode:      AfMode,
 			sysfsdirs: []string{"intel-fpga-dev.0/intel-fpga-port.0"},
 			devfsdirs: []string{"intel-fpga-port.0"},
 			sysfsfiles: map[string][]byte{
@@ -334,6 +340,7 @@ func TestScanFPGAs(t *testing.T) {
 		},
 		{
 			name: "More than one FME per FPGA device",
+			mode: AfMode,
 			sysfsdirs: []string{
 				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
 				"intel-fpga-dev.0/intel-fpga-fme.1/pr",
@@ -350,11 +357,13 @@ func TestScanFPGAs(t *testing.T) {
 		},
 		{
 			name:          "FME without interface ID",
+			mode:          AfMode,
 			sysfsdirs:     []string{"intel-fpga-dev.0/intel-fpga-fme.0"},
 			errorContains: "interface_id: no such file or directory",
 		},
 		{
 			name:      "No device node for detected region",
+			mode:      AfMode,
 			sysfsdirs: []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
 			sysfsfiles: map[string][]byte{
 				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
@@ -362,7 +371,8 @@ func TestScanFPGAs(t *testing.T) {
 			errorContains: "/dev/intel-fpga-fme.0: no such file or directory",
 		},
 		{
-			name: "No errors expected",
+			name: "No errors expected in af mode",
+			mode: AfMode,
 			sysfsdirs: []string{
 				"intel-fpga-dev.0/intel-fpga-port.0",
 				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
@@ -416,6 +426,60 @@ func TestScanFPGAs(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "No errors expected in region mode",
+			mode: RegionMode,
+			sysfsdirs: []string{
+				"intel-fpga-dev.0/intel-fpga-port.0",
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
+				"intel-fpga-dev.1/intel-fpga-port.1",
+				"intel-fpga-dev.1/intel-fpga-fme.1/pr",
+			},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+				"intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+			},
+			devfsdirs: []string{
+				"intel-fpga-port.0", "intel-fpga-fme.0",
+				"intel-fpga-port.1", "intel-fpga-fme.1",
+			},
+			expectedDevices: []device{
+				{
+					name: "intel-fpga-dev.0",
+					regions: []region{
+						{
+							id:          "intel-fpga-fme.0",
+							interfaceID: "ce48969398f05f33946d560708be108a",
+							devNode:     path.Join(devfs, "intel-fpga-fme.0"),
+							afus: []afu{
+								{
+									id:      "intel-fpga-port.0",
+									afuID:   "unused_afu_id",
+									devNode: path.Join(devfs, "intel-fpga-port.0"),
+								},
+							},
+						},
+					},
+				},
+				{
+					name: "intel-fpga-dev.1",
+					regions: []region{
+						{
+							id:          "intel-fpga-fme.1",
+							interfaceID: "ce48969398f05f33946d560708be108a",
+							devNode:     path.Join(devfs, "intel-fpga-fme.1"),
+							afus: []afu{
+								{
+									id:      "intel-fpga-port.1",
+									afuID:   "unused_afu_id",
+									devNode: path.Join(devfs, "intel-fpga-port.1"),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tcase := range tcases {
@@ -424,7 +488,7 @@ func TestScanFPGAs(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		cache, err := NewCache(sysfs, devfs, AfMode, nil)
+		cache, err := NewCache(sysfs, devfs, tcase.mode, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
