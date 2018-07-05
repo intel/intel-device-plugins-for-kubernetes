@@ -8,6 +8,7 @@
 - [GPU device plugin](cmd/gpu_plugin/README.md)
 - [FPGA device plugin](cmd/fpga_plugin/README.md)
 - [FPGA admission controller webhook](cmd/fpga_admissionwebhook/README.md)
+- [FPGA prestart CRI-O hook](cmd/fpga_crihook/README.md)
 
 ## About
 
