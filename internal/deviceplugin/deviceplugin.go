@@ -20,8 +20,10 @@ import (
 	"net"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"google.golang.org/grpc"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
@@ -91,13 +93,38 @@ func (srv *Server) setupAndServe(dm pluginapi.DevicePluginServer, resourceName s
 
 		// Kubelet removes plugin socket when it (re)starts
 		// plugin must restart in this case
-		for {
-			if _, err := os.Stat(pluginSocket); os.IsNotExist(err) {
-				fmt.Println("plugin socket removed, stop server")
-				srv.grpcServer.Stop()
-				break
+		if err = watchFile(pluginSocket); err != nil {
+			return fmt.Errorf("error watching plugin socket: %+v", err)
+		}
+		fmt.Printf("socket %s removed, restarting", pluginSocket)
+
+		fmt.Println("stop GRPC server")
+
+		srv.grpcServer.Stop()
+		os.Remove(pluginSocket)
+	}
+}
+
+func watchFile(file string) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(filepath.Dir(file))
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case ev := <-watcher.Events:
+			if (ev.Op == fsnotify.Remove || ev.Op == fsnotify.Rename) && ev.Name == file {
+				return nil
 			}
-			time.Sleep(1 * time.Second)
+		case err := <-watcher.Errors:
+			return err
 		}
 	}
 }
