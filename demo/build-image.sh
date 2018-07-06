@@ -25,4 +25,4 @@ for proxy in $PROXY_VARS; do
     fi
 done
 
-docker build -t $IMG $BUILD_ARGS "$CWD/$IMG/"
+docker build -t ${IMG} $BUILD_ARGS "$CWD/$IMG/"
