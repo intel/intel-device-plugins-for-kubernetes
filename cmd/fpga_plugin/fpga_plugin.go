@@ -68,20 +68,32 @@ func (dm *deviceManager) GetDevicePluginOptions(ctx context.Context, empty *plug
 	return new(pluginapi.DevicePluginOptions), nil
 }
 
+func (dm *deviceManager) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer) error {
+	resp := new(pluginapi.ListAndWatchResponse)
+	for id, device := range dm.devices {
+		resp.Devices = append(resp.Devices, &pluginapi.Device{id, device.State})
+	}
+	glog.V(2).Info("Sending to kubelet ", resp.Devices)
+	if err := stream.Send(resp); err != nil {
+		dm.srv.Stop()
+		return fmt.Errorf("device-plugin: cannot update device list: %v", err)
+	}
+
+	return nil
+}
+
 // ListAndWatch returns a list of devices
 // Whenever a device state change or a device disappears, ListAndWatch returns the new list
 func (dm *deviceManager) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.DevicePlugin_ListAndWatchServer) error {
 	glog.V(2).Info("Started ListAndWatch for ", dm.fpgaID)
 
+	if err := dm.sendDevices(stream); err != nil {
+		return err
+	}
+
 	for dm.devices = range dm.ch {
-		resp := new(pluginapi.ListAndWatchResponse)
-		for id, device := range dm.devices {
-			resp.Devices = append(resp.Devices, &pluginapi.Device{id, device.State})
-		}
-		glog.V(2).Info("Sending to kubelet ", resp.Devices)
-		if err := stream.Send(resp); err != nil {
-			dm.srv.Stop()
-			return fmt.Errorf("device-plugin: cannot update device list: %v", err)
+		if err := dm.sendDevices(stream); err != nil {
+			return err
 		}
 	}
 

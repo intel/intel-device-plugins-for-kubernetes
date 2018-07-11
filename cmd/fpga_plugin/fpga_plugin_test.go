@@ -30,12 +30,14 @@ import (
 // Minimal implementation of pluginapi.DevicePlugin_ListAndWatchServer
 type listAndWatchServerStub struct {
 	testDM      *deviceManager
-	generateErr bool
+	generateErr int
+	sendCounter int
 	cdata       chan []*pluginapi.Device
 }
 
 func (s *listAndWatchServerStub) Send(resp *pluginapi.ListAndWatchResponse) error {
-	if s.generateErr {
+	s.sendCounter = s.sendCounter + 1
+	if s.generateErr == s.sendCounter {
 		fmt.Println("listAndWatchServerStub::Send returns error")
 		return fmt.Errorf("Fake error")
 	}
@@ -82,10 +84,14 @@ func TestListAndWatch(t *testing.T) {
 	tcases := []struct {
 		name        string
 		updates     []map[string]deviceplugin.DeviceInfo
-		expectedErr bool
+		errorOnCall int
 	}{
 		{
 			name: "No updates and close",
+		},
+		{
+			name:        "No updates and close, but expect streaming error",
+			errorOnCall: 1,
 		},
 		{
 			name: "Send 1 update",
@@ -108,7 +114,7 @@ func TestListAndWatch(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: true,
+			errorOnCall: 2,
 		},
 	}
 
@@ -118,8 +124,8 @@ func TestListAndWatch(t *testing.T) {
 
 		server := &listAndWatchServerStub{
 			testDM:      testDM,
-			generateErr: tt.expectedErr,
-			cdata:       make(chan []*pluginapi.Device, len(tt.updates)),
+			generateErr: tt.errorOnCall,
+			cdata:       make(chan []*pluginapi.Device, len(tt.updates)+1),
 		}
 
 		// push device infos to DM's channel
@@ -129,10 +135,10 @@ func TestListAndWatch(t *testing.T) {
 		close(devCh)
 
 		err := testDM.ListAndWatch(&pluginapi.Empty{}, server)
-		if err != nil && !tt.expectedErr {
+		if err != nil && tt.errorOnCall == 0 {
 			t.Errorf("Test case '%s': got unexpected error %v", tt.name, err)
 		}
-		if err == nil && tt.expectedErr {
+		if err == nil && tt.errorOnCall != 0 {
 			t.Errorf("Test case '%s': expected an error, but got nothing", tt.name)
 		}
 	}
