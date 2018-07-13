@@ -26,18 +26,21 @@ import (
 
 func TestGetFPGAParams(t *testing.T) {
 	tcases := []struct {
-		stdinJSON      string
-		configJSON     string
-		expectedErr    bool
-		expectedRegion string
-		expectedAFU    string
+		stdinJSON         string
+		configJSON        string
+		afuIDPath         string
+		expectedErr       bool
+		expectedRegion    string
+		expectedAFU       string
+		expectedDeviceNum string
 	}{
 		{
-			stdinJSON:      "stdin-correct.json",
-			configJSON:     "config-correct.json",
-			expectedErr:    false,
-			expectedRegion: "ce48969398f05f33946d560708be108a",
-			expectedAFU:    "f7df405cbd7acf7222f144b0b93acd18",
+			stdinJSON:         "stdin-correct.json",
+			configJSON:        "config-correct.json",
+			expectedErr:       false,
+			expectedRegion:    "ce48969398f05f33946d560708be108a",
+			expectedAFU:       "f7df405cbd7acf7222f144b0b93acd18",
+			expectedDeviceNum: "0",
 		},
 		{
 			stdinJSON:   "stdin-broken-json.json",
@@ -80,6 +83,27 @@ func TestGetFPGAParams(t *testing.T) {
 			expectedErr:    true,
 			expectedRegion: "ce48969398f05f33946d560708be108a",
 		},
+		{
+			stdinJSON:      "stdin-correct.json",
+			configJSON:     "config-no-linux.json",
+			expectedErr:    true,
+			expectedRegion: "ce48969398f05f33946d560708be108a",
+			expectedAFU:    "f7df405cbd7acf7222f144b0b93acd18",
+		},
+		{
+			stdinJSON:      "stdin-correct.json",
+			configJSON:     "config-no-devices.json",
+			expectedErr:    true,
+			expectedRegion: "ce48969398f05f33946d560708be108a",
+			expectedAFU:    "f7df405cbd7acf7222f144b0b93acd18",
+		},
+		{
+			stdinJSON:      "stdin-correct.json",
+			configJSON:     "config-no-FPGA-devices.json",
+			expectedErr:    true,
+			expectedRegion: "ce48969398f05f33946d560708be108a",
+			expectedAFU:    "f7df405cbd7acf7222f144b0b93acd18",
+		},
 	}
 	for _, tc := range tcases {
 		stdin, err := os.Open(path.Join("testdata", tc.stdinJSON))
@@ -87,16 +111,22 @@ func TestGetFPGAParams(t *testing.T) {
 			t.Fatalf("can't open file %s: %v", tc.stdinJSON, err)
 		}
 
-		he := newHookEnv("", tc.configJSON, nil)
+		he := newHookEnv("", tc.configJSON, nil, "")
 
-		region, afu, err := he.getFPGAParams(stdin)
+		params, err := he.getFPGAParams(stdin)
 
-		if err != nil && !tc.expectedErr {
-			t.Errorf("unexpected error: %v", err)
-		} else if region != tc.expectedRegion {
-			t.Errorf("expected region: %s, actual: %s", tc.expectedRegion, region)
-		} else if afu != tc.expectedAFU {
-			t.Errorf("expected AFU: %s, actual: %s", tc.expectedAFU, afu)
+		if err != nil {
+			if !tc.expectedErr {
+				t.Errorf("unexpected error: %v", err)
+			}
+		} else {
+			if params.region != tc.expectedRegion {
+				t.Errorf("expected region: %s, actual: %s", tc.expectedRegion, params.region)
+			} else if params.afu != tc.expectedAFU {
+				t.Errorf("expected AFU: %s, actual: %s", tc.expectedAFU, params.afu)
+			} else if params.devNum != tc.expectedDeviceNum {
+				t.Errorf("expected device number: %s, actual: %s", tc.expectedDeviceNum, params.devNum)
+			}
 		}
 	}
 }
@@ -113,14 +143,14 @@ func genFakeActions(fcmd *fakeexec.FakeCmd, num int) []fakeexec.FakeCommandActio
 
 func TestValidateBitstream(t *testing.T) {
 	tcases := []struct {
-		fpgaRegion  string
-		fpgaAfu     string
+		params      *fpgaParams
 		expectedErr bool
 		fakeAction  []fakeexec.FakeCombinedOutputAction
 	}{
 		{
-			fpgaRegion:  "ce48969398f05f33946d560708be108a",
-			fpgaAfu:     "f7df405cbd7acf7222f144b0b93acd18",
+			params: &fpgaParams{
+				region: "ce48969398f05f33946d560708be108a",
+				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			expectedErr: false,
 			fakeAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) {
@@ -129,12 +159,14 @@ func TestValidateBitstream(t *testing.T) {
 			},
 		},
 		{
+			params:      &fpgaParams{region: "", afu: ""},
 			expectedErr: true,
 			fakeAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) { return nil, &fakeexec.FakeExitError{Status: 1} },
 			},
 		},
 		{
+			params:      &fpgaParams{region: "", afu: ""},
 			expectedErr: true,
 			fakeAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) {
@@ -143,6 +175,7 @@ func TestValidateBitstream(t *testing.T) {
 			},
 		},
 		{
+			params:      &fpgaParams{region: "", afu: ""},
 			expectedErr: true,
 			fakeAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) {
@@ -151,6 +184,7 @@ func TestValidateBitstream(t *testing.T) {
 			},
 		},
 		{
+			params:      &fpgaParams{region: "", afu: ""},
 			expectedErr: true,
 			fakeAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) {
@@ -159,6 +193,7 @@ func TestValidateBitstream(t *testing.T) {
 			},
 		},
 		{
+			params:      &fpgaParams{region: "", afu: ""},
 			expectedErr: true,
 			fakeAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) {
@@ -167,7 +202,7 @@ func TestValidateBitstream(t *testing.T) {
 			},
 		},
 		{
-			fpgaRegion:  "this should not match",
+			params:      &fpgaParams{region: "this should not match", afu: ""},
 			expectedErr: true,
 			fakeAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) {
@@ -176,7 +211,7 @@ func TestValidateBitstream(t *testing.T) {
 			},
 		},
 		{
-			fpgaRegion:  "ce48969398f05f33946d560708be108a",
+			params:      &fpgaParams{region: "ce48969398f05f33946d560708be108a", afu: ""},
 			expectedErr: true,
 			fakeAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) {
@@ -185,8 +220,9 @@ func TestValidateBitstream(t *testing.T) {
 			},
 		},
 		{
-			fpgaRegion:  "ce48969398f05f33946d560708be108a",
-			fpgaAfu:     "this should not match",
+			params: &fpgaParams{
+				region: "ce48969398f05f33946d560708be108a",
+				afu:    "this should not match"},
 			expectedErr: true,
 			fakeAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) {
@@ -199,8 +235,8 @@ func TestValidateBitstream(t *testing.T) {
 	for _, tc := range tcases {
 		fcmd := fakeexec.FakeCmd{CombinedOutputScript: tc.fakeAction}
 		execer := fakeexec.FakeExec{CommandScript: genFakeActions(&fcmd, len(fcmd.CombinedOutputScript))}
-		he := newHookEnv("", "", &execer)
-		err := he.validateBitStream(tc.fpgaRegion, tc.fpgaAfu, "")
+		he := newHookEnv("", "", &execer, "")
+		err := he.validateBitStream(tc.params, "")
 		if err != nil && !tc.expectedErr {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -209,22 +245,23 @@ func TestValidateBitstream(t *testing.T) {
 
 func TestProgramBitStream(t *testing.T) {
 	tcases := []struct {
-		fpgaRegion  string
-		fpgaAfu     string
+		params      *fpgaParams
 		expectedErr bool
 		fakeAction  []fakeexec.FakeCombinedOutputAction
 	}{
 		{
-			fpgaRegion:  "ce48969398f05f33946d560708be108a",
-			fpgaAfu:     "f7df405cbd7acf7222f144b0b93acd18",
+			params: &fpgaParams{
+				region: "ce48969398f05f33946d560708be108a",
+				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			expectedErr: false,
 			fakeAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) { return []byte(""), nil },
 			},
 		},
 		{
-			fpgaRegion:  "ce48969398f05f33946d560708be108a",
-			fpgaAfu:     "f7df405cbd7acf7222f144b0b93acd18",
+			params: &fpgaParams{
+				region: "ce48969398f05f33946d560708be108a",
+				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			expectedErr: true,
 			fakeAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) { return []byte("error"), &fakeexec.FakeExitError{Status: 1} },
@@ -235,8 +272,8 @@ func TestProgramBitStream(t *testing.T) {
 	for _, tc := range tcases {
 		fcmd := fakeexec.FakeCmd{CombinedOutputScript: tc.fakeAction}
 		execer := fakeexec.FakeExec{CommandScript: genFakeActions(&fcmd, len(fcmd.CombinedOutputScript))}
-		he := newHookEnv("", "", &execer)
-		err := he.programBitStream(tc.fpgaRegion, tc.fpgaAfu, "")
+		he := newHookEnv("", "", &execer, "")
+		err := he.programBitStream(tc.params, "")
 		if err != nil && !tc.expectedErr {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -247,13 +284,15 @@ func TestProcess(t *testing.T) {
 	tcases := []struct {
 		stdinJSON                string
 		configJSON               string
+		afuIDTemplate            string
 		expectedErr              bool
 		fakeCombinedOutputAction []fakeexec.FakeCombinedOutputAction
 	}{
 		{
-			stdinJSON:   "stdin-correct.json",
-			configJSON:  "config-correct.json",
-			expectedErr: false,
+			stdinJSON:     "stdin-correct.json",
+			configJSON:    "config-correct.json",
+			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_already_programmed",
+			expectedErr:   false,
 			fakeCombinedOutputAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) {
 					return ioutil.ReadFile("testdata/gbs-info-correct.json")
@@ -262,19 +301,39 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
-			stdinJSON:   "stdin-correct.json",
-			configJSON:  "config-no-afu.json",
-			expectedErr: true,
+			stdinJSON:     "stdin-correct.json",
+			configJSON:    "config-correct.json",
+			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_not_programmed_yet",
+			expectedErr:   false,
+			fakeCombinedOutputAction: []fakeexec.FakeCombinedOutputAction{
+				func() ([]byte, error) {
+					return ioutil.ReadFile("testdata/gbs-info-correct.json")
+				},
+				func() ([]byte, error) { return []byte(""), nil },
+			},
 		},
 		{
-			stdinJSON:   "stdin-correct.json",
-			configJSON:  "config-non-existing-bitstream.json",
-			expectedErr: true,
+			stdinJSON:     "stdin-correct.json",
+			configJSON:    "config-no-afu.json",
+			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_not_programmed_yet",
+			expectedErr:   true,
 		},
 		{
 			stdinJSON:   "stdin-correct.json",
 			configJSON:  "config-correct.json",
 			expectedErr: true,
+		},
+		{
+			stdinJSON:     "stdin-correct.json",
+			configJSON:    "config-non-existing-bitstream.json",
+			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_not_programmed_yet",
+			expectedErr:   true,
+		},
+		{
+			stdinJSON:     "stdin-correct.json",
+			configJSON:    "config-correct.json",
+			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_not_programmed_yet",
+			expectedErr:   true,
 			fakeCombinedOutputAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) {
 					return ioutil.ReadFile("testdata/gbs-info-no-accelerator-type-uuid.json")
@@ -282,9 +341,10 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
-			stdinJSON:   "stdin-correct.json",
-			configJSON:  "config-correct.json",
-			expectedErr: true,
+			stdinJSON:     "stdin-correct.json",
+			configJSON:    "config-correct.json",
+			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_not_programmed_yet",
+			expectedErr:   true,
 			fakeCombinedOutputAction: []fakeexec.FakeCombinedOutputAction{
 				func() ([]byte, error) {
 					return ioutil.ReadFile("testdata/gbs-info-correct.json")
@@ -303,7 +363,7 @@ func TestProcess(t *testing.T) {
 		fcmd := fakeexec.FakeCmd{CombinedOutputScript: tc.fakeCombinedOutputAction}
 		execer := fakeexec.FakeExec{CommandScript: genFakeActions(&fcmd, len(fcmd.CombinedOutputScript))}
 
-		he := newHookEnv("testdata/intel.com/fpga", tc.configJSON, &execer)
+		he := newHookEnv("testdata/intel.com/fpga", tc.configJSON, &execer, tc.afuIDTemplate)
 		err = he.process(stdin)
 
 		if err != nil && !tc.expectedErr {
