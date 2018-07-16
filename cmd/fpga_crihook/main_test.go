@@ -43,11 +43,6 @@ func TestGetFPGAParams(t *testing.T) {
 			expectedDeviceNum: "0",
 		},
 		{
-			stdinJSON:   "stdin-broken-json.json",
-			configJSON:  "config-correct.json",
-			expectedErr: true,
-		},
-		{
 			stdinJSON:   "stdin-no-bundle.json",
 			configJSON:  "config-correct.json",
 			expectedErr: true,
@@ -111,9 +106,14 @@ func TestGetFPGAParams(t *testing.T) {
 			t.Fatalf("can't open file %s: %v", tc.stdinJSON, err)
 		}
 
+		content, err := decodeJSONStream(stdin)
+		if err != nil {
+			t.Fatalf("can't decode json file %s: %v", tc.stdinJSON, err)
+		}
+
 		he := newHookEnv("", tc.configJSON, nil, "")
 
-		params, err := he.getFPGAParams(stdin)
+		params, err := he.getFPGAParams(content)
 
 		if err != nil {
 			if !tc.expectedErr {
@@ -311,6 +311,22 @@ func TestProcess(t *testing.T) {
 				},
 				func() ([]byte, error) { return []byte(""), nil },
 			},
+		},
+		{
+			stdinJSON:   "stdin-broken-json.json",
+			expectedErr: true,
+		},
+		{
+			stdinJSON:   "stdin-no-annotations.json",
+			expectedErr: true,
+		},
+		{
+			stdinJSON:   "stdin-no-intel-annotation.json",
+			expectedErr: true,
+		},
+		{
+			stdinJSON:   "stdin-incorrect-intel-annotation.json",
+			expectedErr: true,
 		},
 		{
 			stdinJSON:     "stdin-correct.json",

@@ -38,6 +38,8 @@ const (
 	fpgaBitStreamExt       = ".gbs"
 	fpgaDevRegexp          = `\/dev\/intel-fpga-port.(\d)$`
 	afuIDTemplate          = "/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id"
+	annotationName         = "com.intel.fpga.mode"
+	annotationValue        = "intel.com/fpga-region"
 )
 
 func decodeJSONStream(reader io.Reader) (map[string]interface{}, error) {
@@ -73,12 +75,7 @@ func canonize(uuid string) string {
 	return strings.ToLower(strings.Replace(uuid, "-", "", -1))
 }
 
-func (he *hookEnv) getFPGAParams(reader io.Reader) (*fpgaParams, error) {
-	content, err := decodeJSONStream(reader)
-	if err != nil {
-		return nil, err
-	}
-
+func (he *hookEnv) getFPGAParams(content map[string]interface{}) (*fpgaParams, error) {
 	bundle, ok := content["bundle"]
 	if !ok {
 		return nil, fmt.Errorf("no 'bundle' field in the configuration")
@@ -207,7 +204,28 @@ func (he *hookEnv) getProgrammedAfu(deviceNum string) (string, error) {
 }
 
 func (he *hookEnv) process(reader io.Reader) error {
-	params, err := he.getFPGAParams(reader)
+	content, err := decodeJSONStream(reader)
+	if err != nil {
+		return err
+	}
+
+	// Check if device plugin annotation is set
+	annotations, ok := content["annotations"]
+	if !ok {
+		return fmt.Errorf("no 'annotations' field in the configuration")
+	}
+
+	annotation, ok := annotations.(map[string]interface{})[annotationName]
+	if !ok {
+		fmt.Printf("annotation %s is not set, skipping\n", annotationName)
+		return nil
+	}
+	if annotation != annotationValue {
+		fmt.Printf("annotation %s has incorrect value, skipping\n", annotationName)
+		return nil
+	}
+
+	params, err := he.getFPGAParams(content)
 	if err != nil {
 		return fmt.Errorf("couldn't get FPGA region, AFU and device number: %v, skipping", err)
 	}
