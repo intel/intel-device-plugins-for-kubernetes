@@ -24,4 +24,4 @@ spec:
             limits:
               cpu: 1
               hugepages-2Mi: 20Mi
-              intel.com/fpga-d8424dc4a4a3c413f89e433683f9040b: 1
+              fpga.intel.com/af-d8424dc4a4a3c413f89e433683f9040b: 1
