@@ -1,4 +1,4 @@
-// Copyright 2017 Intel Corporation. All Rights Reserved.
+// Copyright 2018 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,252 +16,336 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"reflect"
+	"strings"
 	"testing"
-
-	"golang.org/x/net/context"
-	"google.golang.org/grpc/metadata"
+	"time"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/devicecache"
-	"github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
+	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
 )
 
-// Minimal implementation of pluginapi.DevicePlugin_ListAndWatchServer
-type listAndWatchServerStub struct {
-	testDM      *deviceManager
-	generateErr int
-	sendCounter int
-	cdata       chan []*pluginapi.Device
-}
+func createTestDirs(devfs, sysfs string, devfsDirs, sysfsDirs []string, sysfsFiles map[string][]byte) error {
+	var err error
 
-func (s *listAndWatchServerStub) Send(resp *pluginapi.ListAndWatchResponse) error {
-	s.sendCounter = s.sendCounter + 1
-	if s.generateErr == s.sendCounter {
-		fmt.Println("listAndWatchServerStub::Send returns error")
-		return fmt.Errorf("Fake error")
+	for _, devfsdir := range devfsDirs {
+		err = os.MkdirAll(path.Join(devfs, devfsdir), 0755)
+		if err != nil {
+			return fmt.Errorf("Failed to create fake device directory: %v", err)
+		}
+	}
+	for _, sysfsdir := range sysfsDirs {
+		err = os.MkdirAll(path.Join(sysfs, sysfsdir), 0755)
+		if err != nil {
+			return fmt.Errorf("Failed to create fake device directory: %v", err)
+		}
+	}
+	for filename, body := range sysfsFiles {
+		err = ioutil.WriteFile(path.Join(sysfs, filename), body, 0644)
+		if err != nil {
+			return fmt.Errorf("Failed to create fake vendor file: %v", err)
+		}
 	}
 
-	fmt.Println("listAndWatchServerStub::Send", resp.Devices)
-	s.cdata <- resp.Devices
 	return nil
 }
 
-func (s *listAndWatchServerStub) Context() context.Context {
-	return nil
-}
-
-func (s *listAndWatchServerStub) RecvMsg(m interface{}) error {
-	return nil
-}
-
-func (s *listAndWatchServerStub) SendMsg(m interface{}) error {
-	return nil
-}
-
-func (s *listAndWatchServerStub) SendHeader(m metadata.MD) error {
-	return nil
-}
-
-func (s *listAndWatchServerStub) SetHeader(m metadata.MD) error {
-	return nil
-}
-
-func (s *listAndWatchServerStub) SetTrailer(m metadata.MD) {
-}
-
-func TestGetDevicePluginOptions(t *testing.T) {
-	dm := &deviceManager{}
-	dm.GetDevicePluginOptions(nil, nil)
-}
-
-func TestPreStartContainer(t *testing.T) {
-	dm := &deviceManager{}
-	dm.PreStartContainer(nil, nil)
-}
-
-func TestListAndWatch(t *testing.T) {
+func TestNewDevicePlugin(t *testing.T) {
 	tcases := []struct {
-		name        string
-		updates     []map[string]deviceplugin.DeviceInfo
-		errorOnCall int
+		mode        string
+		expectedErr bool
 	}{
 		{
-			name: "No updates and close",
+			mode: afMode,
 		},
 		{
-			name:        "No updates and close, but expect streaming error",
-			errorOnCall: 1,
+			mode: regionMode,
 		},
 		{
-			name: "Send 1 update",
-			updates: []map[string]deviceplugin.DeviceInfo{
-				{
-					"fake_id": {
-						State: pluginapi.Healthy,
-						Nodes: []string{"/dev/intel-fpga-port.0"},
-					},
-				},
-			},
+			mode: regionDevelMode,
 		},
 		{
-			name: "Send 1 update, but expect streaming error",
-			updates: []map[string]deviceplugin.DeviceInfo{
-				{
-					"fake_id": {
-						State: pluginapi.Healthy,
-						Nodes: []string{"/dev/intel-fpga-port.0"},
-					},
-				},
-			},
-			errorOnCall: 2,
+			mode:        "unparsable",
+			expectedErr: true,
 		},
 	}
 
-	for _, tt := range tcases {
-		devCh := make(chan map[string]deviceplugin.DeviceInfo, len(tt.updates))
-		testDM := newDeviceManager("intel.com/fpgatest-fpgaID", "fpgaID", devicecache.AfMode, devCh)
-
-		server := &listAndWatchServerStub{
-			testDM:      testDM,
-			generateErr: tt.errorOnCall,
-			cdata:       make(chan []*pluginapi.Device, len(tt.updates)+1),
-		}
-
-		// push device infos to DM's channel
-		for _, update := range tt.updates {
-			devCh <- update
-		}
-		close(devCh)
-
-		err := testDM.ListAndWatch(&pluginapi.Empty{}, server)
-		if err != nil && tt.errorOnCall == 0 {
-			t.Errorf("Test case '%s': got unexpected error %v", tt.name, err)
-		}
-		if err == nil && tt.errorOnCall != 0 {
-			t.Errorf("Test case '%s': expected an error, but got nothing", tt.name)
+	for _, tcase := range tcases {
+		_, err := newDevicePlugin("", "", tcase.mode)
+		if tcase.expectedErr && err == nil {
+			t.Error("No error generated when creating Cache with invalid parameters")
 		}
 	}
 }
 
-func TestAllocate(t *testing.T) {
-	testDM := newDeviceManager("", "", devicecache.RegionMode, nil)
-	if testDM == nil {
-		t.Fatal("Failed to create a deviceManager")
+// getDevices returns static list of device structs for testing purposes
+func getDevices() []device {
+	return []device{
+		{
+			name: "intel-fpga-dev.0",
+			regions: []region{
+				{
+					id:          "intel-fpga-fme.0",
+					interfaceID: "ce48969398f05f33946d560708be108a",
+					devNode:     "/dev/intel-fpga-fme.0",
+					afus: []afu{
+						{
+							id:      "intel-fpga-port.0",
+							afuID:   "d8424dc4a4a3c413f89e433683f9040b",
+							devNode: "/dev/intel-fpga-port.0",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "intel-fpga-dev.1",
+			regions: []region{
+				{
+					id:          "intel-fpga-fme.1",
+					interfaceID: "ce48969398f05f33946d560708be108a",
+					devNode:     "/dev/intel-fpga-fme.1",
+					afus: []afu{
+						{
+							id:      "intel-fpga-port.1",
+							afuID:   "d8424dc4a4a3c413f89e433683f9040b",
+							devNode: "/dev/intel-fpga-port.1",
+						},
+					},
+				},
+			},
+		},
 	}
+}
 
-	rqt := &pluginapi.AllocateRequest{
-		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
-			{
-				DevicesIDs: []string{"dev1"},
+func TestGetRegionDevelTree(t *testing.T) {
+	expected := dpapi.NewDeviceTree()
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.0", dpapi.DeviceInfo{
+		State: pluginapi.Healthy,
+		Nodes: []string{"/dev/intel-fpga-port.0", "/dev/intel-fpga-fme.0"},
+	})
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.1", dpapi.DeviceInfo{
+		State: pluginapi.Healthy,
+		Nodes: []string{"/dev/intel-fpga-port.1", "/dev/intel-fpga-fme.1"},
+	})
+
+	result := getRegionDevelTree(getDevices())
+	if !reflect.DeepEqual(result, expected) {
+		t.Error("Got unexpected result: ", result)
+	}
+}
+
+func TestGetRegionTree(t *testing.T) {
+	expected := dpapi.NewDeviceTree()
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.0", dpapi.DeviceInfo{
+		State: pluginapi.Healthy,
+		Nodes: []string{"/dev/intel-fpga-port.0"},
+	})
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.1", dpapi.DeviceInfo{
+		State: pluginapi.Healthy,
+		Nodes: []string{"/dev/intel-fpga-port.1"},
+	})
+
+	result := getRegionTree(getDevices())
+	if !reflect.DeepEqual(result, expected) {
+		t.Error("Got unexpected result: ", result)
+	}
+}
+
+func TestGetAfuTree(t *testing.T) {
+	expected := dpapi.NewDeviceTree()
+	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "intel-fpga-port.0", dpapi.DeviceInfo{
+		State: pluginapi.Healthy,
+		Nodes: []string{"/dev/intel-fpga-port.0"},
+	})
+	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "intel-fpga-port.1", dpapi.DeviceInfo{
+		State: pluginapi.Healthy,
+		Nodes: []string{"/dev/intel-fpga-port.1"},
+	})
+
+	result := getAfuTree(getDevices())
+	if !reflect.DeepEqual(result, expected) {
+		t.Error("Got unexpected result: ", result)
+	}
+}
+
+func TestScanFPGAs(t *testing.T) {
+	tmpdir := fmt.Sprintf("/tmp/fpgaplugin-TestDiscoverFPGAs-%d", time.Now().Unix())
+	sysfs := path.Join(tmpdir, "sys", "class", "fpga")
+	devfs := path.Join(tmpdir, "dev")
+	tcases := []struct {
+		name            string
+		devfsdirs       []string
+		sysfsdirs       []string
+		sysfsfiles      map[string][]byte
+		errorContains   string
+		expectedDevTree map[string]map[string]dpapi.DeviceInfo
+		mode            string
+	}{
+		{
+			name:          "No sysfs folder given",
+			mode:          afMode,
+			errorContains: "Can't read sysfs folder",
+		},
+		{
+			name:          "FPGA device without FME and ports",
+			mode:          afMode,
+			sysfsdirs:     []string{"intel-fpga-dev.0", "incorrect-file-name"},
+			errorContains: "No regions found",
+		},
+		{
+			name:          "AFU without ID",
+			mode:          afMode,
+			sysfsdirs:     []string{"intel-fpga-dev.0/intel-fpga-port.0"},
+			errorContains: "afu_id: no such file or directory",
+		},
+		{
+			name:      "No device node for detected AFU",
+			mode:      afMode,
+			sysfsdirs: []string{"intel-fpga-dev.0/intel-fpga-port.0"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+			},
+			errorContains: "/dev/intel-fpga-port.0: no such file or directory",
+		},
+		{
+			name:      "AFU without corresponding FME",
+			mode:      afMode,
+			sysfsdirs: []string{"intel-fpga-dev.0/intel-fpga-port.0"},
+			devfsdirs: []string{"intel-fpga-port.0"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+			},
+			errorContains: "No regions found",
+		},
+		{
+			name: "More than one FME per FPGA device",
+			mode: afMode,
+			sysfsdirs: []string{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
+				"intel-fpga-dev.0/intel-fpga-fme.1/pr",
+			},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"intel-fpga-dev.0/intel-fpga-fme.1/pr/interface_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+			},
+			devfsdirs: []string{
+				"intel-fpga-fme.0",
+				"intel-fpga-fme.1",
+			},
+			errorContains: "Detected more than one FPGA region",
+		},
+		{
+			name:          "FME without interface ID",
+			mode:          afMode,
+			sysfsdirs:     []string{"intel-fpga-dev.0/intel-fpga-fme.0"},
+			errorContains: "interface_id: no such file or directory",
+		},
+		{
+			name:      "No device node for detected region",
+			mode:      afMode,
+			sysfsdirs: []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+			},
+			errorContains: "/dev/intel-fpga-fme.0: no such file or directory",
+		},
+		{
+			name: "No errors expected in af mode",
+			mode: afMode,
+			sysfsdirs: []string{
+				"intel-fpga-dev.0/intel-fpga-port.0",
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
+				"intel-fpga-dev.1/intel-fpga-port.1",
+				"intel-fpga-dev.1/intel-fpga-fme.1/pr",
+			},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-port.0/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"intel-fpga-dev.1/intel-fpga-port.1/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+				"intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+			},
+			devfsdirs: []string{
+				"intel-fpga-port.0", "intel-fpga-fme.0",
+				"intel-fpga-port.1", "intel-fpga-fme.1",
+			},
+		},
+		{
+			name: "No errors expected in region mode",
+			mode: regionMode,
+			sysfsdirs: []string{
+				"intel-fpga-dev.0/intel-fpga-port.0",
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
+				"intel-fpga-dev.1/intel-fpga-port.1",
+				"intel-fpga-dev.1/intel-fpga-fme.1/pr",
+			},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+				"intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+			},
+			devfsdirs: []string{
+				"intel-fpga-port.0", "intel-fpga-fme.0",
+				"intel-fpga-port.1", "intel-fpga-fme.1",
 			},
 		},
 	}
 
-	testDM.devices["dev1"] = deviceplugin.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []string{"/dev/dev1"},
-	}
-	resp, err := testDM.Allocate(nil, rqt)
-	if err != nil {
-		t.Fatalf("Failed to allocate healthy device: %v", err)
-	}
+	for _, tcase := range tcases {
+		err := createTestDirs(devfs, sysfs, tcase.devfsdirs, tcase.sysfsdirs, tcase.sysfsfiles)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if len(resp.ContainerResponses[0].Devices) != 1 {
-		t.Fatal("Allocated wrong number of devices")
-	}
+		plugin, err := newDevicePlugin(sysfs, devfs, tcase.mode)
+		if err != nil {
+			t.Fatal(err)
+		}
+		plugin.getDevTree = func(devices []device) dpapi.DeviceTree {
+			return dpapi.NewDeviceTree()
+		}
 
-	if len(resp.ContainerResponses[0].Annotations) != 1 {
+		_, err = plugin.scanFPGAs()
+		if tcase.errorContains != "" {
+			if err == nil || !strings.Contains(err.Error(), tcase.errorContains) {
+				t.Errorf("Test case '%s': expected error '%s', but got '%v'", tcase.name, tcase.errorContains, err)
+			}
+		} else if err != nil {
+			t.Errorf("Test case '%s': expected no error, but got '%v'", tcase.name, err)
+		}
+
+		err = os.RemoveAll(tmpdir)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestPostAllocate(t *testing.T) {
+	response := new(pluginapi.AllocateResponse)
+	cresp := new(pluginapi.ContainerAllocateResponse)
+	response.ContainerResponses = append(response.ContainerResponses, cresp)
+
+	testValue := "some value"
+
+	dp := &devicePlugin{
+		annotationValue: testValue,
+	}
+	dp.PostAllocate(response)
+
+	if len(response.ContainerResponses[0].Annotations) != 1 {
 		t.Fatal("Set wrong number of annotations")
 	}
 
-	annotation, ok := resp.ContainerResponses[0].Annotations[annotationName]
+	annotation, ok := response.ContainerResponses[0].Annotations[annotationName]
 	if ok == false {
 		t.Fatalf("%s annotation is not set", annotationName)
 	}
 
-	expectedAnnotationValue := fmt.Sprintf("%s-%s", resourceNamePrefix, devicecache.RegionMode)
-	if annotation != expectedAnnotationValue {
-		t.Fatalf("Set wrong %s annotation value %s, should be %s", resourceNamePrefix, annotation, expectedAnnotationValue)
-	}
-}
-
-func startDeviceManagerStub(dm *deviceManager, pluginPrefix string) {
-}
-
-func TestHandleUpdate(t *testing.T) {
-	tcases := []struct {
-		name        string
-		dms         map[string]*deviceManager
-		updateInfo  devicecache.UpdateInfo
-		expectedDMs int
-	}{
-		{
-			name:        "Empty update",
-			updateInfo:  devicecache.UpdateInfo{},
-			expectedDMs: 0,
-		},
-		{
-			name: "Add device manager",
-			updateInfo: devicecache.UpdateInfo{
-				Added: map[string]map[string]deviceplugin.DeviceInfo{
-					"ce48969398f05f33946d560708be108a": {
-						"intel-fpga-fme.0": {
-							State: pluginapi.Healthy,
-							Nodes: []string{"/dev/intel-fpga-port.0", "/dev/intel-fpga-fme.0"},
-						},
-						"intel-fpga-fme.1": {
-							State: pluginapi.Healthy,
-							Nodes: []string{"/dev/intel-fpga-port.1", "/dev/intel-fpga-fme.1"},
-						},
-					},
-				},
-			},
-			expectedDMs: 1,
-		},
-		{
-			name: "Update existing device manager",
-			dms: map[string]*deviceManager{
-				"ce48969398f05f33946d560708be108a": {
-					ch: make(chan map[string]deviceplugin.DeviceInfo, 1),
-				},
-			},
-			updateInfo: devicecache.UpdateInfo{
-				Updated: map[string]map[string]deviceplugin.DeviceInfo{
-					"ce48969398f05f33946d560708be108a": {
-						"intel-fpga-fme.1": {
-							State: pluginapi.Healthy,
-							Nodes: []string{"/dev/intel-fpga-port.1", "/dev/intel-fpga-fme.1"},
-						},
-					},
-				},
-			},
-			expectedDMs: 1,
-		},
-		{
-			name: "Remove device manager",
-			dms: map[string]*deviceManager{
-				"ce48969398f05f33946d560708be108a": {
-					ch: make(chan map[string]deviceplugin.DeviceInfo, 1),
-				},
-			},
-			updateInfo: devicecache.UpdateInfo{
-				Removed: map[string]map[string]deviceplugin.DeviceInfo{
-					"ce48969398f05f33946d560708be108a": {},
-				},
-			},
-			expectedDMs: 0,
-		},
-	}
-
-	for _, tt := range tcases {
-		if tt.dms == nil {
-			tt.dms = make(map[string]*deviceManager)
-		}
-		handleUpdate(tt.dms, tt.updateInfo, startDeviceManagerStub, devicecache.AfMode)
-		if len(tt.dms) != tt.expectedDMs {
-			t.Errorf("Test case '%s': expected %d runnig device managers, but got %d",
-				tt.name, tt.expectedDMs, len(tt.dms))
-		}
+	if annotation != testValue {
+		t.Fatalf("Set wrong annotation %s", annotation)
 	}
 }
