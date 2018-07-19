@@ -3,6 +3,7 @@
 \#*#
 
 coverage.html
+coverage.txt
 
 cmd/fpga_admissionwebhook/fpga_admissionwebhook
 cmd/fpga_crihook/fpga_crihook
