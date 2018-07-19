@@ -65,7 +65,7 @@ var (
 	scheme         = runtime.NewScheme()
 	codecs         = serializer.NewCodecFactory(scheme)
 	rfc6901Escaper = strings.NewReplacer("~", "~0", "/", "~1")
-	resourceRe     = regexp.MustCompile(`intel.com/fpga-(?P<Region>[[:alnum:]]+)(-(?P<Af>[[:alnum:]]+))?`)
+	resourceRe     = regexp.MustCompile(`fpga.intel.com/(?P<Region>[[:alnum:]]+)(-(?P<Af>[[:alnum:]]+))?`)
 )
 
 func init() {
@@ -130,12 +130,12 @@ func parseResourceName(input string) (string, string, error) {
 // TODO: get rid of hardcoded translations of FPGA resource names to region interface IDs
 func translateFpgaResourceName(oldname corev1.ResourceName) string {
 	switch strings.ToLower(string(oldname)) {
-	case "intel.com/fpga-arria10":
-		return rfc6901Escaper.Replace("intel.com/fpga-region-ce48969398f05f33946d560708be108a")
-	case "intel.com/fpga-arria10-nlb0":
-		return rfc6901Escaper.Replace("intel.com/fpga-af-d8424dc4a4a3c413f89e433683f9040b")
-	case "intel.com/fpga-arria10-nlb3":
-		return rfc6901Escaper.Replace("intel.com/fpga-af-f7df405cbd7acf7222f144b0b93acd18")
+	case "fpga.intel.com/arria10":
+		return rfc6901Escaper.Replace("fpga.intel.com/region-ce48969398f05f33946d560708be108a")
+	case "fpga.intel.com/arria10-nlb0":
+		return rfc6901Escaper.Replace("fpga.intel.com/af-d8424dc4a4a3c413f89e433683f9040b")
+	case "fpga.intel.com/arria10-nlb3":
+		return rfc6901Escaper.Replace("fpga.intel.com/af-f7df405cbd7acf7222f144b0b93acd18")
 	}
 
 	return ""
@@ -215,7 +215,7 @@ func getPatchOpsOrchestrated(containerIdx int, container corev1.Container) ([]st
 		}
 
 		op := fmt.Sprintf(resourceReplaceOp, containerIdx, "limits", rfc6901Escaper.Replace(string(resourceName)),
-			containerIdx, "limits", rfc6901Escaper.Replace("intel.com/fpga-region-"+interfaceID), resourceQuantity.String())
+			containerIdx, "limits", rfc6901Escaper.Replace("fpga.intel.com/region-"+interfaceID), resourceQuantity.String())
 		ops = append(ops, op)
 
 		oldVars, err := getEnvVars(container)
@@ -243,7 +243,7 @@ func getPatchOpsOrchestrated(containerIdx int, container corev1.Container) ([]st
 		}
 
 		op := fmt.Sprintf(resourceReplaceOp, containerIdx, "requests", rfc6901Escaper.Replace(string(resourceName)),
-			containerIdx, "requests", rfc6901Escaper.Replace("intel.com/fpga-region-"+interfaceID), resourceQuantity.String())
+			containerIdx, "requests", rfc6901Escaper.Replace("fpga.intel.com/region-"+interfaceID), resourceQuantity.String())
 		ops = append(ops, op)
 		mutated = true
 	}
