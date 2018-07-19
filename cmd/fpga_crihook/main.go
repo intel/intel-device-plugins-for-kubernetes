@@ -189,6 +189,16 @@ func (he *hookEnv) programBitStream(params *fpgaParams, fpgaBitStreamPath string
 	if err != nil {
 		return fmt.Errorf("failed to program AFU %s to region %s: error: %v, output: %s", params.afu, params.region, err, string(output))
 	}
+
+	programmedAfu, err := he.getProgrammedAfu(params.devNum)
+	if err != nil {
+		return err
+	}
+
+	if programmedAfu != params.afu {
+		return fmt.Errorf("programmed function %s instead of %s", programmedAfu, params.afu)
+	}
+
 	return nil
 }
 
