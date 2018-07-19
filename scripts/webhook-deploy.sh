@@ -38,6 +38,10 @@ while [[ $# -gt 0 ]]; do
 	cleanup)
 	    command="cleanup"
 	    ;;
+	*)
+	    echo "Unknown option: ${1}"
+	    exit 1
+	    ;;
     esac
     shift
 done
