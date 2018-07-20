@@ -4,11 +4,6 @@ GOCYCLO := gocyclo
 pkgs  = $(shell $(GO) list ./... | grep -v vendor)
 cmds = $(shell ls cmd)
 
-# Image names are formed after corresponding cmd names, e.g. "gpu_plugin" -> "intel-gpu-plugin"
-images = $(shell echo $(cmds) | tr _ - | sed 's/[^ ]* */intel-&/g')
-
-DOCKER_ARGS = --build-arg HTTP_PROXY --build-arg HTTPS_PROXY --build-arg NO_PROXY --build-arg http_proxy --build-arg https_proxy --build-arg no_proxy --pull
-
 all: build
 
 format:
@@ -35,12 +30,15 @@ endif
 lint:
 	@rc=0 ; for f in $$(find -name \*.go | grep -v \.\/vendor) ; do golint -set_exit_status $$f || rc=1 ; done ; exit $$rc
 
-TAG?=$(shell git rev-parse HEAD)
-
 $(cmds):
 	cd cmd/$@; go build
 
 build: $(cmds)
+
+DOCKER_ARGS?=--build-arg HTTP_PROXY --build-arg HTTPS_PROXY --build-arg NO_PROXY --build-arg http_proxy --build-arg https_proxy --build-arg no_proxy --pull
+TAG?=$(shell git rev-parse HEAD)
+
+images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
 
 $(images):
 	docker build -f build/docker/$@.Dockerfile $(DOCKER_ARGS) -t $@:$(TAG) .
