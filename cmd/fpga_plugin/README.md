@@ -1,4 +1,4 @@
-# Build and test Intel GPU Device Plugin for Kubernetes
+# Build and test Intel FPGA Device Plugin for Kubernetes
 
 ### Get source code
 ```
