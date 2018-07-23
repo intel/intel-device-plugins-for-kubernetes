@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-qat-plugin
+  labels:
+    app: intel-qat-plugin
+spec:
+  selector:
+    matchLabels:
+      app: intel-qat-plugin
+  template:
+    metadata:
+      labels:
+        app: intel-qat-plugin
+    spec:
+      containers:
+      - name: intel-qat-plugin
+        image: intel-qat-plugin:devel
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: pcidir
+          mountPath: /sys/bus/pci
+        - name: kubeletsockets
+          mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+      - name: pcidir
+        hostPath:
+          path: /sys/bus/pci
+      - name: kubeletsockets
+        hostPath:
+          path: /var/lib/kubelet/device-plugins

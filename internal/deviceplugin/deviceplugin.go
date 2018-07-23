@@ -31,8 +31,9 @@ import (
 
 // DeviceInfo contains information about device maintained by Device Plugin
 type DeviceInfo struct {
-	State string
-	Nodes []string
+	State           string
+	Nodes           []string
+	DeviceMountPath []string
 }
 
 // Server structure to keep server parameters
