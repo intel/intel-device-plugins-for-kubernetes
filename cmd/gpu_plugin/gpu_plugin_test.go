@@ -47,7 +47,10 @@ func (s *listAndWatchServerStub) Send(resp *pluginapi.ListAndWatchResponse) erro
 		s.t.Error("Wrong number of sent device infos")
 	}
 
-	s.testDM.devices["dev1"] = deviceplugin.DeviceInfo{pluginapi.Unhealthy, []string{"/dev/dev1"}}
+	s.testDM.devices["dev1"] = deviceplugin.DeviceInfo{
+		State: pluginapi.Unhealthy,
+		Nodes: []string{"/dev/dev1"},
+	}
 	s.counter++
 	return nil
 }
@@ -82,7 +85,10 @@ func TestListAndWatch(t *testing.T) {
 		t.Fatal("Failed to create a deviceManager")
 	}
 
-	testDM.devices["dev1"] = deviceplugin.DeviceInfo{pluginapi.Healthy, []string{"/dev/dev1"}}
+	testDM.devices["dev1"] = deviceplugin.DeviceInfo{
+		State: pluginapi.Healthy,
+		Nodes: []string{"/dev/dev1"},
+	}
 
 	server := &listAndWatchServerStub{
 		testDM: testDM,
@@ -107,7 +113,10 @@ func TestAllocate(t *testing.T) {
 		},
 	}
 
-	testDM.devices["dev1"] = deviceplugin.DeviceInfo{pluginapi.Healthy, []string{"/dev/dev1"}}
+	testDM.devices["dev1"] = deviceplugin.DeviceInfo{
+		State: pluginapi.Healthy,
+		Nodes: []string{"/dev/dev1"},
+	}
 	resp, err := testDM.Allocate(nil, rqt)
 	if err != nil {
 		t.Fatalf("Failed to allocate healthy device: %+v", err)

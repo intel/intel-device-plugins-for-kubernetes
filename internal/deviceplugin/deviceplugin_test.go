@@ -238,7 +238,10 @@ func TestMakeAllocateResponse(t *testing.T) {
 	}
 
 	devices := map[string]DeviceInfo{
-		"dev1": {pluginapi.Unhealthy, []string{"/dev/dev1"}},
+		"dev1": {
+			State: pluginapi.Unhealthy,
+			Nodes: []string{"/dev/dev1"},
+		},
 	}
 
 	_, err = MakeAllocateResponse(rqt, devices)
@@ -246,7 +249,10 @@ func TestMakeAllocateResponse(t *testing.T) {
 		t.Fatal("No error when allocating unhealthy device")
 	}
 
-	devices["dev1"] = DeviceInfo{pluginapi.Healthy, []string{"/dev/dev1"}}
+	devices["dev1"] = DeviceInfo{
+		State: pluginapi.Healthy,
+		Nodes: []string{"/dev/dev1"},
+	}
 	resp, err := MakeAllocateResponse(rqt, devices)
 	if err != nil {
 		t.Fatalf("Failed to allocate healthy device: %+v", err)

@@ -89,7 +89,10 @@ func (dm *deviceManager) discoverGPUs(sysfsDrmDir string, devfsDriDir string) er
 				}
 
 				if len(nodes) > 0 {
-					dm.devices[f.Name()] = deviceplugin.DeviceInfo{pluginapi.Healthy, nodes}
+					dm.devices[f.Name()] = deviceplugin.DeviceInfo{
+						State: pluginapi.Healthy,
+						Nodes: nodes,
+					}
 				}
 			}
 		}

@@ -9,3 +9,4 @@ cmd/fpga_admissionwebhook/fpga_admissionwebhook
 cmd/fpga_crihook/fpga_crihook
 cmd/fpga_plugin/fpga_plugin
 cmd/gpu_plugin/gpu_plugin
+cmd/qat_plugin/qat_plugin
