@@ -35,7 +35,7 @@ import (
 const (
 	sysfsDrmDirectory = "/sys/class/drm"
 	devfsDriDirectory = "/dev/dri"
-	gpuDeviceRE       = `^card[0-9]*$`
+	gpuDeviceRE       = `^card[0-9]+$`
 	vendorString      = "0x8086"
 
 	// Device plugin settings.
