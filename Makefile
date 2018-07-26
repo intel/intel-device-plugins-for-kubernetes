@@ -1,4 +1,5 @@
 GO := go
+GOFMT := gofmt
 GOCYCLO := gocyclo
 
 pkgs  = $(shell $(GO) list ./... | grep -v vendor)
@@ -7,7 +8,7 @@ cmds = $(shell ls cmd)
 all: build
 
 format:
-	@$(GO) fmt $(pkgs)
+	@report=`$(GOFMT) -s -d -w $$(find cmd internal -name \*.go)` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
 
 vet:
 	@$(GO) vet -v -shadow $(pkgs)

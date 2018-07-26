@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"path"
 	"time"
 
 	"github.com/golang/glog"
@@ -153,7 +153,7 @@ func getDeviceID(pciAddr string) (string, error) {
 // bindDevice the device where id is the pci address to the specified device driver
 func bindDevice(dpdkDriver string, id string) error {
 
-	devicePCIAddr := "0000:"+id
+	devicePCIAddr := "0000:" + id
 	unbindKernelDevicePath := path.Join(pciDeviceDir, devicePCIAddr, driverUnbindSuffix)
 	bindDevicePath := path.Join(pciDriverDir, dpdkDriver, newIDSuffix)
 	devicePCIAddrBytes := []byte(devicePCIAddr)
@@ -330,7 +330,7 @@ func (dm *deviceManager) PreStartContainer(ctx context.Context, rqt *pluginapi.P
 func main() {
 	flag.Parse()
 	fmt.Println("QAT device plugin started")
-	
+
 	err := isValidDpdkDeviceDriver(*dpdkDriver)
 	if err != nil {
 		glog.Fatalf("Error in user input for DPDK Device Driver: %v", err)
