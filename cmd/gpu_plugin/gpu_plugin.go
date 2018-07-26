@@ -36,6 +36,7 @@ const (
 	sysfsDrmDirectory = "/sys/class/drm"
 	devfsDriDirectory = "/dev/dri"
 	gpuDeviceRE       = `^card[0-9]+$`
+	controlDeviceRE   = `^controlD[0-9]+$`
 	vendorString      = "0x8086"
 
 	// Device plugin settings.
@@ -58,6 +59,7 @@ func newDeviceManager() *deviceManager {
 // Discovers all GPU devices available on the local node by walking `/sys/class/drm` directory.
 func (dm *deviceManager) discoverGPUs(sysfsDrmDir string, devfsDriDir string) error {
 	reg := regexp.MustCompile(gpuDeviceRE)
+	ctlReg := regexp.MustCompile(controlDeviceRE)
 	files, err := ioutil.ReadDir(sysfsDrmDir)
 	if err != nil {
 		return fmt.Errorf("Can't read sysfs folder: %v", err)
@@ -79,6 +81,10 @@ func (dm *deviceManager) discoverGPUs(sysfsDrmDir string, devfsDriDir string) er
 				}
 
 				for _, drmFile := range drmFiles {
+					if ctlReg.MatchString(drmFile.Name()) {
+						//Skipping possible drm control node
+						continue
+					}
 					devPath := path.Join(devfsDriDir, drmFile.Name())
 					if _, err := os.Stat(devPath); err != nil {
 						continue
