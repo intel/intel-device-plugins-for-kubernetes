@@ -22,7 +22,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -56,7 +55,7 @@ const (
 var (
 	dpdkDriver      = flag.String("dpdk-driver", "igb_uio", "DPDK Device driver for configuring the QAT device")
 	kernelVfDrivers = flag.String("kernel-vf-drivers", "dh895xccvf,c6xxvf,c3xxxvf,d15xxvf", "Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC,C62x,C3xxx and D15xx")
-	maxNumdevice    = flag.String("max-num-devices", "32", "maximum number of QAT devices to be provided to the QuickAssist device plugin")
+	maxNumdevice    = flag.Int("max-num-devices", 32, "maximum number of QAT devices to be provided to the QuickAssist device plugin")
 )
 
 // deviceManager manages Intel gpu devices.
@@ -218,12 +217,8 @@ func (dm *deviceManager) discoverQATs() (bool, error) {
 		for n, file := range files {
 			if strings.HasPrefix(file.Name(), "0000:") {
 				vfpciaddr := strings.TrimPrefix(file.Name(), "0000:")
-				max, err := strconv.Atoi(*maxNumdevice)
-				if err != nil {
-					return found, fmt.Errorf("Error in getting maximum number of devices: %v", err)
-				}
 
-				if n < max {
+				if n < *maxNumdevice {
 					err = bindDevice(*dpdkDriver, vfpciaddr)
 					if err != nil {
 						return found, fmt.Errorf("Error in binding the device to the dpdk driver")
@@ -334,10 +329,6 @@ func main() {
 	err := isValidDpdkDeviceDriver(*dpdkDriver)
 	if err != nil {
 		glog.Fatalf("Error in user input for DPDK Device Driver: %v", err)
-	}
-	_, err = strconv.Atoi(*maxNumdevice)
-	if err != nil {
-		glog.Fatalf("Error in getting maximum number of devices: %v", err)
 	}
 	dm, err := newDeviceManager()
 	if err != nil {
