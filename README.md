@@ -6,19 +6,21 @@
 
 - [About](#about)
 - [GPU device plugin](cmd/gpu_plugin/README.md)
-- [FPGA device plugin](cmd/fpga_plugin/README.md)
-- [FPGA admission controller webhook](cmd/fpga_admissionwebhook/README.md)
-- [FPGA prestart CRI-O hook](cmd/fpga_crihook/README.md)
+- FPGA plugin code
+    - [FPGA device plugin](cmd/fpga_plugin/README.md)
+    - [FPGA admission controller webhook](cmd/fpga_admissionwebhook/README.md)
+    - [FPGA prestart CRI-O hook](cmd/fpga_crihook/README.md)
 - [QuickAssist device plugin](cmd/qat_plugin/README.md)
 
 ## About
 
-This repository contains set of Intel Device Plugins that enable usage of Intel hardware in Kubernetes cluster.
+This repository contains a set of Kubernetes plugins that enable you to use
+Intel devices.
 
-These are prerequisites for building and running Intel Device Plugins:
+Prerequisites for building and running Intel device plugins include:
 
 - Intel hardware
-- Fully [configured kubernetes cluster]
+- Fully configured [Kubernetes cluster]
 - Working [Go environment]
 
 ## Supported Kubernetes versions
@@ -29,4 +31,4 @@ These are prerequisites for building and running Intel Device Plugins:
 | master            | Kubernetes master branch       |
 
 [Go environment]: https://golang.org/doc/install
-[Configured Kubernetes cluster]: https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
+[Kubernetes cluster]: https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
