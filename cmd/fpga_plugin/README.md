@@ -30,9 +30,9 @@ $ ls /var/lib/kubelet/device-plugins/kubelet.sock
 
 ### Choose mode for FPGA device plugin
 
-You can run the FPGA device plugin in either afu or region mode.
+You can run the FPGA device plugin in either af or region mode.
 
-#### Run FPGA device plugin in afu mode
+#### Run FPGA device plugin in af mode
 
 1. Run FPGA device plugin as administrator:
 ```
@@ -89,7 +89,7 @@ for the plugin:
     ```
     $ make intel-fpga-plugin
     ```
-    This image launches `fpga_plugin` in the `af` mode by default.
+    This image launches `fpga_plugin` in `af` mode by default.
 
     You can override the mode on a per-node basis using this annotation:
     ```
