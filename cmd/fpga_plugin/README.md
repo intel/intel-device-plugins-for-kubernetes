@@ -39,15 +39,15 @@ You can run the FPGA device plugin in either af or region mode.
 $ export NODE_NAME="<node name>" # if the node's name was overridden and differs from hostname
 $ sudo -E $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode af -kubeconfig /var/run/kubernetes/admin.kubeconfig
 FPGA device plugin started in af mode
-device-plugin start server at: /var/lib/kubelet/device-plugins/intel-fpga-af-f7df405cbd7acf7222f144b0b93acd18.sock
+device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-af-f7df405cbd7acf7222f144b0b93acd18.sock
 device-plugin registered
 ```
 
 2. Check if FPGA device plugin is registered on master:
 ```
-$ kubectl describe node <node name> | grep intel.com/fpga
- intel.com/fpga-af-f7df405cbd7acf7222f144b0b93acd18:  1
- intel.com/fpga-af-f7df405cbd7acf7222f144b0b93acd18:  1
+$ kubectl describe node <node name> | grep fpga.intel.com
+ fpga.intel.com/af-f7df405cbd7acf7222f144b0b93acd18:  1
+ fpga.intel.com/af-f7df405cbd7acf7222f144b0b93acd18:  1
 ```
 
 #### Run FPGA device plugin in region mode
@@ -57,15 +57,15 @@ $ kubectl describe node <node name> | grep intel.com/fpga
 $ export NODE_NAME="<node name>" # if the node's name was overridden and differs from hostname
 $ sudo -E $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode region -kubeconfig /var/run/kubernetes/admin.kubeconfig
 FPGA device plugin started in region mode
-device-plugin start server at: /var/lib/kubelet/device-plugins/intel-fpga-region-ce48969398f05f33946d560708be108a.sock
+device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-region-ce48969398f05f33946d560708be108a.sock
 device-plugin registered
 ```
 
 2. Check if FPGA device plugin is registered on master:
 ```
-$ kubectl describe node <node name> | grep intel.com/fpga
- intel.com/fpga-region-ce48969398f05f33946d560708be108a:  1
- intel.com/fpga-region-ce48969398f05f33946d560708be108a:  1
+$ kubectl describe node <node name> | grep fpga.intel.com
+ fpga.intel.com/region-ce48969398f05f33946d560708be108a:  1
+ fpga.intel.com/region-ce48969398f05f33946d560708be108a:  1
 ```
 
 ### Deploy FPGA device plugin as DaemonSet

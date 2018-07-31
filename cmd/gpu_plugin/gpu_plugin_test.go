@@ -15,121 +15,15 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
 	"time"
-
-	"golang.org/x/net/context"
-	"google.golang.org/grpc/metadata"
-
-	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
-
-	"github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
 )
 
-// Minimal implementation of pluginapi.DevicePlugin_ListAndWatchServer
-type listAndWatchServerStub struct {
-	counter int
-	testDM  *deviceManager
-	t       *testing.T
-}
-
-func (s *listAndWatchServerStub) Send(resp *pluginapi.ListAndWatchResponse) error {
-	if s.counter > 0 {
-		return errors.New("Fake error when sending response")
-	}
-
-	if len(resp.Devices) != 1 {
-		s.t.Error("Wrong number of sent device infos")
-	}
-
-	s.testDM.devices["dev1"] = deviceplugin.DeviceInfo{
-		State: pluginapi.Unhealthy,
-		Nodes: []string{"/dev/dev1"},
-	}
-	s.counter++
-	return nil
-}
-
-func (s *listAndWatchServerStub) Context() context.Context {
-	return nil
-}
-
-func (s *listAndWatchServerStub) RecvMsg(m interface{}) error {
-	return nil
-}
-
-func (s *listAndWatchServerStub) SendMsg(m interface{}) error {
-	return nil
-}
-
-func (s *listAndWatchServerStub) SendHeader(m metadata.MD) error {
-	return nil
-}
-
-func (s *listAndWatchServerStub) SetHeader(m metadata.MD) error {
-	return nil
-}
-
-func (s *listAndWatchServerStub) SetTrailer(m metadata.MD) {
-}
-
-func TestListAndWatch(t *testing.T) {
-	testDM := newDeviceManager()
-
-	if testDM == nil {
-		t.Fatal("Failed to create a deviceManager")
-	}
-
-	testDM.devices["dev1"] = deviceplugin.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []string{"/dev/dev1"},
-	}
-
-	server := &listAndWatchServerStub{
-		testDM: testDM,
-		t:      t,
-	}
-
-	testDM.ListAndWatch(&pluginapi.Empty{}, server)
-}
-
-func TestAllocate(t *testing.T) {
-	testDM := newDeviceManager()
-
-	if testDM == nil {
-		t.Fatal("Failed to create a deviceManager")
-	}
-
-	rqt := &pluginapi.AllocateRequest{
-		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
-			{
-				DevicesIDs: []string{"dev1"},
-			},
-		},
-	}
-
-	testDM.devices["dev1"] = deviceplugin.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []string{"/dev/dev1"},
-	}
-	resp, err := testDM.Allocate(nil, rqt)
-	if err != nil {
-		t.Fatalf("Failed to allocate healthy device: %+v", err)
-	}
-
-	if len(resp.ContainerResponses[0].Devices) != 1 {
-		t.Fatal("Allocated wrong number of devices")
-	}
-}
-
-func TestDiscoverGPUs(t *testing.T) {
-	var err error
-
+func TestScan(t *testing.T) {
 	tmpdir := fmt.Sprintf("/tmp/gpuplugin-test-%d", time.Now().Unix())
 	sysfs := path.Join(tmpdir, "sysfs")
 	devfs := path.Join(tmpdir, "devfs")
@@ -181,37 +75,37 @@ func TestDiscoverGPUs(t *testing.T) {
 		},
 	}
 
-	testDM := newDeviceManager()
+	testPlugin := newDevicePlugin(sysfs, devfs)
 
-	if testDM == nil {
+	if testPlugin == nil {
 		t.Fatal("Failed to create a deviceManager")
 	}
 
 	for _, tcase := range tcases {
 		for _, devfsdir := range tcase.devfsdirs {
-			err = os.MkdirAll(path.Join(devfs, devfsdir), 0755)
+			err := os.MkdirAll(path.Join(devfs, devfsdir), 0755)
 			if err != nil {
 				t.Fatalf("Failed to create fake device directory: %+v", err)
 			}
 		}
 		for _, sysfsdir := range tcase.sysfsdirs {
-			err = os.MkdirAll(path.Join(sysfs, sysfsdir), 0755)
+			err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0755)
 			if err != nil {
 				t.Fatalf("Failed to create fake device directory: %+v", err)
 			}
 		}
 		for filename, body := range tcase.sysfsfiles {
-			err = ioutil.WriteFile(path.Join(sysfs, filename), body, 0644)
+			err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0644)
 			if err != nil {
 				t.Fatalf("Failed to create fake vendor file: %+v", err)
 			}
 		}
 
-		err = testDM.discoverGPUs(sysfs, devfs)
+		tree, err := testPlugin.scan()
 		if tcase.expectedErr && err == nil {
 			t.Error("Expected error hasn't been triggered")
 		}
-		if tcase.expectedDevs != len(testDM.devices) {
+		if tcase.expectedDevs != len(tree[deviceType]) {
 			t.Errorf("Wrong number of discovered devices")
 		}
 
