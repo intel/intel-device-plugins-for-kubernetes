@@ -94,7 +94,7 @@ $ kubectl describe node <node name> | grep intel.com/qat
       In the pod specification file, add container resource request and limit.
       For example, `intel.com/qat: <number of devices>` for a container requesting QAT devices.
 
-      For a DPDK based workload, you may need to add hugepage request and limit.
+      For a DPDK-based workload, you may need to add hugepage request and limit.
 
      ```
      $ kubectl create -f demo/crypto-perf-dpdk-pod-requesting-qat.yaml
