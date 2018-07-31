@@ -39,23 +39,23 @@ func TestParseResourceName(t *testing.T) {
 		expectedErr bool
 	}{
 		{
-			input:       "intel.com/fpga-arria10",
+			input:       "fpga.intel.com/arria10",
 			expectedErr: true,
 		},
 		{
-			input:       "intel.com/fpga-unknown",
+			input:       "fpga.intel.com/unknown",
 			expectedErr: true,
 		},
 		{
-			input: "example.com/fpga-something",
+			input: "fpga.example.com/something",
 		},
 		{
-			input:       "intel.com/fpga-arria10-nlb0",
+			input:       "fpga.intel.com/arria10-nlb0",
 			interfaceID: "ce48969398f05f33946d560708be108a",
 			afuID:       "d8424dc4a4a3c413f89e433683f9040b",
 		},
 		{
-			input:       "intel.com/fpga-arria10-nlb3",
+			input:       "fpga.intel.com/arria10-nlb3",
 			interfaceID: "ce48969398f05f33946d560708be108a",
 			afuID:       "f7df405cbd7acf7222f144b0b93acd18",
 		},
@@ -88,11 +88,11 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
 					Limits: corev1.ResourceList{
-						"intel.com/fpga-arria10-nlb0": resource.MustParse("1"),
+						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
 						"cpu": resource.MustParse("1"),
 					},
 					Requests: corev1.ResourceList{
-						"intel.com/fpga-arria10-nlb0": resource.MustParse("1"),
+						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
 						"cpu": resource.MustParse("1"),
 					},
 				},
@@ -104,8 +104,8 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
 					Limits: corev1.ResourceList{
-						"intel.com/fpga-arria10-nlb0": resource.MustParse("1"),
-						"intel.com/fpga-arria10-nlb3": resource.MustParse("1"),
+						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
+						"fpga.intel.com/arria10-nlb3": resource.MustParse("1"),
 					},
 				},
 			},
@@ -116,8 +116,8 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
-						"intel.com/fpga-arria10-nlb0": resource.MustParse("1"),
-						"intel.com/fpga-arria10-nlb3": resource.MustParse("1"),
+						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
+						"fpga.intel.com/arria10-nlb3": resource.MustParse("1"),
 					},
 				},
 			},
@@ -128,7 +128,7 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
-						"intel.com/fpga-unknown-nlb0": resource.MustParse("1"),
+						"fpga.intel.com/unknown-nlb0": resource.MustParse("1"),
 					},
 				},
 			},
@@ -139,7 +139,7 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
-						"intel.com/fpga-arria10-unknown": resource.MustParse("1"),
+						"fpga.intel.com/arria10-unknown": resource.MustParse("1"),
 					},
 				},
 			},
@@ -150,7 +150,7 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
 					Limits: corev1.ResourceList{
-						"intel.com/fpga-unknown-nlb0": resource.MustParse("1"),
+						"fpga.intel.com/unknown-nlb0": resource.MustParse("1"),
 					},
 				},
 			},
@@ -161,7 +161,7 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
 					Limits: corev1.ResourceList{
-						"intel.com/fpga-arria10-unknown": resource.MustParse("1"),
+						"fpga.intel.com/arria10-unknown": resource.MustParse("1"),
 					},
 				},
 			},
@@ -172,7 +172,7 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
 					Limits: corev1.ResourceList{
-						"intel.com/fpga-arria10-nlb0": resource.MustParse("1"),
+						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
 					},
 				},
 				Env: []corev1.EnvVar{
@@ -295,11 +295,11 @@ func TestMutatePods(t *testing.T) {
 					Resources: corev1.ResourceRequirements{
 						Limits: corev1.ResourceList{
 							"cpu": resource.MustParse("1"),
-							"intel.com/fpga-arria10": resource.MustParse("1"),
+							"fpga.intel.com/arria10": resource.MustParse("1"),
 						},
 						Requests: corev1.ResourceList{
 							"cpu": resource.MustParse("1"),
-							"intel.com/fpga-arria10": resource.MustParse("1"),
+							"fpga.intel.com/arria10": resource.MustParse("1"),
 						},
 					},
 				},
@@ -457,11 +457,11 @@ func TestGetEnvVars(t *testing.T) {
 		Resources: corev1.ResourceRequirements{
 			Limits: corev1.ResourceList{
 				"cpu": resource.MustParse("1"),
-				"intel.com/fpga-arria10": resource.MustParse("1"),
+				"fpga.intel.com/arria10": resource.MustParse("1"),
 			},
 			Requests: corev1.ResourceList{
 				"cpu": resource.MustParse("1"),
-				"intel.com/fpga-arria10": resource.MustParse("1"),
+				"fpga.intel.com/arria10": resource.MustParse("1"),
 			},
 		},
 		Env: []corev1.EnvVar{

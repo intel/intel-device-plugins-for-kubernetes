@@ -25,11 +25,10 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"golang.org/x/net/context"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
+	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
 )
 
 const (
@@ -40,133 +39,98 @@ const (
 	vendorString      = "0x8086"
 
 	// Device plugin settings.
-	pluginEndpointPrefix = "intelGPU"
-	resourceName         = "intel.com/gpu"
+	namespace  = "gpu.intel.com"
+	deviceType = "i915"
 )
 
-// deviceManager manages Intel gpu devices.
-type deviceManager struct {
-	srv     deviceplugin.Server
-	devices map[string]deviceplugin.DeviceInfo
+type devicePlugin struct {
+	sysfsDir string
+	devfsDir string
+
+	gpuDeviceReg     *regexp.Regexp
+	controlDeviceReg *regexp.Regexp
 }
 
-func newDeviceManager() *deviceManager {
-	return &deviceManager{
-		devices: make(map[string]deviceplugin.DeviceInfo),
+func newDevicePlugin(sysfsDir string, devfsDir string) *devicePlugin {
+	return &devicePlugin{
+		sysfsDir:         sysfsDir,
+		devfsDir:         devfsDir,
+		gpuDeviceReg:     regexp.MustCompile(gpuDeviceRE),
+		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
 	}
 }
 
-// Discovers all GPU devices available on the local node by walking `/sys/class/drm` directory.
-func (dm *deviceManager) discoverGPUs(sysfsDrmDir string, devfsDriDir string) error {
-	reg := regexp.MustCompile(gpuDeviceRE)
-	ctlReg := regexp.MustCompile(controlDeviceRE)
-	files, err := ioutil.ReadDir(sysfsDrmDir)
+func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
+	for {
+		devTree, err := dp.scan()
+		if err != nil {
+			glog.Error("Device scan failed: ", err)
+			return fmt.Errorf("Device scan failed: %v", err)
+		}
+
+		notifier.Notify(devTree)
+
+		time.Sleep(5 * time.Second)
+	}
+}
+
+func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
+	files, err := ioutil.ReadDir(dp.sysfsDir)
 	if err != nil {
-		return fmt.Errorf("Can't read sysfs folder: %v", err)
+		return nil, fmt.Errorf("Can't read sysfs folder: %v", err)
 	}
+
+	devTree := dpapi.NewDeviceTree()
 	for _, f := range files {
-		if reg.MatchString(f.Name()) {
-			dat, err := ioutil.ReadFile(path.Join(sysfsDrmDir, f.Name(), "device/vendor"))
+		if dp.gpuDeviceReg.MatchString(f.Name()) {
+			dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/vendor"))
 			if err != nil {
-				fmt.Println("Oops can't read vendor file")
+				glog.Warning("Skipping. Can't read vendor file: ", err)
 				continue
 			}
 
 			if strings.TrimSpace(string(dat)) == vendorString {
 				var nodes []string
 
-				drmFiles, err := ioutil.ReadDir(path.Join(sysfsDrmDir, f.Name(), "device/drm"))
+				drmFiles, err := ioutil.ReadDir(path.Join(dp.sysfsDir, f.Name(), "device/drm"))
 				if err != nil {
-					return fmt.Errorf("Can't read device folder: %v", err)
+					return nil, fmt.Errorf("Can't read device folder: %v", err)
 				}
 
 				for _, drmFile := range drmFiles {
-					if ctlReg.MatchString(drmFile.Name()) {
+					if dp.controlDeviceReg.MatchString(drmFile.Name()) {
 						//Skipping possible drm control node
 						continue
 					}
-					devPath := path.Join(devfsDriDir, drmFile.Name())
+					devPath := path.Join(dp.devfsDir, drmFile.Name())
 					if _, err := os.Stat(devPath); err != nil {
 						continue
 					}
 
-					fmt.Printf("Adding '%s' to GPU '%s'\n", devPath, f.Name())
+					glog.V(2).Info("Adding ", devPath, " to GPU ", f.Name())
 					nodes = append(nodes, devPath)
 				}
 
 				if len(nodes) > 0 {
-					dm.devices[f.Name()] = deviceplugin.DeviceInfo{
+					// Currently only one device type (i915) is supported.
+					// TODO: check model ID to differentiate device models.
+					devTree.AddDevice(deviceType, f.Name(), dpapi.DeviceInfo{
 						State: pluginapi.Healthy,
 						Nodes: nodes,
-					}
+					})
 				}
 			}
 		}
 	}
 
-	return nil
-}
-
-func (dm *deviceManager) getDeviceState(DeviceName string) string {
-	// TODO: calling tools to figure out actual device state
-	return pluginapi.Healthy
-}
-
-// Implements DevicePlugin service functions
-func (dm *deviceManager) GetDevicePluginOptions(ctx context.Context, empty *pluginapi.Empty) (*pluginapi.DevicePluginOptions, error) {
-	fmt.Println("GetDevicePluginOptions: return empty options")
-	return new(pluginapi.DevicePluginOptions), nil
-}
-
-func (dm *deviceManager) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.DevicePlugin_ListAndWatchServer) error {
-	fmt.Println("device-plugin: ListAndWatch start")
-	changed := true
-	for {
-		for id, dev := range dm.devices {
-			state := dm.getDeviceState(id)
-			if dev.State != state {
-				changed = true
-				dev.State = state
-				dm.devices[id] = dev
-			}
-		}
-		if changed {
-			resp := new(pluginapi.ListAndWatchResponse)
-			for id, dev := range dm.devices {
-				resp.Devices = append(resp.Devices, &pluginapi.Device{id, dev.State})
-			}
-			fmt.Printf("ListAndWatch: send devices %v\n", resp)
-			if err := stream.Send(resp); err != nil {
-				dm.srv.Stop()
-				return fmt.Errorf("device-plugin: cannot update device states: %v", err)
-			}
-		}
-		changed = false
-		time.Sleep(5 * time.Second)
-	}
-}
-
-func (dm *deviceManager) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
-	return deviceplugin.MakeAllocateResponse(rqt, dm.devices)
-}
-
-func (dm *deviceManager) PreStartContainer(ctx context.Context, rqt *pluginapi.PreStartContainerRequest) (*pluginapi.PreStartContainerResponse, error) {
-	glog.Warning("PreStartContainer() should not be called")
-	return new(pluginapi.PreStartContainerResponse), nil
+	return devTree, nil
 }
 
 func main() {
 	flag.Parse()
-	fmt.Println("GPU device plugin started")
-	dm := newDeviceManager()
+	glog.Info("GPU device plugin started")
 
-	err := dm.discoverGPUs(sysfsDrmDirectory, devfsDriDirectory)
-	if err != nil {
-		glog.Fatal(err)
-	}
-
-	err = dm.srv.Serve(dm, resourceName, pluginEndpointPrefix)
-	if err != nil {
-		glog.Fatal(err)
-	}
+	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory)
+	manager := dpapi.NewManager(namespace, plugin)
+	manager.Run()
 }

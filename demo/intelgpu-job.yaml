@@ -19,4 +19,4 @@ spec:
           command: [ "/run-opencl-example.sh", "/root/6-1/fft" ]
           resources:
             limits:
-              intel.com/gpu: 1
+              gpu.intel.com/i915: 1

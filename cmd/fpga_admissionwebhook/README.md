@@ -41,7 +41,7 @@ Then run the script `scripts/webhook-deploy.sh`.
 
 By default the script deploys the webhook in the preprogrammed mode (when
 requested FPGA resources get translated to AF resources, e.g.
-"intel.com/fpga-arria10-nlb0" -> "intel.com/fpga-af-d8424dc4a4a3c413f89e433683f9040b").
+"fpga.intel.com/arria10-nlb0" -> "fpga.intel.com/af-d8424dc4a4a3c413f89e433683f9040b").
 You can command the script to deploy the webhook in the orchestrated mode with
 the option `--mode`.
 
