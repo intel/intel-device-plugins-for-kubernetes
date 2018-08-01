@@ -1,27 +1,40 @@
-# Build and test Intel FPGA Device Plugin for Kubernetes
+# Build and test Intel FPGA device plugin for Kubernetes
 
-### Get source code
+### Dependencies
+
+You must install and set up the following FPGA plugin modules for correct operation:
+
+-   [FPGA device plugin](cmd/fpga_plugin/README.md) (this module)
+-   [FPGA admission controller webhook](cmd/fpga_admissionwebhook/README.md)
+-   [FPGA prestart CRI-O hook](cmd/fpga_crihook/README.md)
+
+
+### Get source code:
 ```
 $ mkdir -p $GOPATH/src/github.com/intel/
 $ cd $GOPATH/src/github.com/intel/
 $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes.git
 ```
 
-### Build FPGA device plugin
+### Build FPGA device plugin:
 ```
 $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make fpga_plugin
 ```
 
-### Make sure kubelet socket exists in /var/lib/kubelet/device-plugins/
+### Verify kubelet socket exists in /var/lib/kubelet/device-plugins/ directory:
 ```
 $ ls /var/lib/kubelet/device-plugins/kubelet.sock
 /var/lib/kubelet/device-plugins/kubelet.sock
 ```
 
-#### Run FPGA device plugin in afu mode
+### Choose mode for FPGA device plugin
 
-##### Run FPGA device plugin as administrator
+You can run the FPGA device plugin in either af or region mode.
+
+#### Run FPGA device plugin in af mode
+
+1. Run FPGA device plugin as administrator:
 ```
 $ export NODE_NAME="<node name>" # if the node's name was overridden and differs from hostname
 $ sudo -E $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode af -kubeconfig /var/run/kubernetes/admin.kubeconfig
@@ -30,7 +43,7 @@ device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-af
 device-plugin registered
 ```
 
-##### Check if FPGA device plugin is registered on master
+2. Check if FPGA device plugin is registered on master:
 ```
 $ kubectl describe node <node name> | grep fpga.intel.com
  fpga.intel.com/af-f7df405cbd7acf7222f144b0b93acd18:  1
@@ -39,7 +52,7 @@ $ kubectl describe node <node name> | grep fpga.intel.com
 
 #### Run FPGA device plugin in region mode
 
-##### Run FPGA device plugin as administrator
+1. Run FPGA device plugin as administrator:
 ```
 $ export NODE_NAME="<node name>" # if the node's name was overridden and differs from hostname
 $ sudo -E $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode region -kubeconfig /var/run/kubernetes/admin.kubeconfig
@@ -48,7 +61,7 @@ device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-re
 device-plugin registered
 ```
 
-##### Check if FPGA device plugin is registered on master
+2. Check if FPGA device plugin is registered on master:
 ```
 $ kubectl describe node <node name> | grep fpga.intel.com
  fpga.intel.com/region-ce48969398f05f33946d560708be108a:  1
@@ -57,26 +70,35 @@ $ kubectl describe node <node name> | grep fpga.intel.com
 
 ### Deploy FPGA device plugin as DaemonSet
 
-To deploy the plugin in a production cluster create a service account
+1. To deploy the plugin in a production cluster, create a service account
 for the plugin:
-
+    ```
     $ kubectl create -f deployments/fpga_plugin/fpga_plugin_service_account.yaml
     serviceaccount/intel-fpga-plugin-controller created
     clusterrole.rbac.authorization.k8s.io/node-getter created
     clusterrolebinding.rbac.authorization.k8s.io/get-nodes created
+    ```
 
-Then create the DaemonSet itself
-
+2. Create the DaemonSet:
+    ```
     $ kubectl create -f deployments/fpga_plugin/fpga_plugin.yaml
     daemonset.apps/intel-fpga-plugin created
+    ```
 
-You may want to modify the file `deployments/fpga_plugin/fpga_plugin.yaml` to
-use your own container image. But the command
-
+3. Build an image from sources:
+    ```
     $ make intel-fpga-plugin
+    ```
+    This image launches `fpga_plugin` in `af` mode by default.
 
-can provide an image built from the sources. This image launches `fpga_plugin`
-in the `af` mode by default. The mode can be overriden on per node basis with
-this node annotation:
-
+    You can override the mode on a per-node basis using this annotation:
+    ```
     $ kubectl annotate node mynode "fpga.intel.com/device-plugin-mode=region"
+    ```
+    To use your own container image, modify the
+    `deployments/fpga_plugin/fpga_plugin.yaml` file.
+
+### Next steps
+
+Continue with [FPGA admission controller webhook](cmd/fpga_admissionwebhook/README.md).
+
