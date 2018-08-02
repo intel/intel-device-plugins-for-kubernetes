@@ -5,9 +5,9 @@
     * [DPDK Getting Started Guide for Linux](https://doc.dpdk.org/guides/linux_gsg/index.html)
     * [DPDK Getting Started Guide, Linux Drivers section](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html)
 * QuickAssist SR-IOV virtual functions must be configured. Verify this by running:
-    ```
-    lspci | grep QAT
-    ```
+      ```
+      lspci | grep QAT
+      ```
 * Intel QuickAssist Technology software for Linux must be installed and
   configured. For more information, refer to:
     * [Intel QuickAssist Technology Software for Linux - Getting Started Guide](https://01.org/sites/default/files/downloads/intelr-quickassist-technology/336212qatswgettingstartedguiderev003.pdf)
@@ -20,16 +20,16 @@ $ cd $GOPATH/src/github.com/intel/
 $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes.git
 ```
 
-### Verify kubelet socket exists in /var/lib/kubelet/device-plugins/ directory:
-```
-$ ls /var/lib/kubelet/device-plugins/kubelet.sock
-/var/lib/kubelet/device-plugins/kubelet.sock
-```
-
 ### Build QAT device plugin:
 ```
 $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make qat_plugin
+```
+
+### Verify kubelet socket exists in /var/lib/kubelet/device-plugins/ directory:
+```
+$ ls /var/lib/kubelet/device-plugins/kubelet.sock
+/var/lib/kubelet/device-plugins/kubelet.sock
 ```
 
 ### Deploy QAT device plugin directly on the host:
@@ -89,7 +89,8 @@ $ kubectl describe node <node name> | grep intel.com/qat
 
      This command produces a Docker image named `ubuntu-demo-opencl`.
 
-2. Run an example DPDK application (`dpdk-test-crypto-perf`) requesting QAT devices:
+2. Deploy a pod to run an example DPDK application named
+`dpdk-test-crypto-perf`.
 
       In the pod specification file, add container resource request and limit.
       For example, `intel.com/qat: <number of devices>` for a container requesting QAT devices.
@@ -103,11 +104,12 @@ $ kubectl describe node <node name> | grep intel.com/qat
        dpdkqatuio               1/1       Running   0          27m
        intel-qat-plugin-5zgvb   1/1       Running   0          3h
 
-     $ kubectl exec -it dpdkqatuio bash
      ```
 
-3. Execute the `dpdk-test-crypto-perf` application and review the logs:
+3. Manually execute the `dpdk-test-crypto-perf` application to review the logs:
    ```
+   $ kubectl exec -it dpdkqatuio bash
+
    $ ./dpdk-test-crypto-perf -l 6-7 -w $intelQAT1 -- --ptest throughput --\
 	devtype crypto_qat --optype cipher-only --cipher-algo aes-cbc --cipher-op \
 	encrypt --cipher-key-sz 16 --total-ops 10000000 --burst-sz 32 --buffer-sz 64
