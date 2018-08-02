@@ -87,7 +87,7 @@ $ kubectl describe node <node name> | grep intel.com/qat
      $ docker build -t crypto-perf .
      ```
 
-     This command produces a Docker image named `ubuntu-demo-opencl`.
+     This command produces a Docker image named `crypto-perf`.
 
 2. Deploy a pod to run an example DPDK application named
 `dpdk-test-crypto-perf`.
