@@ -89,7 +89,7 @@ echo "Create webhook deployment"
 cat ${srcroot}/deployments/fpga_admissionwebhook/deployment-tpl.yaml | sed -e "s/{MODE}/${mode}/g" | ${kubectl} create -f -
 
 echo "Create webhook service"
-kubectl create -f ${srcroot}/deployments/fpga_admissionwebhook/service.yaml
+${kubectl} create -f ${srcroot}/deployments/fpga_admissionwebhook/service.yaml
 
 echo "Register webhook"
 cat ${srcroot}/deployments/fpga_admissionwebhook/mutating-webhook-configuration-tpl.yaml | sed -e "s/{CA_BUNDLE}/${CA_BUNDLE}/g" | ${kubectl} create -f -
