@@ -35,23 +35,35 @@ Run the `scripts/webhook-deploy.sh` script.
     $ cd $SRC
     $ ./scripts/webhook-deploy.sh
     Create secret including signed key/cert pair for the webhook
-    Creating certs in /tmp/tmp.JYgcFiaoCZ
-    certificatesigningrequest "intel-fpga-webhook-svc.default" created
+    Creating certs in /tmp/tmp.Ebb77GBKqm
+    certificatesigningrequest.certificates.k8s.io/intel-fpga-webhook-svc.default created
     NAME                             AGE       REQUESTOR      CONDITION
-    intel-fpga-webhook-svc.default   1s        system:admin   Pending
-    certificatesigningrequest "intel-fpga-webhook-svc.default" approved
-    secret "intel-fpga-webhook-certs" created
-    Removing /tmp/tmp.JYgcFiaoCZ
+    intel-fpga-webhook-svc.default   0s        system:admin   Pending
+    certificatesigningrequest.certificates.k8s.io/intel-fpga-webhook-svc.default approved
+    secret/intel-fpga-webhook-certs created
+    Removing /tmp/tmp.Ebb77GBKqm
+    Create FPGA CRDs
+    customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
+    customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
+    acceleratorfunction.fpga.intel.com/arria10-nlb0 created
+    acceleratorfunction.fpga.intel.com/arria10-nlb3 created
+    fpgaregion.fpga.intel.com/arria10 created
+    clusterrole.rbac.authorization.k8s.io/fpga-reader created
+    clusterrolebinding.rbac.authorization.k8s.io/default-fpga-reader created
     Create webhook deployment
-    deployment "intel-fpga-webhook-deployment" created
+    deployment.extensions/intel-fpga-webhook-deployment created
     Create webhook service
-    service "intel-fpga-webhook-svc" created
+    service/intel-fpga-webhook-svc created
     Register webhook
-    mutatingwebhookconfiguration "fpga-mutator-webhook-cfg" created
+    mutatingwebhookconfiguration.admissionregistration.k8s.io/fpga-mutator-webhook-cfg created
 ```
 
-By default, the script deploys the webhook in a preprogrammed mode. Requested FPGA resources are translated to AF resources. For example, 
-`intel.com/fpga-arria10-nlb0` is translated to `intel.com/fpga-af-d8424dc4a4a3c413f89e433683f9040b`.
+Mappings of resource names are configured with objects of `AcceleratorFunction` and
+`FpgaRegion` custom resource definitions found respectively in
+`./deployment/fpga_admissionwebhook/af-crd.yaml` and `./deployment/fpga_admissionwebhook/region-crd.yaml`.
+
+By default, the script deploys the webhook in a preprogrammed mode. Requested FPGA resources are translated to AF resources. For example,
+`fpga.intel.com/arria10-nlb0` is translated to `fpga.intel.com/af-d8424dc4a4a3c413f89e433683f9040b`.
 
 Use the option `--mode` to command the script to deploy the webhook in orchestrated mode:
 ```
