@@ -185,9 +185,9 @@ func (he *hookEnv) validateBitStream(params *fpgaParams, fpgaBitStreamPath strin
 }
 
 func (he *hookEnv) programBitStream(params *fpgaParams, fpgaBitStreamPath string) error {
-	output, err := he.execer.Command("fpgaconf", fpgaBitStreamPath).CombinedOutput()
+	output, err := he.execer.Command("fpgaconf", "-S", params.devNum, fpgaBitStreamPath).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to program AFU %s to region %s: error: %v, output: %s", params.afu, params.region, err, string(output))
+		return fmt.Errorf("failed to program AFU %s to socket %s, region %s: error: %v, output: %s", params.afu, params.devNum, params.region, err, string(output))
 	}
 
 	programmedAfu, err := he.getProgrammedAfu(params.devNum)
