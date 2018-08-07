@@ -39,7 +39,7 @@ const (
 	fpgaDevRegexp          = `\/dev\/intel-fpga-port.(\d)$`
 	afuIDTemplate          = "/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id"
 	annotationName         = "com.intel.fpga.mode"
-	annotationValue        = "intel.com/fpga-region"
+	annotationValue        = "fpga.intel.com/region"
 )
 
 func decodeJSONStream(reader io.Reader) (map[string]interface{}, error) {
