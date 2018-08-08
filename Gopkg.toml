@@ -33,16 +33,16 @@ ignored = ["k8s.io/code-generator"]
 
 [[constraint]]
   name = "google.golang.org/grpc"
-  version = "1.10.0"
+  version = "1.11.0"
 
 [[constraint]]
   name = "k8s.io/kubernetes"
-  version = "1.10.0"
+  version = "1.11.0"
 
 [[constraint]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.10.0"
+  version = "kubernetes-1.11.0"
 
 [[constraint]]
   name = "k8s.io/code-generator"
-  version = "kubernetes-1.10.0"
+  version = "kubernetes-1.11.0"

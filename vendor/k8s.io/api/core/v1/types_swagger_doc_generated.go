@@ -121,7 +121,7 @@ var map_CSIPersistentVolumeSource = map[string]string{
 	"driver":                     "Driver is the name of the driver to use for this volume. Required.",
 	"volumeHandle":               "VolumeHandle is the unique volume name returned by the CSI volume plugin’s CreateVolume to refer to the volume on all subsequent calls. Required.",
 	"readOnly":                   "Optional: The value to pass to ControllerPublishVolumeRequest. Defaults to false (read/write).",
-	"fsType":                     "Filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
+	"fsType":                     "Filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\".",
 	"volumeAttributes":           "Attributes of the volume to publish.",
 	"controllerPublishSecretRef": "ControllerPublishSecretRef is a reference to the secret object containing sensitive information to pass to the CSI driver to complete the CSI ControllerPublishVolume and ControllerUnpublishVolume calls. This field is optional, and  may be empty if no secret is required. If the secret object contains more than one secret, all secrets are passed.",
 	"nodeStageSecretRef":         "NodeStageSecretRef is a reference to the secret object containing sensitive information to pass to the CSI driver to complete the CSI NodeStageVolume and NodeStageVolume and NodeUnstageVolume calls. This field is optional, and  may be empty if no secret is required. If the secret object contains more than one secret, all secrets are passed.",
@@ -1073,7 +1073,7 @@ func (NodeSelectorRequirement) SwaggerDoc() map[string]string {
 }
 
 var map_NodeSelectorTerm = map[string]string{
-	"":                 "A null or empty node selector term matches no objects. The requirements of them are ANDed.",
+	"":                 "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
 	"matchExpressions": "A list of node selector requirements by node's labels.",
 	"matchFields":      "A list of node selector requirements by node's fields.",
 }
@@ -1479,6 +1479,7 @@ var map_PodSecurityContext = map[string]string{
 	"runAsNonRoot":       "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
 	"supplementalGroups": "A list of groups applied to the first process run in each container, in addition to the container's primary GID.  If unspecified, no groups will be added to any container.",
 	"fsGroup":            "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw ",
+	"sysctls":            "Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported sysctls (by the container runtime) might fail to launch.",
 }
 
 func (PodSecurityContext) SwaggerDoc() map[string]string {
@@ -1853,9 +1854,9 @@ var map_ScaleIOPersistentVolumeSource = map[string]string{
 	"sslEnabled":       "Flag to enable/disable SSL communication with Gateway, default false",
 	"protectionDomain": "The name of the ScaleIO Protection Domain for the configured storage.",
 	"storagePool":      "The ScaleIO Storage Pool associated with the protection domain.",
-	"storageMode":      "Indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.",
+	"storageMode":      "Indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned. Default is ThinProvisioned.",
 	"volumeName":       "The name of a volume already created in the ScaleIO system that is associated with this volume source.",
-	"fsType":           "Filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
+	"fsType":           "Filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Default is \"xfs\"",
 	"readOnly":         "Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
 }
 
@@ -1871,9 +1872,9 @@ var map_ScaleIOVolumeSource = map[string]string{
 	"sslEnabled":       "Flag to enable/disable SSL communication with Gateway, default false",
 	"protectionDomain": "The name of the ScaleIO Protection Domain for the configured storage.",
 	"storagePool":      "The ScaleIO Storage Pool associated with the protection domain.",
-	"storageMode":      "Indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.",
+	"storageMode":      "Indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned. Default is ThinProvisioned.",
 	"volumeName":       "The name of a volume already created in the ScaleIO system that is associated with this volume source.",
-	"fsType":           "Filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
+	"fsType":           "Filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Default is \"xfs\".",
 	"readOnly":         "Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
 }
 
@@ -2142,8 +2143,8 @@ func (StorageOSVolumeSource) SwaggerDoc() map[string]string {
 
 var map_Sysctl = map[string]string{
 	"":      "Sysctl defines a kernel parameter to be set",
-	"Name":  "Name of a property to set",
-	"Value": "Value of a property to set",
+	"name":  "Name of a property to set",
+	"value": "Value of a property to set",
 }
 
 func (Sysctl) SwaggerDoc() map[string]string {
@@ -2185,6 +2186,25 @@ func (Toleration) SwaggerDoc() map[string]string {
 	return map_Toleration
 }
 
+var map_TopologySelectorLabelRequirement = map[string]string{
+	"":       "A topology selector requirement is a selector that matches given label. This is an alpha feature and may change in the future.",
+	"key":    "The label key that the selector applies to.",
+	"values": "An array of string values. One value must match the label to be selected. Each entry in Values is ORed.",
+}
+
+func (TopologySelectorLabelRequirement) SwaggerDoc() map[string]string {
+	return map_TopologySelectorLabelRequirement
+}
+
+var map_TopologySelectorTerm = map[string]string{
+	"": "A topology selector term represents the result of label queries. A null or empty topology selector term matches no objects. The requirements of them are ANDed. It provides a subset of functionality as NodeSelectorTerm. This is an alpha feature and may change in the future.",
+	"matchLabelExpressions": "A list of topology selector requirements by labels.",
+}
+
+func (TopologySelectorTerm) SwaggerDoc() map[string]string {
+	return map_TopologySelectorTerm
+}
+
 var map_Volume = map[string]string{
 	"":     "Volume represents a named volume in a pod that may be accessed by any container in the pod.",
 	"name": "Volume's name. Must be a DNS_LABEL and unique within the pod. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
@@ -2210,7 +2230,7 @@ var map_VolumeMount = map[string]string{
 	"readOnly":         "Mounted read-only if true, read-write otherwise (false or unspecified). Defaults to false.",
 	"mountPath":        "Path within the container at which the volume should be mounted.  Must not contain ':'.",
 	"subPath":          "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
-	"mountPropagation": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationHostToContainer is used. This field is beta in 1.10.",
+	"mountPropagation": "mountPropagation determines how mounts are propagated from the host to container and the other way around. When not set, MountPropagationNone is used. This field is beta in 1.10.",
 }
 
 func (VolumeMount) SwaggerDoc() map[string]string {

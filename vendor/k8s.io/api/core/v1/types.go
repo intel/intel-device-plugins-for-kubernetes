@@ -1339,6 +1339,7 @@ type ScaleIOVolumeSource struct {
 	// +optional
 	StoragePool string `json:"storagePool,omitempty" protobuf:"bytes,6,opt,name=storagePool"`
 	// Indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.
+	// Default is ThinProvisioned.
 	// +optional
 	StorageMode string `json:"storageMode,omitempty" protobuf:"bytes,7,opt,name=storageMode"`
 	// The name of a volume already created in the ScaleIO system
@@ -1346,7 +1347,8 @@ type ScaleIOVolumeSource struct {
 	VolumeName string `json:"volumeName,omitempty" protobuf:"bytes,8,opt,name=volumeName"`
 	// Filesystem type to mount.
 	// Must be a filesystem type supported by the host operating system.
-	// Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
+	// Ex. "ext4", "xfs", "ntfs".
+	// Default is "xfs".
 	// +optional
 	FSType string `json:"fsType,omitempty" protobuf:"bytes,9,opt,name=fsType"`
 	// Defaults to false (read/write). ReadOnly here will force
@@ -1374,6 +1376,7 @@ type ScaleIOPersistentVolumeSource struct {
 	// +optional
 	StoragePool string `json:"storagePool,omitempty" protobuf:"bytes,6,opt,name=storagePool"`
 	// Indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.
+	// Default is ThinProvisioned.
 	// +optional
 	StorageMode string `json:"storageMode,omitempty" protobuf:"bytes,7,opt,name=storageMode"`
 	// The name of a volume already created in the ScaleIO system
@@ -1381,7 +1384,8 @@ type ScaleIOPersistentVolumeSource struct {
 	VolumeName string `json:"volumeName,omitempty" protobuf:"bytes,8,opt,name=volumeName"`
 	// Filesystem type to mount.
 	// Must be a filesystem type supported by the host operating system.
-	// Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
+	// Ex. "ext4", "xfs", "ntfs".
+	// Default is "xfs"
 	// +optional
 	FSType string `json:"fsType,omitempty" protobuf:"bytes,9,opt,name=fsType"`
 	// Defaults to false (read/write). ReadOnly here will force
@@ -1607,7 +1611,7 @@ type CSIPersistentVolumeSource struct {
 
 	// Filesystem type to mount.
 	// Must be a filesystem type supported by the host operating system.
-	// Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
+	// Ex. "ext4", "xfs", "ntfs".
 	// +optional
 	FSType string `json:"fsType,omitempty" protobuf:"bytes,4,opt,name=fsType"`
 
@@ -1682,7 +1686,7 @@ type VolumeMount struct {
 	SubPath string `json:"subPath,omitempty" protobuf:"bytes,4,opt,name=subPath"`
 	// mountPropagation determines how mounts are propagated from the host
 	// to container and the other way around.
-	// When not set, MountPropagationHostToContainer is used.
+	// When not set, MountPropagationNone is used.
 	// This field is beta in 1.10.
 	// +optional
 	MountPropagation *MountPropagationMode `json:"mountPropagation,omitempty" protobuf:"bytes,5,opt,name=mountPropagation,casttype=MountPropagationMode"`
@@ -2312,6 +2316,8 @@ const (
 	// PodReasonUnschedulable reason in PodScheduled PodCondition means that the scheduler
 	// can't schedule the pod right now, for example due to insufficient resources in the cluster.
 	PodReasonUnschedulable = "Unschedulable"
+	// ContainersReady indicates whether all containers in the pod are ready.
+	ContainersReady PodConditionType = "ContainersReady"
 )
 
 // PodCondition contains details for the current condition of this pod.
@@ -2389,6 +2395,7 @@ type NodeSelector struct {
 
 // A null or empty node selector term matches no objects. The requirements of
 // them are ANDed.
+// The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
 type NodeSelectorTerm struct {
 	// A list of node selector requirements by node's labels.
 	// +optional
@@ -2427,6 +2434,27 @@ const (
 	NodeSelectorOpGt           NodeSelectorOperator = "Gt"
 	NodeSelectorOpLt           NodeSelectorOperator = "Lt"
 )
+
+// A topology selector term represents the result of label queries.
+// A null or empty topology selector term matches no objects.
+// The requirements of them are ANDed.
+// It provides a subset of functionality as NodeSelectorTerm.
+// This is an alpha feature and may change in the future.
+type TopologySelectorTerm struct {
+	// A list of topology selector requirements by labels.
+	// +optional
+	MatchLabelExpressions []TopologySelectorLabelRequirement `json:"matchLabelExpressions,omitempty" protobuf:"bytes,1,rep,name=matchLabelExpressions"`
+}
+
+// A topology selector requirement is a selector that matches given label.
+// This is an alpha feature and may change in the future.
+type TopologySelectorLabelRequirement struct {
+	// The label key that the selector applies to.
+	Key string `json:"key" protobuf:"bytes,1,opt,name=key"`
+	// An array of string values. One value must match the label to be selected.
+	// Each entry in Values is ORed.
+	Values []string `json:"values" protobuf:"bytes,2,rep,name=values"`
+}
 
 // Affinity is a group of affinity scheduling rules.
 type Affinity struct {
@@ -2897,6 +2925,10 @@ type PodSecurityContext struct {
 	// If unset, the Kubelet will not modify the ownership and permissions of any volume.
 	// +optional
 	FSGroup *int64 `json:"fsGroup,omitempty" protobuf:"varint,5,opt,name=fsGroup"`
+	// Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported
+	// sysctls (by the container runtime) might fail to launch.
+	// +optional
+	Sysctls []Sysctl `json:"sysctls,omitempty" protobuf:"bytes,7,rep,name=sysctls"`
 }
 
 // PodQOSClass defines the supported qos classes of Pods.
@@ -5181,9 +5213,9 @@ const (
 // Sysctl defines a kernel parameter to be set
 type Sysctl struct {
 	// Name of a property to set
-	Name string `protobuf:"bytes,1,opt,name=name"`
+	Name string `json:"name" protobuf:"bytes,1,opt,name=name"`
 	// Value of a property to set
-	Value string `protobuf:"bytes,2,opt,name=value"`
+	Value string `json:"value" protobuf:"bytes,2,opt,name=value"`
 }
 
 // NodeResources is an object for conveying resource information about a node.

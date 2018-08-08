@@ -188,7 +188,7 @@ message CSIPersistentVolumeSource {
 
   // Filesystem type to mount.
   // Must be a filesystem type supported by the host operating system.
-  // Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
+  // Ex. "ext4", "xfs", "ntfs".
   // +optional
   optional string fsType = 4;
 
@@ -1992,6 +1992,7 @@ message NodeSelectorRequirement {
 
 // A null or empty node selector term matches no objects. The requirements of
 // them are ANDed.
+// The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
 message NodeSelectorTerm {
   // A list of node selector requirements by node's labels.
   // +optional
@@ -2892,6 +2893,11 @@ message PodSecurityContext {
   // If unset, the Kubelet will not modify the ownership and permissions of any volume.
   // +optional
   optional int64 fsGroup = 5;
+
+  // Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported
+  // sysctls (by the container runtime) might fail to launch.
+  // +optional
+  repeated Sysctl sysctls = 7;
 }
 
 // Describes the class of pods that should avoid this node.
@@ -3727,6 +3733,7 @@ message ScaleIOPersistentVolumeSource {
   optional string storagePool = 6;
 
   // Indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.
+  // Default is ThinProvisioned.
   // +optional
   optional string storageMode = 7;
 
@@ -3736,7 +3743,8 @@ message ScaleIOPersistentVolumeSource {
 
   // Filesystem type to mount.
   // Must be a filesystem type supported by the host operating system.
-  // Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
+  // Ex. "ext4", "xfs", "ntfs".
+  // Default is "xfs"
   // +optional
   optional string fsType = 9;
 
@@ -3771,6 +3779,7 @@ message ScaleIOVolumeSource {
   optional string storagePool = 6;
 
   // Indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.
+  // Default is ThinProvisioned.
   // +optional
   optional string storageMode = 7;
 
@@ -3780,7 +3789,8 @@ message ScaleIOVolumeSource {
 
   // Filesystem type to mount.
   // Must be a filesystem type supported by the host operating system.
-  // Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
+  // Ex. "ext4", "xfs", "ntfs".
+  // Default is "xfs".
   // +optional
   optional string fsType = 9;
 
@@ -4438,6 +4448,28 @@ message Toleration {
   optional int64 tolerationSeconds = 5;
 }
 
+// A topology selector requirement is a selector that matches given label.
+// This is an alpha feature and may change in the future.
+message TopologySelectorLabelRequirement {
+  // The label key that the selector applies to.
+  optional string key = 1;
+
+  // An array of string values. One value must match the label to be selected.
+  // Each entry in Values is ORed.
+  repeated string values = 2;
+}
+
+// A topology selector term represents the result of label queries.
+// A null or empty topology selector term matches no objects.
+// The requirements of them are ANDed.
+// It provides a subset of functionality as NodeSelectorTerm.
+// This is an alpha feature and may change in the future.
+message TopologySelectorTerm {
+  // A list of topology selector requirements by labels.
+  // +optional
+  repeated TopologySelectorLabelRequirement matchLabelExpressions = 1;
+}
+
 // Volume represents a named volume in a pod that may be accessed by any container in the pod.
 message Volume {
   // Volume's name.
@@ -4481,7 +4513,7 @@ message VolumeMount {
 
   // mountPropagation determines how mounts are propagated from the host
   // to container and the other way around.
-  // When not set, MountPropagationHostToContainer is used.
+  // When not set, MountPropagationNone is used.
   // This field is beta in 1.10.
   // +optional
   optional string mountPropagation = 5;
