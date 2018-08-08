@@ -1,0 +1,20 @@
+apiVersion: fpga.intel.com/v1
+kind: AcceleratorFunction
+metadata:
+  name: arria10-nlb0
+spec:
+  afuId: d8424dc4a4a3c413f89e433683f9040b
+---
+apiVersion: fpga.intel.com/v1
+kind: AcceleratorFunction
+metadata:
+  name: arria10-nlb3
+spec:
+  afuId: f7df405cbd7acf7222f144b0b93acd18
+---
+apiVersion: fpga.intel.com/v1
+kind: FpgaRegion
+metadata:
+  name: arria10
+spec:
+  interfaceId: ce48969398f05f33946d560708be108a
