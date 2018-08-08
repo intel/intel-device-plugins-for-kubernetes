@@ -3,6 +3,8 @@ language: go
 go:
   - 1.10.x
 
+sudo: required
+
 before_install:
   - go get -v github.com/golang/lint/golint
   - go get -v github.com/fzipp/gocyclo
@@ -16,6 +18,7 @@ script:
   - make vet
   - make cyclomatic-check
   - make test
+  - make images
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
