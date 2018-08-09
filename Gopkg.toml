@@ -20,6 +20,8 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
+required = ["k8s.io/code-generator/cmd/deepcopy-gen", "k8s.io/code-generator/cmd/client-gen", "k8s.io/code-generator/cmd/lister-gen", "k8s.io/code-generator/cmd/informer-gen", "k8s.io/code-generator/cmd/defaulter-gen"]
+ignored = ["k8s.io/code-generator"]
 
 [[constraint]]
   branch = "master"
@@ -39,4 +41,8 @@
 
 [[constraint]]
   name = "k8s.io/apimachinery"
+  version = "kubernetes-1.10.0"
+
+[[constraint]]
+  name = "k8s.io/code-generator"
   version = "kubernetes-1.10.0"
