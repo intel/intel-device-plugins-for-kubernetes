@@ -15,6 +15,7 @@ function help {
     echo '      --kubectl <kubectl> - path to the kubectl utility'
     echo '      --mode <mode> - "preprogrammed" (default) or "orchestrated" mode of operation'
     echo '      --ca-bundle-path <path> - path to CA bundle used for signing cerificates in the cluster'
+    echo '      --namespace <name> - namespace to deploy the webhook in'
 }
 
 while [[ $# -gt 0 ]]; do
@@ -29,6 +30,10 @@ while [[ $# -gt 0 ]]; do
             ;;
 	--mode)
 	    mode="$2"
+            shift
+            ;;
+        --namespace)
+            namespace="$2"
             shift
             ;;
 	help)
@@ -48,17 +53,18 @@ done
 
 [ -z ${kubectl} ] && kubectl="kubectl"
 [ -z ${mode} ] && mode="preprogrammed"
+[ -z ${namespace} ] && namespace="default"
 
 # clean up any previously created deployment
 ${kubectl} delete MutatingWebhookConfiguration "fpga-mutator-webhook-cfg" 2>/dev/null || true
-${kubectl} delete service ${service} 2>/dev/null || true
-${kubectl} delete deployment "intel-fpga-webhook-deployment" 2>/dev/null || true
-${kubectl} delete -f ${srcroot}/deployments/fpga_admissionwebhook/rbac-config.yaml 2>/dev/null || true
-${kubectl} delete -f ${srcroot}/deployments/fpga_admissionwebhook/mappings-collection.yaml 2>/dev/null || true
-${kubectl} delete -f ${srcroot}/deployments/fpga_admissionwebhook/region-crd.yaml 2>/dev/null || true
-${kubectl} delete -f ${srcroot}/deployments/fpga_admissionwebhook/af-crd.yaml 2>/dev/null || true
-${kubectl} delete secret ${secret} 2>/dev/null || true
-${kubectl} delete csr "${service}.default" 2>/dev/null || true
+${kubectl} --namespace ${namespace} delete service ${service} 2>/dev/null || true
+${kubectl} --namespace ${namespace} delete deployment "intel-fpga-webhook-deployment" 2>/dev/null || true
+${kubectl} delete -f ${srcroot}/deployments/fpga_admissionwebhook/rbac-config-tpl.yaml 2>/dev/null || true
+${kubectl} --namespace ${namespace} delete -f ${srcroot}/deployments/fpga_admissionwebhook/mappings-collection.yaml 2>/dev/null || true
+${kubectl} --namespace ${namespace} delete -f ${srcroot}/deployments/fpga_admissionwebhook/region-crd.yaml 2>/dev/null || true
+${kubectl} --namespace ${namespace} delete -f ${srcroot}/deployments/fpga_admissionwebhook/af-crd.yaml 2>/dev/null || true
+${kubectl} --namespace ${namespace} delete secret ${secret} 2>/dev/null || true
+${kubectl} delete csr "${service}.${namespace}" 2>/dev/null || true
 
 if [ "x${command}" = "xcleanup" ]; then
     echo "Cleanup done. Exiting..."
@@ -77,19 +83,24 @@ else
 fi
 
 echo "Create secret including signed key/cert pair for the webhook"
-${srcroot}/scripts/webhook-create-signed-cert.sh --kubectl ${kubectl} --service ${service} --secret ${secret} --namespace "default"
+${srcroot}/scripts/webhook-create-signed-cert.sh --kubectl ${kubectl} --service ${service} --secret ${secret} --namespace ${namespace}
 
 echo "Create FPGA CRDs"
-${kubectl} create -f ${srcroot}/deployments/fpga_admissionwebhook/af-crd.yaml
-${kubectl} create -f ${srcroot}/deployments/fpga_admissionwebhook/region-crd.yaml
-${kubectl} create -f ${srcroot}/deployments/fpga_admissionwebhook/mappings-collection.yaml
-${kubectl} create -f ${srcroot}/deployments/fpga_admissionwebhook/rbac-config.yaml
+${kubectl} --namespace ${namespace} create -f ${srcroot}/deployments/fpga_admissionwebhook/af-crd.yaml
+${kubectl} --namespace ${namespace} create -f ${srcroot}/deployments/fpga_admissionwebhook/region-crd.yaml
+${kubectl} --namespace ${namespace} create -f ${srcroot}/deployments/fpga_admissionwebhook/mappings-collection.yaml
+cat ${srcroot}/deployments/fpga_admissionwebhook/rbac-config-tpl.yaml | \
+    sed -e "s/{namespace}/${namespace}/g" | \
+    ${kubectl} create -f -
 
 echo "Create webhook deployment"
-cat ${srcroot}/deployments/fpga_admissionwebhook/deployment-tpl.yaml | sed -e "s/{MODE}/${mode}/g" | ${kubectl} create -f -
+cat ${srcroot}/deployments/fpga_admissionwebhook/deployment-tpl.yaml | sed -e "s/{MODE}/${mode}/g" | ${kubectl} --namespace ${namespace} create -f -
 
 echo "Create webhook service"
-${kubectl} create -f ${srcroot}/deployments/fpga_admissionwebhook/service.yaml
+${kubectl} --namespace ${namespace} create -f ${srcroot}/deployments/fpga_admissionwebhook/service.yaml
 
 echo "Register webhook"
-cat ${srcroot}/deployments/fpga_admissionwebhook/mutating-webhook-configuration-tpl.yaml | sed -e "s/{CA_BUNDLE}/${CA_BUNDLE}/g" | ${kubectl} create -f -
+cat ${srcroot}/deployments/fpga_admissionwebhook/mutating-webhook-configuration-tpl.yaml | \
+    sed -e "s/{CA_BUNDLE}/${CA_BUNDLE}/g" | \
+    sed -e "s/{namespace}/${namespace}/g" | \
+    ${kubectl} create -f -
