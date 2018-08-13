@@ -18,6 +18,6 @@ webhooks:
   clientConfig:
     service:
       path: "/pods"
-      namespace: default
+      namespace: {namespace}
       name: intel-fpga-webhook-svc
     caBundle: {CA_BUNDLE}
