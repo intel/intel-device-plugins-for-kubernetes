@@ -47,4 +47,11 @@ $(images):
 
 images: $(images)
 
+demos = $(shell cd demo/ && ls -d */ | sed 's/\(.\+\)\//\1/g' | grep -v crypto-perf)
+
+$(demos):
+	@cd demo/ && ./build-image.sh $@
+
+demos: $(demos)
+
 .PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images)

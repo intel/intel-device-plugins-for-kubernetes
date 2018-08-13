@@ -19,6 +19,7 @@ script:
   - make cyclomatic-check
   - make test
   - make images
+  - make demos
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
