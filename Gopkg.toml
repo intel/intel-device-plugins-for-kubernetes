@@ -23,6 +23,16 @@
 required = ["k8s.io/code-generator/cmd/deepcopy-gen", "k8s.io/code-generator/cmd/client-gen", "k8s.io/code-generator/cmd/lister-gen", "k8s.io/code-generator/cmd/informer-gen", "k8s.io/code-generator/cmd/defaulter-gen"]
 ignored = ["k8s.io/code-generator"]
 
+[prune]
+  go-tests = true
+  unused-packages = true
+  non-go = true
+
+  [[prune.project]]
+  name = "k8s.io/code-generator"
+  non-go = false
+  unused-packages = false
+
 [[constraint]]
   branch = "master"
   name = "github.com/golang/glog"
