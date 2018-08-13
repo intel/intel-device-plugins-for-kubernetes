@@ -15,6 +15,7 @@
 package deviceplugin
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -23,7 +24,6 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
