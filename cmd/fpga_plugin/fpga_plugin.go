@@ -52,6 +52,10 @@ const (
 	deviceRE = `^intel-fpga-dev.[0-9]+$`
 	portRE   = `^intel-fpga-port.[0-9]+$`
 	fmeRE    = `^intel-fpga-fme.[0-9]+$`
+
+	// When the device's firmware crashes the driver reports these values
+	unhealthyAfuID       = "ffffffffffffffffffffffffffffffff"
+	unhealthyInterfaceID = "ffffffffffffffffffffffffffffffff"
 )
 
 type getDevTreeFunc func(devices []device) dpapi.DeviceTree
@@ -62,6 +66,10 @@ func getRegionDevelTree(devices []device) dpapi.DeviceTree {
 
 	for _, dev := range devices {
 		for _, region := range dev.regions {
+			health := pluginapi.Healthy
+			if region.interfaceID == unhealthyInterfaceID {
+				health = pluginapi.Unhealthy
+			}
 			devType := fmt.Sprintf("%s-%s", regionMode, region.interfaceID)
 			devNodes := make([]string, len(region.afus)+1)
 			for num, afu := range region.afus {
@@ -69,7 +77,7 @@ func getRegionDevelTree(devices []device) dpapi.DeviceTree {
 			}
 			devNodes[len(region.afus)] = region.devNode
 			regionTree.AddDevice(devType, region.id, dpapi.DeviceInfo{
-				State: pluginapi.Healthy,
+				State: health,
 				Nodes: devNodes,
 			})
 		}
@@ -84,13 +92,17 @@ func getRegionTree(devices []device) dpapi.DeviceTree {
 
 	for _, dev := range devices {
 		for _, region := range dev.regions {
+			health := pluginapi.Healthy
+			if region.interfaceID == unhealthyInterfaceID {
+				health = pluginapi.Unhealthy
+			}
 			devType := fmt.Sprintf("%s-%s", regionMode, region.interfaceID)
 			devNodes := make([]string, len(region.afus))
 			for num, afu := range region.afus {
 				devNodes[num] = afu.devNode
 			}
 			regionTree.AddDevice(devType, region.id, dpapi.DeviceInfo{
-				State: pluginapi.Healthy,
+				State: health,
 				Nodes: devNodes,
 			})
 		}
@@ -106,9 +118,13 @@ func getAfuTree(devices []device) dpapi.DeviceTree {
 	for _, dev := range devices {
 		for _, region := range dev.regions {
 			for _, afu := range region.afus {
+				health := pluginapi.Healthy
+				if afu.afuID == unhealthyAfuID {
+					health = pluginapi.Unhealthy
+				}
 				devType := fmt.Sprintf("%s-%s", afMode, afu.afuID)
 				afuTree.AddDevice(devType, afu.id, dpapi.DeviceInfo{
-					State: pluginapi.Healthy,
+					State: health,
 					Nodes: []string{afu.devNode},
 				})
 			}
@@ -194,7 +210,7 @@ func (dp *devicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error
 	return nil
 }
 
-// Scan starts scanning of FPGA devices on the host
+// Scan starts scanning FPGA devices on the host
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	for {
 		devTree, err := dp.scanFPGAs()
