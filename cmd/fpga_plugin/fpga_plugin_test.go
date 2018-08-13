@@ -119,6 +119,23 @@ func getDevices() []device {
 				},
 			},
 		},
+		{
+			name: "intel-fpga-dev.2",
+			regions: []region{
+				{
+					id:          "intel-fpga-fme.2",
+					interfaceID: unhealthyInterfaceID,
+					devNode:     "/dev/intel-fpga-fme.2",
+					afus: []afu{
+						{
+							id:      "intel-fpga-port.2",
+							afuID:   unhealthyAfuID,
+							devNode: "/dev/intel-fpga-port.2",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -131,6 +148,10 @@ func TestGetRegionDevelTree(t *testing.T) {
 	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.1", dpapi.DeviceInfo{
 		State: pluginapi.Healthy,
 		Nodes: []string{"/dev/intel-fpga-port.1", "/dev/intel-fpga-fme.1"},
+	})
+	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "intel-fpga-fme.2", dpapi.DeviceInfo{
+		State: pluginapi.Unhealthy,
+		Nodes: []string{"/dev/intel-fpga-port.2", "/dev/intel-fpga-fme.2"},
 	})
 
 	result := getRegionDevelTree(getDevices())
@@ -149,6 +170,10 @@ func TestGetRegionTree(t *testing.T) {
 		State: pluginapi.Healthy,
 		Nodes: []string{"/dev/intel-fpga-port.1"},
 	})
+	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "intel-fpga-fme.2", dpapi.DeviceInfo{
+		State: pluginapi.Unhealthy,
+		Nodes: []string{"/dev/intel-fpga-port.2"},
+	})
 
 	result := getRegionTree(getDevices())
 	if !reflect.DeepEqual(result, expected) {
@@ -165,6 +190,10 @@ func TestGetAfuTree(t *testing.T) {
 	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "intel-fpga-port.1", dpapi.DeviceInfo{
 		State: pluginapi.Healthy,
 		Nodes: []string{"/dev/intel-fpga-port.1"},
+	})
+	expected.AddDevice(afMode+"-"+unhealthyAfuID, "intel-fpga-port.2", dpapi.DeviceInfo{
+		State: pluginapi.Unhealthy,
+		Nodes: []string{"/dev/intel-fpga-port.2"},
 	})
 
 	result := getAfuTree(getDevices())
