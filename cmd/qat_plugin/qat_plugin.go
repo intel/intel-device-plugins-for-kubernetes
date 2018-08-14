@@ -150,7 +150,7 @@ func (dp *devicePlugin) getDpdkMountPaths(id string) ([]string, error) {
 		return []string{}, nil
 	}
 
-	return nil, fmt.Errorf("Unknwon DPDK driver")
+	return nil, fmt.Errorf("Unknown DPDK driver")
 }
 
 func (dp *devicePlugin) getDeviceID(pciAddr string) (string, error) {
