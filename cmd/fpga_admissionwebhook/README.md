@@ -4,9 +4,9 @@
 
 You must install and set up the following FPGA plugin modules for correct operation:
 
--   [FPGA device plugin](cmd/fpga_plugin/README.md)
--   [FPGA admission controller webhook](cmd/fpga_admissionwebhook/README.md) (this module)
--   [FPGA prestart CRI-O hook](cmd/fpga_crihook/README.md)
+-   [FPGA device plugin](../fpga_plugin/README.md)
+-   [FPGA admission controller webhook](README.md) (this module)
+-   [FPGA prestart CRI-O hook](../fpga_crihook/README.md)
 
 ### Get source code:
 ```
@@ -81,4 +81,4 @@ you must point the script to the actual signing certificate as follows:
 
 ### Next steps
 
-Continue with [FPGA prestart CRI-O hook](cmd/fpga_crihook/README.md).
+Continue with [FPGA prestart CRI-O hook](../fpga_crihook/README.md).
