@@ -4,9 +4,9 @@
 
 You must install and set up the following FPGA plugin modules for correct operation:
 
--   [FPGA device plugin](cmd/fpga_plugin/README.md) (this module)
--   [FPGA admission controller webhook](cmd/fpga_admissionwebhook/README.md)
--   [FPGA prestart CRI-O hook](cmd/fpga_crihook/README.md)
+-   [FPGA device plugin](README.md) (this module)
+-   [FPGA admission controller webhook](../fpga_admissionwebhook/README.md)
+-   [FPGA prestart CRI-O hook](../fpga_crihook/README.md)
 
 
 ### Get source code:
@@ -100,5 +100,5 @@ for the plugin:
 
 ### Next steps
 
-Continue with [FPGA admission controller webhook](cmd/fpga_admissionwebhook/README.md).
+Continue with [FPGA admission controller webhook](../fpga_admissionwebhook/README.md).
 
