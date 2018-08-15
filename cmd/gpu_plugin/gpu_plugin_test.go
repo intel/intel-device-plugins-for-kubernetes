@@ -75,7 +75,7 @@ func TestScan(t *testing.T) {
 		},
 	}
 
-	testPlugin := newDevicePlugin(sysfs, devfs)
+	testPlugin := newDevicePlugin(sysfs, devfs, 1)
 
 	if testPlugin == nil {
 		t.Fatal("Failed to create a deviceManager")

@@ -47,14 +47,17 @@ type devicePlugin struct {
 	sysfsDir string
 	devfsDir string
 
+	sharedDevNum int
+
 	gpuDeviceReg     *regexp.Regexp
 	controlDeviceReg *regexp.Regexp
 }
 
-func newDevicePlugin(sysfsDir string, devfsDir string) *devicePlugin {
+func newDevicePlugin(sysfsDir, devfsDir string, sharedDevNum int) *devicePlugin {
 	return &devicePlugin{
 		sysfsDir:         sysfsDir,
 		devfsDir:         devfsDir,
+		sharedDevNum:     sharedDevNum,
 		gpuDeviceReg:     regexp.MustCompile(gpuDeviceRE),
 		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
 	}
@@ -112,12 +115,15 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				}
 
 				if len(nodes) > 0 {
-					// Currently only one device type (i915) is supported.
-					// TODO: check model ID to differentiate device models.
-					devTree.AddDevice(deviceType, f.Name(), dpapi.DeviceInfo{
-						State: pluginapi.Healthy,
-						Nodes: nodes,
-					})
+					for i := 0; i < dp.sharedDevNum; i++ {
+						devID := fmt.Sprintf("%s-%d", f.Name(), i)
+						// Currently only one device type (i915) is supported.
+						// TODO: check model ID to differentiate device models.
+						devTree.AddDevice(deviceType, devID, dpapi.DeviceInfo{
+							State: pluginapi.Healthy,
+							Nodes: nodes,
+						})
+					}
 				}
 			}
 		}
@@ -127,10 +133,19 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 }
 
 func main() {
+	var sharedDevNum int
+
+	flag.IntVar(&sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.Parse()
+
+	if sharedDevNum < 1 {
+		glog.Error("The number of containers sharing the same GPU must greater than zero")
+		os.Exit(1)
+	}
+
 	glog.Info("GPU device plugin started")
 
-	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory)
+	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory, sharedDevNum)
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }
