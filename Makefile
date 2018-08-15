@@ -36,6 +36,9 @@ $(cmds):
 
 build: $(cmds)
 
+clean:
+	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; go clean ; cd $$pwd ; done
+
 DOCKER_ARGS?=--build-arg HTTP_PROXY --build-arg HTTPS_PROXY --build-arg NO_PROXY --build-arg http_proxy --build-arg https_proxy --build-arg no_proxy --pull
 TAG?=$(shell git rev-parse HEAD)
 
