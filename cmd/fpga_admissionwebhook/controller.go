@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,6 +30,7 @@ import (
 	clientset "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned"
 	informers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/informers/externalversions"
 	listers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/listers/fpga.intel.com/v1"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 const (
@@ -89,7 +89,7 @@ func (c *controller) run(threadiness int) error {
 	defer runtime.HandleCrash()
 	defer c.queue.ShutDown()
 
-	glog.Info("Starting controller")
+	fmt.Println("Starting controller")
 
 	go c.informerFactory.Start(c.stopCh)
 
@@ -153,7 +153,7 @@ func (c *controller) processNextWorkItem() bool {
 		// Finally, if no error occurs we Forget this item so it does not
 		// get queued again until another change happens.
 		c.queue.Forget(obj)
-		glog.V(2).Infof("Successfully synced '%s'", key)
+		debug.Printf("Successfully synced '%s'", key)
 		return nil
 	}(obj)
 
@@ -180,7 +180,7 @@ func (c *controller) syncAfHandler(key string) error {
 		// processing.
 		if k8serrors.IsNotFound(err) {
 			runtime.HandleError(errors.Errorf("accelerated function '%s' in work queue no longer exists", key))
-			glog.V(2).Infof("AF '%s' no longer exists", key)
+			debug.Printf("AF '%s' no longer exists", key)
 			c.patcher.removeAf(name)
 			return nil
 		}
@@ -188,7 +188,7 @@ func (c *controller) syncAfHandler(key string) error {
 		return err
 	}
 
-	glog.V(2).Info("Received ", af)
+	debug.Print("Received", af)
 	c.patcher.addAf(af)
 	return nil
 }
@@ -208,7 +208,7 @@ func (c *controller) syncRegionHandler(key string) error {
 		// processing.
 		if k8serrors.IsNotFound(err) {
 			runtime.HandleError(errors.Errorf("FPGA region '%s' in work queue no longer exists", key))
-			glog.V(2).Infof("Region '%s' no longer exists", key)
+			debug.Printf("Region '%s' no longer exists", key)
 			c.patcher.removeRegion(name)
 			return nil
 		}
@@ -216,7 +216,7 @@ func (c *controller) syncRegionHandler(key string) error {
 		return err
 	}
 
-	glog.V(2).Info("Received ", region)
+	debug.Print("Received", region)
 	c.patcher.addRegion(region)
 	return nil
 }

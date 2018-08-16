@@ -23,7 +23,13 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
+
+func init() {
+	debug.Activate()
+}
 
 func createTestFiles(prefix string, dirs []string, files map[string][]byte) error {
 	for _, dir := range dirs {

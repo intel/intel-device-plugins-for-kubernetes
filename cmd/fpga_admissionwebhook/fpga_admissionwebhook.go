@@ -24,7 +24,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
 	"k8s.io/api/admission/v1beta1"
@@ -36,6 +35,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 const (
@@ -71,11 +72,11 @@ func getTLSConfig(certFile string, keyFile string) *tls.Config {
 func mutatePods(ar v1beta1.AdmissionReview, p *patcher) *v1beta1.AdmissionResponse {
 	var ops []string
 
-	glog.V(2).Info("mutating pods")
+	debug.Print("mutating pods")
 
 	podResource := metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 	if ar.Request.Resource != podResource {
-		glog.Errorf("expect resource to be %s", podResource)
+		fmt.Printf("WARNING: Unexpected resource type %s\n", ar.Request.Resource)
 		return nil
 	}
 
@@ -128,7 +129,7 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 	}
 
 	if len(body) == 0 {
-		glog.Error("No body in request")
+		debug.Print("No body in request")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -136,16 +137,16 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		glog.Errorf("contentType=%s, expect application/json", contentType)
+		debug.Printf("contentType=%s, expect application/json", contentType)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	glog.V(2).Info(fmt.Sprintf("handling request: %s", string(body)))
+	debug.Printf("handling request: %s", string(body))
 	ar := v1beta1.AdmissionReview{}
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(body, nil, &ar); err != nil {
-		glog.Error(err)
+		fmt.Printf("ERROR: %+v\n", err)
 		reviewResponse = toAdmissionResponse(err)
 	} else {
 		if ar.Request == nil {
@@ -156,7 +157,7 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 			reviewResponse = admit(ar)
 		}
 	}
-	glog.V(2).Info(fmt.Sprintf("sending response: %v", reviewResponse))
+	debug.Print("sending response", reviewResponse)
 
 	response := v1beta1.AdmissionReview{}
 	if reviewResponse != nil {
@@ -172,11 +173,11 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 
 	resp, err := json.Marshal(response)
 	if err != nil {
-		glog.Error(err)
+		fmt.Println("ERROR:", err)
 		return
 	}
 	if _, err := w.Write(resp); err != nil {
-		glog.Error(err)
+		fmt.Println("ERROR:", err)
 	}
 }
 
@@ -201,6 +202,7 @@ func main() {
 	var mode string
 	var config *rest.Config
 	var err error
+	var debugEnabled bool
 
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
 	flag.StringVar(&master, "master", "", "master url")
@@ -208,25 +210,30 @@ func main() {
 		"File containing the x509 Certificate for HTTPS. (CA cert, if any, concatenated after server cert).")
 	flag.StringVar(&keyFile, "tls-private-key-file", keyFile, "File containing the x509 private key matching --tls-cert-file.")
 	flag.StringVar(&mode, "mode", preprogrammed, fmt.Sprintf("webhook mode: '%s' (default) or '%s'", preprogrammed, orchestrated))
+	flag.BoolVar(&debugEnabled, "debug", false, "enable debug output")
 	flag.Parse()
 
+	if debugEnabled {
+		debug.Activate()
+	}
+
 	if certFile == "" {
-		glog.Error("TLS certificate file is not set")
+		fmt.Println("TLS certificate file is not set")
 		os.Exit(1)
 	}
 
 	if keyFile == "" {
-		glog.Error("TLS private key is not set")
+		fmt.Println("TLS private key is not set")
 		os.Exit(1)
 	}
 
 	if _, err = os.Stat(certFile); err != nil {
-		glog.Error("TLS certificate not found")
+		fmt.Println("TLS certificate not found")
 		os.Exit(1)
 	}
 
 	if _, err = os.Stat(keyFile); err != nil {
-		glog.Error("TLS private key not found")
+		fmt.Println("TLS private key not found")
 		os.Exit(1)
 	}
 
@@ -236,7 +243,7 @@ func main() {
 		config, err = clientcmd.BuildConfigFromFlags(master, kubeconfig)
 	}
 	if err != nil {
-		glog.Error("Failed to get cluster config ", err)
+		fmt.Println("Failed to get cluster config ", err)
 		os.Exit(1)
 	}
 
@@ -253,7 +260,7 @@ func main() {
 
 	http.HandleFunc("/pods", makePodsHandler(patcher))
 
-	glog.V(2).Info("Webhook started")
+	debug.Print("Webhook started")
 
 	server := &http.Server{
 		Addr:      ":443",

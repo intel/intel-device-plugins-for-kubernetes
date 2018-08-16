@@ -25,12 +25,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 const (
@@ -263,8 +263,13 @@ func main() {
 	dpdkDriver := flag.String("dpdk-driver", "igb_uio", "DPDK Device driver for configuring the QAT device")
 	kernelVfDrivers := flag.String("kernel-vf-drivers", "dh895xccvf,c6xxvf,c3xxxvf,d15xxvf", "Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC,C62x,C3xxx and D15xx")
 	maxNumDevices := flag.Int("max-num-devices", 32, "maximum number of QAT devices to be provided to the QuickAssist device plugin")
+	debugEnabled := flag.Bool("debug", false, "enable debug output")
 	flag.Parse()
 	fmt.Println("QAT device plugin started")
+
+	if *debugEnabled {
+		debug.Activate()
+	}
 
 	if !isValidDpdkDeviceDriver(*dpdkDriver) {
 		fmt.Println("Wrong DPDK device driver:", *dpdkDriver)

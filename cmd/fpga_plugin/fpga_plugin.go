@@ -24,7 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,6 +34,7 @@ import (
 	utilnode "k8s.io/kubernetes/pkg/util/node"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 const (
@@ -237,7 +237,7 @@ func (dp *devicePlugin) getDevNode(devName string) (string, error) {
 func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
 	var devices []device
 
-	glog.V(2).Info("Start new FPGA scan")
+	debug.Print("Start new FPGA scan")
 
 	fpgaFiles, err := ioutil.ReadDir(dp.sysfsDir)
 	if err != nil {
@@ -340,12 +340,18 @@ func main() {
 	var master string
 	var config *rest.Config
 	var err error
+	var debugEnabled bool
 
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
 	flag.StringVar(&master, "master", "", "master url")
 	flag.StringVar(&mode, "mode", string(afMode),
 		fmt.Sprintf("device plugin mode: '%s' (default), '%s' or '%s'", afMode, regionMode, regionDevelMode))
+	flag.BoolVar(&debugEnabled, "debug", false, "enable debug output")
 	flag.Parse()
+
+	if debugEnabled {
+		debug.Activate()
+	}
 
 	if kubeconfig == "" {
 		config, err = rest.InClusterConfig()
@@ -370,7 +376,7 @@ func main() {
 	}
 
 	if nodeMode, ok := node.ObjectMeta.Annotations["fpga.intel.com/device-plugin-mode"]; ok {
-		glog.Info("Overriding mode to ", nodeMode)
+		fmt.Println("Overriding mode to ", nodeMode)
 		mode = nodeMode
 	}
 
@@ -379,7 +385,7 @@ func main() {
 		fatal(err)
 	}
 
-	glog.Info("FPGA device plugin started in ", mode, " mode")
+	fmt.Println("FPGA device plugin started in ", mode, " mode")
 
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()

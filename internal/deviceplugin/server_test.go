@@ -29,6 +29,7 @@ import (
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 	"github.com/pkg/errors"
 )
 
@@ -45,6 +46,10 @@ type kubeletStub struct {
 	socket         string
 	pluginEndpoint string
 	server         *grpc.Server
+}
+
+func init() {
+	debug.Activate()
 }
 
 // newKubeletStub returns an initialized kubeletStub for testing purpose.

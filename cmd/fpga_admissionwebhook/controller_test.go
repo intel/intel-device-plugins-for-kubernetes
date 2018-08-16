@@ -25,11 +25,16 @@ import (
 
 	v1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
 	listers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/listers/fpga.intel.com/v1"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 type fakeAfNamespaceLister struct {
 	af  *v1.AcceleratorFunction
 	err error
+}
+
+func init() {
+	debug.Activate()
 }
 
 func (nl *fakeAfNamespaceLister) Get(name string) (*v1.AcceleratorFunction, error) {

@@ -24,12 +24,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 const (
@@ -88,7 +88,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		if dp.gpuDeviceReg.MatchString(f.Name()) {
 			dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/vendor"))
 			if err != nil {
-				glog.Warning("Skipping. Can't read vendor file: ", err)
+				fmt.Println("WARNING: Skipping. Can't read vendor file: ", err)
 				continue
 			}
 
@@ -110,7 +110,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 						continue
 					}
 
-					glog.V(2).Info("Adding ", devPath, " to GPU ", f.Name())
+					debug.Printf("Adding %s to GPU %s", devPath, f.Name())
 					nodes = append(nodes, devPath)
 				}
 
@@ -134,16 +134,22 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 func main() {
 	var sharedDevNum int
+	var debugEnabled bool
 
 	flag.IntVar(&sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
+	flag.BoolVar(&debugEnabled, "debug", false, "enable debug output")
 	flag.Parse()
 
+	if debugEnabled {
+		debug.Activate()
+	}
+
 	if sharedDevNum < 1 {
-		glog.Error("The number of containers sharing the same GPU must greater than zero")
+		fmt.Println("The number of containers sharing the same GPU must greater than zero")
 		os.Exit(1)
 	}
 
-	glog.Info("GPU device plugin started")
+	fmt.Println("GPU device plugin started")
 
 	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory, sharedDevNum)
 	manager := dpapi.NewManager(namespace, plugin)

@@ -21,7 +21,7 @@ ifndef WHAT
 	@$(GO) test -race -coverprofile=coverage.txt -covermode=atomic $(pkgs)
 else
 	@cd $(WHAT) && \
-            $(GO) test -v -cover -coverprofile cover.out -args -logtostderr -v 2 || rc=1; \
+            $(GO) test -v -cover -coverprofile cover.out || rc=1; \
             $(GO) tool cover -html=cover.out -o coverage.html; \
             rm cover.out; \
             echo "Coverage report: file://$$(realpath coverage.html)"; \

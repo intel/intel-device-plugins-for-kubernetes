@@ -24,11 +24,12 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 // devicePluginServer maintains a gRPC server satisfying
@@ -69,7 +70,7 @@ func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer)
 	for id, device := range srv.devices {
 		resp.Devices = append(resp.Devices, &pluginapi.Device{id, device.State})
 	}
-	glog.V(2).Info("Sending to kubelet ", resp.Devices)
+	debug.Print("Sending to kubelet", resp.Devices)
 	if err := stream.Send(resp); err != nil {
 		srv.Stop()
 		return errors.Wrapf(err, "Cannot update device list")
@@ -79,7 +80,7 @@ func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer)
 }
 
 func (srv *server) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.DevicePlugin_ListAndWatchServer) error {
-	glog.V(2).Info("Started ListAndWatch for ", srv.devType)
+	debug.Print("Started ListAndWatch for", srv.devType)
 
 	if err := srv.sendDevices(stream); err != nil {
 		return err
@@ -187,7 +188,7 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 
 		// Starts device plugin service.
 		go func() {
-			fmt.Printf("device-plugin start server at: %s\n", pluginSocket)
+			fmt.Printf("Start server for %s at: %s\n", srv.devType, pluginSocket)
 			srv.grpcServer.Serve(lis)
 		}()
 
@@ -201,16 +202,14 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 		if err != nil {
 			return err
 		}
-		fmt.Println("device-plugin registered")
+		fmt.Printf("Device plugin for %s registered\n", srv.devType)
 
 		// Kubelet removes plugin socket when it (re)starts
 		// plugin must restart in this case
 		if err = watchFile(pluginSocket); err != nil {
 			return err
 		}
-		fmt.Printf("socket %s removed, restarting", pluginSocket)
-
-		fmt.Println("stop GRPC server")
+		fmt.Printf("Socket %s removed, restarting\n", pluginSocket)
 
 		srv.grpcServer.Stop()
 		os.Remove(pluginSocket)

@@ -22,7 +22,13 @@ import (
 
 	"k8s.io/utils/exec"
 	fakeexec "k8s.io/utils/exec/testing"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
+
+func init() {
+	debug.Activate()
+}
 
 func TestGetFPGAParams(t *testing.T) {
 	tcases := []struct {

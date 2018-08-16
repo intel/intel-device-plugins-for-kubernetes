@@ -21,7 +21,13 @@ import (
 	"path"
 	"testing"
 	"time"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
+
+func init() {
+	debug.Activate()
+}
 
 func TestScan(t *testing.T) {
 	tmpdir := fmt.Sprintf("/tmp/gpuplugin-test-%d", time.Now().Unix())
