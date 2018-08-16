@@ -119,7 +119,8 @@ func (m *Manager) handleUpdate(update updateInfo) {
 		go func() {
 			err := m.servers[devType].Serve(m.namespace)
 			if err != nil {
-				glog.Fatal(err)
+				fmt.Printf("Failed to serve %s/%s: %+v\n", m.namespace, devType, err)
+				os.Exit(1)
 			}
 		}()
 		m.servers[devType].Update(devices)

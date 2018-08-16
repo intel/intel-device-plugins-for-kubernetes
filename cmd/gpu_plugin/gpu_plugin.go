@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 
@@ -67,8 +68,7 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	for {
 		devTree, err := dp.scan()
 		if err != nil {
-			glog.Error("Device scan failed: ", err)
-			return fmt.Errorf("Device scan failed: %v", err)
+			return err
 		}
 
 		notifier.Notify(devTree)
@@ -80,7 +80,7 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	files, err := ioutil.ReadDir(dp.sysfsDir)
 	if err != nil {
-		return nil, fmt.Errorf("Can't read sysfs folder: %v", err)
+		return nil, errors.Wrap(err, "Can't read sysfs folder")
 	}
 
 	devTree := dpapi.NewDeviceTree()
@@ -97,7 +97,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 				drmFiles, err := ioutil.ReadDir(path.Join(dp.sysfsDir, f.Name(), "device/drm"))
 				if err != nil {
-					return nil, fmt.Errorf("Can't read device folder: %v", err)
+					return nil, errors.Wrap(err, "Can't read device folder")
 				}
 
 				for _, drmFile := range drmFiles {

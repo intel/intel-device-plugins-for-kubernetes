@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 
 	"k8s.io/api/admission/v1beta1"
 	admissionregistrationv1beta1 "k8s.io/api/admissionregistration/v1beta1"
@@ -60,7 +61,7 @@ func addToScheme(scheme *runtime.Scheme) {
 func getTLSConfig(certFile string, keyFile string) *tls.Config {
 	sCert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
-		glog.Fatal(err)
+		fatal(err)
 	}
 	return &tls.Config{
 		Certificates: []tls.Certificate{sCert},
@@ -82,7 +83,7 @@ func mutatePods(ar v1beta1.AdmissionReview, p *patcher) *v1beta1.AdmissionRespon
 	pod := corev1.Pod{}
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(raw, nil, &pod); err != nil {
-		glog.Error(err)
+		fmt.Printf("ERROR: %+v\n", err)
 		return toAdmissionResponse(err)
 	}
 	reviewResponse := v1beta1.AdmissionResponse{}
@@ -148,7 +149,7 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 		reviewResponse = toAdmissionResponse(err)
 	} else {
 		if ar.Request == nil {
-			err = fmt.Errorf("Request is empty")
+			err = errors.New("Request is empty")
 			reviewResponse = toAdmissionResponse(err)
 		} else {
 			reqUID = ar.Request.UID
@@ -185,6 +186,11 @@ func makePodsHandler(p *patcher) func(w http.ResponseWriter, r *http.Request) {
 			return mutatePods(ar, p)
 		})
 	}
+}
+
+func fatal(err error) {
+	fmt.Printf("ERROR: %+v\n", err)
+	os.Exit(1)
 }
 
 func main() {
@@ -236,14 +242,12 @@ func main() {
 
 	patcher, err := newPatcher(mode)
 	if err != nil {
-		glog.Error(err)
-		os.Exit(1)
+		fatal(err)
 	}
 
 	controller, err := newController(patcher, config)
 	if err != nil {
-		glog.Error(err)
-		os.Exit(1)
+		fatal(err)
 	}
 	go controller.run(controllerThreadNum)
 
@@ -256,5 +260,5 @@ func main() {
 		TLSConfig: getTLSConfig(certFile, keyFile),
 	}
 
-	glog.Fatal(server.ListenAndServeTLS("", ""))
+	fatal(server.ListenAndServeTLS("", ""))
 }

@@ -98,18 +98,18 @@ func TestSyncAfHandler(t *testing.T) {
 	for _, tt := range tcases {
 		p, err := newPatcher(preprogrammed)
 		if err != nil {
-			t.Fatalf("Test case '%s': %v", tt.name, err)
+			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
 		c, err := newController(p, &rest.Config{})
 		if err != nil {
-			t.Fatalf("Test case '%s': %v", tt.name, err)
+			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
 		if tt.afLister != nil {
 			c.afLister = tt.afLister
 		}
 		err = c.syncAfHandler(tt.key)
 		if err != nil && !tt.expectedErr {
-			t.Errorf("Test case '%s': unexpected error: %v", tt.name, err)
+			t.Errorf("Test case '%s': unexpected error: %+v", tt.name, err)
 		}
 		if err == nil && tt.expectedErr {
 			t.Errorf("Test case '%s': expected error, but got success", tt.name)
@@ -188,18 +188,18 @@ func TestSyncRegionHandler(t *testing.T) {
 	for _, tt := range tcases {
 		p, err := newPatcher(preprogrammed)
 		if err != nil {
-			t.Fatalf("Test case '%s': %v", tt.name, err)
+			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
 		c, err := newController(p, &rest.Config{})
 		if err != nil {
-			t.Fatalf("Test case '%s': %v", tt.name, err)
+			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
 		if tt.regionLister != nil {
 			c.regionLister = tt.regionLister
 		}
 		err = c.syncRegionHandler(tt.key)
 		if err != nil && !tt.expectedErr {
-			t.Errorf("Test case '%s': unexpected error: %v", tt.name, err)
+			t.Errorf("Test case '%s': unexpected error: %+v", tt.name, err)
 		}
 		if err == nil && tt.expectedErr {
 			t.Errorf("Test case '%s': expected error, but got success", tt.name)
@@ -308,7 +308,7 @@ func TestProcessNextWorkItem(t *testing.T) {
 		p := &patcher{}
 		c, err := newController(p, &rest.Config{})
 		if err != nil {
-			t.Fatalf("Test case '%s': %v", tt.name, err)
+			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
 		c.queue = &fakeQueue{
 			shutdown: tt.shutdown,
@@ -349,12 +349,12 @@ func TestRun(t *testing.T) {
 		p := &patcher{}
 		c, err := newController(p, &rest.Config{})
 		if err != nil {
-			t.Fatalf("Test case '%s': %v", tt.name, err)
+			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
 		close(c.stopCh)
 		err = c.run(0)
 		if err != nil && !tt.expectedErr {
-			t.Errorf("Test case '%s': unexpected error: %v", tt.name, err)
+			t.Errorf("Test case '%s': unexpected error: %+v", tt.name, err)
 		}
 		if err == nil && tt.expectedErr {
 			t.Errorf("Test case '%s': expected error, but got success", tt.name)
@@ -384,7 +384,7 @@ func TestNewController(t *testing.T) {
 		p := &patcher{}
 		c, err := newController(p, config)
 		if err != nil && !tt.expectedErr {
-			t.Errorf("Test case '%s': unexpected error: %v", tt.name, err)
+			t.Errorf("Test case '%s': unexpected error: %+v", tt.name, err)
 		}
 		if err == nil && tt.expectedErr {
 			t.Errorf("Test case '%s': expected error, but got success", tt.name)

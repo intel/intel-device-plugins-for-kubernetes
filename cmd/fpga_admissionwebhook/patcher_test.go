@@ -278,7 +278,7 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			t.Errorf("Test case '%s': no error returned", tt.name)
 		}
 		if !tt.expectedErr && err != nil {
-			t.Errorf("Test case '%s': unexpected error %v", tt.name, err)
+			t.Errorf("Test case '%s': unexpected error %+v", tt.name, err)
 		}
 		if len(ops) != tt.expectedOps {
 			t.Errorf("test case '%s': expected %d ops, but got %d\n%v", tt.name, tt.expectedOps, len(ops), ops)
@@ -366,7 +366,7 @@ func TestGetEnvVars(t *testing.T) {
 			t.Errorf("Test case '%s': no error returned", tt.name)
 		}
 		if !tt.expectedErr && err != nil {
-			t.Errorf("Test case '%s': unexpected error %v", tt.name, err)
+			t.Errorf("Test case '%s': unexpected error %+v", tt.name, err)
 		}
 	}
 }

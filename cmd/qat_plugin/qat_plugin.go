@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 
@@ -71,8 +72,7 @@ func (dp *devicePlugin) Scan(notifier deviceplugin.Notifier) error {
 	for {
 		devTree, err := dp.scan()
 		if err != nil {
-			glog.Error("Device scan failed: ", err)
-			return fmt.Errorf("Device scan failed: %v", err)
+			return err
 		}
 
 		notifier.Notify(devTree)
@@ -93,7 +93,7 @@ func (dp *devicePlugin) getDpdkDevice(id string) (string, error) {
 			return "", err
 		}
 		if len(files) == 0 {
-			return "", fmt.Errorf("No devices found")
+			return "", errors.New("No devices found")
 		}
 		return files[0].Name(), nil
 
@@ -101,20 +101,20 @@ func (dp *devicePlugin) getDpdkDevice(id string) (string, error) {
 		vfioDirPath := path.Join(dp.pciDeviceDir, devicePCIAdd, iommuGroupSuffix)
 		group, err := filepath.EvalSymlinks(vfioDirPath)
 		if err != nil {
-			return "", err
+			return "", errors.WithStack(err)
 		}
 		s := strings.TrimPrefix(group, sysfsIommuGroupPrefix)
 		fmt.Printf("The vfio device group detected is %v\n", s)
 		return s, nil
 	}
 
-	return "", fmt.Errorf("Unknown DPDK driver")
+	return "", errors.New("Unknown DPDK driver")
 }
 
 func (dp *devicePlugin) getDpdkDeviceNames(id string) ([]string, error) {
 	dpdkDeviceName, err := dp.getDpdkDevice(id)
 	if err != nil {
-		return []string{}, fmt.Errorf("Unable to get the dpdk device for creating device nodes: %v", err)
+		return []string{}, err
 	}
 	fmt.Printf("%s device: corresponding DPDK device detected is %s\n", id, dpdkDeviceName)
 
@@ -131,13 +131,13 @@ func (dp *devicePlugin) getDpdkDeviceNames(id string) ([]string, error) {
 		return []string{vfioDev1, vfioDev2}, nil
 	}
 
-	return []string{}, fmt.Errorf("Unknown DPDK driver")
+	return []string{}, errors.New("Unknown DPDK driver")
 }
 
 func (dp *devicePlugin) getDpdkMountPaths(id string) ([]string, error) {
 	dpdkDeviceName, err := dp.getDpdkDevice(id)
 	if err != nil {
-		return []string{}, fmt.Errorf("Unable to get the dpdk device for mountPath: %v", err)
+		return []string{}, err
 	}
 
 	switch dp.dpdkDriver {
@@ -150,13 +150,13 @@ func (dp *devicePlugin) getDpdkMountPaths(id string) ([]string, error) {
 		return []string{}, nil
 	}
 
-	return nil, fmt.Errorf("Unknown DPDK driver")
+	return nil, errors.New("Unknown DPDK driver")
 }
 
 func (dp *devicePlugin) getDeviceID(pciAddr string) (string, error) {
 	devID, err := ioutil.ReadFile(path.Join(dp.pciDeviceDir, pciAddr, "device"))
 	if err != nil {
-		return "", fmt.Errorf("Cannot obtain ID for the device %s: %v", pciAddr, err)
+		return "", errors.Wrapf(err, "Cannot obtain ID for the device %s", pciAddr)
 	}
 
 	return strings.TrimPrefix(string(bytes.TrimSpace(devID)), "0x"), nil
@@ -170,19 +170,19 @@ func (dp *devicePlugin) bindDevice(id string) error {
 	// Unbind from the kernel driver
 	err := ioutil.WriteFile(unbindDevicePath, []byte(devicePCIAddr), 0644)
 	if err != nil {
-		return fmt.Errorf("Unbinding from kernel driver failed for the device %s: %v", id, err)
+		return errors.Wrapf(err, "Unbinding from kernel driver failed for the device %s: %v", id)
 
 	}
 
 	vfdevID, err := dp.getDeviceID(devicePCIAddr)
 	if err != nil {
-		return fmt.Errorf("Cannot obtain ID for the device %s: %v", id, err)
+		return err
 	}
 	bindDevicePath := path.Join(dp.pciDriverDir, dp.dpdkDriver, newIDSuffix)
 	//Bind to the the dpdk driver
 	err = ioutil.WriteFile(bindDevicePath, []byte(vendorPrefix+vfdevID), 0644)
 	if err != nil {
-		return fmt.Errorf("Binding to the DPDK driver failed for the device %s: %v", id, err)
+		return errors.Wrapf(err, "Binding to the DPDK driver failed for the device %s: %v", id)
 	}
 
 	return nil
@@ -210,7 +210,7 @@ func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 	for _, driver := range append(dp.kernelVfDrivers, dp.dpdkDriver) {
 		files, err := ioutil.ReadDir(path.Join(dp.pciDriverDir, driver))
 		if err != nil {
-			return nil, fmt.Errorf("Can't read sysfs for driver %s: %+v", driver, err)
+			return nil, errors.Wrapf(err, "Can't read sysfs for driver %s", driver)
 		}
 
 		n := 0
@@ -230,17 +230,17 @@ func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 			if driver != dp.dpdkDriver {
 				err := dp.bindDevice(vfpciaddr)
 				if err != nil {
-					return nil, fmt.Errorf("Error in binding the device to the dpdk driver: %+v", err)
+					return nil, err
 				}
 			}
 
 			devNodes, err := dp.getDpdkDeviceNames(vfpciaddr)
 			if err != nil {
-				return nil, fmt.Errorf("Error in obtaining the device name: %+v", err)
+				return nil, err
 			}
 			devMounts, err := dp.getDpdkMountPaths(vfpciaddr)
 			if err != nil {
-				return nil, fmt.Errorf("Error in obtaining the mount point: %+v", err)
+				return nil, err
 			}
 
 			devinfo := deviceplugin.DeviceInfo{

@@ -17,7 +17,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -26,7 +25,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	utilsexec "k8s.io/utils/exec"
 )
 
@@ -46,7 +45,7 @@ func decodeJSONStream(reader io.Reader) (map[string]interface{}, error) {
 	decoder := json.NewDecoder(reader)
 	content := make(map[string]interface{})
 	err := decoder.Decode(&content)
-	return content, err
+	return content, errors.WithStack(err)
 }
 
 type hookEnv struct {
@@ -78,29 +77,29 @@ func canonize(uuid string) string {
 func (he *hookEnv) getFPGAParams(content map[string]interface{}) (*fpgaParams, error) {
 	bundle, ok := content["bundle"]
 	if !ok {
-		return nil, fmt.Errorf("no 'bundle' field in the configuration")
+		return nil, errors.New("no 'bundle' field in the configuration")
 	}
 
 	configPath := path.Join(fmt.Sprint(bundle), he.config)
 	configFile, err := os.Open(configPath)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	defer configFile.Close()
 
 	content, err = decodeJSONStream(configFile)
 	if err != nil {
-		return nil, fmt.Errorf("can't decode %s", configPath)
+		return nil, errors.WithMessage(err, "can't decode "+configPath)
 	}
 
 	process, ok := content["process"]
 	if !ok {
-		return nil, fmt.Errorf("no 'process' field found in %s", configPath)
+		return nil, errors.Errorf("no 'process' field found in %s", configPath)
 	}
 
 	rawEnv, ok := process.(map[string]interface{})["env"]
 	if !ok {
-		return nil, fmt.Errorf("no 'env' field found in the 'process' struct in %s", configPath)
+		return nil, errors.Errorf("no 'env' field found in the 'process' struct in %s", configPath)
 	}
 
 	dEnv := make(map[string]string)
@@ -111,22 +110,22 @@ func (he *hookEnv) getFPGAParams(content map[string]interface{}) (*fpgaParams, e
 
 	fpgaRegion, ok := dEnv[fpgaRegionEnv]
 	if !ok {
-		return nil, fmt.Errorf("%s environment is not set in the 'process/env' list in %s", fpgaRegionEnv, configPath)
+		return nil, errors.Errorf("%s environment is not set in the 'process/env' list in %s", fpgaRegionEnv, configPath)
 	}
 
 	fpgaAfu, ok := dEnv[fpgaAfuEnv]
 	if !ok {
-		return nil, fmt.Errorf("%s environment is not set in the 'process/env' list in %s", fpgaAfuEnv, configPath)
+		return nil, errors.Errorf("%s environment is not set in the 'process/env' list in %s", fpgaAfuEnv, configPath)
 	}
 
 	linux, ok := content["linux"]
 	if !ok {
-		return nil, fmt.Errorf("no 'linux' field found in %s", configPath)
+		return nil, errors.Errorf("no 'linux' field found in %s", configPath)
 	}
 
 	rawDevices, ok := linux.(map[string]interface{})["devices"]
 	if !ok {
-		return nil, fmt.Errorf("no 'devices' field found in the 'linux' struct in %s", configPath)
+		return nil, errors.Errorf("no 'devices' field found in the 'linux' struct in %s", configPath)
 	}
 
 	pattern := regexp.MustCompile(fpgaDevRegexp)
@@ -137,48 +136,48 @@ func (he *hookEnv) getFPGAParams(content map[string]interface{}) (*fpgaParams, e
 		}
 	}
 
-	return nil, fmt.Errorf("no FPGA devices found in linux/devices list in %s", configPath)
+	return nil, errors.Errorf("no FPGA devices found in linux/devices list in %s", configPath)
 
 }
 
 func (he *hookEnv) validateBitStream(params *fpgaParams, fpgaBitStreamPath string) error {
 	output, err := he.execer.Command("packager", "gbs-info", "--gbs", fpgaBitStreamPath).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%s/%s: can't get bitstream info: %v", params.region, params.afu, err)
+		return errors.Wrapf(err, "%s/%s: can't get bitstream info", params.region, params.afu)
 	}
 
 	reader := bytes.NewBuffer(output)
 	content, err := decodeJSONStream(reader)
 	if err != nil {
-		return fmt.Errorf("%s/%s: can't decode 'packager gbs-info' output: %v", params.region, params.afu, err)
+		return errors.WithMessage(err, fmt.Sprintf("%s/%s: can't decode 'packager gbs-info' output", params.region, params.afu))
 	}
 
 	afuImage, ok := content["afu-image"]
 	if !ok {
-		return fmt.Errorf("%s/%s: 'afu-image' field not found in the 'packager gbs-info' output", params.region, params.afu)
+		return errors.Errorf("%s/%s: 'afu-image' field not found in the 'packager gbs-info' output", params.region, params.afu)
 	}
 
 	interfaceUUID, ok := afuImage.(map[string]interface{})["interface-uuid"]
 	if !ok {
-		return fmt.Errorf("%s/%s: 'interface-uuid' field not found in the 'packager gbs-info' output", params.region, params.afu)
+		return errors.Errorf("%s/%s: 'interface-uuid' field not found in the 'packager gbs-info' output", params.region, params.afu)
 	}
 
 	acceleratorClusters, ok := afuImage.(map[string]interface{})["accelerator-clusters"]
 	if !ok {
-		return fmt.Errorf("%s/%s: 'accelerator-clusters' field not found in the 'packager gbs-info' output", params.region, params.afu)
+		return errors.Errorf("%s/%s: 'accelerator-clusters' field not found in the 'packager gbs-info' output", params.region, params.afu)
 	}
 
 	if canonize(interfaceUUID.(string)) != params.region {
-		return fmt.Errorf("bitstream is not for this device: region(%s) and interface-uuid(%s) don't match", params.region, interfaceUUID)
+		return errors.Errorf("bitstream is not for this device: region(%s) and interface-uuid(%s) don't match", params.region, interfaceUUID)
 	}
 
 	acceleratorTypeUUID, ok := acceleratorClusters.([]interface{})[0].(map[string]interface{})["accelerator-type-uuid"]
 	if !ok {
-		return fmt.Errorf("%s/%s: 'accelerator-type-uuid' field not found in the 'packager gbs-info' output", params.region, params.afu)
+		return errors.Errorf("%s/%s: 'accelerator-type-uuid' field not found in the 'packager gbs-info' output", params.region, params.afu)
 	}
 
 	if canonize(acceleratorTypeUUID.(string)) != params.afu {
-		return fmt.Errorf("incorrect bitstream: AFU(%s) and accelerator-type-uuid(%s) don't match", params.afu, acceleratorTypeUUID)
+		return errors.Errorf("incorrect bitstream: AFU(%s) and accelerator-type-uuid(%s) don't match", params.afu, acceleratorTypeUUID)
 	}
 
 	return nil
@@ -187,7 +186,7 @@ func (he *hookEnv) validateBitStream(params *fpgaParams, fpgaBitStreamPath strin
 func (he *hookEnv) programBitStream(params *fpgaParams, fpgaBitStreamPath string) error {
 	output, err := he.execer.Command("fpgaconf", "-S", params.devNum, fpgaBitStreamPath).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to program AFU %s to socket %s, region %s: error: %v, output: %s", params.afu, params.devNum, params.region, err, string(output))
+		return errors.Wrapf(err, "failed to program AFU %s to socket %s, region %s: output: %s", params.afu, params.devNum, params.region, string(output))
 	}
 
 	programmedAfu, err := he.getProgrammedAfu(params.devNum)
@@ -196,7 +195,7 @@ func (he *hookEnv) programBitStream(params *fpgaParams, fpgaBitStreamPath string
 	}
 
 	if programmedAfu != params.afu {
-		return fmt.Errorf("programmed function %s instead of %s", programmedAfu, params.afu)
+		return errors.Errorf("programmed function %s instead of %s", programmedAfu, params.afu)
 	}
 
 	return nil
@@ -208,7 +207,7 @@ func (he *hookEnv) getProgrammedAfu(deviceNum string) (string, error) {
 	afuIDPath := fmt.Sprintf(he.afuIDTemplate, deviceNum, deviceNum)
 	data, err := ioutil.ReadFile(afuIDPath)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	return strings.TrimSpace(string(data)), nil
 }
@@ -222,7 +221,7 @@ func (he *hookEnv) process(reader io.Reader) error {
 	// Check if device plugin annotation is set
 	annotations, ok := content["annotations"]
 	if !ok {
-		return fmt.Errorf("no 'annotations' field in the configuration")
+		return errors.New("no 'annotations' field in the configuration")
 	}
 
 	annotation, ok := annotations.(map[string]interface{})[annotationName]
@@ -237,7 +236,7 @@ func (he *hookEnv) process(reader io.Reader) error {
 
 	params, err := he.getFPGAParams(content)
 	if err != nil {
-		return fmt.Errorf("couldn't get FPGA region, AFU and device number: %v, skipping", err)
+		return errors.WithMessage(err, "couldn't get FPGA region, AFU and device number")
 	}
 
 	programmedAfu, err := he.getProgrammedAfu(params.devNum)
@@ -252,7 +251,7 @@ func (he *hookEnv) process(reader io.Reader) error {
 
 	fpgaBitStreamPath := path.Join(he.bitStreamDir, params.region, params.afu+fpgaBitStreamExt)
 	if _, err = os.Stat(fpgaBitStreamPath); os.IsNotExist(err) {
-		return fmt.Errorf("%s/%s: bitstream is not found", params.region, params.afu)
+		return errors.Errorf("%s/%s: bitstream is not found", params.region, params.afu)
 	}
 
 	err = he.validateBitStream(params, fpgaBitStreamPath)
@@ -269,9 +268,6 @@ func (he *hookEnv) process(reader io.Reader) error {
 }
 
 func main() {
-	//work around glog ERROR: logging before flag.Parse: I0618
-	flag.Parse()
-
 	if os.Getenv("PATH") == "" { // runc doesn't set PATH when runs hooks
 		os.Setenv("PATH", "/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin")
 	}
@@ -280,7 +276,7 @@ func main() {
 
 	err := he.process(os.Stdin)
 	if err != nil {
-		glog.Error(err)
+		fmt.Printf("%+v\n", err)
 		os.Exit(1)
 	}
 }

@@ -28,6 +28,8 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -65,8 +67,7 @@ func (k *kubeletStub) start() error {
 	os.Remove(k.socket)
 	s, err := net.Listen("unix", k.socket)
 	if err != nil {
-		fmt.Printf("Can't listen at the socket: %+v", err)
-		return err
+		return errors.Wrap(err, "Can't listen at the socket")
 	}
 
 	k.server = grpc.NewServer()
@@ -89,7 +90,10 @@ func TestRegisterWithKublet(t *testing.T) {
 	}
 
 	kubelet := newKubeletStub(kubeletSocket)
-	kubelet.start()
+	err = kubelet.start()
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
 	defer kubelet.server.Stop()
 
 	err = registerWithKubelet(kubeletSocket, pluginSocket, resourceName)
@@ -405,7 +409,7 @@ func TestListAndWatch(t *testing.T) {
 
 		err := testServer.ListAndWatch(&pluginapi.Empty{}, server)
 		if err != nil && tt.errorOnCall == 0 {
-			t.Errorf("Test case '%s': got unexpected error %v", tt.name, err)
+			t.Errorf("Test case '%s': got unexpected error %+v", tt.name, err)
 		}
 		if err == nil && tt.errorOnCall != 0 {
 			t.Errorf("Test case '%s': expected an error, but got nothing", tt.name)

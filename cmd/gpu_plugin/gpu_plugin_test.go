@@ -105,6 +105,9 @@ func TestScan(t *testing.T) {
 		if tcase.expectedErr && err == nil {
 			t.Error("Expected error hasn't been triggered")
 		}
+		if !tcase.expectedErr && err != nil {
+			t.Errorf("Unexpcted error: %+v", err)
+		}
 		if tcase.expectedDevs != len(tree[deviceType]) {
 			t.Errorf("Wrong number of discovered devices")
 		}
