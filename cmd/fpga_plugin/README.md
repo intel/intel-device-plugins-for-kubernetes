@@ -30,7 +30,15 @@ $ ls /var/lib/kubelet/device-plugins/kubelet.sock
 
 ### Choose mode for FPGA device plugin
 
-You can run the FPGA device plugin in either af or region mode.
+You can run the FPGA device plugin in either `af` or `region` mode.
+
+In `af` mode, the device plugin exposes accelerator functions
+programmed onto the device as resources. Accelerator functions identified
+by the same AFU ID are translated to resources of the same type.
+
+In `region` mode, the device plugin exposes partial reconfiguration regions
+as consumable resources. Regions with the same interface ID are
+translated to resources of the same type.
 
 #### Run FPGA device plugin in af mode
 
