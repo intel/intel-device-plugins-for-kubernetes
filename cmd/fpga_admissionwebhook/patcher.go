@@ -126,7 +126,10 @@ func (p *patcher) getPatchOpsPreprogrammed(containerIdx int, container corev1.Co
 	var ops []string
 
 	for resourceName, resourceQuantity := range container.Resources.Limits {
-		newName := p.translateFpgaResourceName(resourceName)
+		newName, err := p.translateFpgaResourceName(resourceName)
+		if err != nil {
+			return nil, err
+		}
 		if len(newName) > 0 {
 			op := fmt.Sprintf(resourceReplaceOp, containerIdx,
 				"limits", rfc6901Escaper.Replace(string(resourceName)),
@@ -135,7 +138,10 @@ func (p *patcher) getPatchOpsPreprogrammed(containerIdx int, container corev1.Co
 		}
 	}
 	for resourceName, resourceQuantity := range container.Resources.Requests {
-		newName := p.translateFpgaResourceName(resourceName)
+		newName, err := p.translateFpgaResourceName(resourceName)
+		if err != nil {
+			return nil, err
+		}
 		if len(newName) > 0 {
 			op := fmt.Sprintf(resourceReplaceOp, containerIdx,
 				"requests", rfc6901Escaper.Replace(string(resourceName)),
@@ -147,15 +153,20 @@ func (p *patcher) getPatchOpsPreprogrammed(containerIdx int, container corev1.Co
 	return ops, nil
 }
 
-func (p *patcher) translateFpgaResourceName(oldname corev1.ResourceName) string {
+func (p *patcher) translateFpgaResourceName(oldname corev1.ResourceName) (string, error) {
+	rname := strings.ToLower(string(oldname))
+	if !strings.HasPrefix(rname, namespace) {
+		return "", nil
+	}
+
 	defer p.Unlock()
 	p.Lock()
 
-	if newname, ok := p.resourceMap[strings.ToLower(string(oldname))]; ok {
-		return newname
+	if newname, ok := p.resourceMap[rname]; ok {
+		return newname, nil
 	}
 
-	return ""
+	return "", errors.Errorf("Unknown FPGA resource: %s", rname)
 }
 
 func (p *patcher) getPatchOpsOrchestrated(containerIdx int, container corev1.Container) ([]string, error) {
