@@ -21,7 +21,13 @@ import (
 	"path"
 	"testing"
 	"time"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
+
+func init() {
+	debug.Activate()
+}
 
 func TestScan(t *testing.T) {
 	tmpdir := fmt.Sprintf("/tmp/gpuplugin-test-%d", time.Now().Unix())
@@ -104,6 +110,9 @@ func TestScan(t *testing.T) {
 		tree, err := testPlugin.scan()
 		if tcase.expectedErr && err == nil {
 			t.Error("Expected error hasn't been triggered")
+		}
+		if !tcase.expectedErr && err != nil {
+			t.Errorf("Unexpcted error: %+v", err)
 		}
 		if tcase.expectedDevs != len(tree[deviceType]) {
 			t.Errorf("Wrong number of discovered devices")

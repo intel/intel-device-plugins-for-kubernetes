@@ -24,10 +24,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
+
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
+
+func init() {
+	debug.Activate()
+}
 
 func createTestDirs(devfs, sysfs string, devfsDirs, sysfsDirs []string, sysfsFiles map[string][]byte) error {
 	var err error
@@ -35,19 +42,19 @@ func createTestDirs(devfs, sysfs string, devfsDirs, sysfsDirs []string, sysfsFil
 	for _, devfsdir := range devfsDirs {
 		err = os.MkdirAll(path.Join(devfs, devfsdir), 0755)
 		if err != nil {
-			return fmt.Errorf("Failed to create fake device directory: %v", err)
+			return errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
 	for _, sysfsdir := range sysfsDirs {
 		err = os.MkdirAll(path.Join(sysfs, sysfsdir), 0755)
 		if err != nil {
-			return fmt.Errorf("Failed to create fake device directory: %v", err)
+			return errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
 	for filename, body := range sysfsFiles {
 		err = ioutil.WriteFile(path.Join(sysfs, filename), body, 0644)
 		if err != nil {
-			return fmt.Errorf("Failed to create fake vendor file: %v", err)
+			return errors.Wrap(err, "Failed to create fake vendor file")
 		}
 	}
 
@@ -326,12 +333,12 @@ func TestScanFPGAs(t *testing.T) {
 	for _, tcase := range tcases {
 		err := createTestDirs(devfs, sysfs, tcase.devfsdirs, tcase.sysfsdirs, tcase.sysfsfiles)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("%+v", err)
 		}
 
 		plugin, err := newDevicePlugin(sysfs, devfs, tcase.mode)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("%+v", err)
 		}
 		plugin.getDevTree = func(devices []device) dpapi.DeviceTree {
 			return dpapi.NewDeviceTree()
@@ -343,7 +350,7 @@ func TestScanFPGAs(t *testing.T) {
 				t.Errorf("Test case '%s': expected error '%s', but got '%v'", tcase.name, tcase.errorContains, err)
 			}
 		} else if err != nil {
-			t.Errorf("Test case '%s': expected no error, but got '%v'", tcase.name, err)
+			t.Errorf("Test case '%s': expected no error, but got '%+v'", tcase.name, err)
 		}
 
 		err = os.RemoveAll(tmpdir)

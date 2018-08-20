@@ -24,10 +24,12 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 // devicePluginServer maintains a gRPC server satisfying
@@ -68,17 +70,17 @@ func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer)
 	for id, device := range srv.devices {
 		resp.Devices = append(resp.Devices, &pluginapi.Device{id, device.State})
 	}
-	glog.V(2).Info("Sending to kubelet ", resp.Devices)
+	debug.Print("Sending to kubelet", resp.Devices)
 	if err := stream.Send(resp); err != nil {
 		srv.Stop()
-		return fmt.Errorf("device-plugin: cannot update device list: %v", err)
+		return errors.Wrapf(err, "Cannot update device list")
 	}
 
 	return nil
 }
 
 func (srv *server) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.DevicePlugin_ListAndWatchServer) error {
-	glog.V(2).Info("Started ListAndWatch for ", srv.devType)
+	debug.Print("Started ListAndWatch for", srv.devType)
 
 	if err := srv.sendDevices(stream); err != nil {
 		return err
@@ -100,10 +102,10 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 		for _, id := range crqt.DevicesIDs {
 			dev, ok := srv.devices[id]
 			if !ok {
-				return nil, fmt.Errorf("Invalid allocation request with non-existing device %s", id)
+				return nil, errors.Errorf("Invalid allocation request with non-existing device %s", id)
 			}
 			if dev.State != pluginapi.Healthy {
-				return nil, fmt.Errorf("Invalid allocation request with unhealthy device %s", id)
+				return nil, errors.Errorf("Invalid allocation request with unhealthy device %s", id)
 			}
 			for _, devnode := range dev.Nodes {
 				cresp.Devices = append(cresp.Devices, &pluginapi.DeviceSpec{
@@ -139,8 +141,7 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 }
 
 func (srv *server) PreStartContainer(ctx context.Context, rqt *pluginapi.PreStartContainerRequest) (*pluginapi.PreStartContainerResponse, error) {
-	glog.Warning("PreStartContainer() should not be called")
-	return new(pluginapi.PreStartContainerResponse), nil
+	return nil, errors.New("PreStartContainer() should not be called")
 }
 
 // Serve starts a gRPC server to serve pluginapi.PluginInterfaceServer interface.
@@ -151,7 +152,7 @@ func (srv *server) Serve(namespace string) error {
 // Stop stops serving pluginapi.PluginInterfaceServer interface.
 func (srv *server) Stop() error {
 	if srv.grpcServer == nil {
-		return fmt.Errorf("Can't stop non-existing gRPC server. Calling Stop() before Serve()?")
+		return errors.New("Can't stop non-existing gRPC server. Calling Stop() before Serve()?")
 	}
 	srv.grpcServer.Stop()
 	close(srv.updatesCh)
@@ -173,13 +174,13 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 		pluginSocket := path.Join(devicePluginPath, pluginEndpoint)
 
 		if err := waitForServer(pluginSocket, time.Second); err == nil {
-			return fmt.Errorf("Socket %s is already in use", pluginSocket)
+			return errors.Errorf("Socket %s is already in use", pluginSocket)
 		}
 		os.Remove(pluginSocket)
 
 		lis, err := net.Listen("unix", pluginSocket)
 		if err != nil {
-			return fmt.Errorf("Failed to listen to plugin socket: %+v", err)
+			return errors.Wrap(err, "Failed to listen to plugin socket")
 		}
 
 		srv.grpcServer = grpc.NewServer()
@@ -187,30 +188,28 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 
 		// Starts device plugin service.
 		go func() {
-			fmt.Printf("device-plugin start server at: %s\n", pluginSocket)
+			fmt.Printf("Start server for %s at: %s\n", srv.devType, pluginSocket)
 			srv.grpcServer.Serve(lis)
 		}()
 
 		// Wait for the server to start
 		if err = waitForServer(pluginSocket, 10*time.Second); err != nil {
-			return fmt.Errorf("Failed to wait for plugin socket: %+v", err)
+			return err
 		}
 
 		// Register with Kubelet.
 		err = registerWithKubelet(kubeletSocket, pluginEndpoint, resourceName)
 		if err != nil {
-			return fmt.Errorf("Failed to register: %+v", err)
+			return err
 		}
-		fmt.Println("device-plugin registered")
+		fmt.Printf("Device plugin for %s registered\n", srv.devType)
 
 		// Kubelet removes plugin socket when it (re)starts
 		// plugin must restart in this case
 		if err = watchFile(pluginSocket); err != nil {
-			return fmt.Errorf("error watching plugin socket: %+v", err)
+			return err
 		}
-		fmt.Printf("socket %s removed, restarting", pluginSocket)
-
-		fmt.Println("stop GRPC server")
+		fmt.Printf("Socket %s removed, restarting\n", pluginSocket)
 
 		srv.grpcServer.Stop()
 		os.Remove(pluginSocket)
@@ -220,13 +219,13 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 func watchFile(file string) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Failed to create watcher for %s", file)
 	}
 	defer watcher.Close()
 
 	err = watcher.Add(filepath.Dir(file))
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Failed to add %s to watcher", file)
 	}
 
 	for {
@@ -236,7 +235,7 @@ func watchFile(file string) error {
 				return nil
 			}
 		case err := <-watcher.Errors:
-			return err
+			return errors.WithStack(err)
 		}
 	}
 }
@@ -248,7 +247,7 @@ func registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string) err
 		}))
 	defer conn.Close()
 	if err != nil {
-		return fmt.Errorf("device-plugin: cannot connect to kubelet service: %v", err)
+		return errors.Wrap(err, "Cannot connect to kubelet service")
 	}
 	client := pluginapi.NewRegistrationClient(conn)
 	reqt := &pluginapi.RegisterRequest{
@@ -259,7 +258,7 @@ func registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string) err
 
 	_, err = client.Register(context.Background(), reqt)
 	if err != nil {
-		return fmt.Errorf("device-plugin: cannot register to kubelet service: %v", err)
+		return errors.Wrap(err, "Cannot register to kubelet service")
 	}
 
 	return nil
@@ -278,5 +277,5 @@ func waitForServer(socket string, timeout time.Duration) error {
 	if conn != nil {
 		conn.Close()
 	}
-	return err
+	return errors.Wrapf(err, "Failed dial context at %s", socket)
 }

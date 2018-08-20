@@ -34,10 +34,6 @@ ignored = ["k8s.io/code-generator"]
   unused-packages = false
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/golang/glog"
-
-[[constraint]]
   name = "google.golang.org/grpc"
   version = "1.11.0"
 

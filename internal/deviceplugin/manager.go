@@ -19,9 +19,9 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/golang/glog"
-
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 // updateInfo contains info for added, updated and deleted devices.
@@ -107,7 +107,7 @@ func (m *Manager) Run() {
 }
 
 func (m *Manager) handleUpdate(update updateInfo) {
-	glog.V(2).Info("Received dev updates: ", update)
+	debug.Print("Received dev updates:", update)
 	for devType, devices := range update.Added {
 		var postAllocate func(*pluginapi.AllocateResponse) error
 
@@ -119,7 +119,8 @@ func (m *Manager) handleUpdate(update updateInfo) {
 		go func() {
 			err := m.servers[devType].Serve(m.namespace)
 			if err != nil {
-				glog.Fatal(err)
+				fmt.Printf("Failed to serve %s/%s: %+v\n", m.namespace, devType, err)
+				os.Exit(1)
 			}
 		}()
 		m.servers[devType].Update(devices)

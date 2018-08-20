@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
+	"github.com/pkg/errors"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -34,6 +34,7 @@ import (
 	utilnode "k8s.io/kubernetes/pkg/util/node"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 const (
@@ -182,7 +183,7 @@ func newDevicePlugin(sysfsDir string, devfsDir string, mode string) (*devicePlug
 		getDevTree = getRegionDevelTree
 		ignoreAfuIDs = true
 	default:
-		return nil, fmt.Errorf("Wrong mode: '%s'", mode)
+		return nil, errors.Errorf("Wrong mode: '%s'", mode)
 	}
 
 	return &devicePlugin{
@@ -215,8 +216,7 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	for {
 		devTree, err := dp.scanFPGAs()
 		if err != nil {
-			glog.Error("Device scan failed: ", err)
-			return fmt.Errorf("Device scan failed: %v", err)
+			return err
 		}
 
 		notifier.Notify(devTree)
@@ -228,7 +228,7 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 func (dp *devicePlugin) getDevNode(devName string) (string, error) {
 	devNode := path.Join(dp.devfsDir, devName)
 	if _, err := os.Stat(devNode); err != nil {
-		return "", fmt.Errorf("Device %s doesn't exist: %v", devNode, err)
+		return "", errors.Wrapf(err, "Device %s doesn't exist", devNode)
 	}
 
 	return devNode, nil
@@ -237,11 +237,11 @@ func (dp *devicePlugin) getDevNode(devName string) (string, error) {
 func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
 	var devices []device
 
-	glog.V(2).Info("Start new FPGA scan")
+	debug.Print("Start new FPGA scan")
 
 	fpgaFiles, err := ioutil.ReadDir(dp.sysfsDir)
 	if err != nil {
-		return nil, fmt.Errorf("Can't read sysfs folder: %v", err)
+		return nil, errors.Wrap(err, "Can't read sysfs folder")
 	}
 
 	for _, fpgaFile := range fpgaFiles {
@@ -254,7 +254,7 @@ func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
 		deviceFolder := path.Join(dp.sysfsDir, fname)
 		deviceFiles, err := ioutil.ReadDir(deviceFolder)
 		if err != nil {
-			return nil, err
+			return nil, errors.WithStack(err)
 		}
 
 		regions, afus, err := dp.getSysFsInfo(deviceFolder, deviceFiles, fname)
@@ -263,7 +263,7 @@ func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
 		}
 
 		if len(regions) == 0 {
-			return nil, fmt.Errorf("No regions found for device %s", fname)
+			return nil, errors.Errorf("No regions found for device %s", fname)
 		}
 
 		// Currently only one region per device is supported.
@@ -285,12 +285,12 @@ func (dp *devicePlugin) getSysFsInfo(deviceFolder string, deviceFiles []os.FileI
 
 		if dp.fmeReg.MatchString(name) {
 			if len(regions) > 0 {
-				return nil, nil, fmt.Errorf("Detected more than one FPGA region for device %s. Only one region per FPGA device is supported", fname)
+				return nil, nil, errors.Errorf("Detected more than one FPGA region for device %s. Only one region per FPGA device is supported", fname)
 			}
 			interfaceIDFile := path.Join(deviceFolder, name, "pr", "interface_id")
 			data, err := ioutil.ReadFile(interfaceIDFile)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, errors.WithStack(err)
 			}
 			devNode, err := dp.getDevNode(name)
 			if err != nil {
@@ -310,7 +310,7 @@ func (dp *devicePlugin) getSysFsInfo(deviceFolder string, deviceFiles []os.FileI
 				afuFile := path.Join(deviceFolder, name, "afu_id")
 				data, err := ioutil.ReadFile(afuFile)
 				if err != nil {
-					return nil, nil, err
+					return nil, nil, errors.WithStack(err)
 				}
 				afuID = strings.TrimSpace(string(data))
 			}
@@ -329,18 +329,29 @@ func (dp *devicePlugin) getSysFsInfo(deviceFolder string, deviceFiles []os.FileI
 	return regions, afus, nil
 }
 
+func fatal(err error) {
+	fmt.Printf("ERROR: %+v\n", err)
+	os.Exit(1)
+}
+
 func main() {
 	var mode string
 	var kubeconfig string
 	var master string
 	var config *rest.Config
 	var err error
+	var debugEnabled bool
 
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
 	flag.StringVar(&master, "master", "", "master url")
 	flag.StringVar(&mode, "mode", string(afMode),
 		fmt.Sprintf("device plugin mode: '%s' (default), '%s' or '%s'", afMode, regionMode, regionDevelMode))
+	flag.BoolVar(&debugEnabled, "debug", false, "enable debug output")
 	flag.Parse()
+
+	if debugEnabled {
+		debug.Activate()
+	}
 
 	if kubeconfig == "" {
 		config, err = rest.InClusterConfig()
@@ -348,7 +359,7 @@ func main() {
 		config, err = clientcmd.BuildConfigFromFlags(master, kubeconfig)
 	}
 	if err != nil {
-		glog.Fatal(err)
+		fatal(err)
 	}
 
 	// if NODE_NAME is not set then try to use hostname
@@ -356,26 +367,25 @@ func main() {
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		glog.Fatal(err)
+		fatal(err)
 	}
 
 	node, err := clientset.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
 	if err != nil {
-		glog.Fatal(err)
+		fatal(err)
 	}
 
 	if nodeMode, ok := node.ObjectMeta.Annotations["fpga.intel.com/device-plugin-mode"]; ok {
-		glog.Info("Overriding mode to ", nodeMode)
+		fmt.Println("Overriding mode to ", nodeMode)
 		mode = nodeMode
 	}
 
 	plugin, err := newDevicePlugin(sysfsDirectory, devfsDirectory, mode)
 	if err != nil {
-		glog.Error(err)
-		os.Exit(1)
+		fatal(err)
 	}
 
-	glog.Info("FPGA device plugin started in ", mode, " mode")
+	fmt.Println("FPGA device plugin started in ", mode, " mode")
 
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()

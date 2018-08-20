@@ -18,9 +18,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/glog"
+	"github.com/pkg/errors"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
@@ -30,6 +30,7 @@ import (
 	clientset "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned"
 	informers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/informers/externalversions"
 	listers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/listers/fpga.intel.com/v1"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 const (
@@ -55,8 +56,7 @@ type controller struct {
 func newController(patcher *patcher, config *rest.Config) (*controller, error) {
 	clientset, err := clientset.NewForConfig(config)
 	if err != nil {
-		glog.Error("Failed to create REST clientset ", err)
-		return nil, err
+		return nil, errors.Wrap(err, "Failed to create REST clientset")
 	}
 
 	informerFactory := informers.NewSharedInformerFactory(clientset, resyncPeriod)
@@ -89,16 +89,16 @@ func (c *controller) run(threadiness int) error {
 	defer runtime.HandleCrash()
 	defer c.queue.ShutDown()
 
-	glog.Info("Starting controller")
+	fmt.Println("Starting controller")
 
 	go c.informerFactory.Start(c.stopCh)
 
 	if ok := cache.WaitForCacheSync(c.stopCh, c.afsSynced); !ok {
-		return fmt.Errorf("failed to wait for AF caches to sync")
+		return errors.New("failed to wait for AF caches to sync")
 	}
 
 	if ok := cache.WaitForCacheSync(c.stopCh, c.regionsSynced); !ok {
-		return fmt.Errorf("failed to wait for Region caches to sync")
+		return errors.New("failed to wait for Region caches to sync")
 	}
 
 	for i := 0; i < threadiness; i++ {
@@ -107,7 +107,7 @@ func (c *controller) run(threadiness int) error {
 			}
 		}, time.Second, c.stopCh)
 	}
-	glog.Info("Started controller workers")
+	fmt.Println("Started controller workers")
 	<-c.stopCh
 
 	return nil
@@ -133,27 +133,27 @@ func (c *controller) processNextWorkItem() bool {
 
 		if key, ok = obj.(fpgaObjectKey); !ok {
 			c.queue.Forget(obj)
-			return fmt.Errorf("expected fpgaObjectKey in workqueue but got %#v", obj)
+			return errors.Errorf("expected fpgaObjectKey in workqueue but got %#v", obj)
 		}
 
 		switch key.kind {
 		case "af":
 			if err := c.syncAfHandler(key.name); err != nil {
-				return fmt.Errorf("error syncing '%s': %v", key.name, err)
+				return errors.Wrapf(err, "error syncing '%s'", key.name)
 			}
 		case "region":
 			if err := c.syncRegionHandler(key.name); err != nil {
-				return fmt.Errorf("error syncing '%s': %v", key.name, err)
+				return errors.Wrapf(err, "error syncing '%s'", key.name)
 			}
 		default:
 			c.queue.Forget(obj)
-			return fmt.Errorf("Unknown kind of object key: %s", key.kind)
+			return errors.Errorf("Unknown kind of object key: %s", key.kind)
 		}
 
 		// Finally, if no error occurs we Forget this item so it does not
 		// get queued again until another change happens.
 		c.queue.Forget(obj)
-		glog.V(2).Infof("Successfully synced '%s'", key)
+		debug.Printf("Successfully synced '%s'", key)
 		return nil
 	}(obj)
 
@@ -169,7 +169,7 @@ func (c *controller) syncAfHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
+		runtime.HandleError(errors.Errorf("invalid resource key: %s", key))
 		return nil
 	}
 
@@ -178,9 +178,9 @@ func (c *controller) syncAfHandler(key string) error {
 	if err != nil {
 		// The AcceleratorFunction resource may no longer exist, in which case we stop
 		// processing.
-		if errors.IsNotFound(err) {
-			runtime.HandleError(fmt.Errorf("accelerated function '%s' in work queue no longer exists", key))
-			glog.V(2).Infof("AF '%s' no longer exists", key)
+		if k8serrors.IsNotFound(err) {
+			runtime.HandleError(errors.Errorf("accelerated function '%s' in work queue no longer exists", key))
+			debug.Printf("AF '%s' no longer exists", key)
 			c.patcher.removeAf(name)
 			return nil
 		}
@@ -188,7 +188,7 @@ func (c *controller) syncAfHandler(key string) error {
 		return err
 	}
 
-	glog.V(2).Info("Received ", af)
+	debug.Print("Received", af)
 	c.patcher.addAf(af)
 	return nil
 }
@@ -197,7 +197,7 @@ func (c *controller) syncRegionHandler(key string) error {
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
+		runtime.HandleError(errors.Errorf("invalid resource key: %s", key))
 		return nil
 	}
 
@@ -206,9 +206,9 @@ func (c *controller) syncRegionHandler(key string) error {
 	if err != nil {
 		// The FpgaRegion resource may no longer exist, in which case we stop
 		// processing.
-		if errors.IsNotFound(err) {
-			runtime.HandleError(fmt.Errorf("FPGA region '%s' in work queue no longer exists", key))
-			glog.V(2).Infof("Region '%s' no longer exists", key)
+		if k8serrors.IsNotFound(err) {
+			runtime.HandleError(errors.Errorf("FPGA region '%s' in work queue no longer exists", key))
+			debug.Printf("Region '%s' no longer exists", key)
 			c.patcher.removeRegion(name)
 			return nil
 		}
@@ -216,7 +216,7 @@ func (c *controller) syncRegionHandler(key string) error {
 		return err
 	}
 
-	glog.V(2).Info("Received ", region)
+	debug.Print("Received", region)
 	c.patcher.addRegion(region)
 	return nil
 }

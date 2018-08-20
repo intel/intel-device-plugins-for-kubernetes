@@ -21,19 +21,27 @@ import (
 	"path"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
+
+func init() {
+	debug.Activate()
+}
 
 func createTestFiles(prefix string, dirs []string, files map[string][]byte) error {
 	for _, dir := range dirs {
 		err := os.MkdirAll(path.Join(prefix, dir), 0755)
 		if err != nil {
-			return fmt.Errorf("Failed to create fake device directory: %v", err)
+			return errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
 	for filename, body := range files {
 		err := ioutil.WriteFile(path.Join(prefix, filename), body, 0644)
 		if err != nil {
-			return fmt.Errorf("Failed to create fake vendor file: %v", err)
+			return errors.Wrap(err, "Failed to create fake vendor file")
 		}
 	}
 
@@ -163,7 +171,7 @@ func TestScanPrivate(t *testing.T) {
 			t.Fatal(err)
 		}
 		if err := createTestFiles(tmpdir, tt.dirs, tt.files); err != nil {
-			t.Fatal(err)
+			t.Fatalf("%+v", err)
 		}
 
 		dp := &devicePlugin{

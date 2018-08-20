@@ -35,7 +35,7 @@ $ ls /var/lib/kubelet/device-plugins/kubelet.sock
 ### Deploy QAT device plugin directly on the host:
 ```
 $ sudo $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/qat_plugin/qat_plugin \
--dpdk-driver igb_uio -kernel-vf-drivers dh895xccvf -max-num-devices 10 -v 10 logtostderr
+-dpdk-driver igb_uio -kernel-vf-drivers dh895xccvf -max-num-devices 10 -debug
 QAT device plugin started
 Discovered Devices below:
 03:01.0 device: corresponding DPDK device detected is uio0

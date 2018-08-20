@@ -22,7 +22,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
+
+func init() {
+	debug.Activate()
+}
 
 func TestPatcherStorageFunctions(t *testing.T) {
 	af := &fpgav1.AcceleratorFunction{
@@ -278,7 +283,7 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			t.Errorf("Test case '%s': no error returned", tt.name)
 		}
 		if !tt.expectedErr && err != nil {
-			t.Errorf("Test case '%s': unexpected error %v", tt.name, err)
+			t.Errorf("Test case '%s': unexpected error %+v", tt.name, err)
 		}
 		if len(ops) != tt.expectedOps {
 			t.Errorf("test case '%s': expected %d ops, but got %d\n%v", tt.name, tt.expectedOps, len(ops), ops)
@@ -366,7 +371,7 @@ func TestGetEnvVars(t *testing.T) {
 			t.Errorf("Test case '%s': no error returned", tt.name)
 		}
 		if !tt.expectedErr && err != nil {
-			t.Errorf("Test case '%s': unexpected error %v", tt.name, err)
+			t.Errorf("Test case '%s': unexpected error %+v", tt.name, err)
 		}
 	}
 }

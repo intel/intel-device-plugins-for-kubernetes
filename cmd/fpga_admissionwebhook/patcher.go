@@ -21,6 +21,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/pkg/errors"
+
 	corev1 "k8s.io/api/core/v1"
 
 	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
@@ -66,7 +68,7 @@ type patcher struct {
 
 func newPatcher(mode string) (*patcher, error) {
 	if mode != preprogrammed && mode != orchestrated {
-		return nil, fmt.Errorf("Unknown mode: %s", mode)
+		return nil, errors.Errorf("Unknown mode: %s", mode)
 	}
 
 	return &patcher{
@@ -117,7 +119,7 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 		return p.getPatchOpsOrchestrated(containerIdx, container)
 	}
 
-	return nil, fmt.Errorf("Uknown mode: %s", p.mode)
+	return nil, errors.Errorf("Uknown mode: %s", p.mode)
 }
 
 func (p *patcher) getPatchOpsPreprogrammed(containerIdx int, container corev1.Container) ([]string, error) {
@@ -171,7 +173,7 @@ func (p *patcher) getPatchOpsOrchestrated(containerIdx int, container corev1.Con
 		}
 
 		if mutated {
-			return nil, fmt.Errorf("Only one FPGA resource per container is supported in '%s' mode", orchestrated)
+			return nil, errors.Errorf("Only one FPGA resource per container is supported in '%s' mode", orchestrated)
 		}
 
 		op := fmt.Sprintf(resourceReplaceOp, containerIdx, "limits", rfc6901Escaper.Replace(string(resourceName)),
@@ -201,7 +203,7 @@ func (p *patcher) getPatchOpsOrchestrated(containerIdx int, container corev1.Con
 		}
 
 		if mutated {
-			return nil, fmt.Errorf("Only one FPGA resource per container is supported in '%s' mode", orchestrated)
+			return nil, errors.Errorf("Only one FPGA resource per container is supported in '%s' mode", orchestrated)
 		}
 
 		op := fmt.Sprintf(resourceReplaceOp, containerIdx, "requests", rfc6901Escaper.Replace(string(resourceName)),
@@ -231,7 +233,7 @@ func (p *patcher) parseResourceName(input string) (string, string, error) {
 		case "Region":
 			regionName = result[num]
 			if interfaceID, ok = p.regionMap[result[num]]; !ok {
-				return "", "", fmt.Errorf("Unknown region name: %s", result[num])
+				return "", "", errors.Errorf("Unknown region name: %s", result[num])
 			}
 		case "Af":
 			afName = result[num]
@@ -240,7 +242,7 @@ func (p *patcher) parseResourceName(input string) (string, string, error) {
 
 	if afName != "" {
 		if afuID, ok = p.afMap[regionName+"-"+afName]; !ok {
-			return "", "", fmt.Errorf("Unknown AF name: %s", regionName+"-"+afName)
+			return "", "", errors.Errorf("Unknown AF name: %s", regionName+"-"+afName)
 		}
 	}
 
@@ -251,7 +253,7 @@ func getEnvVars(container corev1.Container) (string, error) {
 	var jsonstrings []string
 	for _, envvar := range container.Env {
 		if envvar.Name == "FPGA_REGION" || envvar.Name == "FPGA_AFU" {
-			return "", fmt.Errorf("The env var '%s' is not allowed", envvar.Name)
+			return "", errors.Errorf("The env var '%s' is not allowed", envvar.Name)
 		}
 		jsonbytes, err := json.Marshal(envvar)
 		if err != nil {

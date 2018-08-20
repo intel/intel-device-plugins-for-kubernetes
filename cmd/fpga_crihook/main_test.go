@@ -22,7 +22,13 @@ import (
 
 	"k8s.io/utils/exec"
 	fakeexec "k8s.io/utils/exec/testing"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
+
+func init() {
+	debug.Activate()
+}
 
 func TestGetFPGAParams(t *testing.T) {
 	tcases := []struct {
@@ -108,7 +114,7 @@ func TestGetFPGAParams(t *testing.T) {
 
 		content, err := decodeJSONStream(stdin)
 		if err != nil {
-			t.Fatalf("can't decode json file %s: %v", tc.stdinJSON, err)
+			t.Fatalf("can't decode json file %s: %+v", tc.stdinJSON, err)
 		}
 
 		he := newHookEnv("", tc.configJSON, nil, "")
@@ -117,7 +123,7 @@ func TestGetFPGAParams(t *testing.T) {
 
 		if err != nil {
 			if !tc.expectedErr {
-				t.Errorf("unexpected error: %v", err)
+				t.Errorf("unexpected error: %+v", err)
 			}
 		} else {
 			if params.region != tc.expectedRegion {
@@ -238,7 +244,7 @@ func TestValidateBitstream(t *testing.T) {
 		he := newHookEnv("", "", &execer, "")
 		err := he.validateBitStream(tc.params, "")
 		if err != nil && !tc.expectedErr {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("unexpected error: %+v", err)
 		}
 	}
 }
@@ -300,7 +306,7 @@ func TestProgramBitStream(t *testing.T) {
 		he.execer = &fakeexec.FakeExec{CommandScript: genFakeActions(&fcmd, len(fcmd.CombinedOutputScript))}
 		err := he.programBitStream(tc.params, "")
 		if err != nil && !tc.expectedErr {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("unexpected error: %+v", err)
 		}
 	}
 }
@@ -416,7 +422,7 @@ func TestProcess(t *testing.T) {
 		err = he.process(stdin)
 
 		if err != nil && !tc.expectedErr {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("unexpected error: %+v", err)
 		}
 	}
 }

@@ -18,7 +18,13 @@ import (
 	"testing"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
+
+func init() {
+	debug.Activate()
+}
 
 func TestNotify(t *testing.T) {
 	tcases := []struct {
