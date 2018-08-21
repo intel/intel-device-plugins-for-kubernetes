@@ -15,6 +15,16 @@ spec:
         app: intel-fpga-plugin
     spec:
       serviceAccountName: intel-fpga-plugin-controller
+      initContainers:
+      - name: intel-fpga-initcontainer
+        image: intel-fpga-initcontainer:devel
+        imagePullPolicy: IfNotPresent
+        command: ['/opt/intel/fpga-sw.src/deploy.sh']
+        volumeMounts:
+        - mountPath: /opt/intel/fpga-sw
+          name: intel-fpga-sw
+        - mountPath: /etc/containers/oci/hooks.d
+          name: oci-hooks-config
       containers:
       - name: intel-fpga-plugin
         env:
@@ -41,3 +51,11 @@ spec:
       - name: kubeletsockets
         hostPath:
           path: /var/lib/kubelet/device-plugins
+      - name: intel-fpga-sw
+        hostPath:
+          path: /opt/intel/fpga-sw
+          type: DirectoryOrCreate
+      - name: oci-hooks-config
+        hostPath:
+          path: /etc/containers/oci/hooks.d
+          type: DirectoryOrCreate
