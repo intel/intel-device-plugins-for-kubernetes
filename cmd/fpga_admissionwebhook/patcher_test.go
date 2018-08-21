@@ -73,6 +73,78 @@ func TestPatcherStorageFunctions(t *testing.T) {
 	}
 }
 
+func TestGetPatchOpsPreprogrammed(t *testing.T) {
+	tcases := []struct {
+		name        string
+		resourceMap map[string]string
+		container   corev1.Container
+		expectedErr bool
+		expectedOps int
+	}{
+		{
+			name: "Empty container",
+		},
+		{
+			name: "Unknown resource in limits",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"fpga.intel.com/arria10-unknown": resource.MustParse("1"),
+						"cpu": resource.MustParse("1"),
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "Unknown resource in requests",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						"fpga.intel.com/arria10-unknown": resource.MustParse("1"),
+						"cpu": resource.MustParse("1"),
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "Successful case",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
+						"cpu": resource.MustParse("1"),
+					},
+					Requests: corev1.ResourceList{
+						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
+						"cpu": resource.MustParse("1"),
+					},
+				},
+			},
+			resourceMap: map[string]string{
+				"fpga.intel.com/arria10-nlb0": rfc6901Escaper.Replace("fpga.intel.com/af-d8424dc4a4a3c413f89e433683f9040b"),
+			},
+			expectedOps: 2,
+		},
+	}
+	for _, tt := range tcases {
+		p := &patcher{
+			resourceMap: tt.resourceMap,
+		}
+		ops, err := p.getPatchOpsPreprogrammed(0, tt.container)
+		if tt.expectedErr && err == nil {
+			t.Errorf("Test case '%s': no error returned", tt.name)
+		}
+		if !tt.expectedErr && err != nil {
+			t.Errorf("Test case '%s': unexpected error %v", tt.name, err)
+		}
+		if len(ops) != tt.expectedOps {
+			t.Errorf("test case '%s': expected %d ops, but got %d\n%v", tt.name, tt.expectedOps, len(ops), ops)
+		}
+	}
+}
+
 func TestParseResourceName(t *testing.T) {
 	tcases := []struct {
 		input       string
