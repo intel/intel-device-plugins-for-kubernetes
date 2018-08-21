@@ -245,10 +245,10 @@ func registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string) err
 		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
 			return net.DialTimeout("unix", addr, timeout)
 		}))
-	defer conn.Close()
 	if err != nil {
 		return errors.Wrap(err, "Cannot connect to kubelet service")
 	}
+	defer conn.Close()
 	client := pluginapi.NewRegistrationClient(conn)
 	reqt := &pluginapi.RegisterRequest{
 		Version:      pluginapi.Version,
