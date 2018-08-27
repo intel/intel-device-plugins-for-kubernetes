@@ -40,12 +40,15 @@ In `region` mode, the device plugin exposes partial reconfiguration regions
 as consumable resources. Regions with the same interface ID are
 translated to resources of the same type.
 
+### Deploy FPGA device plugin as host process for development purposes
+
 #### Run FPGA device plugin in af mode
 
 1. Run FPGA device plugin as administrator:
 ```
+$ export KUBE_CONF=/var/run/kubernetes/admin.kubeconfig # path to kubeconfig with admin's credentials
 $ export NODE_NAME="<node name>" # if the node's name was overridden and differs from hostname
-$ sudo -E $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode af -kubeconfig /var/run/kubernetes/admin.kubeconfig
+$ sudo -E $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode af -kubeconfig $KUBE_CONF
 FPGA device plugin started in af mode
 device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-af-f7df405cbd7acf7222f144b0b93acd18.sock
 device-plugin registered
@@ -62,8 +65,9 @@ $ kubectl describe node <node name> | grep fpga.intel.com
 
 1. Run FPGA device plugin as administrator:
 ```
+$ export KUBE_CONF=/var/run/kubernetes/admin.kubeconfig # path to kubeconfig with admin's credentials
 $ export NODE_NAME="<node name>" # if the node's name was overridden and differs from hostname
-$ sudo -E $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode region -kubeconfig /var/run/kubernetes/admin.kubeconfig
+$ sudo -E $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode region -kubeconfig $KUBE_CONF
 FPGA device plugin started in region mode
 device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-region-ce48969398f05f33946d560708be108a.sock
 device-plugin registered
