@@ -13,16 +13,4 @@ if [ ! -d "$IMG" ]; then
     exit 1
 fi
 
-PROXY_VARS="http_proxy https_proxy"
-
-BUILD_ARGS=""
-
-for proxy in $PROXY_VARS; do
-    if [ -v $proxy ]; then
-        val=`echo ${!proxy} | tr -d ' '`
-        BUILD_ARGS="${BUILD_ARGS} --build-arg $proxy=${val}"
-        RUN_ARGS="$RUN_ARGS -e $proxy=${!proxy}"
-    fi
-done
-
-docker build -t ${IMG} $BUILD_ARGS "$CWD/$IMG/"
+docker build -t ${IMG} "$CWD/$IMG/"
