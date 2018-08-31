@@ -7,7 +7,7 @@
         "io.kubernetes.pod.namespace": "default",
         "io.kubernetes.pod.terminationGracePeriod": "30",
         "io.kubernetes.pod.uid": "942e94c1-72d3-11e8-b221-c81f66f62fcc",
-        "com.intel.fpga.mode": "intel.com/fpga-region"
+        "com.intel.fpga.mode": "fpga.intel.com/region"
     },
     "bundle": "testdata",
     "id": "1c40dd8efd268a47d7fb9f75d00f50c20af49d07d8d3c5fb948e68abb6d5ecf9",
