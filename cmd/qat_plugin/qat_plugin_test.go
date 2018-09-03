@@ -31,20 +31,34 @@ func init() {
 	debug.Activate()
 }
 
-func createTestFiles(prefix string, dirs []string, files map[string][]byte) error {
+func createTestFiles(prefix string, dirs []string, files map[string][]byte, symlinks map[string]string) error {
 	for _, dir := range dirs {
+
 		err := os.MkdirAll(path.Join(prefix, dir), 0755)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake device directory")
 		}
+
 	}
 	for filename, body := range files {
+
 		err := ioutil.WriteFile(path.Join(prefix, filename), body, 0644)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake vendor file")
 		}
-	}
 
+	}
+	for link, target := range symlinks {
+
+		err := os.MkdirAll(path.Join(prefix, target), 0755)
+		if err != nil {
+			return errors.Wrap(err, "Failed to create fake symlink target directory")
+		}
+		err = os.Symlink(path.Join(prefix, target), path.Join(prefix, link))
+		if err != nil {
+			return errors.Wrap(err, "Failed to create fake symlink")
+		}
+	}
 	return nil
 }
 
@@ -58,18 +72,19 @@ func TestScanPrivate(t *testing.T) {
 		kernelVfDrivers []string
 		dirs            []string
 		files           map[string][]byte
+		symlinks        map[string]string
 		expectedErr     bool
 		maxDevNum       int
 		expectedDevNum  int
 	}{
 		{
-			name:        "Return error for uninitialized device plugin",
-			expectedErr: true,
+			name: "No error returned for uninitialized device plugin",
 		},
 		{
-			name:       "Only DPDK driver is set and no devs allowed",
-			dpdkDriver: "igb_uio",
-			dirs:       []string{"sys/bus/pci/drivers/igb_uio/0000:test"},
+			name:        "Only DPDK driver is set and no devs allowed and vfdevID cannot be determined",
+			dpdkDriver:  "igb_uio",
+			dirs:        []string{"sys/bus/pci/drivers/igb_uio/0000:test"},
+			expectedErr: true,
 		},
 		{
 			name:       "Only DPDK driver is set and no dev exists",
@@ -94,14 +109,27 @@ func TestScanPrivate(t *testing.T) {
 			expectedErr: true,
 		},
 		{
+			name:       "igb_uio DPDKdriver with one DPDK bound device where vfdevID cannot be determined",
+			dpdkDriver: "igb_uio",
+			dirs: []string{
+				"sys/bus/pci/drivers/igb_uio/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/uio/sometestfile",
+			},
+			maxDevNum:   1,
+			expectedErr: true,
+		},
+		{
 			name:       "igb_uio DPDKdriver with one DPDK bound device",
 			dpdkDriver: "igb_uio",
 			dirs: []string{
 				"sys/bus/pci/drivers/igb_uio/0000:02:00.0",
 				"sys/bus/pci/devices/0000:02:00.0/uio/sometestfile",
 			},
+			files: map[string][]byte{
+				"sys/bus/pci/devices/0000:02:00.0/device": []byte("some junk"),
+			},
 			maxDevNum:      1,
-			expectedDevNum: 1,
+			expectedDevNum: 0,
 		},
 		{
 			name:            "igb_uio DPDKdriver with one kernel bound device, but unbindable",
@@ -142,11 +170,11 @@ func TestScanPrivate(t *testing.T) {
 				"sys/bus/pci/devices/0000:02:00.0/driver/unbind": []byte("some junk"),
 				"sys/bus/pci/devices/0000:02:00.0/device":        []byte("some junk"),
 			},
-			maxDevNum:   1,
-			expectedErr: true,
+			maxDevNum:      1,
+			expectedDevNum: 0,
 		},
 		{
-			name:            "igb_uio DPDKdriver with one kernel bound device",
+			name:            "igb_uio DPDKdriver with one kernel bound device (not QAT device) where vfdevID is not equal to qatDevId (37c9)",
 			dpdkDriver:      "igb_uio",
 			kernelVfDrivers: []string{"c6xxvf"},
 			dirs: []string{
@@ -161,16 +189,152 @@ func TestScanPrivate(t *testing.T) {
 				"sys/bus/pci/drivers/igb_uio/new_id":             []byte("some junk"),
 			},
 			maxDevNum:      1,
+			expectedDevNum: 0,
+		},
+		{
+			name:            "igb_uio DPDKdriver with one kernel bound device (QAT device) where vfdevID is equal to qatDevId (37c9) ",
+			dpdkDriver:      "igb_uio",
+			kernelVfDrivers: []string{"c6xxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/igb_uio",
+				"sys/bus/pci/drivers/c6xxvf/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/uio/sometestfile",
+				"sys/bus/pci/devices/0000:02:00.0/driver",
+			},
+			files: map[string][]byte{
+				"sys/bus/pci/devices/0000:02:00.0/driver/unbind": []byte("some junk"),
+				"sys/bus/pci/devices/0000:02:00.0/device":        []byte("0x37c9"),
+				"sys/bus/pci/drivers/igb_uio/new_id":             []byte("some junk"),
+			},
+			maxDevNum:      1,
 			expectedDevNum: 1,
 		},
+		{
+			name:            "igb_uio DPDKdriver with one kernel bound device (QAT device) where vfdevID is equal to qatDevId (37c9) where reading uioDirPath for obtaining device file fails ",
+			dpdkDriver:      "igb_uio",
+			kernelVfDrivers: []string{"c6xxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/igb_uio",
+				"sys/bus/pci/drivers/c6xxvf/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/driver",
+			},
+			files: map[string][]byte{
+				"sys/bus/pci/devices/0000:02:00.0/driver/unbind": []byte("some junk"),
+				"sys/bus/pci/devices/0000:02:00.0/device":        []byte("0x37c9"),
+				"sys/bus/pci/drivers/igb_uio/new_id":             []byte("some junk"),
+			},
+			maxDevNum:   1,
+			expectedErr: true,
+		},
+		{
+			name:            "igb_uio DPDKdriver with one kernel bound device (QAT device) where vfdevID is equal to qatDevId (37c9) but no uio device is found",
+			dpdkDriver:      "igb_uio",
+			kernelVfDrivers: []string{"c6xxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/igb_uio",
+				"sys/bus/pci/drivers/c6xxvf/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/uio",
+				"sys/bus/pci/devices/0000:02:00.0/driver",
+			},
+			files: map[string][]byte{
+				"sys/bus/pci/devices/0000:02:00.0/driver/unbind": []byte("some junk"),
+				"sys/bus/pci/devices/0000:02:00.0/device":        []byte("0x37c9"),
+				"sys/bus/pci/drivers/igb_uio/new_id":             []byte("some junk"),
+			},
+			maxDevNum:   1,
+			expectedErr: true,
+		},
+		{
+			name:            "igb_uio DPDKdriver with one kernel bound device (QAT device) where vfdevID is equal to qatDevId (37c9) where the available devices on the system are 2 but maxNumDevices=1] ",
+			dpdkDriver:      "igb_uio",
+			kernelVfDrivers: []string{"c6xxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/igb_uio",
+				"sys/bus/pci/drivers/c6xxvf/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/uio/sometestfile",
+				"sys/bus/pci/devices/0000:02:00.0/driver",
+				"sys/bus/pci/drivers/c6xxvf/0000:02:00.1",
+				"sys/bus/pci/devices/0000:02:00.1/uio/sometestfile",
+				"sys/bus/pci/devices/0000:02:00.1/driver",
+			},
+			files: map[string][]byte{
+				"sys/bus/pci/devices/0000:02:00.0/driver/unbind": []byte("some junk"),
+				"sys/bus/pci/devices/0000:02:00.0/device":        []byte("0x37c9"),
+				"sys/bus/pci/drivers/igb_uio/new_id":             []byte("some junk"),
+				"sys/bus/pci/devices/0000:02:00.1/driver/unbind": []byte("some junk"),
+				"sys/bus/pci/devices/0000:02:00.1/device":        []byte("0x37c9"),
+			},
+			maxDevNum:      1,
+			expectedDevNum: 1,
+		},
+		{
+			name:            "vfio-pci DPDKdriver with one kernel bound device (not QAT device) where vfdevID is not equal to qatDevId (37c9)",
+			dpdkDriver:      "igb_uio",
+			kernelVfDrivers: []string{"c6xxvf"},
+
+			dirs: []string{
+				"sys/bus/pci/drivers/vfio-pci",
+				"sys/bus/pci/drivers/c6xxvf/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/driver",
+				"sys/bus/pci/devices/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/vfio-pci/vfiotestfile",
+			},
+			files: map[string][]byte{
+				"sys/bus/pci/devices/0000:02:00.0/driver/unbind": []byte("some junk"),
+				"sys/bus/pci/devices/0000:02:00.0/device":        []byte("some junk"),
+				"sys/bus/pci/drivers/vfio-pci/new_id":            []byte("some junk"),
+			},
+			maxDevNum:      1,
+			expectedDevNum: 0,
+		},
+		{
+			name:            "vfio-pci DPDKdriver with  one kernel bound device (QAT device) where vfdevID is equal to qatDevId (37c9)",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: []string{"c6xxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/vfio-pci",
+				"sys/bus/pci/drivers/c6xxvf/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/driver",
+				"sys/bus/pci/devices/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/vfio-pci/vfiotestfile",
+			},
+			files: map[string][]byte{
+				"sys/bus/pci/devices/0000:02:00.0/driver/unbind": []byte("some junk"),
+				"sys/bus/pci/devices/0000:02:00.0/device":        []byte("0x37c9"),
+				"sys/bus/pci/drivers/vfio-pci/new_id":            []byte("some junk"),
+			},
+			symlinks: map[string]string{
+				"sys/bus/pci/devices/0000:02:00.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+			},
+			maxDevNum:      1,
+			expectedDevNum: 1,
+		},
+		{
+			name:            "vfio-pci DPDKdriver with  one kernel bound device (QAT device) where vfdevID is equal to qatDevId (37c9) but symlink is broken",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: []string{"c6xxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/vfio-pci",
+				"sys/bus/pci/drivers/c6xxvf/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/driver",
+				"sys/bus/pci/devices/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/vfio-pci/vfiotestfile",
+			},
+			files: map[string][]byte{
+				"sys/bus/pci/devices/0000:02:00.0/driver/unbind": []byte("some junk"),
+				"sys/bus/pci/devices/0000:02:00.0/device":        []byte("0x37c9"),
+				"sys/bus/pci/drivers/vfio-pci/new_id":            []byte("some junk"),
+			},
+			maxDevNum:   1,
+			expectedErr: true,
+		},
 	}
-
 	for _, tt := range tcases {
-
 		if err := os.MkdirAll(tmpdir, 0755); err != nil {
 			t.Fatal(err)
 		}
-		if err := createTestFiles(tmpdir, tt.dirs, tt.files); err != nil {
+
+		if err := createTestFiles(tmpdir, tt.dirs, tt.files, tt.symlinks); err != nil {
 			t.Fatalf("%+v", err)
 		}
 

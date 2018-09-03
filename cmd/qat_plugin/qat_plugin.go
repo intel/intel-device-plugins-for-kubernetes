@@ -34,20 +34,18 @@ import (
 )
 
 const (
-	uioDevicePath         = "/dev"
-	vfioDevicePath        = "/dev/vfio"
-	uioMountPath          = "/sys/class/uio"
-	pciDeviceDirectory    = "/sys/bus/pci/devices"
-	pciDriverDirectory    = "/sys/bus/pci/drivers"
-	uioSuffix             = "uio"
-	iommuGroupSuffix      = "iommu_group"
-	sysfsIommuGroupPrefix = "/sys/kernel/iommu_groups"
-	newIDSuffix           = "new_id"
-	driverUnbindSuffix    = "driver/unbind"
-	qatDeviceRE           = "[0-9|a-f][0-9|a-f]:[0-9|a-f][0-9|a-f]\\.[0-9|a-f].*"
-	vendorPrefix          = "8086 "
+	uioDevicePath      = "/dev"
+	vfioDevicePath     = "/dev/vfio"
+	uioMountPath       = "/sys/class/uio"
+	pciDeviceDirectory = "/sys/bus/pci/devices"
+	pciDriverDirectory = "/sys/bus/pci/drivers"
+	uioSuffix          = "uio"
+	iommuGroupSuffix   = "iommu_group"
+	newIDSuffix        = "new_id"
+	driverUnbindSuffix = "driver/unbind"
+	vendorPrefix       = "8086 "
 
-	namespace = "qat"
+	namespace = "qat.intel.com"
 )
 
 type devicePlugin struct {
@@ -103,7 +101,7 @@ func (dp *devicePlugin) getDpdkDevice(id string) (string, error) {
 		if err != nil {
 			return "", errors.WithStack(err)
 		}
-		s := strings.TrimPrefix(group, sysfsIommuGroupPrefix)
+		s := path.Base(group)
 		fmt.Printf("The vfio device group detected is %v\n", s)
 		return s, nil
 	}
@@ -170,10 +168,9 @@ func (dp *devicePlugin) bindDevice(id string) error {
 	// Unbind from the kernel driver
 	err := ioutil.WriteFile(unbindDevicePath, []byte(devicePCIAddr), 0644)
 	if err != nil {
-		return errors.Wrapf(err, "Unbinding from kernel driver failed for the device %s: %v", id)
+		return errors.Wrapf(err, "Unbinding from kernel driver failed for the device %s", id)
 
 	}
-
 	vfdevID, err := dp.getDeviceID(devicePCIAddr)
 	if err != nil {
 		return err
@@ -182,9 +179,8 @@ func (dp *devicePlugin) bindDevice(id string) error {
 	//Bind to the the dpdk driver
 	err = ioutil.WriteFile(bindDevicePath, []byte(vendorPrefix+vfdevID), 0644)
 	if err != nil {
-		return errors.Wrapf(err, "Binding to the DPDK driver failed for the device %s: %v", id)
+		return errors.Wrapf(err, "Binding to the DPDK driver failed for the device %s", id)
 	}
-
 	return nil
 }
 
@@ -203,6 +199,13 @@ func isValidDpdkDeviceDriver(dpdkDriver string) bool {
 	}
 	return false
 }
+func isValidVfDeviceID(vfDevID string) bool {
+	switch vfDevID {
+	case "0442", "0443", "37c9", "19e3":
+		return true
+	}
+	return false
+}
 
 func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 	devTree := deviceplugin.NewDeviceTree()
@@ -210,12 +213,20 @@ func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 	for _, driver := range append(dp.kernelVfDrivers, dp.dpdkDriver) {
 		files, err := ioutil.ReadDir(path.Join(dp.pciDriverDir, driver))
 		if err != nil {
-			return nil, errors.Wrapf(err, "Can't read sysfs for driver %s", driver)
+			fmt.Printf("Can't read sysfs for driver as Driver %s is not available: Skipping\n", driver)
+			continue
 		}
 
 		n := 0
 		for _, file := range files {
 			if !strings.HasPrefix(file.Name(), "0000:") {
+				continue
+			}
+			vfdevID, err := dp.getDeviceID(file.Name())
+			if err != nil {
+				return nil, errors.Wrapf(err, "Cannot obtain deviceID for the device with PCI address: %s", file.Name())
+			}
+			if !isValidVfDeviceID(vfdevID) {
 				continue
 			}
 			n = n + 1 // increment after all junk got filtered out
@@ -228,7 +239,7 @@ func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 
 			// initialize newly found devices which aren't bound to DPDK driver yet
 			if driver != dp.dpdkDriver {
-				err := dp.bindDevice(vfpciaddr)
+				err = dp.bindDevice(vfpciaddr)
 				if err != nil {
 					return nil, err
 				}
@@ -242,13 +253,14 @@ func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 			if err != nil {
 				return nil, err
 			}
+			deviceName := strings.TrimSuffix(namespace, ".intel.com")
 
 			devinfo := deviceplugin.DeviceInfo{
 				State:  pluginapi.Healthy,
 				Nodes:  devNodes,
 				Mounts: devMounts,
 				Envs: map[string]string{
-					fmt.Sprintf("%s%d", namespace, n): file.Name(),
+					fmt.Sprintf("%s%d", strings.ToUpper(deviceName), n): file.Name(),
 				},
 			}
 
