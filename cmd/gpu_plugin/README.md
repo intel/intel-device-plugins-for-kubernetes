@@ -35,7 +35,7 @@ $ kubectl describe node <node name> | grep gpu.intel.com
 
 ### Test GPU device plugin:
 
-1. Build a Docker image with beignet unit tests:
+1. Build a Docker image with an example program offloading FFT computations to GPU:
    ```
    $ cd demo
    $ ./build-image.sh ubuntu-demo-opencl
