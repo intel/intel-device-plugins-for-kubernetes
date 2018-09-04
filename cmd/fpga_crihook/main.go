@@ -21,7 +21,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -31,10 +31,12 @@ import (
 
 const (
 	fpgaBitStreamDirectory = "/srv/intel.com/fpga"
+	packager               = "/opt/intel/fpga-sw/opae/bin/packager"
+	fpgaconf               = "/opt/intel/fpga-sw/opae/fpgaconf-wrapper"
+	aocl                   = "/opt/intel/fpga-sw/opencl/aocl-wrapper"
 	configJSON             = "config.json"
 	fpgaRegionEnv          = "FPGA_REGION"
 	fpgaAfuEnv             = "FPGA_AFU"
-	fpgaBitStreamExt       = ".gbs"
 	fpgaDevRegexp          = `\/dev\/intel-fpga-port.(\d)$`
 	afuIDTemplate          = "/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id"
 	annotationName         = "com.intel.fpga.mode"
@@ -61,6 +63,89 @@ type fpgaParams struct {
 	devNum string
 }
 
+type fpgaBitStream interface {
+	validate() error
+	program() error
+}
+
+type opaeBitStream struct {
+	path   string
+	params *fpgaParams
+	execer utilsexec.Interface
+}
+
+func (bitStream *opaeBitStream) validate() error {
+	region, afu := bitStream.params.region, bitStream.params.afu
+	output, err := bitStream.execer.Command(packager, "gbs-info", "--gbs", bitStream.path).CombinedOutput()
+	if err != nil {
+		return errors.Wrapf(err, "%s/%s: can't get bitstream info", region, afu)
+	}
+
+	reader := bytes.NewBuffer(output)
+	content, err := decodeJSONStream(reader)
+	if err != nil {
+		return errors.WithMessage(err, fmt.Sprintf("%s/%s: can't decode 'packager gbs-info' output", region, afu))
+	}
+
+	afuImage, ok := content["afu-image"]
+	if !ok {
+		return errors.Errorf("%s/%s: 'afu-image' field not found in the 'packager gbs-info' output", region, afu)
+	}
+
+	interfaceUUID, ok := afuImage.(map[string]interface{})["interface-uuid"]
+	if !ok {
+		return errors.Errorf("%s/%s: 'interface-uuid' field not found in the 'packager gbs-info' output", region, afu)
+	}
+
+	acceleratorClusters, ok := afuImage.(map[string]interface{})["accelerator-clusters"]
+	if !ok {
+		return errors.Errorf("%s/%s: 'accelerator-clusters' field not found in the 'packager gbs-info' output", region, afu)
+	}
+
+	if canonize(interfaceUUID.(string)) != region {
+		return errors.Errorf("bitstream is not for this device: region(%s) and interface-uuid(%s) don't match", region, interfaceUUID)
+	}
+
+	acceleratorTypeUUID, ok := acceleratorClusters.([]interface{})[0].(map[string]interface{})["accelerator-type-uuid"]
+	if !ok {
+		return errors.Errorf("%s/%s: 'accelerator-type-uuid' field not found in the 'packager gbs-info' output", region, afu)
+	}
+
+	if canonize(acceleratorTypeUUID.(string)) != afu {
+		return errors.Errorf("incorrect bitstream: AFU(%s) and accelerator-type-uuid(%s) don't match", afu, acceleratorTypeUUID)
+	}
+
+	return nil
+}
+
+func (bitStream *opaeBitStream) program() error {
+	output, err := bitStream.execer.Command(fpgaconf, "-S", bitStream.params.devNum, bitStream.path).CombinedOutput()
+	if err != nil {
+		return errors.Wrapf(err, "failed to program AFU %s to socket %s, region %s: output: %s", bitStream.params.afu, bitStream.params.devNum, bitStream.params.region, string(output))
+	}
+
+	return nil
+}
+
+type openCLBitStream struct {
+	path   string
+	params *fpgaParams
+	execer utilsexec.Interface
+}
+
+func (bitStream *openCLBitStream) validate() error {
+	return nil
+}
+
+func (bitStream *openCLBitStream) program() error {
+	output, err := bitStream.execer.Command(aocl, "program", "acl"+bitStream.params.devNum, bitStream.path).CombinedOutput()
+	if err != nil {
+		return errors.Wrapf(err, "failed to program AFU %s to socket %s, region %s: output: %s", bitStream.params.afu, bitStream.params.devNum, bitStream.params.region, string(output))
+	}
+
+	return nil
+}
+
 func newHookEnv(bitStreamDir string, config string, execer utilsexec.Interface, afuIDTemplate string) *hookEnv {
 	return &hookEnv{
 		bitStreamDir,
@@ -80,7 +165,7 @@ func (he *hookEnv) getFPGAParams(content map[string]interface{}) (*fpgaParams, e
 		return nil, errors.New("no 'bundle' field in the configuration")
 	}
 
-	configPath := path.Join(fmt.Sprint(bundle), he.config)
+	configPath := filepath.Join(fmt.Sprint(bundle), he.config)
 	configFile, err := os.Open(configPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -140,65 +225,26 @@ func (he *hookEnv) getFPGAParams(content map[string]interface{}) (*fpgaParams, e
 
 }
 
-func (he *hookEnv) validateBitStream(params *fpgaParams, fpgaBitStreamPath string) error {
-	output, err := he.execer.Command("packager", "gbs-info", "--gbs", fpgaBitStreamPath).CombinedOutput()
-	if err != nil {
-		return errors.Wrapf(err, "%s/%s: can't get bitstream info", params.region, params.afu)
+func (he *hookEnv) getBitStream(params *fpgaParams) (fpgaBitStream, error) {
+	bitStreamPath := ""
+	for _, ext := range []string{".gbs", ".aocx"} {
+		bitStreamPath = filepath.Join(he.bitStreamDir, params.region, params.afu+ext)
+
+		_, err := os.Stat(bitStreamPath)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			return nil, errors.Errorf("%s: stat error: %v", bitStreamPath, err)
+		}
+
+		if ext == ".gbs" {
+			return &opaeBitStream{bitStreamPath, params, he.execer}, nil
+		} else if ext == ".aocx" {
+			return &openCLBitStream{bitStreamPath, params, he.execer}, nil
+		}
 	}
-
-	reader := bytes.NewBuffer(output)
-	content, err := decodeJSONStream(reader)
-	if err != nil {
-		return errors.WithMessage(err, fmt.Sprintf("%s/%s: can't decode 'packager gbs-info' output", params.region, params.afu))
-	}
-
-	afuImage, ok := content["afu-image"]
-	if !ok {
-		return errors.Errorf("%s/%s: 'afu-image' field not found in the 'packager gbs-info' output", params.region, params.afu)
-	}
-
-	interfaceUUID, ok := afuImage.(map[string]interface{})["interface-uuid"]
-	if !ok {
-		return errors.Errorf("%s/%s: 'interface-uuid' field not found in the 'packager gbs-info' output", params.region, params.afu)
-	}
-
-	acceleratorClusters, ok := afuImage.(map[string]interface{})["accelerator-clusters"]
-	if !ok {
-		return errors.Errorf("%s/%s: 'accelerator-clusters' field not found in the 'packager gbs-info' output", params.region, params.afu)
-	}
-
-	if canonize(interfaceUUID.(string)) != params.region {
-		return errors.Errorf("bitstream is not for this device: region(%s) and interface-uuid(%s) don't match", params.region, interfaceUUID)
-	}
-
-	acceleratorTypeUUID, ok := acceleratorClusters.([]interface{})[0].(map[string]interface{})["accelerator-type-uuid"]
-	if !ok {
-		return errors.Errorf("%s/%s: 'accelerator-type-uuid' field not found in the 'packager gbs-info' output", params.region, params.afu)
-	}
-
-	if canonize(acceleratorTypeUUID.(string)) != params.afu {
-		return errors.Errorf("incorrect bitstream: AFU(%s) and accelerator-type-uuid(%s) don't match", params.afu, acceleratorTypeUUID)
-	}
-
-	return nil
-}
-
-func (he *hookEnv) programBitStream(params *fpgaParams, fpgaBitStreamPath string) error {
-	output, err := he.execer.Command("fpgaconf", "-S", params.devNum, fpgaBitStreamPath).CombinedOutput()
-	if err != nil {
-		return errors.Wrapf(err, "failed to program AFU %s to socket %s, region %s: output: %s", params.afu, params.devNum, params.region, string(output))
-	}
-
-	programmedAfu, err := he.getProgrammedAfu(params.devNum)
-	if err != nil {
-		return err
-	}
-
-	if programmedAfu != params.afu {
-		return errors.Errorf("programmed function %s instead of %s", programmedAfu, params.afu)
-	}
-
-	return nil
+	return nil, errors.Errorf("%s/%s: bitstream not found", params.region, params.afu)
 }
 
 func (he *hookEnv) getProgrammedAfu(deviceNum string) (string, error) {
@@ -249,19 +295,28 @@ func (he *hookEnv) process(reader io.Reader) error {
 		return nil
 	}
 
-	fpgaBitStreamPath := path.Join(he.bitStreamDir, params.region, params.afu+fpgaBitStreamExt)
-	if _, err = os.Stat(fpgaBitStreamPath); os.IsNotExist(err) {
-		return errors.Errorf("%s/%s: bitstream is not found", params.region, params.afu)
-	}
-
-	err = he.validateBitStream(params, fpgaBitStreamPath)
+	bitStream, err := he.getBitStream(params)
 	if err != nil {
 		return err
 	}
 
-	err = he.programBitStream(params, fpgaBitStreamPath)
+	err = bitStream.validate()
 	if err != nil {
 		return err
+	}
+
+	err = bitStream.program()
+	if err != nil {
+		return err
+	}
+
+	programmedAfu, err = he.getProgrammedAfu(params.devNum)
+	if err != nil {
+		return err
+	}
+
+	if programmedAfu != params.afu {
+		return errors.Errorf("programmed function %s instead of %s", programmedAfu, params.afu)
 	}
 
 	return nil

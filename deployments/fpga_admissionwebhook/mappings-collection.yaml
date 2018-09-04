@@ -13,6 +13,13 @@ spec:
   afuId: f7df405cbd7acf7222f144b0b93acd18
 ---
 apiVersion: fpga.intel.com/v1
+kind: AcceleratorFunction
+metadata:
+  name: arria10-compress
+spec:
+  afuId: 18b79ffa2ee54aa096ef4230dafacb5f
+---
+apiVersion: fpga.intel.com/v1
 kind: FpgaRegion
 metadata:
   name: arria10

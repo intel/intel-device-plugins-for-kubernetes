@@ -21,20 +21,14 @@ $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make fpga_crihook
 ```
 
-### Install CRI-O hook:
+### Download 'Acceleration Stack for Runtime' tarball
 ```
-$ sudo cp cmd/fpga_crihook/fpga_crihook /usr/local/bin/
+Download a10_gx_pac_ias_1_1_pv_rte_installer.tar.gz from https://www.intel.com/content/www/us/en/programmable/solutions/acceleration-hub/downloads.html into $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin directory
 ```
 
-### Configure CRI-O to run the hook:
+### Build init container that contains CRI hook and all its dependencies:
 ```
-$ sudo cat << EOF > /etc/containers/oci/hooks.d/prestart.json
-{
-    "hook" : "/usr/local/bin/fpga_crihook",
-    "stage" : [ "prestart" ],
-    "annotation": [ "intel.com/fpga-region" ]
-}
-EOF
+$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin
+$ ./build-initcontainer-image.sh
+```
 
-$ sudo systemctl restart crio
-```
