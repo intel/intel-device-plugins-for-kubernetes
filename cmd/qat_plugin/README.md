@@ -73,9 +73,9 @@ kubectl create -f deployments/qat_plugin/qat_plugin.yaml
 
 ### Verify QAT device plugin is registered on master:
 ```
-$ kubectl describe node <node name> | grep intel.com/qat
- intel.com/qat: 10
- intel.com/qat: 10
+$ kubectl describe node <node name> | grep qat.intel.com/generic
+ qat.intel.com/generic: 10
+ qat.intel.com/generic: 10
 ```
 
 ### Consuming QAT device plugin
@@ -93,7 +93,7 @@ $ kubectl describe node <node name> | grep intel.com/qat
 `dpdk-test-crypto-perf`.
 
       In the pod specification file, add container resource request and limit.
-      For example, `intel.com/qat: <number of devices>` for a container requesting QAT devices.
+      For example, `qat.intel.com/generic: <number of devices>` for a container requesting QAT devices.
 
       For a DPDK-based workload, you may need to add hugepage request and limit.
 
@@ -110,7 +110,7 @@ $ kubectl describe node <node name> | grep intel.com/qat
    ```
    $ kubectl exec -it dpdkqatuio bash
 
-   $ ./dpdk-test-crypto-perf -l 6-7 -w $intelQAT1 -- --ptest throughput --\
+   $ ./dpdk-test-crypto-perf -l 6-7 -w $QAT1 -- --ptest throughput --\
 	devtype crypto_qat --optype cipher-only --cipher-algo aes-cbc --cipher-op \
 	encrypt --cipher-key-sz 16 --total-ops 10000000 --burst-sz 32 --buffer-sz 64
 
