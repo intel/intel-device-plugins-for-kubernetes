@@ -241,7 +241,8 @@ func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
 
 	fpgaFiles, err := ioutil.ReadDir(dp.sysfsDir)
 	if err != nil {
-		return nil, errors.Wrap(err, "Can't read sysfs folder")
+		fmt.Printf("WARNING: Can't read folder %s. Kernel driver not loaded?\n", dp.sysfsDir)
+		return dp.getDevTree([]device{}), nil
 	}
 
 	for _, fpgaFile := range fpgaFiles {

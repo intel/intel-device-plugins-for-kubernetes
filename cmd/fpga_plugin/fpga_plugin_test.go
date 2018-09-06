@@ -223,9 +223,8 @@ func TestScanFPGAs(t *testing.T) {
 		mode            string
 	}{
 		{
-			name:          "No sysfs folder given",
-			mode:          afMode,
-			errorContains: "Can't read sysfs folder",
+			name: "No sysfs folder exists",
+			mode: afMode,
 		},
 		{
 			name:          "FPGA device without FME and ports",
