@@ -119,7 +119,7 @@ func (bitStream *opaeBitStream) validate() error {
 }
 
 func (bitStream *opaeBitStream) program() error {
-	output, err := bitStream.execer.Command(fpgaconf, "-S", bitStream.params.devNum, bitStream.path).CombinedOutput()
+	output, err := bitStream.execer.Command(fpgaconf, "-s", bitStream.params.devNum, bitStream.path).CombinedOutput()
 	if err != nil {
 		return errors.Wrapf(err, "failed to program AFU %s to socket %s, region %s: output: %s", bitStream.params.afu, bitStream.params.devNum, bitStream.params.region, string(output))
 	}
