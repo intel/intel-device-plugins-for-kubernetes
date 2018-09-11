@@ -229,6 +229,12 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 						"cpu": resource.MustParse("1"),
 					},
 				},
+				Env: []corev1.EnvVar{
+					{
+						Name:  "SOME_VAR",
+						Value: "fake value",
+					},
+				},
 			},
 			regionMap: map[string]string{
 				"arria10": "ce48969398f05f33946d560708be108a",
@@ -236,15 +242,15 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			afMap: map[string]string{
 				"arria10-nlb0": "d8424dc4a4a3c413f89e433683f9040b",
 			},
-			expectedOps: 3,
+			expectedOps: 5,
 		},
 		{
-			name: "More than one FPGA in Limits",
+			name: "Unequal FPGA resources in Limits and Requests 1",
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
 					Limits: corev1.ResourceList{
 						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
-						"fpga.intel.com/arria10-nlb3": resource.MustParse("1"),
+						"fpga.intel.com/arria10-nlb3": resource.MustParse("2"),
 					},
 				},
 			},
@@ -258,7 +264,7 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			expectedErr: true,
 		},
 		{
-			name: "More than one FPGA in Requests",
+			name: "Unequal FPGA resources in Limits and Requests 2",
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
@@ -299,7 +305,7 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			expectedErr: true,
 		},
 		{
-			name: "Unknown FPGA model in Limitss",
+			name: "Unknown FPGA model in Limits",
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
 					Limits: corev1.ResourceList{
@@ -343,6 +349,26 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			},
 			expectedErr: true,
 		},
+		{
+			name: "Wrong type of quantity",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"fpga.intel.com/arria10-nlb0": resource.MustParse("1.1"),
+					},
+					Requests: corev1.ResourceList{
+						"fpga.intel.com/arria10-nlb0": resource.MustParse("1.1"),
+					},
+				},
+			},
+			regionMap: map[string]string{
+				"arria10": "ce48969398f05f33946d560708be108a",
+			},
+			afMap: map[string]string{
+				"arria10-nlb0": "d8424dc4a4a3c413f89e433683f9040b",
+			},
+			expectedErr: true,
+		},
 	}
 
 	for _, tt := range tcases {
@@ -350,6 +376,7 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			afMap:     tt.afMap,
 			regionMap: tt.regionMap,
 		}
+		debug.Print(tt.name)
 		ops, err := p.getPatchOpsOrchestrated(0, tt.container)
 		if tt.expectedErr && err == nil {
 			t.Errorf("Test case '%s': no error returned", tt.name)
@@ -359,91 +386,6 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 		}
 		if len(ops) != tt.expectedOps {
 			t.Errorf("test case '%s': expected %d ops, but got %d\n%v", tt.name, tt.expectedOps, len(ops), ops)
-		}
-	}
-}
-
-func TestGetEnvVars(t *testing.T) {
-	tcases := []struct {
-		name        string
-		env         []corev1.EnvVar
-		expected    string
-		expectedErr bool
-	}{
-		{
-			name: "Successful result",
-			env: []corev1.EnvVar{
-				{
-					Name:  "VARNAME1",
-					Value: "2",
-					ValueFrom: &corev1.EnvVarSource{
-						ResourceFieldRef: &corev1.ResourceFieldSelector{
-							Resource: "limits.cpu",
-							Divisor:  resource.MustParse("1"),
-						},
-					},
-				},
-				{
-					Name:  "VARNAME2",
-					Value: "4",
-					ValueFrom: &corev1.EnvVarSource{
-						ResourceFieldRef: &corev1.ResourceFieldSelector{
-							Resource: "limits.cpu",
-							Divisor:  resource.MustParse("1"),
-						},
-					},
-				},
-			},
-			expected: `, {"name":"VARNAME1","value":"2","valueFrom":{"resourceFieldRef":{"resource":"limits.cpu","divisor":"1"}}},{"name":"VARNAME2","value":"4","valueFrom":{"resourceFieldRef":{"resource":"limits.cpu","divisor":"1"}}}`,
-		},
-		{
-			name: "Disallowed env variable FPGA_REGION",
-			env: []corev1.EnvVar{
-				{
-					Name:  "FPGA_REGION",
-					Value: "fake value",
-				},
-			},
-			expectedErr: true,
-		},
-		{
-			name: "Disallowed env variable FPGA_AFU",
-			env: []corev1.EnvVar{
-				{
-					Name:  "FPGA_AFU",
-					Value: "fake value",
-				},
-			},
-			expectedErr: true,
-		},
-	}
-
-	for _, tt := range tcases {
-		container := corev1.Container{
-			Name:  "test-container",
-			Image: "test-image",
-			Resources: corev1.ResourceRequirements{
-				Limits: corev1.ResourceList{
-					"cpu": resource.MustParse("1"),
-					"fpga.intel.com/arria10": resource.MustParse("1"),
-				},
-				Requests: corev1.ResourceList{
-					"cpu": resource.MustParse("1"),
-					"fpga.intel.com/arria10": resource.MustParse("1"),
-				},
-			},
-			Env: tt.env,
-		}
-
-		output, err := getEnvVars(container)
-		if output != tt.expected {
-			t.Errorf("Test case '%s': wrong output: %s", tt.name, output)
-		}
-		if tt.expectedErr && err == nil {
-			t.Errorf("Test case '%s': no error returned", tt.name)
-		}
-		if !tt.expectedErr && err != nil {
-			t.Errorf("Test case '%s': unexpected error %+v", tt.name, err)
 		}
 	}
 }

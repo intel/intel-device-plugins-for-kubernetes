@@ -15,11 +15,12 @@
 package main
 
 import (
-	"encoding/json"
+	"bytes"
 	"fmt"
 	"regexp"
 	"strings"
 	"sync"
+	"text/template"
 
 	"github.com/pkg/errors"
 
@@ -39,16 +40,28 @@ const (
                 "path": "/spec/containers/%d/resources/%s/%s",
                 "value": %s
         }`
-	envAddOp = `{
+	resourceRemoveOp = `{
+                "op": "remove",
+                "path": "/spec/containers/%d/resources/%s/%s"
+        }`
+	resourceAddOp = `{
                 "op": "add",
-                "path": "/spec/containers/%d/env",
-                "value": [{
-                        "name": "FPGA_REGION",
-                        "value": "%s"
-                }, {
-                        "name": "FPGA_AFU",
-                        "value": "%s"
-                } %s]
+                "path": "/spec/containers/%d/resources/%s/%s",
+                "value": "%d"
+        }`
+	envAddOpTpl = `{
+                "op": "add",
+                "path": "/spec/containers/{{- .ContainerIdx -}}/env",
+                "value": [
+                     {{- $first := true -}}
+                     {{- range $key, $value := .EnvVars -}}
+                       {{- if not $first -}},{{- end -}}{
+                          "name": "{{$key}}",
+                          "value": "{{$value}}"
+                       }
+                       {{- $first = false -}}
+                     {{- end -}}
+                ]
         }`
 )
 
@@ -169,10 +182,41 @@ func (p *patcher) translateFpgaResourceName(oldname corev1.ResourceName) (string
 	return "", errors.Errorf("Unknown FPGA resource: %s", rname)
 }
 
+func (p *patcher) checkResourceRequests(container corev1.Container) error {
+	for resourceName, resourceQuantity := range container.Resources.Requests {
+		interfaceID, _, err := p.parseResourceName(string(resourceName))
+		if err != nil {
+			return err
+		}
+
+		if interfaceID == "" {
+			// Skip non-FPGA resources
+			continue
+		}
+		if container.Resources.Limits[resourceName] != resourceQuantity {
+			return errors.Errorf("'limits' and 'requests' for %s must be equal", string(resourceName))
+		}
+	}
+
+	return nil
+}
+
 func (p *patcher) getPatchOpsOrchestrated(containerIdx int, container corev1.Container) ([]string, error) {
 	var ops []string
 
-	mutated := false
+	for _, v := range container.Env {
+		if strings.HasPrefix(v.Name, "FPGA_REGION") || strings.HasPrefix(v.Name, "FPGA_AFU") {
+			return nil, errors.Errorf("The environment variable '%s' is not allowed", v.Name)
+		}
+	}
+
+	if err := p.checkResourceRequests(container); err != nil {
+		return nil, err
+	}
+
+	regions := make(map[string]int64)
+	envVars := make(map[string]string)
+	counter := 0
 	for resourceName, resourceQuantity := range container.Resources.Limits {
 		interfaceID, afuID, err := p.parseResourceName(string(resourceName))
 		if err != nil {
@@ -180,47 +224,52 @@ func (p *patcher) getPatchOpsOrchestrated(containerIdx int, container corev1.Con
 		}
 
 		if interfaceID == "" && afuID == "" {
+			// Skip non-FPGA resources
 			continue
 		}
 
-		if mutated {
-			return nil, errors.Errorf("Only one FPGA resource per container is supported in '%s' mode", orchestrated)
+		if container.Resources.Requests[resourceName] != resourceQuantity {
+			return nil, errors.Errorf("'limits' and 'requests' for %s must be equal", string(resourceName))
 		}
 
-		op := fmt.Sprintf(resourceReplaceOp, containerIdx, "limits", rfc6901Escaper.Replace(string(resourceName)),
-			containerIdx, "limits", rfc6901Escaper.Replace(namespace+"/region-"+interfaceID), resourceQuantity.String())
-		ops = append(ops, op)
-
-		if afuID != "" {
-			oldVars, err := getEnvVars(container)
-			if err != nil {
-				return nil, err
-			}
-			op = fmt.Sprintf(envAddOp, containerIdx, interfaceID, afuID, oldVars)
-			ops = append(ops, op)
+		quantity, ok := resourceQuantity.AsInt64()
+		if !ok {
+			return nil, errors.New("Resource quantity isn't of integral type")
 		}
-		mutated = true
+		regions[interfaceID] = regions[interfaceID] + quantity
+
+		for i := int64(0); i < quantity; i++ {
+			counter++
+			envVars[fmt.Sprintf("FPGA_REGION_%d", counter)] = interfaceID
+			envVars[fmt.Sprintf("FPGA_AFU_%d", counter)] = afuID
+		}
+
+		ops = append(ops, fmt.Sprintf(resourceRemoveOp, containerIdx, "limits", rfc6901Escaper.Replace(string(resourceName))))
+		ops = append(ops, fmt.Sprintf(resourceRemoveOp, containerIdx, "requests", rfc6901Escaper.Replace(string(resourceName))))
 	}
 
-	mutated = false
-	for resourceName, resourceQuantity := range container.Resources.Requests {
-		interfaceID, _, err := p.parseResourceName(string(resourceName))
-		if err != nil {
-			return nil, err
-		}
-
-		if interfaceID == "" {
-			continue
-		}
-
-		if mutated {
-			return nil, errors.Errorf("Only one FPGA resource per container is supported in '%s' mode", orchestrated)
-		}
-
-		op := fmt.Sprintf(resourceReplaceOp, containerIdx, "requests", rfc6901Escaper.Replace(string(resourceName)),
-			containerIdx, "requests", rfc6901Escaper.Replace(namespace+"/region-"+interfaceID), resourceQuantity.String())
+	for interfaceID, quantity := range regions {
+		op := fmt.Sprintf(resourceAddOp, containerIdx, "limits", rfc6901Escaper.Replace(namespace+"/region-"+interfaceID), quantity)
 		ops = append(ops, op)
-		mutated = true
+		op = fmt.Sprintf(resourceAddOp, containerIdx, "requests", rfc6901Escaper.Replace(namespace+"/region-"+interfaceID), quantity)
+		ops = append(ops, op)
+	}
+
+	if len(envVars) > 0 {
+		for _, envvar := range container.Env {
+			envVars[envvar.Name] = envvar.Value
+		}
+		data := struct {
+			ContainerIdx int
+			EnvVars      map[string]string
+		}{
+			ContainerIdx: containerIdx,
+			EnvVars:      envVars,
+		}
+		t := template.Must(template.New("add_operation").Parse(envAddOpTpl))
+		buf := new(bytes.Buffer)
+		t.Execute(buf, data)
+		ops = append(ops, buf.String())
 	}
 
 	return ops, nil
@@ -258,24 +307,4 @@ func (p *patcher) parseResourceName(input string) (string, string, error) {
 	}
 
 	return interfaceID, afuID, nil
-}
-
-func getEnvVars(container corev1.Container) (string, error) {
-	var jsonstrings []string
-	for _, envvar := range container.Env {
-		if envvar.Name == "FPGA_REGION" || envvar.Name == "FPGA_AFU" {
-			return "", errors.Errorf("The env var '%s' is not allowed", envvar.Name)
-		}
-		jsonbytes, err := json.Marshal(envvar)
-		if err != nil {
-			return "", err
-		}
-		jsonstrings = append(jsonstrings, string(jsonbytes))
-	}
-
-	if len(jsonstrings) == 0 {
-		return "", nil
-	}
-
-	return fmt.Sprintf(", %s", strings.Join(jsonstrings, ",")), nil
 }
