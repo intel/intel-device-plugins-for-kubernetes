@@ -43,6 +43,10 @@ const (
 	annotationValue        = "fpga.intel.com/region"
 )
 
+var (
+	fpgaDevRE = regexp.MustCompile(fpgaDevRegexp)
+)
+
 func decodeJSONStream(reader io.Reader) (map[string]interface{}, error) {
 	decoder := json.NewDecoder(reader)
 	content := make(map[string]interface{})
@@ -213,9 +217,8 @@ func (he *hookEnv) getFPGAParams(content map[string]interface{}) (*fpgaParams, e
 		return nil, errors.Errorf("no 'devices' field found in the 'linux' struct in %s", configPath)
 	}
 
-	pattern := regexp.MustCompile(fpgaDevRegexp)
 	for _, device := range rawDevices.([]interface{}) {
-		deviceNum := pattern.FindStringSubmatch(device.(map[string]interface{})["path"].(string))
+		deviceNum := fpgaDevRE.FindStringSubmatch(device.(map[string]interface{})["path"].(string))
 		if deviceNum != nil {
 			return &fpgaParams{region: canonize(fpgaRegion), afu: canonize(fpgaAfu), devNum: deviceNum[1]}, nil
 		}
