@@ -1,6 +1,5 @@
 #!/bin/sh -xe
 
-CWD=`dirname $0`
 IMG=$1
 
 if [ -z "$IMG" ]; then
@@ -13,4 +12,8 @@ if [ ! -d "$IMG" ]; then
     exit 1
 fi
 
-docker build -t ${IMG} "$CWD/$IMG/"
+CWD=`dirname $0`
+TAG=`git rev-parse HEAD`
+
+docker build --rm -t ${IMG}:${TAG} "$CWD/$IMG/"
+docker tag ${IMG}:${TAG} ${IMG}:devel
