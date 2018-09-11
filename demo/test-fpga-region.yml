@@ -8,6 +8,10 @@ spec:
     image: ubuntu-demo-opae
     imagePullPolicy: IfNotPresent
     command: ["sh", "/usr/bin/test_fpga.sh"]
+    securityContext:
+      capabilities:
+        add:
+          [IPC_LOCK]
     resources:
       limits:
         fpga.intel.com/arria10-nlb3: 1
