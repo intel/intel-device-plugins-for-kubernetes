@@ -39,13 +39,12 @@ build: $(cmds)
 clean:
 	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; go clean ; cd $$pwd ; done
 
-DOCKER_ARGS?=--build-arg HTTP_PROXY --build-arg HTTPS_PROXY --build-arg NO_PROXY --build-arg http_proxy --build-arg https_proxy --build-arg no_proxy --pull
 TAG?=$(shell git rev-parse HEAD)
 
 images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
 
 $(images):
-	docker build -f build/docker/$@.Dockerfile $(DOCKER_ARGS) -t $@:$(TAG) .
+	docker build -f build/docker/$@.Dockerfile --pull -t $@:$(TAG) .
 	docker tag $@:$(TAG) $@:devel
 
 images: $(images)
