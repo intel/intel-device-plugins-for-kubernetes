@@ -62,8 +62,8 @@ COPY ./$CRI_HOOK $CRI_HOOK_SRC
 
 RUN echo -e "{\n\
     \"hook\" : \"$CRI_HOOK_DST\",\n\
-    \"stages\" : [ \"prestart\" ],\n\
-    \"annotations\": [ \"fpga.intel.com/region\" ]\n\
+    \"stage\" : [ \"prestart\" ],\n\
+    \"annotation\": [ \"fpga.intel.com/region\" ]\n\
 }\n">>$HOOK_CONF_SRC
 
 # Setup
