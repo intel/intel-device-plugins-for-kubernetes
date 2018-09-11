@@ -158,7 +158,7 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 			reviewResponse = admit(ar)
 		}
 	}
-	debug.Print("sending response", reviewResponse)
+	debug.Print("sending response", string(reviewResponse.Patch))
 
 	response := v1beta1.AdmissionReview{}
 	if reviewResponse != nil {
