@@ -13,7 +13,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: intelfpga-demo-job-1
-          image: ubuntu-demo-opae:latest
+          image: ubuntu-demo-opae:devel
           imagePullPolicy: IfNotPresent
           command: ["/usr/bin/test_fpga.sh"]
           securityContext:
