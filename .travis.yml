@@ -1,16 +1,54 @@
 language: go
 
+dist: xenial
+
 go:
   - 1.10.x
+
+env:
+  global:
+    - RUNC_VERSION=v1.0.0-rc5
+    - CRIO_VERSION=v1.11.5
+    - OSTREE_VERSION=v2018.8
 
 sudo: required
 
 before_install:
+  ## checkers
   - go get -v github.com/golang/lint/golint
   - go get -v github.com/fzipp/gocyclo
-  # hack for building on forks
+  ## hack for building on forks
   - repo=`basename $PWD`; src=`dirname $PWD`; dest="`dirname $src`/intel"
   - if [[ "$src" != "$dest" ]]; then mv "$src" "$dest"; cd ../../intel/$repo; export TRAVIS_BUILD_DIR=`dirname $TRAVIS_BUILD_DIR`/$repo; fi
+  ## install buildah build deps
+  - cdir=$(pwd)
+  - sudo apt-get -y install e2fslibs-dev libfuse-dev libgpgme11-dev
+  # build and install ostree
+  - git clone https://github.com/ostreedev/ostree
+  - cd ostree
+  - git reset --hard $OSTREE_VERSION
+  - git submodule update --init
+  - env NOCONFIGURE=1 ./autogen.sh
+  - ./configure
+  - make
+  - sudo make install
+  - sudo apt-get -y install libdevmapper-dev libglib2.0-dev libprotobuf-dev
+  # build buildah
+  - mkdir -p $GOPATH/src/github.com/containers
+  - cd $GOPATH/src/github.com/containers
+  - git clone https://github.com/containers/buildah
+  - cd buildah
+  - make buildah TAGS=""
+  - sudo cp buildah /usr/local/bin
+  # configure buildah
+  - sudo mkdir -p /etc/containers
+  - echo -e '[registries.search]\nregistries = ["docker.io"]\n\n' | sudo tee /etc/containers/registries.conf
+  - sudo curl https://raw.githubusercontent.com/kubernetes-sigs/cri-o/$CRIO_VERSION/test/policy.json -o /etc/containers/policy.json
+  # install runc
+  - sudo curl -L https://github.com/opencontainers/runc/releases/download/$RUNC_VERSION/runc.amd64 -o /usr/bin/runc
+  - sudo chmod +x /usr/bin/runc
+  - cd $cdir
+
 script:
   - make format
   - make lint
@@ -19,7 +57,9 @@ script:
   - make cyclomatic-check
   - make test
   - make images
+  - sudo make images BUILDER=buildah
   - make demos
+  - sudo make demos BUILDER=buildah
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
