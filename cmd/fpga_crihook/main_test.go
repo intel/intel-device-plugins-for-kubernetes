@@ -380,7 +380,6 @@ func TestProcess(t *testing.T) {
 	tcases := []struct {
 		stdinJSON        string
 		configJSON       string
-		params           *fpgaParams
 		afuIDTemplate    string
 		newAFUIDTemplate string
 		expectedErr      bool
@@ -388,10 +387,6 @@ func TestProcess(t *testing.T) {
 		gbsInfoAction    fakeexec.FakeCombinedOutputAction
 	}{
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "d8424dc4a4a3c413f89e433683f9040b"},
 			stdinJSON:     "stdin-correct.json",
 			configJSON:    "config-correct.json",
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_f7df405cbd7acf7222f144b0b93acd18",
@@ -400,10 +395,6 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			stdinJSON:        "stdin-correct.json",
 			configJSON:       "config-correct.json",
 			afuIDTemplate:    "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
@@ -413,71 +404,39 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			stdinJSON:   "stdin-broken-json.json",
 			expectedErr: true,
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			stdinJSON:   "stdin-no-annotations.json",
 			expectedErr: true,
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			stdinJSON:   "stdin-no-intel-annotation.json",
 			expectedErr: true,
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			stdinJSON:   "stdin-incorrect-intel-annotation.json",
 			expectedErr: true,
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			stdinJSON:     "stdin-correct.json",
 			configJSON:    "config-no-afu.json",
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
 			expectedErr:   true,
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			stdinJSON:   "stdin-correct.json",
 			configJSON:  "config-correct.json",
 			expectedErr: true,
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			stdinJSON:     "stdin-correct.json",
 			configJSON:    "config-non-existing-bitstream.json",
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
 			expectedErr:   true,
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			stdinJSON:     "stdin-correct.json",
 			configJSON:    "config-correct.json",
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
@@ -487,10 +446,6 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "d8424dc4a4a3c413f89e433683f9040b"},
 			stdinJSON:     "stdin-correct.json",
 			configJSON:    "config-correct.json",
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
@@ -500,10 +455,6 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "d8424dc4a4a3c413f89e433683f9040b"},
 			stdinJSON:     "stdin-correct.json",
 			configJSON:    "config-correct.json",
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
@@ -514,10 +465,6 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			stdinJSON:        "stdin-correct.json",
 			configJSON:       "config-correct.json",
 			afuIDTemplate:    "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
