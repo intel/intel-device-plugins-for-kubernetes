@@ -15,38 +15,75 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"k8s.io/utils/exec"
 	fakeexec "k8s.io/utils/exec/testing"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
+	"github.com/pkg/errors"
 )
 
 func init() {
 	debug.Activate()
 }
 
+func createTestDirs(sysfs string, sysfsDirs []string, sysfsFiles map[string][]byte) error {
+	for _, sysfsdir := range sysfsDirs {
+		err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0755)
+		if err != nil {
+			return errors.Wrap(err, "Failed to create fake device directory")
+		}
+	}
+	for filename, body := range sysfsFiles {
+		err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0644)
+		if err != nil {
+			return errors.Wrap(err, "Failed to create fake vendor file")
+		}
+	}
+
+	return nil
+}
+
 func TestGetFPGAParams(t *testing.T) {
+	tmpdir := fmt.Sprintf("/tmp/fpgacriohook-TestGetFPGAParams-%d", time.Now().Unix())
+	sysfs := path.Join(tmpdir, "sys", "class", "fpga")
 	tcases := []struct {
 		stdinJSON         string
 		configJSON        string
 		afuIDPath         string
+		sysfsdirs         []string
+		sysfsfiles        map[string][]byte
 		expectedErr       bool
 		expectedRegion    string
 		expectedAFU       string
 		expectedDeviceNum string
 	}{
 		{
-			stdinJSON:         "stdin-correct.json",
-			configJSON:        "config-correct.json",
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			sysfsdirs:  []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
+			},
 			expectedErr:       false,
 			expectedRegion:    "ce48969398f05f33946d560708be108a",
 			expectedAFU:       "f7df405cbd7acf7222f144b0b93acd18",
 			expectedDeviceNum: "0",
+		},
+		{
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			sysfsdirs:  []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("incorrectinterfaceuuid"),
+			},
+			expectedErr: true,
 		},
 		{
 			stdinJSON:   "stdin-no-bundle.json",
@@ -106,10 +143,15 @@ func TestGetFPGAParams(t *testing.T) {
 			expectedAFU:    "f7df405cbd7acf7222f144b0b93acd18",
 		},
 	}
-	for _, tc := range tcases {
+	for tcnum, tc := range tcases {
 		stdin, err := os.Open(path.Join("testdata", tc.stdinJSON))
 		if err != nil {
 			t.Fatalf("can't open file %s: %v", tc.stdinJSON, err)
+		}
+
+		err = createTestDirs(sysfs, tc.sysfsdirs, tc.sysfsfiles)
+		if err != nil {
+			t.Fatalf("can't create temp files: %+v", err)
 		}
 
 		content, err := decodeJSONStream(stdin)
@@ -117,22 +159,27 @@ func TestGetFPGAParams(t *testing.T) {
 			t.Fatalf("can't decode json file %s: %+v", tc.stdinJSON, err)
 		}
 
-		he := newHookEnv("", tc.configJSON, nil, "")
+		he := newHookEnv("", tc.configJSON, nil, "", path.Join(sysfs, "intel-fpga-dev.%s/intel-fpga-fme.%s/pr/interface_id"))
 
 		params, err := he.getFPGAParams(content)
 
 		if err != nil {
 			if !tc.expectedErr {
-				t.Errorf("unexpected error: %+v", err)
+				t.Errorf("unexpected error in test case #%d: %+v", tcnum, err)
 			}
 		} else {
-			if params.region != tc.expectedRegion {
-				t.Errorf("expected region: %s, actual: %s", tc.expectedRegion, params.region)
-			} else if params.afu != tc.expectedAFU {
-				t.Errorf("expected AFU: %s, actual: %s", tc.expectedAFU, params.afu)
-			} else if params.devNum != tc.expectedDeviceNum {
-				t.Errorf("expected device number: %s, actual: %s", tc.expectedDeviceNum, params.devNum)
+			if params[0].region != tc.expectedRegion {
+				t.Errorf("#%d: expected region: %s, actual: %s", tcnum, tc.expectedRegion, params[0].region)
+			} else if params[0].afu != tc.expectedAFU {
+				t.Errorf("#%d: expected AFU: %s, actual: %s", tcnum, tc.expectedAFU, params[0].afu)
+			} else if params[0].devNum != tc.expectedDeviceNum {
+				t.Errorf("#%d: expected device number: %s, actual: %s", tcnum, tc.expectedDeviceNum, params[0].devNum)
 			}
+		}
+
+		err = os.RemoveAll(tmpdir)
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 }
@@ -150,12 +197,12 @@ func genFakeActions(fcmd *fakeexec.FakeCmd, num int) []fakeexec.FakeCommandActio
 func TestValidate(t *testing.T) {
 	var fpgaBitStreamDir = "testdata/intel.com/fpga"
 	tcases := []struct {
-		params      *fpgaParams
+		params      fpgaParams
 		expectedErr bool
 		fakeAction  []fakeexec.FakeCombinedOutputAction
 	}{
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			expectedErr: false,
@@ -166,7 +213,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "d7724dc4a4a3c413f89e433683f9040b"},
 			expectedErr: false,
@@ -177,7 +224,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			expectedErr: true,
@@ -186,7 +233,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			expectedErr: true,
@@ -197,7 +244,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			expectedErr: true,
@@ -208,7 +255,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			expectedErr: true,
@@ -219,7 +266,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			expectedErr: true,
@@ -230,7 +277,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				region: "ce48969398f05fxxxxxxxxxxxxxxxxxx",
 				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			expectedErr: true,
@@ -241,7 +288,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
 			expectedErr: true,
@@ -252,7 +299,7 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "d8424dc4a4a3c413f89e433683f9040b"},
 			expectedErr: true,
@@ -267,7 +314,7 @@ func TestValidate(t *testing.T) {
 	for _, tc := range tcases {
 		fcmd := fakeexec.FakeCmd{CombinedOutputScript: tc.fakeAction}
 		execer := fakeexec.FakeExec{CommandScript: genFakeActions(&fcmd, len(fcmd.CombinedOutputScript))}
-		he := newHookEnv(fpgaBitStreamDir, "", &execer, "")
+		he := newHookEnv(fpgaBitStreamDir, "", &execer, "", "")
 		bitStream, err := he.getBitStream(tc.params)
 		if err != nil && !tc.expectedErr {
 			t.Errorf("unexpected error: unable to get bitstream: %+v", err)
@@ -293,14 +340,14 @@ func genFpgaConfAction(he *hookEnv, afuIDTemplate string, returnError bool) fake
 func TestProgram(t *testing.T) {
 	var fpgaBitStreamDir = "testdata/intel.com/fpga"
 	tcases := []struct {
-		params           *fpgaParams
+		params           fpgaParams
 		afuIDTemplate    string
 		newAFUIDTemplate string
 		expectedErr      bool
 		fpgaconfErr      bool
 	}{
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				devNum: "0",
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
@@ -308,7 +355,7 @@ func TestProgram(t *testing.T) {
 			newAFUIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_f7df405cbd7acf7222f144b0b93acd18",
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				devNum: "0",
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "d7724dc4a4a3c413f89e433683f9040b"},
@@ -316,14 +363,14 @@ func TestProgram(t *testing.T) {
 			newAFUIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d7724dc4a4a3c413f89e433683f9040b",
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				devNum: "0",
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "f7dfaaacbd7acf7222f144b0b93acd18"},
 			expectedErr: true,
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				devNum: "0",
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "f7df405cbd7acf7222f144b0b93acd18"},
@@ -331,7 +378,7 @@ func TestProgram(t *testing.T) {
 			fpgaconfErr: true,
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				devNum: "0",
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "18b7bffa2eb54aa096ef4230dafacb5a"},
@@ -339,7 +386,7 @@ func TestProgram(t *testing.T) {
 			fpgaconfErr: true,
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				devNum: "0",
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "d8424dc4a4a3c413f89e433683f9040b"},
@@ -347,7 +394,7 @@ func TestProgram(t *testing.T) {
 			expectedErr:   true,
 		},
 		{
-			params: &fpgaParams{
+			params: fpgaParams{
 				devNum: "0",
 				region: "ce48969398f05f33946d560708be108a",
 				afu:    "d8424dc4a4a3c413f89e433683f9040b"},
@@ -358,7 +405,7 @@ func TestProgram(t *testing.T) {
 	}
 
 	for _, tc := range tcases {
-		he := newHookEnv(fpgaBitStreamDir, "", nil, tc.afuIDTemplate)
+		he := newHookEnv(fpgaBitStreamDir, "", nil, tc.afuIDTemplate, "")
 		actions := []fakeexec.FakeCombinedOutputAction{genFpgaConfAction(he, tc.newAFUIDTemplate, tc.fpgaconfErr)}
 		fcmd := fakeexec.FakeCmd{CombinedOutputScript: actions}
 		he.execer = &fakeexec.FakeExec{CommandScript: genFakeActions(&fcmd, len(fcmd.CombinedOutputScript))}
@@ -377,26 +424,41 @@ func TestProgram(t *testing.T) {
 }
 
 func TestProcess(t *testing.T) {
+	tmpdir := fmt.Sprintf("/tmp/fpgacriohook-TestProcess-%d", time.Now().Unix())
+	sysfs := path.Join(tmpdir, "sys", "class", "fpga")
 	tcases := []struct {
+		name             string
 		stdinJSON        string
 		configJSON       string
 		afuIDTemplate    string
 		newAFUIDTemplate string
+		sysfsdirs        []string
+		sysfsfiles       map[string][]byte
 		expectedErr      bool
 		fpgaconfErr      bool
 		gbsInfoAction    fakeexec.FakeCombinedOutputAction
 	}{
 		{
-			stdinJSON:     "stdin-correct.json",
-			configJSON:    "config-correct.json",
+			name:       "All correct #1",
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			sysfsdirs:  []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
+			},
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_f7df405cbd7acf7222f144b0b93acd18",
 			gbsInfoAction: func() ([]byte, error) {
 				return ioutil.ReadFile("testdata/gbs-info-correct.json")
 			},
 		},
 		{
-			stdinJSON:        "stdin-correct.json",
-			configJSON:       "config-correct.json",
+			name:       "All correct #2",
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			sysfsdirs:  []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
+			},
 			afuIDTemplate:    "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
 			newAFUIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_f7df405cbd7acf7222f144b0b93acd18",
 			gbsInfoAction: func() ([]byte, error) {
@@ -404,41 +466,57 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
+			name:        "Broken stdin json",
 			stdinJSON:   "stdin-broken-json.json",
 			expectedErr: true,
 		},
 		{
+			name:        "No annotations in stdin at all",
 			stdinJSON:   "stdin-no-annotations.json",
 			expectedErr: true,
 		},
 		{
+			name:        "No Intel annotations in stdin",
 			stdinJSON:   "stdin-no-intel-annotation.json",
 			expectedErr: true,
 		},
 		{
+			name:        "Incorrect annotations in stdin",
 			stdinJSON:   "stdin-incorrect-intel-annotation.json",
 			expectedErr: true,
 		},
 		{
+			name:          "No AFU ID present in container config",
 			stdinJSON:     "stdin-correct.json",
 			configJSON:    "config-no-afu.json",
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
 			expectedErr:   true,
 		},
 		{
-			stdinJSON:   "stdin-correct.json",
-			configJSON:  "config-correct.json",
+			name:       "Unverifyable info",
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			sysfsdirs:  []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
+			},
 			expectedErr: true,
 		},
 		{
+			name:          "Non-existing bitstream present in container config",
 			stdinJSON:     "stdin-correct.json",
 			configJSON:    "config-non-existing-bitstream.json",
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
 			expectedErr:   true,
 		},
 		{
-			stdinJSON:     "stdin-correct.json",
-			configJSON:    "config-correct.json",
+			name:       "No accelerator type UUID present in GBS",
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			sysfsdirs:  []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
+			},
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
 			expectedErr:   true,
 			gbsInfoAction: func() ([]byte, error) {
@@ -446,8 +524,13 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
-			stdinJSON:     "stdin-correct.json",
-			configJSON:    "config-correct.json",
+			name:       "Mismatching bitsream",
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			sysfsdirs:  []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
+			},
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
 			expectedErr:   true,
 			gbsInfoAction: func() ([]byte, error) {
@@ -455,21 +538,31 @@ func TestProcess(t *testing.T) {
 			},
 		},
 		{
+			name:          "Processing error #1",
 			stdinJSON:     "stdin-correct.json",
 			configJSON:    "config-correct.json",
 			afuIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
-			expectedErr:   true,
-			fpgaconfErr:   true,
+			sysfsdirs:     []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
+			},
+			expectedErr: true,
+			fpgaconfErr: true,
 			gbsInfoAction: func() ([]byte, error) {
 				return ioutil.ReadFile("testdata/gbs-info-correct.json")
 			},
 		},
 		{
+			name:             "Processing error #2",
 			stdinJSON:        "stdin-correct.json",
 			configJSON:       "config-correct.json",
 			afuIDTemplate:    "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
 			newAFUIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
-			expectedErr:      true,
+			sysfsdirs:        []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
+			},
+			expectedErr: true,
 			gbsInfoAction: func() ([]byte, error) {
 				return ioutil.ReadFile("testdata/gbs-info-correct.json")
 			},
@@ -482,7 +575,12 @@ func TestProcess(t *testing.T) {
 			t.Fatalf("can't open file %s: %v", tc.stdinJSON, err)
 		}
 
-		he := newHookEnv("testdata/intel.com/fpga", tc.configJSON, nil, tc.afuIDTemplate)
+		err = createTestDirs(sysfs, tc.sysfsdirs, tc.sysfsfiles)
+		if err != nil {
+			t.Fatalf("can't create temp files: %+v", err)
+		}
+
+		he := newHookEnv("testdata/intel.com/fpga", tc.configJSON, nil, tc.afuIDTemplate, path.Join(sysfs, "intel-fpga-dev.%s/intel-fpga-fme.%s/pr/interface_id"))
 
 		actions := []fakeexec.FakeCombinedOutputAction{
 			tc.gbsInfoAction,
@@ -494,7 +592,12 @@ func TestProcess(t *testing.T) {
 		err = he.process(stdin)
 
 		if err != nil && !tc.expectedErr {
-			t.Errorf("unexpected error: %+v", err)
+			t.Errorf("[%s]: unexpected error: %+v", tc.name, err)
+		}
+
+		err = os.RemoveAll(tmpdir)
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 }

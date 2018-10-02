@@ -35,10 +35,11 @@ const (
 	fpgaconf               = "/opt/intel/fpga-sw/opae/fpgaconf-wrapper"
 	aocl                   = "/opt/intel/fpga-sw/opencl/aocl-wrapper"
 	configJSON             = "config.json"
-	fpgaRegionEnv          = "FPGA_REGION"
-	fpgaAfuEnv             = "FPGA_AFU"
+	fpgaRegionEnvPrefix    = "FPGA_REGION_"
+	fpgaAfuEnvPrefix       = "FPGA_AFU_"
 	fpgaDevRegexp          = `\/dev\/intel-fpga-port.(\d)$`
 	afuIDTemplate          = "/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id"
+	interfaceIDTemplate    = "/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-fme.%s/pr/interface_id"
 	annotationName         = "com.intel.fpga.mode"
 	annotationValue        = "fpga.intel.com/region"
 )
@@ -55,10 +56,11 @@ func decodeJSONStream(reader io.Reader) (map[string]interface{}, error) {
 }
 
 type hookEnv struct {
-	bitStreamDir  string
-	config        string
-	execer        utilsexec.Interface
-	afuIDTemplate string
+	bitStreamDir        string
+	config              string
+	execer              utilsexec.Interface
+	afuIDTemplate       string
+	interfaceIDTemplate string
 }
 
 type fpgaParams struct {
@@ -74,7 +76,7 @@ type fpgaBitStream interface {
 
 type opaeBitStream struct {
 	path   string
-	params *fpgaParams
+	params fpgaParams
 	execer utilsexec.Interface
 }
 
@@ -133,7 +135,7 @@ func (bitStream *opaeBitStream) program() error {
 
 type openCLBitStream struct {
 	path   string
-	params *fpgaParams
+	params fpgaParams
 	execer utilsexec.Interface
 }
 
@@ -150,12 +152,13 @@ func (bitStream *openCLBitStream) program() error {
 	return nil
 }
 
-func newHookEnv(bitStreamDir string, config string, execer utilsexec.Interface, afuIDTemplate string) *hookEnv {
+func newHookEnv(bitStreamDir string, config string, execer utilsexec.Interface, afuIDTemplate string, interfaceIDTemplate string) *hookEnv {
 	return &hookEnv{
 		bitStreamDir,
 		config,
 		execer,
 		afuIDTemplate,
+		interfaceIDTemplate,
 	}
 }
 
@@ -163,7 +166,7 @@ func canonize(uuid string) string {
 	return strings.ToLower(strings.Replace(uuid, "-", "", -1))
 }
 
-func (he *hookEnv) getFPGAParams(content map[string]interface{}) (*fpgaParams, error) {
+func (he *hookEnv) getFPGAParams(content map[string]interface{}) ([]fpgaParams, error) {
 	bundle, ok := content["bundle"]
 	if !ok {
 		return nil, errors.New("no 'bundle' field in the configuration")
@@ -191,22 +194,6 @@ func (he *hookEnv) getFPGAParams(content map[string]interface{}) (*fpgaParams, e
 		return nil, errors.Errorf("no 'env' field found in the 'process' struct in %s", configPath)
 	}
 
-	dEnv := make(map[string]string)
-	for _, env := range rawEnv.([]interface{}) {
-		splitted := strings.SplitN(env.(string), "=", 2)
-		dEnv[splitted[0]] = splitted[1]
-	}
-
-	fpgaRegion, ok := dEnv[fpgaRegionEnv]
-	if !ok {
-		return nil, errors.Errorf("%s environment is not set in the 'process/env' list in %s", fpgaRegionEnv, configPath)
-	}
-
-	fpgaAfu, ok := dEnv[fpgaAfuEnv]
-	if !ok {
-		return nil, errors.Errorf("%s environment is not set in the 'process/env' list in %s", fpgaAfuEnv, configPath)
-	}
-
 	linux, ok := content["linux"]
 	if !ok {
 		return nil, errors.Errorf("no 'linux' field found in %s", configPath)
@@ -217,18 +204,80 @@ func (he *hookEnv) getFPGAParams(content map[string]interface{}) (*fpgaParams, e
 		return nil, errors.Errorf("no 'devices' field found in the 'linux' struct in %s", configPath)
 	}
 
-	for _, device := range rawDevices.([]interface{}) {
-		deviceNum := fpgaDevRE.FindStringSubmatch(device.(map[string]interface{})["path"].(string))
-		if deviceNum != nil {
-			return &fpgaParams{region: canonize(fpgaRegion), afu: canonize(fpgaAfu), devNum: deviceNum[1]}, nil
+	regionEnv := make(map[string]string)
+	afuEnv := make(map[string]string)
+	envSet := make(map[string]struct{})
+	for _, env := range rawEnv.([]interface{}) {
+		splitted := strings.SplitN(env.(string), "=", 2)
+		if strings.HasPrefix(splitted[0], fpgaRegionEnvPrefix) {
+			regionEnv[splitted[0]] = splitted[1]
+			underscoreSplitted := strings.SplitN(splitted[0], "_", 3)
+			envSet[underscoreSplitted[2]] = struct{}{}
+		} else if strings.HasPrefix(splitted[0], fpgaAfuEnvPrefix) {
+			afuEnv[splitted[0]] = splitted[1]
+			underscoreSplitted := strings.SplitN(splitted[0], "_", 3)
+			envSet[underscoreSplitted[2]] = struct{}{}
 		}
 	}
 
-	return nil, errors.Errorf("no FPGA devices found in linux/devices list in %s", configPath)
+	devSet := make(map[string]struct{})
+	for _, device := range rawDevices.([]interface{}) {
+		deviceNum := fpgaDevRE.FindStringSubmatch(device.(map[string]interface{})["path"].(string))
+		if deviceNum != nil {
+			devSet[deviceNum[1]] = struct{}{}
+		}
+	}
 
+	return he.produceFPGAParams(regionEnv, afuEnv, envSet, devSet)
 }
 
-func (he *hookEnv) getBitStream(params *fpgaParams) (fpgaBitStream, error) {
+// produceFPGAParams produce FPGA params from parsed JSON data
+func (he *hookEnv) produceFPGAParams(regionEnv, afuEnv map[string]string, envSet, devSet map[string]struct{}) ([]fpgaParams, error) {
+	if len(envSet) == 0 {
+		return nil, errors.Errorf("No correct FPGA environment variables set")
+	}
+
+	if len(envSet) != len(regionEnv) || len(envSet) != len(afuEnv) {
+		return nil, errors.Errorf("Environment variables are set incorrectly")
+	}
+
+	if len(devSet) != len(envSet) {
+		return nil, errors.Errorf("Environment variables don't correspond allocated devices")
+	}
+
+	params := []fpgaParams{}
+	for bitstreamNum := range envSet {
+		interfaceID := canonize(regionEnv[fpgaRegionEnvPrefix+bitstreamNum])
+		found := false
+		// Find a device suitable for the requested bitstream
+		for devNum := range devSet {
+			iID, err := he.getInterfaceID(devNum)
+			if err != nil {
+				return nil, err
+			}
+
+			if interfaceID == canonize(iID) {
+				params = append(params,
+					fpgaParams{
+						afu:    canonize(afuEnv[fpgaAfuEnvPrefix+bitstreamNum]),
+						region: interfaceID,
+						devNum: devNum,
+					},
+				)
+				delete(devSet, devNum)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, errors.Errorf("can't find appropriate device for interfaceID %s", interfaceID)
+		}
+	}
+
+	return params, nil
+}
+
+func (he *hookEnv) getBitStream(params fpgaParams) (fpgaBitStream, error) {
 	bitStreamPath := ""
 	for _, ext := range []string{".gbs", ".aocx"} {
 		bitStreamPath = filepath.Join(he.bitStreamDir, params.region, params.afu+ext)
@@ -261,6 +310,17 @@ func (he *hookEnv) getProgrammedAfu(deviceNum string) (string, error) {
 	return strings.TrimSpace(string(data)), nil
 }
 
+func (he *hookEnv) getInterfaceID(deviceNum string) (string, error) {
+	// NOTE: only one region per device is supported, hence
+	// deviceNum is used twice (device and FME numbers are the same)
+	interfaceIDPath := fmt.Sprintf(he.interfaceIDTemplate, deviceNum, deviceNum)
+	data, err := ioutil.ReadFile(interfaceIDPath)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	return strings.TrimSpace(string(data)), nil
+}
+
 func (he *hookEnv) process(reader io.Reader) error {
 	content, err := decodeJSONStream(reader)
 	if err != nil {
@@ -283,43 +343,45 @@ func (he *hookEnv) process(reader io.Reader) error {
 		return nil
 	}
 
-	params, err := he.getFPGAParams(content)
+	paramslist, err := he.getFPGAParams(content)
 	if err != nil {
 		return errors.WithMessage(err, "couldn't get FPGA region, AFU and device number")
 	}
 
-	programmedAfu, err := he.getProgrammedAfu(params.devNum)
-	if err != nil {
-		return err
-	}
+	for _, params := range paramslist {
+		programmedAfu, err := he.getProgrammedAfu(params.devNum)
+		if err != nil {
+			return err
+		}
 
-	if canonize(programmedAfu) == params.afu {
-		// Afu is already programmed
-		return nil
-	}
+		if canonize(programmedAfu) == params.afu {
+			// Afu is already programmed
+			return nil
+		}
 
-	bitStream, err := he.getBitStream(params)
-	if err != nil {
-		return err
-	}
+		bitStream, err := he.getBitStream(params)
+		if err != nil {
+			return err
+		}
 
-	err = bitStream.validate()
-	if err != nil {
-		return err
-	}
+		err = bitStream.validate()
+		if err != nil {
+			return err
+		}
 
-	err = bitStream.program()
-	if err != nil {
-		return err
-	}
+		err = bitStream.program()
+		if err != nil {
+			return err
+		}
 
-	programmedAfu, err = he.getProgrammedAfu(params.devNum)
-	if err != nil {
-		return err
-	}
+		programmedAfu, err = he.getProgrammedAfu(params.devNum)
+		if err != nil {
+			return err
+		}
 
-	if programmedAfu != params.afu {
-		return errors.Errorf("programmed function %s instead of %s", programmedAfu, params.afu)
+		if programmedAfu != params.afu {
+			return errors.Errorf("programmed function %s instead of %s", programmedAfu, params.afu)
+		}
 	}
 
 	return nil
@@ -330,7 +392,7 @@ func main() {
 		os.Setenv("PATH", "/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin")
 	}
 
-	he := newHookEnv(fpgaBitStreamDirectory, configJSON, utilsexec.New(), afuIDTemplate)
+	he := newHookEnv(fpgaBitStreamDirectory, configJSON, utilsexec.New(), afuIDTemplate, interfaceIDTemplate)
 
 	err := he.process(os.Stdin)
 	if err != nil {
