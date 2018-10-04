@@ -90,7 +90,7 @@ func TestGetPatchOpsPreprogrammed(t *testing.T) {
 				Resources: corev1.ResourceRequirements{
 					Limits: corev1.ResourceList{
 						"fpga.intel.com/arria10-unknown": resource.MustParse("1"),
-						"cpu": resource.MustParse("1"),
+						"cpu":                            resource.MustParse("1"),
 					},
 				},
 			},
@@ -102,7 +102,7 @@ func TestGetPatchOpsPreprogrammed(t *testing.T) {
 				Resources: corev1.ResourceRequirements{
 					Requests: corev1.ResourceList{
 						"fpga.intel.com/arria10-unknown": resource.MustParse("1"),
-						"cpu": resource.MustParse("1"),
+						"cpu":                            resource.MustParse("1"),
 					},
 				},
 			},
@@ -114,11 +114,11 @@ func TestGetPatchOpsPreprogrammed(t *testing.T) {
 				Resources: corev1.ResourceRequirements{
 					Limits: corev1.ResourceList{
 						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
-						"cpu": resource.MustParse("1"),
+						"cpu":                         resource.MustParse("1"),
 					},
 					Requests: corev1.ResourceList{
 						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
-						"cpu": resource.MustParse("1"),
+						"cpu":                         resource.MustParse("1"),
 					},
 				},
 			},
@@ -222,11 +222,11 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 				Resources: corev1.ResourceRequirements{
 					Limits: corev1.ResourceList{
 						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
-						"cpu": resource.MustParse("1"),
+						"cpu":                         resource.MustParse("1"),
 					},
 					Requests: corev1.ResourceList{
 						"fpga.intel.com/arria10-nlb0": resource.MustParse("1"),
-						"cpu": resource.MustParse("1"),
+						"cpu":                         resource.MustParse("1"),
 					},
 				},
 				Env: []corev1.EnvVar{

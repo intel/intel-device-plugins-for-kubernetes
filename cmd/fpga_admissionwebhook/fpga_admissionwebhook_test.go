@@ -130,11 +130,11 @@ func TestMutatePods(t *testing.T) {
 					Image: "test-image",
 					Resources: corev1.ResourceRequirements{
 						Limits: corev1.ResourceList{
-							"cpu": resource.MustParse("1"),
+							"cpu":                    resource.MustParse("1"),
 							"fpga.intel.com/arria10": resource.MustParse("1"),
 						},
 						Requests: corev1.ResourceList{
-							"cpu": resource.MustParse("1"),
+							"cpu":                    resource.MustParse("1"),
 							"fpga.intel.com/arria10": resource.MustParse("1"),
 						},
 					},
