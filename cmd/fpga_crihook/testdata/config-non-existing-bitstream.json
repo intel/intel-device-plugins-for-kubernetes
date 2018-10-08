@@ -13,8 +13,8 @@
 			"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 			"TERM=xterm",
 			"HOSTNAME=test-fpga-region",
-			"FPGA_REGION=ce48969398f05f33946d560708be108a",
-			"FPGA_AFU=non-existing",
+			"FPGA_REGION_1=ce48969398f05f33946d560708be108a",
+			"FPGA_AFU_1=non-existing",
 			"KUBERNETES_SERVICE_PORT=443",
 			"KUBERNETES_PORT_443_TCP_PROTO=tcp",
 			"OPAE_URL=https://github.com/OPAE/opae-sdk/releases/download/1.0.0-5"

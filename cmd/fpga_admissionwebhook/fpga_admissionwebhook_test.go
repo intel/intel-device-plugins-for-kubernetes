@@ -130,11 +130,11 @@ func TestMutatePods(t *testing.T) {
 					Image: "test-image",
 					Resources: corev1.ResourceRequirements{
 						Limits: corev1.ResourceList{
-							"cpu": resource.MustParse("1"),
+							"cpu":                    resource.MustParse("1"),
 							"fpga.intel.com/arria10": resource.MustParse("1"),
 						},
 						Requests: corev1.ResourceList{
-							"cpu": resource.MustParse("1"),
+							"cpu":                    resource.MustParse("1"),
 							"fpga.intel.com/arria10": resource.MustParse("1"),
 						},
 					},
@@ -210,7 +210,7 @@ func TestMutatePods(t *testing.T) {
 			},
 			mode:             orchestrated,
 			expectedResponse: true,
-			expectedPatchOps: 4,
+			expectedPatchOps: 5,
 		},
 		{
 			name: "handle error after wrong getPatchOps()",
@@ -250,8 +250,8 @@ func TestMutatePods(t *testing.T) {
 			if err != nil {
 				t.Errorf("Test case '%s': got unparsable patch '%s'", tcase.name, resp.Patch)
 			} else if len(ops.([]interface{})) != tcase.expectedPatchOps {
-				t.Errorf("Test case '%s': got wrong number of operations in the patch. Expected %d, but got %d",
-					tcase.name, tcase.expectedPatchOps, len(ops.([]interface{})))
+				t.Errorf("Test case '%s': got wrong number of operations in the patch. Expected %d, but got %d\n%s",
+					tcase.name, tcase.expectedPatchOps, len(ops.([]interface{})), string(resp.Patch))
 			}
 		}
 	}
