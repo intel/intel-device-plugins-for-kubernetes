@@ -44,16 +44,16 @@ TAG?=$(shell git rev-parse HEAD)
 images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
 
 $(images):
-	docker build -f build/docker/$@.Dockerfile --pull -t $@:$(TAG) .
-	docker tag $@:$(TAG) $@:devel
+	@build/docker/build-image.sh $@ $(BUILDER)
 
 images: $(images)
 
 demos = $(shell cd demo/ && ls -d */ | sed 's/\(.\+\)\//\1/g' | grep -v crypto-perf)
 
 $(demos):
-	@cd demo/ && ./build-image.sh $@
+	@cd demo/ && ./build-image.sh $@ $(BUILDER)
 
 demos: $(demos)
+
 
 .PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images)
