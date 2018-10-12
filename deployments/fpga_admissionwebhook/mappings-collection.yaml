@@ -1,27 +1,27 @@
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10-nlb0
+  name: arria11-nlb0
 spec:
   afuId: d8424dc4a4a3c413f89e433683f9040b
 ---
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10-nlb3
+  name: arria11-nlb3
 spec:
   afuId: f7df405cbd7acf7222f144b0b93acd18
 ---
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10-compress
+  name: arria11-compress
 spec:
   afuId: 18b79ffa2ee54aa096ef4230dafacb5f
 ---
 apiVersion: fpga.intel.com/v1
 kind: FpgaRegion
 metadata:
-  name: arria10
+  name: arria11
 spec:
-  interfaceId: ce48969398f05f33946d560708be108a
+  interfaceId: 9926ab6d6c925a68aabca7d84c545738
