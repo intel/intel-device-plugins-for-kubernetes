@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 PV='pv -qL'
 
@@ -26,19 +26,19 @@ cleanup()
   clear
   out 'Cleanup demo artifacts' 20
   out 'delete test pod:' 20
-  command 'kubectl delete pod test-fpga-region' 20
+  command 'kubectl delete pod test-fpga-region || true' 20
   out 'delete ServiceAccount:' 20
-  command 'kubectl delete ServiceAccount intel-fpga-plugin-controller --namespace kube-system' 20
+  command 'kubectl delete ServiceAccount intel-fpga-plugin-controller --namespace kube-system || true' 20
   out 'delete ClusterRole:' 20
-  command 'kubectl delete ClusterRole node-getter --namespace kube-system' 20
+  command 'kubectl delete ClusterRole node-getter --namespace kube-system || true' 20
   out 'delete ClusterRoleBinding:' 20
-  command 'kubectl delete ClusterRoleBinding get-nodes --namespace kube-system' 20
+  command 'kubectl delete ClusterRoleBinding get-nodes --namespace kube-system || true' 20
   out 'delete node annotation:' 20
-  command 'kubectl annotate node --all fpga.intel.com/device-plugin-mode-' 20
+  command 'kubectl annotate node --all fpga.intel.com/device-plugin-mode- || true' 20
   out 'delete plugin daemonset:' 20
-  command 'kubectl delete daemonset intel-fpga-plugin --namespace kube-system' 20
+  command 'kubectl delete daemonset intel-fpga-plugin --namespace kube-system || true' 20
   out 'delete webhook deployment:' 20
-  command 'kubectl delete deployment intel-fpga-webhook-deployment --namespace kube-system' 20
+  command 'kubectl delete deployment intel-fpga-webhook-deployment --namespace kube-system || true' 20
   out 'delete images' 20
   #docker rmi -f $(docker images |grep "intel\|opae" | awk '{print $3}' | tr "\n" " ") 
   sudo podman rmi -f $(sudo podman images |grep "intel\|opae" | awk '{print $3}' | tr '\n' ' ')
