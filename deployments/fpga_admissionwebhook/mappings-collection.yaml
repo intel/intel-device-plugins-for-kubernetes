@@ -24,4 +24,4 @@ kind: FpgaRegion
 metadata:
   name: arria10
 spec:
-  interfaceId: ce48969398f05f33946d560708be108a
+  interfaceId: 9926ab6d6c925a68aabca7d84c545738

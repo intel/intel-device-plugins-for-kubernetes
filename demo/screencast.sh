@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 PV='pv -qL'
 
@@ -26,19 +26,19 @@ cleanup()
   clear
   out 'Cleanup demo artifacts' 20
   out 'delete test pod:' 20
-  command 'kubectl delete pod test-fpga-region' 20
+  command 'kubectl delete pod test-fpga-region || true' 20
   out 'delete ServiceAccount:' 20
-  command 'kubectl delete ServiceAccount intel-fpga-plugin-controller --namespace kube-system' 20
+  command 'kubectl delete ServiceAccount intel-fpga-plugin-controller --namespace kube-system || true' 20
   out 'delete ClusterRole:' 20
-  command 'kubectl delete ClusterRole node-getter --namespace kube-system' 20
+  command 'kubectl delete ClusterRole node-getter --namespace kube-system || true' 20
   out 'delete ClusterRoleBinding:' 20
-  command 'kubectl delete ClusterRoleBinding get-nodes --namespace kube-system' 20
+  command 'kubectl delete ClusterRoleBinding get-nodes --namespace kube-system || true' 20
   out 'delete node annotation:' 20
-  command 'kubectl annotate node --all fpga.intel.com/device-plugin-mode-' 20
+  command 'kubectl annotate node --all fpga.intel.com/device-plugin-mode- || true' 20
   out 'delete plugin daemonset:' 20
-  command 'kubectl delete daemonset intel-fpga-plugin --namespace kube-system' 20
+  command 'kubectl delete daemonset intel-fpga-plugin --namespace kube-system || true' 20
   out 'delete webhook deployment:' 20
-  command 'kubectl delete deployment intel-fpga-webhook-deployment --namespace kube-system' 20
+  command 'kubectl delete deployment intel-fpga-webhook-deployment --namespace kube-system || true' 20
   out 'delete images' 20
   #docker rmi -f $(docker images |grep "intel\|opae" | awk '{print $3}' | tr "\n" " ") 
   sudo podman rmi -f $(sudo podman images |grep "intel\|opae" | awk '{print $3}' | tr '\n' ' ')
@@ -130,7 +130,7 @@ screen5()
   out "Import image from docker to CRI-O:"
   command "docker save ubuntu-demo-opae:devel | sudo podman load"
   out "Program bitstream that is not wanted by the workload:"
-  command "sudo /opt/intel/fpga-sw/opae/fpgaconf-wrapper -s0 /srv/intel.com/fpga/ce48969398f05f33946d560708be108a/d8424dc4a4a3c413f89e433683f9040b.gbs"
+  command "sudo /opt/intel/fpga-sw/opae/fpgaconf-wrapper -s0 /srv/intel.com/fpga/9926ab6d6c925a68aabca7d84c545738/d8424dc4a4a3c413f89e433683f9040b.gbs"
   out "Check if device is programmed with it:"
   command "cat /sys/class/fpga/intel-fpga-dev.0/intel-fpga-port.0/afu_id"
   out "Run workload:"
