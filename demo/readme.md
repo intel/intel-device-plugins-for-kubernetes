@@ -26,8 +26,8 @@ Kubernetes and the Device Plugin Framework.
 
 The screencast demonstrates the deployment of the Intel® FPGA Device Plugin for
 Kubernetes and executes a sample GZIP compression workload. The demo begins
-with a fully configured Kubernetes cluster with the
-[Go runtime](https://golang.org/doc/install).
+with a fully [configured Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
+with the [Go runtime](https://golang.org/doc/install).
 
 ### Demo platform configuration
 
@@ -49,4 +49,5 @@ with a fully configured Kubernetes cluster with the
 5. Create bitstream storage for the Intel® FPGA.
 6. Run the sample GZIP compression workload.
 
-[comment]: # (Video placeholder https://asciinema.org/a/UEZg2y8NLFUVARfzspBD5jIli)
+### Screencast
+[Intel® FPGA Device Plugin deployment](https://asciinema.org/a/UEZg2y8NLFUVARfzspBD5jIli)
