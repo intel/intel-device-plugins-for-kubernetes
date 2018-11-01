@@ -50,4 +50,7 @@ with the [Go runtime](https://golang.org/doc/install).
 6. Run the sample GZIP compression workload.
 
 ### Screencast
-[Intel® FPGA Device Plugin deployment](https://asciinema.org/a/UEZg2y8NLFUVARfzspBD5jIli)
+
+Intel® FPGA Device Plugin deployment
+
+[![Intel® FPGA Device Plugin deployment](https://asciinema.org/a/UEZg2y8NLFUVARfzspBD5jIli.png)](https://asciinema.org/a/UEZg2y8NLFUVARfzspBD5jIli)
