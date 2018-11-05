@@ -116,13 +116,13 @@ func (m *Manager) handleUpdate(update updateInfo) {
 		}
 
 		m.servers[devType] = m.createServer(devType, postAllocate)
-		go func() {
-			err := m.servers[devType].Serve(m.namespace)
+		go func(dt string) {
+			err := m.servers[dt].Serve(m.namespace)
 			if err != nil {
-				fmt.Printf("Failed to serve %s/%s: %+v\n", m.namespace, devType, err)
+				fmt.Printf("Failed to serve %s/%s: %+v\n", m.namespace, dt, err)
 				os.Exit(1)
 			}
-		}()
+		}(devType)
 		m.servers[devType].Update(devices)
 	}
 	for devType, devices := range update.Updated {
