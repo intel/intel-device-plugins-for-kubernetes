@@ -53,4 +53,4 @@ with the [Go runtime](https://golang.org/doc/install).
 
 Intel® FPGA Device Plugin deployment
 
-[![Intel® FPGA Device Plugin deployment](https://asciinema.org/a/UEZg2y8NLFUVARfzspBD5jIli.png)](https://asciinema.org/a/UEZg2y8NLFUVARfzspBD5jIli)
+[![Intel® FPGA Device Plugin deployment](https://asciinema.org/a/mRn15bkRRUzTG4kp2UeHQX6gk.png)](https://asciinema.org/a/mRn15bkRRUzTG4kp2UeHQX6gk)
