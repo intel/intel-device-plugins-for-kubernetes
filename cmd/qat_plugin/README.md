@@ -68,6 +68,7 @@ $ make  intel-qat-plugin
 ### Deploy QAT device plugin as a DaemonSet:
 ```
 $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+kubectl create -f deployments/qat_plugin/qat_plugin_default_configmap.yaml
 kubectl create -f deployments/qat_plugin/qat_plugin.yaml
 ```
 
