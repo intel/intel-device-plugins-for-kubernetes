@@ -25,9 +25,8 @@ before_install:
   - cdir=$(pwd)
   - sudo apt-get -y install e2fslibs-dev libfuse-dev libgpgme11-dev
   # build and install ostree
-  - git clone https://github.com/ostreedev/ostree
+  - git clone --single-branch --depth 1 -b $OSTREE_VERSION https://github.com/ostreedev/ostree
   - cd ostree
-  - git reset --hard $OSTREE_VERSION
   - git submodule update --init
   - env NOCONFIGURE=1 ./autogen.sh
   - ./configure
@@ -37,9 +36,8 @@ before_install:
   # build buildah
   - mkdir -p $GOPATH/src/github.com/containers
   - cd $GOPATH/src/github.com/containers
-  - git clone https://github.com/containers/buildah
+  - git clone --single-branch --depth 1 -b $BUILDAH_VERSION https://github.com/containers/buildah
   - cd buildah
-  - git reset --hard $BUILDAH_VERSION
   - make buildah TAGS=""
   - sudo cp buildah /usr/local/bin
   # configure buildah
