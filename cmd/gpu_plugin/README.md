@@ -60,7 +60,7 @@ $ kubectl describe node <node name> | grep gpu.intel.com
 
 2. Create a pod running unit tests off the local Docker image:
    ```
-   $ kubectl apply -f demo/intelgpu_job.yaml
+   $ kubectl apply -f demo/intelgpu-job.yaml
    ```
 
 3. Review the pod's logs:

@@ -14,7 +14,7 @@ spec:
       containers:
         -
           name: intelgpu-demo-job-1
-          image: ubuntu-demo-opencl:latest
+          image: ubuntu-demo-opencl:devel
           imagePullPolicy: IfNotPresent
           command: [ "/run-opencl-example.sh", "/root/6-1/fft" ]
           resources:
