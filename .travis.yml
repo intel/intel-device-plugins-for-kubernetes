@@ -7,7 +7,7 @@ go:
 
 env:
   global:
-    - RUNC_VERSION=v1.0.0-rc5
+    - RUNC_VERSION=v1.0.0-rc6
     - CRIO_VERSION=v1.11.5
     - OSTREE_VERSION=v2018.8
     - BUILDAH_VERSION=v1.4
@@ -59,9 +59,9 @@ script:
   - make cyclomatic-check
   - make test
   - make images
-  - sudo make images BUILDER=buildah
+  - make images BUILDER=buildah
   - make demos
-  - sudo make demos BUILDER=buildah
+  - make demos BUILDER=buildah
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
