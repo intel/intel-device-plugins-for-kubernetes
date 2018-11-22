@@ -10,6 +10,7 @@ env:
     - RUNC_VERSION=v1.0.0-rc5
     - CRIO_VERSION=v1.11.5
     - OSTREE_VERSION=v2018.8
+    - BUILDAH_VERSION=v1.4
 
 sudo: required
 
@@ -38,6 +39,7 @@ before_install:
   - cd $GOPATH/src/github.com/containers
   - git clone https://github.com/containers/buildah
   - cd buildah
+  - git reset --hard $BUILDAH_VERSION
   - make buildah TAGS=""
   - sudo cp buildah /usr/local/bin
   # configure buildah
