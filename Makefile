@@ -48,7 +48,7 @@ $(images):
 
 images: $(images)
 
-demos = $(shell cd demo/ && ls -d */ | sed 's/\(.\+\)\//\1/g' | grep -v crypto-perf)
+demos = $(shell cd demo/ && ls -d */ | sed 's/\(.\+\)\//\1/g')
 
 $(demos):
 	@cd demo/ && ./build-image.sh $@ $(BUILDER)
