@@ -1,0 +1,32 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: openssl-qat-engine
+  annotations:
+      io.kubernetes.docker.TrustedSandbox: "false"
+      io.kubernetes.cri-o.TrustedSandbox: "false"
+      io.kubernetes.cri.untrusted-workload: "true"
+spec:
+  containers:
+  - name: openssl-qat-engine
+    image: docker.io/library/openssl-qat-engine:devel
+    imagePullPolicy: Never
+    volumeMounts:
+            - mountPath: /dev
+              name: dev-mount
+            - mountPath: /etc/c6xxvf_dev0.conf
+              name: dev0
+    command: [ "/bin/bash", "-c", "--" ]
+    args: [ "while true; do sleep 300000; done;" ]
+    resources:
+      requests:
+        qat.intel.com/generic: '1'
+      limits:
+        qat.intel.com/generic: '1'
+  volumes:
+  - name: dev-mount
+    hostPath:
+        path: /dev
+  - name: dev0
+    hostPath:
+        path: /etc/c6xxvf_dev0.conf
