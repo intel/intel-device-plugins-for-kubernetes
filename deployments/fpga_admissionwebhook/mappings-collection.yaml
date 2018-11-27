@@ -15,7 +15,7 @@ spec:
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10_dcp1.0-compress
+  name: arria10-compress
 spec:
   afuId: 18b79ffa2ee54aa096ef4230dafacb5f
 ---
@@ -25,10 +25,3 @@ metadata:
   name: arria10
 spec:
   interfaceId: 9926ab6d6c925a68aabca7d84c545738
----
-apiVersion: fpga.intel.com/v1
-kind: FpgaRegion
-metadata:
-  name: arria10_dcp1.0
-spec:
-  interfaceId: ce48969398f05f33946d560708be108a
