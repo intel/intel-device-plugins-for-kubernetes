@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: intel-qat-plugin-config
 data:
-  DPDK_DRIVER: "igb_uio"
+  DPDK_DRIVER: "vfio-pci"
   KERNEL_VF_DRIVERS: "dh895xccvf,c6xxvf,c3xxxvf,d15xxvf"
   MAX_NUM_DEVICES: "32"
   DEBUG: "false"

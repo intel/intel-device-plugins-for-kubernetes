@@ -272,7 +272,7 @@ func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 }
 
 func main() {
-	dpdkDriver := flag.String("dpdk-driver", "igb_uio", "DPDK Device driver for configuring the QAT device")
+	dpdkDriver := flag.String("dpdk-driver", "vfio-pci", "DPDK Device driver for configuring the QAT device")
 	kernelVfDrivers := flag.String("kernel-vf-drivers", "dh895xccvf,c6xxvf,c3xxxvf,d15xxvf", "Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC,C62x,C3xxx and D15xx")
 	maxNumDevices := flag.Int("max-num-devices", 32, "maximum number of QAT devices to be provided to the QuickAssist device plugin")
 	debugEnabled := flag.Bool("debug", false, "enable debug output")

@@ -6,7 +6,7 @@
     * [DPDK Getting Started Guide, Linux Drivers section](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html)
 * QuickAssist SR-IOV virtual functions must be configured. Verify this by running:
       ```
-      lspci | grep QAT
+      for i in 0442 0443 37c9 19e3; do lspci -d 8086:$i; done
       ```
 * Intel QuickAssist Technology software for Linux must be installed and
   configured. For more information, refer to:
@@ -58,6 +58,8 @@ ListAndWatch: Sending device response
 By default, the device plugin supports these QuickAssist devices:  DH895xCC, C62x, C3xxx, and D15xx devices.
 
 Use the `kernel-vf-drivers flag` to specify the vf Device Driver for the particular QAT device. For more information, refer to [Intel QAT Crypto Poll Mode Driver](https://dpdk.org/doc/guides/cryptodevs/qat.html).
+
+`-dpdk-driver` is set to `vfio-pci` by default since it is more robust and secure driver compared with `igb_uio`. See [DPDK Linux Driver Guide](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html) for more information.
 
 ### Build QAT device plugin Docker image:
 ```
