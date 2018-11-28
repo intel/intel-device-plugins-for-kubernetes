@@ -59,6 +59,8 @@ By default, the device plugin supports these QuickAssist devices:  DH895xCC, C62
 
 Use the `kernel-vf-drivers flag` to specify the vf Device Driver for the particular QAT device. For more information, refer to [Intel QAT Crypto Poll Mode Driver](https://dpdk.org/doc/guides/cryptodevs/qat.html).
 
+`-dpdk-driver` is set to `vfio-pci` by default since it is more robust and secure driver compared with `igb_uio`. See [DPDK Linux Driver Guide](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html) for more information.
+
 ### Build QAT device plugin Docker image:
 ```
 $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
