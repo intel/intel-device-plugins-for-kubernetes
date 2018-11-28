@@ -2,11 +2,8 @@ kind: Pod
 apiVersion: v1
 metadata:
   name: openssl-qat-engine
-  annotations:
-      io.kubernetes.docker.TrustedSandbox: "false"
-      io.kubernetes.cri-o.TrustedSandbox: "false"
-      io.kubernetes.cri.untrusted-workload: "true"
 spec:
+  runtimeClassName: kata-containers
   containers:
   - name: openssl-qat-engine
     image: docker.io/library/openssl-qat-engine:devel
