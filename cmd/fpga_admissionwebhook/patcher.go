@@ -303,7 +303,7 @@ func (p *patcher) parseResourceName(input string) (string, string, error) {
 
 	if afName != "" {
 		if afuID, ok = p.afMap[regionName+"-"+afName]; !ok {
-			return "", "", errors.Errorf("Unknown AF name: %s", regionName+"-"+afName)
+			return "", "", errors.Errorf("Unknown AF name: %s %v", regionName+"-"+afName, p.afMap)
 		}
 	}
 
