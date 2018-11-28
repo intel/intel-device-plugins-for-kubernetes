@@ -6,7 +6,7 @@
     * [DPDK Getting Started Guide, Linux Drivers section](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html)
 * QuickAssist SR-IOV virtual functions must be configured. Verify this by running:
       ```
-      lspci | grep QAT
+      for i in 0442 0443 37c9 19e3; do lspci -d 8086:$i; done
       ```
 * Intel QuickAssist Technology software for Linux must be installed and
   configured. For more information, refer to:
