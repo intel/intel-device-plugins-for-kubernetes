@@ -23,6 +23,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -206,6 +207,20 @@ func isValidVfDeviceID(vfDevID string) bool {
 	}
 	return false
 }
+
+func (dp *devicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error { 
+        tempMap := make(map[string]string)
+        counter := 0
+        for _, cresp := range response.ContainerResponses {
+                for k := range cresp.Envs {
+                        tempMap[strings.Join([]string{"QAT",strconv.Itoa(counter)},"")] = cresp.Envs[k]
+                        counter++
+                }       
+                cresp.Envs = tempMap        
+        }
+        return nil      
+}
+
 
 func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 	devTree := deviceplugin.NewDeviceTree()
