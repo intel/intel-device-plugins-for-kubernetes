@@ -57,8 +57,35 @@ Intel® FPGA Device Plugin deployment
 
 ## Intel® QuickAssist Technology Device Plugin OpenSSL demo video
 
-TBD
+The screencast demonstrates the deployment of the [Intel® QAT Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/qat_plugin/README.md) for
+Kubernetes and executes a sample QAT accelerated OpenSSL workload with the OCI
+compatible Kata Containers runtime, a lightweight Virtual Machine (VMs) that feel
+and perform like traditional containers, but provides the workload isolation
+and security advantages of VMs. The demo begins with a fully [configured Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
+and [Kata Containers](https://github.com/kata-containers/documentation/tree/master/install) runtime for workloads.
 
 ### Demo platform configuration
+
+- 1-node, 2x Intel® Xeon® CPU E5-2687W v4 @ 3.00GHz
+- Total memory 251 GB DDR4
+- Intel® QAT C62x chipset
+- Software
+- OpenSUSE 15 (Kernel:4.12.14-lp150.12.22-default)
+- Kubernetes 1.12
+- Containerd 1.2
+- Kata Containers 1.3.0
+- Intel® QAT Device Plugin built from master
+- QAT 1.7 L.4.3.0-00033
+
 ### Demo steps
+
+1. Load the host drivers and prepare the virtual function (VF) devices
+2. Check the Kubernetes cluster is in good shape
+3. Deploy the Intel® QAT device plugin for Kubernetes
+4. Deploy an Intel® QAT Accelerated OpenSSL workload
+5. Testing!
+
 ### Screencast
+Intel® QAT Device Plugin deployment
+
+[![Intel® QAT Device Plugin deployment](https://asciinema.org/a/2N7wF3c9oeCuB9sFqTNm2gmOr.png)](https://asciinema.org/a/2N7wF3c9oeCuB9sFqTNm2gmOr)
