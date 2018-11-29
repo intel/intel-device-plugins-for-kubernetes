@@ -67,7 +67,7 @@ const (
 
 var (
 	rfc6901Escaper = strings.NewReplacer("~", "~0", "/", "~1")
-	resourceRe     = regexp.MustCompile(namespace + `/(?P<Region>[[:alnum:]]+)(-(?P<Af>[[:alnum:]]+))?`)
+	resourceRe     = regexp.MustCompile(namespace + `/(?P<Region>[[:alnum:].]+)(-(?P<Af>[[:alnum:]]+))?`)
 )
 
 type patcher struct {
