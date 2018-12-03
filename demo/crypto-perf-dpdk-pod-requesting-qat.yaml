@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
   - name: dpdkcontainer
-    image: crypto-perf:latest
+    image: crypto-perf:devel
     imagePullPolicy: IfNotPresent
     command: [ "/bin/bash", "-c", "--" ]
     args: [ "while true; do sleep 300000; done;" ]

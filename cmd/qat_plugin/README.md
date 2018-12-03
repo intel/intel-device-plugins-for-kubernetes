@@ -83,11 +83,11 @@ $ kubectl describe node <node name> | grep qat.intel.com/generic
 
 ### Consuming QAT device plugin
 
-1. Place the Dockerfile in the DPDK directory and build the DPDK image:
+1. Build the DPDK image:
 
      ```
      $ cd demo
-     $ docker build -t crypto-perf .
+     $ ./build-image.sh crypto-perf
      ```
 
      This command produces a Docker image named `crypto-perf`.
