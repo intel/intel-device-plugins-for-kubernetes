@@ -17,7 +17,13 @@ CWD=`dirname $0`
 TAG=`git rev-parse HEAD`
 
 if [ -z "$BUILDER" -o "$BUILDER" = 'docker' ] ; then
-    docker build --rm -t ${IMG}:${TAG} "$CWD/$IMG/"
+    docker build --rm --build-arg http_proxy=${http_proxy} \
+		--build-arg HTTP_PROXY=${HTTP_PROXY} \
+		--build-arg https_proxy=${https_proxy} \
+		--build-arg HTTPS_PROXY=${HTTPS_PROXY} \
+		--build-arg no_proxy=${no_proxy} \
+		--build-arg NO_PROXY=${NO_PROXY} \
+		-t ${IMG}:${TAG} "$CWD/$IMG/"
     docker tag ${IMG}:${TAG} ${IMG}:devel
 elif [ "$BUILDER" = 'buildah' ] ; then
     buildah bud -t ${IMG}:${TAG} "$CWD/$IMG/"
