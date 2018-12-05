@@ -22,6 +22,28 @@ on [kubernetes.slack.com](https://kubernetes.slack.com/) to ask questions,
 contribute to the community, and learn about the work we are doing with
 Kubernetes and the Device Plugin Framework.
 
+## Intel® GPU Device Plugin demo video
+
+The screencast demonstrates the deployment of the Intel® GPU Device Plugin for
+Kubernetes including Kubeless Function as a Service (FaaS) media transcoder
+JavaScript function. The media transcoding workload is scheduled to two different worker nodes.
+Only one worker node is having GPU. The time difference in transcoding speed is captured.
+
+### Demo platform configuration
+
+- Hardware 2-nodes
+  - 1x Virtual Machine on Intel® Xeon® E5-2687 CPU @ 3.0 GHz
+  - 1x Intel® NUC KIT NUC6i7KYK (Skull Canyon) with Intel integrated GPU
+- Software
+  - Ubuntu 18.04 (Kernel: 4.15.0-36-generic)
+  - Kubernetes 1.11
+  - Docker 18.3.1
+  - Intel® GPU Device Plugin built from master branch
+
+### Screencast
+
+[Intel® GPU Device Plugin demo](https://youtu.be/sg31rV1FdQk)
+
 ## Intel® FPGA Device Plugin demo video
 
 The screencast demonstrates the deployment of the Intel® FPGA Device Plugin for
