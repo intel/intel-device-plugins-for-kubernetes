@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
+	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 )
 
 func init() {
@@ -359,6 +360,59 @@ func TestScanPrivate(t *testing.T) {
 
 		if err = os.RemoveAll(tmpdir); err != nil {
 			t.Fatal(err)
+		}
+	}
+}
+func eleInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+func TestPostAllocate(t *testing.T) {
+	response := new(pluginapi.AllocateResponse)
+	cresp := new(pluginapi.ContainerAllocateResponse)
+	response.ContainerResponses = append(response.ContainerResponses, cresp)
+	testMap := map[string]string{
+		"QAT29": "03:04.1",
+		"QAT13": "03:04.2",
+		"QAT6":  "03:04.3",
+		"QAT21": "03:04.4",
+	}
+	response.ContainerResponses[0].Envs = testMap
+	resultKey := []string{
+		"QAT0",
+		"QAT1",
+		"QAT2",
+		"QAT3",
+	}
+	expectedValues := map[string]struct{}{
+		"03:04.1": {},
+		"03:04.2": {},
+		"03:04.3": {},
+		"03:04.4": {},
+	}
+	dp := &devicePlugin{}
+	dp.PostAllocate(response)
+	if len(response.ContainerResponses[0].Envs) != 4 {
+		t.Fatal("Set wrong number of Environment Variables")
+	}
+
+	for k := range response.ContainerResponses[0].Envs {
+		if !eleInSlice(k, resultKey) {
+			t.Fatalf("Set wrong key: %s. The key should be in the range %v", k, resultKey)
+		}
+	}
+
+	for _, key := range resultKey {
+		if value, ok := response.ContainerResponses[0].Envs[key]; ok {
+			if _, ok := expectedValues[value]; ok {
+				delete(expectedValues, value)
+			} else {
+				t.Errorf("Unexpected value %s", value)
+			}
 		}
 	}
 }
