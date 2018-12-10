@@ -116,15 +116,15 @@ Intel® QAT Device Plugin deployment
 
 ### Demo steps
 
-1. Check health of Kubernetes nodes
-2. Check for allocatable resources
-3. List QAT Virtual Functions
-4. Deploy QAT Device Plugin as a Daemonset
-5. Check again for allocatable resources
-6. List QAT Virtual Functions again, ensuring they are now bound to DPDK driver
-7. View pod specification file for pod requesting QAT VFs
-8. Create pod requesting QAT VFs
-9. Get a shell to the running container and run a DPDK application
+1. Check health of Kubernetes nodes.
+2. Check for allocatable resources.
+3. List QAT Virtual Functions.
+4. Deploy QAT Device Plugin as a Daemonset.
+5. Check again for allocatable resources.
+6. List QAT Virtual Functions again, ensuring they are now bound to DPDK driver.
+7. View pod specification file for pod requesting QAT VFs.
+8. Create pod requesting QAT VFs.
+9. Get a shell to the running container and run a DPDK application.
 
 ### Screencast
 Intel® QAT Device Plugin with DPDK
