@@ -118,3 +118,21 @@ and [Kata Containers](https://github.com/kata-containers/documentation/tree/mast
 Intel® QAT Device Plugin deployment
 
 [![Intel® QAT Device Plugin deployment](https://asciinema.org/a/2N7wF3c9oeCuB9sFqTNm2gmOr.png)](https://asciinema.org/a/2N7wF3c9oeCuB9sFqTNm2gmOr)
+
+## Intel® QuickAssist Technology Device Plugin with DPDK Demo Video
+
+### Demo steps
+
+1. Check health of Kubernetes nodes.
+2. Check for allocatable resources.
+3. List QAT Virtual Functions.
+4. Deploy QAT Device Plugin as a Daemonset.
+5. Check again for allocatable resources.
+6. List QAT Virtual Functions again, ensuring they are now bound to DPDK driver.
+7. View pod specification file for pod requesting QAT VFs.
+8. Create pod requesting QAT VFs.
+9. Get a shell to the running container and run a DPDK application.
+
+### Screencast
+Intel® QAT Device Plugin with DPDK
+[![Intel® QAT Device Plugin with DPDK](https://asciinema.org/a/H723QlyIf69H6Rpv0YihCtcKw.png)](https://asciinema.org/a/H723QlyIf69H6Rpv0YihCtcKw)
