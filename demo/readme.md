@@ -1,5 +1,12 @@
 # Intel Device Plugin Demo for Kubernetes
 
+## Table of Contents
+
+- [Demo overview](#demo-overview)
+- [Intel® GPU Device Plugin demo video](#intel-gpu-device-plugin-demo-video)
+- [Intel® FPGA Device Plugin demo video](#intel-fpga-device-plugin-demo-video)
+- [Intel® QuickAssist Technology Device Plugin OpenSSL demo video](#intel-quickassist-technology-device-plugin-openssl-demo-video)
+
 ## Demo overview
 
 Acceleration of compute and data processing of workloads like video
@@ -11,9 +18,7 @@ for the acceleration of your workloads orchestrated by Kubernetes.
 The current list of supported Intel Device Plugins includes:
 
 - [GPU Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/gpu_plugin/README.md) with support for [Intel® Graphics Technology](https://www.intel.com/content/www/us/en/architecture-and-technology/visual-technology/graphics-overview.html)
-
 - [Intel® FPGA Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_plugin/README.md)
-
 - [Intel® QuickAssist Technology (QAT) Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/qat_plugin/README.md)
 
 We have included an example demo and configuration information for the Intel
@@ -26,19 +31,19 @@ Kubernetes and the Device Plugin Framework.
 
 The screencast demonstrates the deployment of the Intel® GPU Device Plugin for
 Kubernetes including Kubeless Function as a Service (FaaS) media transcoder
-JavaScript function. The media transcoding workload is scheduled to two different worker nodes.
-Only one worker node is having GPU. The time difference in transcoding speed is captured.
+JavaScript function. The media transcoding workload is scheduled on two different worker nodes.
+Only one worker node has a GPU. The time difference in transcoding speed is captured.
 
 ### Demo platform configuration
 
 - Hardware 2-nodes
-  - 1x Virtual Machine on Intel® Xeon® E5-2687 CPU @ 3.0 GHz
-  - 1x Intel® NUC KIT NUC6i7KYK (Skull Canyon) with Intel integrated GPU
+    - 1x Virtual Machine on Intel® Xeon® E5-2687 CPU @ 3.0 GHz
+    - 1x Intel® NUC KIT NUC6i7KYK (Skull Canyon) with Intel integrated GPU
 - Software
-  - Ubuntu 18.04 (Kernel: 4.15.0-36-generic)
-  - Kubernetes 1.11
-  - Docker 18.3.1
-  - Intel® GPU Device Plugin built from master branch
+    - Ubuntu* 18.04 (Kernel: 4.15.0-36-generic)
+    - Kubernetes* 1.11
+    - Docker* 18.3.1
+    - Intel® GPU Device Plugin built from master branch
 
 ### Screencast
 
@@ -53,14 +58,15 @@ with the [Go runtime](https://golang.org/doc/install).
 
 ### Demo platform configuration
 
-- 1-node, 2x Intel® Xeon® E5-2680 CPU @ 2.4 GHz
-- Total memory 251 GB
-- Intel® Arria® 10 GX FPGA
+- Hardware
+    - 1-node, 2x Intel® Xeon® E5-2680 CPU @ 2.4 GHz
+    - Total memory 251 GB
+    - Intel® Arria® 10 GX FPGA
 - Software
-- OpenSUSE 15 (Kernel: 4.18.9-200.fc28.x86_64)
-- Kubernetes 1.11
-- CRI-O 1.11.1
-- Intel® FPGA Device Plugin built from master branch
+    - OpenSUSE* 15 (Kernel: 4.18.9-200.fc28.x86_64)
+    - Kubernetes* 1.11
+    - CRI-O 1.11.1
+    - Intel® FPGA Device Plugin built from master branch
 
 ### Demo steps
 
@@ -81,30 +87,31 @@ Intel® FPGA Device Plugin deployment
 
 The screencast demonstrates the deployment of the [Intel® QAT Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/qat_plugin/README.md) for
 Kubernetes and executes a sample QAT accelerated OpenSSL workload with the OCI
-compatible Kata Containers runtime, a lightweight Virtual Machine (VMs) that feel
-and perform like traditional containers, but provides the workload isolation
+compatible Kata Containers runtime, a lightweight Virtual Machine (VM) that feels
+and performs like traditional containers, but provides the workload isolation
 and security advantages of VMs. The demo begins with a fully [configured Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
 and [Kata Containers](https://github.com/kata-containers/documentation/tree/master/install) runtime for workloads.
 
 ### Demo platform configuration
 
-- 1-node, 2x Intel® Xeon® CPU E5-2687W v4 @ 3.00GHz
-- Total memory 251 GB DDR4
-- Intel® QAT C62x chipset
+- Hardware
+    - 1-node, 2x Intel® Xeon® CPU E5-2687W v4 @ 3.00GHz
+    - Total memory 251 GB DDR4
+    - Intel® QAT C62x chipset
 - Software
-- OpenSUSE 15 (Kernel:4.12.14-lp150.12.22-default)
-- Kubernetes 1.12
-- Containerd 1.2
-- Kata Containers 1.3.0
-- Intel® QAT Device Plugin built from master
-- QAT 1.7 L.4.3.0-00033
+    - OpenSUSE* 15 (Kernel:4.12.14-lp150.12.22-default)
+    - Kubernetes* 1.12
+    - Containerd 1.2
+    - Kata Containers* 1.3.0
+    - Intel® QAT Device Plugin built from master
+    - QAT 1.7 L.4.3.0-00033
 
 ### Demo steps
 
-1. Load the host drivers and prepare the virtual function (VF) devices
-2. Check the Kubernetes cluster is in good shape
-3. Deploy the Intel® QAT device plugin for Kubernetes
-4. Deploy an Intel® QAT Accelerated OpenSSL workload
+1. Load the host drivers and prepare the virtual function (VF) devices.
+2. Check the Kubernetes cluster is in good shape.
+3. Deploy the Intel® QAT device plugin for Kubernetes.
+4. Deploy an Intel® QAT Accelerated OpenSSL workload.
 5. Testing!
 
 ### Screencast
