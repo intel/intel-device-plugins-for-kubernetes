@@ -210,8 +210,8 @@ func isValidVfDeviceID(vfDevID string) bool {
 
 func (dp *devicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error {
 	tempMap := make(map[string]string)
-	counter := 0
 	for _, cresp := range response.ContainerResponses {
+		counter := 0
 		for k := range cresp.Envs {
 			tempMap[strings.Join([]string{"QAT", strconv.Itoa(counter)}, "")] = cresp.Envs[k]
 			counter++
