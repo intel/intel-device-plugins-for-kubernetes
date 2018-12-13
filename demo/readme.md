@@ -6,6 +6,7 @@
 - [Intel® GPU Device Plugin demo video](#intel-gpu-device-plugin-demo-video)
 - [Intel® FPGA Device Plugin demo video](#intel-fpga-device-plugin-demo-video)
 - [Intel® QuickAssist Technology Device Plugin OpenSSL demo video](#intel-quickassist-technology-device-plugin-openssl-demo-video)
+- [Intel® QuickAssist Technology Device Plugin with DPDK demo video](#intel-quickassist-technology-device-plugin-with-dpdk-demo-video)
 
 ## Demo overview
 
@@ -119,7 +120,7 @@ Intel® QAT Device Plugin deployment
 
 [![Intel® QAT Device Plugin deployment](https://asciinema.org/a/2N7wF3c9oeCuB9sFqTNm2gmOr.png)](https://asciinema.org/a/2N7wF3c9oeCuB9sFqTNm2gmOr)
 
-## Intel® QuickAssist Technology Device Plugin with DPDK Demo Video
+## Intel® QuickAssist Technology Device Plugin with DPDK demo video
 
 ### Demo steps
 
