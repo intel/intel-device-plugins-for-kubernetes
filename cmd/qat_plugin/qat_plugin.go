@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -51,15 +52,17 @@ const (
 
 type devicePlugin struct {
 	maxDevices      int
+	balanceDevices  bool
 	pciDriverDir    string
 	pciDeviceDir    string
 	kernelVfDrivers []string
 	dpdkDriver      string
 }
 
-func newDevicePlugin(pciDriverDir, pciDeviceDir string, maxDevices int, kernelVfDrivers []string, dpdkDriver string) *devicePlugin {
+func newDevicePlugin(pciDriverDir, pciDeviceDir string, maxDevices int, balanceDevices bool, kernelVfDrivers []string, dpdkDriver string) *devicePlugin {
 	return &devicePlugin{
 		maxDevices:      maxDevices,
+		balanceDevices:  balanceDevices,
 		pciDriverDir:    pciDriverDir,
 		pciDeviceDir:    pciDeviceDir,
 		kernelVfDrivers: kernelVfDrivers,
@@ -208,6 +211,25 @@ func isValidVfDeviceID(vfDevID string) bool {
 	return false
 }
 
+func swapBDF(devstrings []string) []string {
+	result := make([]string, len(devstrings))
+	for n, dev := range devstrings {
+		tmp := strings.Split(dev, ":")
+		result[n] = fmt.Sprintf("%v:%v:%v", tmp[2], tmp[1], tmp[0])
+	}
+	return result
+}
+
+func sortByFunction(bdf []string) []string {
+
+	// make it "FDB" and string sort
+	tmp := swapBDF(bdf)
+	sort.Strings(tmp)
+
+	// return "BDF"
+	return swapBDF(tmp)
+}
+
 func (dp *devicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error {
 	tempMap := make(map[string]string)
 	for _, cresp := range response.ContainerResponses {
@@ -224,6 +246,7 @@ func (dp *devicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error
 func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 	devTree := deviceplugin.NewDeviceTree()
 
+	n := 0
 	for _, driver := range append(dp.kernelVfDrivers, dp.dpdkDriver) {
 		files, err := ioutil.ReadDir(path.Join(dp.pciDriverDir, driver))
 		if err != nil {
@@ -231,14 +254,23 @@ func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 			continue
 		}
 
-		n := 0
+		var devices []string
+
 		for _, file := range files {
 			if !strings.HasPrefix(file.Name(), "0000:") {
 				continue
 			}
-			vfdevID, err := dp.getDeviceID(file.Name())
+			devices = append(devices, file.Name())
+		}
+
+		if dp.balanceDevices {
+			devices = sortByFunction(devices)
+		}
+
+		for _, dev := range devices {
+			vfdevID, err := dp.getDeviceID(dev)
 			if err != nil {
-				return nil, errors.Wrapf(err, "Cannot obtain deviceID for the device with PCI address: %s", file.Name())
+				return nil, errors.Wrapf(err, "Cannot obtain deviceID for the device with PCI address: %s", dev)
 			}
 			if !isValidVfDeviceID(vfdevID) {
 				continue
@@ -249,7 +281,7 @@ func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 				break
 			}
 
-			vfpciaddr := strings.TrimPrefix(file.Name(), "0000:")
+			vfpciaddr := strings.TrimPrefix(dev, "0000:")
 
 			// initialize newly found devices which aren't bound to DPDK driver yet
 			if driver != dp.dpdkDriver {
@@ -274,7 +306,7 @@ func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 				Nodes:  devNodes,
 				Mounts: devMounts,
 				Envs: map[string]string{
-					fmt.Sprintf("%s%d", strings.ToUpper(deviceName), n): file.Name(),
+					fmt.Sprintf("%s%d", strings.ToUpper(deviceName), n): dev,
 				},
 			}
 
@@ -288,6 +320,7 @@ func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 func main() {
 	dpdkDriver := flag.String("dpdk-driver", "vfio-pci", "DPDK Device driver for configuring the QAT device")
 	kernelVfDrivers := flag.String("kernel-vf-drivers", "dh895xccvf,c6xxvf,c3xxxvf,d15xxvf", "Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC,C62x,C3xxx and D15xx")
+	balanceDevices := flag.Bool("balance-devices", false, "allocate VF devices balanced from each PF")
 	maxNumDevices := flag.Int("max-num-devices", 32, "maximum number of QAT devices to be provided to the QuickAssist device plugin")
 	debugEnabled := flag.Bool("debug", false, "enable debug output")
 	flag.Parse()
@@ -310,7 +343,7 @@ func main() {
 		}
 	}
 
-	plugin := newDevicePlugin(pciDriverDirectory, pciDeviceDirectory, *maxNumDevices, kernelDrivers, *dpdkDriver)
+	plugin := newDevicePlugin(pciDriverDirectory, pciDeviceDirectory, *maxNumDevices, *balanceDevices, kernelDrivers, *dpdkDriver)
 	manager := deviceplugin.NewManager(namespace, plugin)
 	manager.Run()
 }

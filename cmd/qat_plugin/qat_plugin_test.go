@@ -341,6 +341,7 @@ func TestScanPrivate(t *testing.T) {
 
 		dp := &devicePlugin{
 			maxDevices:      tt.maxDevNum,
+			balanceDevices:  false,
 			pciDriverDir:    pciDrvDir,
 			pciDeviceDir:    pciDevDir,
 			dpdkDriver:      tt.dpdkDriver,
@@ -413,6 +414,43 @@ func TestPostAllocate(t *testing.T) {
 			} else {
 				t.Errorf("Unexpected value %s", value)
 			}
+		}
+	}
+}
+
+func TestSortByFunction(t *testing.T) {
+	testArray := []string{
+		"0000:03:01.0",
+		"0000:03:01.1",
+		"0000:03:01.2",
+		"0000:04:01.0",
+		"0000:04:01.1",
+		"0000:04:01.2",
+		"0000:05:01.0",
+		"0000:05:01.1",
+		"0000:05:01.2",
+	}
+	expectedValues := []string{
+		"0000:03:01.0",
+		"0000:04:01.0",
+		"0000:05:01.0",
+		"0000:03:01.1",
+		"0000:04:01.1",
+		"0000:05:01.1",
+		"0000:03:01.2",
+		"0000:04:01.2",
+		"0000:05:01.2",
+	}
+
+	results := sortByFunction(testArray)
+
+	if len(results) != len(expectedValues) {
+		t.Fatalf("sortByFunction returned an array of wrong size %v (expected %v)", len(results), len(expectedValues))
+	}
+
+	for idx, val := range expectedValues {
+		if results[idx] != val {
+			t.Errorf("Unexpected value %s in sorted array (expected %s).", results[idx], val)
 		}
 	}
 }
