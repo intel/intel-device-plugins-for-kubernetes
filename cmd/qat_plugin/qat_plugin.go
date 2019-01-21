@@ -110,10 +110,10 @@ func (dp *devicePlugin) getDpdkDevice(id string) (string, error) {
 	return "", errors.New("Unknown DPDK driver")
 }
 
-func (dp *devicePlugin) getDpdkDeviceNames(id string) ([]string, error) {
+func (dp *devicePlugin) getDpdkDeviceSpecs(id string) ([]pluginapi.DeviceSpec, error) {
 	dpdkDeviceName, err := dp.getDpdkDevice(id)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 	fmt.Printf("%s device: corresponding DPDK device detected is %s\n", id, dpdkDeviceName)
 
@@ -122,31 +122,53 @@ func (dp *devicePlugin) getDpdkDeviceNames(id string) ([]string, error) {
 	case "igb_uio":
 		//Setting up with uio
 		uioDev := path.Join(uioDevicePath, dpdkDeviceName)
-		return []string{uioDev}, nil
+		return []pluginapi.DeviceSpec{
+			{
+				HostPath:      uioDev,
+				ContainerPath: uioDev,
+				Permissions:   "rw",
+			},
+		}, nil
 	case "vfio-pci":
 		//Setting up with vfio
 		vfioDev1 := path.Join(vfioDevicePath, dpdkDeviceName)
 		vfioDev2 := path.Join(vfioDevicePath, "/vfio")
-		return []string{vfioDev1, vfioDev2}, nil
+		return []pluginapi.DeviceSpec{
+			{
+				HostPath:      vfioDev1,
+				ContainerPath: vfioDev1,
+				Permissions:   "rw",
+			},
+			{
+				HostPath:      vfioDev2,
+				ContainerPath: vfioDev2,
+				Permissions:   "rw",
+			},
+		}, nil
 	}
 
-	return []string{}, errors.New("Unknown DPDK driver")
+	return nil, errors.New("Unknown DPDK driver")
 }
 
-func (dp *devicePlugin) getDpdkMountPaths(id string) ([]string, error) {
+func (dp *devicePlugin) getDpdkMounts(id string) ([]pluginapi.Mount, error) {
 	dpdkDeviceName, err := dp.getDpdkDevice(id)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 
 	switch dp.dpdkDriver {
 	case "igb_uio":
 		//Setting up with uio mountpoints
 		uioMountPoint := path.Join(uioMountPath, dpdkDeviceName, "/device")
-		return []string{uioMountPoint}, nil
+		return []pluginapi.Mount{
+			{
+				HostPath:      uioMountPoint,
+				ContainerPath: uioMountPath,
+			},
+		}, nil
 	case "vfio-pci":
 		//No mountpoint for vfio needs to be populated
-		return []string{}, nil
+		return nil, nil
 	}
 
 	return nil, errors.New("Unknown DPDK driver")
@@ -259,11 +281,11 @@ func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 				}
 			}
 
-			devNodes, err := dp.getDpdkDeviceNames(vfpciaddr)
+			devNodes, err := dp.getDpdkDeviceSpecs(vfpciaddr)
 			if err != nil {
 				return nil, err
 			}
-			devMounts, err := dp.getDpdkMountPaths(vfpciaddr)
+			devMounts, err := dp.getDpdkMounts(vfpciaddr)
 			if err != nil {
 				return nil, err
 			}

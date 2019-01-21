@@ -93,7 +93,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			}
 
 			if strings.TrimSpace(string(dat)) == vendorString {
-				var nodes []string
+				var nodes []pluginapi.DeviceSpec
 
 				drmFiles, err := ioutil.ReadDir(path.Join(dp.sysfsDir, f.Name(), "device/drm"))
 				if err != nil {
@@ -111,7 +111,11 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 					}
 
 					debug.Printf("Adding %s to GPU %s", devPath, f.Name())
-					nodes = append(nodes, devPath)
+					nodes = append(nodes, pluginapi.DeviceSpec{
+						HostPath:      devPath,
+						ContainerPath: devPath,
+						Permissions:   "rw",
+					})
 				}
 
 				if len(nodes) > 0 {

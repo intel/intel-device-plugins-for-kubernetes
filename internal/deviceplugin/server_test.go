@@ -247,7 +247,13 @@ func TestAllocate(t *testing.T) {
 			devices: map[string]DeviceInfo{
 				"dev1": {
 					State: pluginapi.Unhealthy,
-					Nodes: []string{"/dev/dev1"},
+					Nodes: []pluginapi.DeviceSpec{
+						{
+							HostPath:      "/dev/dev1",
+							ContainerPath: "/dev/dev1",
+							Permissions:   "rw",
+						},
+					},
 				},
 			},
 			expectedErr: true,
@@ -257,7 +263,13 @@ func TestAllocate(t *testing.T) {
 			devices: map[string]DeviceInfo{
 				"dev1": {
 					State: pluginapi.Healthy,
-					Nodes: []string{"/dev/dev1"},
+					Nodes: []pluginapi.DeviceSpec{
+						{
+							HostPath:      "/dev/dev1",
+							ContainerPath: "/dev/dev1",
+							Permissions:   "rw",
+						},
+					},
 				},
 			},
 			expectedAllocated: 1,
@@ -266,9 +278,20 @@ func TestAllocate(t *testing.T) {
 			name: "Allocate healthy device with postAllocate hook",
 			devices: map[string]DeviceInfo{
 				"dev1": {
-					State:  pluginapi.Healthy,
-					Nodes:  []string{"/dev/dev1"},
-					Mounts: []string{"/dev"},
+					State: pluginapi.Healthy,
+					Nodes: []pluginapi.DeviceSpec{
+						{
+							HostPath:      "/dev/dev1",
+							ContainerPath: "/dev/dev1",
+							Permissions:   "rw",
+						},
+					},
+					Mounts: []pluginapi.Mount{
+						{
+							HostPath:      "/dev",
+							ContainerPath: "/dev",
+						},
+					},
 					Envs: map[string]string{
 						"testname": "testvalue",
 					},
@@ -284,7 +307,13 @@ func TestAllocate(t *testing.T) {
 			devices: map[string]DeviceInfo{
 				"dev1": {
 					State: pluginapi.Healthy,
-					Nodes: []string{"/dev/dev1"},
+					Nodes: []pluginapi.DeviceSpec{
+						{
+							HostPath:      "/dev/dev1",
+							ContainerPath: "/dev/dev1",
+							Permissions:   "rw",
+						},
+					},
 				},
 			},
 			postAllocate: func(resp *pluginapi.AllocateResponse) error {
@@ -375,7 +404,13 @@ func TestListAndWatch(t *testing.T) {
 				{
 					"fake_id": {
 						State: pluginapi.Healthy,
-						Nodes: []string{"/dev/intel-fpga-port.0"},
+						Nodes: []pluginapi.DeviceSpec{
+							{
+								HostPath:      "/dev/intel-fpga-port.0",
+								ContainerPath: "/dev/intel-fpga-port.0",
+								Permissions:   "rw",
+							},
+						},
 					},
 				},
 			},
@@ -386,7 +421,13 @@ func TestListAndWatch(t *testing.T) {
 				{
 					"fake_id": {
 						State: pluginapi.Healthy,
-						Nodes: []string{"/dev/intel-fpga-port.0"},
+						Nodes: []pluginapi.DeviceSpec{
+							{
+								HostPath:      "/dev/intel-fpga-port.0",
+								ContainerPath: "/dev/intel-fpga-port.0",
+								Permissions:   "rw",
+							},
+						},
 					},
 				},
 			},

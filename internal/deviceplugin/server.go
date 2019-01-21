@@ -68,7 +68,10 @@ func (srv *server) GetDevicePluginOptions(ctx context.Context, empty *pluginapi.
 func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer) error {
 	resp := new(pluginapi.ListAndWatchResponse)
 	for id, device := range srv.devices {
-		resp.Devices = append(resp.Devices, &pluginapi.Device{id, device.State})
+		resp.Devices = append(resp.Devices, &pluginapi.Device{
+			ID:     id,
+			Health: device.State,
+		})
 	}
 	debug.Print("Sending to kubelet", resp.Devices)
 	if err := stream.Send(resp); err != nil {
@@ -108,18 +111,10 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 				return nil, errors.Errorf("Invalid allocation request with unhealthy device %s", id)
 			}
 			for _, devnode := range dev.Nodes {
-				cresp.Devices = append(cresp.Devices, &pluginapi.DeviceSpec{
-					HostPath:      devnode,
-					ContainerPath: devnode,
-					Permissions:   "mrw",
-				})
+				cresp.Devices = append(cresp.Devices, &devnode)
 			}
 			for _, devmount := range dev.Mounts {
-				cresp.Mounts = append(cresp.Mounts, &pluginapi.Mount{
-					HostPath:      devmount,
-					ContainerPath: devmount,
-					ReadOnly:      false,
-				})
+				cresp.Mounts = append(cresp.Mounts, &devmount)
 			}
 			for key, value := range dev.Envs {
 				if cresp.Envs == nil {
