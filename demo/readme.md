@@ -48,7 +48,7 @@ Only one worker node has a GPU. The time difference in transcoding speed is capt
 
 ### Screencast
 
-[Intel® GPU Device Plugin demo](https://youtu.be/sg31rV1FdQk)
+[![Intel® GPU Device Plugin demo](https://img.youtube.com/vi/sg31rV1FdQk/0.jpg)](https://youtu.be/sg31rV1FdQk)
 
 ## Intel® FPGA Device Plugin demo video
 
