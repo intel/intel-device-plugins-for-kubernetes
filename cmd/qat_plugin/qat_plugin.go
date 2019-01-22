@@ -245,15 +245,14 @@ func (dp *devicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error
 
 func (dp *devicePlugin) scan() (deviceplugin.DeviceTree, error) {
 	devTree := deviceplugin.NewDeviceTree()
-
-	for _, driver := range append(dp.kernelVfDrivers, dp.dpdkDriver) {
+	n := 0
+	for _, driver := range append([]string{dp.dpdkDriver}, dp.kernelVfDrivers...) {
 		files, err := ioutil.ReadDir(path.Join(dp.pciDriverDir, driver))
 		if err != nil {
 			fmt.Printf("Can't read sysfs for driver as Driver %s is not available: Skipping\n", driver)
 			continue
 		}
 
-		n := 0
 		for _, file := range files {
 			if !strings.HasPrefix(file.Name(), "0000:") {
 				continue
