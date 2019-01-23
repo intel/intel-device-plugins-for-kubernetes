@@ -21,8 +21,8 @@ import (
 // DeviceInfo contains information about device maintained by Device Plugin
 type DeviceInfo struct {
 	State  string
-	Nodes  []string
-	Mounts []string
+	Nodes  []pluginapi.DeviceSpec
+	Mounts []pluginapi.Mount
 	Envs   map[string]string
 }
 

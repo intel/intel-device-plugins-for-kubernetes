@@ -33,8 +33,8 @@ import (
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 	utilnode "k8s.io/kubernetes/pkg/util/node"
 
-	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/internal/deviceplugin"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
+	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
 
 const (
@@ -72,11 +72,19 @@ func getRegionDevelTree(devices []device) dpapi.DeviceTree {
 				health = pluginapi.Unhealthy
 			}
 			devType := fmt.Sprintf("%s-%s", regionMode, region.interfaceID)
-			devNodes := make([]string, len(region.afus)+1)
+			devNodes := make([]pluginapi.DeviceSpec, len(region.afus)+1)
 			for num, afu := range region.afus {
-				devNodes[num] = afu.devNode
+				devNodes[num] = pluginapi.DeviceSpec{
+					HostPath:      afu.devNode,
+					ContainerPath: afu.devNode,
+					Permissions:   "rw",
+				}
 			}
-			devNodes[len(region.afus)] = region.devNode
+			devNodes[len(region.afus)] = pluginapi.DeviceSpec{
+				HostPath:      region.devNode,
+				ContainerPath: region.devNode,
+				Permissions:   "rw",
+			}
 			regionTree.AddDevice(devType, region.id, dpapi.DeviceInfo{
 				State: health,
 				Nodes: devNodes,
@@ -98,9 +106,13 @@ func getRegionTree(devices []device) dpapi.DeviceTree {
 				health = pluginapi.Unhealthy
 			}
 			devType := fmt.Sprintf("%s-%s", regionMode, region.interfaceID)
-			devNodes := make([]string, len(region.afus))
+			devNodes := make([]pluginapi.DeviceSpec, len(region.afus))
 			for num, afu := range region.afus {
-				devNodes[num] = afu.devNode
+				devNodes[num] = pluginapi.DeviceSpec{
+					HostPath:      afu.devNode,
+					ContainerPath: afu.devNode,
+					Permissions:   "rw",
+				}
 			}
 			regionTree.AddDevice(devType, region.id, dpapi.DeviceInfo{
 				State: health,
@@ -126,7 +138,13 @@ func getAfuTree(devices []device) dpapi.DeviceTree {
 				devType := fmt.Sprintf("%s-%s", afMode, afu.afuID)
 				afuTree.AddDevice(devType, afu.id, dpapi.DeviceInfo{
 					State: health,
-					Nodes: []string{afu.devNode},
+					Nodes: []pluginapi.DeviceSpec{
+						{
+							HostPath:      afu.devNode,
+							ContainerPath: afu.devNode,
+							Permissions:   "rw",
+						},
+					},
 				})
 			}
 		}

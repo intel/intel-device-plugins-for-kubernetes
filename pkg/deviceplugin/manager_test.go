@@ -44,7 +44,13 @@ func TestNotify(t *testing.T) {
 				"someDeviceType": {
 					"intel-fpga-port.0": {
 						State: pluginapi.Healthy,
-						Nodes: []string{"/dev/intel-fpga-port.0"},
+						Nodes: []pluginapi.DeviceSpec{
+							{
+								HostPath:      "/dev/intel-fpga-port.0",
+								ContainerPath: "/dev/intel-fpga-port.0",
+								Permissions:   "rw",
+							},
+						},
 					},
 				},
 			},
@@ -56,7 +62,13 @@ func TestNotify(t *testing.T) {
 				"someDeviceType": {
 					"intel-fpga-port.0": {
 						State: pluginapi.Healthy,
-						Nodes: []string{"/dev/intel-fpga-port.0"},
+						Nodes: []pluginapi.DeviceSpec{
+							{
+								HostPath:      "/dev/intel-fpga-port.0",
+								ContainerPath: "/dev/intel-fpga-port.0",
+								Permissions:   "rw",
+							},
+						},
 					},
 				},
 			},
@@ -64,7 +76,13 @@ func TestNotify(t *testing.T) {
 				"someDeviceType": {
 					"intel-fpga-port.1": {
 						State: pluginapi.Healthy,
-						Nodes: []string{"/dev/intel-fpga-port.1"},
+						Nodes: []pluginapi.DeviceSpec{
+							{
+								HostPath:      "/dev/intel-fpga-port.1",
+								ContainerPath: "/dev/intel-fpga-port.1",
+								Permissions:   "rw",
+							},
+						},
 					},
 				},
 			},
@@ -76,7 +94,13 @@ func TestNotify(t *testing.T) {
 				"someDeviceType": {
 					"intel-fpga-port.0": {
 						State: pluginapi.Healthy,
-						Nodes: []string{"/dev/intel-fpga-port.0"},
+						Nodes: []pluginapi.DeviceSpec{
+							{
+								HostPath:      "/dev/intel-fpga-port.0",
+								ContainerPath: "/dev/intel-fpga-port.0",
+								Permissions:   "rw",
+							},
+						},
 					},
 				},
 			},
@@ -127,7 +151,7 @@ func (*devicePluginStub) Scan(n Notifier) error {
 	tree := NewDeviceTree()
 	tree.AddDevice("testdevice", "dev1", DeviceInfo{
 		State: pluginapi.Healthy,
-		Nodes: make([]string, 0),
+		Nodes: make([]pluginapi.DeviceSpec, 0),
 	})
 	n.Notify(tree)
 	return nil
@@ -156,11 +180,33 @@ func TestHandleUpdate(t *testing.T) {
 					"ce48969398f05f33946d560708be108a": {
 						"intel-fpga-fme.0": {
 							State: pluginapi.Healthy,
-							Nodes: []string{"/dev/intel-fpga-port.0", "/dev/intel-fpga-fme.0"},
+							Nodes: []pluginapi.DeviceSpec{
+								{
+									HostPath:      "/dev/intel-fpga-port.0",
+									ContainerPath: "/dev/intel-fpga-port.0",
+									Permissions:   "rw",
+								},
+								{
+									HostPath:      "/dev/intel-fpga-fme.0",
+									ContainerPath: "/dev/intel-fpga-fme.0",
+									Permissions:   "rw",
+								},
+							},
 						},
 						"intel-fpga-fme.1": {
 							State: pluginapi.Healthy,
-							Nodes: []string{"/dev/intel-fpga-port.1", "/dev/intel-fpga-fme.1"},
+							Nodes: []pluginapi.DeviceSpec{
+								{
+									HostPath:      "/dev/intel-fpga-port.1",
+									ContainerPath: "/dev/intel-fpga-port.1",
+									Permissions:   "rw",
+								},
+								{
+									HostPath:      "/dev/intel-fpga-fme.1",
+									ContainerPath: "/dev/intel-fpga-fme.1",
+									Permissions:   "rw",
+								},
+							},
 						},
 					},
 				},
@@ -177,7 +223,18 @@ func TestHandleUpdate(t *testing.T) {
 					"ce48969398f05f33946d560708be108a": {
 						"intel-fpga-fme.1": {
 							State: pluginapi.Healthy,
-							Nodes: []string{"/dev/intel-fpga-port.1", "/dev/intel-fpga-fme.1"},
+							Nodes: []pluginapi.DeviceSpec{
+								{
+									HostPath:      "/dev/intel-fpga-port.1",
+									ContainerPath: "/dev/intel-fpga-port.1",
+									Permissions:   "rw",
+								},
+								{
+									HostPath:      "/dev/intel-fpga-fme.1",
+									ContainerPath: "/dev/intel-fpga-fme.1",
+									Permissions:   "rw",
+								},
+							},
 						},
 					},
 				},
