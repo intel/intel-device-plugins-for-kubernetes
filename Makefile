@@ -8,13 +8,13 @@ cmds = $(shell ls cmd)
 all: build
 
 format:
-	@report=`$(GOFMT) -s -d -w $$(find cmd internal -name \*.go)` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
+	@report=`$(GOFMT) -s -d -w $$(find cmd pkg -name \*.go)` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
 
 vet:
 	@$(GO) vet -v -shadow $(pkgs)
 
 cyclomatic-check:
-	@report=`$(GOCYCLO) -over 15 cmd internal`; if [ -n "$$report" ]; then echo "Complexity is over 15 in"; echo $$report; exit 1; fi
+	@report=`$(GOCYCLO) -over 15 cmd pkg`; if [ -n "$$report" ]; then echo "Complexity is over 15 in"; echo $$report; exit 1; fi
 
 test:
 ifndef WHAT
