@@ -54,7 +54,7 @@ type Notifier interface {
 type Scanner interface {
 	// Scan scans the host for devices and sends all found devices to
 	// a Notifier instance. It's called only once for every device plugin by
-	// Manager in a goroutine and operates in an endless loop.
+	// Manager in a goroutine and operates in an infinite loop.
 	Scan(Notifier) error
 }
 

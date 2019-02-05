@@ -11,6 +11,7 @@
     - [FPGA admission controller webhook](cmd/fpga_admissionwebhook/README.md)
     - [FPGA prestart CRI-O hook](cmd/fpga_crihook/README.md)
 - [QuickAssist device plugin](cmd/qat_plugin/README.md)
+- [How to develop simple device plugins](DEVEL.md)
 
 ## About
 
