@@ -28,7 +28,7 @@ Prerequisites for building and running Intel device plugins include:
 
 | Branch            | Kubernetes branch/version      |
 |-------------------|--------------------------------|
-| master            | Kubernetes 1.11 branch v1.11.x |
+| release-0.11      | Kubernetes 1.11 branch v1.11.x |
 
 [Go environment]: https://golang.org/doc/install
 [Kubernetes cluster]: https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
