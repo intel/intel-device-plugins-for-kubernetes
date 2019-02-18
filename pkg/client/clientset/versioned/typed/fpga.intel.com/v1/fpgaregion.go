@@ -17,6 +17,8 @@
 package v1
 
 import (
+	"time"
+
 	v1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
 	scheme "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,11 +75,16 @@ func (c *fpgaRegions) Get(name string, options metav1.GetOptions) (result *v1.Fp
 
 // List takes label and field selectors, and returns the list of FpgaRegions that match those selectors.
 func (c *fpgaRegions) List(opts metav1.ListOptions) (result *v1.FpgaRegionList, err error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	result = &v1.FpgaRegionList{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("fpgaregions").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Do().
 		Into(result)
 	return
@@ -85,11 +92,16 @@ func (c *fpgaRegions) List(opts metav1.ListOptions) (result *v1.FpgaRegionList, 
 
 // Watch returns a watch.Interface that watches the requested fpgaRegions.
 func (c *fpgaRegions) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	opts.Watch = true
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("fpgaregions").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Watch()
 }
 
@@ -131,10 +143,15 @@ func (c *fpgaRegions) Delete(name string, options *metav1.DeleteOptions) error {
 
 // DeleteCollection deletes a collection of objects.
 func (c *fpgaRegions) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	var timeout time.Duration
+	if listOptions.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("fpgaregions").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
+		Timeout(timeout).
 		Body(options).
 		Do().
 		Error()

@@ -17,6 +17,8 @@
 package v1
 
 import (
+	"time"
+
 	v1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
 	scheme "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned/scheme"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,11 +75,16 @@ func (c *acceleratorFunctions) Get(name string, options metav1.GetOptions) (resu
 
 // List takes label and field selectors, and returns the list of AcceleratorFunctions that match those selectors.
 func (c *acceleratorFunctions) List(opts metav1.ListOptions) (result *v1.AcceleratorFunctionList, err error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	result = &v1.AcceleratorFunctionList{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("acceleratorfunctions").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Do().
 		Into(result)
 	return
@@ -85,11 +92,16 @@ func (c *acceleratorFunctions) List(opts metav1.ListOptions) (result *v1.Acceler
 
 // Watch returns a watch.Interface that watches the requested acceleratorFunctions.
 func (c *acceleratorFunctions) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	opts.Watch = true
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("acceleratorfunctions").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Watch()
 }
 
@@ -131,10 +143,15 @@ func (c *acceleratorFunctions) Delete(name string, options *metav1.DeleteOptions
 
 // DeleteCollection deletes a collection of objects.
 func (c *acceleratorFunctions) DeleteCollection(options *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	var timeout time.Duration
+	if listOptions.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("acceleratorfunctions").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
+		Timeout(timeout).
 		Body(options).
 		Do().
 		Error()
