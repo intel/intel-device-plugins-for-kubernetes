@@ -133,7 +133,3 @@ Intel® QAT Device Plugin deployment
 7. View pod specification file for pod requesting QAT VFs.
 8. Create pod requesting QAT VFs.
 9. Get a shell to the running container and run a DPDK application.
-
-### Screencast
-Intel® QAT Device Plugin with DPDK
-[![Intel® QAT Device Plugin with DPDK](https://asciinema.org/a/H723QlyIf69H6Rpv0YihCtcKw.png)](https://asciinema.org/a/H723QlyIf69H6Rpv0YihCtcKw)
