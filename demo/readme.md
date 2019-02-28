@@ -136,4 +136,4 @@ Intel® QAT Device Plugin deployment
 
 ### Screencast
 Intel® QAT Device Plugin with DPDK
-[![Intel® QAT Device Plugin with DPDK](https://asciinema.org/a/H723QlyIf69H6Rpv0YihCtcKw.png)](https://asciinema.org/a/H723QlyIf69H6Rpv0YihCtcKw)
+[![Intel® QAT Device Plugin with DPDK](https://asciinema.org/a/PoWOz4q2lX4AF4K9A2AV1RtSA.png)](https://asciinema.org/a/PoWOz4q2lX4AF4K9A2AV1RtSA)
