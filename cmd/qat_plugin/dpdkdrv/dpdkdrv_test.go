@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package dpdkdrv
 
 import (
 	"fmt"
@@ -339,7 +339,7 @@ func TestScanPrivate(t *testing.T) {
 			t.Fatalf("%+v", err)
 		}
 
-		dp := &devicePlugin{
+		dp := &DevicePlugin{
 			maxDevices:      tt.maxDevNum,
 			pciDriverDir:    pciDrvDir,
 			pciDeviceDir:    pciDevDir,
@@ -394,7 +394,7 @@ func TestPostAllocate(t *testing.T) {
 		"03:04.3": {},
 		"03:04.4": {},
 	}
-	dp := &devicePlugin{}
+	dp := &DevicePlugin{}
 	dp.PostAllocate(response)
 	if len(response.ContainerResponses[0].Envs) != 4 {
 		t.Fatal("Set wrong number of Environment Variables")
