@@ -389,3 +389,32 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 		}
 	}
 }
+
+func TestNewPatcherManager(t *testing.T) {
+	tcases := []struct {
+		name        string
+		defaultMode string
+		expectedErr bool
+	}{
+		{
+			name:        "Everything is OK",
+			defaultMode: preprogrammed,
+		},
+		{
+			name:        "Unknown default mode",
+			defaultMode: "unknownMode",
+			expectedErr: true,
+		},
+	}
+	for _, tt := range tcases {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := newPatcherManager(tt.defaultMode)
+			if tt.expectedErr && err == nil {
+				t.Errorf("Test case '%s': no error returned", tt.name)
+			}
+			if !tt.expectedErr && err != nil {
+				t.Errorf("Test case '%s': unexpected error %+v", tt.name, err)
+			}
+		})
+	}
+}

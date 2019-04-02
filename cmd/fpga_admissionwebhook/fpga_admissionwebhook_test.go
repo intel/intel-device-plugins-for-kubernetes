@@ -123,6 +123,9 @@ func TestServe(t *testing.T) {
 
 func TestMutatePods(t *testing.T) {
 	pod := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
@@ -237,7 +240,13 @@ func TestMutatePods(t *testing.T) {
 				"fpga.intel.com/arria10": "ce48969398f05f33946d560708be108a",
 			},
 		}
-		resp := mutatePods(tcase.ar, p)
+		pm := &patcherManager{
+			defaultMode: tcase.mode,
+			patchers: map[string]*patcher{
+				"default": p,
+			},
+		}
+		resp := mutatePods(tcase.ar, pm)
 
 		if !tcase.expectedResponse && resp != nil {
 			t.Errorf("Test case '%s': got unexpected response", tcase.name)
@@ -272,6 +281,6 @@ func (*fakeResponseWriter) WriteHeader(int) {
 }
 
 func TestMakePodsHandler(t *testing.T) {
-	serveFunc := makePodsHandler(&patcher{})
+	serveFunc := makePodsHandler(&patcherManager{})
 	serveFunc(&fakeResponseWriter{}, &http.Request{})
 }

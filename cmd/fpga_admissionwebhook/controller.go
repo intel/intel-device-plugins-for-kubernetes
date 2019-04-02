@@ -43,7 +43,7 @@ type fpgaObjectKey struct {
 }
 
 type controller struct {
-	patcher         *patcher
+	patcherManager  *patcherManager
 	informerFactory informers.SharedInformerFactory
 	afsSynced       cache.InformerSynced
 	regionsSynced   cache.InformerSynced
@@ -53,7 +53,7 @@ type controller struct {
 	stopCh          chan struct{}
 }
 
-func newController(patcher *patcher, config *rest.Config) (*controller, error) {
+func newController(patcherManager *patcherManager, config *rest.Config) (*controller, error) {
 	clientset, err := clientset.NewForConfig(config)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create REST clientset")
@@ -66,7 +66,7 @@ func newController(patcher *patcher, config *rest.Config) (*controller, error) {
 	regionInformer := informerFactory.Fpga().V1().FpgaRegions()
 
 	controller := &controller{
-		patcher:         patcher,
+		patcherManager:  patcherManager,
 		informerFactory: informerFactory,
 		queue:           workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 		afsSynced:       afInformer.Informer().HasSynced,
@@ -173,6 +173,12 @@ func (c *controller) syncAfHandler(key string) error {
 		return nil
 	}
 
+	patcher, err := c.patcherManager.getPatcher(namespace)
+	if err != nil {
+		runtime.HandleError(errors.Wrapf(err, "can't get patcher for namespace %s", namespace))
+		return nil
+	}
+
 	// Get the AcceleratorFunction resource with this namespace/name
 	af, err := c.afLister.AcceleratorFunctions(namespace).Get(name)
 	if err != nil {
@@ -181,7 +187,7 @@ func (c *controller) syncAfHandler(key string) error {
 		if k8serrors.IsNotFound(err) {
 			runtime.HandleError(errors.Errorf("accelerated function '%s' in work queue no longer exists", key))
 			debug.Printf("AF '%s' no longer exists", key)
-			c.patcher.removeAf(name)
+			patcher.removeAf(name)
 			return nil
 		}
 
@@ -189,7 +195,7 @@ func (c *controller) syncAfHandler(key string) error {
 	}
 
 	debug.Print("Received", af)
-	c.patcher.addAf(af)
+	patcher.addAf(af)
 	return nil
 }
 
@@ -201,6 +207,12 @@ func (c *controller) syncRegionHandler(key string) error {
 		return nil
 	}
 
+	patcher, err := c.patcherManager.getPatcher(namespace)
+	if err != nil {
+		runtime.HandleError(errors.Wrapf(err, "can't get patcher for namespace %s", namespace))
+		return nil
+	}
+
 	// Get the FpgaRegion resource with this namespace/name
 	region, err := c.regionLister.FpgaRegions(namespace).Get(name)
 	if err != nil {
@@ -209,7 +221,7 @@ func (c *controller) syncRegionHandler(key string) error {
 		if k8serrors.IsNotFound(err) {
 			runtime.HandleError(errors.Errorf("FPGA region '%s' in work queue no longer exists", key))
 			debug.Printf("Region '%s' no longer exists", key)
-			c.patcher.removeRegion(name)
+			patcher.removeRegion(name)
 			return nil
 		}
 
@@ -217,7 +229,7 @@ func (c *controller) syncRegionHandler(key string) error {
 	}
 
 	debug.Print("Received", region)
-	c.patcher.addRegion(region)
+	patcher.addRegion(region)
 	return nil
 }
 
