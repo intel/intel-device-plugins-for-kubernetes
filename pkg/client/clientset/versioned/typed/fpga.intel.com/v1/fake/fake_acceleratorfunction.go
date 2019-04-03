@@ -60,7 +60,7 @@ func (c *FakeAcceleratorFunctions) List(opts v1.ListOptions) (result *fpgaintelc
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &fpgaintelcomv1.AcceleratorFunctionList{}
+	list := &fpgaintelcomv1.AcceleratorFunctionList{ListMeta: obj.(*fpgaintelcomv1.AcceleratorFunctionList).ListMeta}
 	for _, item := range obj.(*fpgaintelcomv1.AcceleratorFunctionList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
@@ -117,7 +117,7 @@ func (c *FakeAcceleratorFunctions) DeleteCollection(options *v1.DeleteOptions, l
 // Patch applies the patch and returns the patched acceleratorFunction.
 func (c *FakeAcceleratorFunctions) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(acceleratorfunctionsResource, c.ns, name, data, subresources...), &fpgaintelcomv1.AcceleratorFunction{})
+		Invokes(testing.NewPatchSubresourceAction(acceleratorfunctionsResource, c.ns, name, pt, data, subresources...), &fpgaintelcomv1.AcceleratorFunction{})
 
 	if obj == nil {
 		return nil, err

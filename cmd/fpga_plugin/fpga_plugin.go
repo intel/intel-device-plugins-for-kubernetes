@@ -382,7 +382,10 @@ func main() {
 	}
 
 	// if NODE_NAME is not set then try to use hostname
-	nodeName := utilnode.GetHostname(os.Getenv("NODE_NAME"))
+	nodeName, err := utilnode.GetHostname(os.Getenv("NODE_NAME"))
+	if err != nil {
+		fatal(err)
+	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {

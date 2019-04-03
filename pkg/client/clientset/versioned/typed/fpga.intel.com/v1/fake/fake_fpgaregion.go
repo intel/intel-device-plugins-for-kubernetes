@@ -60,7 +60,7 @@ func (c *FakeFpgaRegions) List(opts v1.ListOptions) (result *fpgaintelcomv1.Fpga
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &fpgaintelcomv1.FpgaRegionList{}
+	list := &fpgaintelcomv1.FpgaRegionList{ListMeta: obj.(*fpgaintelcomv1.FpgaRegionList).ListMeta}
 	for _, item := range obj.(*fpgaintelcomv1.FpgaRegionList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
@@ -117,7 +117,7 @@ func (c *FakeFpgaRegions) DeleteCollection(options *v1.DeleteOptions, listOption
 // Patch applies the patch and returns the patched fpgaRegion.
 func (c *FakeFpgaRegions) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *fpgaintelcomv1.FpgaRegion, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(fpgaregionsResource, c.ns, name, data, subresources...), &fpgaintelcomv1.FpgaRegion{})
+		Invokes(testing.NewPatchSubresourceAction(fpgaregionsResource, c.ns, name, pt, data, subresources...), &fpgaintelcomv1.FpgaRegion{})
 
 	if obj == nil {
 		return nil, err
