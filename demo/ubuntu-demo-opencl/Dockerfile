@@ -15,7 +15,7 @@ RUN apt-get update && \
     cd /root && wget https://github.com/intel/compute-runtime/releases/download/18.26.10987/intel-opencl_18.26.10987_amd64.deb && \
     dpkg -i /root/*.deb && \
     ldconfig && \
-    wget https://us.fixstars.com/files/opencl/samples.zip && \
+    wget https://us.fixstars.com/dl/opencl/samples.zip && \
     unzip samples.zip && \
     cd 6-1/fft && \
     patch -p0 < /fft.patch && \
