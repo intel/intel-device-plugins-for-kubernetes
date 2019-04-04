@@ -110,11 +110,11 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 			if dev.State != pluginapi.Healthy {
 				return nil, errors.Errorf("Invalid allocation request with unhealthy device %s", id)
 			}
-			for _, devnode := range dev.Nodes {
-				cresp.Devices = append(cresp.Devices, &devnode)
+			for i := range dev.Nodes {
+				cresp.Devices = append(cresp.Devices, &dev.Nodes[i])
 			}
-			for _, devmount := range dev.Mounts {
-				cresp.Mounts = append(cresp.Mounts, &devmount)
+			for i := range dev.Mounts {
+				cresp.Mounts = append(cresp.Mounts, &dev.Mounts[i])
 			}
 			for key, value := range dev.Envs {
 				if cresp.Envs == nil {

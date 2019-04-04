@@ -20,6 +20,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -285,11 +286,20 @@ func TestAllocate(t *testing.T) {
 							ContainerPath: "/dev/dev1",
 							Permissions:   "rw",
 						},
+						{
+							HostPath:      "/dev/dev2",
+							ContainerPath: "/dev/dev2",
+							Permissions:   "rw",
+						},
 					},
 					Mounts: []pluginapi.Mount{
 						{
 							HostPath:      "/dev",
 							ContainerPath: "/dev",
+						},
+						{
+							HostPath:      "/mnt",
+							ContainerPath: "/mnt",
 						},
 					},
 					Envs: map[string]string{
@@ -300,7 +310,7 @@ func TestAllocate(t *testing.T) {
 			postAllocate: func(resp *pluginapi.AllocateResponse) error {
 				return nil
 			},
-			expectedAllocated: 1,
+			expectedAllocated: 2,
 		},
 		{
 			name: "Allocate healthy device with failing postAllocate hook",
@@ -338,6 +348,11 @@ func TestAllocate(t *testing.T) {
 		}
 		if tt.expectedAllocated > 0 && len(resp.ContainerResponses[0].Devices) != tt.expectedAllocated {
 			t.Errorf("Test case '%s': allocated wrong number of devices", tt.name)
+		}
+		if tt.expectedAllocated > 1 {
+			if reflect.DeepEqual(resp.ContainerResponses[0].Devices[0], resp.ContainerResponses[0].Devices[1]) {
+				t.Errorf("Test case '%s': got equal dev nodes in the same response", tt.name)
+			}
 		}
 	}
 }
