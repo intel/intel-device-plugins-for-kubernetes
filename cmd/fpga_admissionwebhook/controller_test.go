@@ -63,10 +63,11 @@ func (l *fakeAfLister) List(selector labels.Selector) (ret []*v1.AcceleratorFunc
 
 func TestSyncAfHandler(t *testing.T) {
 	tcases := []struct {
-		name        string
-		key         string
-		afLister    *fakeAfLister
-		expectedErr bool
+		name                   string
+		key                    string
+		afLister               *fakeAfLister
+		patcherManagerIsBroken bool
+		expectedErr            bool
 	}{
 		{
 			name: "Wrong key format",
@@ -87,6 +88,11 @@ func TestSyncAfHandler(t *testing.T) {
 			},
 		},
 		{
+			name:                   "Broken patcher manager",
+			key:                    "default/arria10-nlb0",
+			patcherManagerIsBroken: true,
+		},
+		{
 			name: "Unknown key",
 			key:  "default/unknown",
 		},
@@ -101,11 +107,14 @@ func TestSyncAfHandler(t *testing.T) {
 	}
 
 	for _, tt := range tcases {
-		p, err := newPatcher(preprogrammed)
+		pm, err := newPatcherManager(preprogrammed)
 		if err != nil {
 			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
-		c, err := newController(p, &rest.Config{})
+		if tt.patcherManagerIsBroken {
+			pm.defaultMode = "broken"
+		}
+		c, err := newController(pm, &rest.Config{})
 		if err != nil {
 			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
@@ -153,10 +162,11 @@ func (l *fakeRegionLister) List(selector labels.Selector) (ret []*v1.FpgaRegion,
 
 func TestSyncRegionHandler(t *testing.T) {
 	tcases := []struct {
-		name         string
-		key          string
-		regionLister *fakeRegionLister
-		expectedErr  bool
+		name                   string
+		key                    string
+		patcherManagerIsBroken bool
+		regionLister           *fakeRegionLister
+		expectedErr            bool
 	}{
 		{
 			name: "Wrong key format",
@@ -177,6 +187,11 @@ func TestSyncRegionHandler(t *testing.T) {
 			},
 		},
 		{
+			name:                   "Broken patcher manager",
+			key:                    "default/arria10",
+			patcherManagerIsBroken: true,
+		},
+		{
 			name: "Unknown key",
 			key:  "default/unknown",
 		},
@@ -191,11 +206,14 @@ func TestSyncRegionHandler(t *testing.T) {
 	}
 
 	for _, tt := range tcases {
-		p, err := newPatcher(preprogrammed)
+		pm, err := newPatcherManager(preprogrammed)
 		if err != nil {
 			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
-		c, err := newController(p, &rest.Config{})
+		if tt.patcherManagerIsBroken {
+			pm.defaultMode = "broken"
+		}
+		c, err := newController(pm, &rest.Config{})
 		if err != nil {
 			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
@@ -310,8 +328,8 @@ func TestProcessNextWorkItem(t *testing.T) {
 		},
 	}
 	for _, tt := range tcases {
-		p := &patcher{}
-		c, err := newController(p, &rest.Config{})
+		pm, _ := newPatcherManager(preprogrammed)
+		c, err := newController(pm, &rest.Config{})
 		if err != nil {
 			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
@@ -351,8 +369,8 @@ func TestRun(t *testing.T) {
 	}
 
 	for _, tt := range tcases {
-		p := &patcher{}
-		c, err := newController(p, &rest.Config{})
+		pm := &patcherManager{}
+		c, err := newController(pm, &rest.Config{})
 		if err != nil {
 			t.Fatalf("Test case '%s': %+v", tt.name, err)
 		}
@@ -386,8 +404,8 @@ func TestNewController(t *testing.T) {
 		config := &rest.Config{
 			Host: tt.configHost,
 		}
-		p := &patcher{}
-		c, err := newController(p, config)
+		pm := &patcherManager{}
+		c, err := newController(pm, config)
 		if err != nil && !tt.expectedErr {
 			t.Errorf("Test case '%s': unexpected error: %+v", tt.name, err)
 		}

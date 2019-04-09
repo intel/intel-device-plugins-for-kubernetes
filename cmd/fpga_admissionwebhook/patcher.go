@@ -27,6 +27,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 const (
@@ -307,4 +308,37 @@ func (p *patcher) parseResourceName(input string) (string, string, error) {
 	}
 
 	return interfaceID, afuID, nil
+}
+
+// patcherManager keeps track of patchers registered for different Kubernetes namespaces.
+type patcherManager struct {
+	defaultMode string
+	patchers    map[string]*patcher
+}
+
+func newPatcherManager(defaultMode string) (*patcherManager, error) {
+	if defaultMode != preprogrammed && defaultMode != orchestrated {
+		return nil, errors.Errorf("Unknown mode: %s", defaultMode)
+	}
+
+	return &patcherManager{
+		defaultMode: defaultMode,
+		patchers:    make(map[string]*patcher),
+	}, nil
+}
+
+func (pm *patcherManager) getPatcher(namespace string) (*patcher, error) {
+	if p, ok := pm.patchers[namespace]; ok {
+		return p, nil
+	}
+
+	p, err := newPatcher(pm.defaultMode)
+	if err != nil {
+		return nil, err
+	}
+
+	pm.patchers[namespace] = p
+	debug.Print("created new patcher for namespace", namespace)
+
+	return p, nil
 }

@@ -69,7 +69,7 @@ func getTLSConfig(certFile string, keyFile string) *tls.Config {
 	}
 }
 
-func mutatePods(ar v1beta1.AdmissionReview, p *patcher) *v1beta1.AdmissionResponse {
+func mutatePods(ar v1beta1.AdmissionReview, pm *patcherManager) *v1beta1.AdmissionResponse {
 	var ops []string
 
 	debug.Print("mutating pods")
@@ -87,11 +87,18 @@ func mutatePods(ar v1beta1.AdmissionReview, p *patcher) *v1beta1.AdmissionRespon
 		fmt.Printf("ERROR: %+v\n", err)
 		return toAdmissionResponse(err)
 	}
+	debug.Printf("Received pod '%s' in name space '%s'", pod.Name, pod.Namespace)
+	patcher, err := pm.getPatcher(pod.Namespace)
+	if err != nil {
+		fmt.Printf("ERROR: %+v\n", err)
+		return toAdmissionResponse(err)
+	}
+
 	reviewResponse := v1beta1.AdmissionResponse{}
 	reviewResponse.Allowed = true
 
 	for containerIdx, container := range pod.Spec.Containers {
-		patchOps, err := p.getPatchOps(containerIdx, container)
+		patchOps, err := patcher.getPatchOps(containerIdx, container)
 		if err != nil {
 			return toAdmissionResponse(err)
 		}
@@ -182,10 +189,10 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 	}
 }
 
-func makePodsHandler(p *patcher) func(w http.ResponseWriter, r *http.Request) {
+func makePodsHandler(pm *patcherManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		serve(w, r, func(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
-			return mutatePods(ar, p)
+			return mutatePods(ar, pm)
 		})
 	}
 }
@@ -248,18 +255,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	patcher, err := newPatcher(mode)
+	patcherManager, err := newPatcherManager(mode)
 	if err != nil {
 		fatal(err)
 	}
 
-	controller, err := newController(patcher, config)
+	controller, err := newController(patcherManager, config)
 	if err != nil {
 		fatal(err)
 	}
 	go controller.run(controllerThreadNum)
 
-	http.HandleFunc("/pods", makePodsHandler(patcher))
+	http.HandleFunc("/pods", makePodsHandler(patcherManager))
 
 	debug.Print("Webhook started")
 
