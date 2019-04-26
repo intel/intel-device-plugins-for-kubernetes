@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-qat-kernel-plugin
+  labels:
+    app: intel-qat-kernel-plugin
+spec:
+  selector:
+    matchLabels:
+      app: intel-qat-kernel-plugin
+  template:
+    metadata:
+      labels:
+        app: intel-qat-kernel-plugin
+    spec:
+      containers:
+      - name: intel-qat-kernel-plugin
+        securityContext:
+          privileged: true
+        image: intel-qat-plugin:devel
+        imagePullPolicy: IfNotPresent
+        command: ["/usr/bin/intel_qat_device_plugin", "-mode", "kernel"]
+        volumeMounts:
+        - name: devfs
+          mountPath: /dev
+        - name: etcdir
+          mountPath: /etc
+          readOnly: true
+        - name: kubeletsockets
+          mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+      - name: etcdir
+        hostPath:
+          path: /etc
+      - name: kubeletsockets
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+      - name: devfs
+        hostPath:
+          path: /dev
