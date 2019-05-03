@@ -3,7 +3,7 @@ RUN dnf update -y && \
     dnf install -y wget make gcc-c++ findutils golang-bin && \
     mkdir -p /usr/src/qat && \
     cd /usr/src/qat && \
-    wget https://01.org/sites/default/files/downloads/intelr-quickassist-technology/qat1.7.l.4.3.0-00033.tar.gz && \
+    wget https://01.org/sites/default/files/downloads/qat1.7.l.4.5.0-00034.tar.gz && \
     tar xf *.tar.gz
 RUN cd /usr/src/qat/quickassist/utilities/adf_ctl && \
     make KERNEL_SOURCE_DIR=/usr/src/qat/quickassist/qat && \
