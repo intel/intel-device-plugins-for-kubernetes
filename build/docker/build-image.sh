@@ -18,10 +18,10 @@ fi
 TAG=$(git rev-parse HEAD)
 
 if [ -z "${BUILDER}" -o "${BUILDER}" = 'docker' ] ; then
-    docker build -t ${IMG}:${TAG} -f ${DOCKERFILE} .
+    docker build --pull -t ${IMG}:${TAG} -f ${DOCKERFILE} .
     docker tag ${IMG}:${TAG} ${IMG}:devel
 elif [ "${BUILDER}" = 'buildah' ] ; then
-    buildah bud -t ${IMG}:${TAG} -f ${DOCKERFILE} .
+    buildah bud --pull-always -t ${IMG}:${TAG} -f ${DOCKERFILE} .
     buildah tag ${IMG}:${TAG} ${IMG}:devel
 else
     (>&2 echo "Unknown builder ${BUILDER}")
