@@ -14,9 +14,7 @@ COPY . .
 RUN cd cmd/qat_plugin; go install
 RUN chmod a+x /root/go/bin/qat_plugin
 
-FROM fedora:28
-RUN dnf update -y && \
-    dnf install -y libstdc++
+FROM gcr.io/distroless/cc
 COPY --from=builder /root/go/bin/qat_plugin /usr/bin/intel_qat_device_plugin
 COPY --from=builder /usr/bin/adf_ctl /usr/bin/adf_ctl
 CMD ["/usr/bin/intel_qat_device_plugin"]
