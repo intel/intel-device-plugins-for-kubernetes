@@ -79,6 +79,20 @@ func TestScan(t *testing.T) {
 			expectedDevs: 1,
 			expectedErr:  false,
 		},
+		{
+			sysfsdirs: []string{"card0/device/drm/card0"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0xbeef"),
+			},
+			devfsdirs:    []string{"card0"},
+			expectedDevs: 0,
+			expectedErr:  false,
+		},
+		{
+			sysfsdirs:    []string{"non_gpu_card"},
+			expectedDevs: 0,
+			expectedErr:  false,
+		},
 	}
 
 	testPlugin := newDevicePlugin(sysfs, devfs, 1)

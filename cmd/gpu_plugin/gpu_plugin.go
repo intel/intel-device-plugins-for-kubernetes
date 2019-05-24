@@ -85,50 +85,56 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 	devTree := dpapi.NewDeviceTree()
 	for _, f := range files {
-		if dp.gpuDeviceReg.MatchString(f.Name()) {
-			dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/vendor"))
-			if err != nil {
-				fmt.Println("WARNING: Skipping. Can't read vendor file: ", err)
+		var nodes []pluginapi.DeviceSpec
+
+		if !dp.gpuDeviceReg.MatchString(f.Name()) {
+			debug.Print("Not compatible device", f.Name())
+			continue
+		}
+
+		dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/vendor"))
+		if err != nil {
+			fmt.Println("WARNING: Skipping. Can't read vendor file: ", err)
+			continue
+		}
+
+		if strings.TrimSpace(string(dat)) != vendorString {
+			debug.Print("Non-Intel GPU", f.Name())
+			continue
+		}
+
+		drmFiles, err := ioutil.ReadDir(path.Join(dp.sysfsDir, f.Name(), "device/drm"))
+		if err != nil {
+			return nil, errors.Wrap(err, "Can't read device folder")
+		}
+
+		for _, drmFile := range drmFiles {
+			if dp.controlDeviceReg.MatchString(drmFile.Name()) {
+				//Skipping possible drm control node
+				continue
+			}
+			devPath := path.Join(dp.devfsDir, drmFile.Name())
+			if _, err := os.Stat(devPath); err != nil {
 				continue
 			}
 
-			if strings.TrimSpace(string(dat)) == vendorString {
-				var nodes []pluginapi.DeviceSpec
+			debug.Printf("Adding %s to GPU %s", devPath, f.Name())
+			nodes = append(nodes, pluginapi.DeviceSpec{
+				HostPath:      devPath,
+				ContainerPath: devPath,
+				Permissions:   "rw",
+			})
+		}
 
-				drmFiles, err := ioutil.ReadDir(path.Join(dp.sysfsDir, f.Name(), "device/drm"))
-				if err != nil {
-					return nil, errors.Wrap(err, "Can't read device folder")
-				}
-
-				for _, drmFile := range drmFiles {
-					if dp.controlDeviceReg.MatchString(drmFile.Name()) {
-						//Skipping possible drm control node
-						continue
-					}
-					devPath := path.Join(dp.devfsDir, drmFile.Name())
-					if _, err := os.Stat(devPath); err != nil {
-						continue
-					}
-
-					debug.Printf("Adding %s to GPU %s", devPath, f.Name())
-					nodes = append(nodes, pluginapi.DeviceSpec{
-						HostPath:      devPath,
-						ContainerPath: devPath,
-						Permissions:   "rw",
-					})
-				}
-
-				if len(nodes) > 0 {
-					for i := 0; i < dp.sharedDevNum; i++ {
-						devID := fmt.Sprintf("%s-%d", f.Name(), i)
-						// Currently only one device type (i915) is supported.
-						// TODO: check model ID to differentiate device models.
-						devTree.AddDevice(deviceType, devID, dpapi.DeviceInfo{
-							State: pluginapi.Healthy,
-							Nodes: nodes,
-						})
-					}
-				}
+		if len(nodes) > 0 {
+			for i := 0; i < dp.sharedDevNum; i++ {
+				devID := fmt.Sprintf("%s-%d", f.Name(), i)
+				// Currently only one device type (i915) is supported.
+				// TODO: check model ID to differentiate device models.
+				devTree.AddDevice(deviceType, devID, dpapi.DeviceInfo{
+					State: pluginapi.Healthy,
+					Nodes: nodes,
+				})
 			}
 		}
 	}
