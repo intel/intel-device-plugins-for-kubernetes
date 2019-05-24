@@ -62,6 +62,9 @@ Mappings of resource names are configured with objects of `AcceleratorFunction` 
 `FpgaRegion` custom resource definitions found respectively in
 `./deployment/fpga_admissionwebhook/af-crd.yaml` and `./deployment/fpga_admissionwebhook/region-crd.yaml`.
 
+Please note that the mappings are scoped to the namespaces they were created in
+and are applicable to pods created in corresponding namespaces.
+
 By default, the script deploys the webhook in a preprogrammed mode. Requested FPGA resources are translated to AF resources. For example,
 `fpga.intel.com/arria10-nlb0` is translated to `fpga.intel.com/af-d8424dc4a4a3c413f89e433683f9040b`.
 
