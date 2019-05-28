@@ -37,7 +37,7 @@ const (
 )
 
 var (
-	adfCtlRegex = regexp.MustCompile(`qat_(?P<devid>[[:alnum:]]+) - type: (?P<devtype>[[:alnum:]]+), .* bsf: ([0-9a-f]{4}:)?(?P<bsf>[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]), .* state: (?P<state>[[:alpha:]]+)$`)
+	adfCtlRegex = regexp.MustCompile(`type: (?P<devtype>[[:alnum:]]+), .* inst_id: (?P<instid>[0-9]+), .* bsf: ([0-9a-f]{4}:)?(?P<bsf>[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]), .* state: (?P<state>[[:alpha:]]+)$`)
 )
 
 type endpoint struct {
@@ -153,10 +153,11 @@ func (dp *DevicePlugin) getOnlineDevices() ([]device, error) {
 		}
 
 		devices = append(devices, device{
-			id:      matches[1],
-			devtype: matches[2],
+			id:      fmt.Sprintf("dev%s", matches[2]),
+			devtype: matches[1],
 			bsf:     matches[4],
 		})
+		debug.Print("New online device", devices[len(devices)-1])
 	}
 
 	return devices, nil
