@@ -134,7 +134,7 @@ func newDevicePlugin(configDir string, execer utilsexec.Interface) *DevicePlugin
 	}
 }
 
-func (dp *DevicePlugin) getOnlineDevices() ([]device, error) {
+func (dp *DevicePlugin) getOnlineDevices(iommuOn bool) ([]device, error) {
 	outputBytes, err := dp.execer.Command("adf_ctl", "status").CombinedOutput()
 	if err != nil {
 		return nil, errors.Wrapf(err, "Can't get driver status")
@@ -149,6 +149,11 @@ func (dp *DevicePlugin) getOnlineDevices() ([]device, error) {
 
 		// Ignore devices which are down.
 		if matches[5] != "up" {
+			continue
+		}
+
+		// "Cannot use PF with IOMMU enabled"
+		if iommuOn != strings.HasSuffix(matches[1], "vf") {
 			continue
 		}
 
@@ -281,10 +286,28 @@ func (drvConfig driverConfig) update(devID string, iniSection *ini.Section) erro
 	return nil
 }
 
+func getIOMMUStatus() (bool, error) {
+	iommus, err := ioutil.ReadDir("/sys/class/iommu/")
+	if err != nil {
+		return false, errors.Wrapf(err, "Unable to read IOMMU status")
+	}
+
+	if len(iommus) > 0 {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // Scan implements Scanner interface for kernel based QAT plugin.
 func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 	for {
-		devices, err := dp.getOnlineDevices()
+		iommuOn, err := getIOMMUStatus()
+		if err != nil {
+			return err
+		}
+
+		devices, err := dp.getOnlineDevices(iommuOn)
 		if err != nil {
 			return err
 		}

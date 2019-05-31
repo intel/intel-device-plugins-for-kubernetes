@@ -45,6 +45,16 @@ There is 3 QAT acceleration device(s) in the system:
  qat_dev1 - type: c6xx,  inst_id: 1,  node_id: 0,  bsf: 3d:00.0,  #accel: 5 #engines: 10 state: down
  qat_dev2 - type: c6xx,  inst_id: 2,  node_id: 3,  bsf: d8:00.0,  #accel: 5 #engines: 10 state: up
 `
+	adfCtlOutputVf = `Checking status of all devices.
+There is 7 QAT acceleration device(s) in the system:
+ qat_dev0 - type: c6xx,  inst_id: 0,  node_id: 0,  bsf: 0000:3b:00.0,  #accel: 5 #engines: 10 state: up
+ qat_dev1 - type: c6xx,  inst_id: 1,  node_id: 0,  bsf: 0000:3b:00.0,  #accel: 5 #engines: 10 state: up
+ qat_dev2 - type: c6xx,  inst_id: 2,  node_id: 3,  bsf: 0000:3b:00.0,  #accel: 5 #engines: 10 state: up
+ qat_dev3 - type: c6xxvf,  inst_id: 0,  node_id: 0,  bsf: 0000:3b:01.0,  #accel: 1 #engines: 1 state: up
+ qat_dev4 - type: c6xxvf,  inst_id: 1,  node_id: 0,  bsf: 0000:3b:01.1,  #accel: 1 #engines: 1 state: up
+ qat_dev5 - type: c6xxvf,  inst_id: 2,  node_id: 0,  bsf: 0000:3b:01.2,  #accel: 1 #engines: 1 state: up
+ qat_dev6 - type: c6xxvf,  inst_id: 3,  node_id: 0,  bsf: 0000:3b:01.3,  #accel: 1 #engines: 1 state: up
+`
 )
 
 func init() {
@@ -58,16 +68,25 @@ func TestGetOnlineDevices(t *testing.T) {
 		adfCtlError    error
 		expectedDevNum int
 		expectedErr    bool
+		iommuOn        bool
 	}{
 		{
 			name:           "all is good",
 			adfCtlOutput:   adfCtlOutput,
 			expectedDevNum: 3,
+			iommuOn:        false,
 		},
 		{
 			name:           "one device is down",
 			adfCtlOutput:   adfCtlOutputOneDown,
 			expectedDevNum: 2,
+			iommuOn:        false,
+		},
+		{
+			name:           "virtual functions enabled",
+			adfCtlOutput:   adfCtlOutputVf,
+			expectedDevNum: 4,
+			iommuOn:        true,
 		},
 		{
 			name:        "adf_ctl fails to run",
@@ -94,7 +113,7 @@ func TestGetOnlineDevices(t *testing.T) {
 			dp := &DevicePlugin{
 				execer: &execer,
 			}
-			devices, err := dp.getOnlineDevices()
+			devices, err := dp.getOnlineDevices(tt.iommuOn)
 			if tt.expectedErr && err == nil {
 				t.Error("Expected error hasn't been triggered")
 			}
