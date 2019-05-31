@@ -24,8 +24,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"syscall"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
 	utilsexec "k8s.io/utils/exec"
 )
 
@@ -42,10 +44,12 @@ const (
 	interfaceIDTemplate    = "/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-fme.%s/pr/interface_id"
 	annotationName         = "com.intel.fpga.mode"
 	annotationValue        = "fpga.intel.com/region"
+	pciAddressRegex        = `^[[:xdigit:]]{4}:([[:xdigit:]]{2}):([[:xdigit:]]{2})\.([[:xdigit:]])$`
 )
 
 var (
-	fpgaDevRE = regexp.MustCompile(fpgaDevRegexp)
+	fpgaDevRE    = regexp.MustCompile(fpgaDevRegexp)
+	pciAddressRE = regexp.MustCompile(pciAddressRegex)
 )
 
 func decodeJSONStream(reader io.Reader) (map[string]interface{}, error) {
@@ -124,12 +128,73 @@ func (bitStream *opaeBitStream) validate() error {
 	return nil
 }
 
+func getFpgaConfArgs(dev string) ([]string, error) {
+	realDevPath, err := findSysFsDevice(dev)
+	if err != nil {
+		return nil, err
+	}
+	if realDevPath == "" {
+		return nil, nil
+	}
+	for p := realDevPath; strings.HasPrefix(p, "/sys/devices/pci"); p = filepath.Dir(p) {
+		pciDevPath, err := filepath.EvalSymlinks(filepath.Join(p, "device"))
+		if err != nil {
+			continue
+		}
+		subs := pciAddressRE.FindStringSubmatch(filepath.Base(pciDevPath))
+		if subs == nil || len(subs) != 4 {
+			return nil, errors.Errorf("unable to parse PCI address %s", pciDevPath)
+		}
+		return []string{"-b", "0x" + subs[1], "-d", "0x" + subs[2], "-f", "0x" + subs[3]}, nil
+	}
+	return nil, errors.Errorf("can't find PCI device address for sysfs entry %s", realDevPath)
+}
+
+func findSysFsDevice(dev string) (string, error) {
+	var devType string
+
+	fi, err := os.Stat(dev)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", errors.Wrapf(err, "unable to get stat for %s", dev)
+	}
+
+	switch mode := fi.Mode(); {
+	case mode&os.ModeDevice != 0 && mode&os.ModeCharDevice == 0:
+		devType = "block"
+	case mode&os.ModeDevice != 0 && mode&os.ModeCharDevice != 0:
+		devType = "char"
+	default:
+		return "", errors.Errorf("%s is not a device node", dev)
+	}
+
+	rdev := fi.Sys().(*syscall.Stat_t).Rdev
+	major := unix.Major(rdev)
+	minor := unix.Minor(rdev)
+	if major == 0 {
+		return "", errors.Errorf("%s is a virtual device node", dev)
+	}
+	devPath := fmt.Sprintf("/sys/dev/%s/%d:%d", devType, major, minor)
+	realDevPath, err := filepath.EvalSymlinks(devPath)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed get realpath for %s", devPath)
+	}
+	return realDevPath, nil
+}
+
 func (bitStream *opaeBitStream) program() error {
-	output, err := bitStream.execer.Command(fpgaconf, "-s", bitStream.params.devNum, bitStream.path).CombinedOutput()
+	devNode := "/dev/intel-fpga-port." + bitStream.params.devNum
+	args, err := getFpgaConfArgs(devNode)
+	if err != nil {
+		return errors.Wrapf(err, "failed get fpgaconf args for %s", devNode)
+	}
+	args = append(args, bitStream.path)
+	output, err := bitStream.execer.Command(fpgaconf, args...).CombinedOutput()
 	if err != nil {
 		return errors.Wrapf(err, "failed to program AFU %s to socket %s, region %s: output: %s", bitStream.params.afu, bitStream.params.devNum, bitStream.params.region, string(output))
 	}
-
 	return nil
 }
 
