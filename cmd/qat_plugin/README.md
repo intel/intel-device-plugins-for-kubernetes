@@ -109,6 +109,9 @@ $ kubectl describe node <node name> | grep qat.intel.com/generic
 
      ```
 
+    **Note**: If the `igb_uio` VF driver is used with the QAT device plugin,
+    the workload be deployed with `SYS_ADMIN` capabilities added.
+
 3. Manually execute the `dpdk-test-crypto-perf` application to review the logs:
    ```
    $ kubectl exec -it dpdkqatuio bash
