@@ -1,13 +1,11 @@
 FROM debian:sid as builder
 
 ENV QAT_DRIVER_RELEASE="qat1.7.l.4.3.0-00033"
-ENV QAT_ENGINE_VERSION="v0.5.39"
-ENV PERL5LIB="/openssl"
+ENV QAT_ENGINE_VERSION="v0.5.41"
 
 RUN apt-get update && \
-    apt-get install -y git build-essential wget libssl-dev openssl libudev-dev pkg-config autoconf autogen libtool && \
+    apt-get install -y git build-essential wget libssl-dev openssl libudev-dev pkg-config autoconf autogen libtool gawk && \
     git clone https://github.com/intel/QAT_Engine && \
-    git clone -b OpenSSL_1_1_1-stable https://github.com/openssl/openssl.git && \
     wget https://01.org/sites/default/files/downloads/intelr-quickassist-technology/$QAT_DRIVER_RELEASE.tar.gz && \
     tar zxf $QAT_DRIVER_RELEASE.tar.gz
 
@@ -18,16 +16,16 @@ RUN sed -i -e 's/cmn_ko$//' -e 's/lac_kernel$//' quickassist/Makefile && \
     install -m 755 build/libqat_s.so /usr/lib/ && \
     install -m 755 build/libusdm_drv_s.so /usr/lib/ && \
     install -m 755 build/adf_ctl /usr/bin/ && \
-    cd openssl && ./config && cd - && \
     cd QAT_Engine && git checkout $QAT_ENGINE_VERSION && \
     ./autogen.sh && \
     ./configure \
     --with-qat_dir=/ \
-    --with-openssl_dir=/openssl \
+    --with-openssl_dir=/usr \
     --with-openssl_install_dir=/usr/lib/x86_64-linux-gnu \
     --enable-upstream_driver \
     --enable-usdm \
     --with-qat_install_dir=/usr/lib \
+    --enable-qat_skip_err_files_build \
     --enable-openssl_install_build_arch_path && \
     make && make install
 
