@@ -19,7 +19,7 @@ RUN tar -zxf a10_gx_pac_ias_1_1_pv_rte_installer/components/a10_gx_pac_ias_1_1_p
 RUN tar -zxf opencl/opencl_bsp.tar.gz && rm -rf opencl_bsp/hardware
 
 ### 2. Final initcontainer image
-FROM alpine as final
+FROM clearlinux:base as final
 
 ARG SRC_DIR=/opt/intel/fpga-sw.src
 ARG DST_DIR=/opt/intel/fpga-sw
@@ -68,8 +68,7 @@ RUN echo -e "{\n\
 
 # Setup
 
-RUN apk update
-RUN apk add rsync
+RUN swupd bundle-add network-basic
 
 RUN echo -e "#!/bin/sh\n\
 rsync -a --delete $SRC_DIR/ $DST_DIR\n\
