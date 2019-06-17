@@ -1,21 +1,25 @@
 ### 1. Temporary image to prepare AOCL and OPAE components
-FROM centos:centos7.4.1708 as temporary
+FROM centos:centos7.6.1810 as temporary
 
 # install aocl and opae deps
 RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
-RUN yum -y install which perl uuid libuuid-devel json-c
+RUN yum -y install which perl uuid libuuid-devel json-c rsync
 
-ADD a10_gx_pac_ias_1_1_pv_rte_installer.tar.gz $WORKDIR
+ADD a10_gx_pac_ias_1_2_pv_rte_installer.tar.gz $WORKDIR
 
 # install opae
-RUN tar -zxf a10_gx_pac_ias_1_1_pv_rte_installer/components/a10_gx_pac_ias_1_1_pv.tar.gz sw
-RUN rpm -ihv sw/opae-libs*.rpm sw/opae-tools*.rpm sw/opae-devel*.rpm
+RUN tar -zxf a10_gx_pac_ias_1_2_pv_rte_installer/components/a10_gx_pac_ias_1_2_pv.tar.gz sw
+
+# RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+# RUN yum -y install hwloc-libs
+# --nodeps workarround just for libhwloc.so.5 dependency by fpga_dma_test in opae-tools-extra-1.1.2-1.x86_64
+RUN rpm -ihv --nodeps sw/opae-libs*.rpm sw/opae-tools*.rpm sw/opae-devel*.rpm
 
 # install aocl rte
-RUN a10_gx_pac_ias_1_1_pv_rte_installer/components/aocl-pro-rte-17.1.1.273-linux.run --mode unattended --installdir / --accept_eula 1
+RUN a10_gx_pac_ias_1_2_pv_rte_installer/components/aocl-pro-rte-17.1.1.273-linux.run --mode unattended --installdir / --accept_eula 1
 
 # unpack opencl_bsp
-RUN tar -zxf a10_gx_pac_ias_1_1_pv_rte_installer/components/a10_gx_pac_ias_1_1_pv.tar.gz opencl/opencl_bsp.tar.gz
+RUN tar -zxf a10_gx_pac_ias_1_2_pv_rte_installer/components/a10_gx_pac_ias_1_2_pv.tar.gz opencl/opencl_bsp.tar.gz
 RUN tar -zxf opencl/opencl_bsp.tar.gz && rm -rf opencl_bsp/hardware
 
 ### 2. Final initcontainer image
@@ -68,7 +72,7 @@ RUN echo -e "{\n\
 
 # Setup
 
-RUN swupd bundle-add network-basic
+COPY --from=temporary /usr/bin/rsync /usr/bin/rsync
 
 RUN echo -e "#!/bin/sh\n\
 rsync -a --delete $SRC_DIR/ $DST_DIR\n\
