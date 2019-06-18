@@ -21,6 +21,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
@@ -30,6 +31,15 @@ import (
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
+)
+
+type serverState int
+
+// Server state
+const (
+	uninitialized serverState = iota
+	serving
+	terminating
 )
 
 // devicePluginServer maintains a gRPC server satisfying
@@ -48,6 +58,8 @@ type server struct {
 	updatesCh    chan map[string]DeviceInfo
 	devices      map[string]DeviceInfo
 	postAllocate func(*pluginapi.AllocateResponse) error
+	state        serverState
+	stateMutex   sync.Mutex
 }
 
 // newServer creates a new server satisfying the devicePluginServer interface.
@@ -57,6 +69,7 @@ func newServer(devType string, postAllocate func(*pluginapi.AllocateResponse) er
 		updatesCh:    make(chan map[string]DeviceInfo, 1), // TODO: is 1 needed?
 		devices:      make(map[string]DeviceInfo),
 		postAllocate: postAllocate,
+		state:        uninitialized,
 	}
 }
 
@@ -149,6 +162,7 @@ func (srv *server) Stop() error {
 	if srv.grpcServer == nil {
 		return errors.New("Can't stop non-existing gRPC server. Calling Stop() before Serve()?")
 	}
+	srv.setState(terminating)
 	srv.grpcServer.Stop()
 	close(srv.updatesCh)
 	return nil
@@ -159,12 +173,25 @@ func (srv *server) Update(devices map[string]DeviceInfo) {
 	srv.updatesCh <- devices
 }
 
+func (srv *server) setState(state serverState) {
+	srv.stateMutex.Lock()
+	defer srv.stateMutex.Unlock()
+	srv.state = state
+}
+
+func (srv *server) getState() serverState {
+	srv.stateMutex.Lock()
+	defer srv.stateMutex.Unlock()
+	return srv.state
+}
+
 // setupAndServe binds given gRPC server to device manager, starts it and registers it with kubelet.
 func (srv *server) setupAndServe(namespace string, devicePluginPath string, kubeletSocket string) error {
 	resourceName := namespace + "/" + srv.devType
 	pluginPrefix := namespace + "-" + srv.devType
+	srv.setState(serving)
 
-	for {
+	for srv.getState() == serving {
 		pluginEndpoint := pluginPrefix + ".sock"
 		pluginSocket := path.Join(devicePluginPath, pluginEndpoint)
 
@@ -204,11 +231,16 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 		if err = watchFile(pluginSocket); err != nil {
 			return err
 		}
-		fmt.Printf("Socket %s removed, restarting\n", pluginSocket)
 
-		srv.grpcServer.Stop()
-		os.Remove(pluginSocket)
+		if srv.getState() == serving {
+			srv.grpcServer.Stop()
+			fmt.Printf("Socket %s removed, restarting\n", pluginSocket)
+		} else {
+			fmt.Printf("Socket %s shut down\n", pluginSocket)
+		}
 	}
+
+	return nil
 }
 
 func watchFile(file string) error {
