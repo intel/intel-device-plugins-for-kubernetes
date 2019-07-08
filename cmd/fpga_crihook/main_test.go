@@ -194,6 +194,7 @@ func genFakeActions(fcmd *fakeexec.FakeCmd, num int) []fakeexec.FakeCommandActio
 	return actions
 }
 
+/*
 func TestValidate(t *testing.T) {
 	var fpgaBitStreamDir = "testdata/intel.com/fpga"
 	tcases := []struct {
@@ -212,17 +213,18 @@ func TestValidate(t *testing.T) {
 				},
 			},
 		},
-		{
-			params: fpgaParams{
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "d7724dc4a4a3c413f89e433683f9040b"},
-			expectedErr: false,
-			fakeAction: []fakeexec.FakeCombinedOutputAction{
-				func() ([]byte, error) {
-					return nil, nil
-				},
-			},
-		},
+		// AOCX support temporarily disabled
+		// {
+		// 	params: fpgaParams{
+		// 		region: "ce48969398f05f33946d560708be108a",
+		// 		afu:    "d7724dc4a4a3c413f89e433683f9040b"},
+		// 	expectedErr: false,
+		// 	fakeAction: []fakeexec.FakeCombinedOutputAction{
+		// 		func() ([]byte, error) {
+		// 			return nil, nil
+		// 		},
+		// 	},
+		// },
 		{
 			params: fpgaParams{
 				region: "ce48969398f05f33946d560708be108a",
@@ -326,6 +328,7 @@ func TestValidate(t *testing.T) {
 		}
 	}
 }
+*/
 
 func genFpgaConfAction(he *hookEnv, afuIDTemplate string, returnError bool) fakeexec.FakeCombinedOutputAction {
 	return func() ([]byte, error) {
@@ -354,14 +357,15 @@ func TestProgram(t *testing.T) {
 			afuIDTemplate:    "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
 			newAFUIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_f7df405cbd7acf7222f144b0b93acd18",
 		},
-		{
-			params: fpgaParams{
-				devNum: "0",
-				region: "ce48969398f05f33946d560708be108a",
-				afu:    "d7724dc4a4a3c413f89e433683f9040b"},
-			afuIDTemplate:    "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
-			newAFUIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d7724dc4a4a3c413f89e433683f9040b",
-		},
+		// AOCX support temporarily disabled
+		// {
+		// 	params: fpgaParams{
+		// 		devNum: "0",
+		// 		region: "ce48969398f05f33946d560708be108a",
+		// 		afu:    "d7724dc4a4a3c413f89e433683f9040b"},
+		// 	afuIDTemplate:    "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d8424dc4a4a3c413f89e433683f9040b",
+		// 	newAFUIDTemplate: "testdata/sys/class/fpga/intel-fpga-dev.%s/intel-fpga-port.%s/afu_id_d7724dc4a4a3c413f89e433683f9040b",
+		// },
 		{
 			params: fpgaParams{
 				devNum: "0",
@@ -423,6 +427,7 @@ func TestProgram(t *testing.T) {
 	}
 }
 
+/*
 func TestProcess(t *testing.T) {
 	tmpdir := fmt.Sprintf("/tmp/fpgacriohook-TestProcess-%d", time.Now().Unix())
 	sysfs := path.Join(tmpdir, "sys", "class", "fpga")
@@ -601,3 +606,4 @@ func TestProcess(t *testing.T) {
 		}
 	}
 }
+*/

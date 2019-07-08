@@ -15,7 +15,7 @@
 package main
 
 import (
-	"bytes"
+	// "bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -26,9 +26,11 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/gbs"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 	utilsexec "k8s.io/utils/exec"
+	// "github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/aocx"
 )
 
 const (
@@ -86,43 +88,22 @@ type opaeBitStream struct {
 
 func (bitStream *opaeBitStream) validate() error {
 	region, afu := bitStream.params.region, bitStream.params.afu
-	output, err := bitStream.execer.Command(packager, "gbs-info", "--gbs", bitStream.path).CombinedOutput()
+
+	gbs, err := gbs.Open(bitStream.path)
 	if err != nil {
 		return errors.Wrapf(err, "%s/%s: can't get bitstream info", region, afu)
 	}
 
-	reader := bytes.NewBuffer(output)
-	content, err := decodeJSONStream(reader)
-	if err != nil {
-		return errors.WithMessage(err, fmt.Sprintf("%s/%s: can't decode 'packager gbs-info' output", region, afu))
+	if canonize(gbs.Metadata.AfuImage.InterfaceUUID) != region {
+		return errors.Errorf("bitstream is not for this device: region(%s) and interface-uuid(%s) don't match", region, gbs.Metadata.AfuImage.InterfaceUUID)
+
 	}
 
-	afuImage, ok := content["afu-image"]
-	if !ok {
-		return errors.Errorf("%s/%s: 'afu-image' field not found in the 'packager gbs-info' output", region, afu)
+	if len(gbs.Metadata.AfuImage.AcceleratorClusters) != 1 {
+		return errors.Errorf("%s/%s: 'accelerator-clusters' field not found", region, afu)
 	}
-
-	interfaceUUID, ok := afuImage.(map[string]interface{})["interface-uuid"]
-	if !ok {
-		return errors.Errorf("%s/%s: 'interface-uuid' field not found in the 'packager gbs-info' output", region, afu)
-	}
-
-	acceleratorClusters, ok := afuImage.(map[string]interface{})["accelerator-clusters"]
-	if !ok {
-		return errors.Errorf("%s/%s: 'accelerator-clusters' field not found in the 'packager gbs-info' output", region, afu)
-	}
-
-	if canonize(interfaceUUID.(string)) != region {
-		return errors.Errorf("bitstream is not for this device: region(%s) and interface-uuid(%s) don't match", region, interfaceUUID)
-	}
-
-	acceleratorTypeUUID, ok := acceleratorClusters.([]interface{})[0].(map[string]interface{})["accelerator-type-uuid"]
-	if !ok {
-		return errors.Errorf("%s/%s: 'accelerator-type-uuid' field not found in the 'packager gbs-info' output", region, afu)
-	}
-
-	if canonize(acceleratorTypeUUID.(string)) != afu {
-		return errors.Errorf("incorrect bitstream: AFU(%s) and accelerator-type-uuid(%s) don't match", afu, acceleratorTypeUUID)
+	if canonize(gbs.Metadata.AfuImage.AcceleratorClusters[0].AcceleratorTypeUUID) != afu {
+		return errors.Errorf("incorrect bitstream: AFU(%s) and accelerator-type-uuid(%s) don't match", afu, gbs.Metadata.AfuImage.AcceleratorClusters[0].AcceleratorTypeUUID)
 	}
 
 	return nil
@@ -145,7 +126,7 @@ func getFpgaConfArgs(dev string) ([]string, error) {
 		if subs == nil || len(subs) != 4 {
 			return nil, errors.Errorf("unable to parse PCI address %s", pciDevPath)
 		}
-		return []string{"-b", "0x" + subs[1], "-d", "0x" + subs[2], "-f", "0x" + subs[3]}, nil
+		return []string{"-B", "0x" + subs[1], "-D", "0x" + subs[2], "-F", "0x" + subs[3]}, nil
 	}
 	return nil, errors.Errorf("can't find PCI device address for sysfs entry %s", realDevPath)
 }
@@ -344,7 +325,9 @@ func (he *hookEnv) produceFPGAParams(regionEnv, afuEnv map[string]string, envSet
 
 func (he *hookEnv) getBitStream(params fpgaParams) (fpgaBitStream, error) {
 	bitStreamPath := ""
-	for _, ext := range []string{".gbs", ".aocx"} {
+	// Temporarily only support gbs bitstreams
+	// for _, ext := range []string{".gbs", ".aocx"} {
+	for _, ext := range []string{".gbs"} {
 		bitStreamPath = filepath.Join(he.bitStreamDir, params.region, params.afu+ext)
 
 		_, err := os.Stat(bitStreamPath)

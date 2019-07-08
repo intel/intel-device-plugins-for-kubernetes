@@ -23,6 +23,7 @@ before_install:
   - if [[ "$src" != "$dest" ]]; then mv "$src" "$dest"; cd ../../intel/$repo; export TRAVIS_BUILD_DIR=`dirname $TRAVIS_BUILD_DIR`/$repo; fi
   ## install buildah build deps
   - cdir=$(pwd)
+  - sudo apt-get update
   - sudo apt-get -y install e2fslibs-dev libfuse-dev libgpgme11-dev libdevmapper-dev libglib2.0-dev libprotobuf-dev
   # build buildah
   - mkdir -p $GOPATH/src/github.com/containers
@@ -47,7 +48,7 @@ script:
   - make vet
   - make cyclomatic-check
   - make test BUILDTAGS=kerneldrv
-  - make images
+  - make -j4 images
   - make images BUILDER=buildah
   - make demos
   - make demos BUILDER=buildah
