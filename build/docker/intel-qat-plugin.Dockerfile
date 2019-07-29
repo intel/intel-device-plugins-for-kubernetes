@@ -1,9 +1,11 @@
 FROM clearlinux:base as builder
 
+ARG QAT_DRIVER_RELEASE="qat1.7.l.4.6.0-00025"
+
 RUN swupd bundle-add wget c-basic go-basic && \
     mkdir -p /usr/src/qat && \
     cd /usr/src/qat && \
-    wget https://01.org/sites/default/files/downloads/qat1.7.l.4.5.0-00034.tar.gz && \
+    wget https://01.org/sites/default/files/downloads/$QAT_DRIVER_RELEASE.tar.gz && \
     tar xf *.tar.gz
 RUN cd /usr/src/qat/quickassist/utilities/adf_ctl && \
     make KERNEL_SOURCE_DIR=/usr/src/qat/quickassist/qat && \

@@ -1,13 +1,13 @@
 FROM debian:sid as builder
 
-ENV QAT_DRIVER_RELEASE="qat1.7.l.4.3.0-00033"
-ENV QAT_ENGINE_VERSION="v0.5.41"
+ARG QAT_DRIVER_RELEASE="qat1.7.l.4.6.0-00025"
+ARG QAT_ENGINE_VERSION="v0.5.42"
 
 RUN apt-get update && \
     apt-get install -y git build-essential wget libssl-dev openssl libudev-dev pkg-config autoconf autogen libtool gawk && \
     git clone https://github.com/intel/QAT_Engine && \
-    wget https://01.org/sites/default/files/downloads/intelr-quickassist-technology/$QAT_DRIVER_RELEASE.tar.gz && \
-    tar zxf $QAT_DRIVER_RELEASE.tar.gz
+    wget https://01.org/sites/default/files/downloads/$QAT_DRIVER_RELEASE.tar.gz && \
+    tar xf *.tar.gz
 
 
 RUN sed -i -e 's/cmn_ko$//' -e 's/lac_kernel$//' quickassist/Makefile && \
