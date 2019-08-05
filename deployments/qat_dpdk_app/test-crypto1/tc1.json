@@ -1,0 +1,3 @@
+- op: replace
+  path: /spec/containers/0/env/1/value
+  value: "--ptest throughput --devtype crypto_qat --optype cipher-only --cipher-algo aes-cbc --cipher-op encrypt --cipher-key-sz 16 --total-ops 10000000 --burst-sz 32 --buffer-sz 64"

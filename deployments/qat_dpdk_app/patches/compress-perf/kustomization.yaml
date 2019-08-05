@@ -1,0 +1,10 @@
+nameSuffix: -compress-perf
+bases:
+- ../dpdk-test/
+patchesStrategicMerge:
+- volume_add_configmap.yaml
+- env_replace_testcmd.yaml
+configMapGenerator:
+- name: test-data
+  files:
+  - file.txt

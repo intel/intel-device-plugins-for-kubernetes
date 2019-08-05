@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qat-dpdk
+spec:
+  containers:
+  - name: crypto-perf
+    volumeMounts:
+    - name: testfile
+      mountPath: /var/data/
+  volumes:
+  - name: testfile
+    configMap:
+      name: test-data
