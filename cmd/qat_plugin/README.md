@@ -105,20 +105,20 @@ $ kubectl describe node <node name> | grep qat.intel.com/generic
       For a DPDK-based workload, you may need to add hugepage request and limit.
 
      ```
-     $ kubectl create -f demo/crypto-perf-dpdk-pod-requesting-qat.yaml
+     $ kubectl apply -k deployments/qat_dpdk_app/base/
      $ kubectl get pods
        NAME                     READY     STATUS    RESTARTS   AGE
-       dpdkqatuio               1/1       Running   0          27m
+       qat-dpdk                 1/1       Running   0          27m
        intel-qat-plugin-5zgvb   1/1       Running   0          3h
 
      ```
 
-    **Note**: If the `igb_uio` VF driver is used with the QAT device plugin,
-    the workload be deployed with `SYS_ADMIN` capabilities added.
+    **Note**: The deployment example above uses kustomize that is available in
+    kubectl since kubernetes v1.14 release.
 
 3. Manually execute the `dpdk-test-crypto-perf` application to review the logs:
    ```
-   $ kubectl exec -it dpdkqatuio bash
+   $ kubectl exec -it qat-dpdk bash
 
    $ ./dpdk-test-crypto-perf -l 6-7 -w $QAT1 -- --ptest throughput --\
 	devtype crypto_qat --optype cipher-only --cipher-algo aes-cbc --cipher-op \

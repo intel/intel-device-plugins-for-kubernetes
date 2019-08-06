@@ -1,10 +1,10 @@
 kind: Pod
 apiVersion: v1
 metadata:
-  name: dpdkqatuio
+  name: qat-dpdk
 spec:
   containers:
-  - name: dpdkcontainer
+  - name: crypto-perf
     image: crypto-perf:devel
     imagePullPolicy: IfNotPresent
     command: [ "/bin/bash", "-c", "--" ]
@@ -17,16 +17,17 @@ spec:
         cpu: "3"
         memory: "128Mi"
         qat.intel.com/generic: '4'
-        hugepages-2Mi: "1Gi"
+        hugepages-2Mi: "128Mi"
       limits:
         cpu: "3"
         memory: "128Mi"
         qat.intel.com/generic: '4'
-        hugepages-2Mi: "1Gi"
+        hugepages-2Mi: "128Mi"
     securityContext:
       capabilities:
         add:
-          ["IPC_LOCK"]
+          ["IPC_LOCK", "SYS_ADMIN"]
+  restartPolicy: Never
   volumes:
   - name: hugepage
     emptyDir:
