@@ -6,6 +6,8 @@ pipeline {
     timeout(time: 2, unit: "HOURS")
   }
   environment {
+    CUSTOM_REGISTRY = "cloud-native-image-registry.westus.cloudapp.azure.com"
+    CUSTOM_TAG = "${env.BUILD_TAG}-rejected"
     RUNC_VERSION="v1.0.0-rc8"
     CRIO_VERSION="v1.14.6"
     BUILDAH_VERSION="v1.10.0"
@@ -127,6 +129,15 @@ pipeline {
             dir(path: "$REPO_DIR") {
               sh "make demos BUILDER=buildah"
             }
+          }
+        }
+      }
+    }
+    stage('make push images') {
+      steps {
+        withDockerRegistry([credentialsId: "57e4a8b2-ccf9-4da1-a787-76dd1aac8fd1", url: "https://${CUSTOM_REGISTRY}"]) {
+          dir(path: "$REPO_DIR") {
+            sh "make push-all"
           }
         }
       }

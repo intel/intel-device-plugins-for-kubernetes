@@ -19,7 +19,21 @@ TAG=$(git rev-parse HEAD)
 
 if [ -z "${BUILDER}" -o "${BUILDER}" = 'docker' ] ; then
     docker build --pull -t ${IMG}:${TAG} -f ${DOCKERFILE} .
-    docker tag ${IMG}:${TAG} ${IMG}:devel
+    # If $CUSTOM_TAG is set as an env var, then the final tag,
+    # is replaced with $CUSTOM_TAG value, otherwise "devel",
+    # string constant is set.
+    CUSTOM_TAG=${CUSTOM_TAG:-"devel"}
+    # If custom $CUSTOM_REGISTRY is defined as an env var,
+    # then the image name is prefixed with the registry name,
+    # if not registry provided, $CUSTOM_NAME defaults with,
+    # $IMG value.
+    CUSTOM_NAME=${IMG}
+    if [ -n "$CUSTOM_REGISTRY" ]; then
+      CUSTOM_NAME="$CUSTOM_REGISTRY/$IMG"
+    fi
+    # TODO: check if this mechanism of tagging applies only,
+    # for Docker builds.
+    docker tag ${IMG}:${TAG} ${CUSTOM_NAME}:${CUSTOM_TAG}
 elif [ "${BUILDER}" = 'buildah' ] ; then
     buildah bud --pull-always -t ${IMG}:${TAG} -f ${DOCKERFILE} .
     buildah tag ${IMG}:${TAG} ${IMG}:devel

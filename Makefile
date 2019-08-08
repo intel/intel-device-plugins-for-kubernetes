@@ -57,5 +57,20 @@ $(demos):
 
 demos: $(demos)
 
+push-demos = $(shell cd demo/ && ls -d */ | sed 's/\(.\+\)\//push-\1/g')
 
-.PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images)
+$(push-demos):
+	@build/docker/push-image.sh $(shell echo $@ | sed -e "s/^push-//")
+
+push-demos: $(push-demos)
+
+push-images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/push-\1/')
+
+$(push-images):
+	@build/docker/push-image.sh $(shell echo $@ | sed -e "s/^push-//")
+
+push-images: $(push-images)
+
+push-all: push-images push-demos
+
+.PHONY: all format vet cyclomatic-check test lint build images push-images $(cmds) $(images) $(push-images)
