@@ -32,12 +32,12 @@ lint:
 	@rc=0 ; for f in $$(find -name \*.go | grep -v \.\/vendor) ; do golint -set_exit_status $$f || rc=1 ; done ; exit $$rc
 
 $(cmds):
-	cd cmd/$@; go build
+	cd cmd/$@; $(GO) build
 
 build: $(cmds)
 
 clean:
-	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; go clean ; cd $$pwd ; done
+	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; $(GO) clean ; cd $$pwd ; done
 
 TAG?=$(shell git rev-parse HEAD)
 
