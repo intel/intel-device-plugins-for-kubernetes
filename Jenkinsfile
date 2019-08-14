@@ -86,10 +86,10 @@ pipeline {
             }
           }
         }
-        stage("make test") {
+        stage("make test BUILDTAGS=kerneldrv") {
           steps {
             dir(path: "$REPO_DIR") {
-              sh "make test"
+              sh "make test BUILDTAGS=kerneldrv"
             }
           }
         }

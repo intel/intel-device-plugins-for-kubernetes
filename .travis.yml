@@ -43,10 +43,10 @@ before_install:
 script:
   - make format
   - make lint
-  - make
+  - make BUILDTAGS=kerneldrv
   - make vet
   - make cyclomatic-check
-  - make test
+  - make test BUILDTAGS=kerneldrv
   - make images
   - make images BUILDER=buildah
   - make demos
