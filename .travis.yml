@@ -3,7 +3,7 @@ language: go
 dist: xenial
 
 go:
-  - 1.11.x
+  - 1.12.x
 
 env:
   global:
@@ -17,6 +17,7 @@ before_install:
   ## checkers
   - go get -v golang.org/x/lint/golint
   - go get -v github.com/fzipp/gocyclo
+  - go get -v golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
   ## hack for building on forks
   - repo=`basename $PWD`; src=`dirname $PWD`; dest="`dirname $src`/intel"
   - if [[ "$src" != "$dest" ]]; then mv "$src" "$dest"; cd ../../intel/$repo; export TRAVIS_BUILD_DIR=`dirname $TRAVIS_BUILD_DIR`/$repo; fi
