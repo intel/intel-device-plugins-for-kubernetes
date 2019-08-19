@@ -1,14 +1,15 @@
-FROM debian:sid as builder
+FROM clearlinux:base as builder
 
 ARG QAT_DRIVER_RELEASE="qat1.7.l.4.6.0-00025"
 ARG QAT_ENGINE_VERSION="v0.5.42"
 
-RUN apt-get update && \
-    apt-get install -y git build-essential wget libssl-dev openssl libudev-dev pkg-config autoconf autogen libtool gawk && \
+# add trusted CAs
+RUN rm -rf /run/lock/clrtrust.lock && \
+    clrtrust generate && \
+    swupd bundle-add --skip-diskspace-check devpkg-systemd devpkg-openssl c-basic wget git && \
     git clone https://github.com/intel/QAT_Engine && \
     wget https://01.org/sites/default/files/downloads/$QAT_DRIVER_RELEASE.tar.gz && \
     tar xf *.tar.gz
-
 
 RUN sed -i -e 's/cmn_ko$//' -e 's/lac_kernel$//' quickassist/Makefile && \
     KERNEL_SOURCE_ROOT=/tmp ./configure && \
@@ -21,7 +22,7 @@ RUN sed -i -e 's/cmn_ko$//' -e 's/lac_kernel$//' quickassist/Makefile && \
     ./configure \
     --with-qat_dir=/ \
     --with-openssl_dir=/usr \
-    --with-openssl_install_dir=/usr/lib/x86_64-linux-gnu \
+    --with-openssl_install_dir=/usr/lib64 \
     --enable-upstream_driver \
     --enable-usdm \
     --with-qat_install_dir=/usr/lib \
@@ -29,11 +30,11 @@ RUN sed -i -e 's/cmn_ko$//' -e 's/lac_kernel$//' quickassist/Makefile && \
     --enable-openssl_install_build_arch_path && \
     make && make install
 
-FROM debian:sid-slim
-
-RUN apt-get update && apt-get install -y openssl
+FROM clearlinux:base
 
 COPY --from=builder /usr/lib/libqat_s.so /usr/lib/
 COPY --from=builder /usr/lib/libusdm_drv_s.so /usr/lib/
 COPY --from=builder /usr/bin/adf_ctl /usr/bin
-COPY --from=builder /usr/lib/x86_64-linux-gnu/engines-1.1/qat.so /usr/lib/x86_64-linux-gnu/engines-1.1/qat.so
+COPY --from=builder /usr/lib64/engines-1.1/qat.so /usr/lib64/engines-1.1/qat.so
+COPY --from=builder /LICENSE.GPL /usr/share/package-licenses/libqat/LICENSE.GPL
+COPY --from=builder /QAT_Engine/LICENSE /usr/share/package-licenses/QAT_Engine/LICENSE
