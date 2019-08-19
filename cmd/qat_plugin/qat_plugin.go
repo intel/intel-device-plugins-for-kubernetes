@@ -53,7 +53,7 @@ func main() {
 	case "kernel":
 		plugin = kerneldrv.NewDevicePlugin()
 	default:
-		err = errors.Errorf("Uknown mode: %s", *mode)
+		err = errors.Errorf("Unknown mode: %s", *mode)
 	}
 	if err != nil {
 		fmt.Println(err.Error())
