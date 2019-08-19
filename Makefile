@@ -2,6 +2,8 @@ GO := go
 GOFMT := gofmt
 GOCYCLO := gocyclo
 
+BUILDTAGS ?= ""
+
 pkgs  = $(shell $(GO) list ./... | grep -v vendor)
 cmds = $(shell ls cmd)
 
@@ -18,10 +20,10 @@ cyclomatic-check:
 
 test:
 ifndef WHAT
-	@$(GO) test -race -coverprofile=coverage.txt -covermode=atomic $(pkgs)
+	@$(GO) test -tags $(BUILDTAGS) -race -coverprofile=coverage.txt -covermode=atomic $(pkgs)
 else
 	@cd $(WHAT) && \
-            $(GO) test -v -cover -coverprofile cover.out || rc=1; \
+            $(GO) test -tags $(BUILDTAGS) -v -cover -coverprofile cover.out || rc=1; \
             $(GO) tool cover -html=cover.out -o coverage.html; \
             rm cover.out; \
             echo "Coverage report: file://$$(realpath coverage.html)"; \
@@ -32,12 +34,12 @@ lint:
 	@rc=0 ; for f in $$(find -name \*.go | grep -v \.\/vendor) ; do golint -set_exit_status $$f || rc=1 ; done ; exit $$rc
 
 $(cmds):
-	cd cmd/$@; go build
+	cd cmd/$@; $(GO) build -tags $(BUILDTAGS)
 
 build: $(cmds)
 
 clean:
-	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; go clean ; cd $$pwd ; done
+	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; $(GO) clean ; cd $$pwd ; done
 
 TAG?=$(shell git rev-parse HEAD)
 

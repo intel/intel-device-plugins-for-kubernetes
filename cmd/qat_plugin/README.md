@@ -61,11 +61,15 @@ Use the `kernel-vf-drivers flag` to specify the vf Device Driver for the particu
 
 `-dpdk-driver` is set to `vfio-pci` by default since it is more robust and secure driver compared with `igb_uio`. See [DPDK Linux Driver Guide](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html) for more information.
 
+`-mode` parameter can be set to `kerneldrv` to override the default  mode (`dpdkdrv`). With `-mode kerneldrv`, no other parameter documented above are valid, except `-debug` which is global for both modes. `kerneldrv` mode implements resource allocation based on system configured [logical instances](https://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdfhttps://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdf). The mode does not guarantee full device isolation between containers and therefore it's not recommended. Moreover, the mode will be deprecated and removed once `libqat` implements non-UIO based device access.
+
 ### Build QAT device plugin Docker image:
 ```
 $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make  intel-qat-plugin
 ```
+
+**Note**: `kerneldrv` mode is excluded from the build by default. Add `BUILDTAGS=kerneldrv` to `make` to get `kerneldrv` functionality added to the build.
 
 ### Deploy QAT device plugin as a DaemonSet:
 ```
