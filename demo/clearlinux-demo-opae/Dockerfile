@@ -1,8 +1,18 @@
-FROM clearlinux:base as builder
+# CLEAR_LINUX_BASE and CLEAR_LINUX_VERSION can be used to make the build
+# reproducible by choosing an image by its hash and installing an OS version
+# with --version=:
+# CLEAR_LINUX_BASE=clearlinux@sha256:b8e5d3b2576eb6d868f8d52e401f678c873264d349e469637f98ee2adf7b33d4
+# CLEAR_LINUX_VERSION="--version=29970"
+#
+# This is used on release branches before tagging a stable version.
+# The master branch defaults to using the latest Clear Linux.
+ARG CLEAR_LINUX_BASE=clearlinux:latest
 
-# Move to latest Clear Linux release
-# ARG swupd_args
-# RUN swupd update --no-boot-update $swupd_args
+FROM ${CLEAR_LINUX_BASE} as builder
+
+ARG CLEAR_LINUX_VERSION=
+
+RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
 
 # Fetch dependencies and source code
 ARG OPAE_RElEASE=1.3.2-1
@@ -21,11 +31,11 @@ RUN cd /usr/src/opae/opae-sdk-${OPAE_RElEASE} && \
     make xfpga nlb0 nlb3
 
 # Install clean os-core and libstdcpp bundle in target directory
-RUN source /usr/lib/os-release \
-    && mkdir /install_root \
-    && swupd os-install -V ${VERSION_ID} \
+RUN mkdir /install_root \
+    && swupd os-install  \
+    ${CLEAR_LINUX_VERSION} \
     --path /install_root --statedir /swupd-state \
-    --bundles=os-core,libstdcpp --no-scripts \
+    --bundles=os-core,libstdcpp --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
 # Minimal result image
