@@ -1,0 +1,9 @@
+nameSuffix: -tc1
+bases:
+- ../patches/crypto-perf
+patchesJson6902:
+- target:
+    version: v1
+    kind: Pod
+    name: qat-dpdk
+  path: tc1.json

@@ -35,7 +35,7 @@
   out "This video demonstrates the Intel(R) QuickAssist Technology device Plugin for Kubernetes"
   out "Prerequisites:"
   out "* Intel(R) QuickAssist Technology (Intel(R) QAT) DH895xcc Chipset with SR-IOV enabled"
-  out "* Kubernetes v1.12 cluster"
+  out "* Kubernetes v1.14 cluster"
   out "* Data Plane Development Kit (DPDK) drivers configured"
   out "Let's get started!"
 }
@@ -80,10 +80,10 @@
 {
   clear
   out "7. View pod specification file for pod requesting QAT Virtual Functions:"
-  command "cat crypto-perf-dpdk-pod-requesting-qat.yaml"
+  command "kubectl apply --dry-run -o yaml -k ../deployments/qat_dpdk_app/base"
   sleep 5 
   out "8. Create Pod requesting QAT Virtual Functions:"
-  command "kubectl create -f crypto-perf-dpdk-pod-requesting-qat.yaml"
+  command "kubectl apply -k ../deployments/qat_dpdk_app/base"
   sleep 2
   command "kubectl get pods"
   sleep 2
@@ -94,7 +94,7 @@
   out "9. Get a shell to the running container and run a DPDK application using QAT device"
   out "* \"export\": Lists environment variables - note QAT0, QAT1, QAT2... etc"
   out "* \"./dpdk-test-crypto-perf -l 6-7 -w \$QAT0 -- --ptest throughput --devtype crypto_qat --optype cipher-only --cipher-algo aes-cbc --cipher-op encrypt --cipher-key-sz 16 --total-ops 10000000 --burst-sz 32 --buffer-sz 64\" : Manually executes the dpdk-test-crypto-perf application to review the logs"
-   command "kubectl exec -it dpdkqatuio bash"
+   command "kubectl exec -it qat-dpdk bash"
   sleep 10
 }
  if [ "$1" == 'play' ] ; then

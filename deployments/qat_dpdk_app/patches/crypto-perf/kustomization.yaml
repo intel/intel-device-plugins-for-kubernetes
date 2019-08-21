@@ -1,0 +1,9 @@
+nameSuffix: -crypto-perf
+bases:
+- ../dpdk-test/
+patchesJson6902:
+- target:
+    version: v1
+    kind: Pod
+    name: qat-dpdk
+  path: test.json

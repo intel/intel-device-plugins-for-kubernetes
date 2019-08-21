@@ -1,0 +1,9 @@
+nameSuffix: -test
+bases:
+- ../../base/
+patchesJson6902:
+- target:
+    version: v1
+    kind: Pod
+    name: qat-dpdk
+  path: containers_patch_command_args.json

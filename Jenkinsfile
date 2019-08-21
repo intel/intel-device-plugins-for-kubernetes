@@ -6,11 +6,10 @@ pipeline {
     timeout(time: 2, unit: "HOURS")
   }
   environment {
-    RUNC_VERSION="v1.0.0-rc6"
-    CRIO_VERSION="v1.11.5"
-    OSTREE_VERSION="v2018.8"
-    BUILDAH_VERSION="v1.4"
-    GO_VERSION="1.11.11"
+    RUNC_VERSION="v1.0.0-rc8"
+    CRIO_VERSION="v1.14.6"
+    BUILDAH_VERSION="v1.10.0"
+    GO_VERSION="1.12.8"
     GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
     GOROOT="/usr/local/go"
     GOPATH="/tmp/go"
@@ -30,6 +29,7 @@ pipeline {
             sh "cp -rf ${env.WORKSPACE} $REPO_DIR"
             dir(path: "$REPO_DIR") {
               sh "go get -v golang.org/x/lint/golint"
+              sh "go get -v golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow"
               sh "go get -v github.com/fzipp/gocyclo"
             }
           }

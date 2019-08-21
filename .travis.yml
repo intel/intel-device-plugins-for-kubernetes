@@ -3,14 +3,13 @@ language: go
 dist: xenial
 
 go:
-  - 1.11.x
+  - 1.12.x
 
 env:
   global:
-    - RUNC_VERSION=v1.0.0-rc6
-    - CRIO_VERSION=v1.11.5
-    - OSTREE_VERSION=v2018.8
-    - BUILDAH_VERSION=v1.4
+    - RUNC_VERSION=v1.0.0-rc8
+    - CRIO_VERSION=v1.14.6
+    - BUILDAH_VERSION=v1.10.0
 
 sudo: required
 
@@ -18,6 +17,7 @@ before_install:
   ## checkers
   - go get -v golang.org/x/lint/golint
   - go get -v github.com/fzipp/gocyclo
+  - go get -v golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
   ## hack for building on forks
   - repo=`basename $PWD`; src=`dirname $PWD`; dest="`dirname $src`/intel"
   - if [[ "$src" != "$dest" ]]; then mv "$src" "$dest"; cd ../../intel/$repo; export TRAVIS_BUILD_DIR=`dirname $TRAVIS_BUILD_DIR`/$repo; fi
