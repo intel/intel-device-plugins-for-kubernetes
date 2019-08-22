@@ -22,7 +22,7 @@ RUN mkdir /install_root \
     --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
-ARG DIR=/go/src/github.com/intel/intel-device-plugins-for-kubernetes
+ARG DIR=/intel-device-plugins-for-kubernetes
 WORKDIR $DIR
 COPY . .
 RUN cd cmd/gpu_plugin; go install

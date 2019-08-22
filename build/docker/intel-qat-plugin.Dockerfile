@@ -34,10 +34,10 @@ RUN test -z "${TAGS_KERNELDRV}" \
     && cd /usr/src/qat/quickassist/utilities/adf_ctl \
     && make KERNEL_SOURCE_DIR=/usr/src/qat/quickassist/qat \
     && install -D adf_ctl /install_root/usr/local/bin/adf_ctl )
-ARG DIR=/go/src/github.com/intel/intel-device-plugins-for-kubernetes
+ARG DIR=/intel-device-plugins-for-kubernetes
 WORKDIR $DIR
 COPY . .
-RUN cd cmd/qat_plugin; go install ${TAGS_KERNELDRV}
+RUN cd cmd/qat_plugin; echo "build tags: ${TAGS_KERNELDRV}"; go install -tags "${TAGS_KERNELDRV}"
 RUN chmod a+x /go/bin/qat_plugin \
     && install -D /go/bin/qat_plugin /install_root/usr/local/bin/intel_qat_device_plugin \
     && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE

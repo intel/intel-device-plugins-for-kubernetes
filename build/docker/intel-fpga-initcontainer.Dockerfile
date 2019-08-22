@@ -23,7 +23,7 @@ RUN mkdir /install_root \
     && rm -rf /install_root/var/lib/swupd/*
 
 # Build CRI Hook
-ARG DIR=/go/src/github.com/intel/intel-device-plugins-for-kubernetes
+ARG DIR=/intel-device-plugins-for-kubernetes
 WORKDIR $DIR
 COPY . .
 RUN cd $DIR/cmd/fpga_crihook && \
