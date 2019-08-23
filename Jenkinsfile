@@ -6,10 +6,11 @@ pipeline {
     timeout(time: 2, unit: "HOURS")
   }
   environment {
+    GO111MODULE="on"
     RUNC_VERSION="v1.0.0-rc8"
     CRIO_VERSION="v1.14.6"
     BUILDAH_VERSION="v1.10.0"
-    GO_VERSION="1.12.8"
+    GO_VERSION="1.12.9"
     GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
     GOROOT="/usr/local/go"
     GOPATH="/tmp/go"
