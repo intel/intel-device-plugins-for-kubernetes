@@ -17,9 +17,13 @@
 
 package linux
 
-import "io"
+import (
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/bitstream"
+	"io"
+)
 
-type commonAPI interface {
+type commonFpgaAPI interface {
+	// Generic interfaces provided by FPGA ports and FMEs
 	io.Closer
 	// GetAPIVersion  Report the version of the driver API.
 	// * Return: Driver API Version.
@@ -27,11 +31,23 @@ type commonAPI interface {
 	// CheckExtension Check whether an extension is supported.
 	// * Return: 0 if not supported, otherwise the extension is supported.
 	CheckExtension() (int, error)
+
+	// Interfaces for device discovery and accessing properties
+
+	// GetDevPath returns path to device node
+	GetDevPath() string
+	// GetSysFsPath returns sysfs entry for FPGA FME or Port (e.g. can be used for custom errors/perf items)
+	GetSysFsPath() string
+	// GetName returns simple FPGA name, derived from sysfs entry, can be used with /dev/ or /sys/bus/platform/
+	GetName() string
+	// GetPCIDevice returns PCIDevice for this device
+	GetPCIDevice() (*PCIDevice, error)
 }
 
 // FpgaFME represent interfaces provided by management interface of FPGA
 type FpgaFME interface {
-	commonAPI
+	// Kernel IOCTL interfaces for FPGA ports:
+	commonFpgaAPI
 	// PortPR does Partial Reconfiguration based on Port ID and Buffer (Image)
 	// provided by caller.
 	// * Return: 0 on success, -errno on failure.
@@ -39,16 +55,25 @@ type FpgaFME interface {
 	//   some errors during PR, under this case, the user can fetch HW error info
 	//   from the status of FME's fpga manager.
 	PortPR(uint32, []byte) error
-
-	// TODO:
+	// TODO: (not implemented IOCTLs)
 	// Port release / assign
 	// Get Info
 	// Set IRQ err
+
+	// Interfaces for device discovery and accessing properties
+
+	// GetPortsNum returns amount of FPGA Ports associated to this FME
+	GetPortsNum() int
+	// InterfaceUUID returns Interface UUID for FME
+	GetInterfaceUUID() string
+	// GetPort returns FpgaPort of the desired FPGA port within that FME
+	// GetPort(uint32) (FpgaPort, error)
 }
 
 // FpgaPort represent interfaces provided by AFU port of FPGA
 type FpgaPort interface {
-	commonAPI
+	// Kernel IOCTL interfaces for FPGA ports:
+	commonFpgaAPI
 	// PortReset Reset the FPGA Port and its AFU. No parameters are supported.
 	// Userspace can do Port reset at any time, e.g. during DMA or PR. But
 	// it should never cause any system level issue, only functional failure
@@ -65,11 +90,23 @@ type FpgaPort interface {
 	// * Driver returns the region info in other fields.
 	// * Return: 0 on success, -errno on failure.
 	PortGetRegionInfo(index uint32) (FpgaPortRegionInfo, error)
-
-	// TODO:
+	// TODO: (not implemented IOCTLs)
 	// Port DMA map / unmap
 	// UMSG enable / disable / set-mode / set-base-addr (intel-fpga)
 	// Set IRQ: err, uafu (intel-fpga)
+
+	// Interfaces for device discovery and accessing properties
+
+	// GetFME returns FPGA FME device for this port
+	GetFME() (FpgaFME, error)
+	// GetPortID returns ID of the FPGA port within physical device
+	GetPortID() (uint32, error)
+	// GetAcceleratorTypeUUID returns AFU UUID for port
+	GetAcceleratorTypeUUID() string
+	// InterfaceUUID returns Interface UUID for FME
+	GetInterfaceUUID() string
+	// PR programs specified bitstream to port
+	PR(bitstream.File, bool) error
 }
 
 // FpgaPortInfo is a unified port info between drivers

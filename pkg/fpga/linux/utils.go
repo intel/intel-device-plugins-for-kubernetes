@@ -15,17 +15,32 @@
 package linux
 
 import (
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // small helper function that reads several files into provided set of variables
 func readFilesInDirectory(fileMap map[string]*string, dir string) error {
 	for k, v := range fileMap {
-		b, err := ioutil.ReadFile(filepath.Join(dir, k))
+		fname := filepath.Join(dir, k)
+		if strings.ContainsAny(fname, "?*[") {
+			// path contains wildcards, let's find by Glob needed file.
+			files, err := filepath.Glob(fname)
+			switch {
+			case err != nil:
+				continue
+			case len(files) != 1:
+				// doesn't match unique file, skip it
+				// fmt.Println("KAD2: ", files)
+				continue
+			}
+			fname = files[0]
+		}
+		b, err := ioutil.ReadFile(fname)
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue
@@ -33,6 +48,27 @@ func readFilesInDirectory(fileMap map[string]*string, dir string) error {
 			return errors.Wrapf(err, "%s: unable to read file %q", dir, k)
 		}
 		*v = strings.TrimSpace(string(b))
+	}
+	return nil
+}
+
+// returns filename of the argument after resolving symlinks
+func cleanBasename(name string) string {
+	realPath, err := filepath.EvalSymlinks(name)
+	if err != nil {
+		realPath = name
+	}
+	return filepath.Base(realPath)
+}
+
+// check that FPGA device is a compatible PCI device
+func checkVendorAndClass(dev commonFpgaAPI) error {
+	pci, err := dev.GetPCIDevice()
+	if err != nil {
+		return err
+	}
+	if pci.Vendor != vendorIntel || pci.Class != fpgaClass {
+		return errors.Errorf("unsupported PCI device %s  VID=%s PID=%s Class=%s", pci.BDF, pci.Vendor, pci.Device, pci.Class)
 	}
 	return nil
 }

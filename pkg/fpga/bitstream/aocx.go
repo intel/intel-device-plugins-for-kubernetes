@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -113,7 +114,7 @@ func setSection(f *FileAOCX, section *elf.Section) error {
 		if err != nil {
 			return errors.Wrapf(err, "%s: unable to get section data", name)
 		}
-		*field = string(data)
+		*field = strings.TrimSpace(string(data))
 	}
 	return nil
 }

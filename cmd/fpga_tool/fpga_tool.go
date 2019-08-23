@@ -21,12 +21,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/pkg/errors"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/bitstream"
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/device"
 	fpga "github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/linux"
 )
 
@@ -106,16 +104,7 @@ func validateFlags(cmd, bitstream, device string) error {
 
 // WIP testing command
 func magic(dev string) (err error) {
-	d, err := device.GetFMEDevice("", dev)
-	fmt.Printf("%+v %+v\n", d, err)
-
-	d1, err := fpga.FindSysFsDevice(dev)
-	fmt.Printf("%+v %+v\n", d1, err)
-	if err != nil {
-		return
-	}
-	d2, err := fpga.NewPCIDevice(d1)
-	fmt.Printf("%+v %+v\n", d2, err)
+	fmt.Println(fpga.ListFpgaDevices())
 	return
 }
 
@@ -153,9 +142,9 @@ func installBitstream(fname string, dryRun bool) (err error) {
 
 func fpgaInfo(fname string) error {
 	switch {
-	case strings.HasPrefix(fname, "/dev/dfl-fme."), strings.HasPrefix(fname, "/dev/intel-fpga-fme."):
+	case fpga.IsFpgaFME(fname):
 		return fmeInfo(fname)
-	case strings.HasPrefix(fname, "/dev/dfl-port."), strings.HasPrefix(fname, "/dev/intel-fpga-port."):
+	case fpga.IsFpgaPort(fname):
 		return portInfo(fname)
 	}
 	return errors.Errorf("unknown FPGA device file %s", fname)
@@ -185,14 +174,7 @@ func printBitstreamInfo(fname string) (err error) {
 func fmeInfo(fname string) error {
 	var f fpga.FpgaFME
 	var err error
-	switch {
-	case strings.HasPrefix(fname, "/dev/dfl-fme."):
-		f, err = fpga.NewDflFME(fname)
-	case strings.HasPrefix(fname, "/dev/intel-fpga-fme."):
-		f, err = fpga.NewIntelFpgaFME(fname)
-	default:
-		return errors.Errorf("unknow type of FME %s", fname)
-	}
+	f, err = fpga.NewFpgaFME(fname)
 	if err != nil {
 		return err
 	}
@@ -201,20 +183,21 @@ func fmeInfo(fname string) error {
 	fmt.Println(f.GetAPIVersion())
 	fmt.Print("CheckExtension:")
 	fmt.Println(f.CheckExtension())
+
+	fmt.Println("GetDevPath: ", f.GetDevPath())
+	fmt.Println("GetSysFsPath: ", f.GetSysFsPath())
+	fmt.Println("GetName: ", f.GetName())
+	pci, err := f.GetPCIDevice()
+	fmt.Printf("GetPCIDevice: %+v %+v\n", pci, err)
+	fmt.Println("GetInterfaceUUID: ", f.GetInterfaceUUID())
+	fmt.Println("GetPortNums: ", f.GetPortsNum())
 	return nil
 }
 
 func portInfo(fname string) error {
 	var f fpga.FpgaPort
 	var err error
-	switch {
-	case strings.HasPrefix(fname, "/dev/dfl-port."):
-		f, err = fpga.NewDflPort(fname)
-	case strings.HasPrefix(fname, "/dev/intel-fpga-port."):
-		f, err = fpga.NewIntelFpgaPort(fname)
-	default:
-		err = errors.Errorf("unknown type of port %s", fname)
-	}
+	f, err = fpga.NewFpgaPort(fname)
 	if err != nil {
 		return err
 	}
@@ -234,42 +217,38 @@ func portInfo(fname string) error {
 			fmt.Println(f.PortGetRegionInfo(uint32(idx)))
 		}
 	}
+
+	fmt.Println("GetDevPath: ", f.GetDevPath())
+	fmt.Println("GetSysFsPath: ", f.GetSysFsPath())
+	fmt.Println("GetName: ", f.GetName())
+	pci, err := f.GetPCIDevice()
+	fmt.Printf("GetPCIDevice: %+v %+v\n", pci, err)
+	id, err := f.GetPortID()
+	fmt.Printf("GetPort: %+v %+v\n", id, err)
+	fmt.Println("GetAcceleratorTypeUUID: ", f.GetAcceleratorTypeUUID())
+	fmt.Println("GetInterfaceUUID: ", f.GetInterfaceUUID())
+	fme, err := f.GetFME()
+	fmt.Printf("GetFME: %+v %+v\n", fme, err)
+
 	return nil
 }
 
-func doPR(fme, bs string, dryRun bool) error {
-	var f fpga.FpgaFME
-	var err error
-	switch {
-	case strings.HasPrefix(fme, "/dev/dfl-fme."):
-		f, err = fpga.NewDflFME(fme)
-	case strings.HasPrefix(fme, "/dev/intel-fpga-fme."):
-		f, err = fpga.NewIntelFpgaFME(fme)
-	default:
-		return errors.Errorf("unknown FME %s", fme)
-	}
-	fmt.Printf("Trying to program %s to port 0 of %s", bs, fme)
+func doPR(dev, bs string, dryRun bool) error {
+
+	f, err := fpga.NewFpgaPort(dev)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	fmt.Print("API:")
-	fmt.Println(f.GetAPIVersion())
 	m, err := bitstream.Open(bs)
 	if err != nil {
 		return err
 	}
 	defer m.Close()
 
-	rawBistream, err := m.RawBitstreamData()
-	if err != nil {
-		return err
-	}
-	if dryRun {
-		fmt.Println("Dry-Run: Skipping actual programming")
-		return nil
-	}
-	fmt.Print("Trying to PR, brace yourself! :")
-	fmt.Println(f.PortPR(0, rawBistream))
+	fmt.Printf("Before programming I %q A %q\n", f.GetInterfaceUUID(), f.GetAcceleratorTypeUUID())
+	fmt.Printf("Trying to program %s to port %s: ", bs, dev)
+	fmt.Println(f.PR(m, dryRun))
+	fmt.Printf("After programming I %q A %q\n", f.GetInterfaceUUID(), f.GetAcceleratorTypeUUID())
 	return nil
 }

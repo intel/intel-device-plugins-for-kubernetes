@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/bitstream"
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/device"
+	fpga "github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/linux"
 	"github.com/pkg/errors"
 	utilsexec "k8s.io/utils/exec"
 )
@@ -144,10 +144,10 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 		splitted := strings.SplitN(env, "=", 2)
 		if strings.HasPrefix(splitted[0], fpgaRegionEnvPrefix) {
 			num := strings.Split(splitted[0], fpgaRegionEnvPrefix)[1]
-			regionEnv[num] = device.CanonizeID(splitted[1])
+			regionEnv[num] = fpga.CanonizeID(splitted[1])
 		} else if strings.HasPrefix(splitted[0], fpgaAfuEnvPrefix) {
 			num := strings.Split(splitted[0], fpgaAfuEnvPrefix)[1]
-			afuEnv[num] = device.CanonizeID(splitted[1])
+			afuEnv[num] = fpga.CanonizeID(splitted[1])
 		}
 	}
 
@@ -175,7 +175,7 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 		for _, dev := range config.Linux.Devices {
 			deviceName := dev.getName()
 			// skip non-FPGA devices
-			if !device.IsFPGADevice(deviceName) {
+			if !fpga.IsFpgaPort(deviceName) {
 				continue
 			}
 
@@ -183,16 +183,15 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 			if dev.processed {
 				continue
 			}
-			fme, err := device.GetFMEDevice(he.sysFsPrefix, deviceName)
+			port, err := fpga.NewFpgaPort(deviceName)
 			if err != nil {
 				return nil, err
 			}
-
-			if fme.ID == region {
+			if interfaceUUID := port.GetInterfaceUUID(); interfaceUUID == region {
 				params = append(params,
 					fpgaParams{
 						afu:        afu,
-						region:     fme.ID,
+						region:     interfaceUUID,
 						portDevice: deviceName,
 					},
 				)
@@ -253,12 +252,13 @@ func (he *hookEnv) process(reader io.Reader) error {
 	}
 
 	for _, params := range paramslist {
-		programmedAfu, err := device.GetAFUDevice(he.sysFsPrefix, params.portDevice)
+		port, err := fpga.NewFpgaPort(params.portDevice)
 		if err != nil {
 			return err
 		}
 
-		if programmedAfu.ID == params.afu {
+		programmedAfu := port.GetAcceleratorTypeUUID()
+		if programmedAfu == params.afu {
 			// Afu is already programmed
 			return nil
 		}
@@ -267,34 +267,14 @@ func (he *hookEnv) process(reader io.Reader) error {
 		if err != nil {
 			return err
 		}
+		defer bitstream.Close()
 
-		err = bitstream.Init()
-		if err != nil {
-			return err
-		}
+		err = port.PR(bitstream, false)
 
-		err = bitstream.Validate(params.region, params.afu)
-		if err != nil {
-			return err
-		}
+		programmedAfu = port.GetAcceleratorTypeUUID()
 
-		fme, err := device.GetFMEDevice(he.sysFsPrefix, params.portDevice)
-		if err != nil {
-			return err
-		}
-
-		err = bitstream.Program(fme, he.execer)
-		if err != nil {
-			return err
-		}
-
-		programmedAfu, err = device.GetAFUDevice(he.sysFsPrefix, params.portDevice)
-		if err != nil {
-			return err
-		}
-
-		if programmedAfu.ID != params.afu {
-			return errors.Errorf("programmed function %s instead of %s", programmedAfu.ID, params.afu)
+		if programmedAfu != bitstream.AcceleratorTypeUUID() {
+			return errors.Errorf("programmed function %s instead of %s", programmedAfu, bitstream.AcceleratorTypeUUID())
 		}
 	}
 

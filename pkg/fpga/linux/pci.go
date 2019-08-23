@@ -32,6 +32,8 @@ import (
 
 const (
 	pciAddressRegex = `^([[:xdigit:]]{4}):([[:xdigit:]]{2}):([[:xdigit:]]{2})\.([[:xdigit:]])$`
+	vendorIntel     = "0x8086"
+	fpgaClass       = "0x120000"
 )
 
 var (

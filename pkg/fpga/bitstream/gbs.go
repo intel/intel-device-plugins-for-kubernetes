@@ -153,7 +153,6 @@ func NewFileGBS(r bitstreamReader) (*FileGBS, error) {
 	sr := io.NewSectionReader(r, 0, 1<<63-1)
 
 	f := new(FileGBS)
-	// TODO:
 	// 1. Read file header
 	sr.Seek(0, io.SeekStart)
 	if err := binary.Read(sr, binary.LittleEndian, &f.Header); err != nil {

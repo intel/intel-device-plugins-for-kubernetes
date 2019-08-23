@@ -18,6 +18,7 @@
 package linux
 
 import (
+	"os"
 	"syscall"
 )
 
@@ -27,4 +28,14 @@ func ioctl(fd uintptr, req uint, arg uintptr) (ret uintptr, err error) {
 		err = syscall.Errno(en)
 	}
 	return
+}
+
+// Same as above, but open device only for single operation
+func ioctlDev(dev string, req uint, arg uintptr) (ret uintptr, err error) {
+	f, err := os.OpenFile(dev, os.O_RDWR, 0644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	return ioctl(f.Fd(), req, arg)
 }
