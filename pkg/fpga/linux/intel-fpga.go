@@ -271,6 +271,25 @@ func (f *IntelFpgaFME) GetInterfaceUUID() (id string) {
 	return f.CompatID
 }
 
+// GetSocketID returns physical socket number, in case NUMA enumeration fails
+func (f *IntelFpgaFME) GetSocketID() (uint32, error) {
+	if f.SocketID == "" {
+		return math.MaxUint32, errors.Errorf("n/a")
+	}
+	id, err := strconv.ParseUint(f.SocketID, 10, 32)
+	return uint32(id), err
+}
+
+// GetBitstreamID returns FME bitstream id
+func (f *IntelFpgaFME) GetBitstreamID() string {
+	return f.BitstreamID
+}
+
+// GetBitstreamMetadata returns FME bitstream metadata
+func (f *IntelFpgaFME) GetBitstreamMetadata() string {
+	return f.BitstreamMetadata
+}
+
 // Update properties from sysfs
 func (f *IntelFpgaFME) updateProperties() error {
 	pci, err := f.GetPCIDevice()

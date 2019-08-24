@@ -34,17 +34,18 @@ const (
 
 func main() {
 	var err error
-	var bitstream string
-	var device string
-	var dryRun bool
+	var bitstream, device string
+	var dryRun, force, quiet bool
 	flag.StringVar(&bitstream, "b", "", "Path to bitstream file (GBS or AOCX)")
 	flag.StringVar(&device, "d", "", "Path to device node (FME or Port)")
 	flag.BoolVar(&dryRun, "dry-run", false, "Don't write/program, just validate and log")
+	flag.BoolVar(&force, "force", false, "Force overwrite operation for installing bitstreams")
+	flag.BoolVar(&quiet, "q", false, "Quiet mode. Only errors will be reported")
 
 	flag.Parse()
 
 	if flag.NArg() < 1 {
-		log.Fatal("Please provide command: info, fpgainfo, fmeinfo, portinfo, install, pr")
+		log.Fatal("Please provide command: info, fpgainfo, install, list, fmeinfo, portinfo, list-fme, list-port, pr")
 	}
 
 	cmd := flag.Arg(0)
@@ -53,25 +54,27 @@ func main() {
 		log.Fatalf("Invalid arguments: %+v", err)
 	}
 
-	// fmt.Printf("Cmd: %q\nBitstream: %q\nDevice: %q\n", cmd, bitstream, device)
 	switch cmd {
 	case "info":
-		err = printBitstreamInfo(bitstream)
+		err = printBitstreamInfo(bitstream, quiet)
 	case "pr":
-		err = doPR(device, bitstream, dryRun)
+		err = doPR(device, bitstream, dryRun, quiet)
 	case "fpgainfo":
-		err = fpgaInfo(device)
+		err = fpgaInfo(device, quiet)
 	case "fmeinfo":
-		err = fmeInfo(device)
+		err = fmeInfo(device, quiet)
 	case "portinfo":
-		err = portInfo(device)
+		err = portInfo(device, quiet)
 	case "install":
-		err = installBitstream(bitstream, dryRun)
-	case "magic":
-		err = magic(device)
+		err = installBitstream(bitstream, dryRun, force, quiet)
+	case "list":
+		err = listDevices(true, true, quiet)
+	case "list-fme":
+		err = listDevices(true, false, quiet)
+	case "list-port":
+		err = listDevices(false, true, quiet)
 	default:
 		err = errors.Errorf("unknown command %+v", flag.Args())
-
 	}
 	if err != nil {
 		log.Fatalf("%+v", err)
@@ -85,7 +88,7 @@ func validateFlags(cmd, bitstream, device string) error {
 		if bitstream == "" {
 			return errors.Errorf("bitstream filename is missing")
 		}
-	case "fpgainfo", "fmeinfo", "portinfo", "magic":
+	case "fpgainfo", "fmeinfo", "portinfo":
 		// device must not be empty
 		if device == "" {
 			return errors.Errorf("FPGA device name is missing")
@@ -102,13 +105,7 @@ func validateFlags(cmd, bitstream, device string) error {
 	return nil
 }
 
-// WIP testing command
-func magic(dev string) (err error) {
-	fmt.Println(fpga.ListFpgaDevices())
-	return
-}
-
-func installBitstream(fname string, dryRun bool) (err error) {
+func installBitstream(fname string, dryRun, force, quiet bool) (err error) {
 	info, err := bitstream.Open(fname)
 	if err != nil {
 		return
@@ -117,10 +114,12 @@ func installBitstream(fname string, dryRun bool) (err error) {
 
 	installPath := info.InstallPath(fpgaBitStreamDirectory)
 
-	fmt.Printf("Installing bitstream %q as %q\n", fname, installPath)
-	if dryRun {
-		fmt.Println("Dry-run: no copying performed")
-		return
+	if !quiet {
+		fmt.Printf("Installing bitstream %q as %q\n", fname, installPath)
+		if dryRun {
+			fmt.Println("Dry-run: no copying performed")
+			return
+		}
 	}
 	err = os.MkdirAll(filepath.Dir(installPath), 0755)
 	if err != nil {
@@ -131,8 +130,15 @@ func installBitstream(fname string, dryRun bool) (err error) {
 		return errors.Wrap(err, "can't open bitstream file")
 	}
 	defer src.Close()
-	dst, err := os.OpenFile(installPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	flags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	if !force {
+		flags = flags | os.O_EXCL
+	}
+	dst, err := os.OpenFile(installPath, flags, 0644)
 	if err != nil {
+		if os.IsExist(err) {
+			return fmt.Errorf("Destination file %q already exist. Use --force to overwrite it", installPath)
+		}
 		return errors.Wrap(err, "can't create destination file")
 	}
 	defer dst.Close()
@@ -140,17 +146,7 @@ func installBitstream(fname string, dryRun bool) (err error) {
 	return
 }
 
-func fpgaInfo(fname string) error {
-	switch {
-	case fpga.IsFpgaFME(fname):
-		return fmeInfo(fname)
-	case fpga.IsFpgaPort(fname):
-		return portInfo(fname)
-	}
-	return errors.Errorf("unknown FPGA device file %s", fname)
-}
-
-func printBitstreamInfo(fname string) (err error) {
+func printBitstreamInfo(fname string, quiet bool) (err error) {
 	info, err := bitstream.Open(fname)
 	if err != nil {
 		return
@@ -162,7 +158,7 @@ func printBitstreamInfo(fname string) (err error) {
 	fmt.Printf("Unique UUID           : %q\n", info.UniqueUUID())
 	fmt.Printf("Installation Path     : %q\n", info.InstallPath(fpgaBitStreamDirectory))
 	extra := info.ExtraMetadata()
-	if len(extra) > 0 {
+	if len(extra) > 0 && !quiet {
 		fmt.Println("Extra:")
 		for k, v := range extra {
 			fmt.Printf("\t%s : %q\n", k, v)
@@ -171,7 +167,17 @@ func printBitstreamInfo(fname string) (err error) {
 	return
 }
 
-func fmeInfo(fname string) error {
+func fpgaInfo(fname string, quiet bool) error {
+	switch {
+	case fpga.IsFpgaFME(fname):
+		return fmeInfo(fname, quiet)
+	case fpga.IsFpgaPort(fname):
+		return portInfo(fname, quiet)
+	}
+	return errors.Errorf("unknown FPGA device file %s", fname)
+}
+
+func fmeInfo(fname string, quiet bool) error {
 	var f fpga.FpgaFME
 	var err error
 	f, err = fpga.NewFpgaFME(fname)
@@ -179,22 +185,36 @@ func fmeInfo(fname string) error {
 		return err
 	}
 	defer f.Close()
-	fmt.Print("API:")
-	fmt.Println(f.GetAPIVersion())
-	fmt.Print("CheckExtension:")
-	fmt.Println(f.CheckExtension())
-
-	fmt.Println("GetDevPath: ", f.GetDevPath())
-	fmt.Println("GetSysFsPath: ", f.GetSysFsPath())
-	fmt.Println("GetName: ", f.GetName())
-	pci, err := f.GetPCIDevice()
-	fmt.Printf("GetPCIDevice: %+v %+v\n", pci, err)
-	fmt.Println("GetInterfaceUUID: ", f.GetInterfaceUUID())
-	fmt.Println("GetPortNums: ", f.GetPortsNum())
-	return nil
+	return printFpgaFME(f, quiet)
 }
 
-func portInfo(fname string) error {
+func printFpgaFME(f fpga.FpgaFME, quiet bool) (err error) {
+	fmt.Println("//****** FME ******//")
+	fmt.Printf("Name                             : %s\n", f.GetName())
+	fmt.Printf("Device Node                      : %s\n", f.GetDevPath())
+	fmt.Printf("SysFS Path                       : %s\n", f.GetSysFsPath())
+	pci, err := f.GetPCIDevice()
+	if err != nil {
+		return
+	}
+	printPCIeInfo(pci, quiet)
+	fmt.Printf("Interface UUID                   : %s\n", f.GetInterfaceUUID())
+	if !quiet {
+		if apiVer, err := f.GetAPIVersion(); err == nil {
+			fmt.Printf("Kernet API Version               : %d\n", apiVer)
+		}
+		fmt.Printf("Ports Num                        : %d\n", f.GetPortsNum())
+		if id, err := f.GetSocketID(); err == nil {
+			fmt.Printf("Socket Id                        : %d\n", id)
+		}
+		fmt.Printf("Bitstream Id                     : %s\n", f.GetBitstreamID())
+		fmt.Printf("Bitstream Metadata               : %s\n", f.GetBitstreamMetadata())
+	}
+
+	return
+}
+
+func portInfo(fname string, quiet bool) error {
 	var f fpga.FpgaPort
 	var err error
 	f, err = fpga.NewFpgaPort(fname)
@@ -202,53 +222,113 @@ func portInfo(fname string) error {
 		return err
 	}
 	defer f.Close()
-	fmt.Print("API:")
-	fmt.Println(f.GetAPIVersion())
-	fmt.Print("CheckExtension:")
-	fmt.Println(f.CheckExtension())
-	fmt.Print("Reset:")
-	fmt.Println(f.PortReset())
-	fmt.Print("PortGetInfo:")
-	fmt.Println(f.PortGetInfo())
-	pi, err := f.PortGetInfo()
-	if err == nil {
-		for idx := 0; uint32(idx) < pi.Regions; idx++ {
-			fmt.Printf("PortGetRegionInfo %d\n", idx)
-			fmt.Println(f.PortGetRegionInfo(uint32(idx)))
-		}
-	}
-
-	fmt.Println("GetDevPath: ", f.GetDevPath())
-	fmt.Println("GetSysFsPath: ", f.GetSysFsPath())
-	fmt.Println("GetName: ", f.GetName())
-	pci, err := f.GetPCIDevice()
-	fmt.Printf("GetPCIDevice: %+v %+v\n", pci, err)
-	id, err := f.GetPortID()
-	fmt.Printf("GetPort: %+v %+v\n", id, err)
-	fmt.Println("GetAcceleratorTypeUUID: ", f.GetAcceleratorTypeUUID())
-	fmt.Println("GetInterfaceUUID: ", f.GetInterfaceUUID())
-	fme, err := f.GetFME()
-	fmt.Printf("GetFME: %+v %+v\n", fme, err)
-
-	return nil
+	return printFpgaPort(f, quiet)
 }
 
-func doPR(dev, bs string, dryRun bool) error {
-
-	f, err := fpga.NewFpgaPort(dev)
+func printFpgaPort(f fpga.FpgaPort, quiet bool) (err error) {
+	fmt.Println("//****** PORT ******//")
+	fmt.Printf("Name                             : %s\n", f.GetName())
+	fmt.Printf("Device Node                      : %s\n", f.GetDevPath())
+	fmt.Printf("SysFS Path                       : %s\n", f.GetSysFsPath())
+	pci, err := f.GetPCIDevice()
 	if err != nil {
-		return err
+		return
 	}
-	defer f.Close()
-	m, err := bitstream.Open(bs)
+	printPCIeInfo(pci, quiet)
+	fme, err := f.GetFME()
 	if err != nil {
-		return err
+		return
 	}
-	defer m.Close()
+	fmt.Printf("FME Name                         : %s\n", fme.GetName())
+	num, err := f.GetPortID()
+	if err != nil {
+		return
+	}
+	fmt.Printf("Port Id                          : %d\n", num)
+	fmt.Printf("Interface UUID                   : %s\n", f.GetInterfaceUUID())
+	fmt.Printf("Accelerator UUID                 : %s\n", f.GetAcceleratorTypeUUID())
+	if !quiet {
+		if apiVer, err := f.GetAPIVersion(); err == nil {
+			fmt.Printf("Kernet API Version               : %d\n", apiVer)
+			pi, err := f.PortGetInfo()
+			if err == nil {
+				fmt.Printf("Port Regions                     : %d\n", pi.Regions)
+				for idx := 0; uint32(idx) < pi.Regions; idx++ {
+					if ri, err := f.PortGetRegionInfo(uint32(idx)); err == nil {
+						fmt.Printf("Port Region (Index/Size/Offset)  : %d / %d / %d\n", ri.Index, ri.Size, ri.Offset)
+					}
+				}
+			}
+		}
+	}
+	return
+}
 
-	fmt.Printf("Before programming I %q A %q\n", f.GetInterfaceUUID(), f.GetAcceleratorTypeUUID())
-	fmt.Printf("Trying to program %s to port %s: ", bs, dev)
-	fmt.Println(f.PR(m, dryRun))
-	fmt.Printf("After programming I %q A %q\n", f.GetInterfaceUUID(), f.GetAcceleratorTypeUUID())
+func printPCIeInfo(pci *fpga.PCIDevice, quiet bool) {
+	fmt.Printf("PCIe s:b:d:f                     : %s\n", pci.BDF)
+	if pci.PhysFn != nil && !quiet {
+		fmt.Printf("Physical Function PCIe s:b:d:f   : %s\n", pci.PhysFn.BDF)
+	}
+	fmt.Printf("Device Id                        : %s:%s\n", pci.Vendor, pci.Device)
+	if !quiet {
+		fmt.Printf("Device Class                     : %s\n", pci.Class)
+		fmt.Printf("Local CPUs                       : %s\n", pci.CPUs)
+		fmt.Printf("NUMA                             : %s\n", pci.NUMA)
+		if pci.VFs != "" {
+			fmt.Printf("SR-IOV Virtual Functions         : %s\n", pci.VFs)
+		}
+		if pci.TotalVFs != "" {
+			fmt.Printf("SR-IOV maximum Virtual Functions : %s\n", pci.TotalVFs)
+		}
+	}
+	return
+}
+
+func doPR(dev, fname string, dryRun, quiet bool) (err error) {
+	fp, err := fpga.NewFpgaPort(dev)
+	if err != nil {
+		return
+	}
+	defer fp.Close()
+	bs, err := bitstream.Open(fname)
+	if err != nil {
+		return
+	}
+	defer bs.Close()
+
+	if !quiet {
+		fmt.Printf("Before: Interface ID: %q AFU ID: %q\n", fp.GetInterfaceUUID(), fp.GetAcceleratorTypeUUID())
+		fmt.Printf("Programming %q to port %q: ", fname, dev)
+	}
+	err = fp.PR(bs, dryRun)
+	if !quiet {
+		if err != nil {
+			fmt.Println("FAILED")
+		} else {
+			fmt.Println("OK")
+		}
+		fmt.Printf("After : Interface ID: %q AFU ID: %q\n", fp.GetInterfaceUUID(), fp.GetAcceleratorTypeUUID())
+	}
+	return
+}
+
+func listDevices(listFMEs, listPorts, quiet bool) error {
+	fmes, ports := fpga.ListFpgaDevices()
+	if listFMEs {
+		if !quiet {
+			fmt.Printf("Detected FPGA FMEs: %d\n", len(fmes))
+		}
+		for _, v := range fmes {
+			fmt.Println(v)
+		}
+	}
+	if listPorts {
+		if !quiet {
+			fmt.Printf("Detected FPGA Ports: %d\n", len(ports))
+		}
+		for _, v := range ports {
+			fmt.Println(v)
+		}
+	}
 	return nil
 }

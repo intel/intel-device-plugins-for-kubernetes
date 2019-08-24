@@ -66,7 +66,13 @@ type FpgaFME interface {
 	GetPortsNum() int
 	// InterfaceUUID returns Interface UUID for FME
 	GetInterfaceUUID() string
-	// GetPort returns FpgaPort of the desired FPGA port within that FME
+	// GetSocketID returns physical socket number, in case NUMA enumeration fails
+	GetSocketID() (uint32, error)
+	// GetBitstreamID returns FME bitstream id
+	GetBitstreamID() string
+	// GetBitstreamMetadata returns FME bitstream metadata
+	GetBitstreamMetadata() string
+	// GetPort returns FpgaPort of the desired FPGA port index within that FME
 	// GetPort(uint32) (FpgaPort, error)
 }
 
