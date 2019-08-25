@@ -21,14 +21,9 @@ $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make fpga_crihook
 ```
 
-### Download 'Acceleration Stack for Runtime' tarball
-```
-Download a10_gx_pac_ias_1_1_pv_rte_installer.tar.gz from https://www.intel.com/content/www/us/en/programmable/solutions/acceleration-hub/downloads.html into $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin directory
-```
+### Ensure that CRI-O is configured to allow OCI hooks
 
-### Build init container that contains CRI hook and all its dependencies:
-```
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin
-$ ./build-initcontainer-image.sh
-```
-
+Recent versions of CRI-O are shipped with default configuration file that prevents
+CRI-O to discover and configure hooks automatically.
+For FPGA orchestration programmed mode, the OCI hooks are the key component.
+Thus, please make sure that in your `/etc/crio/crio.conf` parameter `hooks_dir` is either unset (to enable default search paths for OCI hooks configuration) or contains directory `/etc/containers/oci/hooks.d`
