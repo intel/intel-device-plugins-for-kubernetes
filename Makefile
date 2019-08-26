@@ -49,14 +49,22 @@ export TAG
 images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
 
 $(images):
+ifndef PUSH
 	@build/docker/build-image.sh $(REG)$@ $(BUILDER)
+else
+	@docker push $(REG)$@
+endif
 
 images: $(images)
 
 demos = $(shell cd demo/ && ls -d */ | sed 's/\(.\+\)\//\1/g')
 
 $(demos):
+ifndef PUSH
 	@cd demo/ && ./build-image.sh $(REG)$@ $(BUILDER)
+else
+	@docker push ${REG}$@
+endif
 
 demos: $(demos)
 

@@ -7,6 +7,7 @@ pipeline {
   }
   environment {
     GO111MODULE="on"
+    REG = "cloud-native-image-registry.westus.cloudapp.azure.com/"
     RUNC_VERSION="v1.0.0-rc8"
     CRIO_VERSION="v1.14.6"
     BUILDAH_VERSION="v1.10.0"
@@ -129,6 +130,18 @@ pipeline {
             dir(path: "$REPO_DIR") {
               sh "make demos BUILDER=buildah"
             }
+          }
+        }
+      }
+    }
+  }
+  post {
+    success {
+      script {
+        if (env.CHANGE_ID == null) {
+          withDockerRegistry([ credentialsId: "57e4a8b2-ccf9-4da1-a787-76dd1aac8fd1", url: "https://${REG}" ]) {
+            sh "make images PUSH=1"
+            sh "make demos PUSH=1"
           }
         }
       }
