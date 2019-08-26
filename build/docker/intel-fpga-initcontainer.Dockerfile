@@ -38,7 +38,7 @@ RUN cd $DIR/cmd/fpga_crihook && \
 FROM scratch as final
 COPY --from=builder /install_root /
 
-ARG SRC_DIR=/usr/local/fpga-sw.src
+ARG SRC_DIR=/usr/local/fpga-sw
 ARG DST_DIR=/opt/intel/fpga-sw
 
 # CRI hook
@@ -64,4 +64,4 @@ ln -sf $HOOK_CONF_DST /etc/containers/oci/hooks.d/$HOOK_CONF\n\
 rm $DST_DIR/deploy.sh\n\
 ">> $SRC_DIR/deploy.sh && chmod +x $SRC_DIR/deploy.sh
 
-CMD [ "/opt/intel/fpga-sw.src/deploy.sh" ]
+ENTRYPOINT [ "/usr/local/fpga-sw/deploy.sh" ]
