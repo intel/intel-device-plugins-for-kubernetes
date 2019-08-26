@@ -38,7 +38,7 @@ spec:
               name: intel-qat-plugin-config
               key: DEBUG
         imagePullPolicy: IfNotPresent
-        command: ["/usr/bin/intel_qat_device_plugin", "-dpdk-driver", "$(DPDK_DRIVER)", "-kernel-vf-drivers", "$(KERNEL_VF_DRIVERS)", "-max-num-devices", "$(MAX_NUM_DEVICES)", "-debug", "$(DEBUG)"]
+        args: ["-dpdk-driver", "$(DPDK_DRIVER)", "-kernel-vf-drivers", "$(KERNEL_VF_DRIVERS)", "-max-num-devices", "$(MAX_NUM_DEVICES)", "-debug", "$(DEBUG)"]
         volumeMounts:
         - name: pcidir
           mountPath: /sys/bus/pci
