@@ -17,14 +17,16 @@ RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
 # Fetch dependencies and source code
 ARG OPAE_RElEASE=1.3.2-1
 
-RUN swupd bundle-add wget c-basic devpkg-json-c devpkg-util-linux devpkg-hwloc doxygen Sphinx && \
+RUN swupd bundle-add wget c-basic devpkg-json-c devpkg-util-linux devpkg-hwloc doxygen Sphinx patch && \
     mkdir -p /usr/src/opae && \
     cd /usr/src/opae && \
     wget https://github.com/OPAE/opae-sdk/archive/${OPAE_RElEASE}.tar.gz && \
     tar xf *.tar.gz
 
 # Build OPAE
+ADD 0001-OPAE-in-containers-don-t-enumerate-missing-device.patch /usr/src/opae/opae-sdk-${OPAE_RElEASE}
 RUN cd /usr/src/opae/opae-sdk-${OPAE_RElEASE} && \
+    patch -p1 < 0001-OPAE-in-containers-don-t-enumerate-missing-device.patch && \
     mkdir build && \
     cd build && \
     cmake .. -DBUILD_ASE=0 -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_SKIP_RPATH=true && \
