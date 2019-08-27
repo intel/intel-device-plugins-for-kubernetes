@@ -41,19 +41,22 @@ build: $(cmds)
 clean:
 	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; $(GO) clean ; cd $$pwd ; done
 
-TAG?=$(shell git rev-parse HEAD)
+ORG?=intel
+REG?=$(ORG)/
+TAG?=devel
+export TAG
 
 images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
 
 $(images):
-	@build/docker/build-image.sh $@ $(BUILDER)
+	@build/docker/build-image.sh $(REG)$@ $(BUILDER)
 
 images: $(images)
 
 demos = $(shell cd demo/ && ls -d */ | sed 's/\(.\+\)\//\1/g')
 
 $(demos):
-	@cd demo/ && ./build-image.sh $@ $(BUILDER)
+	@cd demo/ && ./build-image.sh $(REG)$@ $(BUILDER)
 
 demos: $(demos)
 

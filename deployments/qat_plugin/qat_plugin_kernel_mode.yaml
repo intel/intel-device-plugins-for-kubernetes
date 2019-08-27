@@ -17,7 +17,7 @@ spec:
       - name: intel-qat-kernel-plugin
         securityContext:
           privileged: true
-        image: intel-qat-plugin:devel
+        image: intel/intel-qat-plugin:devel
         imagePullPolicy: IfNotPresent
         command: ["/usr/bin/intel_qat_device_plugin", "-mode", "kernel"]
         volumeMounts:

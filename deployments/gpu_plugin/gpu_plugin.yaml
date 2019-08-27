@@ -21,7 +21,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel-gpu-plugin:devel
+        image: intel/intel-gpu-plugin:devel
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: devfs

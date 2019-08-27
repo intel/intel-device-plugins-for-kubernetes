@@ -17,7 +17,7 @@ spec:
       serviceAccountName: intel-fpga-plugin-controller
       initContainers:
       - name: intel-fpga-initcontainer
-        image: intel-fpga-initcontainer:devel
+        image: intel/intel-fpga-initcontainer:devel
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - mountPath: /opt/intel/fpga-sw
@@ -31,7 +31,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel-fpga-plugin:devel
+        image: intel/intel-fpga-plugin:devel
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: devfs

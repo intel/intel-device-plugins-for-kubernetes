@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: fpga-mutator
-          image: intel-fpga-admissionwebhook:devel
+          image: intel/intel-fpga-admissionwebhook:devel
           imagePullPolicy: IfNotPresent
           args:
             - -tls-cert-file=/etc/webhook/certs/cert.pem
