@@ -15,8 +15,6 @@ spec:
         - name: fpga-mutator
           image: intel-fpga-admissionwebhook:devel
           imagePullPolicy: IfNotPresent
-          command:
-            - /usr/bin/intel_fpga_admissionwebhook
           args:
             - -tls-cert-file=/etc/webhook/certs/cert.pem
             - -tls-private-key-file=/etc/webhook/certs/key.pem

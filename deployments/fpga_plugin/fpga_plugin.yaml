@@ -19,7 +19,6 @@ spec:
       - name: intel-fpga-initcontainer
         image: intel-fpga-initcontainer:devel
         imagePullPolicy: IfNotPresent
-        command: ['/opt/intel/fpga-sw.src/deploy.sh']
         volumeMounts:
         - mountPath: /opt/intel/fpga-sw
           name: intel-fpga-sw

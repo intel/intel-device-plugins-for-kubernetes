@@ -32,4 +32,4 @@ RUN chmod a+x /go/bin/fpga_admissionwebhook \
 
 FROM scratch as final
 COPY --from=builder /install_root /
-CMD ["/usr/local/bin/intel_fpga_admissionwebhook"]
+ENTRYPOINT ["/usr/local/bin/intel_fpga_admissionwebhook"]
