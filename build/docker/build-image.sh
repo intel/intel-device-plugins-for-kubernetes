@@ -1,4 +1,29 @@
-#!/bin/sh -e
+#!/bin/bash -e
+
+BUILD_ARGS=
+PULL=yes
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+    key="$1"
+
+    case $key in
+	--build-arg)
+	BUILD_ARGS="${BUILD_ARGS} --build-arg=$2"
+	shift # past argument
+	shift # past value
+	;;
+	--no-pull)
+	PULL=
+	shift # past argument
+	;;
+	*)    # unknown option
+	POSITIONAL+=("$1") # save it in an array for later
+	shift # past argument
+	;;
+    esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
 
 IMG=$1
 BUILDER=$2
@@ -19,10 +44,10 @@ TAG=${TAG:-devel}
 SRCREV=$(git rev-parse HEAD)
 
 if [ -z "${BUILDER}" -o "${BUILDER}" = 'docker' ] ; then
-    docker build --pull -t ${IMG}:${TAG} -f ${DOCKERFILE} .
+    docker build ${PULL/yes/--pull} -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .
     docker tag ${IMG}:${TAG} ${IMG}:${SRCREV}
 elif [ "${BUILDER}" = 'buildah' ] ; then
-    buildah bud --pull-always -t ${IMG}:${TAG} -f ${DOCKERFILE} .
+    buildah bud  ${PULL/yes/--pull-always} -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .
     buildah tag ${IMG}:${TAG} ${IMG}:${SRCREV}
 else
     (>&2 echo "Unknown builder ${BUILDER}")

@@ -3,6 +3,7 @@ GOFMT := gofmt
 GOCYCLO := gocyclo
 
 BUILDTAGS ?= ""
+BUILDER ?= "docker"
 
 pkgs  = $(shell $(GO) list ./... | grep -v vendor)
 cmds = $(shell ls cmd)
@@ -46,10 +47,20 @@ REG?=$(ORG)/
 TAG?=devel
 export TAG
 
-images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
+images = $(shell ls build/docker/*.Dockerfile | grep -v clearlinux-base | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
 
+clearlinux-base:
+	@test -d mod -o ! -d $(shell $(GO) env GOPATH)/pkg/mod && (echo "Either no cache or not clean workspace detected. Make sure there's no 'mod' directory in the repo and Go mod cache is present. Exiting..."; exit 1) || true
+	@mv $(shell $(GO) env GOPATH)/pkg/mod .
+	@rc=0; build/docker/build-image.sh $@ $(BUILDER) || rc=1; mv mod $(shell $(GO) env GOPATH)/pkg/; exit $$rc
+
+ifeq ($(USE_CACHED_GO_MODULES),yes)
+$(images): clearlinux-base
+	@build/docker/build-image.sh --build-arg CLEAR_LINUX_BASE=clearlinux-base:devel --no-pull $(REG)$@ $(BUILDER)
+else
 $(images):
 	@build/docker/build-image.sh $(REG)$@ $(BUILDER)
+endif
 
 images: $(images)
 
@@ -70,4 +81,4 @@ lock-images:
 	@scripts/update-clear-linux-base.sh clearlinux/golang:latest $(shell ls build/docker/*.Dockerfile)
 	@scripts/update-clear-linux-base.sh clearlinux:latest $(shell find demo -name Dockerfile)
 
-.PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images) lock-images
+.PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images) lock-images $(images_tags) push

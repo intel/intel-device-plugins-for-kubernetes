@@ -13,6 +13,11 @@ FROM ${CLEAR_LINUX_BASE} as builder
 ARG CLEAR_LINUX_VERSION=
 
 RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
+
+ARG DIR=/intel-device-plugins-for-kubernetes
+WORKDIR $DIR
+COPY . .
+
 RUN mkdir /install_root \
     && swupd os-install \
     ${CLEAR_LINUX_VERSION} \
@@ -23,9 +28,6 @@ RUN mkdir /install_root \
     && rm -rf /install_root/var/lib/swupd/*
 
 # Build CRI Hook
-ARG DIR=/intel-device-plugins-for-kubernetes
-WORKDIR $DIR
-COPY . .
 RUN cd $DIR/cmd/fpga_crihook && \
     go install && \
     chmod a+x /go/bin/fpga_crihook && \

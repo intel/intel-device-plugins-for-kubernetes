@@ -50,8 +50,8 @@ script:
   - make vet
   - make cyclomatic-check
   - make test BUILDTAGS=kerneldrv
-  - make -j4 images
-  - make images BUILDER=buildah
+  - make -j4 images USE_CACHED_GO_MODULES=yes
+  - make images BUILDER=buildah USE_CACHED_GO_MODULES=yes
   - make demos
   - make demos BUILDER=buildah
 
