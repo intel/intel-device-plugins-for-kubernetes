@@ -140,8 +140,7 @@ pipeline {
       script {
         if (env.CHANGE_ID == null) {
           withDockerRegistry([ credentialsId: "57e4a8b2-ccf9-4da1-a787-76dd1aac8fd1", url: "https://${REG}" ]) {
-            sh "make images PUSH=1"
-            sh "make demos PUSH=1"
+            sh "make push"
           }
         }
       }
