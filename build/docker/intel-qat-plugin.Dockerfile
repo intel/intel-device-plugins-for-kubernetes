@@ -45,4 +45,4 @@ RUN chmod a+x /go/bin/qat_plugin \
 FROM scratch as final
 COPY --from=builder /install_root /
 ENV PATH=/usr/local/bin
-CMD ["/usr/local/bin/intel_qat_device_plugin"]
+ENTRYPOINT ["/usr/local/bin/intel_qat_device_plugin"]

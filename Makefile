@@ -41,21 +41,35 @@ build: $(cmds)
 clean:
 	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; $(GO) clean ; cd $$pwd ; done
 
-TAG?=$(shell git rev-parse HEAD)
+ORG?=intel
+REG?=$(ORG)/
+TAG?=devel
+export TAG
 
 images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
 
 $(images):
-	@build/docker/build-image.sh $@ $(BUILDER)
+ifndef PUSH
+	@build/docker/build-image.sh $(REG)$@ $(BUILDER)
+else
+	@docker push $(REG)$@
+endif
 
 images: $(images)
 
 demos = $(shell cd demo/ && ls -d */ | sed 's/\(.\+\)\//\1/g')
 
 $(demos):
-	@cd demo/ && ./build-image.sh $@ $(BUILDER)
+ifndef PUSH
+	@cd demo/ && ./build-image.sh $(REG)$@ $(BUILDER)
+else
+	@docker push ${REG}$@
+endif
 
 demos: $(demos)
 
+lock-images:
+	@scripts/update-clear-linux-base.sh clearlinux/golang:latest $(shell ls build/docker/*.Dockerfile)
+	@scripts/update-clear-linux-base.sh clearlinux:latest $(shell find demo -name Dockerfile)
 
-.PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images)
+.PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images) lock-images
