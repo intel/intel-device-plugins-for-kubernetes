@@ -49,24 +49,22 @@ export TAG
 images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
 
 $(images):
-ifndef PUSH
 	@build/docker/build-image.sh $(REG)$@ $(BUILDER)
-else
-	@docker push $(REG)$@
-endif
 
 images: $(images)
 
 demos = $(shell cd demo/ && ls -d */ | sed 's/\(.\+\)\//\1/g')
 
 $(demos):
-ifndef PUSH
 	@cd demo/ && ./build-image.sh $(REG)$@ $(BUILDER)
-else
-	@docker push ${REG}$@
-endif
 
 demos: $(demos)
+
+image_tags = $(patsubst %,$(REG)%,$(images) $(demos))
+$(image_tags):
+	@docker push $@
+
+push: $(image_tags)
 
 lock-images:
 	@scripts/update-clear-linux-base.sh clearlinux/golang:latest $(shell ls build/docker/*.Dockerfile)
