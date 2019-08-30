@@ -23,6 +23,8 @@ spec:
                 fieldPath: spec.nodeName
         image: intel/intel-gpu-plugin:devel
         imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
         volumeMounts:
         - name: devfs
           mountPath: /dev

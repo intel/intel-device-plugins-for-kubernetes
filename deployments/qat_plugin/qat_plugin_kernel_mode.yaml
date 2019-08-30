@@ -16,6 +16,7 @@ spec:
       containers:
       - name: intel-qat-kernel-plugin
         securityContext:
+          readOnlyRootFilesystem: true
           privileged: true
         image: intel/intel-qat-plugin:devel
         imagePullPolicy: IfNotPresent

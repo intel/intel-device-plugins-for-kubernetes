@@ -19,6 +19,8 @@ spec:
       - name: intel-fpga-initcontainer
         image: intel/intel-fpga-initcontainer:devel
         imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
         volumeMounts:
         - mountPath: /opt/intel/fpga-sw
           name: intel-fpga-sw
@@ -33,6 +35,8 @@ spec:
                 fieldPath: spec.nodeName
         image: intel/intel-fpga-plugin:devel
         imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
         volumeMounts:
         - name: devfs
           mountPath: /dev
