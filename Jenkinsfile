@@ -139,7 +139,7 @@ pipeline {
     success {
       script {
         if (env.CHANGE_ID == null) {
-          withDockerRegistry([ credentialsId: "57e4a8b2-ccf9-4da1-a787-76dd1aac8fd1", url: "https://${REG}" ]) {
+          withDockerRegistry([ credentialsId: "e16bd38a-76cb-4900-a5cb-7f6aa3aeb22d", url: "https://${REG}" ]) {
             sh "make push"
           }
         }
