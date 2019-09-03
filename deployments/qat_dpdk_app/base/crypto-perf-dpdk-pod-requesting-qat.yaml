@@ -9,6 +9,8 @@ spec:
     imagePullPolicy: IfNotPresent
     command: [ "/bin/bash", "-c", "--" ]
     args: [ "while true; do sleep 300000; done;" ]
+    securityContext:
+      readOnlyRootFilesystem: true
     volumeMounts:
     - mountPath: /dev/hugepages
       name: hugepage

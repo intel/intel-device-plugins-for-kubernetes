@@ -16,6 +16,8 @@ spec:
       containers:
       - name: intel-qat-plugin
         image: intel/intel-qat-plugin:devel
+        securityContext:
+          readOnlyRootFilesystem: true
         env:
         - name: DPDK_DRIVER
           valueFrom:
