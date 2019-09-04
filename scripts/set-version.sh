@@ -15,4 +15,4 @@ if [ $# != 1 ] || [ "$1" = "?" ] || [ "$1" = "--help" ]; then
     exit 1
 fi
 
-sed -i -e "s;\(^TAG?*=\|intel/crypto-perf:\|intel/intel-[^ ]*:\)[^ ]*;\1$1;g" $(git grep -l '^TAG?*=\|intel/crypto-perf:\|intel/intel-[^ ]*:' Makefile deployments)
+sed -i -e "s;\(^TAG?*=\|intel/crypto-perf:\|intel/opae-nlb-demo:\|intel/intel-[^ ]*:\)[^ ]*;\1$1;g" $(git grep -l '^TAG?*=\|intel/crypto-perf:\|intel/opae-nlb-demo:\|intel/intel-[^ ]*:' Makefile deployments demo/*fpga*.yaml)

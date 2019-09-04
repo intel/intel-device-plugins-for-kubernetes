@@ -125,16 +125,16 @@ screen5()
   clear
   cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
   out "5. Run OPAE workload that uses NLB3 bitstream"
-  out "Build clearlinux-demo-opae image:"
-  command "cd demo; ./build-image.sh clearlinux-demo-opae ; cd ../" 15
+  out "Build opae-nlb-demo image:"
+  command "cd demo; ./build-image.sh opae-nlb-demo ; cd ../" 15
   out "Import image from docker to CRI-O:"
-  command "docker save clearlinux-demo-opae:devel | sudo podman load"
+  command "docker save opae-nlb-demo:devel | sudo podman load"
   out "Program bitstream that is not wanted by the workload:"
   command "sudo /opt/intel/fpga-sw/opae/fpgaconf-wrapper -s0 /srv/intel.com/fpga/9926ab6d6c925a68aabca7d84c545738/d8424dc4a4a3c413f89e433683f9040b.gbs"
   out "Check if device is programmed with it:"
   command "cat /sys/class/fpga/intel-fpga-dev.0/intel-fpga-port.0/afu_id"
   out "Run workload:"
-  command "kubectl create -f demo/test-fpga-region.yml"
+  command "kubectl create -f demo/test-fpga-region.yaml"
   sleep 2
   out "Look at the test output"
   command "kubectl logs test-fpga-region"

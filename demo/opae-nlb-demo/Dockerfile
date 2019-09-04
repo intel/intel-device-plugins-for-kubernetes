@@ -12,13 +12,14 @@ FROM ${CLEAR_LINUX_BASE} as builder
 
 ARG CLEAR_LINUX_VERSION=
 
-RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
-
+RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION} && \
+    swupd bundle-add wget c-basic devpkg-json-c devpkg-util-linux devpkg-hwloc doxygen Sphinx patch
 # Fetch dependencies and source code
 ARG OPAE_RElEASE=1.3.2-1
 
-RUN swupd bundle-add wget c-basic devpkg-json-c devpkg-util-linux devpkg-hwloc doxygen Sphinx patch && \
-    mkdir -p /usr/src/opae && \
+# workaround for a swupd failure discussed in https://github.com/clearlinux/distribution/issues/831
+RUN ldconfig
+RUN mkdir -p /usr/src/opae && \
     cd /usr/src/opae && \
     wget https://github.com/OPAE/opae-sdk/archive/${OPAE_RElEASE}.tar.gz && \
     tar xf *.tar.gz
@@ -51,3 +52,4 @@ COPY --from=builder /usr/src/opae/opae-sdk-*/build/bin/nlb* /usr/bin/
 COPY --from=builder /usr/src/opae/opae-sdk-*/build/lib/lib*.so* /usr/lib64/
 
 COPY test_fpga.sh /usr/bin/
+ENTRYPOINT ["/usr/bin/test_fpga.sh"]
