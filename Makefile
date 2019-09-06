@@ -3,6 +3,7 @@ GOFMT := gofmt
 GOCYCLO := gocyclo
 
 BUILDTAGS ?= ""
+BUILDER ?= "docker"
 
 pkgs  = $(shell $(GO) list ./... | grep -v vendor)
 cmds = $(shell ls cmd)
@@ -14,6 +15,9 @@ format:
 
 vet:
 	@$(GO) vet -v -vettool=$$(which shadow) $(pkgs)
+
+vendor:
+	@$(GO) mod vendor -v
 
 cyclomatic-check:
 	@report=`$(GOCYCLO) -over 15 cmd pkg`; if [ -n "$$report" ]; then echo "Complexity is over 15 in"; echo $$report; exit 1; fi
@@ -46,6 +50,12 @@ REG?=$(ORG)/
 TAG?=devel
 export TAG
 
+pre-pull:
+ifeq ($(TAG),devel)
+	@$(BUILDER) pull clearlinux/golang:latest
+	@$(BUILDER) pull clearlinux:latest
+endif
+
 images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
 
 $(images):
@@ -70,4 +80,4 @@ lock-images:
 	@scripts/update-clear-linux-base.sh clearlinux/golang:latest $(shell ls build/docker/*.Dockerfile)
 	@scripts/update-clear-linux-base.sh clearlinux:latest $(shell find demo -name Dockerfile)
 
-.PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images) lock-images
+.PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images) lock-images vendor pre-pull

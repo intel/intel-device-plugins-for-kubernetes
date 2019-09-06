@@ -98,12 +98,19 @@ pipeline {
         }
       }
     }
+    stage('make pre-pull') {
+      steps {
+	dir(path: "$REPO_DIR") {
+          sh "make pre-pull"
+        }
+      }
+    }
     stage('make images') {
       parallel {
         stage("make images with docker") {
           steps {
             dir(path: "$REPO_DIR") {
-              sh "make images"
+              sh "make -j4 images"
             }
           }
         }
