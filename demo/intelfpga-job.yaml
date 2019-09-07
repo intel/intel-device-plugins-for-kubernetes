@@ -13,9 +13,8 @@ spec:
       restartPolicy: Never
       containers:
         - name: intelfpga-demo-job-1
-          image: clearlinux-demo-opae:devel
+          image: intel/opae-nlb-demo:devel
           imagePullPolicy: IfNotPresent
-          command: ["/usr/bin/test_fpga.sh"]
           securityContext:
             capabilities:
               add:

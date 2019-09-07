@@ -5,9 +5,8 @@ metadata:
 spec:
   containers:
   - name: test-container
-    image: clearlinux-demo-opae:devel
+    image: intel/opae-nlb-demo:devel
     imagePullPolicy: IfNotPresent
-    command: ["sh", "/usr/bin/test_fpga.sh"]
     securityContext:
       capabilities:
         add:
