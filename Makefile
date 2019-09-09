@@ -43,7 +43,7 @@ clean:
 
 ORG?=intel
 REG?=$(ORG)/
-TAG?=devel
+TAG?=0.15.0-rc.1
 export TAG
 
 images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
