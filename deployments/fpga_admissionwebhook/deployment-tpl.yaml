@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: fpga-mutator
-          image: intel/intel-fpga-admissionwebhook:devel
+          image: intel/intel-fpga-admissionwebhook:0.15.0-rc.1
           imagePullPolicy: IfNotPresent
           securityContext:
             readOnlyRootFilesystem: true
