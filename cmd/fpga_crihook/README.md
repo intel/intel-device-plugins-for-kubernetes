@@ -10,15 +10,20 @@ You must install and set up the following FPGA plugin modules for correct operat
 
 ### Get source code:
 ```
-$ mkdir -p $GOPATH/src/github.com/intel/
-$ cd $GOPATH/src/github.com/intel/
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes.git
+    $ mkdir -p $GOPATH/src/github.com/intel/
+    $ cd $GOPATH/src/github.com/intel/
+    $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes.git
 ```
 
 ### Build CRI-O hook:
 ```
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
-$ make fpga_crihook
+    $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+    $ make intel-fpga-initcontainer
+    $ docker images
+    REPOSITORY                      TAG                                        IMAGE ID            CREATED          SIZE
+    intel/intel-fpga-initcontainer  01b11d9d6d18bbe7df987a738efb20ae22ce795e   2e7586fe0fa6        0 sec ago        57.6MB
+    intel/intel-fpga-initcontainer  devel                                      2e7586fe0fa6        0 sec ago        57.6MB
+    ...
 ```
 
 ### Ensure that CRI-O is configured to allow OCI hooks
