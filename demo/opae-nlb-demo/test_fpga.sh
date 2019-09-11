@@ -2,8 +2,8 @@
 
 # Test FPGA by running 2 OPAE samples: nlb3 and nlb0
 # nlb3 is expected to succeed, nlb0 - to fail
-green () { echo "\033[0;32m$1\033[0m";}
-red () { echo "\033[0;31m$1\033[0m";}
+green () { echo -e "\033[0;32m$1\033[0m";}
+red () { echo -e "\033[0;31m$1\033[0m";}
 
 green 'Running nlb3'
 if nlb3; then
