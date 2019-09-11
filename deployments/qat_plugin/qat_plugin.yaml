@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: intel-qat-plugin
-        image: intel/intel-qat-plugin:0.15.0-rc.1
+        image: intel/intel-qat-plugin:0.15.0
         securityContext:
           readOnlyRootFilesystem: true
         env:
