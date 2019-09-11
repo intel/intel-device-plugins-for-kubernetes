@@ -21,9 +21,9 @@ You must install and set up the following FPGA plugin modules for correct operat
     $ cd $SRC
     $ make intel-fpga-admissionwebhook
     $ docker images
-    REPOSITORY                    TAG                                        IMAGE ID            CREATED          SIZE
-    intel-fpga-admissionwebhook   10efe163a5091e8b2ceaa9baad236d3a41063c88   6c3bce0b8693        0 sec ago        25.2MB
-    intel-fpga-admissionwebhook   devel                                      6c3bce0b8693        0 sec ago        25.2MB
+    REPOSITORY                          TAG                                        IMAGE ID            CREATED          SIZE
+    intel/intel-fpga-admissionwebhook   01b11d9d6d18bbe7df987a738efb20ae22ce795e   eb8f95f87ee4        0 sec ago        81.9MB
+    intel/intel-fpga-admissionwebhook   devel                                      eb8f95f87ee4        0 sec ago        81.9MB
     ...
 ```
 
@@ -35,19 +35,29 @@ Run the `scripts/webhook-deploy.sh` script.
     $ cd $SRC
     $ ./scripts/webhook-deploy.sh
     Create secret including signed key/cert pair for the webhook
-    Creating certs in /tmp/tmp.Ebb77GBKqm
+    Creating certs in /tmp/tmp.XGTpddQBwP
     certificatesigningrequest.certificates.k8s.io/intel-fpga-webhook-svc.default created
-    NAME                             AGE       REQUESTOR      CONDITION
-    intel-fpga-webhook-svc.default   0s        system:admin   Pending
+    NAME                             AGE   REQUESTOR          CONDITION
+    intel-fpga-webhook-svc.default   0s    kubernetes-admin   Pending
     certificatesigningrequest.certificates.k8s.io/intel-fpga-webhook-svc.default approved
     secret/intel-fpga-webhook-certs created
-    Removing /tmp/tmp.Ebb77GBKqm
+    Removing /tmp/tmp.XGTpddQBwP
     Create FPGA CRDs
     customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
     customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
-    acceleratorfunction.fpga.intel.com/arria10-nlb0 created
-    acceleratorfunction.fpga.intel.com/arria10-nlb3 created
-    fpgaregion.fpga.intel.com/arria10 created
+    fpgaregion.fpga.intel.com/arria10.dcp1.0 created
+    acceleratorfunction.fpga.intel.com/arria10.dcp1.0-compress created
+    acceleratorfunction.fpga.intel.com/arria10.dcp1.0-nlb0 created
+    acceleratorfunction.fpga.intel.com/arria10.dcp1.0-nlb3 created
+    fpgaregion.fpga.intel.com/arria10.dcp1.1 created
+    acceleratorfunction.fpga.intel.com/arria10.dcp1.1-nlb0 created
+    acceleratorfunction.fpga.intel.com/arria10.dcp1.1-nlb3 created
+    fpgaregion.fpga.intel.com/arria10.dcp1.2 created
+    acceleratorfunction.fpga.intel.com/arria10.dcp1.2-nlb0 created
+    acceleratorfunction.fpga.intel.com/arria10.dcp1.2-nlb3 created
+    fpgaregion.fpga.intel.com/d5005 created
+    acceleratorfunction.fpga.intel.com/d5005-nlb0 created
+    acceleratorfunction.fpga.intel.com/d5005-nlb3 created
     clusterrole.rbac.authorization.k8s.io/fpga-reader created
     clusterrolebinding.rbac.authorization.k8s.io/default-fpga-reader created
     Create webhook deployment

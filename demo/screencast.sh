@@ -79,7 +79,7 @@ screen3()
   out "Build intel-fpga-admissionwebhook image:"
   command "cd intel-device-plugins-for-kubernetes; make intel-fpga-admissionwebhook" 15
   out "Import image from docker to CRI-O:"
-  command "docker save intel-fpga-admissionwebhook:devel | sudo podman load"
+  command "docker save intel/intel-fpga-admissionwebhook:devel | sudo podman load"
   cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
   out "Deploy the webhook:"
   command "cd scripts ; ./webhook-deploy.sh --namespace kube-system --mode orchestrated; cd ../"
@@ -96,14 +96,11 @@ screen4()
   out "Build intel-fpga-plugin image"
   command "make intel-fpga-plugin" 15
   out "Import image from docker to CRI-O:"
-  command "docker save intel-fpga-plugin:devel | sudo podman load"
+  command "docker save intel/intel-fpga-plugin:devel | sudo podman load"
   out "Build intel-fpga-initcontainer image"
-  out "NOTE! This image requires 'Acceleration Stack for Runtime' tarball from https://www.intel.com/content/www/us/en/programmable/solutions/acceleration-hub/downloads.html" 15
-  out "We'll skip download part as it takes time and simply copy the tarball to the required location and build the image:" 15
-  command "cp /srv/demo/a10_gx_pac_ias_1_1_pv_rte_installer.tar.gz deployments/fpga_plugin/" 15
-  command "cd deployments/fpga_plugin/ ; ./build-initcontainer-image.sh" 15
+  command "make intel-fpga-initcontainer" 15
   out "Import image from docker to CRI-O:"
-  command "docker save intel-fpga-initcontainer:devel | sudo podman load"
+  command "docker save intel/intel-fpga-initcontainer:devel | sudo podman load"
   out "Check that both images are imported:"
   command "sudo crictl images|grep 'intel-fpga-\(i\|p\)'"
   out "Create a service account for the plugin"
@@ -126,9 +123,9 @@ screen5()
   cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
   out "5. Run OPAE workload that uses NLB3 bitstream"
   out "Build opae-nlb-demo image:"
-  command "cd demo; ./build-image.sh opae-nlb-demo ; cd ../" 15
+  command "cd demo; ./build-image.sh intel/opae-nlb-demo ; cd ../" 15
   out "Import image from docker to CRI-O:"
-  command "docker save opae-nlb-demo:devel | sudo podman load"
+  command "docker save intel/opae-nlb-demo:devel | sudo podman load"
   out "Program bitstream that is not wanted by the workload:"
   command "sudo /opt/intel/fpga-sw/opae/fpgaconf-wrapper -s0 /srv/intel.com/fpga/9926ab6d6c925a68aabca7d84c545738/d8424dc4a4a3c413f89e433683f9040b.gbs"
   out "Check if device is programmed with it:"
