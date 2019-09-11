@@ -53,20 +53,20 @@ Only one worker node has a GPU. The time difference in transcoding speed is capt
 ## Intel® FPGA Device Plugin demo video
 
 The screencast demonstrates the deployment of the Intel® FPGA Device Plugin for
-Kubernetes and executes a sample GZIP compression workload. The demo begins
+Kubernetes and executes a native loopback 3 (NLB3) workload. The demo begins
 with a fully [configured Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
 with the [Go runtime](https://golang.org/doc/install).
 
 ### Demo platform configuration
 
 - Hardware
-    - 1-node, 2x Intel® Xeon® E5-2680 CPU @ 2.4 GHz
-    - Total memory 251 GB
+    - 1-node, 2x Intel@ Xeon@ Gold 6140M CPU @ 2.30GHz
+    - Total memory 377 GB
     - Intel® Arria® 10 GX FPGA
 - Software
-    - OpenSUSE* 15 (Kernel: 4.18.9-200.fc28.x86_64)
-    - Kubernetes* 1.11
-    - CRI-O 1.11.1
+    - Ubuntu 18.04.2 LTS (Kernel: 4.15.0-60-generic)
+    - Kubernetes* 1.13
+    - CRI-O 1.13.1
     - Intel® FPGA Device Plugin built from master branch
 
 ### Demo steps
@@ -75,14 +75,14 @@ with the [Go runtime](https://golang.org/doc/install).
 2. Clone the [Intel Device Plugins for Kubernetes source](https://github.com/intel/intel-device-plugins-for-kubernetes).
 3. Provision the [admission controller webhook](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_admissionwebhook/README.md).
 4. Provision the [Intel® FPGA Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_plugin/README.md).
-5. Create bitstream storage for the Intel® FPGA.
-6. Run the sample GZIP compression workload.
+5. Build the opae-nlb-demo image
+6. Run the NLB3 workload.
 
 ### Screencast
 
 Intel® FPGA Device Plugin deployment
 
-[![Intel® FPGA Device Plugin deployment](https://asciinema.org/a/mRn15bkRRUzTG4kp2UeHQX6gk.png)](https://asciinema.org/a/mRn15bkRRUzTG4kp2UeHQX6gk)
+[![Intel® FPGA Device Plugin deployment](https://asciinema.org/a/7FK8WDwyoL5g1T5HOa2vekKU2.png)](https://asciinema.org/a/7FK8WDwyoL5g1T5HOa2vekKU2)
 
 ## Intel® QuickAssist Technology Device Plugin OpenSSL demo video
 
