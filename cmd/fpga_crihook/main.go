@@ -167,7 +167,7 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 	for num, region := range regionEnv {
 		afu, ok := afuEnv[num]
 		if !ok {
-			errors.Errorf("Environment variable %s%s is not set", fpgaAfuEnvPrefix, num)
+			return nil, errors.Errorf("Environment variable %s%s is not set", fpgaAfuEnvPrefix, num)
 		}
 
 		// Find a device suitable for the region/interface id
