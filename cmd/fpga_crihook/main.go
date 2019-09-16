@@ -97,13 +97,13 @@ type fpgaParams struct {
 	portDevice string
 }
 
-func newHookEnv(sysFsPrefix, bitstreamDir string, config string, execer utilsexec.Interface) (*hookEnv, error) {
+func newHookEnv(sysFsPrefix, bitstreamDir string, config string, execer utilsexec.Interface) *hookEnv {
 	return &hookEnv{
 		sysFsPrefix:  sysFsPrefix,
 		bitstreamDir: bitstreamDir,
 		config:       config,
 		execer:       execer,
-	}, nil
+	}
 }
 
 func (he *hookEnv) getConfig(stdinJ *Stdin) (*Config, error) {
@@ -283,12 +283,9 @@ func main() {
 		os.Setenv("PATH", "/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin")
 	}
 
-	he, err := newHookEnv("", fpgaBitStreamDirectory, configJSON, utilsexec.New())
-	if err == nil {
-		err = he.process(os.Stdin)
-	}
+	he := newHookEnv("", fpgaBitStreamDirectory, configJSON, utilsexec.New())
 
-	if err != nil {
+	if err := he.process(os.Stdin); err != nil {
 		fmt.Printf("%+v\n", err)
 		os.Exit(1)
 	}
