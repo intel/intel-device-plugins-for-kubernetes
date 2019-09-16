@@ -52,12 +52,6 @@ type Config struct {
 		Env []string `json:"env"`
 	} `json:"process"`
 	Linux struct {
-		Resources struct {
-			Devices []struct {
-				Major int `json:"major,omitempty"`
-				Minor int `json:"minor,omitempty"`
-			} `json:"devices"`
-		} `json:"resources"`
 		Devices []Device `json:"devices"`
 	} `json:"linux"`
 }
