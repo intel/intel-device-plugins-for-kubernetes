@@ -52,12 +52,6 @@ type Config struct {
 		Env []string `json:"env"`
 	} `json:"process"`
 	Linux struct {
-		Resources struct {
-			Devices []struct {
-				Major int `json:"major,omitempty"`
-				Minor int `json:"minor,omitempty"`
-			} `json:"devices"`
-		} `json:"resources"`
 		Devices []Device `json:"devices"`
 	} `json:"linux"`
 }
@@ -103,13 +97,13 @@ type fpgaParams struct {
 	portDevice string
 }
 
-func newHookEnv(sysFsPrefix, bitstreamDir string, config string, execer utilsexec.Interface) (*hookEnv, error) {
+func newHookEnv(sysFsPrefix, bitstreamDir string, config string, execer utilsexec.Interface) *hookEnv {
 	return &hookEnv{
 		sysFsPrefix:  sysFsPrefix,
 		bitstreamDir: bitstreamDir,
 		config:       config,
 		execer:       execer,
-	}, nil
+	}
 }
 
 func (he *hookEnv) getConfig(stdinJ *Stdin) (*Config, error) {
@@ -167,7 +161,7 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 	for num, region := range regionEnv {
 		afu, ok := afuEnv[num]
 		if !ok {
-			errors.Errorf("Environment variable %s%s is not set", fpgaAfuEnvPrefix, num)
+			return nil, errors.Errorf("Environment variable %s%s is not set", fpgaAfuEnvPrefix, num)
 		}
 
 		// Find a device suitable for the region/interface id
@@ -270,6 +264,9 @@ func (he *hookEnv) process(reader io.Reader) error {
 		defer bitstream.Close()
 
 		err = port.PR(bitstream, false)
+		if err != nil {
+			return err
+		}
 
 		programmedAfu = port.GetAcceleratorTypeUUID()
 
@@ -286,12 +283,9 @@ func main() {
 		os.Setenv("PATH", "/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin")
 	}
 
-	he, err := newHookEnv("", fpgaBitStreamDirectory, configJSON, utilsexec.New())
-	if err == nil {
-		err = he.process(os.Stdin)
-	}
+	he := newHookEnv("", fpgaBitStreamDirectory, configJSON, utilsexec.New())
 
-	if err != nil {
+	if err := he.process(os.Stdin); err != nil {
 		fmt.Printf("%+v\n", err)
 		os.Exit(1)
 	}

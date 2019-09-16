@@ -158,10 +158,7 @@ func TestGetConfig(t *testing.T) {
 				t.Fatalf("can't decode %s: %+v", fname, err)
 			}
 
-			he, err := newHookEnv("", "", tc.configJSON, nil)
-			if err != nil {
-				t.Fatalf("can't create HookEnv for config JSON %s: %+v", tc.configJSON, err)
-			}
+			he := newHookEnv("", "", tc.configJSON, nil)
 
 			config, err := he.getConfig(stdinJ)
 			if err != nil {
@@ -287,10 +284,7 @@ func TestGetFPGAParams(t *testing.T) {
 				t.Fatalf("can't create temp files: %+v", err)
 			}
 
-			he, err := newHookEnv(tmpdir, "", tc.configJSON, nil)
-			if err != nil {
-				t.Fatalf("can't create HookEnv for config JSON %s: %+v", tc.configJSON, err)
-			}
+			he := newHookEnv(tmpdir, "", tc.configJSON, nil)
 
 			stdinJ, err := getStdin(stdin)
 			if err != nil {
