@@ -52,7 +52,7 @@ pipeline {
             stage("buildah") {
               steps {
                 sh "sudo apt-get update"
-                sh "sudo apt-get -y install e2fslibs-dev libfuse-dev libgpgme11-dev libdevmapper-dev libglib2.0-dev libprotobuf-dev"
+                sh "sudo apt-get -y install e2fslibs-dev libfuse-dev libgpgme11-dev libdevmapper-dev libglib2.0-dev libprotobuf-dev libusb-1.0-0-dev"
                 sh "mkdir -p ${GOPATH}/src/github.com/containers"
                 dir(path: "${GOPATH}/src/github.com/containers") {
                   sh "git clone --single-branch --depth 1 -b $BUILDAH_VERSION https://github.com/containers/buildah"

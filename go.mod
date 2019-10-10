@@ -12,9 +12,11 @@ require (
 	github.com/d2g/dhcp4 v0.0.0-20170904100407-a1d1b6c41b1c // indirect
 	github.com/d2g/dhcp4client v0.0.0-20170829104524-6e570ed0a266 // indirect
 	github.com/fsnotify/fsnotify v1.4.7
+	github.com/fzipp/gocyclo v0.0.0-20150627053110-6acd4345c835 // indirect
 	github.com/go-ini/ini v1.46.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/certificate-transparency-go v1.0.21 // indirect
+	github.com/google/gousb v0.0.0-20190812193832-18f4c1d8a750
 	github.com/heketi/rest v0.0.0-20180404230133-aa6a65207413 // indirect
 	github.com/heketi/utils v0.0.0-20170317161834-435bc5bdfa64 // indirect
 	github.com/jteeuwen/go-bindata v0.0.0-20151023091102-a0ff2567cfb7 // indirect
@@ -27,7 +29,9 @@ require (
 	github.com/sigma/go-inotify v0.0.0-20181102212354-c87b6cf5033d // indirect
 	github.com/vmware/photon-controller-go-sdk v0.0.0-20170310013346-4a435daef6cc // indirect
 	github.com/xanzy/go-cloudstack v0.0.0-20160728180336-1e2cbf647e57 // indirect
+	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
 	golang.org/x/sys v0.0.0-20190826190057-c7b8b68b1456
+	golang.org/x/tools v0.0.0-20200124021010-5c352bb417e0 // indirect
 	google.golang.org/grpc v1.23.1
 	gopkg.in/ini.v1 v1.46.0 // indirect
 	k8s.io/api v0.17.0

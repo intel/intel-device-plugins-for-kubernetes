@@ -26,7 +26,7 @@ before_install:
   ## install buildah build deps
   - cdir=$(pwd)
   - sudo apt-get update
-  - sudo apt-get -y install e2fslibs-dev libfuse-dev libgpgme11-dev libdevmapper-dev libglib2.0-dev libprotobuf-dev
+  - sudo apt-get -y install e2fslibs-dev libfuse-dev libgpgme11-dev libdevmapper-dev libglib2.0-dev libprotobuf-dev libusb-1.0-0-dev
   # build buildah
   - mkdir -p $GOPATH/src/github.com/containers
   - cd $GOPATH/src/github.com/containers

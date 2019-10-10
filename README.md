@@ -13,6 +13,7 @@
         * [admission controller](#admission-controller)
         * [CRI-O prestart hook](#cri-o-prestart-hook)
     * [QAT device plugin](#qat-device-plugin)
+    * [VPU device plugin](#vpu-device-plugin)
 * [Demos](#demos)
 * [Developers](#developers)
 * [Supported Kubernetes versions](#supported-kubernetes-versions)
@@ -100,6 +101,18 @@ Source for the OpenSSL demo can be found in the [relevant subdirectory](demo/ope
 Details for integrating the QAT device plugin into [Kata Containers](https://katacontainers.io/)
 can be found in the
 [Kata Containers documentation repository](https://github.com/kata-containers/documentation/blob/master/use-cases/using-Intel-QAT-and-kata.md).
+
+### VPU device plugin
+
+The [VPU device plugin](cmd/vpu_plugin/README.md) supports Intel VCAC-A card
+(https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/media-analytics-vcac-a-accelerator-card-by-celestica-datasheet.pdf)
+the card has:
+- 1 Intel Core i3-7100U processor
+- 12 MyriadX VPUs
+- 8GB DDR4 memory
+
+The demo subdirectory includes details of a OpenVINO deployment and use of the VPU plugin.
+Sources can be found in [openvino-demo](demo/ubuntu-demo-openvino)
 
 ## Demos
 
