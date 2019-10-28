@@ -87,8 +87,17 @@ func mutatePods(ar v1beta1.AdmissionReview, pm *patcherManager) *v1beta1.Admissi
 		fmt.Printf("ERROR: %+v\n", err)
 		return toAdmissionResponse(err)
 	}
-	debug.Printf("Received pod '%s' in name space '%s'", pod.Name, pod.Namespace)
-	patcher, err := pm.getPatcher(pod.Namespace)
+
+	namespace := pod.Namespace
+	if namespace == "" && ar.Request.Namespace != "" {
+		namespace = ar.Request.Namespace
+	}
+	name := pod.Name
+	if name == "" && pod.ObjectMeta.GenerateName != "" {
+		name = pod.ObjectMeta.GenerateName
+	}
+	debug.Printf("Received pod '%s' in name space '%s'", name, namespace)
+	patcher, err := pm.getPatcher(namespace)
 	if err != nil {
 		fmt.Printf("ERROR: %+v\n", err)
 		return toAdmissionResponse(err)
