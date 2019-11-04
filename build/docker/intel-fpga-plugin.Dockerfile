@@ -13,6 +13,12 @@ FROM ${CLEAR_LINUX_BASE} as builder
 ARG CLEAR_LINUX_VERSION=
 
 RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
+
+ARG DIR=/intel-device-plugins-for-kubernetes
+ARG GO111MODULE=on
+WORKDIR $DIR
+COPY . .
+
 RUN mkdir /install_root \
     && swupd os-install \
     ${CLEAR_LINUX_VERSION} \
@@ -22,10 +28,7 @@ RUN mkdir /install_root \
     --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
-ARG DIR=/intel-device-plugins-for-kubernetes
-WORKDIR $DIR
-COPY . .
-RUN cd cmd/fpga_plugin; go install
+RUN cd cmd/fpga_plugin; GO111MODULE=${GO111MODULE} go install
 RUN chmod a+x /go/bin/fpga_plugin \
     && install -D /go/bin/fpga_plugin /install_root/usr/local/bin/intel_fpga_device_plugin \
     && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE

@@ -16,14 +16,17 @@ if [ ! -e "${DOCKERFILE}" ]; then
 fi
 
 TAG=${TAG:-devel}
-SRCREV=$(git rev-parse HEAD)
+
+BUILD_ARGS=
+if [ -d $(dirname $0)/../../vendor ] ; then
+    echo "Building images with vendored code"
+    BUILD_ARGS="--build-arg DIR=/go/src/github.com/intel/intel-device-plugins-for-kubernetes --build-arg GO111MODULE=off"
+fi
 
 if [ -z "${BUILDER}" -o "${BUILDER}" = 'docker' ] ; then
-    docker build --pull -t ${IMG}:${TAG} -f ${DOCKERFILE} .
-    docker tag ${IMG}:${TAG} ${IMG}:${SRCREV}
+    docker build --pull -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .
 elif [ "${BUILDER}" = 'buildah' ] ; then
-    buildah bud --pull-always -t ${IMG}:${TAG} -f ${DOCKERFILE} .
-    buildah tag ${IMG}:${TAG} ${IMG}:${SRCREV}
+    buildah bud --pull-always -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .
 else
     (>&2 echo "Unknown builder ${BUILDER}")
     exit 1
