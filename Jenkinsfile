@@ -178,59 +178,36 @@ pipeline {
       stages {
         stage('Checks') {
           steps {
-            sh 'sudo lsmod'
-            sh 'sudo dmesg | grep -i qat'
-            sh 'sudo swupd bundle-list | grep -i qat'
-            sh 'sudo swupd bundle-list | grep -i dpdk'
-            sh 'sudo cat /proc/cmdline'
-            sh 'for i in 0434 0435 37c8 6f54 19e2; do sudo lspci -D -d 8086:$i; done'
-            sh 'for i in 0442 0443 37c9 19e3; do sudo lspci -D -d 8086:$i; done'
+            sh 'bash ./scripts/jenkins/qat/checks.sh'
           }
         }
         stage('Install K8s') {
           steps {
-            sh 'sudo git clone https://github.com/clearlinux/cloud-native-setup.git'
-            sh 'sudo bash ./cloud-native-setup/clr-k8s-examples/setup_system.sh'
-            sh 'sudo bash ./cloud-native-setup/clr-k8s-examples/create_stack.sh init'
-            sh 'sudo mkdir -p $HOME/.kube'
-            sh 'sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config'
-            sh 'sudo chown $(id -u):$(id -g) $HOME/.kube/config'
-            sh 'sudo bash ./cloud-native-setup/clr-k8s-examples/create_stack.sh cni'
-            sh 'kubectl rollout status deployment/coredns -n kube-system --timeout=5m'
+            sh 'bash ./scripts/jenkins/qat/k8s-install.sh'
           }
         }
         stage('Pull images') {
           steps {
             withCredentials([usernamePassword(credentialsId: 'e16bd38a-76cb-4900-a5cb-7f6aa3aeb22d', passwordVariable: 'RPASS', usernameVariable: 'RUSER')]) {
-              sh 'sudo crictl pull --creds ${RUSER}:${RPASS} ${REG}intel-qat-plugin:${TAG}'
-              sh 'sudo crictl pull --creds ${RUSER}:${RPASS} ${REG}crypto-perf:${TAG}'
+              sh 'bash ./scripts/jenkins/qat/images-pull.sh'
             }
           }
         }
         stage('Deploy QAT plugin') {
           steps {
-            sh 'sed -i "s#intel/intel-qat-plugin:devel#${REG}intel-qat-plugin:${TAG}#g" ./deployments/qat_plugin/qat_plugin.yaml'
-            sh 'sed -i "s#intel/crypto-perf:devel#${REG}crypto-perf:${TAG}#g" ./deployments/qat_dpdk_app/base/crypto-perf-dpdk-pod-requesting-qat.yaml'
-            sh 'kubectl create -f ./deployments/qat_plugin/qat_plugin_default_configmap.yaml'
-            sh 'kubectl create -f ./deployments/qat_plugin/qat_plugin.yaml'
-            sh 'kubectl rollout status ds/intel-qat-plugin --timeout=5m'
-            sh 'kubectl wait --for=condition=Ready pod --all --timeout=5m && sleep 60s'
+            sh 'bash ./scripts/jenkins/qat/plugin-deploy.sh'
           }
         }
         stage('DPDK app tests') {
           parallel {
             stage('Run crypto-tc1') {
               steps {
-                sh 'kubectl apply -k ./deployments/qat_dpdk_app/test-crypto1/'
-                sh 'kubectl wait --for=condition=Initialized pod/qat-dpdk-test-crypto-perf-tc1 --timeout=5m && sleep 60s'
-                sh 'kubectl logs -f qat-dpdk-test-crypto-perf-tc1 | tee qat-dpdk-test-crypto-perf-tc1.log'
+                sh 'TCNAME="crypto" TCNUM=1 bash ./scripts/jenkins/qat/tc-deploy.sh'
               }
             }
             stage('Run compress-tc1') {
               steps {
-                sh 'kubectl apply -k ./deployments/qat_dpdk_app/test-compress1/'
-                sh 'kubectl wait --for=condition=Initialized pod/qat-dpdk-test-compress-perf-tc1 --timeout=5m && sleep 60s'
-                sh 'kubectl logs -f qat-dpdk-test-compress-perf-tc1 | tee qat-dpdk-test-compress-perf-tc1.log'
+                sh 'TCNAME="compress" TCNUM=1 bash ./scripts/jenkins/qat/tc-deploy.sh'
               }
             }
           }
