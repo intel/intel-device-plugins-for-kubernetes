@@ -21,15 +21,10 @@ pipeline {
   }
   stages {
     stage("Set env") {
+      when { changeRequest() }
       steps {
         script {
-          if (env.CHANGE_ID == null) {
-            env.PR = 'no'
-          }
-          else {
-            env.TAG = env.BUILD_TAG + '-rejected'
-            env.PR = 'yes'
-          }
+          env.TAG = env.BUILD_TAG + '-rejected'
         }
       }
     }
@@ -169,9 +164,7 @@ pipeline {
       }
     }
     stage('Intel QAT plugin') {
-      when {
-        environment name: 'PR', value: 'yes'
-      }
+      when { changeRequest() }
       agent {
         label "qat-clearlinux"
       }
