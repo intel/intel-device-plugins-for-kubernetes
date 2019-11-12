@@ -7,9 +7,13 @@
 # Installs a k8s cluster (single node) using cloud-native-setup scripts in
 # current Jenkins test environment.
 
+set -o pipefail
+set -o xtrace
+set -o errexit
+
 sudo git clone https://github.com/clearlinux/cloud-native-setup.git
 sudo bash ./cloud-native-setup/clr-k8s-examples/setup_system.sh
-sudo bash ./cloud-native-setup/clr-k8s-examples/create_stack.sh init
+echo -ne '\n' |sudo bash ./cloud-native-setup/clr-k8s-examples/create_stack.sh init
 sudo mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config

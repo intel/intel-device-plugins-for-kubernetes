@@ -6,18 +6,20 @@
 #
 # Checks if all pre-requirements for qat-dpdk are up.
 
-set -e
+set -o pipefail
+set -o xtrace
+set -o errexit
 
 sudo cat /proc/cmdline
 sudo dmesg | grep -i qat
 
 QAT=$(sudo swupd bundle-list | grep -i qat)
 if [ -z "$QAT" ]; then
- echo "ERROR: qat-firmware bundle is not installed."
+ echo "ERROR: linux-qat-firmware bundle is not installed."
  ERROR=1
 fi
 
-DPDK=$(swupd bundle-list | grep -i dpdk)
+DPDK=$(sudo swupd bundle-list | grep -i dpdk)
 if [ -z "$DPDK" ]; then
  echo "ERROR: dpdk bundle is not installed."
  ERROR=1

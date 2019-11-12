@@ -171,36 +171,36 @@ pipeline {
       stages {
         stage('Checks') {
           steps {
-            sh 'bash ./scripts/jenkins/qat/checks.sh'
+            sh 'make qat-checks'
           }
         }
         stage('Install K8s') {
           steps {
-            sh 'bash ./scripts/jenkins/qat/k8s-install.sh'
+            sh 'make qat-cluster'
           }
         }
         stage('Pull images') {
           steps {
             withCredentials([usernamePassword(credentialsId: 'e16bd38a-76cb-4900-a5cb-7f6aa3aeb22d', passwordVariable: 'RPASS', usernameVariable: 'RUSER')]) {
-              sh 'bash ./scripts/jenkins/qat/images-pull.sh'
+              sh 'make qat-pull'
             }
           }
         }
         stage('Deploy QAT plugin') {
           steps {
-            sh 'bash ./scripts/jenkins/qat/plugin-deploy.sh'
+            sh 'make qat-plugin'
           }
         }
         stage('DPDK app tests') {
           parallel {
-            stage('Run crypto-tc1') {
+            stage('Run crypto') {
               steps {
-                sh 'TCNAME="crypto" TCNUM=1 bash ./scripts/jenkins/qat/tc-deploy.sh'
+                sh 'make qat-tc-crypto'
               }
             }
-            stage('Run compress-tc1') {
+            stage('Run compress') {
               steps {
-                sh 'TCNAME="compress" TCNUM=1 bash ./scripts/jenkins/qat/tc-deploy.sh'
+                sh 'make qat-tc-compress'
               }
             }
           }

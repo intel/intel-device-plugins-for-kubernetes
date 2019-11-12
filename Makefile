@@ -81,3 +81,5 @@ lock-images:
 	@scripts/update-clear-linux-base.sh clearlinux:latest $(shell find demo -name Dockerfile)
 
 .PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images) lock-images vendor pre-pull
+
+include scripts/jenkins/qat/test.make
