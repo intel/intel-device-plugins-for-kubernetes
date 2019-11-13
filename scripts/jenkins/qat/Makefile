@@ -7,21 +7,23 @@
 qat: qat-checks qat-cluster qat-pull qat-plugin qat-tests
 
 qat-checks:
-	bash scripts/jenkins/qat/checks.sh
+	bash checks.sh
 
 qat-pull:
-	bash scripts/jenkins/qat/images-pull.sh
+	bash images-pull.sh
 
 qat-cluster:
-	bash scripts/jenkins/qat/k8s-install.sh
+	bash k8s-install.sh
 
 qat-plugin:
-	bash scripts/jenkins/qat/plugin-deploy.sh
+	bash plugin-deploy.sh
 
 qat-tests: qat-tc-crypto qat-tc-compress
 
 qat-tc-crypto:
-	TCNAME="crypto" TCNUM=1 bash ./scripts/jenkins/qat/tc-deploy.sh
+	TCNAME="crypto" TCNUM=1 bash tc-deploy.sh
 
 qat-tc-compress:
-	TCNAME="compress" TCNUM=1 bash ./scripts/jenkins/qat/tc-deploy.sh
+	TCNAME="compress" TCNUM=1 bash tc-deploy.sh
+
+.PHONY: qat qat-checks qat-pull qat-cluster qat-plugin qat-tests qat-tc-crypto qat-tc-compress

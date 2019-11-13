@@ -168,39 +168,54 @@ pipeline {
       agent {
         label "qat-clearlinux"
       }
+      environment {
+        QAT_DIR="${env.WORKSPACE}/scripts/jenkins/qat"
+      }
       stages {
         stage('Checks') {
           steps {
-            sh 'make qat-checks'
+            dir(path: "$QAT_DIR") {
+              sh 'make qat-checks'
+            }
           }
         }
         stage('Install K8s') {
           steps {
-            sh 'make qat-cluster'
+            dir(path: "$QAT_DIR") {
+              sh 'make qat-cluster'
+            }
           }
         }
         stage('Pull images') {
           steps {
-            withCredentials([usernamePassword(credentialsId: 'e16bd38a-76cb-4900-a5cb-7f6aa3aeb22d', passwordVariable: 'RPASS', usernameVariable: 'RUSER')]) {
-              sh 'make qat-pull'
+            dir(path: "$QAT_DIR") {
+              withCredentials([usernamePassword(credentialsId: 'e16bd38a-76cb-4900-a5cb-7f6aa3aeb22d', passwordVariable: 'RPASS', usernameVariable: 'RUSER')]) {
+                sh 'make qat-pull'
+              }
             }
           }
         }
         stage('Deploy QAT plugin') {
           steps {
-            sh 'make qat-plugin'
+            dir(path: "$QAT_DIR") {
+              sh 'make qat-plugin'
+            }
           }
         }
         stage('DPDK app tests') {
           parallel {
             stage('Run crypto') {
               steps {
-                sh 'make qat-tc-crypto'
+                dir(path: "$QAT_DIR") {
+                  sh 'make qat-tc-crypto'
+                }
               }
             }
             stage('Run compress') {
               steps {
-                sh 'make qat-tc-compress'
+                dir(path: "$QAT_DIR") {
+                  sh 'make qat-tc-compress'
+                }
               }
             }
           }
