@@ -4,7 +4,7 @@
 #
 # Makefile for QAT-DPDK jenkins.
 
-qat: qat-checks qat-pull qat-cluster qat-plugin qat-tests
+qat: qat-checks qat-cluster qat-pull qat-plugin qat-tests
 
 qat-checks:
 	bash scripts/jenkins/qat/checks.sh

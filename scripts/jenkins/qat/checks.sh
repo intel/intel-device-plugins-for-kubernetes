@@ -10,8 +10,19 @@ set -o pipefail
 set -o xtrace
 set -o errexit
 
-sudo cat /proc/cmdline
 sudo dmesg | grep -i qat
+
+HPAGES=$(sudo cat /proc/cmdline | grep "hugepages=1024")
+if [ -z "$HPAGES" ]; then
+ echo "ERROR: no hugepages cmdline flag set."
+ ERROR=1
+fi
+
+IOMMU=$(sudo cat /proc/cmdline | grep "intel_iommu=on iommu=pt")
+if [ -z "$IOMMU" ]; then
+ echo "ERROR: no iommu cmdline flags set."
+ ERROR=1
+fi
 
 QAT=$(sudo swupd bundle-list | grep -i qat)
 if [ -z "$QAT" ]; then

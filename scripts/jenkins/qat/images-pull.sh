@@ -8,8 +8,21 @@
 # using crio.
 
 set -o pipefail
-set -o xtrace
 set -o errexit
 
-sudo crictl pull --creds ${RUSER}:${RPASS} ${REG}intel-qat-plugin:${TAG}
-sudo crictl pull --creds ${RUSER}:${RPASS} ${REG}crypto-perf:${TAG}
+REG=${REG:-intel/}
+TAG=${TAG:-devel}
+
+# If registry is a custom one, then append creds.
+if [ "$REG" != "intel/" ]; then
+  # Verify if user credentials are set.
+  if [ -z "$RUSER" ] || [ -z "$RPASS" ]; then
+    echo "ERROR: registry user and password is required.";
+    exit 1;
+  fi
+
+  CREDS="--creds ${RUSER}:${RPASS}"
+fi
+
+sudo bash -c "crictl pull ${CREDS} ${REG}intel-qat-plugin:${TAG}"
+sudo bash -c "crictl pull ${CREDS} ${REG}crypto-perf:${TAG}"
