@@ -35,7 +35,10 @@ RUN cd $DIR/cmd/fpga_crihook && \
     cd $DIR/cmd/fpga_tool && \
     go install && \
     chmod a+x /go/bin/fpga_tool && \
-    install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE
+    cd $DIR && \
+    install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE && \
+    scripts/copy-modules-licenses.sh ./cmd/fpga_crihook /install_root/usr/local/share/package-licenses/ && \
+    scripts/copy-modules-licenses.sh ./cmd/fpga_tool /install_root/usr/local/share/package-licenses/
 
 # Minimal result image
 FROM scratch as final

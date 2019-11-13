@@ -28,10 +28,11 @@ RUN mkdir /install_root \
     --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
-RUN cd cmd/gpu_plugin; GO111MODULE=${GO111MODULE} go install
+RUN cd cmd/gpu_plugin; GO111MODULE=${GO111MODULE} go install; cd -
 RUN chmod a+x /go/bin/gpu_plugin \
     && install -D /go/bin/gpu_plugin /install_root/usr/local/bin/intel_gpu_device_plugin \
-    && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE
+    && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
+    && scripts/copy-modules-licenses.sh ./cmd/gpu_plugin /install_root/usr/local/share/package-licenses/
 
 FROM scratch as final
 COPY --from=builder /install_root /
