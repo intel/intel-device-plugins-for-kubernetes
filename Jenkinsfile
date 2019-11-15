@@ -179,13 +179,6 @@ pipeline {
             }
           }
         }
-        stage('Install K8s') {
-          steps {
-            dir(path: "$QAT_DIR") {
-              sh 'make qat-cluster'
-            }
-          }
-        }
         stage('Pull images') {
           steps {
             dir(path: "$QAT_DIR") {
