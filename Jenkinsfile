@@ -163,53 +163,19 @@ pipeline {
         }
       }
     }
-    stage('Intel QAT plugin') {
+    stage('Intel Device plugins') {
       when { changeRequest() }
       agent {
-        label "qat-clearlinux"
+        label "clr-bmaas-intel-device-plugins"
       }
       environment {
-        QAT_DIR="${env.WORKSPACE}/scripts/jenkins/qat"
+        WORKDIR="${env.WORKSPACE}/scripts/jenkins"
       }
       stages {
-        stage('Checks') {
+        stage('Tests') {
           steps {
-            dir(path: "$QAT_DIR") {
-              sh 'make qat-checks'
-            }
-          }
-        }
-        stage('Pull images') {
-          steps {
-            dir(path: "$QAT_DIR") {
-              withCredentials([usernamePassword(credentialsId: 'e16bd38a-76cb-4900-a5cb-7f6aa3aeb22d', passwordVariable: 'RPASS', usernameVariable: 'RUSER')]) {
-                sh 'make qat-pull'
-              }
-            }
-          }
-        }
-        stage('Deploy QAT plugin') {
-          steps {
-            dir(path: "$QAT_DIR") {
-              sh 'make qat-plugin'
-            }
-          }
-        }
-        stage('DPDK app tests') {
-          parallel {
-            stage('Run crypto') {
-              steps {
-                dir(path: "$QAT_DIR") {
-                  sh 'make qat-tc-crypto'
-                }
-              }
-            }
-            stage('Run compress') {
-              steps {
-                dir(path: "$QAT_DIR") {
-                  sh 'make qat-tc-compress'
-                }
-              }
+            dir(path: "$WORKDIR") {
+              sh 'make tests'
             }
           }
         }
