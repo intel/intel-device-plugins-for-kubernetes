@@ -15,12 +15,7 @@ qat-pull:
 qat-plugin:
 	bash plugin-deploy.sh
 
-qat-tests: qat-tc-crypto qat-tc-compress
+qat-tests:
+	bash tc-deploy.sh
 
-qat-tc-crypto:
-	TCNAME="crypto" TCNUM=1 bash tc-deploy.sh
-
-qat-tc-compress:
-	TCNAME="compress" TCNUM=1 bash tc-deploy.sh
-
-.PHONY: qat qat-checks qat-pull qat-plugin qat-tests qat-tc-crypto qat-tc-compress
+.PHONY: qat qat-checks qat-pull qat-plugin qat-tests

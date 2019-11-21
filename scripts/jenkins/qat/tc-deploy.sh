@@ -12,8 +12,10 @@ set -o xtrace
 set -o errexit
 
 REPO_ROOT=${WORKSPACE:-$(realpath $(dirname $0)/../../..)}
-TCNAME=${TCNAME:-crypto}
-TCNUM=${TCNUM:-1}
-kubectl apply -k ${REPO_ROOT}/deployments/qat_dpdk_app/test-${TCNAME}${TCNUM}/ && \
-kubectl wait --for=condition=Ready pod/qat-dpdk-test-${TCNAME}-perf-tc${TCNUM} --timeout=5m  && \
-kubectl logs -f qat-dpdk-test-crypto-perf-tc1 | tee qat-dpdk-test-${TCNAME}-perf-tc${TCNUM}.log
+for test in $(ls ${REPO_ROOT}/deployments/qat_dpdk_app/ | grep test-*); do
+  tname=$(echo $test |sed -e "s;\(test-[a-z]*\)\([0-9]*\);\1;g")
+  tnum=$(echo $test|sed -e "s;\(test-[a-z]*\)\([0-9]*\);\2;g")
+  kubectl apply -k ${REPO_ROOT}/deployments/qat_dpdk_app/${test}/ && \
+  kubectl wait --for=condition=Ready pod/qat-dpdk-${tname}-perf-tc${tnum} --timeout=5m  && \
+  kubectl logs -f qat-dpdk-${tname}-perf-tc${tnum} | tee qat-dpdk-${tname}-perf-tc${tnum}.log
+done
