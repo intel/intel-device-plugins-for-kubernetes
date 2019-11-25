@@ -4,10 +4,7 @@
 #
 # Makefile for QAT-DPDK jenkins.
 
-all: checks plugin tests
-
-checks:
-	bash checks.sh
+all: plugin tests
 
 plugin:
 	bash plugin-deploy.sh
@@ -15,4 +12,4 @@ plugin:
 tests:
 	bash tc-deploy.sh
 
-.PHONY: all checks plugin tests
+.PHONY: all plugin tests
