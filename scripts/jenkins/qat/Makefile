@@ -12,4 +12,7 @@ plugin:
 tests:
 	bash tc-deploy.sh
 
-.PHONY: all plugin tests
+logs:
+	bash logs.sh
+
+.PHONY: all plugin tests logs

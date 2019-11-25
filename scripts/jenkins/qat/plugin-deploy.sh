@@ -10,7 +10,7 @@ set -o pipefail
 set -o xtrace
 set -o errexit
 
-REPO_ROOT=${WORKSPACE:-$(realpath $(dirname $0)/../../..)}
+REPO_ROOT=$(realpath $(dirname $0)/../../..)
 kubectl create -f ${REPO_ROOT}/deployments/qat_plugin/qat_plugin_default_configmap.yaml
 kubectl create -f ${REPO_ROOT}/deployments/qat_plugin/qat_plugin.yaml
 kubectl rollout status ds/intel-qat-plugin --timeout=5m

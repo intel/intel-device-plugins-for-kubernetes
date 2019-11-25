@@ -11,11 +11,10 @@ set -o pipefail
 set -o xtrace
 set -o errexit
 
-REPO_ROOT=${WORKSPACE:-$(realpath $(dirname $0)/../../..)}
+REPO_ROOT=$(realpath $(dirname $0)/../../..)
 for test in $(ls ${REPO_ROOT}/deployments/qat_dpdk_app/ | grep test-*); do
   tname=$(echo $test |sed -e "s;\(test-[a-z]*\)\([0-9]*\);\1;g")
   tnum=$(echo $test|sed -e "s;\(test-[a-z]*\)\([0-9]*\);\2;g")
   kubectl apply -k ${REPO_ROOT}/deployments/qat_dpdk_app/${test}/ && \
-  kubectl wait --for=condition=Ready pod/qat-dpdk-${tname}-perf-tc${tnum} --timeout=5m  && \
-  kubectl logs -f qat-dpdk-${tname}-perf-tc${tnum} | tee qat-dpdk-${tname}-perf-tc${tnum}.log
+  kubectl wait --for=condition=Ready pod/qat-dpdk-${tname}-perf-tc${tnum} --timeout=5m
 done

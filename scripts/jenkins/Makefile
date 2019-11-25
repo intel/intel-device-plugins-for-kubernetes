@@ -20,4 +20,13 @@ $(tests):
 
 tests: set-version $(tests)
 
-.PHONY: set-version tests $(tests)
+info:
+	@kubectl get pods
+	@kubectl describe pods
+
+logs-$(tests):
+	@make -C $(subst logs-,,$@) logs
+
+logs: info logs-$(tests)
+
+.PHONY: set-version info logs logs-$(tests) tests $(tests)

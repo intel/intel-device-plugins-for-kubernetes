@@ -180,6 +180,13 @@ pipeline {
           }
         }
       }
+      post {
+        always {
+          dir(path: "$WORKDIR") {
+            sh 'make logs'
+          }
+        }
+      }
     }
   }
 }
