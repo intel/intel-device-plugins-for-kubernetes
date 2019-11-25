@@ -11,14 +11,6 @@ set -o xtrace
 set -o errexit
 
 REPO_ROOT=${WORKSPACE:-$(realpath $(dirname $0)/../../..)}
-REG=${REG:-intel/}
-TAG=${TAG:-devel}
-ORG=${REG%/}
-
-if [ "${ORG}" != "intel" ] || [ "${TAG}" != "devel" ]; then
-  ${REPO_ROOT}/scripts/set-version.sh --tag ${TAG} --org ${ORG}
-fi
-
 kubectl create -f ${REPO_ROOT}/deployments/qat_plugin/qat_plugin_default_configmap.yaml
 kubectl create -f ${REPO_ROOT}/deployments/qat_plugin/qat_plugin.yaml
 kubectl rollout status ds/intel-qat-plugin --timeout=5m
