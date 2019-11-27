@@ -24,7 +24,7 @@ pipeline {
       when { changeRequest() }
       steps {
         script {
-          env.TAG = env.BUILD_TAG + '-rejected'
+          env.TAG = env.CHANGE_ID + '-rejected'
         }
       }
     }
@@ -113,7 +113,7 @@ pipeline {
         }
         stage('make pre-pull') {
           steps {
-    	      dir(path: "$REPO_DIR") {
+            dir(path: "$REPO_DIR") {
               sh "make pre-pull"
             }
           }

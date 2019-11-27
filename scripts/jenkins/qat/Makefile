@@ -7,12 +7,12 @@
 all: plugin tests
 
 plugin:
-	bash plugin-deploy.sh
+	/bin/bash plugin-deploy.sh
 
 tests:
-	bash tc-deploy.sh
+	/bin/bash tc-deploy.sh
 
 logs:
-	bash logs.sh
+	/bin/bash logs.sh
 
 .PHONY: all plugin tests logs

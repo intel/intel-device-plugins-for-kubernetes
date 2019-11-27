@@ -12,7 +12,7 @@ TAG?=devel
 
 set-version:
 ifneq ($(ORG)$(TAG),inteldevel)
-	@bash ../set-version.sh --tag $(TAG) --org $(ORG)
+	@/bin/bash ../set-version.sh --tag $(TAG) --org $(ORG)
 endif
 
 $(tests):
