@@ -6,13 +6,11 @@
 
 tests = $(shell ls -d */ | cut -f1 -d'/')
 
-REG?=intel/
-ORG?=$(REG:/=)
 TAG?=devel
 
 set-version:
-ifneq ($(ORG)$(TAG),inteldevel)
-	@/bin/bash ../set-version.sh --tag $(TAG) --org $(ORG)
+ifneq ($(TAG),devel)
+	@cd ../.. && ./scripts/set-version.sh $(TAG)
 endif
 
 $(tests):
