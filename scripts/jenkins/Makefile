@@ -6,17 +6,10 @@
 
 tests = $(shell ls -d */ | cut -f1 -d'/')
 
-TAG?=devel
-
-set-version:
-ifneq ($(TAG),devel)
-	@cd ../.. && ./scripts/set-version.sh $(TAG)
-endif
-
 $(tests):
 	@make -C $@ all
 
-tests: set-version $(tests)
+tests: $(tests)
 
 info:
 	@kubectl get pods
@@ -27,4 +20,4 @@ logs-$(tests):
 
 logs: info logs-$(tests)
 
-.PHONY: set-version info logs logs-$(tests) tests $(tests)
+.PHONY: info logs logs-$(tests) tests $(tests)

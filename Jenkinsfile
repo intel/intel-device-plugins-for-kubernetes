@@ -172,6 +172,11 @@ pipeline {
         WORKDIR="${env.WORKSPACE}/scripts/jenkins"
       }
       stages {
+        stage('Set tag') {
+          steps {
+            sh 'make set-version'
+          }
+        }
         stage('Tests') {
           steps {
             dir(path: "$WORKDIR") {
