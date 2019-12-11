@@ -27,18 +27,20 @@ spec:
           readOnlyRootFilesystem: true
         volumeMounts:
         - name: devfs
-          mountPath: /dev
+          mountPath: /dev/dri
+          readOnly: true
         - name: sysfs
-          mountPath: /sys
+          mountPath: /sys/class/drm
+          readOnly: true
         - name: kubeletsockets
           mountPath: /var/lib/kubelet/device-plugins
       volumes:
       - name: devfs
         hostPath:
-          path: /dev
+          path: /dev/dri
       - name: sysfs
         hostPath:
-          path: /sys
+          path: /sys/class/drm
       - name: kubeletsockets
         hostPath:
           path: /var/lib/kubelet/device-plugins
