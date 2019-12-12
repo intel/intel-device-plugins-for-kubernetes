@@ -41,6 +41,10 @@ $ kubectl create -f ./deployments/gpu_plugin/gpu_plugin.yaml
 daemonset.apps/intel-gpu-plugin created
 ```
 
+**Note**: It is also possible to run the GPU device plugin using a non-root user. To do this,
+the nodes' DAC rules must be configured to device plugin socket creation and kubelet registration.
+Furthermore, the deployments `securityContext` must be configured with appropriate `runAsUser/runAsGroup`.
+
 ### Verify GPU device plugin is registered on master:
 ```
 $ kubectl describe node <node name> | grep gpu.intel.com

@@ -78,6 +78,11 @@ kubectl create -f deployments/qat_plugin/qat_plugin_default_configmap.yaml
 kubectl create -f deployments/qat_plugin/qat_plugin.yaml
 ```
 
+**Note**: It is also possible to run the QAT device plugin using a non-root user. To do this,
+the nodes' DAC rules must be configured to allow PCI driver unbinding/binding, device plugin
+socket creation and kubelet registration. Furthermore, the deployments `securityContext` must
+be configured with appropriate `runAsUser/runAsGroup`.
+
 ### Verify QAT device plugin is registered on master:
 ```
 $ kubectl describe node <node name> | grep qat.intel.com/generic
