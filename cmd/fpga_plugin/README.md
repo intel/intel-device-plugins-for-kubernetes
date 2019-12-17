@@ -54,6 +54,10 @@ translated to resources of the same type.
     device-plugin registered
 ```
 
+**Note**: It is also possible to run the FPGA device plugin using a non-root user. To do this,
+the nodes' DAC rules must be configured to device plugin socket creation and kubelet registration.
+Furthermore, the deployments `securityContext` must be configured with appropriate `runAsUser/runAsGroup`.
+
 2. Check if FPGA device plugin is registered on master:
 ```
     $ kubectl describe node <node name> | grep fpga.intel.com
