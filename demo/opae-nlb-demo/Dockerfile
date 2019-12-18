@@ -43,13 +43,16 @@ RUN mkdir /install_root \
 
 # Minimal result image
 FROM scratch as final
+ENV PATH="/usr/local/bin/:${PATH}"
 COPY --from=builder /install_root /
 
 # OPAE
 # nlb0 and nlb3 examples
-COPY --from=builder /usr/src/opae/opae-sdk-*/build/bin/nlb* /usr/bin/
+COPY --from=builder /usr/src/opae/opae-sdk-*/build/bin/nlb* /usr/local/bin/
 # libxfpga.so, libopae-c*.so*
-COPY --from=builder /usr/src/opae/opae-sdk-*/build/lib/lib*.so* /usr/lib64/
+COPY --from=builder /usr/src/opae/opae-sdk-*/build/lib/lib*.so* /usr/local/lib64/
 
-COPY test_fpga.sh /usr/bin/
-ENTRYPOINT ["/usr/bin/test_fpga.sh"]
+RUN echo /usr/local/lib64/ >> /etc/ld.so.conf && ldconfig
+
+COPY test_fpga.sh /usr/local/bin/
+ENTRYPOINT ["/usr/local/bin/test_fpga.sh"]
