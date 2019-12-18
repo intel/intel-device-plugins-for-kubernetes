@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
       name: intel-fpga-webhook-deployment
@@ -6,6 +6,9 @@ metadata:
         app: intel-fpga-webhook
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: intel-fpga-webhook
   template:
     metadata:
       labels:
