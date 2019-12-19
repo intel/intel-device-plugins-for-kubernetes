@@ -3,6 +3,8 @@
 srcroot="$(realpath $(dirname $0)/..)"
 service="intel-fpga-webhook-svc"
 secret="intel-fpga-webhook-certs"
+uid="3210" # fpga user
+gid="3210" # fpga group
 
 function help {
     echo "Usage: $1 <options> [help|cleanup]"
@@ -94,7 +96,7 @@ cat ${srcroot}/deployments/fpga_admissionwebhook/rbac-config-tpl.yaml | \
     ${kubectl} create -f -
 
 echo "Create webhook deployment"
-cat ${srcroot}/deployments/fpga_admissionwebhook/deployment-tpl.yaml | sed -e "s/{MODE}/${mode}/g" | ${kubectl} --namespace ${namespace} create -f -
+cat ${srcroot}/deployments/fpga_admissionwebhook/deployment-tpl.yaml | sed -e "s/{MODE}/${mode}/g" -e "s/{uid}/${uid}/g" -e "s/{gid}/${gid}/g" | ${kubectl} --namespace ${namespace} create -f -
 
 echo "Create webhook service"
 ${kubectl} --namespace ${namespace} create -f ${srcroot}/deployments/fpga_admissionwebhook/service.yaml

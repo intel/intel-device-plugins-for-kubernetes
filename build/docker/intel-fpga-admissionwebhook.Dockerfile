@@ -36,4 +36,5 @@ RUN chmod a+x /go/bin/fpga_admissionwebhook \
 
 FROM scratch as final
 COPY --from=builder /install_root /
+RUN groupadd -g 3210 fpga && useradd fpga -u 3210 -g 3210
 ENTRYPOINT ["/usr/local/bin/intel_fpga_admissionwebhook"]

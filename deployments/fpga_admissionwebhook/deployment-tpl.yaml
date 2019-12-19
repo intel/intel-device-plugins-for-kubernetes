@@ -22,6 +22,9 @@ spec:
           - containerPort: 8443
             name: webhook-api
           securityContext:
+            runAsNonRoot: true
+            runAsUser: {uid}
+            runAsGroup: {gid}
             readOnlyRootFilesystem: true
           args:
             - -tls-cert-file=/etc/webhook/certs/cert.pem
