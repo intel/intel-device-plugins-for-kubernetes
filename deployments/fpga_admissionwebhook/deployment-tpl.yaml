@@ -18,6 +18,9 @@ spec:
         - name: fpga-mutator
           image: intel/intel-fpga-admissionwebhook:devel
           imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 8443
+            name: webhook-api
           securityContext:
             readOnlyRootFilesystem: true
           args:
