@@ -101,6 +101,5 @@ ${kubectl} --namespace ${namespace} create -f ${srcroot}/deployments/fpga_admiss
 
 echo "Register webhook"
 cat ${srcroot}/deployments/fpga_admissionwebhook/mutating-webhook-configuration-tpl.yaml | \
-    sed -e "s/{CA_BUNDLE}/${CA_BUNDLE}/g" | \
-    sed -e "s/{namespace}/${namespace}/g" | \
+    sed -e "s/{CA_BUNDLE}/${CA_BUNDLE}/g" -e "s/{namespace}/${namespace}/g" | \
     ${kubectl} create -f -
