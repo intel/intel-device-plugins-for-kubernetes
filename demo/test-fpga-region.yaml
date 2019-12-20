@@ -13,7 +13,7 @@ spec:
           [IPC_LOCK]
     resources:
       limits:
-        fpga.intel.com/arria10.dcp1.2-nlb3: 1
+        fpga.intel.com/arria10.dcp1.1-nlb3: 1
         cpu: 1
         hugepages-2Mi: 20Mi
 
