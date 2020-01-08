@@ -15,7 +15,7 @@
 package deviceplugin
 
 import (
-	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
+	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
 // DeviceInfo contains information about device maintained by Device Plugin

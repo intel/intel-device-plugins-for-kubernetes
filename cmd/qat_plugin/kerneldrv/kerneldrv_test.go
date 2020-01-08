@@ -27,7 +27,7 @@ import (
 	"testing"
 	"time"
 
-	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
+	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 	"k8s.io/utils/exec"
 	fakeexec "k8s.io/utils/exec/testing"
 
