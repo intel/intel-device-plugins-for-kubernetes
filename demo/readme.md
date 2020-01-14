@@ -82,7 +82,7 @@ with the [Go runtime](https://golang.org/doc/install).
 
 Intel® FPGA Device Plugin deployment
 
-[![Intel® FPGA Device Plugin deployment](https://asciinema.org/a/7FK8WDwyoL5g1T5HOa2vekKU2.png)](https://asciinema.org/a/7FK8WDwyoL5g1T5HOa2vekKU2)
+[![Intel® FPGA Device Plugin deployment](https://asciinema.org/a/JuYzNxx9n0eQ1vQBzy86GYBki.png)](https://asciinema.org/a/JuYzNxx9n0eQ1vQBzy86GYBki)
 
 ## Intel® QuickAssist Technology Device Plugin OpenSSL demo video
 
