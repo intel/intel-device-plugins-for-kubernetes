@@ -26,7 +26,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
+	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )

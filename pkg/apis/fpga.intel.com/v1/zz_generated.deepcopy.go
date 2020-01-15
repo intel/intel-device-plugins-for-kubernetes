@@ -53,7 +53,7 @@ func (in *AcceleratorFunction) DeepCopyObject() runtime.Object {
 func (in *AcceleratorFunctionList) DeepCopyInto(out *AcceleratorFunctionList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]AcceleratorFunction, len(*in))
@@ -129,7 +129,7 @@ func (in *FpgaRegion) DeepCopyObject() runtime.Object {
 func (in *FpgaRegionList) DeepCopyInto(out *FpgaRegionList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]FpgaRegion, len(*in))
