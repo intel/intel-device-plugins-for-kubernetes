@@ -35,6 +35,7 @@ spec:
                 fieldPath: spec.nodeName
         image: intel/intel-fpga-plugin:devel
         imagePullPolicy: IfNotPresent
+        terminationMessagePath: /tmp/termination-log
         securityContext:
           readOnlyRootFilesystem: true
         volumeMounts:
