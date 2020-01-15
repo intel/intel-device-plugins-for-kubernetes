@@ -13,7 +13,7 @@ FROM ${CLEAR_LINUX_BASE} as builder
 ARG CLEAR_LINUX_VERSION=
 
 RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION} && \
-    swupd bundle-add wget c-basic devpkg-json-c devpkg-util-linux devpkg-hwloc doxygen Sphinx patch
+    swupd bundle-add wget c-basic devpkg-json-c devpkg-util-linux devpkg-hwloc doxygen patch
 # Fetch dependencies and source code
 ARG OPAE_RElEASE=1.3.2-1
 
