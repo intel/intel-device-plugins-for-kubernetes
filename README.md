@@ -5,6 +5,7 @@
 ## Table of Contents
 
 - [About](#about)
+- [Prerequisites](#prerequisites)
 - [GPU device plugin](cmd/gpu_plugin/README.md)
 - FPGA plugin code
     - [FPGA device plugin](cmd/fpga_plugin/README.md)
@@ -15,14 +16,17 @@
 
 ## About
 
-This repository contains a set of Kubernetes plugins that enable you to use
-Intel devices.
+This repository contains a framework for developing plugins for the Kubernetes
+[device plugins framework](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/),
+along with a number of device implementations utilising that framework.
+
+## Prerequisites
 
 Prerequisites for building and running Intel device plugins include:
 
-- Intel hardware
-- Fully configured [Kubernetes cluster]
-- Working [Go environment]
+- Appropriate hardware
+- A fully configured [Kubernetes cluster]
+- A working [Go environment]
 
 ## Supported Kubernetes versions
 
