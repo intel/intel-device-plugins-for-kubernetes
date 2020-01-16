@@ -2,6 +2,18 @@
 
 PV='pv -qL'
 
+# check if FPGA devices exist
+if [ -d /sys/class/fpga ] ; then
+    DRIVER=OPAE
+    DEVICE_PREFIX=/dev/intel-fpga-port
+elif [ -d /sys/class/fpga_region ] ; then
+    DRIVER=DFL
+    DEVICE_PREFIX=/dev/dfl-port
+else
+    >&2 echo 'ERROR: FPGA devices not found or kernel drivers not loaded'
+    exit 1
+fi
+
 command()
 {
   speed=$2
@@ -45,13 +57,13 @@ record()
 {
   clear
   out 'Record this screencast'
-  command 'asciinema rec -t "Intel FPGA Device Plugin for Kubernetes in orchestrated mode with DFL kernel driver."  Intel-FPGA-Device-Plugin-for-Kubernetes-orchestrated-DFL-Demo.cast -c "sh ./screencast-fpga-orchestrated-dfl.sh play"'
+  command "asciinema rec -t 'Intel FPGA Device Plugin for Kubernetes in orchestrated mode with $DRIVER kernel driver.'  Intel-FPGA-Device-Plugin-for-Kubernetes-orchestrated-$DRIVER-Demo.cast -c 'sh ./screencast-fpga-orchestrated.sh play'"
 }
 
 screen1()
 {
   clear
-  out 'This screencast demonstrates deployment of the Intel FPGA Plugin for Kubernetes in orchestrated mode with DFL kernel driver'
+  out "This screencast demonstrates deployment of the Intel FPGA Plugin for Kubernetes in orchestrated mode with $DRIVER kernel driver"
   out "Let's get started!"
   out '1. Check if Kubernetes node is in good shape:'
   command 'kubectl get nodes'
@@ -124,20 +136,18 @@ screen6()
   clear
   cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
   out '6. Run OPAE workload that uses NLB3 bitstream'
-  out 'Program devices with a bitstream that is not wanted by the workload:'
-  command 'sudo /opt/intel/fpga-sw/fpgatool -b /srv/intel.com/fpga/Arria10.dcp1.2/nlb0.gbs -d /dev/dfl-port.0 pr'
-  command 'sudo /opt/intel/fpga-sw/fpgatool -b /srv/intel.com/fpga/Arria10.dcp1.2/nlb0.gbs -d /dev/dfl-port.1 pr'
+  out 'Program devices with a NLB0 bitstream that is not wanted by the workload:'
+  command "sudo /opt/intel/fpga-sw/fpgatool -b /srv/intel.com/fpga/Arria10.dcp1.2/nlb0.gbs -d ${DEVICE_PREFIX}.0 pr"
+  command "sudo /opt/intel/fpga-sw/fpgatool -b /srv/intel.com/fpga/Arria10.dcp1.2/nlb0.gbs -d ${DEVICE_PREFIX}.1 pr"
   out 'Check if devices are programmed with it:'
-  command 'cat /sys/class/fpga_region/region0/dfl-port.0/afu_id'
-  command 'cat /sys/class/fpga_region/region1/dfl-port.1/afu_id'
+  command 'cat /sys/class/*/*/*/afu_id'
   out 'Run workload:'
   command 'kubectl create -f demo/test-fpga-region.yaml'
   sleep 5
   out 'Look at the test output'
   command 'kubectl logs test-fpga-region'
   out 'Check if orchestration reprogrammed one device with required(NLB3) bitstream:'
-  command 'cat /sys/class/fpga_region/region0/dfl-port.0/afu_id'
-  command 'cat /sys/class/fpga_region/region1/dfl-port.1/afu_id'
+  command 'cat /sys/class/*/*/*/afu_id'
 }
 
 screen7()
@@ -164,5 +174,5 @@ elif [ "$1" == 'cleanup' ] ; then
 elif [ "$1" == 'record' ] ; then
   record
 else
-   echo 'Usage: screencast-fpga-orchestrated-dfl.sh [--help|help|-h] | [play [<screen number>]] | [cleanup] | [record]'
+   echo 'Usage: screencast-fpga-orchestrated.sh [--help|help|-h] | [play [<screen number>]] | [cleanup] | [record]'
 fi
