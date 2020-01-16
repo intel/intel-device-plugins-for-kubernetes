@@ -1,6 +1,48 @@
-# Build and test Intel GPU device plugin for Kubernetes
+# Intel GPU device plugin for Kubernetes
 
-### Get source code:
+# Table of Contents
+
+
+* [Introduction](#introduction)
+    * [Build and test](#build-and-test)
+        * [Getting the source code:](#getting-the-source-code)
+        * [Verify kubelet socket exists in /var/lib/kubelet/device-plugins/ directory:](#verify-kubelet-socket-exists-in-varlibkubeletdevice-plugins-directory)
+        * [Deploy GPU device plugin as host process for development purposes](#deploy-gpu-device-plugin-as-host-process-for-development-purposes)
+            * [Build GPU device plugin:](#build-gpu-device-plugin)
+            * [Run GPU device plugin as administrator:](#run-gpu-device-plugin-as-administrator)
+        * [Deploy GPU device plugin as a DaemonSet:](#deploy-gpu-device-plugin-as-a-daemonset)
+            * [Build plugin image](#build-plugin-image)
+            * [Create plugin DaemonSet](#create-plugin-daemonset)
+        * [Verify GPU device plugin is registered on master:](#verify-gpu-device-plugin-is-registered-on-master)
+        * [Test GPU device plugin:](#test-gpu-device-plugin)
+
+# Introduction
+
+The GPU device plugin for Kubernetes supports Intel
+[GVT-d](https://github.com/intel/gvt-linux/wiki/GVTd_Setup_Guide) device passthrough
+and acceleration, supporting GPUs of the following hardware families:
+
+- Integrated GPUs within Intel Core processors
+- Integrated GPUs within Intel Xeon processors
+- Intel Visual Compute Accelerator (Intel VCA)
+
+The GPU plugin offloads the processing of computation intensive workloads to GPU hardware.
+There are two primary use cases:
+
+- hardware vendor-independent acceleration using the [Intel Media SDK](https://github.com/Intel-Media-SDK/MediaSDK)
+- OpenCL code tuned for high end Intel devices.
+
+For example, the Intel Media SDK can offload video transcoding operations, and the OpenCL™ libraries can provide computation acceleration for Intel GPUs
+
+For information on Intel GVT-g virtual GPU device passthrough, see
+[this site](https://github.com/intel/gvt-linux/wiki/GVTg_Setup_Guide).
+
+## Build and test
+
+The following sections detail how to obtain, build, test and deploy the GPU device plugin.
+
+### Getting the source code:
+
 ```
 $ mkdir -p $GOPATH/src/github.com/intel/
 $ cd $GOPATH/src/github.com/intel/
