@@ -7,6 +7,8 @@ require (
 	github.com/go-ini/ini v1.46.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/gousb v0.0.0-20190812193832-18f4c1d8a750
+	github.com/onsi/ginkgo v1.10.1
+	github.com/onsi/gomega v1.7.0
 	github.com/pkg/errors v0.8.1
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/sys v0.0.0-20190826190057-c7b8b68b1456
@@ -15,6 +17,8 @@ require (
 	k8s.io/api v0.17.0
 	k8s.io/apimachinery v0.17.0
 	k8s.io/client-go v0.17.0
+	k8s.io/component-base v0.17.0
+	k8s.io/klog v1.0.0
 	k8s.io/kubelet v0.0.0
 	k8s.io/kubernetes v1.17.0
 	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f

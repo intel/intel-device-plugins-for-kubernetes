@@ -57,6 +57,8 @@ done
 [ -z ${mode} ] && mode="preprogrammed"
 [ -z ${namespace} ] && namespace="default"
 
+which ${kubectl} > /dev/null 2>&1 || { echo "ERROR: ${kubectl} not found"; exit 1; }
+
 # clean up any previously created deployment
 ${kubectl} delete MutatingWebhookConfiguration "fpga-mutator-webhook-cfg" 2>/dev/null || true
 ${kubectl} --namespace ${namespace} delete service ${service} 2>/dev/null || true

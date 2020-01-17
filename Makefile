@@ -1,12 +1,18 @@
 GO := go
 GOFMT := gofmt
 GOCYCLO := gocyclo
+KUBECTL ?= kubectl
+KIND ?= kind
+PODMAN ?= podman
 
 BUILDTAGS ?= ""
 BUILDER ?= "docker"
 
+WEBHOOK_IMAGE_FILE = intel-fpga-admissionwebhook-devel.tgz
+
 pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e)
 cmds = $(shell ls cmd)
+e2e_tmp_dir := $(shell mktemp -u -t e2e-tests.XXXXXXXXXX)
 
 all: build
 
@@ -38,10 +44,17 @@ else
             exit $$rc
 endif
 
-test-e2e:
+test-with-kind:
 	@build/docker/build-image.sh intel/intel-fpga-admissionwebhook buildah
-	@podman tag localhost/intel/intel-fpga-admissionwebhook:devel docker.io/intel/intel-fpga-admissionwebhook:devel
-	@$(GO) test -v ./test/e2e/...
+	@$(PODMAN) tag localhost/intel/intel-fpga-admissionwebhook:devel docker.io/intel/intel-fpga-admissionwebhook:devel
+	@mkdir -p $(e2e_tmp_dir)
+	@$(PODMAN) save "docker.io/intel/intel-fpga-admissionwebhook:devel" -o $(e2e_tmp_dir)/$(WEBHOOK_IMAGE_FILE)
+	@$(KIND) create cluster --name "intel-device-plugins" --kubeconfig $(e2e_tmp_dir)/kubeconfig --image "kindest/node:v1.17.0"
+	@$(KIND) load image-archive --name "intel-device-plugins" $(e2e_tmp_dir)/$(WEBHOOK_IMAGE_FILE)
+	@$(GO) test -v ./test/e2e -args -kubeconfig $(e2e_tmp_dir)/kubeconfig -kubectl-path $(KUBECTL) -ginkgo.focus "Webhook" || rc=1; \
+	$(KIND) delete cluster --name "intel-device-plugins"; \
+	rm -rf $(e2e_tmp_dir); \
+	exit $$rc
 
 lint:
 	@rc=0 ; for f in $$(find -name \*.go | grep -v \.\/vendor) ; do golint -set_exit_status $$f || rc=1 ; done ; exit $$rc
