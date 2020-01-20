@@ -166,10 +166,11 @@ pipeline {
     stage('Intel Device plugins') {
       when { changeRequest() }
       agent {
-        label "clr-bmaas-intel-device-plugins"
+        label "clr-bmaas-intel-device-plugins-kubernetes"
       }
       environment {
         WORKDIR="${env.WORKSPACE}/scripts/jenkins"
+        GOROOT="/usr/lib/golang"
       }
       stages {
         stage('Set tag') {
@@ -182,13 +183,6 @@ pipeline {
             dir(path: "$WORKDIR") {
               sh 'make tests'
             }
-          }
-        }
-      }
-      post {
-        always {
-          dir(path: "$WORKDIR") {
-            sh 'make logs'
           }
         }
       }
