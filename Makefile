@@ -5,13 +5,13 @@ GOCYCLO := gocyclo
 BUILDTAGS ?= ""
 BUILDER ?= "docker"
 
-pkgs  = $(shell $(GO) list ./... | grep -v vendor)
+pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e)
 cmds = $(shell ls cmd)
 
 all: build
 
 format:
-	@report=`$(GOFMT) -s -d -w $$(find cmd pkg -name \*.go)` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
+	@report=`$(GOFMT) -s -d -w $$(find cmd pkg test -name \*.go)` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
 
 vet:
 	@$(GO) vet -v -vettool=$$(which shadow) $(pkgs)
@@ -20,7 +20,7 @@ vendor:
 	@$(GO) mod vendor -v
 
 cyclomatic-check:
-	@report=`$(GOCYCLO) -over 15 cmd pkg`; if [ -n "$$report" ]; then echo "Complexity is over 15 in"; echo $$report; exit 1; fi
+	@report=`$(GOCYCLO) -over 15 cmd pkg test`; if [ -n "$$report" ]; then echo "Complexity is over 15 in"; echo $$report; exit 1; fi
 
 test:
 ifndef WHAT
@@ -33,6 +33,11 @@ else
             echo "Coverage report: file://$$(realpath coverage.html)"; \
             exit $$rc
 endif
+
+test-e2e:
+	@build/docker/build-image.sh intel/intel-fpga-admissionwebhook buildah
+	@podman tag localhost/intel/intel-fpga-admissionwebhook:devel docker.io/intel/intel-fpga-admissionwebhook:devel
+	@$(GO) test -v ./test/e2e/...
 
 lint:
 	@rc=0 ; for f in $$(find -name \*.go | grep -v \.\/vendor) ; do golint -set_exit_status $$f || rc=1 ; done ; exit $$rc
