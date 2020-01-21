@@ -1,3 +1,29 @@
+def skus = ["qat-c62x", "qat-c3xxx"]
+
+def parallelStagesMap = skus.collectEntries {
+  ["${it}" : generateStage(it)]
+}
+
+def generateStage(job) {
+  return {
+    node("${job}") {
+      stage('Tests') {
+        checkout scm
+        sh 'make set-version'
+        try {
+          sh 'make -C ./scripts/jenkins tests'
+        }
+        catch(e) {
+          throw e
+        }
+        finally {
+          sh 'make -C ./scripts/jenkins logs'
+        }
+      }
+    }
+  }
+}
+
 pipeline {
   agent {
     label "master"
@@ -165,31 +191,9 @@ pipeline {
     }
     stage('Intel Device plugins') {
       when { changeRequest() }
-      agent {
-        label "clr-bmaas-intel-device-plugins"
-      }
-      environment {
-        WORKDIR="${env.WORKSPACE}/scripts/jenkins"
-      }
-      stages {
-        stage('Set tag') {
-          steps {
-            sh 'make set-version'
-          }
-        }
-        stage('Tests') {
-          steps {
-            dir(path: "$WORKDIR") {
-              sh 'make tests'
-            }
-          }
-        }
-      }
-      post {
-        always {
-          dir(path: "$WORKDIR") {
-            sh 'make logs'
-          }
+      steps {
+        script {
+          parallel parallelStagesMap
         }
       }
     }
