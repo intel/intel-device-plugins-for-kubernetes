@@ -94,3 +94,10 @@ type PostAllocator interface {
 	// adding annotations consumed by CRI hooks to the responses.
 	PostAllocate(*pluginapi.AllocateResponse) error
 }
+
+// ContainerPreStarter is an optional interface implemented by device plugins.
+type ContainerPreStarter interface {
+	// PreStartContainer  defines device initialization function before container is started.
+	// It might include operations like card reset.
+	PreStartContainer(*pluginapi.PreStartContainerRequest) error
+}
