@@ -91,7 +91,7 @@ func (k *kubeletStub) start() error {
 func TestRegisterWithKublet(t *testing.T) {
 	pluginSocket := path.Join(devicePluginPath, pluginEndpoint)
 
-	err := registerWithKubelet(kubeletSocket, pluginSocket, resourceName)
+	err := registerWithKubelet(kubeletSocket, pluginSocket, resourceName, nil)
 	if err == nil {
 		t.Error("No error triggered when kubelet is not accessible")
 	}
@@ -103,7 +103,7 @@ func TestRegisterWithKublet(t *testing.T) {
 	}
 	defer kubelet.server.Stop()
 
-	err = registerWithKubelet(kubeletSocket, pluginSocket, resourceName)
+	err = registerWithKubelet(kubeletSocket, pluginSocket, resourceName, nil)
 	if err != nil {
 		t.Errorf("Can't register device plugin: %+v", err)
 	}
@@ -485,12 +485,40 @@ func TestGetDevicePluginOptions(t *testing.T) {
 }
 
 func TestPreStartContainer(t *testing.T) {
-	srv := &server{}
-	srv.PreStartContainer(nil, nil)
+	tcases := []struct {
+		name              string
+		preStartContainer func(*pluginapi.PreStartContainerRequest) error
+		expectedError     bool
+	}{
+		{
+			name: "success",
+			preStartContainer: func(*pluginapi.PreStartContainerRequest) error {
+				return nil
+			},
+		},
+		{
+			name:          "error",
+			expectedError: true,
+		},
+	}
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := &server{
+				preStartContainer: tc.preStartContainer,
+			}
+			_, err := srv.PreStartContainer(nil, nil)
+			if !tc.expectedError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			} else if tc.expectedError && err == nil {
+				t.Error("didn't failed when expected to fail")
+				return
+			}
+		})
+	}
 }
 
 func TestNewServer(t *testing.T) {
-	_ = newServer("test", nil)
+	_ = newServer("test", nil, nil)
 }
 
 func TestUpdate(t *testing.T) {

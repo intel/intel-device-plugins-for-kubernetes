@@ -160,6 +160,10 @@ func (*devicePluginStub) PostAllocate(*pluginapi.AllocateResponse) error {
 	return nil
 }
 
+func (*devicePluginStub) PreStartContainer(*pluginapi.PreStartContainerRequest) error {
+	return nil
+}
+
 func TestHandleUpdate(t *testing.T) {
 	tcases := []struct {
 		name            string
@@ -261,7 +265,7 @@ func TestHandleUpdate(t *testing.T) {
 		mgr := Manager{
 			devicePlugin: &devicePluginStub{},
 			servers:      tt.servers,
-			createServer: func(string, func(*pluginapi.AllocateResponse) error) devicePluginServer {
+			createServer: func(string, func(*pluginapi.AllocateResponse) error, func(*pluginapi.PreStartContainerRequest) error) devicePluginServer {
 				return &serverStub{}
 			},
 		}
@@ -275,7 +279,7 @@ func TestHandleUpdate(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	mgr := NewManager("testnamespace", &devicePluginStub{})
-	mgr.createServer = func(string, func(*pluginapi.AllocateResponse) error) devicePluginServer {
+	mgr.createServer = func(string, func(*pluginapi.AllocateResponse) error, func(*pluginapi.PreStartContainerRequest) error) devicePluginServer {
 		return &serverStub{}
 	}
 	mgr.Run()
