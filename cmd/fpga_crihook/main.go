@@ -85,7 +85,6 @@ func decodeJSONStream(reader io.Reader, dest interface{}) error {
 }
 
 type hookEnv struct {
-	sysFsPrefix  string
 	bitstreamDir string
 	config       string
 	execer       utilsexec.Interface
@@ -97,9 +96,8 @@ type fpgaParams struct {
 	portDevice string
 }
 
-func newHookEnv(sysFsPrefix, bitstreamDir string, config string, execer utilsexec.Interface) *hookEnv {
+func newHookEnv(bitstreamDir string, config string, execer utilsexec.Interface) *hookEnv {
 	return &hookEnv{
-		sysFsPrefix:  sysFsPrefix,
 		bitstreamDir: bitstreamDir,
 		config:       config,
 		execer:       execer,
@@ -283,7 +281,7 @@ func main() {
 		os.Setenv("PATH", "/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin")
 	}
 
-	he := newHookEnv("", fpgaBitStreamDirectory, configJSON, utilsexec.New())
+	he := newHookEnv(fpgaBitStreamDirectory, configJSON, utilsexec.New())
 
 	if err := he.process(os.Stdin); err != nil {
 		fmt.Printf("%+v\n", err)
