@@ -66,10 +66,18 @@ func newDevicePlugin(sysfsDir, devfsDir string, sharedDevNum int) *devicePlugin 
 }
 
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
+	var previouslyFound int = -1
+
 	for {
 		devTree, err := dp.scan()
 		if err != nil {
 			return err
+		}
+
+		found := len(devTree)
+		if found != previouslyFound {
+			klog.Info("GPU scan update: devices found: ", found)
+			previouslyFound = found
 		}
 
 		notifier.Notify(devTree)
