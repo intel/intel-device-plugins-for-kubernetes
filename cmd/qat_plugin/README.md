@@ -1,39 +1,213 @@
-# Build and test Intel® QuickAssist Technology (QAT) device plugin for Kubernetes
+# Intel QuickAssist Technology (QAT) device plugin for Kubernetes
 
-### Prerequisites
-* Data Plane Development Kit (DPDK) drivers must be loaded and configured. For more information, refer to:
-    * [DPDK Getting Started Guide for Linux](https://doc.dpdk.org/guides/linux_gsg/index.html)
-    * [DPDK Getting Started Guide, Linux Drivers section](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html)
-* QuickAssist SR-IOV virtual functions must be configured. Verify this by running:
-      ```
-      for i in 0442 0443 37c9 19e3; do lspci -d 8086:$i; done
-      ```
-* Intel QuickAssist Technology software for Linux must be installed and
-  configured. For more information, refer to:
-    * [Intel QuickAssist Technology Software for Linux - Getting Started Guide](https://01.org/sites/default/files/downloads/intelr-quickassist-technology/336212qatswgettingstartedguiderev003.pdf)
-    * [Intel QuickAssist Technology on 01.org](https://01.org/intel-quickassist-technology)
+# Table of Contents
 
-### Get source code:
-```
-$ mkdir -p $GOPATH/src/github.com/intel/
-$ cd $GOPATH/src/github.com/intel/
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes.git
+* [Introduction](#introduction)
+    * [Modes and Configuration options](#modes-and-configuration-options)
+* [Installation](#installation)
+    * [Pre-built image](#pre-built-image)
+    * [Prerequisites](#prerequisites)
+    * [Getting the source code:](#getting-the-source-code)
+    * [Verify node kubelet config](#verify-node-kubelet-config)
+    * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
+        * [Build the plugin image](#build-the-plugin-image)
+        * [Deploy the DaemonSet](#deploy-the-daemonset)
+        * [Verify QAT device plugin is registered on master:](#verify-qat-device-plugin-is-registered-on-master)
+    * [Deploying by hand](#deploying-by-hand)
+        * [Build QAT device plugin](#build-qat-device-plugin)
+        * [Deploy QAT plugin](#deploy-qat-plugin)
+    * [QAT device plugin Demos](#qat-device-plugin-demos)
+        * [DPDK QAT demo](#dpdk-qat-demo)
+            * [DPDK Prerequisites](#dpdk-prerequisites)
+            * [Build the image](#build-the-image)
+            * [Deploy the pod](#deploy-the-pod)
+            * [Run the test](#run-the-test)
+        * [OpenSSL QAT demo](#openssl-qat-demo)
+* [Checking for hardware](#checking-for-hardware)
+
+# Introduction
+
+This Intel QAT device plugin provides support for Intel QAT devices under Kubernetes.
+The supported devices are determined by the VF device drivers available in your Linux
+Kernel. See the [Prerequisites](#prerequisites) section for more details.
+
+Supported Devices include, but may not be limited to, the following:
+
+- [Intel&reg; Xeon&reg; with Intel&reg; C62X Series Chipset][1]
+- [Intel&reg; Atom&trade; Processor C3000][2]
+- [Intel&reg; Communications Chipset 8925 to 8955 Series][3]
+
+The QAT device plugin provides access to QAT hardware accelerated cryptographic and compression features.
+Demonstrations are provided utilising [DPDK](https://doc.dpdk.org/) and [OpenSSL](https://www.openssl.org/).
+
+[Kata Containers](https://katacontainers.io/) QAT integration is documented in the
+[Kata Containers documentation repository][6].
+
+## Modes and Configuration options
+
+The QAT plugin can take a number of command line arguments, summarised in the following table:
+
+| Flag | Argument | Meaning |
+|:---- |:-------- |:------- |
+| -debug | | enable debug output
+| -dpdk-driver | string | DPDK Device driver for configuring the QAT device (default: `vfio-pci`) |
+| -kernel-vf-drivers | string | Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC,C62x,C3xxx and D15xx (default: `dh895xccvf,c6xxvf,c3xxxvf,d15xxvf`) |
+| -max-num-devices | int | maximum number of QAT devices to be provided to the QuickAssist device plugin (default: `32`) |
+| -mode | string | plugin mode which can be either `dpdk` or `kernel` (default: `dpdk`) |
+
+The example [DaemonSet YAML](../../deployments/qat_plugin/qat_plugin.yaml) passes a number of these
+arguments, and takes its default values from the
+[QAT default ConfigMap](../../deployments/qat_plugin/qat_plugin_default_configmap.yaml). The following
+table summarises the defaults:
+
+| Argument | Variable | Default setting | Explanation |
+|:-------- |:-------- |:--------------- |:----------- |
+| -debug | `$DEBUG` | false | Debug is disabled by default |
+| -dpdk-driver | `$DPDK_DRIVER` | vfio-pci | A more robust and secure choice than the `igb_uio` alternative |
+| -kernel-vf-drivers | `$KERNEL_VF_DRIVERS` | dh895xccvf,c6xxvf,c3xxxvf,d15xxvf | Modify to suit your hardware setup |
+| -max-num-devices | `$MAX_NUM_DEVICES` | 32 | Modify to suit your hardware setup if necessary |
+
+For more details on the `-dpdk-driver` choice, see 
+[DPDK Linux Driver Guide](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html).
+
+For more details on the available options to the `-kernel-vf-drivers` option, see the list of
+vf drivers available in the [Linux Kernel](https://github.com/torvalds/linux/tree/master/drivers/crypto/qat).
+
+If the `-mode` parameter is set to `kerneldrv`, no other parameter documented above are valid,
+except `-debug` which is global for both modes.
+`kerneldrv` mode implements resource allocation based on system configured [logical instances][7].
+
+> **Note**: `kerneldrv` mode is excluded by default from all builds (including those hosted on the Docker hub),
+> by default. See the [Build the plugin image](#build-the-plugin-image) section for more details.
+
+The `kerneldrv` mode does not guarantee full device isolation between containers
+and therefore it's not recommended. This mode will be deprecated and removed once `libqat`
+implements non-UIO based device access.
+
+# Installation
+
+The below sections cover how to obtain, build and install this component.
+
+The component can be installed either using a DaemonSet or running 'by hand' on each node.
+
+## Pre-built image
+
+[Pre-built images](https://hub.docker.com/r/intel/intel-qat-plugin)
+of this component are available on the Docker hub. These images are automatically built and uploaded
+to the hub from the latest master branch of this repository.
+
+Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers in the format `x.y.z`, corresponding to the branches and releases in this
+repository.
+
+The deployment YAML files supplied with the component in this repository use the images with the `devel`
+tag by default. If you do not build your own local images, your Kubernetes cluster may pull down
+the devel images from the Docker hub by default.
+
+To use the release tagged versions of the images, edit the
+[YAML deployment files](../../deployments/qat_plugin/)
+appropriately.
+
+## Prerequisites
+
+The component has the same basic dependancies as the
+[generic plugin framework dependencies](../../README.md#about).
+
+You will also need [appropriate hardware installed](#checking-for-hardware).
+
+The QAT plugin requires Linux Kernel VF QAT drivers to be available. These drivers
+are available via two methods. One of them must be installed and enabled:
+
+- [Linux Kernel upstream drivers](https://github.com/torvalds/linux/tree/master/drivers/crypto/qat)
+- [Intel QuickAssist Technology software for Linux][9]
+
+The demonstrations have their own requirements, listed in their own specific sections.
+
+## Getting the source code:
+
+```bash
+$ go get -d -u https://github.com/intel/intel-device-plugins-for-kubernetes
 ```
 
-### Build QAT device plugin:
-```
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
-$ make qat_plugin
-```
+## Verify node kubelet config
 
-### Verify kubelet socket exists in /var/lib/kubelet/device-plugins/ directory:
-```
+Every node that will be running the plugin must have the
+[kubelet device-plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/)
+configured. For each node, check that the kubelet device plugin socket exists:
+
+```bash
 $ ls /var/lib/kubelet/device-plugins/kubelet.sock
 /var/lib/kubelet/device-plugins/kubelet.sock
 ```
 
-### Deploy QAT device plugin directly on the host:
+## Deploying as a DaemonSet
+
+To deploy the plugin as a DaemonSet, you first need to build a container image for the plugin and
+ensure that is visible to your nodes. If you do not build your own plugin, your cluster may pull
+the image from the pre-built Docker Hub images, depending on your configuration.
+
+### Build the plugin image
+
+The following will use `docker` to build a local container image called `intel/intel-qat-plugin`
+with the tag `devel`. The image build tool can be changed from the default docker by setting the
+`BUILDER` argument to the [Makefile](../../Makefile).
+
+```bash
+$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ make intel-qat-plugin
+...
+Successfully tagged intel/intel-qat-plugin:devel
 ```
+
+> **Note**: `kerneldrv` mode is excluded from the build by default. Add `BUILDTAGS=kerneldrv` to `make`
+> to get `kerneldrv` functionality added to the build.
+
+### Deploy the DaemonSet
+
+Deploying the plugin involves deployment of both a
+[ConfigMap](../../deployments/qat_plugin/qat_plugin_default_configmap.yaml) and the
+[DaemonSet YAML](../../deployments/qat_plugin/qat_plugin.yaml):
+
+```bash
+$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+kubectl create -f deployments/qat_plugin/qat_plugin_default_configmap.yaml
+kubectl create -f deployments/qat_plugin/qat_plugin.yaml
+```
+
+> **Note**: It is also possible to run the QAT device plugin using a non-root user. To do this,
+> the nodes' DAC rules must be configured to allow PCI driver unbinding/binding, device plugin
+> socket creation and kubelet registration. Furthermore, the deployments `securityContext` must
+> be configured with appropriate `runAsUser/runAsGroup`.
+
+### Verify QAT device plugin is registered on master:
+
+Verification of the plugin deployment and detection of QAT hardware can be confirmed by
+examining the resource allocations on the nodes:
+
+```bash
+$ kubectl describe node <node name> | grep qat.intel.com/generic
+ qat.intel.com/generic: 10
+ qat.intel.com/generic: 10
+```
+
+## Deploying by hand
+
+For development purposes, it is sometimes convenient to deploy the plugin 'by hand' on a node.
+In this case, you do not need to build the complete container image, and can build just the plugin.
+
+### Build QAT device plugin
+
+```bash
+$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ make qat_plugin
+```
+
+### Deploy QAT plugin
+
+Deploy the plugin on a node by running it as `root`. The below is just an example - modify the
+paramaters as necessary for your setup:
+
+```bash
 $ sudo $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/qat_plugin/qat_plugin \
 -dpdk-driver igb_uio -kernel-vf-drivers dh895xccvf -max-num-devices 10 -debug
 QAT device plugin started
@@ -52,81 +226,87 @@ The number of devices discovered are:10
 device-plugin start server at: /var/lib/kubelet/device-plugins/intelQAT.sock
 device-plugin registered
 ListAndWatch: Sending device response
-
 ```
 
-By default, the device plugin supports these QuickAssist devices:  DH895xCC, C62x, C3xxx, and D15xx devices.
+## QAT device plugin Demos
 
-Use the `kernel-vf-drivers flag` to specify the vf Device Driver for the particular QAT device. For more information, refer to [Intel QAT Crypto Poll Mode Driver](https://dpdk.org/doc/guides/cryptodevs/qat.html).
+The below sections cover a `DPDK` and `OpenSSL` demo, both of which utilise the
+QAT device plugin under Kubernetes.
 
-`-dpdk-driver` is set to `vfio-pci` by default since it is more robust and secure driver compared with `igb_uio`. See [DPDK Linux Driver Guide](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html) for more information.
+### DPDK QAT demo
 
-`-mode` parameter can be set to `kerneldrv` to override the default  mode (`dpdkdrv`). With `-mode kerneldrv`, no other parameter documented above are valid, except `-debug` which is global for both modes. `kerneldrv` mode implements resource allocation based on system configured [logical instances](https://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdfhttps://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdf). The mode does not guarantee full device isolation between containers and therefore it's not recommended. Moreover, the mode will be deprecated and removed once `libqat` implements non-UIO based device access.
+#### DPDK Prerequisites
 
-### Build QAT device plugin Docker image:
+For the DPDK QAT demo to work, the Data Plane Development Kit (DPDK) drivers must be loaded and configured.
+For more information, refer to:
+[DPDK Getting Started Guide for Linux](https://doc.dpdk.org/guides/linux_gsg/index.html) and
+[DPDK Getting Started Guide, Linux Drivers section](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html)
+
+#### Build the image
+
+The demo uses a container image. You can either use the
+[pre-built image from the Docker Hub](https://hub.docker.com/r/intel/crypto-perf), or build your own local copy.
+
+To build the DPDK demo image:
+
+```bash
+$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/demo
+$ ./build-image.sh crypto-perf
+...
+Successfully tagged crypto-perf:devel
 ```
+
+#### Deploy the pod
+
+In the pod specification file, add container resource request and limit.
+For example, `qat.intel.com/generic: <number of devices>` for a container requesting QAT devices.
+
+For a DPDK-based workload, you may need to add hugepage request and limit.
+
+```bash
 $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
-$ make  intel-qat-plugin
+$ kubectl apply -k deployments/qat_dpdk_app/base/
+$ kubectl get pods
+  NAME                     READY     STATUS    RESTARTS   AGE
+  qat-dpdk                 1/1       Running   0          27m
+  intel-qat-plugin-5zgvb   1/1       Running   0          3h
+
 ```
 
-**Note**: `kerneldrv` mode is excluded from the build by default. Add `BUILDTAGS=kerneldrv` to `make` to get `kerneldrv` functionality added to the build.
+> **Note**: The deployment example above uses [kustomize](https://github.com/kubernetes-sigs/kustomize)
+> that is available in kubectl since Kubernetes v1.14 release.
 
-### Deploy QAT device plugin as a DaemonSet:
-```
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
-kubectl create -f deployments/qat_plugin/qat_plugin_default_configmap.yaml
-kubectl create -f deployments/qat_plugin/qat_plugin.yaml
-```
+#### Run the test
 
-**Note**: It is also possible to run the QAT device plugin using a non-root user. To do this,
-the nodes' DAC rules must be configured to allow PCI driver unbinding/binding, device plugin
-socket creation and kubelet registration. Furthermore, the deployments `securityContext` must
-be configured with appropriate `runAsUser/runAsGroup`.
+Manually execute the `dpdk-test-crypto-perf` application to review the logs:
 
-### Verify QAT device plugin is registered on master:
-```
-$ kubectl describe node <node name> | grep qat.intel.com/generic
- qat.intel.com/generic: 10
- qat.intel.com/generic: 10
+```bash
+$ kubectl exec -it qat-dpdk bash
+
+$ ./dpdk-test-crypto-perf -l 6-7 -w $QAT1 -- --ptest throughput --\
+devtype crypto_qat --optype cipher-only --cipher-algo aes-cbc --cipher-op \
+encrypt --cipher-key-sz 16 --total-ops 10000000 --burst-sz 32 --buffer-sz 64
+
 ```
 
-### Consuming QAT device plugin
+### OpenSSL QAT demo
 
-1. Build the DPDK image:
+Please refer to the [Kata Containers documentation][8] for details on the OpenSSL
+QAT acceleration demo.
 
-     ```
-     $ cd demo
-     $ ./build-image.sh crypto-perf
-     ```
+# Checking for hardware
 
-     This command produces a Docker image named `crypto-perf`.
+In order to utilise the QAT device plugin, QuickAssist SR-IOV virtual functions must be configured.
+You can verify this on your nodes by checking for the relevant PCI identifiers:
 
-2. Deploy a pod to run an example DPDK application named
-`dpdk-test-crypto-perf`.
+```bash
+for i in 0442 0443 37c9 19e3; do lspci -d 8086:$i; done
+```
 
-      In the pod specification file, add container resource request and limit.
-      For example, `qat.intel.com/generic: <number of devices>` for a container requesting QAT devices.
-
-      For a DPDK-based workload, you may need to add hugepage request and limit.
-
-     ```
-     $ kubectl apply -k deployments/qat_dpdk_app/base/
-     $ kubectl get pods
-       NAME                     READY     STATUS    RESTARTS   AGE
-       qat-dpdk                 1/1       Running   0          27m
-       intel-qat-plugin-5zgvb   1/1       Running   0          3h
-
-     ```
-
-    **Note**: The deployment example above uses kustomize that is available in
-    kubectl since kubernetes v1.14 release.
-
-3. Manually execute the `dpdk-test-crypto-perf` application to review the logs:
-   ```
-   $ kubectl exec -it qat-dpdk bash
-
-   $ ./dpdk-test-crypto-perf -l 6-7 -w $QAT1 -- --ptest throughput --\
-	devtype crypto_qat --optype cipher-only --cipher-algo aes-cbc --cipher-op \
-	encrypt --cipher-key-sz 16 --total-ops 10000000 --burst-sz 32 --buffer-sz 64
-
-   ```
+[1]:https://www-ssl.intel.com/content/www/us/en/design/products-and-solutions/processors-and-chipsets/purley/intel-xeon-scalable-processors.html
+[2]:https://www.intel.com/content/www/us/en/design/products-and-solutions/processors-and-chipsets/denverton/ns/atom-processor-c3000-series.html
+[3]:https://www.intel.com/content/www/us/en/ethernet-products/gigabit-server-adapters/quickassist-adapter-8950-brief.html
+[6]:https://github.com/kata-containers/documentation/blob/master/use-cases/using-Intel-QAT-and-kata.md
+[7]:https://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdfhttps://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdf
+[8]:https://github.com/kata-containers/documentation/blob/master/use-cases/using-Intel-QAT-and-kata.md#build-openssl-intel-qat-engine-container
+[9]:https://01.org/sites/default/files/downloads/intelr-quickassist-technology/336212qatswgettingstartedguiderev003.pdf
