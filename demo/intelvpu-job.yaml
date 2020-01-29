@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: intelvpu-demo-job
+  labels:
+    jobgroup: intelvpu-demo
+spec:
+  template:
+    metadata:
+      labels:
+        jobgroup: intelvpu-demo
+    spec:
+      restartPolicy: Never
+      containers:
+        -
+          name: intelvpu-demo-job-1
+          image: ubuntu-demo-openvino:devel
+          imagePullPolicy: IfNotPresent
+          command: [ "/do_classification.sh" ]
+          resources:
+            limits:
+              vpu.intel.com/hddl: 1
