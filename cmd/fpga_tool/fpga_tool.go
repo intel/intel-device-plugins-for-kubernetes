@@ -24,8 +24,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/bitstream"
-	fpga "github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/linux"
 )
 
 const (
