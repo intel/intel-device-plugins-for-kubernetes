@@ -32,7 +32,7 @@ const (
 
 // IntelFpgaFME represent Intel FPGA FME device
 type IntelFpgaFME struct {
-	FpgaFME
+	FME
 	DevPath           string
 	SysFsPath         string
 	Name              string
@@ -51,7 +51,7 @@ func (f *IntelFpgaFME) Close() error {
 }
 
 // NewIntelFpgaFME Opens device
-func NewIntelFpgaFME(dev string) (FpgaFME, error) {
+func NewIntelFpgaFME(dev string) (FME, error) {
 	fme := &IntelFpgaFME{DevPath: dev}
 	// check that kernel API is compatible
 	if _, err := fme.GetAPIVersion(); err != nil {
@@ -68,7 +68,7 @@ func NewIntelFpgaFME(dev string) (FpgaFME, error) {
 
 // IntelFpgaPort represent IntelFpga FPGA Port device
 type IntelFpgaPort struct {
-	FpgaPort
+	Port
 	DevPath   string
 	SysFsPath string
 	Name      string
@@ -76,7 +76,7 @@ type IntelFpgaPort struct {
 	Dev       string
 	AFUID     string
 	ID        string
-	FME       FpgaFME
+	FME       FME
 }
 
 // Close closes open device
@@ -88,7 +88,7 @@ func (f *IntelFpgaPort) Close() error {
 }
 
 // NewIntelFpgaPort Opens device
-func NewIntelFpgaPort(dev string) (FpgaPort, error) {
+func NewIntelFpgaPort(dev string) (Port, error) {
 	port := &IntelFpgaPort{DevPath: dev}
 	// check that kernel API is compatible
 	if _, err := port.GetAPIVersion(); err != nil {
@@ -153,7 +153,7 @@ func (f *IntelFpgaPort) PortReset() error {
 // PortGetInfo Retrieve information about the fpga port.
 // Driver fills the info in provided struct IntelFpga_fpga_port_info.
 // * Return: 0 on success, -errno on failure.
-func (f *IntelFpgaPort) PortGetInfo() (ret FpgaPortInfo, err error) {
+func (f *IntelFpgaPort) PortGetInfo() (ret PortInfo, err error) {
 	var value IntelFpgaPortInfo
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	_, err = ioctlDev(f.DevPath, FPGA_PORT_GET_INFO, uintptr(unsafe.Pointer(&value)))
@@ -170,7 +170,7 @@ func (f *IntelFpgaPort) PortGetInfo() (ret FpgaPortInfo, err error) {
 // * Caller provides struct IntelFpga_fpga_port_region_info with index value set.
 // * Driver returns the region info in other fields.
 // * Return: 0 on success, -errno on failure.
-func (f *IntelFpgaPort) PortGetRegionInfo(index uint32) (ret FpgaPortRegionInfo, err error) {
+func (f *IntelFpgaPort) PortGetRegionInfo(index uint32) (ret PortRegionInfo, err error) {
 	var value IntelFpgaPortRegionInfo
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	value.Index = index
@@ -347,7 +347,7 @@ func (f *IntelFpgaPort) GetPCIDevice() (*PCIDevice, error) {
 }
 
 // GetFME returns FPGA FME device for this port
-func (f *IntelFpgaPort) GetFME() (fme FpgaFME, err error) {
+func (f *IntelFpgaPort) GetFME() (fme FME, err error) {
 	if f.FME != nil {
 		return f.FME, nil
 	}

@@ -32,7 +32,7 @@ const (
 
 // DflFME represent DFL FPGA FME device
 type DflFME struct {
-	FpgaFME
+	FME
 	DevPath           string
 	SysFsPath         string
 	Name              string
@@ -54,7 +54,7 @@ func (f *DflFME) Close() error {
 }
 
 // NewDflFME Opens device
-func NewDflFME(dev string) (FpgaFME, error) {
+func NewDflFME(dev string) (FME, error) {
 	fme := &DflFME{DevPath: dev}
 	// check that kernel API is compatible
 	if _, err := fme.GetAPIVersion(); err != nil {
@@ -71,7 +71,7 @@ func NewDflFME(dev string) (FpgaFME, error) {
 
 // DflPort represent DFL FPGA Port device
 type DflPort struct {
-	FpgaPort
+	Port
 	DevPath   string
 	SysFsPath string
 	Name      string
@@ -79,7 +79,7 @@ type DflPort struct {
 	Dev       string
 	AFUID     string
 	ID        string
-	FME       FpgaFME
+	FME       FME
 }
 
 // Close closes open device
@@ -94,7 +94,7 @@ func (f *DflPort) Close() error {
 }
 
 // NewDflPort Opens device
-func NewDflPort(dev string) (FpgaPort, error) {
+func NewDflPort(dev string) (Port, error) {
 	port := &DflPort{DevPath: dev}
 	// check that kernel API is compatible
 	if _, err := port.GetAPIVersion(); err != nil {
@@ -157,7 +157,7 @@ func (f *DflPort) PortReset() error {
 // PortGetInfo Retrieve information about the fpga port.
 // Driver fills the info in provided struct dfl_fpga_port_info.
 // * Return: 0 on success, -errno on failure.
-func (f *DflPort) PortGetInfo() (ret FpgaPortInfo, err error) {
+func (f *DflPort) PortGetInfo() (ret PortInfo, err error) {
 	var value DflFpgaPortInfo
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	_, err = ioctlDev(f.DevPath, DFL_FPGA_PORT_GET_INFO, uintptr(unsafe.Pointer(&value)))
@@ -174,7 +174,7 @@ func (f *DflPort) PortGetInfo() (ret FpgaPortInfo, err error) {
 // * Caller provides struct dfl_fpga_port_region_info with index value set.
 // * Driver returns the region info in other fields.
 // * Return: 0 on success, -errno on failure.
-func (f *DflPort) PortGetRegionInfo(index uint32) (ret FpgaPortRegionInfo, err error) {
+func (f *DflPort) PortGetRegionInfo(index uint32) (ret PortRegionInfo, err error) {
 	var value DflFpgaPortRegionInfo
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	value.Index = index
@@ -351,7 +351,7 @@ func (f *DflPort) GetPCIDevice() (*PCIDevice, error) {
 }
 
 // GetFME returns FPGA FME device for this port
-func (f *DflPort) GetFME() (fme FpgaFME, err error) {
+func (f *DflPort) GetFME() (fme FME, err error) {
 	if f.FME != nil {
 		return f.FME, nil
 	}

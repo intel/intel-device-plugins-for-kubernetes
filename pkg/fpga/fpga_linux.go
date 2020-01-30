@@ -41,8 +41,8 @@ func CanonizeID(ID string) string {
 	return strings.ToLower(strings.Replace(strings.TrimSpace(ID), "-", "", -1))
 }
 
-// NewFpgaPort returns FpgaPort for specified device node
-func NewFpgaPort(fname string) (FpgaPort, error) {
+// NewPort returns Port for specified device node
+func NewPort(fname string) (Port, error) {
 	if strings.IndexByte(fname, byte('/')) < 0 {
 		fname = filepath.Join("/dev", fname)
 	}
@@ -56,8 +56,8 @@ func NewFpgaPort(fname string) (FpgaPort, error) {
 	return nil, errors.Errorf("unknown type of FPGA port %s", fname)
 }
 
-// NewFpgaFME returns FpgaFME for specified device node
-func NewFpgaFME(fname string) (FpgaFME, error) {
+// NewFME returns FME for specified device node
+func NewFME(fname string) (FME, error) {
 	if strings.IndexByte(fname, byte('/')) < 0 {
 		fname = filepath.Join("/dev", fname)
 	}
@@ -89,7 +89,7 @@ func ListFpgaDevices() (FMEs, Ports []string) {
 	return
 }
 
-func genericPortPR(f FpgaPort, bs bitstream.File, dryRun bool) error {
+func genericPortPR(f Port, bs bitstream.File, dryRun bool) error {
 	fme, err := f.GetFME()
 	if err != nil {
 		return err

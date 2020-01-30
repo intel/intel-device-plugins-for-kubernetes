@@ -175,7 +175,7 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 			if dev.processed {
 				continue
 			}
-			port, err := fpga.NewFpgaPort(deviceName)
+			port, err := fpga.NewPort(deviceName)
 			if err != nil {
 				return nil, err
 			}
@@ -244,7 +244,7 @@ func (he *hookEnv) process(reader io.Reader) error {
 	}
 
 	for _, params := range paramslist {
-		port, err := fpga.NewFpgaPort(params.portDevice)
+		port, err := fpga.NewPort(params.portDevice)
 		if err != nil {
 			return err
 		}

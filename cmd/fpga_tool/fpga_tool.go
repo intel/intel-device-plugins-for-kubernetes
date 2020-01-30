@@ -178,9 +178,9 @@ func fpgaInfo(fname string, quiet bool) error {
 }
 
 func fmeInfo(fname string, quiet bool) error {
-	var f fpga.FpgaFME
+	var f fpga.FME
 	var err error
-	f, err = fpga.NewFpgaFME(fname)
+	f, err = fpga.NewFME(fname)
 	if err != nil {
 		return err
 	}
@@ -188,7 +188,7 @@ func fmeInfo(fname string, quiet bool) error {
 	return printFpgaFME(f, quiet)
 }
 
-func printFpgaFME(f fpga.FpgaFME, quiet bool) (err error) {
+func printFpgaFME(f fpga.FME, quiet bool) (err error) {
 	fmt.Println("//****** FME ******//")
 	fmt.Printf("Name                             : %s\n", f.GetName())
 	fmt.Printf("Device Node                      : %s\n", f.GetDevPath())
@@ -215,9 +215,9 @@ func printFpgaFME(f fpga.FpgaFME, quiet bool) (err error) {
 }
 
 func portInfo(fname string, quiet bool) error {
-	var f fpga.FpgaPort
+	var f fpga.Port
 	var err error
-	f, err = fpga.NewFpgaPort(fname)
+	f, err = fpga.NewPort(fname)
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func portInfo(fname string, quiet bool) error {
 	return printFpgaPort(f, quiet)
 }
 
-func printFpgaPort(f fpga.FpgaPort, quiet bool) (err error) {
+func printFpgaPort(f fpga.Port, quiet bool) (err error) {
 	fmt.Println("//****** PORT ******//")
 	fmt.Printf("Name                             : %s\n", f.GetName())
 	fmt.Printf("Device Node                      : %s\n", f.GetDevPath())
@@ -285,7 +285,7 @@ func printPCIeInfo(pci *fpga.PCIDevice, quiet bool) {
 }
 
 func doPR(dev, fname string, dryRun, quiet bool) (err error) {
-	fp, err := fpga.NewFpgaPort(dev)
+	fp, err := fpga.NewPort(dev)
 	if err != nil {
 		return
 	}
