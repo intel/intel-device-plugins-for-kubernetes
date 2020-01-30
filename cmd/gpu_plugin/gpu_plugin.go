@@ -68,7 +68,7 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	for {
 		devTree, err := dp.scan()
 		if err != nil {
-			return err
+			fmt.Println("WARNING: Failed to scan: ", err)
 		}
 
 		notifier.Notify(devTree)
