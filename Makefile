@@ -22,6 +22,10 @@ vendor:
 cyclomatic-check:
 	@report=`$(GOCYCLO) -over 15 cmd pkg test`; if [ -n "$$report" ]; then echo "Complexity is over 15 in"; echo $$report; exit 1; fi
 
+go-mod-tidy:
+	$(GO) mod download
+	@report=`$(GO) mod tidy -v 2>&1` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
+
 test:
 ifndef WHAT
 	@$(GO) test -tags $(BUILDTAGS) -race -coverprofile=coverage.txt -covermode=atomic $(pkgs)
@@ -41,6 +45,8 @@ test-e2e:
 
 lint:
 	@rc=0 ; for f in $$(find -name \*.go | grep -v \.\/vendor) ; do golint -set_exit_status $$f || rc=1 ; done ; exit $$rc
+
+checks: lint format cyclomatic-check go-mod-tidy
 
 $(cmds):
 	cd cmd/$@; $(GO) build -tags $(BUILDTAGS)

@@ -42,7 +42,7 @@ pipeline {
                 sh "sudo mv go $GOROOT"
                 sh "mkdir -p $GOPATH/src/github.com/intel"
                 sh "cp -rf ${env.WORKSPACE} $REPO_DIR"
-                dir(path: "$REPO_DIR") {
+                dir(path: "$GOPATH") {
                   sh "go get -v golang.org/x/lint/golint"
                   sh "go get -v golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow"
                   sh "go get -v github.com/fzipp/gocyclo"
@@ -69,6 +69,13 @@ pipeline {
                   sh "sudo chmod +x /usr/bin/runc"
                 }
               }
+            }
+          }
+        }
+        stage("make go-mod-tidy") {
+          steps {
+            dir(path: "$REPO_DIR") {
+              sh "make go-mod-tidy"
             }
           }
         }
