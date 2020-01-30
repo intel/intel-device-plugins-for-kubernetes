@@ -55,9 +55,9 @@ The QAT plugin can take a number of command line arguments, summarised in the fo
 | -max-num-devices | int | maximum number of QAT devices to be provided to the QuickAssist device plugin (default: `32`) |
 | -mode | string | plugin mode which can be either `dpdk` or `kernel` (default: `dpdk`) |
 
-The example [DaemonSet YAML](../../deployments/qat_plugin/qat_plugin.yaml) passes a number of these
+The example [DaemonSet YAML](../../deployments/qat_plugin/base/intel-qat-plugin.yaml) passes a number of these
 arguments, and takes its default values from the
-[QAT default ConfigMap](../../deployments/qat_plugin/qat_plugin_default_configmap.yaml). The following
+[QAT default ConfigMap](../../deployments/qat_plugin/base/intel-qat-plugin-config.yaml). The following
 table summarises the defaults:
 
 | Argument | Variable | Default setting | Explanation |
@@ -67,7 +67,7 @@ table summarises the defaults:
 | -kernel-vf-drivers | `$KERNEL_VF_DRIVERS` | dh895xccvf,c6xxvf,c3xxxvf,d15xxvf | Modify to suit your hardware setup |
 | -max-num-devices | `$MAX_NUM_DEVICES` | 32 | Modify to suit your hardware setup if necessary |
 
-For more details on the `-dpdk-driver` choice, see 
+For more details on the `-dpdk-driver` choice, see
 [DPDK Linux Driver Guide](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html).
 
 For more details on the available options to the `-kernel-vf-drivers` option, see the list of
@@ -105,7 +105,7 @@ tag by default. If you do not build your own local images, your Kubernetes clust
 the devel images from the Docker hub by default.
 
 To use the release tagged versions of the images, edit the
-[YAML deployment files](../../deployments/qat_plugin/)
+[YAML deployment files](../../deployments/qat_plugin/base/)
 appropriately.
 
 ## Prerequisites
@@ -123,7 +123,7 @@ are available via two methods. One of them must be installed and enabled:
 
 The demonstrations have their own requirements, listed in their own specific sections.
 
-## Getting the source code:
+## Getting the source code
 
 ```bash
 $ go get -d -u https://github.com/intel/intel-device-plugins-for-kubernetes
@@ -164,14 +164,26 @@ Successfully tagged intel/intel-qat-plugin:devel
 
 ### Deploy the DaemonSet
 
-Deploying the plugin involves deployment of both a
-[ConfigMap](../../deployments/qat_plugin/qat_plugin_default_configmap.yaml) and the
-[DaemonSet YAML](../../deployments/qat_plugin/qat_plugin.yaml):
+Deploying the plugin involves first the deployment of a
+[ConfigMap](../../deployments/qat_plugin/base/intel-qat-plugin-config.yaml) and the
+[DaemonSet YAML](../../deployments/qat_plugin/base/intel-qat-plugin.yaml).
 
+There is a kustomization for deploying both:
 ```bash
 $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
-kubectl create -f deployments/qat_plugin/qat_plugin_default_configmap.yaml
-kubectl create -f deployments/qat_plugin/qat_plugin.yaml
+$ kubectl apply -k deployments/qat_plugin
+```
+and an alternative kustomization for deploying the plugin in the debug mode:
+
+```bash
+$ kubectl apply -k deployments/qat_plugin/overlays/debug
+```
+
+The third option is to deploy the `yaml`s separately:
+
+```bash
+$ kubectl create -f deployments/qat_plugin/base/intel-qat-plugin-config.yaml
+$ kubectl create -f deployments/qat_plugin/base/intel-qat-plugin.yaml
 ```
 
 > **Note**: It is also possible to run the QAT device plugin using a non-root user. To do this,
