@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/bitstream"
-	fpga "github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/linux"
 	"github.com/pkg/errors"
 	utilsexec "k8s.io/utils/exec"
 )
@@ -85,7 +85,6 @@ func decodeJSONStream(reader io.Reader, dest interface{}) error {
 }
 
 type hookEnv struct {
-	sysFsPrefix  string
 	bitstreamDir string
 	config       string
 	execer       utilsexec.Interface
@@ -97,9 +96,8 @@ type fpgaParams struct {
 	portDevice string
 }
 
-func newHookEnv(sysFsPrefix, bitstreamDir string, config string, execer utilsexec.Interface) *hookEnv {
+func newHookEnv(bitstreamDir string, config string, execer utilsexec.Interface) *hookEnv {
 	return &hookEnv{
-		sysFsPrefix:  sysFsPrefix,
 		bitstreamDir: bitstreamDir,
 		config:       config,
 		execer:       execer,
@@ -177,7 +175,7 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 			if dev.processed {
 				continue
 			}
-			port, err := fpga.NewFpgaPort(deviceName)
+			port, err := fpga.NewPort(deviceName)
 			if err != nil {
 				return nil, err
 			}
@@ -246,7 +244,7 @@ func (he *hookEnv) process(reader io.Reader) error {
 	}
 
 	for _, params := range paramslist {
-		port, err := fpga.NewFpgaPort(params.portDevice)
+		port, err := fpga.NewPort(params.portDevice)
 		if err != nil {
 			return err
 		}
@@ -283,7 +281,7 @@ func main() {
 		os.Setenv("PATH", "/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin")
 	}
 
-	he := newHookEnv("", fpgaBitStreamDirectory, configJSON, utilsexec.New())
+	he := newHookEnv(fpgaBitStreamDirectory, configJSON, utilsexec.New())
 
 	if err := he.process(os.Stdin); err != nil {
 		fmt.Printf("%+v\n", err)

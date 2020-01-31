@@ -11,15 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// +build linux
-//
 
-package linux
+package fpga
 
 import (
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/bitstream"
 	"io"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/bitstream"
 )
 
 type commonFpgaAPI interface {
@@ -44,8 +42,8 @@ type commonFpgaAPI interface {
 	GetPCIDevice() (*PCIDevice, error)
 }
 
-// FpgaFME represent interfaces provided by management interface of FPGA
-type FpgaFME interface {
+// FME represent interfaces provided by management interface of FPGA
+type FME interface {
 	// Kernel IOCTL interfaces for FPGA ports:
 	commonFpgaAPI
 	// PortPR does Partial Reconfiguration based on Port ID and Buffer (Image)
@@ -76,8 +74,8 @@ type FpgaFME interface {
 	// GetPort(uint32) (FpgaPort, error)
 }
 
-// FpgaPort represent interfaces provided by AFU port of FPGA
-type FpgaPort interface {
+// Port represent interfaces provided by AFU port of FPGA
+type Port interface {
 	// Kernel IOCTL interfaces for FPGA ports:
 	commonFpgaAPI
 	// PortReset Reset the FPGA Port and its AFU. No parameters are supported.
@@ -89,13 +87,13 @@ type FpgaPort interface {
 	// PortGetInfo Retrieve information about the fpga port.
 	// Driver fills the info in provided struct dfl_fpga_port_info.
 	// * Return: 0 on success, -errno on failure.
-	PortGetInfo() (FpgaPortInfo, error)
+	PortGetInfo() (PortInfo, error)
 	// PortGetRegionInfo Retrieve information about the fpga port.
 	// * Retrieve information about a device memory region.
 	// * Caller provides struct dfl_fpga_port_region_info with index value set.
 	// * Driver returns the region info in other fields.
 	// * Return: 0 on success, -errno on failure.
-	PortGetRegionInfo(index uint32) (FpgaPortRegionInfo, error)
+	PortGetRegionInfo(index uint32) (PortRegionInfo, error)
 	// TODO: (not implemented IOCTLs)
 	// Port DMA map / unmap
 	// UMSG enable / disable / set-mode / set-base-addr (intel-fpga)
@@ -104,7 +102,7 @@ type FpgaPort interface {
 	// Interfaces for device discovery and accessing properties
 
 	// GetFME returns FPGA FME device for this port
-	GetFME() (FpgaFME, error)
+	GetFME() (FME, error)
 	// GetPortID returns ID of the FPGA port within physical device
 	GetPortID() (uint32, error)
 	// GetAcceleratorTypeUUID returns AFU UUID for port
@@ -115,15 +113,15 @@ type FpgaPort interface {
 	PR(bitstream.File, bool) error
 }
 
-// FpgaPortInfo is a unified port info between drivers
-type FpgaPortInfo struct {
+// PortInfo is a unified port info between drivers
+type PortInfo struct {
 	Flags   uint32
 	Regions uint32
 	Umsgs   uint32
 }
 
-// FpgaPortRegionInfo is a unified Port Region info between drivers
-type FpgaPortRegionInfo struct {
+// PortRegionInfo is a unified Port Region info between drivers
+type PortRegionInfo struct {
 	Flags  uint32
 	Index  uint32
 	Size   uint64

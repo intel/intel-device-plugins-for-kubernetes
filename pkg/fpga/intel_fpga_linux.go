@@ -11,11 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// +build linux
-//
 
-package linux
+package fpga
 
 import (
 	"math"
@@ -28,14 +25,14 @@ import (
 )
 
 const (
-	dflFpgaFmePrefix  = "dfl-fme."
-	dflFpgaPortPrefix = "dfl-port."
-	dflFpgaFmeGlobPCI = "fpga_region/region*/dfl-fme.*"
+	intelFpgaFmePrefix  = "intel-fpga-fme."
+	intelFpgaPortPrefix = "intel-fpga-port."
+	intelFpgaFmeGlobPCI = "fpga/intel-fpga-dev.*/intel-fpga-fme.*"
 )
 
-// DflFME represent DFL FPGA FME device
-type DflFME struct {
-	FpgaFME
+// IntelFpgaFME represent Intel FPGA FME device
+type IntelFpgaFME struct {
+	FME
 	DevPath           string
 	SysFsPath         string
 	Name              string
@@ -49,16 +46,13 @@ type DflFME struct {
 }
 
 // Close closes open device
-func (f *DflFME) Close() error {
-	// if f.f != nil {
-	// 	return f.f.Close()
-	// }
+func (f *IntelFpgaFME) Close() error {
 	return nil
 }
 
-// NewDflFME Opens device
-func NewDflFME(dev string) (FpgaFME, error) {
-	fme := &DflFME{DevPath: dev}
+// NewIntelFpgaFME Opens device
+func NewIntelFpgaFME(dev string) (FME, error) {
+	fme := &IntelFpgaFME{DevPath: dev}
 	// check that kernel API is compatible
 	if _, err := fme.GetAPIVersion(); err != nil {
 		return nil, errors.Wrap(err, "kernel API mismatch")
@@ -72,9 +66,9 @@ func NewDflFME(dev string) (FpgaFME, error) {
 	return fme, nil
 }
 
-// DflPort represent DFL FPGA Port device
-type DflPort struct {
-	FpgaPort
+// IntelFpgaPort represent IntelFpga FPGA Port device
+type IntelFpgaPort struct {
+	Port
 	DevPath   string
 	SysFsPath string
 	Name      string
@@ -82,69 +76,68 @@ type DflPort struct {
 	Dev       string
 	AFUID     string
 	ID        string
-	FME       FpgaFME
+	FME       FME
 }
 
 // Close closes open device
-func (f *DflPort) Close() error {
+func (f *IntelFpgaPort) Close() error {
 	if f.FME != nil {
-		return f.FME.Close()
+		defer f.FME.Close()
 	}
-	// if f.f != nil {
-	// 	return f.f.Close()
-	// }
 	return nil
 }
 
-// NewDflPort Opens device
-func NewDflPort(dev string) (FpgaPort, error) {
-	port := &DflPort{DevPath: dev}
+// NewIntelFpgaPort Opens device
+func NewIntelFpgaPort(dev string) (Port, error) {
+	port := &IntelFpgaPort{DevPath: dev}
 	// check that kernel API is compatible
 	if _, err := port.GetAPIVersion(); err != nil {
+		port.Close()
 		return nil, errors.Wrap(err, "kernel API mismatch")
 	}
 	if err := checkVendorAndClass(port); err != nil {
+		port.Close()
 		return nil, err
 	}
 	if err := port.updateProperties(); err != nil {
+		port.Close()
 		return nil, err
 	}
 	return port, nil
 }
 
 // common ioctls for FME and Port
-func commonDflGetAPIVersion(dev string) (int, error) {
-	v, err := ioctlDev(dev, DFL_FPGA_GET_API_VERSION, 0)
+func commonIntelFpgaGetAPIVersion(fd string) (int, error) {
+	v, err := ioctlDev(fd, FPGA_GET_API_VERSION, 0)
 	return int(v), err
 }
-func commonDflCheckExtension(dev string) (int, error) {
-	v, err := ioctlDev(dev, DFL_FPGA_CHECK_EXTENSION, 0)
+func commonIntelFpgaCheckExtension(fd string) (int, error) {
+	v, err := ioctlDev(fd, FPGA_CHECK_EXTENSION, 0)
 	return int(v), err
 }
 
 // GetAPIVersion  Report the version of the driver API.
 // * Return: Driver API Version.
-func (f *DflFME) GetAPIVersion() (int, error) {
-	return commonDflGetAPIVersion(f.DevPath)
+func (f *IntelFpgaFME) GetAPIVersion() (int, error) {
+	return commonIntelFpgaGetAPIVersion(f.DevPath)
 }
 
 // CheckExtension Check whether an extension is supported.
 // * Return: 0 if not supported, otherwise the extension is supported.
-func (f *DflFME) CheckExtension() (int, error) {
-	// return commonCheckExtension(f.f.Fd())
-	return commonDflCheckExtension(f.DevPath)
+func (f *IntelFpgaFME) CheckExtension() (int, error) {
+	return commonIntelFpgaCheckExtension(f.DevPath)
 }
 
 // GetAPIVersion  Report the version of the driver API.
 // * Return: Driver API Version.
-func (f *DflPort) GetAPIVersion() (int, error) {
-	return commonDflGetAPIVersion(f.DevPath)
+func (f *IntelFpgaPort) GetAPIVersion() (int, error) {
+	return commonIntelFpgaGetAPIVersion(f.DevPath)
 }
 
 // CheckExtension Check whether an extension is supported.
 // * Return: 0 if not supported, otherwise the extension is supported.
-func (f *DflPort) CheckExtension() (int, error) {
-	return commonDflCheckExtension(f.DevPath)
+func (f *IntelFpgaPort) CheckExtension() (int, error) {
+	return commonIntelFpgaCheckExtension(f.DevPath)
 }
 
 // PortReset Reset the FPGA Port and its AFU. No parameters are supported.
@@ -152,18 +145,18 @@ func (f *DflPort) CheckExtension() (int, error) {
 // it should never cause any system level issue, only functional failure
 // (e.g. DMA or PR operation failure) and be recoverable from the failure.
 // * Return: 0 on success, -errno of failure
-func (f *DflPort) PortReset() error {
-	_, err := ioctlDev(f.DevPath, DFL_FPGA_PORT_RESET, 0)
+func (f *IntelFpgaPort) PortReset() error {
+	_, err := ioctlDev(f.DevPath, FPGA_PORT_RESET, 0)
 	return err
 }
 
 // PortGetInfo Retrieve information about the fpga port.
-// Driver fills the info in provided struct dfl_fpga_port_info.
+// Driver fills the info in provided struct IntelFpga_fpga_port_info.
 // * Return: 0 on success, -errno on failure.
-func (f *DflPort) PortGetInfo() (ret FpgaPortInfo, err error) {
-	var value DflFpgaPortInfo
+func (f *IntelFpgaPort) PortGetInfo() (ret PortInfo, err error) {
+	var value IntelFpgaPortInfo
 	value.Argsz = uint32(unsafe.Sizeof(value))
-	_, err = ioctlDev(f.DevPath, DFL_FPGA_PORT_GET_INFO, uintptr(unsafe.Pointer(&value)))
+	_, err = ioctlDev(f.DevPath, FPGA_PORT_GET_INFO, uintptr(unsafe.Pointer(&value)))
 	if err == nil {
 		ret.Flags = value.Flags
 		ret.Regions = value.Regions
@@ -174,14 +167,14 @@ func (f *DflPort) PortGetInfo() (ret FpgaPortInfo, err error) {
 
 // PortGetRegionInfo Retrieve information about the fpga port.
 // * Retrieve information about a device memory region.
-// * Caller provides struct dfl_fpga_port_region_info with index value set.
+// * Caller provides struct IntelFpga_fpga_port_region_info with index value set.
 // * Driver returns the region info in other fields.
 // * Return: 0 on success, -errno on failure.
-func (f *DflPort) PortGetRegionInfo(index uint32) (ret FpgaPortRegionInfo, err error) {
-	var value DflFpgaPortRegionInfo
+func (f *IntelFpgaPort) PortGetRegionInfo(index uint32) (ret PortRegionInfo, err error) {
+	var value IntelFpgaPortRegionInfo
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	value.Index = index
-	_, err = ioctlDev(f.DevPath, DFL_FPGA_PORT_GET_REGION_INFO, uintptr(unsafe.Pointer(&value)))
+	_, err = ioctlDev(f.DevPath, FPGA_PORT_GET_REGION_INFO, uintptr(unsafe.Pointer(&value)))
 	if err == nil {
 		ret.Flags = value.Flags
 		ret.Index = value.Index
@@ -194,28 +187,28 @@ func (f *DflPort) PortGetRegionInfo(index uint32) (ret FpgaPortRegionInfo, err e
 // PortPR does Partial Reconfiguration based on Port ID and Buffer (Image)
 // provided by caller.
 // * Return: 0 on success, -errno on failure.
-// * If DFL_FPGA_FME_PORT_PR returns -EIO, that indicates the HW has detected
+// * If IntelFpga_FPGA_FME_PORT_PR returns -EIO, that indicates the HW has detected
 //   some errors during PR, under this case, the user can fetch HW error info
 //   from the status of FME's fpga manager.
-func (f *DflFME) PortPR(port uint32, bitstream []byte) error {
-	var value DflFpgaFmePortPR
+func (f *IntelFpgaFME) PortPR(port uint32, bitstream []byte) error {
+	var value IntelFpgaFmePortPR
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	value.Port_id = port
 	value.Buffer_size = uint32(len(bitstream))
 	value.Buffer_address = uint64(uintptr(unsafe.Pointer(&bitstream[0])))
-	_, err := ioctlDev(f.DevPath, DFL_FPGA_FME_PORT_PR, uintptr(unsafe.Pointer(&value)))
+	_, err := ioctlDev(f.DevPath, FPGA_FME_PORT_PR, uintptr(unsafe.Pointer(&value)))
 	return err
 }
 
 // FME interfaces
 
 // GetDevPath returns path to device node
-func (f *DflFME) GetDevPath() string {
+func (f *IntelFpgaFME) GetDevPath() string {
 	return f.DevPath
 }
 
 // GetSysFsPath returns sysfs entry for FPGA FME or Port (e.g. can be used for custom errors/perf items)
-func (f *DflFME) GetSysFsPath() string {
+func (f *IntelFpgaFME) GetSysFsPath() string {
 	if f.SysFsPath != "" {
 		return f.SysFsPath
 	}
@@ -228,7 +221,7 @@ func (f *DflFME) GetSysFsPath() string {
 }
 
 // GetName returns simple FPGA name, derived from sysfs entry, can be used with /dev/ or /sys/bus/platform/
-func (f *DflFME) GetName() string {
+func (f *IntelFpgaFME) GetName() string {
 	if f.Name != "" {
 		return f.Name
 	}
@@ -237,7 +230,7 @@ func (f *DflFME) GetName() string {
 }
 
 // GetPCIDevice returns PCIDevice for this device
-func (f *DflFME) GetPCIDevice() (*PCIDevice, error) {
+func (f *IntelFpgaFME) GetPCIDevice() (*PCIDevice, error) {
 	if f.PCIDevice != nil {
 		return f.PCIDevice, nil
 	}
@@ -250,7 +243,7 @@ func (f *DflFME) GetPCIDevice() (*PCIDevice, error) {
 }
 
 // GetPortsNum returns amount of FPGA Ports associated to this FME
-func (f *DflFME) GetPortsNum() int {
+func (f *IntelFpgaFME) GetPortsNum() int {
 	if f.PortsNum == "" {
 		err := f.updateProperties()
 		if err != nil {
@@ -265,7 +258,7 @@ func (f *DflFME) GetPortsNum() int {
 }
 
 // GetInterfaceUUID returns Interface UUID for FME
-func (f *DflFME) GetInterfaceUUID() (id string) {
+func (f *IntelFpgaFME) GetInterfaceUUID() (id string) {
 	if f.CompatID == "" {
 		err := f.updateProperties()
 		if err != nil {
@@ -276,7 +269,7 @@ func (f *DflFME) GetInterfaceUUID() (id string) {
 }
 
 // GetSocketID returns physical socket number, in case NUMA enumeration fails
-func (f *DflFME) GetSocketID() (uint32, error) {
+func (f *IntelFpgaFME) GetSocketID() (uint32, error) {
 	if f.SocketID == "" {
 		return math.MaxUint32, errors.Errorf("n/a")
 	}
@@ -285,17 +278,17 @@ func (f *DflFME) GetSocketID() (uint32, error) {
 }
 
 // GetBitstreamID returns FME bitstream id
-func (f *DflFME) GetBitstreamID() string {
+func (f *IntelFpgaFME) GetBitstreamID() string {
 	return f.BitstreamID
 }
 
 // GetBitstreamMetadata returns FME bitstream metadata
-func (f *DflFME) GetBitstreamMetadata() string {
+func (f *IntelFpgaFME) GetBitstreamMetadata() string {
 	return f.BitstreamMetadata
 }
 
 // Update properties from sysfs
-func (f *DflFME) updateProperties() error {
+func (f *IntelFpgaFME) updateProperties() error {
 	pci, err := f.GetPCIDevice()
 	if err != nil {
 		return err
@@ -306,20 +299,20 @@ func (f *DflFME) updateProperties() error {
 		"dev":                &f.Dev,
 		"ports_num":          &f.PortsNum,
 		"socket_id":          &f.SocketID,
-		"dfl-fme-region.*/fpga_region/region*/compat_id": &f.CompatID,
+		"pr/interface_id":    &f.CompatID,
 	}
-	return readFilesInDirectory(fileMap, filepath.Join(pci.SysFsPath, dflFpgaFmeGlobPCI))
+	return readFilesInDirectory(fileMap, filepath.Join(pci.SysFsPath, intelFpgaFmeGlobPCI))
 }
 
 // Port interfaces
 
 // GetDevPath returns path to device node
-func (f *DflPort) GetDevPath() string {
+func (f *IntelFpgaPort) GetDevPath() string {
 	return f.DevPath
 }
 
 // GetSysFsPath returns sysfs entry for FPGA FME or Port (e.g. can be used for custom errors/perf items)
-func (f *DflPort) GetSysFsPath() string {
+func (f *IntelFpgaPort) GetSysFsPath() string {
 	if f.SysFsPath != "" {
 		return f.SysFsPath
 	}
@@ -332,7 +325,7 @@ func (f *DflPort) GetSysFsPath() string {
 }
 
 // GetName returns simple FPGA name, derived from sysfs entry, can be used with /dev/ or /sys/bus/platform/
-func (f *DflPort) GetName() string {
+func (f *IntelFpgaPort) GetName() string {
 	if f.Name != "" {
 		return f.Name
 	}
@@ -341,7 +334,7 @@ func (f *DflPort) GetName() string {
 }
 
 // GetPCIDevice returns PCIDevice for this device
-func (f *DflPort) GetPCIDevice() (*PCIDevice, error) {
+func (f *IntelFpgaPort) GetPCIDevice() (*PCIDevice, error) {
 	if f.PCIDevice != nil {
 		return f.PCIDevice, nil
 	}
@@ -354,7 +347,7 @@ func (f *DflPort) GetPCIDevice() (*PCIDevice, error) {
 }
 
 // GetFME returns FPGA FME device for this port
-func (f *DflPort) GetFME() (fme FpgaFME, err error) {
+func (f *IntelFpgaPort) GetFME() (fme FME, err error) {
 	if f.FME != nil {
 		return f.FME, nil
 	}
@@ -370,14 +363,14 @@ func (f *DflPort) GetFME() (fme FpgaFME, err error) {
 	fileMap := map[string]*string{
 		"dev": &dev,
 	}
-	if err = readFilesInDirectory(fileMap, filepath.Join(pci.SysFsPath, dflFpgaFmeGlobPCI)); err != nil {
+	if err = readFilesInDirectory(fileMap, filepath.Join(pci.SysFsPath, intelFpgaFmeGlobPCI)); err != nil {
 		return
 	}
 	realDev, err := filepath.EvalSymlinks(filepath.Join("/dev/char", dev))
 	if err != nil {
 		return
 	}
-	fme, err = NewDflFME(realDev)
+	fme, err = NewIntelFpgaFME(realDev)
 	if err != nil {
 		return
 	}
@@ -386,7 +379,7 @@ func (f *DflPort) GetFME() (fme FpgaFME, err error) {
 }
 
 // GetPortID returns ID of the FPGA port within physical device
-func (f *DflPort) GetPortID() (uint32, error) {
+func (f *IntelFpgaPort) GetPortID() (uint32, error) {
 	if f.ID == "" {
 		err := f.updateProperties()
 		if err != nil {
@@ -398,7 +391,7 @@ func (f *DflPort) GetPortID() (uint32, error) {
 }
 
 // GetAcceleratorTypeUUID returns AFU UUID for port
-func (f *DflPort) GetAcceleratorTypeUUID() (afuID string) {
+func (f *IntelFpgaPort) GetAcceleratorTypeUUID() string {
 	err := f.updateProperties()
 	if err != nil || f.AFUID == "" {
 		return ""
@@ -407,7 +400,7 @@ func (f *DflPort) GetAcceleratorTypeUUID() (afuID string) {
 }
 
 // GetInterfaceUUID returns Interface UUID for FME
-func (f *DflPort) GetInterfaceUUID() (id string) {
+func (f *IntelFpgaPort) GetInterfaceUUID() (id string) {
 	fme, err := f.GetFME()
 	if err != nil {
 		return ""
@@ -417,12 +410,12 @@ func (f *DflPort) GetInterfaceUUID() (id string) {
 }
 
 // PR programs specified bitstream to port
-func (f *DflPort) PR(bs bitstream.File, dryRun bool) error {
+func (f *IntelFpgaPort) PR(bs bitstream.File, dryRun bool) error {
 	return genericPortPR(f, bs, dryRun)
 }
 
 // Update properties from sysfs
-func (f *DflPort) updateProperties() error {
+func (f *IntelFpgaPort) updateProperties() error {
 	fileMap := map[string]*string{
 		"afu_id": &f.AFUID,
 		"dev":    &f.Dev,
