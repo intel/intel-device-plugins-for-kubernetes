@@ -1,34 +1,70 @@
-# Build and set up Intel FPGA prestart CRI-O hook
+# Intel FPGA prestart CRI-O webhook for Kubernetes
 
-### Dependencies
+# Table of Contents
 
-You must install and set up the following FPGA plugin modules for correct operation:
+* [Introduction](#introduction)
+* [Dependencies](#dependencies)
+* [Building](#building)
+    * [Getting the source code](#getting-the-source-code)
+    * [Building the image](#building-the-image)
+* [Configuring CRI-O](#configuring-cri-o)
+
+# Introduction
+
+The FPGA CRI-O webhook is one of the components used to add support for Intel FPGA
+devices to Kubernetes.
+
+The FPGA prestart CRI-O hook is triggered by container annotations, such as set by the
+[FPGA device plugin](../fpga_plugin).  It performs discovery of the requested FPGA
+function bitstream and then programs FPGA devices based on the environment variables
+in the workload description.
+
+The CRI-O prestart hook is only *required* when the
+[FPGA admission webhook](../fpga_admissionwebhook) is configured for orchestration
+programmed mode, and is benign (un-used) otherwise.
+
+> **Note:** The fpga CRI-O webhook is usually installed by the same DaemonSet as the
+> FPGA device plugin. If building and installing the CRI-O webhook by hand, it is
+> recommended you reference the
+> [fpga plugin DaemonSet YAML](../../deployments/fpga_plugin/fpga_plugin.yaml) for
+> more details.
+
+# Dependencies
+
+This component is one of a set of components that work together. You may also want to
+install the following:
 
 -   [FPGA device plugin](../fpga_plugin/README.md)
--   [FPGA admission controller webhook](../fpga_admissionwebhook/README.md)
--   [FPGA prestart CRI-O hook](README.md) (this module)
+-   [FPGA admission controller](../fpga_admissionwebhook/README.md)
 
-### Get source code:
-```
-    $ mkdir -p $GOPATH/src/github.com/intel/
-    $ cd $GOPATH/src/github.com/intel/
-    $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes.git
-```
+All components have the same basic dependencies as the
+[generic plugin framework dependencies](../../README.md#about)
 
-### Build CRI-O hook:
-```
-    $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
-    $ make intel-fpga-initcontainer
-    $ docker images
-    REPOSITORY                      TAG                                        IMAGE ID            CREATED          SIZE
-    intel/intel-fpga-initcontainer  01b11d9d6d18bbe7df987a738efb20ae22ce795e   2e7586fe0fa6        0 sec ago        57.6MB
-    intel/intel-fpga-initcontainer  devel                                      2e7586fe0fa6        0 sec ago        57.6MB
-    ...
+# Building
+
+The following sections detail how to obtain, build and deploy the CRI-O
+prestart hook.
+
+## Getting the source code
+
+```bash
+$ go get -d -u github.com/intel/intel-device-plugins-for-kubernetes
 ```
 
-### Ensure that CRI-O is configured to allow OCI hooks
+## Building the image
 
-Recent versions of CRI-O are shipped with default configuration file that prevents
-CRI-O to discover and configure hooks automatically.
+```bash
+$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ make intel-fpga-initcontainer
+...
+Successfully tagged intel/intel-fpga-initcontainer:devel
+```
+
+# Configuring CRI-O
+
+Recent versions of [CRI-O](https://github.com/cri-o/cri-o) are shipped with default configuration
+file that prevents CRI-O to discover and configure hooks automatically.
 For FPGA orchestration programmed mode, the OCI hooks are the key component.
-Thus, please make sure that in your `/etc/crio/crio.conf` parameter `hooks_dir` is either unset (to enable default search paths for OCI hooks configuration) or contains directory `/etc/containers/oci/hooks.d`
+Please ensure that your `/etc/crio/crio.conf` parameter `hooks_dir` is either unset
+(to enable default search paths for OCI hooks configuration) or contains the directory
+`/etc/containers/oci/hooks.d`.
