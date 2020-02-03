@@ -19,12 +19,8 @@ env:
 sudo: required
 
 before_install:
-  ## checkers
-  - go get -v golang.org/x/lint/golint
-  - go get -v github.com/fzipp/gocyclo
-  - go get -v golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
-  ## install buildah build deps
   - cdir=$(pwd)
+  ## install buildah build deps
   - sudo apt-get update
   - sudo apt-get -y install e2fslibs-dev libfuse-dev libgpgme11-dev libdevmapper-dev libglib2.0-dev libprotobuf-dev libusb-1.0-0-dev
   # build buildah
@@ -41,9 +37,14 @@ before_install:
   # install runc
   - sudo curl -L https://github.com/opencontainers/runc/releases/download/$RUNC_VERSION/runc.amd64 -o /usr/bin/runc
   - sudo chmod +x /usr/bin/runc
+  ## checkers
+  - go get -v golang.org/x/lint/golint
+  - go get -v github.com/fzipp/gocyclo
+  - go get -v golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
   - cd $cdir
 
 script:
+  - make go-mod-tidy
   - make format
   - make lint
   - make BUILDTAGS=kerneldrv
