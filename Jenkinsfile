@@ -171,7 +171,10 @@ pipeline {
       }
     }
     stage('Intel Device plugins') {
-      when { changeRequest() }
+      when {
+	beforeAgent true
+	allOf { changeRequest(); environment name: 'BMAAS', value: 'yes' }
+      }
       agent {
         label "clr-bmaas-intel-device-plugins"
       }
