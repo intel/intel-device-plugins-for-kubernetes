@@ -9,11 +9,11 @@ spec:
     imagePullPolicy: IfNotPresent
     command: [ "/bin/bash", "-c", "--" ]
     args: [ "while true; do sleep 300000; done;" ]
-    securityContext:
-      readOnlyRootFilesystem: true
     volumeMounts:
     - mountPath: /dev/hugepages
       name: hugepage
+    - mountPath: /var/run/dpdk
+      name: dpdk-runtime
     resources:
       requests:
         cpu: "3"
@@ -26,11 +26,15 @@ spec:
         qat.intel.com/generic: '4'
         hugepages-2Mi: "128Mi"
     securityContext:
+      readOnlyRootFilesystem: true
       capabilities:
         add:
           ["IPC_LOCK", "SYS_ADMIN"]
   restartPolicy: Never
   volumes:
+  - name: dpdk-runtime
+    emptyDir:
+      medium: Memory
   - name: hugepage
     emptyDir:
       medium: HugePages
