@@ -17,11 +17,12 @@
         * [Build QAT device plugin](#build-qat-device-plugin)
         * [Deploy QAT plugin](#deploy-qat-plugin)
     * [QAT device plugin Demos](#qat-device-plugin-demos)
-        * [DPDK QAT demo](#dpdk-qat-demo)
+        * [DPDK QAT demos](#dpdk-qat-demos)
             * [DPDK Prerequisites](#dpdk-prerequisites)
             * [Build the image](#build-the-image)
             * [Deploy the pod](#deploy-the-pod)
-            * [Run the test](#run-the-test)
+            * [Manual test run](#manual-test-run)
+            * [Automated test run](#automated-test-run)
         * [OpenSSL QAT demo](#openssl-qat-demo)
 * [Checking for hardware](#checking-for-hardware)
 
@@ -230,14 +231,20 @@ ListAndWatch: Sending device response
 
 ## QAT device plugin Demos
 
-The below sections cover a `DPDK` and `OpenSSL` demo, both of which utilise the
+The below sections cover `DPDK` and `OpenSSL` demos, both of which utilise the
 QAT device plugin under Kubernetes.
 
-### DPDK QAT demo
+### DPDK QAT demos
+
+The Data Plane Development Kit (DPDK) QAT demos use DPDK
+[crypto-perf](https://doc.dpdk.org/guides/tools/cryptoperf.html) and
+[compress-perf](https://doc.dpdk.org/guides/tools/comp_perf.html) utilities to exercise
+DPDK QAT Poll-Mode Drivers (PMD). For more information on the tools' parameters, refer to the
+website links.
 
 #### DPDK Prerequisites
 
-For the DPDK QAT demo to work, the Data Plane Development Kit (DPDK) drivers must be loaded and configured.
+For the DPDK QAT demos to work, the DPDK drivers must be loaded and configured.
 For more information, refer to:
 [DPDK Getting Started Guide for Linux](https://doc.dpdk.org/guides/linux_gsg/index.html) and
 [DPDK Getting Started Guide, Linux Drivers section](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html)
@@ -276,18 +283,38 @@ $ kubectl get pods
 > **Note**: The deployment example above uses [kustomize](https://github.com/kubernetes-sigs/kustomize)
 > that is available in kubectl since Kubernetes v1.14 release.
 
-#### Run the test
+#### Manual test run
 
 Manually execute the `dpdk-test-crypto-perf` application to review the logs:
 
 ```bash
 $ kubectl exec -it qat-dpdk bash
 
-$ ./dpdk-test-crypto-perf -l 6-7 -w $QAT1 -- --ptest throughput --\
-devtype crypto_qat --optype cipher-only --cipher-algo aes-cbc --cipher-op \
-encrypt --cipher-key-sz 16 --total-ops 10000000 --burst-sz 32 --buffer-sz 64
-
+$ dpdk-test-crypto-perf -l 6-7 -w $QAT1 \
+-d /usr/lib64/librte_mempool_ring.so.1.1 \
+-d /usr/lib64/librte_pmd_qat.so.1.1 -- \
+--ptest throughput --devtype crypto_qat \
+--optype cipher-only --cipher-algo aes-cbc --cipher-op encrypt \
+--cipher-key-sz 16 --total-ops 10000000 --burst-sz 32 --buffer-sz 64
 ```
+
+> **Note**: Adapt the `.so` versions to what the DPDK version in the container provides.
+
+#### Automated test run
+
+It is also possible to deploy and run `crypto-perf` using the following
+`kustomize` overlays:
+
+```bash
+$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ kubectl apply -k deployments/qat_dpdk_app/test-crypto1
+$ kubectl apply -k deployments/qat_dpdk_app/test-compress1
+$ kubectl logs qat-dpdk-test-crypto-perf-tc1
+$ kubectl logs qat-dpdk-test-compress-perf-tc1
+```
+
+> **Note**: for `test-crypto1` and `test-compress1` to work, the cluster must enable
+[Kubernetes CPU manager's](https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/) `static` policy.
 
 ### OpenSSL QAT demo
 
