@@ -82,10 +82,8 @@ func getRegionDevelTree(devices []device) dpapi.DeviceTree {
 				ContainerPath: region.devNode,
 				Permissions:   "rw",
 			}
-			regionTree.AddDevice(devType, region.id, dpapi.DeviceInfo{
-				State: health,
-				Nodes: devNodes,
-			})
+
+			regionTree.AddDevice(devType, region.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil))
 		}
 	}
 
@@ -111,10 +109,7 @@ func getRegionTree(devices []device) dpapi.DeviceTree {
 					Permissions:   "rw",
 				}
 			}
-			regionTree.AddDevice(devType, region.id, dpapi.DeviceInfo{
-				State: health,
-				Nodes: devNodes,
-			})
+			regionTree.AddDevice(devType, region.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil))
 		}
 	}
 
@@ -133,16 +128,14 @@ func getAfuTree(devices []device) dpapi.DeviceTree {
 					health = pluginapi.Unhealthy
 				}
 				devType := fmt.Sprintf("%s-%s", afMode, afu.afuID)
-				afuTree.AddDevice(devType, afu.id, dpapi.DeviceInfo{
-					State: health,
-					Nodes: []pluginapi.DeviceSpec{
-						{
-							HostPath:      afu.devNode,
-							ContainerPath: afu.devNode,
-							Permissions:   "rw",
-						},
+				devNodes := []pluginapi.DeviceSpec{
+					{
+						HostPath:      afu.devNode,
+						ContainerPath: afu.devNode,
+						Permissions:   "rw",
 					},
-				})
+				}
+				afuTree.AddDevice(devType, afu.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil))
 			}
 		}
 	}

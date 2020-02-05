@@ -20,10 +20,27 @@ import (
 
 // DeviceInfo contains information about device maintained by Device Plugin
 type DeviceInfo struct {
-	State  string
-	Nodes  []pluginapi.DeviceSpec
-	Mounts []pluginapi.Mount
-	Envs   map[string]string
+	state    string
+	nodes    []pluginapi.DeviceSpec
+	mounts   []pluginapi.Mount
+	envs     map[string]string
+	topology *pluginapi.TopologyInfo
+}
+
+// NewDeviceInfo makes DeviceInfo struct and adds topology information to it
+func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string) DeviceInfo {
+	deviceInfo := DeviceInfo{
+		state:  state,
+		nodes:  nodes,
+		mounts: mounts,
+		envs:   envs,
+	}
+	devPaths := []string{}
+	for _, node := range nodes {
+		devPaths = append(devPaths, node.HostPath)
+	}
+
+	return deviceInfo
 }
 
 // DeviceTree contains a tree-like structure of device type -> device ID -> device info.

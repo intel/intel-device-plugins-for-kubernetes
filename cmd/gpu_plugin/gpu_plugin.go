@@ -131,10 +131,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				devID := fmt.Sprintf("%s-%d", f.Name(), i)
 				// Currently only one device type (i915) is supported.
 				// TODO: check model ID to differentiate device models.
-				devTree.AddDevice(deviceType, devID, dpapi.DeviceInfo{
-					State: pluginapi.Healthy,
-					Nodes: nodes,
-				})
+				devTree.AddDevice(deviceType, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
 			}
 		}
 	}

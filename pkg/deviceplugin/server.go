@@ -83,7 +83,7 @@ func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer)
 	for id, device := range srv.devices {
 		resp.Devices = append(resp.Devices, &pluginapi.Device{
 			ID:     id,
-			Health: device.State,
+			Health: device.state,
 		})
 	}
 	debug.Print("Sending to kubelet", resp.Devices)
@@ -120,16 +120,16 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 			if !ok {
 				return nil, errors.Errorf("Invalid allocation request with non-existing device %s", id)
 			}
-			if dev.State != pluginapi.Healthy {
+			if dev.state != pluginapi.Healthy {
 				return nil, errors.Errorf("Invalid allocation request with unhealthy device %s", id)
 			}
-			for i := range dev.Nodes {
-				cresp.Devices = append(cresp.Devices, &dev.Nodes[i])
+			for i := range dev.nodes {
+				cresp.Devices = append(cresp.Devices, &dev.nodes[i])
 			}
-			for i := range dev.Mounts {
-				cresp.Mounts = append(cresp.Mounts, &dev.Mounts[i])
+			for i := range dev.mounts {
+				cresp.Mounts = append(cresp.Mounts, &dev.mounts[i])
 			}
-			for key, value := range dev.Envs {
+			for key, value := range dev.envs {
 				if cresp.Envs == nil {
 					cresp.Envs = make(map[string]string)
 				}
