@@ -82,8 +82,9 @@ func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer)
 	resp := new(pluginapi.ListAndWatchResponse)
 	for id, device := range srv.devices {
 		resp.Devices = append(resp.Devices, &pluginapi.Device{
-			ID:     id,
-			Health: device.state,
+			ID:       id,
+			Health:   device.state,
+			Topology: device.topology,
 		})
 	}
 	debug.Print("Sending to kubelet", resp.Devices)
