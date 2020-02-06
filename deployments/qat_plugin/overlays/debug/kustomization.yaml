@@ -1,0 +1,8 @@
+nameSuffix: -debug
+bases:
+- ../../base
+configMapGenerator:
+- name: intel-qat-plugin-config
+  behavior: merge
+  literals:
+    - DEBUG="true"
