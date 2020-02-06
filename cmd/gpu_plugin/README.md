@@ -84,10 +84,22 @@ Successfully tagged intel/intel-gpu-plugin:devel
 
 ### Deploy plugin DaemonSet
 
-You can then use the example DaemonSet YAML file provided to deploy the plugin.
+You can then use the [example DaemonSet YAML](../../deployments/gpu_plugin/base/intel-gpu-plugin.yaml)
+file provided to deploy the plugin. The default kustomization that deploys the YAML as is:
 
 ```bash
-$ kubectl create -f ./deployments/gpu_plugin/gpu_plugin.yaml
+$ kubectl apply -k deployments/gpu_plugin
+daemonset.apps/intel-gpu-plugin created
+```
+
+Alternatively, if your cluster runs
+[Node Feature Discovery](https://github.com/kubernetes-sigs/node-feature-discovery),
+you can deploy the device plugin only on nodes with Intel GPU.
+The [nfd_labeled_nodes](../../deployments/gpu_plugin/overlays/nfd_labeled_nodes/)
+kustomization adds the nodeSelector to the DaemonSet:
+
+```bash
+$ kubectl apply -k deployments/gpu_plugin/overlays/nfd_labeled_nodes
 daemonset.apps/intel-gpu-plugin created
 ```
 
