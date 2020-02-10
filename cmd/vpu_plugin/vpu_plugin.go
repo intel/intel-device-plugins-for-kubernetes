@@ -17,9 +17,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/google/gousb"
 	"os"
 	"time"
+
+	"github.com/google/gousb"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
@@ -144,11 +145,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 					ContainerPath: hddlServicePath2,
 				},
 			}
-			devTree.AddDevice(deviceType, devID, dpapi.DeviceInfo{
-				State:  pluginapi.Healthy,
-				Nodes:  nodes,
-				Mounts: mounts,
-			})
+			devTree.AddDevice(deviceType, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, mounts, nil))
 		}
 	}
 

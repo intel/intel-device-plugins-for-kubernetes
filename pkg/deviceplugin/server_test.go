@@ -120,10 +120,10 @@ func TestSetupAndServe(t *testing.T) {
 		devType: "testtype",
 		devices: map[string]DeviceInfo{
 			"dev1": {
-				State: pluginapi.Healthy,
+				state: pluginapi.Healthy,
 			},
 			"dev2": {
-				State: pluginapi.Healthy,
+				state: pluginapi.Healthy,
 			},
 		},
 		updatesCh: make(chan map[string]DeviceInfo),
@@ -247,8 +247,8 @@ func TestAllocate(t *testing.T) {
 			name: "Allocate unhealthy devices",
 			devices: map[string]DeviceInfo{
 				"dev1": {
-					State: pluginapi.Unhealthy,
-					Nodes: []pluginapi.DeviceSpec{
+					state: pluginapi.Unhealthy,
+					nodes: []pluginapi.DeviceSpec{
 						{
 							HostPath:      "/dev/dev1",
 							ContainerPath: "/dev/dev1",
@@ -263,8 +263,8 @@ func TestAllocate(t *testing.T) {
 			name: "Allocate healthy device",
 			devices: map[string]DeviceInfo{
 				"dev1": {
-					State: pluginapi.Healthy,
-					Nodes: []pluginapi.DeviceSpec{
+					state: pluginapi.Healthy,
+					nodes: []pluginapi.DeviceSpec{
 						{
 							HostPath:      "/dev/dev1",
 							ContainerPath: "/dev/dev1",
@@ -279,8 +279,8 @@ func TestAllocate(t *testing.T) {
 			name: "Allocate healthy device with postAllocate hook",
 			devices: map[string]DeviceInfo{
 				"dev1": {
-					State: pluginapi.Healthy,
-					Nodes: []pluginapi.DeviceSpec{
+					state: pluginapi.Healthy,
+					nodes: []pluginapi.DeviceSpec{
 						{
 							HostPath:      "/dev/dev1",
 							ContainerPath: "/dev/dev1",
@@ -292,7 +292,7 @@ func TestAllocate(t *testing.T) {
 							Permissions:   "rw",
 						},
 					},
-					Mounts: []pluginapi.Mount{
+					mounts: []pluginapi.Mount{
 						{
 							HostPath:      "/dev",
 							ContainerPath: "/dev",
@@ -302,7 +302,7 @@ func TestAllocate(t *testing.T) {
 							ContainerPath: "/mnt",
 						},
 					},
-					Envs: map[string]string{
+					envs: map[string]string{
 						"testname": "testvalue",
 					},
 				},
@@ -316,8 +316,8 @@ func TestAllocate(t *testing.T) {
 			name: "Allocate healthy device with failing postAllocate hook",
 			devices: map[string]DeviceInfo{
 				"dev1": {
-					State: pluginapi.Healthy,
-					Nodes: []pluginapi.DeviceSpec{
+					state: pluginapi.Healthy,
+					nodes: []pluginapi.DeviceSpec{
 						{
 							HostPath:      "/dev/dev1",
 							ContainerPath: "/dev/dev1",
@@ -418,8 +418,8 @@ func TestListAndWatch(t *testing.T) {
 			updates: []map[string]DeviceInfo{
 				{
 					"fake_id": {
-						State: pluginapi.Healthy,
-						Nodes: []pluginapi.DeviceSpec{
+						state: pluginapi.Healthy,
+						nodes: []pluginapi.DeviceSpec{
 							{
 								HostPath:      "/dev/intel-fpga-port.0",
 								ContainerPath: "/dev/intel-fpga-port.0",
@@ -435,8 +435,8 @@ func TestListAndWatch(t *testing.T) {
 			updates: []map[string]DeviceInfo{
 				{
 					"fake_id": {
-						State: pluginapi.Healthy,
-						Nodes: []pluginapi.DeviceSpec{
+						state: pluginapi.Healthy,
+						nodes: []pluginapi.DeviceSpec{
 							{
 								HostPath:      "/dev/intel-fpga-port.0",
 								ContainerPath: "/dev/intel-fpga-port.0",

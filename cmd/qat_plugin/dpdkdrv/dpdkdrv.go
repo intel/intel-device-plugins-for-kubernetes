@@ -28,7 +28,7 @@ import (
 
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
 
 const (
@@ -81,7 +81,7 @@ func newDevicePlugin(pciDriverDir, pciDeviceDir string, maxDevices int, kernelVf
 }
 
 // Scan implements Scanner interface for vfio based QAT plugin.
-func (dp *DevicePlugin) Scan(notifier deviceplugin.Notifier) error {
+func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 	for {
 		devTree, err := dp.scan()
 		if err != nil {
@@ -258,8 +258,8 @@ func (dp *DevicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error
 	return nil
 }
 
-func (dp *DevicePlugin) scan() (deviceplugin.DeviceTree, error) {
-	devTree := deviceplugin.NewDeviceTree()
+func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
+	devTree := dpapi.NewDeviceTree()
 	n := 0
 	for _, driver := range append([]string{dp.dpdkDriver}, dp.kernelVfDrivers...) {
 		files, err := ioutil.ReadDir(path.Join(dp.pciDriverDir, driver))
@@ -304,14 +304,10 @@ func (dp *DevicePlugin) scan() (deviceplugin.DeviceTree, error) {
 				return nil, err
 			}
 
-			devinfo := deviceplugin.DeviceInfo{
-				State:  pluginapi.Healthy,
-				Nodes:  devNodes,
-				Mounts: devMounts,
-				Envs: map[string]string{
-					fmt.Sprintf("%s%d", envVarPrefix, n): file.Name(),
-				},
+			envs := map[string]string{
+				fmt.Sprintf("%s%d", envVarPrefix, n): file.Name(),
 			}
+			devinfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devNodes, devMounts, envs)
 
 			devTree.AddDevice("generic", vfpciaddr, devinfo)
 		}

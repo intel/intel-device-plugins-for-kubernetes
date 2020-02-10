@@ -15,15 +15,83 @@
 package deviceplugin
 
 import (
+	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/pkg/errors"
+
+	"github.com/intel/cri-resource-manager/pkg/topology"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
 // DeviceInfo contains information about device maintained by Device Plugin
 type DeviceInfo struct {
-	State  string
-	Nodes  []pluginapi.DeviceSpec
-	Mounts []pluginapi.Mount
-	Envs   map[string]string
+	state    string
+	nodes    []pluginapi.DeviceSpec
+	mounts   []pluginapi.Mount
+	envs     map[string]string
+	topology *pluginapi.TopologyInfo
+}
+
+// getTopologyInfo returns topology information for the list of device nodes
+func getTopologyInfo(devs []string) (*pluginapi.TopologyInfo, error) {
+	var result pluginapi.TopologyInfo
+	nodeIDs := map[int64]struct{}{}
+	for _, dev := range devs {
+		sysfsDevice, err := topology.FindSysFsDevice(dev)
+		if err != nil {
+			return nil, err
+		}
+
+		if sysfsDevice == "" {
+			return nil, errors.Errorf("device %s doesn't exist", dev)
+		}
+
+		hints, err := topology.NewTopologyHints(sysfsDevice)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, hint := range hints {
+			for _, nNode := range strings.Split(hint.NUMAs, ",") {
+				nNodeID, err := strconv.ParseInt(strings.TrimSpace(nNode), 10, 64)
+				if err != nil {
+					return nil, errors.Wrapf(err, "unable to convert numa node %s into int64", nNode)
+				}
+				if nNodeID < 0 {
+					return nil, errors.Wrapf(err, "numa node is negative: %d", nNodeID)
+				}
+				if _, ok := nodeIDs[nNodeID]; !ok {
+					result.Nodes = append(result.Nodes, &pluginapi.NUMANode{ID: nNodeID})
+					nodeIDs[nNodeID] = struct{}{}
+				}
+			}
+		}
+	}
+	sort.Slice(result.Nodes, func(i, j int) bool { return result.Nodes[i].ID < result.Nodes[j].ID })
+	return &result, nil
+}
+
+// NewDeviceInfo makes DeviceInfo struct and adds topology information to it
+func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string) DeviceInfo {
+	deviceInfo := DeviceInfo{
+		state:  state,
+		nodes:  nodes,
+		mounts: mounts,
+		envs:   envs,
+	}
+	devPaths := []string{}
+	for _, node := range nodes {
+		devPaths = append(devPaths, node.HostPath)
+	}
+
+	topologyInfo, err := getTopologyInfo(devPaths)
+	if err == nil {
+		deviceInfo.topology = topologyInfo
+	}
+
+	return deviceInfo
 }
 
 // DeviceTree contains a tree-like structure of device type -> device ID -> device info.

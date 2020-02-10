@@ -114,51 +114,47 @@ func getDevicesOPAE() []device {
 
 func TestGetRegionDevelTreeOPAE(t *testing.T) {
 	expected := dpapi.NewDeviceTree()
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.0", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/intel-fpga-port.0",
-				ContainerPath: "/dev/intel-fpga-port.0",
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      "/dev/intel-fpga-fme.0",
-				ContainerPath: "/dev/intel-fpga-fme.0",
-				Permissions:   "rw",
-			},
+	nodes := []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/intel-fpga-port.0",
+			ContainerPath: "/dev/intel-fpga-port.0",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.1", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/intel-fpga-port.1",
-				ContainerPath: "/dev/intel-fpga-port.1",
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      "/dev/intel-fpga-fme.1",
-				ContainerPath: "/dev/intel-fpga-fme.1",
-				Permissions:   "rw",
-			},
+		{
+			HostPath:      "/dev/intel-fpga-fme.0",
+			ContainerPath: "/dev/intel-fpga-fme.0",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "intel-fpga-fme.2", dpapi.DeviceInfo{
-		State: pluginapi.Unhealthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/intel-fpga-port.2",
-				ContainerPath: "/dev/intel-fpga-port.2",
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      "/dev/intel-fpga-fme.2",
-				ContainerPath: "/dev/intel-fpga-fme.2",
-				Permissions:   "rw",
-			},
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/intel-fpga-port.1",
+			ContainerPath: "/dev/intel-fpga-port.1",
+			Permissions:   "rw",
 		},
-	})
+		{
+			HostPath:      "/dev/intel-fpga-fme.1",
+			ContainerPath: "/dev/intel-fpga-fme.1",
+			Permissions:   "rw",
+		},
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/intel-fpga-port.2",
+			ContainerPath: "/dev/intel-fpga-port.2",
+			Permissions:   "rw",
+		},
+		{
+			HostPath:      "/dev/intel-fpga-fme.2",
+			ContainerPath: "/dev/intel-fpga-fme.2",
+			Permissions:   "rw",
+		},
+	}
+	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "intel-fpga-fme.2", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
 
 	result := getRegionDevelTree(getDevicesOPAE())
 	if !reflect.DeepEqual(result, expected) {
@@ -168,36 +164,32 @@ func TestGetRegionDevelTreeOPAE(t *testing.T) {
 
 func TestGetRegionTreeOPAE(t *testing.T) {
 	expected := dpapi.NewDeviceTree()
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.0", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/intel-fpga-port.0",
-				ContainerPath: "/dev/intel-fpga-port.0",
-				Permissions:   "rw",
-			},
+	nodes := []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/intel-fpga-port.0",
+			ContainerPath: "/dev/intel-fpga-port.0",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.1", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/intel-fpga-port.1",
-				ContainerPath: "/dev/intel-fpga-port.1",
-				Permissions:   "rw",
-			},
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/intel-fpga-port.1",
+			ContainerPath: "/dev/intel-fpga-port.1",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "intel-fpga-fme.2", dpapi.DeviceInfo{
-		State: pluginapi.Unhealthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/intel-fpga-port.2",
-				ContainerPath: "/dev/intel-fpga-port.2",
-				Permissions:   "rw",
-			},
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/intel-fpga-port.2",
+			ContainerPath: "/dev/intel-fpga-port.2",
+			Permissions:   "rw",
 		},
-	})
+	}
+	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "intel-fpga-fme.2", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
 
 	result := getRegionTree(getDevicesOPAE())
 	if !reflect.DeepEqual(result, expected) {
@@ -207,36 +199,32 @@ func TestGetRegionTreeOPAE(t *testing.T) {
 
 func TestGetAfuTreeOPAE(t *testing.T) {
 	expected := dpapi.NewDeviceTree()
-	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "intel-fpga-port.0", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/intel-fpga-port.0",
-				ContainerPath: "/dev/intel-fpga-port.0",
-				Permissions:   "rw",
-			},
+	nodes := []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/intel-fpga-port.0",
+			ContainerPath: "/dev/intel-fpga-port.0",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "intel-fpga-port.1", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/intel-fpga-port.1",
-				ContainerPath: "/dev/intel-fpga-port.1",
-				Permissions:   "rw",
-			},
+	}
+	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "intel-fpga-port.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/intel-fpga-port.1",
+			ContainerPath: "/dev/intel-fpga-port.1",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(afMode+"-"+unhealthyAfuID, "intel-fpga-port.2", dpapi.DeviceInfo{
-		State: pluginapi.Unhealthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/intel-fpga-port.2",
-				ContainerPath: "/dev/intel-fpga-port.2",
-				Permissions:   "rw",
-			},
+	}
+	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "intel-fpga-port.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/intel-fpga-port.2",
+			ContainerPath: "/dev/intel-fpga-port.2",
+			Permissions:   "rw",
 		},
-	})
+	}
+	expected.AddDevice(afMode+"-"+unhealthyAfuID, "intel-fpga-port.2", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
 
 	result := getAfuTree(getDevicesOPAE())
 	if !reflect.DeepEqual(result, expected) {

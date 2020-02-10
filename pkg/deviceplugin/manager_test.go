@@ -43,8 +43,8 @@ func TestNotify(t *testing.T) {
 			newmap: map[string]map[string]DeviceInfo{
 				"someDeviceType": {
 					"intel-fpga-port.0": {
-						State: pluginapi.Healthy,
-						Nodes: []pluginapi.DeviceSpec{
+						state: pluginapi.Healthy,
+						nodes: []pluginapi.DeviceSpec{
 							{
 								HostPath:      "/dev/intel-fpga-port.0",
 								ContainerPath: "/dev/intel-fpga-port.0",
@@ -61,8 +61,8 @@ func TestNotify(t *testing.T) {
 			oldmap: map[string]map[string]DeviceInfo{
 				"someDeviceType": {
 					"intel-fpga-port.0": {
-						State: pluginapi.Healthy,
-						Nodes: []pluginapi.DeviceSpec{
+						state: pluginapi.Healthy,
+						nodes: []pluginapi.DeviceSpec{
 							{
 								HostPath:      "/dev/intel-fpga-port.0",
 								ContainerPath: "/dev/intel-fpga-port.0",
@@ -75,8 +75,8 @@ func TestNotify(t *testing.T) {
 			newmap: map[string]map[string]DeviceInfo{
 				"someDeviceType": {
 					"intel-fpga-port.1": {
-						State: pluginapi.Healthy,
-						Nodes: []pluginapi.DeviceSpec{
+						state: pluginapi.Healthy,
+						nodes: []pluginapi.DeviceSpec{
 							{
 								HostPath:      "/dev/intel-fpga-port.1",
 								ContainerPath: "/dev/intel-fpga-port.1",
@@ -93,8 +93,8 @@ func TestNotify(t *testing.T) {
 			oldmap: map[string]map[string]DeviceInfo{
 				"someDeviceType": {
 					"intel-fpga-port.0": {
-						State: pluginapi.Healthy,
-						Nodes: []pluginapi.DeviceSpec{
+						state: pluginapi.Healthy,
+						nodes: []pluginapi.DeviceSpec{
 							{
 								HostPath:      "/dev/intel-fpga-port.0",
 								ContainerPath: "/dev/intel-fpga-port.0",
@@ -150,8 +150,8 @@ type devicePluginStub struct{}
 func (*devicePluginStub) Scan(n Notifier) error {
 	tree := NewDeviceTree()
 	tree.AddDevice("testdevice", "dev1", DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: make([]pluginapi.DeviceSpec, 0),
+		state: pluginapi.Healthy,
+		nodes: make([]pluginapi.DeviceSpec, 0),
 	})
 	n.Notify(tree)
 	return nil
@@ -179,8 +179,8 @@ func TestHandleUpdate(t *testing.T) {
 				Added: map[string]map[string]DeviceInfo{
 					"ce48969398f05f33946d560708be108a": {
 						"intel-fpga-fme.0": {
-							State: pluginapi.Healthy,
-							Nodes: []pluginapi.DeviceSpec{
+							state: pluginapi.Healthy,
+							nodes: []pluginapi.DeviceSpec{
 								{
 									HostPath:      "/dev/intel-fpga-port.0",
 									ContainerPath: "/dev/intel-fpga-port.0",
@@ -194,8 +194,8 @@ func TestHandleUpdate(t *testing.T) {
 							},
 						},
 						"intel-fpga-fme.1": {
-							State: pluginapi.Healthy,
-							Nodes: []pluginapi.DeviceSpec{
+							state: pluginapi.Healthy,
+							nodes: []pluginapi.DeviceSpec{
 								{
 									HostPath:      "/dev/intel-fpga-port.1",
 									ContainerPath: "/dev/intel-fpga-port.1",
@@ -222,8 +222,8 @@ func TestHandleUpdate(t *testing.T) {
 				Updated: map[string]map[string]DeviceInfo{
 					"ce48969398f05f33946d560708be108a": {
 						"intel-fpga-fme.1": {
-							State: pluginapi.Healthy,
-							Nodes: []pluginapi.DeviceSpec{
+							state: pluginapi.Healthy,
+							nodes: []pluginapi.DeviceSpec{
 								{
 									HostPath:      "/dev/intel-fpga-port.1",
 									ContainerPath: "/dev/intel-fpga-port.1",

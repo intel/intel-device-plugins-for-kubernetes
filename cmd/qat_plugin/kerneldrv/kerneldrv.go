@@ -95,17 +95,15 @@ func getDevTree(sysfs string, qatDevs []device, config map[string]section) (dpap
 		devType = fmt.Sprintf("cy%d_dc%d", svalue.cryptoEngines, svalue.compressionEngines)
 		for _, ep := range svalue.endpoints {
 			for i := 0; i < ep.processes; i++ {
-				devTree.AddDevice(devType, fmt.Sprintf("%s_%s_%d", sname, ep.id, i), dpapi.DeviceInfo{
-					State: pluginapi.Healthy,
-					Nodes: devs,
-					Envs: map[string]string{
-						fmt.Sprintf("QAT_SECTION_NAME_%s_%d", devType, uniqID): sname,
-						// This env variable may get overriden if a container requests more than one QAT process.
-						// But we keep this code since the majority of pod workloads run only one QAT process.
-						// The rest should use QAT_SECTION_NAME_XXX variables.
-						"QAT_SECTION_NAME": sname,
-					},
-				})
+				envs := map[string]string{
+					fmt.Sprintf("QAT_SECTION_NAME_%s_%d", devType, uniqID): sname,
+					// This env variable may get overriden if a container requests more than one QAT process.
+					// But we keep this code since the majority of pod workloads run only one QAT process.
+					// The rest should use QAT_SECTION_NAME_XXX variables.
+					"QAT_SECTION_NAME": sname,
+				}
+				deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devs, nil, envs)
+				devTree.AddDevice(devType, fmt.Sprintf("%s_%s_%d", sname, ep.id, i), deviceInfo)
 				uniqID++
 			}
 

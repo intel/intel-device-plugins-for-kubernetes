@@ -124,61 +124,57 @@ func getDevicesDFL() []device {
 
 func TestGetRegionDevelTreeDFL(t *testing.T) {
 	expected := dpapi.NewDeviceTree()
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region1", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/dfl-port.0",
-				ContainerPath: "/dev/dfl-port.0",
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      "/dev/dfl-fme.0",
-				ContainerPath: "/dev/dfl-fme.0",
-				Permissions:   "rw",
-			},
+	nodes := []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/dfl-port.0",
+			ContainerPath: "/dev/dfl-port.0",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region2", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/dfl-port.1",
-				ContainerPath: "/dev/dfl-port.1",
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      "/dev/dfl-port.2",
-				ContainerPath: "/dev/dfl-port.2",
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      "/dev/dfl-fme.1",
-				ContainerPath: "/dev/dfl-fme.1",
-				Permissions:   "rw",
-			},
+		{
+			HostPath:      "/dev/dfl-fme.0",
+			ContainerPath: "/dev/dfl-fme.0",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "region3", dpapi.DeviceInfo{
-		State: pluginapi.Unhealthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/dfl-port.3",
-				ContainerPath: "/dev/dfl-port.3",
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      "/dev/dfl-port.4",
-				ContainerPath: "/dev/dfl-port.4",
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      "/dev/dfl-fme.2",
-				ContainerPath: "/dev/dfl-fme.2",
-				Permissions:   "rw",
-			},
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/dfl-port.1",
+			ContainerPath: "/dev/dfl-port.1",
+			Permissions:   "rw",
 		},
-	})
+		{
+			HostPath:      "/dev/dfl-port.2",
+			ContainerPath: "/dev/dfl-port.2",
+			Permissions:   "rw",
+		},
+		{
+			HostPath:      "/dev/dfl-fme.1",
+			ContainerPath: "/dev/dfl-fme.1",
+			Permissions:   "rw",
+		},
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/dfl-port.3",
+			ContainerPath: "/dev/dfl-port.3",
+			Permissions:   "rw",
+		},
+		{
+			HostPath:      "/dev/dfl-port.4",
+			ContainerPath: "/dev/dfl-port.4",
+			Permissions:   "rw",
+		},
+		{
+			HostPath:      "/dev/dfl-fme.2",
+			ContainerPath: "/dev/dfl-fme.2",
+			Permissions:   "rw",
+		},
+	}
+	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "region3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
 
 	result := getRegionDevelTree(getDevicesDFL())
 	if !reflect.DeepEqual(result, expected) {
@@ -188,46 +184,42 @@ func TestGetRegionDevelTreeDFL(t *testing.T) {
 
 func TestGetRegionTreeDFL(t *testing.T) {
 	expected := dpapi.NewDeviceTree()
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region1", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/dfl-port.0",
-				ContainerPath: "/dev/dfl-port.0",
-				Permissions:   "rw",
-			},
+	nodes := []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/dfl-port.0",
+			ContainerPath: "/dev/dfl-port.0",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region2", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/dfl-port.1",
-				ContainerPath: "/dev/dfl-port.1",
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      "/dev/dfl-port.2",
-				ContainerPath: "/dev/dfl-port.2",
-				Permissions:   "rw",
-			},
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/dfl-port.1",
+			ContainerPath: "/dev/dfl-port.1",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "region3", dpapi.DeviceInfo{
-		State: pluginapi.Unhealthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/dfl-port.3",
-				ContainerPath: "/dev/dfl-port.3",
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      "/dev/dfl-port.4",
-				ContainerPath: "/dev/dfl-port.4",
-				Permissions:   "rw",
-			},
+		{
+			HostPath:      "/dev/dfl-port.2",
+			ContainerPath: "/dev/dfl-port.2",
+			Permissions:   "rw",
 		},
-	})
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/dfl-port.3",
+			ContainerPath: "/dev/dfl-port.3",
+			Permissions:   "rw",
+		},
+		{
+			HostPath:      "/dev/dfl-port.4",
+			ContainerPath: "/dev/dfl-port.4",
+			Permissions:   "rw",
+		},
+	}
+	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "region3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
 
 	result := getRegionTree(getDevicesDFL())
 	if !reflect.DeepEqual(result, expected) {
@@ -237,56 +229,51 @@ func TestGetRegionTreeDFL(t *testing.T) {
 
 func TestGetAfuTreeDFL(t *testing.T) {
 	expected := dpapi.NewDeviceTree()
-	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "dfl-port.0", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/dfl-port.0",
-				ContainerPath: "/dev/dfl-port.0",
-				Permissions:   "rw",
-			},
+	nodes := []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/dfl-port.0",
+			ContainerPath: "/dev/dfl-port.0",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "dfl-port.1", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/dfl-port.1",
-				ContainerPath: "/dev/dfl-port.1",
-				Permissions:   "rw",
-			},
+	}
+	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "dfl-port.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/dfl-port.1",
+			ContainerPath: "/dev/dfl-port.1",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "dfl-port.2", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/dfl-port.2",
-				ContainerPath: "/dev/dfl-port.2",
-				Permissions:   "rw",
-			},
+	}
+
+	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "dfl-port.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/dfl-port.2",
+			ContainerPath: "/dev/dfl-port.2",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(afMode+"-"+unhealthyAfuID, "dfl-port.3", dpapi.DeviceInfo{
-		State: pluginapi.Unhealthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/dfl-port.3",
-				ContainerPath: "/dev/dfl-port.3",
-				Permissions:   "rw",
-			},
+	}
+	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "dfl-port.2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/dfl-port.3",
+			ContainerPath: "/dev/dfl-port.3",
+			Permissions:   "rw",
 		},
-	})
-	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "dfl-port.4", dpapi.DeviceInfo{
-		State: pluginapi.Healthy,
-		Nodes: []pluginapi.DeviceSpec{
-			{
-				HostPath:      "/dev/dfl-port.4",
-				ContainerPath: "/dev/dfl-port.4",
-				Permissions:   "rw",
-			},
+	}
+	expected.AddDevice(afMode+"-"+unhealthyAfuID, "dfl-port.3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
+
+	nodes = []pluginapi.DeviceSpec{
+		{
+			HostPath:      "/dev/dfl-port.4",
+			ContainerPath: "/dev/dfl-port.4",
+			Permissions:   "rw",
 		},
-	})
+	}
+	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "dfl-port.4", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
 
 	result := getAfuTree(getDevicesDFL())
 	if !reflect.DeepEqual(result, expected) {
