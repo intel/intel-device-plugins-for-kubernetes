@@ -7,7 +7,6 @@ require (
 	github.com/go-ini/ini v1.46.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/gousb v0.0.0-20190812193832-18f4c1d8a750
-	github.com/intel/cri-resource-manager/pkg/topology v0.0.0-20200207111533-82d10bdaca4e
 	github.com/pkg/errors v0.8.1
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/sys v0.0.0-20190826190057-c7b8b68b1456
