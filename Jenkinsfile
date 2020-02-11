@@ -8,10 +8,10 @@ pipeline {
   environment {
     GO111MODULE="on"
     REG="cloud-native-image-registry.westus.cloudapp.azure.com/"
-    RUNC_VERSION="v1.0.0-rc8"
-    CRIO_VERSION="v1.14.6"
-    BUILDAH_VERSION="v1.10.0"
-    GO_VERSION="1.13.5"
+    RUNC_VERSION="v1.0.0-rc10"
+    CRIO_VERSION="v1.17.0"
+    BUILDAH_VERSION="v1.14.0"
+    GO_VERSION="1.13.7"
     GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
     GOROOT="/usr/local/go"
     GOPATH="/tmp/go"
@@ -61,6 +61,10 @@ pipeline {
                   sh 'make buildah TAGS=""'
                   sh "sudo cp buildah /usr/local/bin"
                   sh "sudo mkdir -p /etc/containers"
+                  sh "sudo mkdir -p /etc/cni/net.d"
+                  sh "sudo mkdir -p /opt/cni/bin"
+                  sh "sed -i -e 's/build.sh/build_linux.sh/' Makefile"
+                  sh "make install.cni.sudo"
                   sh '''echo '[registries.search]' > registries.conf'''
                   sh '''echo 'registries = ["docker.io"]' >> registries.conf'''
                   sh "sudo mv registries.conf /etc/containers/registries.conf"
