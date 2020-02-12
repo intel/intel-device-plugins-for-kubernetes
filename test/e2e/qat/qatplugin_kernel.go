@@ -44,6 +44,10 @@ func describeQatKernelPlugin() {
 	}
 
 	ginkgo.It("checks availability of QAT resources", func() {
+		if !framework.TestContext.FeatureGates["enable-experimental"] {
+			ginkgo.Skip("running experimental tests is disabled")
+		}
+
 		ginkgo.By("deploying QAT plugin in kernel mode")
 		framework.RunKubectlOrDie("--namespace", f.Namespace.Name, "create", "-f", yamlPath)
 
