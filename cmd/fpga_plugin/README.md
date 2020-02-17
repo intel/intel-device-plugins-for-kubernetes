@@ -75,7 +75,7 @@ development, initial deployment and debugging.
 
 The FPGA plugin set can run in one of two modes:
 
-- `region`/`orchestration` mode, where the plugins locate and advertise
+- `region`/`orchestrated` mode, where the plugins locate and advertise
   regions of the FPGA, and facilitate programing of those regions with the
   requested bistreams.
 - `af`/`preprogrammed` mode, where the FPGA bitstreams are already loaded
@@ -318,4 +318,3 @@ device-plugin registered
 # Next steps
 
 Continue installation with the [FPGA admission controller webhook](../fpga_admissionwebhook/README.md).
-

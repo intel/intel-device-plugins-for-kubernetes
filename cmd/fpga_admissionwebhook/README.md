@@ -36,9 +36,9 @@ shown in the following table:
 
 | FPGA plugin mode | matching admission controller mode |
 |:---------------- |:---------------------------------- |
-| region           | orchestration                      |
+| region           | orchestrated                       |
 | af               | preprogrammed                      |
- 
+
 
 # Dependencies
 
@@ -140,7 +140,7 @@ $ ./scripts/webhook-deploy.sh --ca-bundle-path /var/run/kubernetes/server-ca.crt
 Requested FPGA resources are translated to AF resources. For example,
 `fpga.intel.com/arria10.dcp1.1-nlb0` is translated to `fpga.intel.com/af-d8424dc4a4a3c413f89e433683f9040b`.
 
-In orchestration mode, `fpga.intel.com/arria10.dcp1.1-nlb0` gets translated to
+In orchestrated mode, `fpga.intel.com/arria10.dcp1.1-nlb0` gets translated to
 `fpga.intel.com/region-9926ab6d6c925a68aabca7d84c545738`, and, the corresponding AF IDs are set in
 environment variables for the container. The [FPGA CRI-O hook](../fpga_crihook/README.md)
 then loads the requested bitstream to a region before the container is started.
