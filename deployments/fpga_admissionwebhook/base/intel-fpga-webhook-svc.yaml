@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: intel-fpga-webhook-svc
+  labels:
+    app: intel-fpga-webhook
+spec:
+  ports:
+  - port: 443
+    targetPort: 8443
+  selector:
+    app: intel-fpga-webhook
