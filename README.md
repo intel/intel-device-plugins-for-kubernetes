@@ -126,6 +126,44 @@ For information on how to develop a new plugin using the framework, see the
 [Developers Guide](DEVEL.md) and the code in the
 [device plugins pkg directory](pkg/deviceplugin).
 
+## Running E2E tests
+
+Currently the E2E tests require having a Kubernetes cluster already configured
+on the nodes with the hardware required by the device plugins. Also all the
+container images with the executables under test must be available in the
+cluster. Given these two conditions are satisfied one can run the tests with
+
+```bash
+$ go test -v ./test/e2e/...
+```
+
+In case you want to run only certain tests, e.g. QAT ones, then run
+
+```bash
+$ go test -v ./test/e2e/... -args -ginkgo.focus "QAT"
+```
+
+If you need to specify paths to your custom `kubeconfig` containing
+embedded authentication info then add the `-kubeconfig` argument:
+
+```bash
+$ go test -v ./test/e2e/... -args -kubeconfig /path/to/kubeconfig
+```
+
+The full list of available options can be obtained with
+
+```bash
+$ go test ./test/e2e/... -args -help
+```
+
+Also it is possible to run the tests which don't depend on hardware
+without a pre-configured Kubernetes cluster. Just make sure you have
+[Kind](https://kind.sigs.k8s.io/) installed on your host and run
+
+```
+$ make test-with-kind
+```
+
 ## Supported Kubernetes versions
 
 Releases are made under the github [releases area](releases). Supported releases and
