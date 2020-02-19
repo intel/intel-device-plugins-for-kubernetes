@@ -21,6 +21,10 @@ while [[ $# -gt 0 ]]; do
 	    kubectl="$2"
             shift
             ;;
+        --output-dir)
+            output_dir="$2"
+            shift
+            ;;
     esac
     shift
 done
@@ -29,6 +33,7 @@ done
 [ -z ${secret} ] && secret="webhook-certs"
 [ -z ${namespace} ] && namespace="default"
 [ -z ${kubectl} ] && kubectl="kubectl"
+[ -z ${output_dir} ] && output_dir=""
 
 which ${kubectl} > /dev/null 2>&1 || { echo "ERROR: ${kubectl} not found"; exit 1; }
 
@@ -105,12 +110,25 @@ echo ${serverCert} | base64 --decode > ${tmpdir}/server-cert.pem
 # clean-up any previously created secret for our service. Ignore errors if not present.
 ${kubectl} delete secret ${secret} 2>/dev/null || true
 
-# create the secret with CA cert and server cert/key
-${kubectl} create secret generic ${secret} \
-        --from-file=key.pem=${tmpdir}/server-key.pem \
-        --from-file=cert.pem=${tmpdir}/server-cert.pem \
-        --dry-run -o yaml |
-    ${kubectl} -n ${namespace} apply -f -
+if [ -z "${output_dir}" ]; then
+    # create the secret with CA cert and server cert/key
+    ${kubectl} create secret generic ${secret} \
+               --from-file=key.pem=${tmpdir}/server-key.pem \
+               --from-file=cert.pem=${tmpdir}/server-cert.pem \
+               --dry-run -o yaml |
+        ${kubectl} -n ${namespace} apply -f -
+else
+    # save CA cert and server cert/key to output_dir
+    ( cp ${tmpdir}/server-key.pem ${output_dir}/key.pem &&
+      cp ${tmpdir}/server-cert.pem ${output_dir}/cert.pem ) || {
+        echo "ERROR: failed to copy ${tmpdir}/server-{key,cert}.pem to output_dir \"${output_dir}\""
+        exit 1
+    }
+    ${kubectl} get configmap -n kube-system extension-apiserver-authentication -o=jsonpath='{.data.client-ca-file}' > "${output_dir}/client-ca-file" || {
+        echo "ERROR: failed to save extension-apiserver-authentication.client-ca-file to output_dir \"${output_dir}\""
+        exit 1
+    }
+fi
 
 echo "Removing ${tmpdir}"
 rm -rf ${tmpdir}
