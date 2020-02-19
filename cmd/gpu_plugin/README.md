@@ -48,7 +48,8 @@ Examples are provided showing how to deploy the plugin either using a DaemonSet 
 > that meets the minimum required version.
 
 ```bash
-$ go get -d -u github.com/intel/intel-device-plugins-for-kubernetes
+$ mkdir -p $(go env GOPATH)/src/github.com/intel
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 ```
 
 ## Verify node kubelet config
@@ -76,7 +77,7 @@ The image build tool can be changed from the default `docker` by setting the `BU
 to the [`Makefile`](Makefile).
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make intel-gpu-plugin
 ...
 Successfully tagged intel/intel-gpu-plugin:devel
@@ -117,7 +118,7 @@ In this case, you do not need to build the complete container image, and can bui
 First we build the plugin:
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make gpu_plugin
 ```
 
@@ -126,7 +127,7 @@ $ make gpu_plugin
 Now we can run the plugin directly on the node:
 
 ```bash
-$ sudo $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/gpu_plugin
+$ sudo $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/gpu_plugin
 device-plugin start server at: /var/lib/kubelet/device-plugins/gpu.intel.com-i915.sock
 device-plugin registered
 ```
@@ -158,7 +159,7 @@ We can test the plugin is working by deploying the provided example OpenCL image
 1. Create a job running unit tests off the local Docker image:
 
     ```bash
-    $ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+    $ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
     $ kubectl apply -f demo/intelgpu-job.yaml
     job.batch/intelgpu-demo-job created
     ```

@@ -127,7 +127,8 @@ The demonstrations have their own requirements, listed in their own specific sec
 ## Getting the source code
 
 ```bash
-$ go get -d -u https://github.com/intel/intel-device-plugins-for-kubernetes
+$ mkdir -p $(go env GOPATH)/src/github.com/intel
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 ```
 
 ## Verify node kubelet config
@@ -154,7 +155,7 @@ with the tag `devel`. The image build tool can be changed from the default docke
 `BUILDER` argument to the [Makefile](../../Makefile).
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make intel-qat-plugin
 ...
 Successfully tagged intel/intel-qat-plugin:devel
@@ -171,7 +172,7 @@ Deploying the plugin involves first the deployment of a
 
 There is a kustomization for deploying both:
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ kubectl apply -k deployments/qat_plugin
 ```
 and an alternative kustomization for deploying the plugin in the debug mode:
@@ -211,7 +212,7 @@ In this case, you do not need to build the complete container image, and can bui
 ### Build QAT device plugin
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make qat_plugin
 ```
 
@@ -221,7 +222,7 @@ Deploy the plugin on a node by running it as `root`. The below is just an exampl
 paramaters as necessary for your setup:
 
 ```bash
-$ sudo $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/qat_plugin/qat_plugin \
+$ sudo $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/qat_plugin/qat_plugin \
 -dpdk-driver igb_uio -kernel-vf-drivers dh895xccvf -max-num-devices 10 -debug
 QAT device plugin started
 Discovered Devices below:
@@ -269,7 +270,7 @@ The demo uses a container image. You can either use the
 To build the DPDK demo image:
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/demo
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes/demo
 $ ./build-image.sh crypto-perf
 ...
 Successfully tagged crypto-perf:devel
@@ -283,7 +284,7 @@ For example, `qat.intel.com/generic: <number of devices>` for a container reques
 For a DPDK-based workload, you may need to add hugepage request and limit.
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ kubectl apply -k deployments/qat_dpdk_app/base/
 $ kubectl get pods
   NAME                     READY     STATUS    RESTARTS   AGE
@@ -318,7 +319,7 @@ It is also possible to deploy and run `crypto-perf` using the following
 `kustomize` overlays:
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ kubectl apply -k deployments/qat_dpdk_app/test-crypto1
 $ kubectl apply -k deployments/qat_dpdk_app/test-compress1
 $ kubectl logs qat-dpdk-test-crypto-perf-tc1

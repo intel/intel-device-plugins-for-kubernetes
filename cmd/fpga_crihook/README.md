@@ -48,13 +48,14 @@ prestart hook.
 ## Getting the source code
 
 ```bash
-$ go get -d -u github.com/intel/intel-device-plugins-for-kubernetes
+$ mkdir -p $(go env GOPATH)/src/github.com/intel
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 ```
 
 ## Building the image
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make intel-fpga-initcontainer
 ...
 Successfully tagged intel/intel-fpga-initcontainer:devel
