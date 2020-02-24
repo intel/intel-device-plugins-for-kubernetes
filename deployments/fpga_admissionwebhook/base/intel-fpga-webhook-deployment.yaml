@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+      name: intel-fpga-webhook-deployment
+      labels:
+        app: intel-fpga-webhook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: intel-fpga-webhook
+  template:
+    metadata:
+      labels:
+        app: intel-fpga-webhook
+    spec:
+      containers:
+        - name: fpga-mutator
+          image: intel/intel-fpga-admissionwebhook:devel
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 8443
+            name: webhook-api
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 3210
+            runAsGroup: 3210
+            readOnlyRootFilesystem: true
+          args:
+            - -tls-cert-file=/etc/webhook/certs/cert.pem
+            - -tls-private-key-file=/etc/webhook/certs/key.pem
+            - -mode=preprogrammed
+            - -debug
+          volumeMounts:
+            - name: webhook-certs
+              mountPath: /etc/webhook/certs
+              readOnly: true
+      volumes:
+        - name: webhook-certs
+          secret:
+            secretName: intel-fpga-webhook-certs

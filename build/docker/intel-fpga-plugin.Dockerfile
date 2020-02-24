@@ -36,4 +36,4 @@ RUN chmod a+x /go/bin/fpga_plugin \
 
 FROM scratch as final
 COPY --from=builder /install_root /
-CMD ["/usr/local/bin/intel_fpga_device_plugin"]
+ENTRYPOINT ["/usr/local/bin/intel_fpga_device_plugin"]

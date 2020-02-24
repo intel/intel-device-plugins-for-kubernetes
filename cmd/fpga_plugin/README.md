@@ -189,6 +189,31 @@ If you intend to deploy your own image, you will need to reference the
 If you do not want to deploy the `devel` tagged image, you will need to edit the
 YAML deployment files to reference your required image.
 
+### For beta testing: new deployment model
+
+The FPGA plugin deployment is currently being rewritten to enable
+straight-forward deployment of both `af/preprogrammed` and
+`region/orchestrated` modes. The deployment has two steps:
+
+1. Run `scripts/fpga-plugin-prepare-for-kustomization.sh`. This will
+   create the necessary secrets: a key and a signed certificate for
+   the FPGA admission controller.
+
+2. Depending on the FPGA mode, run either
+   ```bash
+   $ kubectl create -k deployments/fpga_plugin/overlays/af
+   ```
+   or
+   ```bash
+   $ kubectl create -k deployments/fpga_plugin/overlays/region
+   ```
+   This will create the service account and deploy
+   both the FPGA plugin and the admission controller in the chosen mode.
+
+This deployment model is under development. The remaining part of this
+document goes through the current deployment model: here for the
+FPGA plugin and in the next document for the FPGA admission controller.
+
 ### Create a service account
 
 To deploy the plugin in a production cluster, create a service account
