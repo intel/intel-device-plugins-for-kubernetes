@@ -24,12 +24,7 @@ import (
 	"strings"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
-	utilnode "k8s.io/kubernetes/pkg/util/node"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
@@ -351,12 +346,12 @@ func main() {
 	var mode string
 	var kubeconfig string
 	var master string
-	var config *rest.Config
-	var err error
+	var nodename string
 	var debugEnabled bool
 
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
 	flag.StringVar(&master, "master", "", "master url")
+	flag.StringVar(&nodename, "node-name", os.Getenv("NODE_NAME"), "node name in the cluster to query mode annotation from")
 	flag.StringVar(&mode, "mode", string(afMode),
 		fmt.Sprintf("device plugin mode: '%s' (default), '%s' or '%s'", afMode, regionMode, regionDevelMode))
 	flag.BoolVar(&debugEnabled, "debug", false, "enable debug output")
@@ -366,34 +361,17 @@ func main() {
 		debug.Activate()
 	}
 
-	if kubeconfig == "" {
-		config, err = rest.InClusterConfig()
-	} else {
-		config, err = clientcmd.BuildConfigFromFlags(master, kubeconfig)
-	}
+	nodeMode, err := getModeOverrideFromCluster(nodename, kubeconfig, master, mode)
 	if err != nil {
-		fatal(err)
+		fmt.Printf("WARNING: could not get mode override from cluster: %+v\n", err)
 	}
 
-	// if NODE_NAME is not set then try to use hostname
-	nodeName, err := utilnode.GetHostname(os.Getenv("NODE_NAME"))
-	if err != nil {
-		fatal(err)
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fatal(err)
-	}
-
-	node, err := clientset.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
-	if err != nil {
-		fatal(err)
-	}
-
-	if nodeMode, ok := node.ObjectMeta.Annotations["fpga.intel.com/device-plugin-mode"]; ok {
-		fmt.Println("Overriding mode to ", nodeMode)
+	var modeMessage string
+	if mode != nodeMode {
+		modeMessage = fmt.Sprintf(" (override from %s node annotation)", nodename)
 		mode = nodeMode
+	} else {
+		modeMessage = ""
 	}
 
 	plugin, err := newDevicePlugin(mode)
@@ -401,8 +379,7 @@ func main() {
 		fatal(err)
 	}
 
-	fmt.Printf("FPGA device plugin (%s) started in %s mode\n", plugin.name, mode)
-
+	fmt.Printf("FPGA device plugin (%s) started in %s mode%s\n", plugin.name, mode, modeMessage)
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }
