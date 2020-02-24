@@ -59,7 +59,8 @@ controller webhook plugin.
 ## Getting the source code
 
 ```bash
-$ go get -d -u github.com/intel/intel-device-plugins-for-kubernetes
+$ mkdir -p $(go env GOPATH)/src/github.com/intel
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 ```
 
 ## Deploying via the script
@@ -86,7 +87,7 @@ The script has some pre-requisite tools that must be installed on your system:
 Before the webhook can be deployed, its container image needs to be built:
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make intel-fpga-admissionwebhook
 ...
 Successfully tagged intel/intel-fpga-admissionwebhook:devel
@@ -98,7 +99,7 @@ To deploy the webhook, run the [`scripts/webhook-deploy.sh`](../../scripts/webho
  script:
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ ./scripts/webhook-deploy.sh
 Create secret including signed key/cert pair for the webhook
 ...

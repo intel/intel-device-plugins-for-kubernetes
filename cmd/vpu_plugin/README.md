@@ -47,7 +47,8 @@ Examples are provided showing how to deploy the plugin either using a DaemonSet 
 > that meets the minimum required version.
 
 ```bash
-$ go get -d -u github.com/intel/intel-device-plugins-for-kubernetes
+$ mkdir -p $(go env GOPATH)/src/github.com/intel
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 ```
 
 ## Verify node kubelet config
@@ -75,7 +76,7 @@ The image build tool can be changed from the default `docker` by setting the `BU
 to the [`Makefile`](Makefile).
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make intel-vpu-plugin
 ...
 Successfully tagged intel/intel-vpu-plugin:devel
@@ -106,7 +107,7 @@ First we build the plugin:
 > **Note:** this vpu plugin has dependency of libusb-1.0-0-dev, you need install it before building vpu plugin
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make vpu_plugin
 ```
 
@@ -115,7 +116,7 @@ $ make vpu_plugin
 Now we can run the plugin directly on the node:
 
 ```bash
-$ sudo $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/vpu_plugin/vpu_plugin
+$ sudo $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/vpu_plugin/vpu_plugin
 VPU device plugin started
 ```
 
@@ -146,7 +147,7 @@ Successfully tagged ubuntu-demo-openvino:devel
 ### Create a job running unit tests off the local Docker image
 
 ```bash
-$ cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ kubectl apply -f demo/intelvpu-job.yaml
 job.batch/intelvpu-demo-job created
 ```
