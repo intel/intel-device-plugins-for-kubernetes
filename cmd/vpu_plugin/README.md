@@ -14,6 +14,9 @@
         * [Run the plugin as administrator](#run-the-plugin-as-administrator)
     * [Verify plugin registration](#verify-plugin-registration)
     * [Testing the plugin](#testing-the-plugin)
+        * [Build a Docker image with an classification example](#build-a-docker-image-with-an-classification-example)
+        * [Create a job running unit tests off the local Docker image](#create-a-job-running-unit-tests-off-the-local-docker-image)
+        * [Review the job logs](#review-the-job-logs)
 
 # Introduction
 
@@ -84,10 +87,11 @@ Successfully tagged intel/intel-vpu-plugin:devel
 
 ### Deploy plugin DaemonSet
 
-You can then use the example DaemonSet YAML file provided to deploy the plugin.
+You can then use the [example DaemonSet YAML](../../deployments/vpu_plugin/base/intel-vpu-plugin.yaml)
+file provided to deploy the plugin. The default kustomization that deploys the YAML as is:
 
 ```bash
-$ kubectl create -f ./deployments/vpu_plugin/vpu_plugin.yaml
+$ kubectl apply -k deployments/vpu_plugin
 daemonset.apps/intel-vpu-plugin created
 ```
 
@@ -152,7 +156,7 @@ $ kubectl apply -f demo/intelvpu-job.yaml
 job.batch/intelvpu-demo-job created
 ```
 
-### Review the job's logs
+### Review the job logs
 
 ```bash
 $ kubectl get pods | fgrep intelvpu
