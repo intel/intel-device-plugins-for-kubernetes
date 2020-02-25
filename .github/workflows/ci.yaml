@@ -1,0 +1,107 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+      - 'release-*'
+  pull_request:
+    branches:
+      - master
+      - 'release-*'
+env:
+  RUNC_VERSION: v1.0.0-rc10
+  CRIO_VERSION: v1.17.0
+  GO_VERSION: 1.13.8
+jobs:
+
+  build:
+    name: Build and check device plugins
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2-beta
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Set up environment
+        shell: bash
+        run: |
+          echo "::add-path::$(go env GOPATH)/bin"
+          echo "::set-env name=MOD_PATH::$(go env GOPATH)/pkg/mod"
+      - uses: actions/cache@v1
+        with:
+          path: ${{ env.MOD_PATH }}
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Install build dependencies needed for VPU plugin
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libusb-1.0-0-dev
+      - name: Install tools
+        run: |
+          # checkers
+          cd /
+          go get -v golang.org/x/lint/golint
+          go get -v github.com/fzipp/gocyclo
+          go get -v golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
+      - run: make go-mod-tidy
+      - run: make format
+      - run: make lint
+      - run: make BUILDTAGS=kerneldrv
+      - run: make vet
+      - run: make cyclomatic-check
+      - run: make test BUILDTAGS=kerneldrv
+
+  image:
+    name: Build image
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        image:
+          - intel-fpga-admissionwebhook
+          - intel-fpga-initcontainer
+          - intel-gpu-plugin
+          - intel-fpga-plugin
+          - intel-qat-plugin
+          - intel-vpu-plugin
+
+          # Demo images
+          - crypto-perf
+          - opae-nlb-demo
+          - openssl-qat-engine
+          - ubuntu-demo-opencl
+          - ubuntu-demo-openvino
+        builder: [buildah, docker]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        id: cache-vendor
+        with:
+          path: vendor
+          key: ${{ runner.os }}-vendor-${{ hashFiles('**/go.sum') }}
+      - uses: actions/setup-go@v2-beta
+        if: steps.cache-vendor.outputs.cache-hit != 'true'
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - run: make -e vendor
+        if: steps.cache-vendor.outputs.cache-hit != 'true'
+      - name: Install Buildah and RunC
+        if: matrix.builder == 'buildah'
+        run: |
+          . /etc/os-release
+          sudo sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x${ID^}_${VERSION_ID}/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list"
+          wget -nv https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/x${ID^}_${VERSION_ID}/Release.key -O Release.key
+          sudo apt-key add - < Release.key
+          sudo apt-get update -qq
+          sudo apt-get -qq -y install buildah
+          echo -e '[registries.search]\nregistries = ["docker.io"]\n\n' | sudo tee /etc/containers/registries.conf
+          sudo curl https://raw.githubusercontent.com/kubernetes-sigs/cri-o/${CRIO_VERSION}/test/policy.json -o /etc/containers/policy.json
+          # install runc
+          sudo curl -L https://github.com/opencontainers/runc/releases/download/${RUNC_VERSION}/runc.amd64 -o /usr/bin/runc
+          sudo chmod +x /usr/bin/runc
+      - name: Build image
+        env:
+          IMAGE_NAME: ${{ matrix.image }}
+          BUILDER_NAME: ${{ matrix.builder }}
+        run: |
+          make ${IMAGE_NAME} BUILDER=${BUILDER_NAME}
