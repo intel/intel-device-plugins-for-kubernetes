@@ -1,7 +1,7 @@
 FROM clearlinux:base as builder
 
-ARG QAT_DRIVER_RELEASE="qat1.7.l.4.6.0-00025"
-ARG QAT_ENGINE_VERSION="v0.5.42"
+ARG QAT_DRIVER_RELEASE="qat1.7.l.4.8.0-00005"
+ARG QAT_ENGINE_VERSION="v0.5.43"
 
 # add trusted CAs
 RUN rm -rf /run/lock/clrtrust.lock && \
@@ -21,12 +21,10 @@ RUN sed -i -e 's/cmn_ko$//' -e 's/lac_kernel$//' quickassist/Makefile && \
     ./autogen.sh && \
     ./configure \
     --with-qat_dir=/ \
-    --with-openssl_dir=/usr \
     --with-openssl_install_dir=/usr/lib64 \
     --enable-upstream_driver \
     --enable-usdm \
     --with-qat_install_dir=/usr/lib \
-    --enable-qat_skip_err_files_build \
     --enable-openssl_install_build_arch_path && \
     make && make install
 
