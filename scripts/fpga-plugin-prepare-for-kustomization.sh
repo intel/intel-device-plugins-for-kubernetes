@@ -19,7 +19,7 @@ kustomize_secret_dir="${srcroot}/deployments/fpga_admissionwebhook/base/${secret
 mkdir -p "${kustomize_secret_dir}"
 
 # Create signed cert files to kustomize_secret_dir
-${script_dir}/webhook-create-signed-cert.sh --output-dir ${kustomize_secret_dir} --service=$service && {
+${script_dir}/webhook-create-signed-cert.sh --output-dir ${kustomize_secret_dir} --service $service && {
     echo ""
     echo created for kustomization:
     echo - "${kustomize_secret_dir}"
