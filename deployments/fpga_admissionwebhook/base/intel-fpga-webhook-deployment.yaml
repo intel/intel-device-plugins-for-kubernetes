@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: fpga-mutator
-          image: intel/intel-fpga-admissionwebhook:devel
+          image: intel/intel-fpga-admissionwebhook:0.17.0
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 8443
