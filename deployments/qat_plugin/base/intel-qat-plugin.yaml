@@ -42,11 +42,17 @@ spec:
         imagePullPolicy: IfNotPresent
         args: ["-dpdk-driver", "$(DPDK_DRIVER)", "-kernel-vf-drivers", "$(KERNEL_VF_DRIVERS)", "-max-num-devices", "$(MAX_NUM_DEVICES)", "-debug", "$(DEBUG)"]
         volumeMounts:
+        - name: devdir
+          mountPath: /dev/vfio
+          readOnly: true
         - name: pcidir
           mountPath: /sys/bus/pci
         - name: kubeletsockets
           mountPath: /var/lib/kubelet/device-plugins
       volumes:
+      - name: devdir
+        hostPath:
+          path: /dev/vfio
       - name: pcidir
         hostPath:
           path: /sys/bus/pci
