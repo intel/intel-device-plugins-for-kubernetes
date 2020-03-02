@@ -15,6 +15,8 @@
 package deviceplugin
 
 import (
+	"fmt"
+
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/topology"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
@@ -44,6 +46,8 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 	topologyInfo, err := topology.GetTopologyInfo(devPaths)
 	if err == nil {
 		deviceInfo.topology = topologyInfo
+	} else {
+		fmt.Printf("WARNING: GetTopologyInfo: %v\n", err)
 	}
 
 	return deviceInfo
