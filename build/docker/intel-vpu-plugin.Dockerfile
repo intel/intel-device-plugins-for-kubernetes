@@ -10,7 +10,7 @@ ARG CLEAR_LINUX_BASE=clearlinux/golang:latest
 FROM ${CLEAR_LINUX_BASE} as builder
 ARG CLEAR_LINUX_VERSION=
 
-RUN swupd update --no-boot-update
+RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
 RUN swupd bundle-add devpkg-libusb
 RUN mkdir /install_root \
     && swupd os-install \
