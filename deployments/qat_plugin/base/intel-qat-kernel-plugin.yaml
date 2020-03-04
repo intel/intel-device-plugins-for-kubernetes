@@ -18,7 +18,7 @@ spec:
         securityContext:
           readOnlyRootFilesystem: true
           privileged: true
-        image: intel/intel-qat-plugin:devel
+        image: intel/intel-qat-plugin:0.17.0
         imagePullPolicy: IfNotPresent
         args: ["-mode", "kernel"]
         volumeMounts:
