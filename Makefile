@@ -107,4 +107,14 @@ lock-images:
 set-version:
 	@scripts/set-version.sh $(TAG)
 
-.PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version
+null  :=
+space := $(null) #
+comma := ,
+images_json := $(subst $(space),$(comma),[$(addprefix ",$(addsuffix ",$(images) $(demos))]))
+
+check-github-actions:
+	@python3 -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout)' < .github/workflows/ci.yaml | \
+	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
+	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
+
+.PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions

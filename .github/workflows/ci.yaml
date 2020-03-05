@@ -51,6 +51,7 @@ jobs:
       - run: make vet
       - run: make cyclomatic-check
       - run: make test BUILDTAGS=kerneldrv
+      - run: make check-github-actions
 
   image:
     name: Build image
