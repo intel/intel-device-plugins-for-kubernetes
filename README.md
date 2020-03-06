@@ -171,6 +171,7 @@ matching Kubernetes versions are listed below:
 
 | Branch            | Kubernetes branch/version      |
 |:------------------|:-------------------------------|
+| release-0.17      | Kubernetes 1.17 branch v1.17.x |
 | release-0.15      | Kubernetes 1.15 branch v1.15.x |
 | release-0.11      | Kubernetes 1.11 branch v1.11.x |
 
