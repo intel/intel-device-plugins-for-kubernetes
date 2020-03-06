@@ -166,7 +166,7 @@ $ make test-with-kind
 
 ## Supported Kubernetes versions
 
-Releases are made under the github [releases area](releases). Supported releases and
+Releases are made under the github [releases area](../../releases). Supported releases and
 matching Kubernetes versions are listed below:
 
 | Branch            | Kubernetes branch/version      |
