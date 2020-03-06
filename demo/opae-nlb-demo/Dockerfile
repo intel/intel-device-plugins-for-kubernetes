@@ -17,8 +17,6 @@ RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION} && \
 # Fetch dependencies and source code
 ARG OPAE_RELEASE=1.4.0-1
 
-# workaround for a swupd failure discussed in https://github.com/clearlinux/distribution/issues/831
-RUN ldconfig
 RUN mkdir -p /usr/src/opae && \
     cd /usr/src/opae && \
     wget https://github.com/OPAE/opae-sdk/archive/${OPAE_RELEASE}.tar.gz && \
