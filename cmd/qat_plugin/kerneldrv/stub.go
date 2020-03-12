@@ -17,15 +17,15 @@
 package kerneldrv
 
 import (
-	"fmt"
 	"os"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"k8s.io/klog"
 )
 
 // NewDevicePlugin creates a non-functional stub for kernel mode device plugins.
 func NewDevicePlugin() dpapi.Scanner {
-	fmt.Println("kernel mode is not supported in this build. Use 'kerneldrv' build tag to have this mode enabled. Exiting...")
+	klog.Errorf("kernel mode is not supported in this build. Use 'kerneldrv' build tag to have this mode enabled. Exiting...")
 	os.Exit(1)
 
 	return nil

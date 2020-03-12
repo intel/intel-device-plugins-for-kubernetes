@@ -15,13 +15,11 @@
 package deviceplugin
 
 import (
-	"fmt"
 	"os"
 	"reflect"
 
+	"k8s.io/klog"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
-
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 // updateInfo contains info for added, updated and deleted devices.
@@ -95,7 +93,7 @@ func (m *Manager) Run() {
 	go func() {
 		err := m.devicePlugin.Scan(newNotifier(updatesCh))
 		if err != nil {
-			fmt.Printf("Device scan failed: %+v\n", err)
+			klog.Errorf("Device scan failed: %+v", err)
 			os.Exit(1)
 		}
 		close(updatesCh)
@@ -107,7 +105,7 @@ func (m *Manager) Run() {
 }
 
 func (m *Manager) handleUpdate(update updateInfo) {
-	debug.Print("Received dev updates:", update)
+	klog.V(4).Info("Received dev updates:", update)
 	for devType, devices := range update.Added {
 		var postAllocate func(*pluginapi.AllocateResponse) error
 
@@ -119,7 +117,7 @@ func (m *Manager) handleUpdate(update updateInfo) {
 		go func(dt string) {
 			err := m.servers[dt].Serve(m.namespace)
 			if err != nil {
-				fmt.Printf("Failed to serve %s/%s: %+v\n", m.namespace, dt, err)
+				klog.Errorf("Failed to serve %s/%s: %+v", m.namespace, dt, err)
 				os.Exit(1)
 			}
 		}(devType)

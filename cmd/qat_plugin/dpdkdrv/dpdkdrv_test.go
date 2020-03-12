@@ -15,6 +15,7 @@
 package dpdkdrv
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -24,12 +25,11 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
 func init() {
-	debug.Activate()
+	flag.Set("v", "4") //Enable debug output
 }
 
 func createTestFiles(prefix string, dirs []string, files map[string][]byte, symlinks map[string]string) error {

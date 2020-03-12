@@ -15,9 +15,8 @@
 package deviceplugin
 
 import (
-	"fmt"
-
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/topology"
+	"k8s.io/klog"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
@@ -28,6 +27,10 @@ type DeviceInfo struct {
 	mounts   []pluginapi.Mount
 	envs     map[string]string
 	topology *pluginapi.TopologyInfo
+}
+
+func init() {
+	klog.InitFlags(nil)
 }
 
 // NewDeviceInfo makes DeviceInfo struct and adds topology information to it
@@ -47,7 +50,7 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 	if err == nil {
 		deviceInfo.topology = topologyInfo
 	} else {
-		fmt.Printf("WARNING: GetTopologyInfo: %v\n", err)
+		klog.Warningf("GetTopologyInfo: %v", err)
 	}
 
 	return deviceInfo
