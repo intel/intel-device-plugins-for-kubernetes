@@ -24,7 +24,7 @@ RUN mkdir /install_root \
     ${CLEAR_LINUX_VERSION} \
     --path /install_root \
     --statedir /swupd-state \
-    --bundles=os-core,rsync \
+    --bundles=rsync \
     --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
