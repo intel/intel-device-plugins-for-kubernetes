@@ -22,6 +22,12 @@ jobs:
       - uses: actions/setup-go@v2-beta
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Debug environment
+        shell: bash
+        run: |
+          uname -a
+          sudo cat /sys/module/overlay/parameters/redirect_dir
+          docker info
       - name: Set up environment
         shell: bash
         run: |
