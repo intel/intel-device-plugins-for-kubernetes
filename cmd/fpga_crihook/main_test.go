@@ -15,6 +15,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -22,12 +23,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 	"github.com/pkg/errors"
 )
 
 func init() {
-	debug.Activate()
+	flag.Set("v", "4")
 }
 
 func createTestDirs(sysfs string, sysfsDirs []string, sysfsFiles map[string][]byte) error {

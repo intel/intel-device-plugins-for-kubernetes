@@ -82,3 +82,41 @@ line more difficult.
 The default is to not log `Info()` calls. This can be changed using the plugin command
 line `-v` parameter. The additional annotations prepended to log lines by 'klog' can be disabled
 with the `-skip_headers` option.
+
+Error Conventions
+-----------------
+
+The framework has a convention for producing and logging errors. Ideally plugins will also adhere
+to the convention.
+
+Errors generated within the framework and plugins are instantiated with the `New()` and
+`Errorf()` functions of the [errors package](https://golang.org/pkg/errors/):
+
+```golang
+    return errors.New("error message")
+```
+
+Errors generated from outside the plugins and framework are augmented with their stack dump with code such as
+
+```golang
+    return errors.WithStack(err)
+```
+
+or
+
+```golang
+    return errors.Wrap(err, "some additional error message")
+```
+
+These errors are then logged using a default struct value format like:
+
+```golang
+    klog.Errorf("Example of an internal error death: %+v", err)
+```
+
+at the line where it's certain that the error cannot be passed out farther nor handled gracefully.
+Otherwise, they can be logged as simple values:
+
+```golang
+    klog.Warningf("Example of a warning due to an external error: %v", err)
+```

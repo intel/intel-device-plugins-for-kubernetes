@@ -15,6 +15,7 @@
 package main
 
 import (
+	"flag"
 	"io/ioutil"
 	"os"
 	"path"
@@ -24,12 +25,11 @@ import (
 
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
 
 func init() {
-	debug.Activate()
+	flag.Set("v", "4") // Enable debug output
 }
 
 func createTestDirs(devfs, sysfs string, devfsDirs, sysfsDirs []string, sysfsFiles map[string][]byte) error {

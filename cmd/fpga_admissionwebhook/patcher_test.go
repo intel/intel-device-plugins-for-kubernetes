@@ -15,18 +15,19 @@
 package main
 
 import (
+	"flag"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog"
 
 	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 func init() {
-	debug.Activate()
+	flag.Set("v", "4")
 }
 
 func TestPatcherStorageFunctions(t *testing.T) {
@@ -376,7 +377,7 @@ func TestGetPatchOpsOrchestrated(t *testing.T) {
 			afMap:     tt.afMap,
 			regionMap: tt.regionMap,
 		}
-		debug.Print(tt.name)
+		klog.V(4).Info(tt.name)
 		ops, err := p.getPatchOpsOrchestrated(0, tt.container)
 		if tt.expectedErr && err == nil {
 			t.Errorf("Test case '%s': no error returned", tt.name)
