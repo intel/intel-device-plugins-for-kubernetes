@@ -153,14 +153,14 @@ func (dp *DevicePlugin) getOnlineDevices(iommuOn bool) ([]device, error) {
 		}
 
 		// "Cannot use PF with IOMMU enabled"
-		if iommuOn != strings.HasSuffix(matches[1], "vf") {
+		if iommuOn && !strings.HasSuffix(matches[1], "vf") {
 			continue
 		}
 
 		devices = append(devices, device{
 			id:      fmt.Sprintf("dev%s", matches[2]),
 			devtype: matches[1],
-			bsf:     matches[4],
+			bsf:     fmt.Sprintf("%s%s", matches[3], matches[4]),
 		})
 		debug.Print("New online device", devices[len(devices)-1])
 	}
@@ -169,7 +169,7 @@ func (dp *DevicePlugin) getOnlineDevices(iommuOn bool) ([]device, error) {
 }
 
 func getUIODeviceListPath(sysfs, devtype, bsf string) string {
-	return filepath.Join(sysfs, "bus", "pci", "drivers", devtype, "0000:"+bsf, "uio")
+	return filepath.Join(sysfs, "bus", "pci", "drivers", devtype, bsf, "uio")
 }
 
 func getUIODevices(sysfs, devtype, bsf string) ([]string, error) {
