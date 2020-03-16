@@ -12,6 +12,7 @@ ARG CLEAR_LINUX_VERSION=
 
 RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
 RUN swupd bundle-add devpkg-libusb
+RUN ldconfig
 RUN mkdir /install_root \
     && swupd os-install \
     ${CLEAR_LINUX_VERSION} \
