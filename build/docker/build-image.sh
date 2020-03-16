@@ -1,7 +1,6 @@
 #!/bin/sh -e
 
 IMG=$1
-BUILDER=$2
 
 DOCKERFILE="$(dirname $0)/$(basename ${IMG}).Dockerfile"
 
@@ -15,12 +14,19 @@ if [ ! -e "${DOCKERFILE}" ]; then
     exit 1
 fi
 
+shift
+
+if [ "$1" = 'docker' -o "$1" = 'buildah' ]; then
+    BUILDER=$1
+    shift
+fi
+
 TAG=${TAG:-devel}
 
-BUILD_ARGS=
+BUILD_ARGS=$@
 if [ -d $(dirname $0)/../../vendor ] ; then
     echo "Building images with vendored code"
-    BUILD_ARGS="--build-arg DIR=/go/src/github.com/intel/intel-device-plugins-for-kubernetes --build-arg GO111MODULE=off"
+    BUILD_ARGS="${BUILD_ARGS} --build-arg DIR=/go/src/github.com/intel/intel-device-plugins-for-kubernetes --build-arg GO111MODULE=off"
 fi
 
 if [ -z "${BUILDER}" -o "${BUILDER}" = 'docker' ] ; then
