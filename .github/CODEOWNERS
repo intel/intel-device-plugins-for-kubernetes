@@ -1,0 +1,37 @@
+#
+# Syntax and details are here: https://help.github.com/articles/about-codeowners/
+#
+# Global code ownership, fallback
+*                   @kad @mythi
+
+# CI and building
+.github/workflows/  @rojkov @bart0sh @kad @mythi
+.travis.yml         @rojkov @bart0sh @kad @mythi
+Jenkinsfile         @rojkov @bart0sh @kad @mythi
+Makefile            @rojkov @bart0sh @kad @mythi
+/build/             @rojkov @bart0sh @kad @mythi
+/scripts/           @rojkov @bart0sh @kad @mythi
+
+# Binaries
+/cmd/               @rojkov @bart0sh
+/cmd/fpga_tool/     @bart0sh @kad @rojkov
+/cmd/qat_plugin/    @rojkov @mythi @swatisehgal
+/cmd/vpu_plugin/    @rojkov @mythi @alekdu 
+
+# Framework
+/pkg/               @rojkov @bart0sh
+/pkg/fpga/          @bart0sh @kad
+/pkg/topology/      @bart0sh @kad
+
+# Deployments
+/deployments/       @rojkov @bart0sh @mythi
+
+# Demos
+/demo/              @rojkov @bart0sh @mythi @kad
+
+# e2e testing 
+/tests/e2e/         @rojkov
+
+# New dependencies review
+/go.sum              @kad @mythi
+/go.mod              @kad @mythi
