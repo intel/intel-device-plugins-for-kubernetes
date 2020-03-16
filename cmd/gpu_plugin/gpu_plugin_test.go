@@ -15,18 +15,17 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
 	"time"
-
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 func init() {
-	debug.Activate()
+	flag.Set("v", "4") //Enable debug output
 }
 
 func TestScan(t *testing.T) {
