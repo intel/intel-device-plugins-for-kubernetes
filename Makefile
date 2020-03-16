@@ -7,6 +7,7 @@ PODMAN ?= podman
 
 BUILDTAGS ?= ""
 BUILDER ?= "docker"
+EXTRA_BUILD_ARGS ?= ""
 
 WEBHOOK_IMAGE_FILE = intel-fpga-admissionwebhook-devel.tgz
 
@@ -83,7 +84,7 @@ endif
 images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
 
 $(images):
-	@build/docker/build-image.sh $(REG)$@ $(BUILDER)
+	@build/docker/build-image.sh $(REG)$@ $(BUILDER) $(EXTRA_BUILD_ARGS)
 
 images: $(images)
 
