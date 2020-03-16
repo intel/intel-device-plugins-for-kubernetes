@@ -14,7 +14,6 @@ ARG CLEAR_LINUX_VERSION=
 
 RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
 
-
 ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
 WORKDIR $DIR
