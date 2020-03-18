@@ -25,6 +25,9 @@ spec:
         securityContext:
           readOnlyRootFilesystem: true
         volumeMounts:
+        - name: devion
+          mountPath: /dev/ion
+          readOnly: true
         - name: devfs
           mountPath: /dev/bus/usb
           readOnly: true
@@ -39,6 +42,10 @@ spec:
         - name: kubeletsockets
           mountPath: /var/lib/kubelet/device-plugins
       volumes:
+      - name: devion
+        hostPath:
+           path: /dev/ion
+           type: CharDevice
       - name: devfs
         hostPath:
           path: /dev/bus/usb
