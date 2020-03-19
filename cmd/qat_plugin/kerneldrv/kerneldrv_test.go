@@ -18,6 +18,7 @@ package kerneldrv
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"path"
@@ -27,11 +28,10 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/klog"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 	"k8s.io/utils/exec"
 	fakeexec "k8s.io/utils/exec/testing"
-
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 const (
@@ -60,7 +60,7 @@ There is 7 QAT acceleration device(s) in the system:
 )
 
 func init() {
-	debug.Activate()
+	flag.Set("v", "4") //Enable debug output
 }
 
 func TestGetOnlineDevices(t *testing.T) {
@@ -386,6 +386,6 @@ func TestPostAllocate(t *testing.T) {
 		if !tc.expectedErr && err != nil {
 			t.Errorf("Test case '%s': Unexpected error: %+v", tc.name, err)
 		}
-		debug.Print(response)
+		klog.V(4).Info(response)
 	}
 }

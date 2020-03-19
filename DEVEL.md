@@ -62,3 +62,23 @@ Optionally, your device plugin may also implement the
 before they are sent to `kubelet`. To see an example, refer to the FPGA
 plugin which implements this interface to annotate its responses.
 
+Logging
+-------
+
+The framework uses [`klog`](https://github.com/kubernetes/klog) as its logging
+framework. It is encouraged for plugins to also use `klog` to maintain uniformity
+in the logs and command line options.
+
+The framework initialises `klog`, so further calls to `klog.InitFlags()` by
+plugins should not be necessary. This does add a number of log configuration
+options to your plugin, which can be viewed with the `-h` command line option of your
+plugin.
+
+The framework tries to adhere to the Kubernetes
+[Logging Conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md). The advise is to use the `V()` levels for `Info()` calls, as calling `Info()`
+with no set level will make configuration and filtering of logging via the command
+line more difficult.
+
+The default is to not log `Info()` calls. This can be changed using the plugin command
+line `-v` parameter. The additional annotations prepended to log lines by 'klog' can be disabled
+with the `-skip_headers` option.

@@ -16,6 +16,7 @@ package deviceplugin
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -28,9 +29,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
+	"k8s.io/klog"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 	"github.com/pkg/errors"
 )
 
@@ -50,7 +51,7 @@ type kubeletStub struct {
 }
 
 func init() {
-	debug.Activate()
+	flag.Set("v", "4") //Enable debug output
 }
 
 // newKubeletStub returns an initialized kubeletStub for testing purpose.
@@ -190,7 +191,7 @@ func TestSetupAndServe(t *testing.T) {
 				break
 			}
 		}
-		fmt.Println("No plugin socket. Waiting...")
+		klog.V(1).Info("No plugin socket. Waiting...")
 		time.Sleep(1 * time.Second)
 	}
 	conn, err = grpc.Dial(pluginSocket, grpc.WithInsecure(),
@@ -368,11 +369,11 @@ type listAndWatchServerStub struct {
 func (s *listAndWatchServerStub) Send(resp *pluginapi.ListAndWatchResponse) error {
 	s.sendCounter = s.sendCounter + 1
 	if s.generateErr == s.sendCounter {
-		fmt.Println("listAndWatchServerStub::Send returns error")
+		klog.V(4).Info("listAndWatchServerStub::Send returns error")
 		return fmt.Errorf("Fake error")
 	}
 
-	fmt.Println("listAndWatchServerStub::Send", resp.Devices)
+	klog.V(4).Info("listAndWatchServerStub::Send", resp.Devices)
 	s.cdata <- resp.Devices
 	return nil
 }

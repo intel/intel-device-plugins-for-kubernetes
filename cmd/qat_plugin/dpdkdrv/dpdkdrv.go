@@ -26,6 +26,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"k8s.io/klog"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
@@ -117,7 +118,7 @@ func (dp *DevicePlugin) getDpdkDevice(id string) (string, error) {
 			return "", errors.WithStack(err)
 		}
 		s := path.Base(group)
-		fmt.Printf("The vfio device group detected is %v\n", s)
+		klog.V(1).Infof("The vfio device group detected is %v", s)
 		return s, nil
 	}
 
@@ -129,7 +130,7 @@ func (dp *DevicePlugin) getDpdkDeviceSpecs(id string) ([]pluginapi.DeviceSpec, e
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("%s device: corresponding DPDK device detected is %s\n", id, dpdkDeviceName)
+	klog.V(1).Infof("%s device: corresponding DPDK device detected is %s", id, dpdkDeviceName)
 
 	switch dp.dpdkDriver {
 	// TODO: case "pci-generic" and "kernel":
@@ -264,7 +265,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 	for _, driver := range append([]string{dp.dpdkDriver}, dp.kernelVfDrivers...) {
 		files, err := ioutil.ReadDir(path.Join(dp.pciDriverDir, driver))
 		if err != nil {
-			fmt.Printf("Can't read sysfs for driver as Driver %s is not available: Skipping\n", driver)
+			klog.Warningf("Can't read sysfs for driver as Driver %s is not available: Skipping", driver)
 			continue
 		}
 

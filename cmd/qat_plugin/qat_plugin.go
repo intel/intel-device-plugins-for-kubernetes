@@ -23,8 +23,8 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/qat_plugin/dpdkdrv"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/qat_plugin/kerneldrv"
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"k8s.io/klog"
 )
 
 const (
@@ -35,17 +35,12 @@ func main() {
 	var plugin deviceplugin.Scanner
 	var err error
 
-	debugEnabled := flag.Bool("debug", false, "enable debug output")
 	mode := flag.String("mode", "dpdk", "plugin mode which can be either dpdk (default) or kernel")
 
 	dpdkDriver := flag.String("dpdk-driver", "vfio-pci", "DPDK Device driver for configuring the QAT device")
 	kernelVfDrivers := flag.String("kernel-vf-drivers", "dh895xccvf,c6xxvf,c3xxxvf,d15xxvf", "Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC,C62x,C3xxx and D15xx")
 	maxNumDevices := flag.Int("max-num-devices", 32, "maximum number of QAT devices to be provided to the QuickAssist device plugin")
 	flag.Parse()
-
-	if *debugEnabled {
-		debug.Activate()
-	}
 
 	switch *mode {
 	case "dpdk":
@@ -60,7 +55,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("QAT device plugin started in '%s' mode\n", *mode)
+	klog.V(1).Infof("QAT device plugin started in '%s' mode", *mode)
 	manager := deviceplugin.NewManager(namespace, plugin)
 	manager.Run()
 }

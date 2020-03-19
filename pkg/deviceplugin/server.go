@@ -16,7 +16,6 @@ package deviceplugin
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"os"
 	"path"
@@ -28,9 +27,8 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
+	"k8s.io/klog"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
-
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 type serverState int
@@ -74,7 +72,7 @@ func newServer(devType string, postAllocate func(*pluginapi.AllocateResponse) er
 }
 
 func (srv *server) GetDevicePluginOptions(ctx context.Context, empty *pluginapi.Empty) (*pluginapi.DevicePluginOptions, error) {
-	fmt.Println("GetDevicePluginOptions: return empty options")
+	klog.V(4).Info("GetDevicePluginOptions: return empty options")
 	return new(pluginapi.DevicePluginOptions), nil
 }
 
@@ -87,7 +85,7 @@ func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer)
 			Topology: device.topology,
 		})
 	}
-	debug.Print("Sending to kubelet", resp.Devices)
+	klog.V(4).Info("Sending to kubelet", resp.Devices)
 	if err := stream.Send(resp); err != nil {
 		srv.Stop()
 		return errors.Wrapf(err, "Cannot update device list")
@@ -97,7 +95,7 @@ func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer)
 }
 
 func (srv *server) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.DevicePlugin_ListAndWatchServer) error {
-	debug.Print("Started ListAndWatch for", srv.devType)
+	klog.V(4).Info("Started ListAndWatch for", srv.devType)
 
 	if err := srv.sendDevices(stream); err != nil {
 		return err
@@ -211,7 +209,7 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 
 		// Starts device plugin service.
 		go func() {
-			fmt.Printf("Start server for %s at: %s\n", srv.devType, pluginSocket)
+			klog.V(1).Infof("Start server for %s at: %s", srv.devType, pluginSocket)
 			srv.grpcServer.Serve(lis)
 		}()
 
@@ -225,7 +223,7 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Device plugin for %s registered\n", srv.devType)
+		klog.V(1).Infof("Device plugin for %s registered", srv.devType)
 
 		// Kubelet removes plugin socket when it (re)starts
 		// plugin must restart in this case
@@ -235,9 +233,9 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 
 		if srv.getState() == serving {
 			srv.grpcServer.Stop()
-			fmt.Printf("Socket %s removed, restarting\n", pluginSocket)
+			klog.V(1).Infof("Socket %s removed, restarting", pluginSocket)
 		} else {
-			fmt.Printf("Socket %s shut down\n", pluginSocket)
+			klog.V(1).Infof("Socket %s shut down", pluginSocket)
 		}
 	}
 

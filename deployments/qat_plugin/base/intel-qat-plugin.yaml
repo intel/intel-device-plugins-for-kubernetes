@@ -34,13 +34,14 @@ spec:
             configMapKeyRef:
               name: intel-qat-plugin-config
               key: MAX_NUM_DEVICES
-        - name: DEBUG
+        - name: VERBOSITY
           valueFrom:
             configMapKeyRef:
               name: intel-qat-plugin-config
-              key: DEBUG
+              key: VERBOSITY
+
         imagePullPolicy: IfNotPresent
-        args: ["-dpdk-driver", "$(DPDK_DRIVER)", "-kernel-vf-drivers", "$(KERNEL_VF_DRIVERS)", "-max-num-devices", "$(MAX_NUM_DEVICES)", "-debug", "$(DEBUG)"]
+        args: ["-dpdk-driver", "$(DPDK_DRIVER)", "-kernel-vf-drivers", "$(KERNEL_VF_DRIVERS)", "-max-num-devices", "$(MAX_NUM_DEVICES)", "-v", "$(VERBOSITY)"]
         volumeMounts:
         - name: devdir
           mountPath: /dev/vfio

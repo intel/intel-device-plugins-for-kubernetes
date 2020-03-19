@@ -15,15 +15,14 @@
 package deviceplugin
 
 import (
+	"flag"
 	"testing"
 
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
-
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 func init() {
-	debug.Activate()
+	flag.Set("v", "4") //Enable debug output
 }
 
 func TestNotify(t *testing.T) {

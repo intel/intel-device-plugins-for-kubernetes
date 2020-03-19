@@ -5,4 +5,4 @@ configMapGenerator:
 - name: intel-qat-plugin-config
   behavior: merge
   literals:
-    - DEBUG="true"
+    - VERBOSITY="4"
