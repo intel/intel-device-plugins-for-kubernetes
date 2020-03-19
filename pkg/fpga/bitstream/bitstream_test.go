@@ -15,32 +15,8 @@
 package bitstream
 
 import (
-	"io/ioutil"
-	"os"
-	"path"
 	"testing"
-
-	"github.com/pkg/errors"
-	"k8s.io/utils/exec"
-	fakeexec "k8s.io/utils/exec/testing"
 )
-
-func createTestDirs(sysfs string, sysfsDirs []string, sysfsFiles map[string][]byte) error {
-	for _, sysfsdir := range sysfsDirs {
-		err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0755)
-		if err != nil {
-			return errors.Wrap(err, "Failed to create fake device directory")
-		}
-	}
-	for filename, body := range sysfsFiles {
-		err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0644)
-		if err != nil {
-			return errors.Wrap(err, "Failed to create fake vendor file")
-		}
-	}
-
-	return nil
-}
 
 func TestGetFPGABitstream(t *testing.T) {
 	var fpgaBitStreamDir = "testdata/intel.com/fpga"
@@ -87,14 +63,4 @@ func TestGetFPGABitstream(t *testing.T) {
 		})
 	}
 
-}
-
-func genFakeActions(fcmd *fakeexec.FakeCmd, num int) []fakeexec.FakeCommandAction {
-	var actions []fakeexec.FakeCommandAction
-	for i := 0; i < num; i++ {
-		actions = append(actions, func(cmd string, args ...string) exec.Cmd {
-			return fakeexec.InitFakeCmd(fcmd, cmd, args...)
-		})
-	}
-	return actions
 }
