@@ -15,7 +15,6 @@ cmd/qat_plugin/qat_plugin
 deployments/fpga_admissionwebhook/base/intel-fpga-webhook-certs-secret
 
 *.h
-*.gbs
 *.gbs.*
 *.aocx
 *.aocx.*
