@@ -25,6 +25,7 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
+	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
 
 func init() {
@@ -79,5 +80,159 @@ func TestPostAllocate(t *testing.T) {
 
 	if annotation != testValue {
 		t.Fatalf("Set wrong annotation %s", annotation)
+	}
+}
+
+func TestNewDevicePlugin(t *testing.T) {
+	root, err := ioutil.TempDir("", "test_new_device_plugin")
+	if err != nil {
+		t.Fatalf("can't create temporary directory: %+v", err)
+	}
+	defer os.RemoveAll(root)
+
+	tcases := []struct {
+		name        string
+		mode        string
+		sysfs       string
+		sysfsdirs   []string
+		expectedErr bool
+	}{
+		{
+			name:        "valid OPAE af mode",
+			mode:        afMode,
+			sysfs:       path.Join(root, "sys", "class", "fpga"),
+			sysfsdirs:   []string{"intel-fpga-dev.0"},
+			expectedErr: false,
+		},
+		{
+			name:        "valid DFL af mode",
+			mode:        afMode,
+			sysfs:       path.Join(root, "sys", "class", "fpga_region"),
+			sysfsdirs:   []string{"dfl-port.0"},
+			expectedErr: false,
+		},
+		{
+			name:        "invalid: af mode: driver is not loaded",
+			mode:        afMode,
+			sysfs:       root,
+			expectedErr: true,
+		},
+		{
+			name:        "invalid: region mode: driver is not loaded",
+			mode:        regionMode,
+			sysfs:       root,
+			expectedErr: true,
+		},
+		{
+			name:        "invalid: regionDevel mode: driver is not loaded",
+			mode:        regionDevelMode,
+			sysfs:       root,
+			expectedErr: true,
+		},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			err = createTestDirs("", tc.sysfs, nil, tc.sysfsdirs, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, err := newDevicePlugin(tc.mode, root)
+			if tc.expectedErr && err == nil {
+				t.Error("unexpected success")
+			}
+			if !tc.expectedErr && err != nil {
+				t.Errorf("unexpected error: %+v", err)
+			}
+
+			err = os.RemoveAll(path.Join(root, "sys"))
+			if err != nil {
+				t.Fatalf("Failed to remove fake sysfs directory: %+v", err)
+			}
+		})
+	}
+}
+
+// fakeNotifier implements Notifier interface.
+type fakeNotifier struct {
+	scanDone chan bool
+}
+
+// Notify stops plugin Scan
+func (n *fakeNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
+	n.scanDone <- true
+}
+
+func TestScan(t *testing.T) {
+	root, err := ioutil.TempDir("", "test_new_device_plugin")
+	if err != nil {
+		t.Fatalf("can't create temporary directory: %+v", err)
+	}
+	defer os.RemoveAll(root)
+
+	devfs := path.Join(root, "dev")
+
+	tcases := []struct {
+		name        string
+		mode        string
+		sysfs       string
+		devfsdirs   []string
+		sysfsdirs   []string
+		sysfsfiles  map[string][]byte
+		expectedErr bool
+	}{
+		{
+			name:  "valid OPAE scan",
+			mode:  afMode,
+			sysfs: path.Join(root, "sys", "class", "fpga"),
+			sysfsdirs: []string{
+				"intel-fpga-dev.0/intel-fpga-port.0",
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
+				"intel-fpga-dev.1/intel-fpga-port.1",
+				"intel-fpga-dev.1/intel-fpga-fme.1/pr",
+			},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-port.0/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"intel-fpga-dev.1/intel-fpga-port.1/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+				"intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+			},
+			devfsdirs: []string{
+				"intel-fpga-port.0", "intel-fpga-fme.0",
+				"intel-fpga-port.1", "intel-fpga-fme.1",
+			},
+			expectedErr: false,
+		},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			err = createTestDirs(devfs, tc.sysfs, tc.devfsdirs, tc.sysfsdirs, tc.sysfsfiles)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			plugin, err := newDevicePlugin(tc.mode, root)
+			if err != nil {
+				t.Fatalf("failed to create a device plugin: %+v", err)
+			}
+
+			err = plugin.Scan(&fakeNotifier{plugin.scanDone})
+
+			if tc.expectedErr && err == nil {
+				t.Error("unexpected success")
+			}
+			if !tc.expectedErr && err != nil {
+				t.Errorf("unexpected error: %+v", err)
+			}
+
+			for _, dir := range []string{"sys", "dev"} {
+				err = os.RemoveAll(path.Join(root, dir))
+				if err != nil {
+					t.Fatalf("Failed to remove fake sysfs directory: %+v", err)
+				}
+			}
+		})
 	}
 }

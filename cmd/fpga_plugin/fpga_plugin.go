@@ -181,17 +181,20 @@ type devicePlugin struct {
 }
 
 // newDevicePlugin returns new instance of devicePlugin
-func newDevicePlugin(mode string) (*devicePlugin, error) {
+func newDevicePlugin(mode string, rootPath string) (*devicePlugin, error) {
 	var dp *devicePlugin
 	var err error
 
-	if _, err := os.Stat(sysfsDirectoryOPAE); os.IsNotExist(err) {
-		if _, err = os.Stat(sysfsDirectoryDFL); os.IsNotExist(err) {
-			return nil, fmt.Errorf("kernel driver is not loaded: neither %s nor %s sysfs entry exists", sysfsDirectoryOPAE, sysfsDirectoryDFL)
+	sysfsPathOPAE := path.Join(rootPath, sysfsDirectoryOPAE)
+	devfsPath := path.Join(rootPath, devfsDirectory)
+	if _, err = os.Stat(sysfsPathOPAE); os.IsNotExist(err) {
+		sysfsPathDFL := path.Join(rootPath, sysfsDirectoryDFL)
+		if _, err = os.Stat(sysfsPathDFL); os.IsNotExist(err) {
+			return nil, fmt.Errorf("kernel driver is not loaded: neither %s nor %s sysfs entry exists", sysfsPathOPAE, sysfsPathDFL)
 		}
-		dp, err = newDevicePluginDFL(sysfsDirectoryDFL, devfsDirectory, mode)
+		dp, err = newDevicePluginDFL(sysfsPathDFL, devfsPath, mode)
 	} else {
-		dp, err = newDevicePluginOPAE(sysfsDirectoryOPAE, devfsDirectory, mode)
+		dp, err = newDevicePluginOPAE(sysfsPathOPAE, devfsPath, mode)
 	}
 
 	if err != nil {
@@ -398,7 +401,7 @@ func main() {
 		modeMessage = ""
 	}
 
-	plugin, err := newDevicePlugin(mode)
+	plugin, err := newDevicePlugin(mode, "")
 	if err != nil {
 		fatal(err)
 	}
