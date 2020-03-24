@@ -15,14 +15,16 @@
 package main
 
 import (
-	"github.com/google/gousb"
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
+	"flag"
 	"os"
 	"testing"
+
+	"github.com/google/gousb"
+	"k8s.io/klog"
 )
 
 func init() {
-	debug.Activate()
+	flag.Set("v", "4")
 }
 
 type testCase struct {
@@ -69,6 +71,6 @@ func TestScan(t *testing.T) {
 	if err != nil {
 		t.Error("vpu plugin test failed")
 	} else {
-		debug.Printf("tree len is %d", len(tree[deviceType]))
+		klog.V(4).Infof("tree len is %d", len(tree[deviceType]))
 	}
 }

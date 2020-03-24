@@ -18,12 +18,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/google/gousb"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"k8s.io/klog"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
@@ -41,7 +42,6 @@ const (
 )
 
 var (
-	isdebug = flag.Int("debug", 0, "debug level (0..1)")
 	// Movidius MyriadX Product IDs
 	productIDs = []int{0x2485, 0xf63b}
 )
@@ -101,7 +101,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		thisVendor := desc.Vendor
 		thisProduct := desc.Product
 		for _, v := range dp.productIDs {
-			debug.Printf("checking %04x,%04x vs %s,%s", dp.vendorID, v, thisVendor.String(), thisProduct.String())
+			klog.V(4).Infof("checking %04x,%04x vs %s,%s", dp.vendorID, v, thisVendor.String(), thisProduct.String())
 			if (gousb.ID(dp.vendorID) == thisVendor) && (gousb.ID(v) == thisProduct) {
 				nUsb++
 			}
@@ -115,7 +115,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	}()
 
 	if err != nil {
-		debug.Printf("list usb device %s", err)
+		klog.V(4).Infof("list usb device %s", err)
 	}
 
 	if nUsb > 0 {
@@ -159,22 +159,24 @@ func main() {
 
 	flag.Parse()
 
-	if *isdebug > 0 {
-		debug.Activate()
-		debug.Printf("isdebug is on")
-	}
+	klog.V(4).Info("debug is on")
 
 	if sharedDevNum < 1 {
-		fmt.Println("The number of containers sharing the same VPU must greater than zero")
+		klog.Fatal("The number of containers sharing the same VPU must greater than zero")
 		os.Exit(1)
 	}
 
-	fmt.Println("VPU device plugin started")
+	klog.V(1).Info("VPU device plugin started")
 
 	// add lsusb here
 	ctx := gousb.NewContext()
 	defer ctx.Close()
-	ctx.Debug(*isdebug)
+
+	verbosityLevel, err := strconv.Atoi(flag.CommandLine.Lookup("v").Value.String())
+	if err == nil {
+		// gousb (libusb) Debug levels are a 1:1 match to klog levels, just pass through.
+		ctx.Debug(verbosityLevel)
+	}
 
 	plugin := newDevicePlugin(ctx, vendorID, productIDs, sharedDevNum)
 	manager := dpapi.NewManager(namespace, plugin)
