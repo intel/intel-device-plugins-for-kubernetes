@@ -48,6 +48,9 @@ const (
 	// When the device's firmware crashes the driver reports these values
 	unhealthyAfuID       = "ffffffffffffffffffffffffffffffff"
 	unhealthyInterfaceID = "ffffffffffffffffffffffffffffffff"
+
+	// Frequency of device scans
+	scanFrequency = 5 * time.Second
 )
 
 type getDevTreeFunc func(devices []device) dpapi.DeviceTree
@@ -172,17 +175,36 @@ type devicePlugin struct {
 	ignoreAfuIDs       bool
 	ignoreEmptyRegions bool
 	annotationValue    string
+
+	scanTicker *time.Ticker
+	scanDone   chan bool
 }
 
 // newDevicePlugin returns new instance of devicePlugin
-func newDevicePlugin(mode string) (*devicePlugin, error) {
-	if _, err := os.Stat(sysfsDirectoryOPAE); os.IsNotExist(err) {
-		if _, err = os.Stat(sysfsDirectoryDFL); os.IsNotExist(err) {
-			return nil, fmt.Errorf("kernel driver is not loaded: neither %s nor %s sysfs entry exists", sysfsDirectoryOPAE, sysfsDirectoryDFL)
+func newDevicePlugin(mode string, rootPath string) (*devicePlugin, error) {
+	var dp *devicePlugin
+	var err error
+
+	sysfsPathOPAE := path.Join(rootPath, sysfsDirectoryOPAE)
+	devfsPath := path.Join(rootPath, devfsDirectory)
+	if _, err = os.Stat(sysfsPathOPAE); os.IsNotExist(err) {
+		sysfsPathDFL := path.Join(rootPath, sysfsDirectoryDFL)
+		if _, err = os.Stat(sysfsPathDFL); os.IsNotExist(err) {
+			return nil, fmt.Errorf("kernel driver is not loaded: neither %s nor %s sysfs entry exists", sysfsPathOPAE, sysfsPathDFL)
 		}
-		return newDevicePluginDFL(sysfsDirectoryDFL, devfsDirectory, mode)
+		dp, err = newDevicePluginDFL(sysfsPathDFL, devfsPath, mode)
+	} else {
+		dp, err = newDevicePluginOPAE(sysfsPathOPAE, devfsPath, mode)
 	}
-	return newDevicePluginOPAE(sysfsDirectoryOPAE, devfsDirectory, mode)
+
+	if err != nil {
+		return nil, err
+	}
+
+	dp.scanTicker = time.NewTicker(scanFrequency)
+	dp.scanDone = make(chan bool, 1) // buffered as we may send to it before Scan starts receiving from it
+
+	return dp, nil
 }
 
 func (dp *devicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error {
@@ -200,6 +222,7 @@ func (dp *devicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error
 
 // Scan starts scanning FPGA devices on the host
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
+	defer dp.scanTicker.Stop()
 	for {
 		devTree, err := dp.scanFPGAs()
 		if err != nil {
@@ -208,7 +231,11 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 
 		notifier.Notify(devTree)
 
-		time.Sleep(5 * time.Second)
+		select {
+		case <-dp.scanDone:
+			return nil
+		case <-dp.scanTicker.C:
+		}
 	}
 }
 
@@ -374,7 +401,7 @@ func main() {
 		modeMessage = ""
 	}
 
-	plugin, err := newDevicePlugin(mode)
+	plugin, err := newDevicePlugin(mode, "")
 	if err != nil {
 		fatal(err)
 	}
