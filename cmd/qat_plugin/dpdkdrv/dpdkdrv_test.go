@@ -63,6 +63,53 @@ func createTestFiles(prefix string, dirs []string, files map[string][]byte, syml
 	return nil
 }
 
+func TestNewDevicePlugin(t *testing.T) {
+
+	tcases := []struct {
+		name            string
+		dpdkDriver      string
+		kernelVfDrivers string
+		expectedErr     bool
+	}{
+		{
+			name:            "Wrong dpdkDriver",
+			dpdkDriver:      "uio",
+			kernelVfDrivers: "c6xxvf",
+			expectedErr:     true,
+		},
+		{
+			name:            "Correct dpdkDriver, wrong kernelVfDrivers",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: "c6xxxvf",
+			expectedErr:     true,
+		},
+		{
+			name:            "Correct dpdkDriver, kernelVfDrivers separated wrong",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: "c6xxvf:d15xxvf",
+			expectedErr:     true,
+		},
+		{
+			name:            "No errors",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: "c6xxvf,d15xxvf",
+			expectedErr:     false,
+		},
+	}
+	for _, tt := range tcases {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := NewDevicePlugin(1, tt.kernelVfDrivers, tt.dpdkDriver)
+
+			if tt.expectedErr && err == nil {
+				t.Errorf("Test case '%s': expected error", tt.name)
+			}
+			if !tt.expectedErr && err != nil {
+				t.Errorf("Test case '%s': expected success", tt.name)
+			}
+		})
+	}
+}
+
 func TestScanPrivate(t *testing.T) {
 	tmpdir := fmt.Sprintf("/tmp/qatplugin-TestScanPrivate-%d", time.Now().Unix())
 	pciDrvDir := path.Join(tmpdir, "sys/bus/pci/drivers")
