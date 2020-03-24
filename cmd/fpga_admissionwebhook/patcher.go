@@ -25,9 +25,9 @@ import (
 	"github.com/pkg/errors"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/klog"
 
 	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 const (
@@ -338,7 +338,7 @@ func (pm *patcherManager) getPatcher(namespace string) (*patcher, error) {
 	}
 
 	pm.patchers[namespace] = p
-	debug.Print("created new patcher for namespace", namespace)
+	klog.V(4).Info("created new patcher for namespace", namespace)
 
 	return p, nil
 }

@@ -30,7 +30,7 @@ spec:
             - -tls-cert-file=/etc/webhook/certs/cert.pem
             - -tls-private-key-file=/etc/webhook/certs/key.pem
             - -mode=preprogrammed
-            - -debug
+            - -v 1
           volumeMounts:
             - name: webhook-certs
               mountPath: /etc/webhook/certs

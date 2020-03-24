@@ -24,9 +24,9 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/klog"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	"github.com/pkg/errors"
 )
@@ -292,11 +292,11 @@ func (dp *devicePlugin) getFME(interfaceIDPath string, devName string) (*region,
 func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
 	var devices []device
 
-	debug.Print("Start new FPGA scan")
+	klog.V(4).Info("Start new FPGA scan")
 
 	fpgaFiles, err := ioutil.ReadDir(dp.sysfsDir)
 	if err != nil {
-		fmt.Printf("WARNING: Can't read folder %s. Kernel driver not loaded?\n", dp.sysfsDir)
+		klog.Warningf("Can't read folder %s. Kernel driver not loaded?", dp.sysfsDir)
 		return dp.getDevTree([]device{}), nil
 	}
 
@@ -364,33 +364,22 @@ func getPluginParams(mode string) (getDevTreeFunc, bool, string, error) {
 	return getDevTree, ignoreAfuIDs, annotationValue, nil
 }
 
-func fatal(err error) {
-	fmt.Printf("ERROR: %+v\n", err)
-	os.Exit(1)
-}
-
 func main() {
 	var mode string
 	var kubeconfig string
 	var master string
 	var nodename string
-	var debugEnabled bool
 
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
 	flag.StringVar(&master, "master", "", "master url")
 	flag.StringVar(&nodename, "node-name", os.Getenv("NODE_NAME"), "node name in the cluster to query mode annotation from")
 	flag.StringVar(&mode, "mode", string(afMode),
 		fmt.Sprintf("device plugin mode: '%s' (default), '%s' or '%s'", afMode, regionMode, regionDevelMode))
-	flag.BoolVar(&debugEnabled, "debug", false, "enable debug output")
 	flag.Parse()
-
-	if debugEnabled {
-		debug.Activate()
-	}
 
 	nodeMode, err := getModeOverrideFromCluster(nodename, kubeconfig, master, mode)
 	if err != nil {
-		fmt.Printf("WARNING: could not get mode override from cluster: %+v\n", err)
+		klog.Warningf("could not get mode override from cluster: %+v", err)
 	}
 
 	var modeMessage string
@@ -403,10 +392,10 @@ func main() {
 
 	plugin, err := newDevicePlugin(mode, "")
 	if err != nil {
-		fatal(err)
+		klog.Fatalf("%+v", err)
 	}
 
-	fmt.Printf("FPGA device plugin (%s) started in %s mode%s\n", plugin.name, mode, modeMessage)
+	klog.V(1).Infof("FPGA device plugin (%s) started in %s mode%s", plugin.name, mode, modeMessage)
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }

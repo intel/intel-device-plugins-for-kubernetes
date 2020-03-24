@@ -35,8 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
+	"k8s.io/klog"
 )
 
 const (
@@ -51,6 +50,7 @@ var (
 )
 
 func init() {
+	klog.InitFlags(nil)
 	addToScheme(scheme)
 }
 
@@ -62,7 +62,7 @@ func addToScheme(scheme *runtime.Scheme) {
 func getTLSConfig(certFile string, keyFile string) *tls.Config {
 	sCert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
-		fatal(err)
+		klog.Fatal(err)
 	}
 	return &tls.Config{
 		Certificates: []tls.Certificate{sCert},
@@ -72,11 +72,11 @@ func getTLSConfig(certFile string, keyFile string) *tls.Config {
 func mutatePods(ar v1beta1.AdmissionReview, pm *patcherManager) *v1beta1.AdmissionResponse {
 	var ops []string
 
-	debug.Print("mutating pods")
+	klog.V(4).Info("mutating pods")
 
 	podResource := metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 	if ar.Request.Resource != podResource {
-		fmt.Printf("WARNING: Unexpected resource type %s\n", ar.Request.Resource)
+		klog.Warningf("Unexpected resource type %s", ar.Request.Resource)
 		return nil
 	}
 
@@ -84,7 +84,7 @@ func mutatePods(ar v1beta1.AdmissionReview, pm *patcherManager) *v1beta1.Admissi
 	pod := corev1.Pod{}
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(raw, nil, &pod); err != nil {
-		fmt.Printf("ERROR: %+v\n", err)
+		klog.Warningf("%+v", err)
 		return toAdmissionResponse(err)
 	}
 
@@ -96,10 +96,10 @@ func mutatePods(ar v1beta1.AdmissionReview, pm *patcherManager) *v1beta1.Admissi
 	if name == "" && pod.ObjectMeta.GenerateName != "" {
 		name = pod.ObjectMeta.GenerateName
 	}
-	debug.Printf("Received pod '%s' in name space '%s'", name, namespace)
+	klog.V(4).Infof("Received pod '%s' in name space '%s'", name, namespace)
 	patcher, err := pm.getPatcher(namespace)
 	if err != nil {
-		fmt.Printf("ERROR: %+v\n", err)
+		klog.Warningf("%+v", err)
 		return toAdmissionResponse(err)
 	}
 
@@ -146,7 +146,7 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 	}
 
 	if len(body) == 0 {
-		debug.Print("No body in request")
+		klog.V(4).Info("No body in request")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -154,16 +154,16 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		debug.Printf("contentType=%s, expect application/json", contentType)
+		klog.V(4).Infof("contentType=%s, expect application/json", contentType)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	debug.Printf("handling request: %s", string(body))
+	klog.V(4).Infof("handling request: %s", string(body))
 	ar := v1beta1.AdmissionReview{}
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(body, nil, &ar); err != nil {
-		fmt.Printf("ERROR: %+v\n", err)
+		klog.Warningf("%+v", err)
 		reviewResponse = toAdmissionResponse(err)
 	} else {
 		if ar.Request == nil {
@@ -174,7 +174,7 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 			reviewResponse = admit(ar)
 		}
 	}
-	debug.Print("sending response", string(reviewResponse.Patch))
+	klog.V(4).Info("sending response", string(reviewResponse.Patch))
 
 	response := v1beta1.AdmissionReview{}
 	if reviewResponse != nil {
@@ -190,11 +190,11 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 
 	resp, err := json.Marshal(response)
 	if err != nil {
-		fmt.Println("ERROR:", err)
+		klog.Error(err)
 		return
 	}
 	if _, err := w.Write(resp); err != nil {
-		fmt.Println("ERROR:", err)
+		klog.Warningf("%+v", err)
 	}
 }
 
@@ -206,11 +206,6 @@ func makePodsHandler(pm *patcherManager) func(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func fatal(err error) {
-	fmt.Printf("ERROR: %+v\n", err)
-	os.Exit(1)
-}
-
 func main() {
 	var kubeconfig string
 	var master string
@@ -219,7 +214,6 @@ func main() {
 	var mode string
 	var config *rest.Config
 	var err error
-	var debugEnabled bool
 
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
 	flag.StringVar(&master, "master", "", "master url")
@@ -227,31 +221,22 @@ func main() {
 		"File containing the x509 Certificate for HTTPS. (CA cert, if any, concatenated after server cert).")
 	flag.StringVar(&keyFile, "tls-private-key-file", keyFile, "File containing the x509 private key matching --tls-cert-file.")
 	flag.StringVar(&mode, "mode", preprogrammed, fmt.Sprintf("webhook mode: '%s' (default) or '%s'", preprogrammed, orchestrated))
-	flag.BoolVar(&debugEnabled, "debug", false, "enable debug output")
 	flag.Parse()
 
-	if debugEnabled {
-		debug.Activate()
-	}
-
 	if certFile == "" {
-		fmt.Println("TLS certificate file is not set")
-		os.Exit(1)
+		klog.Fatal("TLS certificate file is not set")
 	}
 
 	if keyFile == "" {
-		fmt.Println("TLS private key is not set")
-		os.Exit(1)
+		klog.Fatal("TLS private key is not set")
 	}
 
 	if _, err = os.Stat(certFile); err != nil {
-		fmt.Println("TLS certificate not found")
-		os.Exit(1)
+		klog.Fatal("TLS certificate not found")
 	}
 
 	if _, err = os.Stat(keyFile); err != nil {
-		fmt.Println("TLS private key not found")
-		os.Exit(1)
+		klog.Fatal("TLS private key not found")
 	}
 
 	if kubeconfig == "" {
@@ -260,29 +245,28 @@ func main() {
 		config, err = clientcmd.BuildConfigFromFlags(master, kubeconfig)
 	}
 	if err != nil {
-		fmt.Println("Failed to get cluster config ", err)
-		os.Exit(1)
+		klog.Fatal("Failed to get cluster config ", err)
 	}
 
 	patcherManager, err := newPatcherManager(mode)
 	if err != nil {
-		fatal(err)
+		klog.Fatalf("%+v", err)
 	}
 
 	controller, err := newController(patcherManager, config)
 	if err != nil {
-		fatal(err)
+		klog.Fatalf("%+v", err)
 	}
 	go controller.run(controllerThreadNum)
 
 	http.HandleFunc("/pods", makePodsHandler(patcherManager))
 
-	debug.Print("Webhook started")
+	klog.V(4).Info("Webhook started")
 
 	server := &http.Server{
 		Addr:      ":8443",
 		TLSConfig: getTLSConfig(certFile, keyFile),
 	}
 
-	fatal(server.ListenAndServeTLS("", ""))
+	klog.Fatal(server.ListenAndServeTLS("", ""))
 }

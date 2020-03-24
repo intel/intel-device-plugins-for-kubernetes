@@ -15,6 +15,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"testing"
 	"time"
@@ -25,7 +26,6 @@ import (
 
 	v1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
 	listers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/listers/fpga.intel.com/v1"
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/debug"
 )
 
 type fakeAfNamespaceLister struct {
@@ -34,7 +34,7 @@ type fakeAfNamespaceLister struct {
 }
 
 func init() {
-	debug.Activate()
+	flag.Set("v", "4") ///Enable debug output
 }
 
 func (nl *fakeAfNamespaceLister) Get(name string) (*v1.AcceleratorFunction, error) {

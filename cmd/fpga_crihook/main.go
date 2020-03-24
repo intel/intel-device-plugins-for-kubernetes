@@ -25,6 +25,7 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/bitstream"
 	"github.com/pkg/errors"
+	"k8s.io/klog"
 	utilsexec "k8s.io/utils/exec"
 )
 
@@ -276,6 +277,10 @@ func (he *hookEnv) process(reader io.Reader) error {
 	return nil
 }
 
+func init() {
+	klog.InitFlags(nil)
+}
+
 func main() {
 	if os.Getenv("PATH") == "" { // runc doesn't set PATH when runs hooks
 		os.Setenv("PATH", "/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin")
@@ -284,7 +289,7 @@ func main() {
 	he := newHookEnv(fpgaBitStreamDirectory, configJSON, utilsexec.New())
 
 	if err := he.process(os.Stdin); err != nil {
-		fmt.Printf("%+v\n", err)
+		klog.Errorf("%+v", err)
 		os.Exit(1)
 	}
 }
