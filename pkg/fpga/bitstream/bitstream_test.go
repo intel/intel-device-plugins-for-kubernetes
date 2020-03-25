@@ -15,32 +15,8 @@
 package bitstream
 
 import (
-	"io/ioutil"
-	"os"
-	"path"
 	"testing"
-
-	"github.com/pkg/errors"
-	"k8s.io/utils/exec"
-	fakeexec "k8s.io/utils/exec/testing"
 )
-
-func createTestDirs(sysfs string, sysfsDirs []string, sysfsFiles map[string][]byte) error {
-	for _, sysfsdir := range sysfsDirs {
-		err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0755)
-		if err != nil {
-			return errors.Wrap(err, "Failed to create fake device directory")
-		}
-	}
-	for filename, body := range sysfsFiles {
-		err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0644)
-		if err != nil {
-			return errors.Wrap(err, "Failed to create fake vendor file")
-		}
-	}
-
-	return nil
-}
 
 func TestGetFPGABitstream(t *testing.T) {
 	var fpgaBitStreamDir = "testdata/intel.com/fpga"
@@ -52,6 +28,13 @@ func TestGetFPGABitstream(t *testing.T) {
 		afu          string
 		expectedErr  bool
 	}{
+		{
+			name:         "Correct OPAE bitstream file",
+			bitstreamDir: fpgaBitStreamDir,
+			region:       "69528db6eb31577a8c3668f9faa081f6",
+			afu:          "d8424dc4a4a3c413f89e433683f9040b",
+			expectedErr:  false,
+		},
 		{
 			name:         "Get broken OPAE bistream file",
 			bitstreamDir: fpgaBitStreamDir,
@@ -89,12 +72,32 @@ func TestGetFPGABitstream(t *testing.T) {
 
 }
 
-func genFakeActions(fcmd *fakeexec.FakeCmd, num int) []fakeexec.FakeCommandAction {
-	var actions []fakeexec.FakeCommandAction
-	for i := 0; i < num; i++ {
-		actions = append(actions, func(cmd string, args ...string) exec.Cmd {
-			return fakeexec.InitFakeCmd(fcmd, cmd, args...)
+func TestOpen(t *testing.T) {
+	tcases := []struct {
+		name          string
+		fname         string
+		expectedError bool
+	}{
+		{
+			name:  "correct GBS",
+			fname: "testdata/intel.com/fpga/69528db6eb31577a8c3668f9faa081f6/d8424dc4a4a3c413f89e433683f9040b.gbs",
+		},
+		{
+			name:          "Unsupported file format",
+			fname:         "test.unsupported",
+			expectedError: true,
+		},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := Open(tc.fname)
+			if tc.expectedError && err == nil {
+				t.Error("unexpected success")
+			}
+			if !tc.expectedError && err != nil {
+				t.Errorf("unexpected error: %+v", err)
+			}
 		})
 	}
-	return actions
 }
