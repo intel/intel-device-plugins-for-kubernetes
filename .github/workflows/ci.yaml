@@ -72,6 +72,8 @@ jobs:
           - intel-qat-plugin
           - intel-vpu-plugin
           - intel-deviceplugin-operator
+          - intel-sgx-plugin
+          - intel-sgx-initcontainer
 
           # Demo images
           - crypto-perf
