@@ -39,6 +39,8 @@ const (
 	hddlServicePath1 = "/var/tmp/hddl_service_ready.mutex"
 	hddlServicePath2 = "/var/tmp/hddl_service_alive.mutex"
 	ionDevNode       = "/dev/ion"
+	// Frequency of device scans
+	scanFrequency = 5 * time.Second
 )
 
 var (
@@ -55,18 +57,27 @@ type devicePlugin struct {
 	vendorID     int
 	productIDs   []int
 	sharedDevNum int
+	scanTicker   *time.Ticker
+	scanDone     chan bool
 }
 
 func newDevicePlugin(usbContext gousbContext, vendorID int, productIDs []int, sharedDevNum int) *devicePlugin {
+	if sharedDevNum < 1 {
+		klog.V(1).Info("The number of containers sharing the same VPU must greater than zero")
+		return nil
+	}
 	return &devicePlugin{
 		usbContext:   usbContext,
 		vendorID:     vendorID,
 		productIDs:   productIDs,
 		sharedDevNum: sharedDevNum,
+		scanTicker:   time.NewTicker(scanFrequency),
+		scanDone:     make(chan bool, 1),
 	}
 }
 
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
+	defer dp.scanTicker.Stop()
 	for {
 		devTree, err := dp.scan()
 		if err != nil {
@@ -75,7 +86,11 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 
 		notifier.Notify(devTree)
 
-		time.Sleep(5 * time.Second)
+		select {
+		case <-dp.scanDone:
+			return nil
+		case <-dp.scanTicker.C:
+		}
 	}
 }
 
@@ -156,15 +171,7 @@ func main() {
 	var sharedDevNum int
 
 	flag.IntVar(&sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same VPU device")
-
 	flag.Parse()
-
-	klog.V(4).Info("debug is on")
-
-	if sharedDevNum < 1 {
-		klog.Fatal("The number of containers sharing the same VPU must greater than zero")
-		os.Exit(1)
-	}
 
 	klog.V(1).Info("VPU device plugin started")
 
@@ -179,6 +186,9 @@ func main() {
 	}
 
 	plugin := newDevicePlugin(ctx, vendorID, productIDs, sharedDevNum)
+	if plugin == nil {
+		klog.Fatal("Cannot create device plugin, please check above error messages.")
+	}
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }
