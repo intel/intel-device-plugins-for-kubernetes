@@ -73,7 +73,7 @@ type Manager struct {
 	devicePlugin Scanner
 	namespace    string
 	servers      map[string]devicePluginServer
-	createServer func(string, func(*pluginapi.AllocateResponse) error) devicePluginServer
+	createServer func(string, func(*pluginapi.AllocateResponse) error, func(*pluginapi.PreStartContainerRequest) error) devicePluginServer
 }
 
 // NewManager creates a new instance of Manager
@@ -108,12 +108,17 @@ func (m *Manager) handleUpdate(update updateInfo) {
 	klog.V(4).Info("Received dev updates:", update)
 	for devType, devices := range update.Added {
 		var postAllocate func(*pluginapi.AllocateResponse) error
+		var preStartContainer func(*pluginapi.PreStartContainerRequest) error
 
 		if postAllocator, ok := m.devicePlugin.(PostAllocator); ok {
 			postAllocate = postAllocator.PostAllocate
 		}
 
-		m.servers[devType] = m.createServer(devType, postAllocate)
+		if containerPreStarter, ok := m.devicePlugin.(ContainerPreStarter); ok {
+			preStartContainer = containerPreStarter.PreStartContainer
+		}
+
+		m.servers[devType] = m.createServer(devType, postAllocate, preStartContainer)
 		go func(dt string) {
 			err := m.servers[dt].Serve(m.namespace)
 			if err != nil {
