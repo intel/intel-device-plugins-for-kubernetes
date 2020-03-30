@@ -155,7 +155,7 @@ func (srv *server) PreStartContainer(ctx context.Context, rqt *pluginapi.PreStar
 		return new(pluginapi.PreStartContainerResponse), srv.preStartContainer(rqt)
 	}
 
-	return nil, errors.New("PreStartContainer() should not be called")
+	return nil, errors.New("PreStartContainer() should not be called as this device plugin doesn't implement it")
 }
 
 // Serve starts a gRPC server to serve pluginapi.PluginInterfaceServer interface.
