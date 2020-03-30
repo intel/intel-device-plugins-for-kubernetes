@@ -26,7 +26,6 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/bitstream"
 	"github.com/pkg/errors"
 	"k8s.io/klog"
-	utilsexec "k8s.io/utils/exec"
 )
 
 const (
@@ -56,6 +55,9 @@ type Config struct {
 		Devices []Device `json:"devices"`
 	} `json:"linux"`
 }
+
+// newPortFun defines a function type that returns fpga.Port
+type newPortFun func(string) (fpga.Port, error)
 
 // Device defines structure for Config.Linux.Devices entries
 type Device struct {
@@ -88,7 +90,7 @@ func decodeJSONStream(reader io.Reader, dest interface{}) error {
 type hookEnv struct {
 	bitstreamDir string
 	config       string
-	execer       utilsexec.Interface
+	newPort      newPortFun
 }
 
 type fpgaParams struct {
@@ -97,11 +99,11 @@ type fpgaParams struct {
 	portDevice string
 }
 
-func newHookEnv(bitstreamDir string, config string, execer utilsexec.Interface) *hookEnv {
+func newHookEnv(bitstreamDir string, config string, newPort newPortFun) *hookEnv {
 	return &hookEnv{
 		bitstreamDir: bitstreamDir,
 		config:       config,
-		execer:       execer,
+		newPort:      newPort,
 	}
 }
 
@@ -152,10 +154,6 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 		return nil, errors.Errorf("No %s* environment variables are set", fpgaAfuEnvPrefix)
 	}
 
-	if len(afuEnv) != len(regionEnv) {
-		return nil, errors.Errorf("Environment variables %s* and %s* don't match", fpgaRegionEnvPrefix, fpgaAfuEnvPrefix)
-	}
-
 	params := []fpgaParams{}
 	for num, region := range regionEnv {
 		afu, ok := afuEnv[num]
@@ -176,7 +174,7 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 			if dev.processed {
 				continue
 			}
-			port, err := fpga.NewPort(deviceName)
+			port, err := he.newPort(deviceName)
 			if err != nil {
 				return nil, err
 			}
@@ -245,7 +243,7 @@ func (he *hookEnv) process(reader io.Reader) error {
 	}
 
 	for _, params := range paramslist {
-		port, err := fpga.NewPort(params.portDevice)
+		port, err := he.newPort(params.portDevice)
 		if err != nil {
 			return err
 		}
@@ -256,21 +254,21 @@ func (he *hookEnv) process(reader io.Reader) error {
 			return nil
 		}
 
-		bitstream, err := bitstream.GetFPGABitstream(he.bitstreamDir, params.region, params.afu)
+		bstream, err := bitstream.GetFPGABitstream(he.bitstreamDir, params.region, params.afu)
 		if err != nil {
 			return err
 		}
-		defer bitstream.Close()
+		defer bstream.Close()
 
-		err = port.PR(bitstream, false)
+		err = port.PR(bstream, false)
 		if err != nil {
 			return err
 		}
 
 		programmedAfu = port.GetAcceleratorTypeUUID()
 
-		if programmedAfu != bitstream.AcceleratorTypeUUID() {
-			return errors.Errorf("programmed function %s instead of %s", programmedAfu, bitstream.AcceleratorTypeUUID())
+		if programmedAfu != bstream.AcceleratorTypeUUID() {
+			return errors.Errorf("programmed function %s instead of %s", programmedAfu, bstream.AcceleratorTypeUUID())
 		}
 	}
 
@@ -286,7 +284,7 @@ func main() {
 		os.Setenv("PATH", "/sbin:/usr/sbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin")
 	}
 
-	he := newHookEnv(fpgaBitStreamDirectory, configJSON, utilsexec.New())
+	he := newHookEnv(fpgaBitStreamDirectory, configJSON, fpga.NewPort)
 
 	if err := he.process(os.Stdin); err != nil {
 		klog.Errorf("%+v", err)
