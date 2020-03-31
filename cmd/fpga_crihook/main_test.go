@@ -16,13 +16,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
-	"time"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/bitstream"
 	"github.com/pkg/errors"
 )
 
@@ -158,7 +158,7 @@ func TestGetConfig(t *testing.T) {
 				t.Fatalf("can't decode %s: %+v", fname, err)
 			}
 
-			he := newHookEnv("", tc.configJSON, nil)
+			he := newHookEnv("", tc.configJSON, fpga.NewPort)
 
 			config, err := he.getConfig(stdinJ)
 			if err != nil {
@@ -177,10 +177,53 @@ func TestGetConfig(t *testing.T) {
 	}
 }
 
+// testFpgaPort represent Fake FPGA Port device for testing purposes
+type testFpgaPort struct {
+	fpga.Port
+	callNo          int
+	interfaceUUIDS  []string
+	accelTypeUUIDS  []string
+	failProgramming bool
+}
+
+// GetInterfaceUUID returns Interface UUID
+func (p *testFpgaPort) GetInterfaceUUID() (id string) {
+	uuid := p.interfaceUUIDS[p.callNo]
+	p.callNo++
+	return uuid
+}
+
+// GetAcceleratorTypeUUID returns AFU UUID
+func (p *testFpgaPort) GetAcceleratorTypeUUID() string {
+	uuid := p.accelTypeUUIDS[p.callNo]
+	p.callNo++
+	return uuid
+}
+
+// PR fakes programming specified bitstream
+func (p *testFpgaPort) PR(bs bitstream.File, dryRun bool) error {
+	if p.failProgramming {
+		return errors.New("fail to program device")
+	}
+	return nil
+}
+
+func newTestPort(dev string) (fpga.Port, error) {
+	return &testFpgaPort{
+		interfaceUUIDS: []string{"ce48969398f05f33946d560708be108a"},
+		accelTypeUUIDS: []string{"d8424dc4a4a3c413f89e433683f9040b"},
+	}, nil
+}
+
 func TestGetFPGAParams(t *testing.T) {
-	tmpdir := fmt.Sprintf("/tmp/fpgacriohook-TestGetFPGAParams-%d", time.Now().Unix())
-	sysfsOPAE := path.Join(tmpdir, "sys", "class", "fpga")
-	// sysfsDFL := path.Join(tmpdir, "sys", "class", "fpga_region")
+	tmpdir, err := ioutil.TempDir("", "TestGetFPGAParams")
+	if err != nil {
+		t.Fatalf("can't create temporary directory: %+v", err)
+	}
+	defer os.RemoveAll(tmpdir)
+
+	sysfsTest := path.Join(tmpdir, "sys", "class", "fpga")
+
 	tcases := []struct {
 		name               string
 		sysfs              string
@@ -194,79 +237,49 @@ func TestGetFPGAParams(t *testing.T) {
 		expectedAFU        string
 		expectedPortDevice string
 	}{
-		// {
-		// 	name:       "correct OPAE setup",
-		// 	sysfs:      sysfsOPAE,
-		// 	stdinJSON:  "stdin-correct.json",
-		// 	configJSON: "config-correct.json",
-		// 	sysfsdirs: []string{
-		// 		"intel-fpga-dev.0/intel-fpga-fme.0/pr",
-		// 		"intel-fpga-dev.0/intel-fpga-port.0",
-		// 	},
-		// 	sysfsfiles: map[string][]byte{
-		// 		"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
-		// 		"intel-fpga-dev.0/intel-fpga-port.0/afu_id":         []byte("f7df405cbd7acf7222f144b0b93acd18"),
-		// 		"intel-fpga-dev.0/intel-fpga-port.0/dev":            []byte("100:0"),
-		// 	},
-		// 	expectedErr:        false,
-		// 	expectedRegion:     "ce48969398f05f33946d560708be108a",
-		// 	expectedAFU:        "f7df405cbd7acf7222f144b0b93acd18",
-		// 	expectedPortDevice: "intel-fpga-port.0",
-		// },
-		// {
-		// 	name:       "correct DFL setup",
-		// 	sysfs:      sysfsDFL,
-		// 	stdinJSON:  "stdin-correct.json",
-		// 	configJSON: "config-correct-DFL.json",
-		// 	sysfsdirs: []string{
-		// 		"region0/dfl-fme.0/dfl-fme-region.1/fpga_region/region1",
-		// 		"region0/dfl-port.0",
-		// 	},
-		// 	sysfsfiles: map[string][]byte{
-		// 		"region0/dfl-fme.0/dfl-fme-region.1/fpga_region/region1/compat_id": []byte("ce48969398f05f33946d560708be108a"),
-		// 		"region0/dfl-port.0/afu_id":                                        []byte("f7df405cbd7acf7222f144b0b93acd18"),
-		// 		"region0/dfl-port.0/dev":                                           []byte("100:0"),
-		// 	},
-		// 	expectedErr:        false,
-		// 	expectedRegion:     "ce48969398f05f33946d560708be108a",
-		// 	expectedAFU:        "f7df405cbd7acf7222f144b0b93acd18",
-		// 	expectedPortDevice: "dfl-port.0",
-		// },
-		// {
-		// 	name:       "incorrect interface id",
-		// 	sysfs:      sysfsOPAE,
-		// 	stdinJSON:  "stdin-correct.json",
-		// 	configJSON: "config-correct.json",
-		// 	sysfsdirs:  []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
-		// 	sysfsfiles: map[string][]byte{
-		// 		"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("incorrectinterfaceuuid"),
-		// 	},
-		// 	expectedErr: true,
-		// },
+		{
+			name:       "valid setup",
+			sysfs:      sysfsTest,
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			sysfsdirs: []string{
+				"intel-fpga-dev.0/test-fpga-fme.0/pr",
+				"intel-fpga-dev.0/test-fpga-port.0",
+			},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/test-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
+				"intel-fpga-dev.0/test-fpga-port.0/afu_id":         []byte("f7df405cbd7acf7222f144b0b93acd18"),
+				"intel-fpga-dev.0/test-fpga-port.0/dev":            []byte("100:0"),
+			},
+			expectedErr:        false,
+			expectedRegion:     "ce48969398f05f33946d560708be108a",
+			expectedAFU:        "f7df405cbd7acf7222f144b0b93acd18",
+			expectedPortDevice: "intel-fpga-port.0",
+		},
 		{
 			name:        "no region in config",
-			sysfs:       sysfsOPAE,
+			sysfs:       sysfsTest,
 			stdinJSON:   "stdin-correct.json",
 			configJSON:  "config-no-region.json",
 			expectedErr: true,
 		},
 		{
 			name:        "no AFU in config",
-			sysfs:       sysfsOPAE,
+			sysfs:       sysfsTest,
 			stdinJSON:   "stdin-correct.json",
 			configJSON:  "config-no-afu.json",
 			expectedErr: true,
 		},
 		{
 			name:        "no FPGA devices in config",
-			sysfs:       sysfsOPAE,
+			sysfs:       sysfsTest,
 			stdinJSON:   "stdin-correct.json",
 			configJSON:  "config-no-FPGA-devices.json",
 			expectedErr: true,
 		},
 		{
 			name:        "region and AFU don't match",
-			sysfs:       sysfsOPAE,
+			sysfs:       sysfsTest,
 			stdinJSON:   "stdin-correct.json",
 			configJSON:  "config-region-afu-dont-match.json",
 			expectedErr: true,
@@ -284,7 +297,7 @@ func TestGetFPGAParams(t *testing.T) {
 				t.Fatalf("can't create temp files: %+v", err)
 			}
 
-			he := newHookEnv("", tc.configJSON, nil)
+			he := newHookEnv("", tc.configJSON, newTestPort)
 
 			stdinJ, err := getStdin(stdin)
 			if err != nil {
@@ -309,6 +322,145 @@ func TestGetFPGAParams(t *testing.T) {
 				} else if params[0].portDevice != tc.expectedPortDevice {
 					t.Errorf("#%d: expected device node: %s, actual: %s", tcnum, tc.expectedPortDevice, params[0].portDevice)
 				}
+			}
+
+			err = os.RemoveAll(tmpdir)
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestProcess(t *testing.T) {
+	tmpdir, err := ioutil.TempDir("", "testProcess")
+	if err != nil {
+		t.Fatalf("can't create temporary directory: %+v", err)
+	}
+	defer os.RemoveAll(tmpdir)
+
+	sysfs := path.Join(tmpdir, "sys", "class", "fpga")
+	tcases := []struct {
+		name        string
+		stdinJSON   string
+		configJSON  string
+		sysfsdirs   []string
+		sysfsfiles  map[string][]byte
+		newPort     newPortFun
+		expectedErr bool
+	}{
+		{
+			name:       "Reprogramming",
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			sysfsdirs:  []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
+			},
+			newPort: func(dev string) (fpga.Port, error) {
+				return &testFpgaPort{
+					interfaceUUIDS: []string{"ce48969398f05f33946d560708be108a"},
+					accelTypeUUIDS: []string{
+						"d8424dc4a4a3c413f89e433683f9040b",
+						"f7df405cbd7acf7222f144b0b93acd18"},
+				}, nil
+			},
+		},
+		{
+			name:        "Broken stdin",
+			stdinJSON:   "stdin-broken-json.json",
+			expectedErr: true,
+		},
+		{
+			name:        "Broken config",
+			stdinJSON:   "stdin-correct.json",
+			configJSON:  "config-broken-json.json",
+			expectedErr: true,
+		},
+		{
+			name:        "Failing to get FPGA params",
+			stdinJSON:   "stdin-correct.json",
+			configJSON:  "config-no-region.json",
+			expectedErr: true,
+		},
+		{
+			name:       "Already programmed",
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			sysfsdirs:  []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
+			sysfsfiles: map[string][]byte{
+				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a"),
+			},
+			newPort: func(dev string) (fpga.Port, error) {
+				return &testFpgaPort{
+					interfaceUUIDS: []string{"ce48969398f05f33946d560708be108a"},
+					accelTypeUUIDS: []string{"f7df405cbd7acf7222f144b0b93acd18"},
+				}, nil
+			},
+		},
+		{
+			name:       "Non-existing bitstream",
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-non-existing-bitstream.json",
+			newPort: func(dev string) (fpga.Port, error) {
+				return &testFpgaPort{
+					interfaceUUIDS: []string{"ce48969398f05f33946d560708be108a"},
+					accelTypeUUIDS: []string{
+						"d8424dc4a4a3c413f89e433683f9040b",
+						"f7df405cbd7acf7222f144b0b93acd18"},
+				}, nil
+			},
+			expectedErr: true,
+		},
+		{
+			name:       "Programming fails",
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			newPort: func(dev string) (fpga.Port, error) {
+				return &testFpgaPort{
+					interfaceUUIDS: []string{"ce48969398f05f33946d560708be108a"},
+					accelTypeUUIDS: []string{
+						"d8424dc4a4a3c413f89e433683f9040b",
+						"f7df405cbd7acf7222f144b0b93acd18"},
+					failProgramming: true,
+				}, nil
+			},
+			expectedErr: true,
+		},
+		{
+			name:       "Device is not reprogrammed",
+			stdinJSON:  "stdin-correct.json",
+			configJSON: "config-correct.json",
+			newPort: func(dev string) (fpga.Port, error) {
+				return &testFpgaPort{
+					interfaceUUIDS: []string{"ce48969398f05f33946d560708be108a"},
+					accelTypeUUIDS: []string{
+						"d8424dc4a4a3c413f89e433683f9040b",
+						"d8424dc4a4a3c413f89e433683f9040b"},
+				}, nil
+			},
+			expectedErr: true,
+		},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			stdin, err := os.Open(path.Join("testdata", tc.stdinJSON))
+			if err != nil {
+				t.Fatalf("can't open file %s: %v", tc.stdinJSON, err)
+			}
+
+			err = createTestDirs(sysfs, tc.sysfsdirs, tc.sysfsfiles)
+			if err != nil {
+				t.Fatalf("can't create temp files: %+v", err)
+			}
+
+			he := newHookEnv("testdata/intel.com/fpga", tc.configJSON, tc.newPort)
+
+			err = he.process(stdin)
+
+			if err != nil && !tc.expectedErr {
+				t.Errorf("[%s]: unexpected error: %+v", tc.name, err)
 			}
 
 			err = os.RemoveAll(tmpdir)
