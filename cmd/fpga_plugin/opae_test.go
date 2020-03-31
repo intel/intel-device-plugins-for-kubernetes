@@ -15,13 +15,12 @@
 package main
 
 import (
-	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
@@ -48,10 +47,15 @@ func TestNewDevicePluginOPAE(t *testing.T) {
 	}
 
 	for _, tcase := range tcases {
-		_, err := newDevicePluginOPAE("", "", tcase.mode)
-		if tcase.expectedErr && err == nil {
-			t.Error("No error generated when creating Cache with invalid parameters")
-		}
+		t.Run(tcase.mode, func(t *testing.T) {
+			_, err := newDevicePluginOPAE("", "", tcase.mode)
+			if tcase.expectedErr && err == nil {
+				t.Error("Unexpected success")
+			}
+			if !tcase.expectedErr && err != nil {
+				t.Errorf("Unexpected error: %+v", err)
+			}
+		})
 	}
 }
 
@@ -233,7 +237,10 @@ func TestGetAfuTreeOPAE(t *testing.T) {
 }
 
 func TestScanFPGAsOPAE(t *testing.T) {
-	tmpdir := fmt.Sprintf("/tmp/fpgaplugin-TestDiscoverFPGAs-%d", time.Now().Unix())
+	tmpdir, err := ioutil.TempDir("", "TestScanFPGAsOPAE")
+	if err != nil {
+		t.Fatalf("can't create temporary directory: %+v", err)
+	}
 	sysfs := path.Join(tmpdir, "sys", "class", "fpga")
 	devfs := path.Join(tmpdir, "dev")
 	tcases := []struct {
@@ -353,33 +360,35 @@ func TestScanFPGAsOPAE(t *testing.T) {
 	}
 
 	for _, tcase := range tcases {
-		err := createTestDirs(devfs, sysfs, tcase.devfsdirs, tcase.sysfsdirs, tcase.sysfsfiles)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-
-		plugin, err := newDevicePluginOPAE(sysfs, devfs, tcase.mode)
-
-		plugin.getDevTree = func(devices []device) dpapi.DeviceTree {
-			return dpapi.NewDeviceTree()
-		}
-
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-
-		_, err = plugin.scanFPGAs()
-		if tcase.errorContains != "" {
-			if err == nil || !strings.Contains(err.Error(), tcase.errorContains) {
-				t.Errorf("Test case '%s': expected error '%s', but got '%v'", tcase.name, tcase.errorContains, err)
+		t.Run(tcase.name, func(t *testing.T) {
+			err := createTestDirs(devfs, sysfs, tcase.devfsdirs, tcase.sysfsdirs, tcase.sysfsfiles)
+			if err != nil {
+				t.Fatalf("%+v", err)
 			}
-		} else if err != nil {
-			t.Errorf("Test case '%s': expected no error, but got '%+v'", tcase.name, err)
-		}
 
-		err = os.RemoveAll(tmpdir)
-		if err != nil {
-			t.Fatal(err)
-		}
+			plugin, err := newDevicePluginOPAE(sysfs, devfs, tcase.mode)
+
+			plugin.getDevTree = func(devices []device) dpapi.DeviceTree {
+				return dpapi.NewDeviceTree()
+			}
+
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			_, err = plugin.scanFPGAs()
+			if tcase.errorContains != "" {
+				if err == nil || !strings.Contains(err.Error(), tcase.errorContains) {
+					t.Errorf("expected error '%s', but got '%v'", tcase.errorContains, err)
+				}
+			} else if err != nil {
+				t.Errorf("expected no error, but got '%+v'", err)
+			}
+
+			err = os.RemoveAll(tmpdir)
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }
