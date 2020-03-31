@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/google/gousb"
+	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	"k8s.io/klog"
 )
 
@@ -49,9 +50,22 @@ func (t *testCase) OpenDevices(opener func(desc *gousb.DeviceDesc) bool) ([]*gou
 	return ret, nil
 }
 
+// fakeNotifier implements Notifier interface.
+type fakeNotifier struct {
+	scanDone chan bool
+	tree     dpapi.DeviceTree
+}
+
+// Notify stops plugin Scan
+func (n *fakeNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
+	n.tree = newDeviceTree
+	n.scanDone <- true
+}
+
 func TestScan(t *testing.T) {
+	var fN fakeNotifier
+
 	f, err := os.Create("/var/tmp/hddl_service.sock")
-	defer f.Close()
 	if err != nil {
 		t.Error("create fake hddl file failed")
 	}
@@ -64,13 +78,40 @@ func TestScan(t *testing.T) {
 	testPlugin := newDevicePlugin(tc, vendorID, productIDs, 10)
 
 	if testPlugin == nil {
-		t.Error("vpu plugin test failed")
+		t.Error("vpu plugin test failed with newDevicePlugin().")
 	}
 
-	tree, err := testPlugin.scan()
+	fN.scanDone = testPlugin.scanDone
+	err = testPlugin.Scan(&fN)
 	if err != nil {
-		t.Error("vpu plugin test failed")
-	} else {
-		klog.V(4).Infof("tree len is %d", len(tree[deviceType]))
+		t.Error("vpu plugin test failed with testPlugin.Scan()")
+	}
+	if len(fN.tree[deviceType]) == 0 {
+		t.Error("vpu plugin test failed with testPlugin.Scan(): tree len is 0")
+	}
+	klog.V(4).Infof("tree len is %d", len(fN.tree[deviceType]))
+
+	//remove the hddl_service.sock and test with no hddl socket case
+	f.Close()
+	os.Remove("/var/tmp/hddl_service.sock")
+	testPlugin = newDevicePlugin(tc, vendorID, productIDs, 10)
+
+	if testPlugin == nil {
+		t.Error("vpu plugin test failed with newDevicePlugin() in no hddl_service.sock case.")
+	}
+
+	fN.scanDone = testPlugin.scanDone
+	err = testPlugin.Scan(&fN)
+	if err != nil {
+		t.Error("vpu plugin test failed with testPlugin.Scan() in no hddl_service.sock case.")
+	}
+	if len(fN.tree[deviceType]) != 0 {
+		t.Error("vpu plugin test failed with testPlugin.Scan(): tree len should be 0 in no hddl_service.sock case.")
+	}
+
+	//test with sharedNum equals 0 case
+	testPlugin = newDevicePlugin(tc, vendorID, productIDs, 0)
+	if testPlugin != nil {
+		t.Error("vpu plugin test fail: newDevicePlugin should fail with 0 sharedDevNum")
 	}
 }
