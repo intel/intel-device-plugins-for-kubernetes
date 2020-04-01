@@ -178,7 +178,7 @@ func (dp *DevicePlugin) getDpdkMounts(id string) ([]pluginapi.Mount, error) {
 		return []pluginapi.Mount{
 			{
 				HostPath:      uioMountPoint,
-				ContainerPath: uioMountPath,
+				ContainerPath: uioMountPoint,
 			},
 		}, nil
 	case "vfio-pci":
