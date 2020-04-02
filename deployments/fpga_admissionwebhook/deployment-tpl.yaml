@@ -29,7 +29,6 @@ spec:
           args:
             - -tls-cert-file=/etc/webhook/certs/cert.pem
             - -tls-private-key-file=/etc/webhook/certs/key.pem
-            - -mode={MODE}
             - -v=1
           volumeMounts:
             - name: webhook-certs

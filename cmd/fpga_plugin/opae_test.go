@@ -210,7 +210,7 @@ func TestGetAfuTreeOPAE(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "intel-fpga-port.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+	expected.AddDevice("ce48969398f05f33946d560708be108d8424dc4a4a3c413f89e433683f9040b", "intel-fpga-port.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -219,7 +219,7 @@ func TestGetAfuTreeOPAE(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(afMode+"-d8424dc4a4a3c413f89e433683f9040b", "intel-fpga-port.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+	expected.AddDevice("ce48969398f05f33946d560708be108d8424dc4a4a3c413f89e433683f9040b", "intel-fpga-port.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -228,7 +228,7 @@ func TestGetAfuTreeOPAE(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(afMode+"-"+unhealthyAfuID, "intel-fpga-port.2", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
+	expected.AddDevice(unhealthyInterfaceID[:interfaceIDPrefixLength]+unhealthyAfuID, "intel-fpga-port.2", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
 
 	result := getAfuTree(getDevicesOPAE())
 	if !reflect.DeepEqual(result, expected) {

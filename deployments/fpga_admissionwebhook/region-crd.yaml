@@ -19,4 +19,4 @@ spec:
           properties:
             interfaceId:
               type: string
-              pattern: '^[0-9a-f]{8,128}$'
+              pattern: '^[0-9a-f]{8,32}$'

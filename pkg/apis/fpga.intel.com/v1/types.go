@@ -18,7 +18,9 @@ type AcceleratorFunction struct {
 
 // AcceleratorFunctionSpec contains actual specs for AcceleratorFunction
 type AcceleratorFunctionSpec struct {
-	AfuID string `json:"afuId"`
+	AfuID       string `json:"afuId"`
+	InterfaceID string `json:"interfaceId"`
+	Mode        string `json:"mode"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

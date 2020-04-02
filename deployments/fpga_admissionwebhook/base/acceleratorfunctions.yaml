@@ -2,13 +2,6 @@
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10.dcp1.0-compress
-spec:
-  afuId: 946c21d1e49704a5e5daa0805bc6b0785e1765bf
----
-apiVersion: fpga.intel.com/v1
-kind: AcceleratorFunction
-metadata:
   name: arria10.dcp1.0-nlb0
 spec:
   afuId: d8424dc4a4a3c413f89e433683f9040b

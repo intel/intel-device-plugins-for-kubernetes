@@ -51,6 +51,11 @@ const (
 
 	// Frequency of device scans
 	scanFrequency = 5 * time.Second
+
+	// Names of extended resources cannot be longer than 63 characters.
+	// Therefore for AF resources we have to cut the interface ID prefix
+	// to 31 characters only.
+	interfaceIDPrefixLength = 31
 )
 
 type getDevTreeFunc func(devices []device) dpapi.DeviceTree
@@ -125,7 +130,7 @@ func getAfuTree(devices []device) dpapi.DeviceTree {
 				if afu.afuID == unhealthyAfuID {
 					health = pluginapi.Unhealthy
 				}
-				devType := fmt.Sprintf("%s-%s", afMode, afu.afuID)
+				devType := region.interfaceID[:interfaceIDPrefixLength] + afu.afuID
 				devNodes := []pluginapi.DeviceSpec{
 					{
 						HostPath:      afu.devNode,
