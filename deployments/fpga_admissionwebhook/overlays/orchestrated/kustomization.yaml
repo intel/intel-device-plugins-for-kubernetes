@@ -1,10 +1,6 @@
 bases:
   - ../../base
 
-resources:
-  - fpgaregion-crd.yaml
-  - fpgaregions.yaml
-
 patchesJson6902:
   - target:
       group: apps
