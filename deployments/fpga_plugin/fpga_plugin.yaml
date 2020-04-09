@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: intel-fpga-plugin
-  namespace: kube-system
+  namespace: {namespace}
   labels:
     app: intel-fpga-plugin
 spec:
