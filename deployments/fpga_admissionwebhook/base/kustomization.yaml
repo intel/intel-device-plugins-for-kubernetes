@@ -3,6 +3,8 @@ resources:
   - intel-fpga-webhook-deployment.yaml
   - intel-fpga-webhook-svc.yaml
   - fpga-mutator-webhook-cfg.yaml
+  - region-crd.yaml
+  - regions.yaml
   - acceleratorfunction-crd.yaml
   - acceleratorfunctions.yaml
 
