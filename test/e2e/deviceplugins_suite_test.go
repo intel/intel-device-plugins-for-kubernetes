@@ -22,6 +22,7 @@ import (
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/gomega"
 
+	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/fpga"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/fpgaadmissionwebhook"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/gpu"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/qat"
