@@ -29,7 +29,7 @@ RUN chmod a+x /go/bin/vpu_plugin \
     && install -D /go/bin/vpu_plugin /install_root/usr/local/bin/intel_vpu_device_plugin \
     && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && scripts/copy-modules-licenses.sh ./cmd/vpu_plugin /install_root/usr/local/share/package-licenses/ \
-    && install -D /usr/share/package-licenses/libusb/COPYING -t /install_root/usr/local/share/package-licenses/libusb \
+    && install -D /usr/share/package-licenses/libusb/* -t /install_root/usr/local/share/package-licenses/libusb \
     && install -D /lib64/libusb-1.0.so.0 /install_root/lib64
 
 FROM scratch as final

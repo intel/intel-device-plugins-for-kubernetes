@@ -15,7 +15,7 @@ Makefile            @rojkov @bart0sh @kad @mythi
 # Binaries
 /cmd/               @rojkov @bart0sh
 /cmd/fpga_tool/     @bart0sh @kad @rojkov
-/cmd/qat_plugin/    @rojkov @mythi @swatisehgal
+/cmd/qat_plugin/    @rojkov @mythi
 /cmd/vpu_plugin/    @rojkov @mythi @alekdu 
 
 # Framework
