@@ -15,6 +15,7 @@
 package gpu
 
 import (
+	"context"
 	"path/filepath"
 	"time"
 
@@ -22,8 +23,10 @@ import (
 	"github.com/onsi/ginkgo"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
+	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	imageutils "k8s.io/kubernetes/test/utils/image"
 )
@@ -46,13 +49,13 @@ func describe() {
 
 	ginkgo.It("checks availability of GPU resources", func() {
 		ginkgo.By("deploying GPU plugin")
-		framework.RunKubectlOrDie("--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
+		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for GPU plugin's availability")
 		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
 			labels.Set{"app": "intel-gpu-plugin"}.AsSelector(), 1 /* one replica */, 10*time.Second); err != nil {
 			framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			framework.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 
@@ -69,7 +72,7 @@ func describe() {
 		podSpec.Spec.Containers[0].Image = imageutils.GetE2EImage(imageutils.BusyBox)
 		podSpec.Spec.Containers[0].Command = []string{"/bin/sh"}
 		podSpec.Spec.Containers[0].Args = []string{"-c", "echo hello world"}
-		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(podSpec)
+		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), podSpec, metav1.CreateOptions{})
 		framework.ExpectNoError(err, "pod Create API error")
 
 		ginkgo.By("waiting the pod to finnish successfully")

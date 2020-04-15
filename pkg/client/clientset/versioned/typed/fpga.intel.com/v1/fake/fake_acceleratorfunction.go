@@ -1,4 +1,4 @@
-// Copyright 2018 Intel Corporation. All Rights Reserved.
+// Copyright 2020 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package fake
 
 import (
+	"context"
+
 	fpgaintelcomv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -37,7 +39,7 @@ var acceleratorfunctionsResource = schema.GroupVersionResource{Group: "fpga.inte
 var acceleratorfunctionsKind = schema.GroupVersionKind{Group: "fpga.intel.com", Version: "v1", Kind: "AcceleratorFunction"}
 
 // Get takes name of the acceleratorFunction, and returns the corresponding acceleratorFunction object, and an error if there is any.
-func (c *FakeAcceleratorFunctions) Get(name string, options v1.GetOptions) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
+func (c *FakeAcceleratorFunctions) Get(ctx context.Context, name string, options v1.GetOptions) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(acceleratorfunctionsResource, c.ns, name), &fpgaintelcomv1.AcceleratorFunction{})
 
@@ -48,7 +50,7 @@ func (c *FakeAcceleratorFunctions) Get(name string, options v1.GetOptions) (resu
 }
 
 // List takes label and field selectors, and returns the list of AcceleratorFunctions that match those selectors.
-func (c *FakeAcceleratorFunctions) List(opts v1.ListOptions) (result *fpgaintelcomv1.AcceleratorFunctionList, err error) {
+func (c *FakeAcceleratorFunctions) List(ctx context.Context, opts v1.ListOptions) (result *fpgaintelcomv1.AcceleratorFunctionList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(acceleratorfunctionsResource, acceleratorfunctionsKind, c.ns, opts), &fpgaintelcomv1.AcceleratorFunctionList{})
 
@@ -70,14 +72,14 @@ func (c *FakeAcceleratorFunctions) List(opts v1.ListOptions) (result *fpgaintelc
 }
 
 // Watch returns a watch.Interface that watches the requested acceleratorFunctions.
-func (c *FakeAcceleratorFunctions) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeAcceleratorFunctions) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(acceleratorfunctionsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a acceleratorFunction and creates it.  Returns the server's representation of the acceleratorFunction, and an error, if there is any.
-func (c *FakeAcceleratorFunctions) Create(acceleratorFunction *fpgaintelcomv1.AcceleratorFunction) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
+func (c *FakeAcceleratorFunctions) Create(ctx context.Context, acceleratorFunction *fpgaintelcomv1.AcceleratorFunction, opts v1.CreateOptions) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(acceleratorfunctionsResource, c.ns, acceleratorFunction), &fpgaintelcomv1.AcceleratorFunction{})
 
@@ -88,7 +90,7 @@ func (c *FakeAcceleratorFunctions) Create(acceleratorFunction *fpgaintelcomv1.Ac
 }
 
 // Update takes the representation of a acceleratorFunction and updates it. Returns the server's representation of the acceleratorFunction, and an error, if there is any.
-func (c *FakeAcceleratorFunctions) Update(acceleratorFunction *fpgaintelcomv1.AcceleratorFunction) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
+func (c *FakeAcceleratorFunctions) Update(ctx context.Context, acceleratorFunction *fpgaintelcomv1.AcceleratorFunction, opts v1.UpdateOptions) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(acceleratorfunctionsResource, c.ns, acceleratorFunction), &fpgaintelcomv1.AcceleratorFunction{})
 
@@ -99,7 +101,7 @@ func (c *FakeAcceleratorFunctions) Update(acceleratorFunction *fpgaintelcomv1.Ac
 }
 
 // Delete takes name of the acceleratorFunction and deletes it. Returns an error if one occurs.
-func (c *FakeAcceleratorFunctions) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeAcceleratorFunctions) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(acceleratorfunctionsResource, c.ns, name), &fpgaintelcomv1.AcceleratorFunction{})
 
@@ -107,15 +109,15 @@ func (c *FakeAcceleratorFunctions) Delete(name string, options *v1.DeleteOptions
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeAcceleratorFunctions) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(acceleratorfunctionsResource, c.ns, listOptions)
+func (c *FakeAcceleratorFunctions) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(acceleratorfunctionsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &fpgaintelcomv1.AcceleratorFunctionList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched acceleratorFunction.
-func (c *FakeAcceleratorFunctions) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
+func (c *FakeAcceleratorFunctions) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(acceleratorfunctionsResource, c.ns, name, pt, data, subresources...), &fpgaintelcomv1.AcceleratorFunction{})
 

@@ -1,4 +1,4 @@
-// Copyright 2018 Intel Corporation. All Rights Reserved.
+// Copyright 2020 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package v1
 
 import (
+	"context"
 	time "time"
 
 	fpgaintelcomv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
@@ -59,13 +60,13 @@ func NewFilteredAcceleratorFunctionInformer(client versioned.Interface, namespac
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FpgaV1().AcceleratorFunctions(namespace).List(options)
+				return client.FpgaV1().AcceleratorFunctions(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.FpgaV1().AcceleratorFunctions(namespace).Watch(options)
+				return client.FpgaV1().AcceleratorFunctions(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&fpgaintelcomv1.AcceleratorFunction{},

@@ -32,7 +32,7 @@ in an infinite loop. A `Scan()` implementation scans the host for devices and
 sends all found devices to a `deviceplugin.Notifier` instance. The
 `deviceplugin.Notifier` is implemented and provided by the `deviceplugin`
 package itself. The found devices are organized in an instance of
-`deviceplugin.DeviceTree` object. The object is filled in with its 
+`deviceplugin.DeviceTree` object. The object is filled in with its
 `AddDevice()` method:
 
 ```go
@@ -56,8 +56,8 @@ func (dp *devicePlugin) Scan(notifier deviceplugin.Notifier) error {
 }
 ```
 
-Optionally, your device plugin may also implement the 
-`deviceplugin.PostAllocator` interface. If implemented, its method 
+Optionally, your device plugin may also implement the
+`deviceplugin.PostAllocator` interface. If implemented, its method
 `PostAllocate()` modifies `pluginapi.AllocateResponse` responses just
 before they are sent to `kubelet`. To see an example, refer to the FPGA
 plugin which implements this interface to annotate its responses.
@@ -120,3 +120,58 @@ Otherwise, they can be logged as simple values:
 ```golang
     klog.Warningf("Example of a warning due to an external error: %v", err)
 ```
+
+How to build against a newer version of Kubernetes
+==================================================
+
+First you need to update module dependencies. The easiest way is to use the
+script copied from https://github.com/kubernetes/kubernetes/issues/79384#issuecomment-521493597:
+
+```bash
+#!/bin/sh
+set -euo pipefail
+
+VERSION=${1#"v"}
+if [ -z "$VERSION" ]; then
+    echo "Must specify version!"
+    exit 1
+fi
+MODS=($(
+    curl -sS https://raw.githubusercontent.com/kubernetes/kubernetes/v${VERSION}/go.mod |
+    sed -n 's|.*k8s.io/\(.*\) => ./staging/src/k8s.io/.*|k8s.io/\1|p'
+))
+for MOD in "${MODS[@]}"; do
+    V=$(
+        go mod download -json "${MOD}@kubernetes-${VERSION}" |
+        sed -n 's|.*"Version": "\(.*\)".*|\1|p'
+    )
+    go mod edit "-replace=${MOD}=${MOD}@${V}"
+done
+go get "k8s.io/kubernetes@v${VERSION}"
+```
+
+Just run it inside the repo's root, e.g.
+
+```
+$ ./k8s_gomod_update.sh 1.18.1
+```
+
+Then run the code generator script which can be found at
+https://github.com/kubernetes/code-generator/blob/master/generate-groups.sh
+
+```
+$ generate-groups.sh all github.com/intel/intel-device-plugins-for-kubernetes/pkg/client \
+                         github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis \
+                         fpga.intel.com:v1
+```
+
+Please note that the script (at least of v0.18.2-beta.0) expects the device plugins
+repo to be located under $GOPATH/src.
+
+Finally run
+
+```
+$ make test
+```
+
+and fix all new compilation issues.

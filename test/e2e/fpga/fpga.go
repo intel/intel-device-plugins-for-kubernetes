@@ -15,6 +15,7 @@
 package fpga
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -22,8 +23,10 @@ import (
 	"github.com/onsi/ginkgo"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
+	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 )
 
@@ -92,14 +95,14 @@ func runTestCase(fmw *framework.Framework, webhookDeployScriptPath, pluginDeploy
 	// If WaitForSuccess fails, ginkgo doesn't show the logs of the failed container.
 	// Replacing WaitForSuccess with WaitForFinish + 'kubelet logs' would show the logs
 	// fmw.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
-	// framework.RunKubectlOrDie("--namespace", fmw.Namespace.Name, "logs", pod.ObjectMeta.Name)
+	// framework.RunKubectlOrDie(fmw.Namespace.Name, "--namespace", fmw.Namespace.Name, "logs", pod.ObjectMeta.Name)
 	// return
 
 	ginkgo.By("submitting a pod requesting incorrect FPGA resources")
 	pod = createPod(fmw, fmt.Sprintf("fpgaplugin-nlb-%s-%s-%s-incorrect", pluginMode, cmd1, cmd2), resource, image, []string{cmd2})
 
 	ginkgo.By("waiting the pod failure")
-	fmw.PodClient().WaitForFailure(pod.ObjectMeta.Name, 60*time.Second)
+	utils.WaitForPodFailure(fmw, pod.ObjectMeta.Name, 60*time.Second)
 }
 
 func createPod(fmw *framework.Framework, name string, resourceName v1.ResourceName, image string, command []string) *v1.Pod {
@@ -116,7 +119,8 @@ func createPod(fmw *framework.Framework, name string, resourceName v1.ResourceNa
 		},
 	}
 
-	pod, err := fmw.ClientSet.CoreV1().Pods(fmw.Namespace.Name).Create(podSpec)
+	pod, err := fmw.ClientSet.CoreV1().Pods(fmw.Namespace.Name).Create(context.TODO(),
+		podSpec, metav1.CreateOptions{})
 	framework.ExpectNoError(err, "pod Create API error")
 	return pod
 }
@@ -126,7 +130,7 @@ func waitForPod(fmw *framework.Framework, name string) {
 	if _, err := e2epod.WaitForPodsWithLabelRunningReady(fmw.ClientSet, fmw.Namespace.Name,
 		labels.Set{"app": name}.AsSelector(), 1, 10*time.Second); err != nil {
 		framework.DumpAllNamespaceInfo(fmw.ClientSet, fmw.Namespace.Name)
-		framework.LogFailedContainers(fmw.ClientSet, fmw.Namespace.Name, framework.Logf)
+		kubectl.LogFailedContainers(fmw.ClientSet, fmw.Namespace.Name, framework.Logf)
 		framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 	}
 }

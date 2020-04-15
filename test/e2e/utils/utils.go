@@ -15,16 +15,20 @@
 package utils
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
+	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	testutils "k8s.io/kubernetes/test/utils"
 )
 
@@ -40,7 +44,7 @@ func WaitForNodesWithResource(c clientset.Interface, res v1.ResourceName, timeou
 	err := wait.Poll(poll, timeout,
 		func() (bool, error) {
 			for t := time.Now(); time.Since(t) < nodeListTimeout; time.Sleep(poll) {
-				nodelist, err := c.CoreV1().Nodes().List(metav1.ListOptions{})
+				nodelist, err := c.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 				if err != nil {
 					if testutils.IsRetryableAPIError(err) {
 						continue
@@ -61,6 +65,24 @@ func WaitForNodesWithResource(c clientset.Interface, res v1.ResourceName, timeou
 			return false, errors.New("unable to list nodes")
 		})
 	return err
+}
+
+// WaitForPodFailure waits for a pod to fail.
+// This function used to be a part of k8s e2e framework, but was deleted in
+// https://github.com/kubernetes/kubernetes/pull/86732.
+func WaitForPodFailure(f *framework.Framework, name string, timeout time.Duration) {
+	gomega.Expect(e2epod.WaitForPodCondition(f.ClientSet, f.Namespace.Name, name, "success or failure", timeout,
+		func(pod *v1.Pod) (bool, error) {
+			switch pod.Status.Phase {
+			case v1.PodFailed:
+				return true, nil
+			case v1.PodSucceeded:
+				return true, fmt.Errorf("pod %q successed with reason: %q, message: %q", name, pod.Status.Reason, pod.Status.Message)
+			default:
+				return false, nil
+			}
+		},
+	)).To(gomega.Succeed(), "wait for pod %q to fail", name)
 }
 
 // LocateRepoFile locates a file inside this repository.
