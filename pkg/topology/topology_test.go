@@ -373,10 +373,10 @@ func TestGetTopologyInfo(t *testing.T) {
 			expectedErr: true,
 		},
 		{
-			name:        "incorrect numa node ID",
+			name:        "valid: missing numa node ID",
 			input:       []string{"/dev/random"},
-			output:      nil,
-			expectedErr: true,
+			output:      &pluginapi.TopologyInfo{},
+			expectedErr: false,
 		},
 	}
 	for _, test := range cases {
