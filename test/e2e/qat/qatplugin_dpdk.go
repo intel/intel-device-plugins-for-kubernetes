@@ -22,6 +22,7 @@ import (
 	"github.com/onsi/ginkgo"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
+	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 )
 
@@ -53,13 +54,13 @@ func describeQatDpdkPlugin() {
 
 	ginkgo.It("measures performance of DPDK", func() {
 		ginkgo.By("deploying QAT plugin in DPDK mode")
-		framework.RunKubectlOrDie("--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
+		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for QAT plugin's availability")
 		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
 			labels.Set{"app": "intel-qat-plugin"}.AsSelector(), 1 /* one replica */, 10*time.Second); err != nil {
 			framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			framework.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 
@@ -69,13 +70,13 @@ func describeQatDpdkPlugin() {
 		}
 
 		ginkgo.By("submitting a crypto pod requesting QAT resources")
-		framework.RunKubectlOrDie("--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
+		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
 		ginkgo.By("waiting the crypto pod to finnish successfully")
 		f.PodClient().WaitForSuccess("qat-dpdk-test-crypto-perf-tc1", 30*time.Second)
 
 		ginkgo.By("submitting a compress pod requesting QAT resources")
-		framework.RunKubectlOrDie("--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
+		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
 		ginkgo.By("waiting the compress pod to finnish successfully")
 		f.PodClient().WaitForSuccess("qat-dpdk-test-compress-perf-tc1", 30*time.Second)

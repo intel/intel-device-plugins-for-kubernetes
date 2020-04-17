@@ -99,9 +99,9 @@ func TestGetOnlineDevices(t *testing.T) {
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
 			fcmd := fakeexec.FakeCmd{
-				CombinedOutputScript: []fakeexec.FakeCombinedOutputAction{
-					func() ([]byte, error) {
-						return []byte(tt.adfCtlOutput), tt.adfCtlError
+				CombinedOutputScript: []fakeexec.FakeAction{
+					func() ([]byte, []byte, error) {
+						return []byte(tt.adfCtlOutput), []byte{}, tt.adfCtlError
 					},
 				},
 			}

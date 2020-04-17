@@ -1,4 +1,4 @@
-// Copyright 2018 Intel Corporation. All Rights Reserved.
+// Copyright 2020 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package fake
 
 import (
+	"context"
+
 	fpgaintelcomv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -37,7 +39,7 @@ var fpgaregionsResource = schema.GroupVersionResource{Group: "fpga.intel.com", V
 var fpgaregionsKind = schema.GroupVersionKind{Group: "fpga.intel.com", Version: "v1", Kind: "FpgaRegion"}
 
 // Get takes name of the fpgaRegion, and returns the corresponding fpgaRegion object, and an error if there is any.
-func (c *FakeFpgaRegions) Get(name string, options v1.GetOptions) (result *fpgaintelcomv1.FpgaRegion, err error) {
+func (c *FakeFpgaRegions) Get(ctx context.Context, name string, options v1.GetOptions) (result *fpgaintelcomv1.FpgaRegion, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(fpgaregionsResource, c.ns, name), &fpgaintelcomv1.FpgaRegion{})
 
@@ -48,7 +50,7 @@ func (c *FakeFpgaRegions) Get(name string, options v1.GetOptions) (result *fpgai
 }
 
 // List takes label and field selectors, and returns the list of FpgaRegions that match those selectors.
-func (c *FakeFpgaRegions) List(opts v1.ListOptions) (result *fpgaintelcomv1.FpgaRegionList, err error) {
+func (c *FakeFpgaRegions) List(ctx context.Context, opts v1.ListOptions) (result *fpgaintelcomv1.FpgaRegionList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(fpgaregionsResource, fpgaregionsKind, c.ns, opts), &fpgaintelcomv1.FpgaRegionList{})
 
@@ -70,14 +72,14 @@ func (c *FakeFpgaRegions) List(opts v1.ListOptions) (result *fpgaintelcomv1.Fpga
 }
 
 // Watch returns a watch.Interface that watches the requested fpgaRegions.
-func (c *FakeFpgaRegions) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeFpgaRegions) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(fpgaregionsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a fpgaRegion and creates it.  Returns the server's representation of the fpgaRegion, and an error, if there is any.
-func (c *FakeFpgaRegions) Create(fpgaRegion *fpgaintelcomv1.FpgaRegion) (result *fpgaintelcomv1.FpgaRegion, err error) {
+func (c *FakeFpgaRegions) Create(ctx context.Context, fpgaRegion *fpgaintelcomv1.FpgaRegion, opts v1.CreateOptions) (result *fpgaintelcomv1.FpgaRegion, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(fpgaregionsResource, c.ns, fpgaRegion), &fpgaintelcomv1.FpgaRegion{})
 
@@ -88,7 +90,7 @@ func (c *FakeFpgaRegions) Create(fpgaRegion *fpgaintelcomv1.FpgaRegion) (result 
 }
 
 // Update takes the representation of a fpgaRegion and updates it. Returns the server's representation of the fpgaRegion, and an error, if there is any.
-func (c *FakeFpgaRegions) Update(fpgaRegion *fpgaintelcomv1.FpgaRegion) (result *fpgaintelcomv1.FpgaRegion, err error) {
+func (c *FakeFpgaRegions) Update(ctx context.Context, fpgaRegion *fpgaintelcomv1.FpgaRegion, opts v1.UpdateOptions) (result *fpgaintelcomv1.FpgaRegion, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(fpgaregionsResource, c.ns, fpgaRegion), &fpgaintelcomv1.FpgaRegion{})
 
@@ -99,7 +101,7 @@ func (c *FakeFpgaRegions) Update(fpgaRegion *fpgaintelcomv1.FpgaRegion) (result 
 }
 
 // Delete takes name of the fpgaRegion and deletes it. Returns an error if one occurs.
-func (c *FakeFpgaRegions) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeFpgaRegions) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(fpgaregionsResource, c.ns, name), &fpgaintelcomv1.FpgaRegion{})
 
@@ -107,15 +109,15 @@ func (c *FakeFpgaRegions) Delete(name string, options *v1.DeleteOptions) error {
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeFpgaRegions) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(fpgaregionsResource, c.ns, listOptions)
+func (c *FakeFpgaRegions) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(fpgaregionsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &fpgaintelcomv1.FpgaRegionList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched fpgaRegion.
-func (c *FakeFpgaRegions) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *fpgaintelcomv1.FpgaRegion, err error) {
+func (c *FakeFpgaRegions) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *fpgaintelcomv1.FpgaRegion, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(fpgaregionsResource, c.ns, name, pt, data, subresources...), &fpgaintelcomv1.FpgaRegion{})
 

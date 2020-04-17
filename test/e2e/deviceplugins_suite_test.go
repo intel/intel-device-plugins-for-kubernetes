@@ -33,6 +33,7 @@ import (
 	"k8s.io/klog"
 	"k8s.io/kubernetes/test/e2e/framework"
 	"k8s.io/kubernetes/test/e2e/framework/config"
+	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 )
 
@@ -59,7 +60,7 @@ func setupFirstNode() []byte {
 		framework.Failf("Error deleting orphaned namespaces: %v", err)
 	}
 	framework.Logf("Waiting for deletion of the following namespaces: %v", deleted)
-	if err := framework.WaitForNamespacesDeleted(c, deleted, framework.NamespaceCleanupTimeout); err != nil {
+	if err := framework.WaitForNamespacesDeleted(c, deleted, framework.DefaultPodDeletionTimeout); err != nil {
 		framework.Failf("Failed to delete orphaned namespaces %v: %v", deleted, err)
 	}
 
@@ -73,7 +74,7 @@ func setupFirstNode() []byte {
 		int32(framework.TestContext.AllowedNotReadyNodes), framework.TestContext.SystemPodsStartupTimeout,
 		map[string]string{}); err != nil {
 		framework.DumpAllNamespaceInfo(c, metav1.NamespaceSystem)
-		framework.LogFailedContainers(c, metav1.NamespaceSystem, framework.Logf)
+		kubectl.LogFailedContainers(c, metav1.NamespaceSystem, framework.Logf)
 		framework.Failf("Error waiting for all pods to be running and ready: %v", err)
 	}
 
