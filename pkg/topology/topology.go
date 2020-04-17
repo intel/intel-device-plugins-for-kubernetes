@@ -270,17 +270,19 @@ func GetTopologyInfo(devs []string) (*pluginapi.TopologyInfo, error) {
 		}
 
 		for _, hint := range hints {
-			for _, nNode := range strings.Split(hint.NUMAs, ",") {
-				nNodeID, err := strconv.ParseInt(strings.TrimSpace(nNode), 10, 64)
-				if err != nil {
-					return nil, errors.Wrapf(err, "unable to convert numa node %s into int64", nNode)
-				}
-				if nNodeID < 0 {
-					return nil, errors.Wrapf(err, "numa node is negative: %d", nNodeID)
-				}
-				if _, ok := nodeIDs[nNodeID]; !ok {
-					result.Nodes = append(result.Nodes, &pluginapi.NUMANode{ID: nNodeID})
-					nodeIDs[nNodeID] = struct{}{}
+			if hint.NUMAs != "" {
+				for _, nNode := range strings.Split(hint.NUMAs, ",") {
+					nNodeID, err := strconv.ParseInt(strings.TrimSpace(nNode), 10, 64)
+					if err != nil {
+						return nil, errors.Wrapf(err, "unable to convert numa node %s into int64", nNode)
+					}
+					if nNodeID < 0 {
+						return nil, errors.Wrapf(err, "numa node is negative: %d", nNodeID)
+					}
+					if _, ok := nodeIDs[nNodeID]; !ok {
+						result.Nodes = append(result.Nodes, &pluginapi.NUMANode{ID: nNodeID})
+						nodeIDs[nNodeID] = struct{}{}
+					}
 				}
 			}
 		}
