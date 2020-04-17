@@ -1,41 +1,37 @@
 FROM ubuntu:18.04 as builder
-ARG DOWNLOAD_LINK=http://registrationcenter-download.intel.com/akdlm/irc_nas/16345/l_openvino_toolkit_p_2020.1.023.tgz
 ARG INSTALL_DIR=/opt/intel/openvino
-ARG TEMP_DIR=/tmp/openvino_installer
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    cpio \
-    sudo \
-    python3-pip \
-    python3-setuptools \
-    libboost-filesystem1.65 \
-    libboost-thread1.65 \
-    lsb-release
-RUN mkdir -p $TEMP_DIR; curl -o $TEMP_DIR/openvino.tgz $DOWNLOAD_LINK
-RUN cd $TEMP_DIR && \
-    tar xf openvino.tgz && \
-    cd l_openvino_toolkit* && \
-    sed -i 's/decline/accept/g' silent.cfg && \
-    ./install.sh -s silent.cfg && \
-    rm -rf $TEMP_DIR
+ARG VERSION=2020.2.130
+RUN apt update
+RUN apt install -y gnupg2 curl sudo
+RUN curl  https://apt.repos.intel.com/openvino/2020/GPG-PUB-KEY-INTEL-OPENVINO-2020 | apt-key add -
+RUN echo 'deb https://apt.repos.intel.com/openvino/2020 all main' > /etc/apt/sources.list.d/intel-openvino.list
+RUN apt update  
+RUN apt install -y --no-install-recommends \
+	intel-openvino-ie-rt-hddl-ubuntu-bionic-$VERSION \
+	intel-openvino-ie-samples-$VERSION \
+	intel-openvino-setupvars-$VERSION \
+	intel-openvino-omz-dev-$VERSION \
+	intel-openvino-omz-tools-$VERSION \
+	intel-openvino-model-optimizer-$VERSION \
+	intel-openvino-ie-rt-cpu-ubuntu-bionic-$VERSION \
+	intel-openvino-opencv-etc-$VERSION \
+	intel-openvino-opencv-generic-$VERSION \
+	intel-openvino-opencv-lib-ubuntu-bionic-$VERSION \
+	intel-openvino-pot-$VERSION
+
 RUN $INSTALL_DIR/install_dependencies/install_openvino_dependencies.sh
 # build Inference Engine samples
-RUN mkdir $INSTALL_DIR/deployment_tools/inference_engine/samples/cpp/build && cd $INSTALL_DIR/deployment_tools/inference_engine/samples/cpp/build && \
-    /bin/bash -c "source $INSTALL_DIR/bin/setupvars.sh && cmake .. && make -j1"
-RUN pip3 install networkx==2.3
-RUN cd $INSTALL_DIR/deployment_tools/demo && \
-    /bin/bash -c "source $INSTALL_DIR/bin/setupvars.sh && ./demo_squeezenet_download_convert_run.sh"
+RUN $INSTALL_DIR/deployment_tools/inference_engine/samples/cpp/build_samples.sh
+RUN $INSTALL_DIR/deployment_tools/demo/demo_squeezenet_download_convert_run.sh
 RUN  cp /opt/intel/openvino/deployment_tools/demo/car.png /root && \
      cp /opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/plugins.xml /root/inference_engine_samples_build/intel64/Release/lib/ && \
      cp /opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libHDDLPlugin.so /root/inference_engine_samples_build/intel64/Release/lib/ && \
-     cp /opt/intel/openvino/deployment_tools/inference_engine/external/hddl/lib/libhddlapi.so /root/inference_engine_samples_build/intel64/Release/lib/ && \
-     cp /opt/intel/openvino/deployment_tools/inference_engine/external/hddl/lib/libion.so.0 /root/inference_engine_samples_build/intel64/Release/lib/ && \
-     cp /opt/intel/openvino/deployment_tools/inference_engine/external/hddl/lib/libmvnc-hddl.so.0 /root/inference_engine_samples_build/intel64/Release/lib/ && \
-     cp /opt/intel/openvino/deployment_tools/inference_engine/external/hddl/lib/libbsl.so.0 /root/inference_engine_samples_build/intel64/Release/lib/ && \
      cp /lib/x86_64-linux-gnu/libusb-1.0.so.0 /root/inference_engine_samples_build/intel64/Release/lib/ && \
      cp -r /opt/intel/openvino/deployment_tools/inference_engine/external/hddl /root && \
      /bin/bash -c "source /opt/intel/openvino/bin/setupvars.sh && \
-     ldd /root/inference_engine_samples_build/intel64/Release/classification_sample_async" | grep opt | awk '{print $3}' | xargs -Iaaa cp aaa /root/inference_engine_samples_build/intel64/Release/lib/
+     ldd /root/inference_engine_samples_build/intel64/Release/classification_sample_async" | grep opt | awk '{print $3}' | xargs -Iaaa cp aaa /root/inference_engine_samples_build/intel64/Release/lib/ && \
+     /bin/bash -c "source /opt/intel/openvino/bin/setupvars.sh && \
+     ldd /opt/intel/openvino/deployment_tools/inference_engine/lib/intel64/libHDDLPlugin.so" | grep opt | awk '{print $3}' | xargs -Iaaa cp aaa /root/inference_engine_samples_build/intel64/Release/lib/
 
 FROM ubuntu:18.04
 RUN apt-get update && apt-get install -y --no-install-recommends \
