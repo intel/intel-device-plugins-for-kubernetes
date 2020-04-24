@@ -28,6 +28,7 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 	"github.com/pkg/errors"
 )
 
@@ -51,11 +52,6 @@ const (
 
 	// Frequency of device scans
 	scanFrequency = 5 * time.Second
-
-	// Names of extended resources cannot be longer than 63 characters.
-	// Therefore for AF resources we have to cut the interface ID prefix
-	// to 31 characters only.
-	interfaceIDPrefixLength = 31
 )
 
 type getDevTreeFunc func(devices []device) dpapi.DeviceTree
@@ -130,7 +126,11 @@ func getAfuTree(devices []device) dpapi.DeviceTree {
 				if afu.afuID == unhealthyAfuID {
 					health = pluginapi.Unhealthy
 				}
-				devType := region.interfaceID[:interfaceIDPrefixLength] + afu.afuID
+				devType, err := fpga.GetAfuDevType(region.interfaceID, afu.afuID)
+				if err != nil {
+					klog.Warningf("failed to get devtype: %+v", err)
+					continue
+				}
 				devNodes := []pluginapi.DeviceSpec{
 					{
 						HostPath:      afu.devNode,

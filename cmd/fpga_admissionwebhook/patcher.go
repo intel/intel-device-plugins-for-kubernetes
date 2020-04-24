@@ -27,6 +27,7 @@ import (
 	"k8s.io/klog"
 
 	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 )
 
 const (
@@ -61,11 +62,6 @@ const (
                      {{- end -}}
                 ]
         }`
-
-	// Names of extended resources cannot be longer than 63 characters.
-	// Therefore for AF resources we have to cut the interface ID prefix
-	// to 31 characters only.
-	interfaceIDPrefixLength = 31
 )
 
 var (
@@ -88,18 +84,24 @@ func newPatcher() *patcher {
 	}
 }
 
-func (p *patcher) addAf(accfunc *fpgav1.AcceleratorFunction) {
+func (p *patcher) addAf(accfunc *fpgav1.AcceleratorFunction) error {
 	defer p.Unlock()
 	p.Lock()
 
 	p.afMap[namespace+"/"+accfunc.Name] = accfunc
 	if accfunc.Spec.Mode == af {
-		p.resourceMap[namespace+"/"+accfunc.Name] = rfc6901Escaper.Replace(namespace + "/" +
-			accfunc.Spec.InterfaceID[:interfaceIDPrefixLength] + accfunc.Spec.AfuID)
+		devtype, err := fpga.GetAfuDevType(accfunc.Spec.InterfaceID, accfunc.Spec.AfuID)
+		if err != nil {
+			return err
+		}
+
+		p.resourceMap[namespace+"/"+accfunc.Name] = rfc6901Escaper.Replace(namespace + "/" + devtype)
 	} else {
 		p.resourceMap[namespace+"/"+accfunc.Name] = rfc6901Escaper.Replace(namespace + "/region-" + accfunc.Spec.InterfaceID)
 	}
 	p.resourceModeMap[namespace+"/"+accfunc.Name] = accfunc.Spec.Mode
+
+	return nil
 }
 
 func (p *patcher) addRegion(region *fpgav1.FpgaRegion) {

@@ -9,7 +9,7 @@ spec:
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10.dcp1.0-nlb0
+  name: arria10.dcp1.0-nlb0-orchestrated
 spec:
   afuId: d8424dc4a4a3c413f89e433683f9040b
   interfaceId: ce48969398f05f33946d560708be108a
@@ -18,7 +18,7 @@ spec:
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10.dcp1.0-nlb3
+  name: arria10.dcp1.0-nlb3-orchestrated
 spec:
   afuId: f7df405cbd7acf7222f144b0b93acd18
   interfaceId: ce48969398f05f33946d560708be108a
@@ -35,7 +35,7 @@ spec:
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10.dcp1.1-nlb0
+  name: arria10.dcp1.1-nlb0-orchestrated
 spec:
   afuId: d8424dc4a4a3c413f89e433683f9040b
   interfaceId: 9926ab6d6c925a68aabca7d84c545738
@@ -44,7 +44,7 @@ spec:
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10.dcp1.1-nlb3
+  name: arria10.dcp1.1-nlb3-orchestrated
 spec:
   afuId: f7df405cbd7acf7222f144b0b93acd18
   interfaceId: 9926ab6d6c925a68aabca7d84c545738
@@ -61,7 +61,7 @@ spec:
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10.dcp1.2-nlb0
+  name: arria10.dcp1.2-nlb0-orchestrated
 spec:
   afuId: d8424dc4a4a3c413f89e433683f9040b
   interfaceId: 69528db6eb31577a8c3668f9faa081f6
@@ -70,7 +70,16 @@ spec:
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10.dcp1.2-nlb3
+  name: arria10.dcp1.2-nlb0-preprogrammed
+spec:
+  afuId: d8424dc4a4a3c413f89e433683f9040b
+  interfaceId: 69528db6eb31577a8c3668f9faa081f6
+  mode: af
+---
+apiVersion: fpga.intel.com/v1
+kind: AcceleratorFunction
+metadata:
+  name: arria10.dcp1.2-nlb3-orchestrated
 spec:
   afuId: f7df405cbd7acf7222f144b0b93acd18
   interfaceId: 69528db6eb31577a8c3668f9faa081f6
@@ -87,7 +96,7 @@ spec:
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: d5005-nlb0
+  name: d5005-nlb0-orchestrated
 spec:
   afuId: d8424dc4a4a3c413f89e433683f9040b
   interfaceId: bfac4d851ee856fe8c95865ce1bbaa2d
@@ -96,7 +105,7 @@ spec:
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: d5005-nlb3
+  name: d5005-nlb3-orchestrated
 spec:
   afuId: f7df405cbd7acf7222f144b0b93acd18
   interfaceId: bfac4d851ee856fe8c95865ce1bbaa2d

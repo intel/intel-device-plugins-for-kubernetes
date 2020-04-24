@@ -57,7 +57,7 @@ func describe() {
 		framework.ExpectNoError(err)
 
 		checkPodMutation(f, "fpga.intel.com/d5005-nlb3-preprogrammed",
-			"fpga.intel.com/bfac4d851ee856fe8c95865ce1bbaa2f7df405cbd7acf7222f144b0b93acd18")
+			"fpga.intel.com/af-bfa.f7d.v6xNhR7oVv6MlYZc4buqLfffQFy9es9yIvFEsLk6zRg")
 	})
 
 	ginkgo.It("mutates created pods to reference resolved Regions", func() {
@@ -65,7 +65,7 @@ func describe() {
 		_, _, err := framework.RunCmdEnv(getEnv(), webhookDeployPath, "--kubectl", framework.TestContext.KubectlPath, "--namespace", f.Namespace.Name)
 		framework.ExpectNoError(err)
 
-		checkPodMutation(f, "fpga.intel.com/arria10.dcp1.0-nlb0",
+		checkPodMutation(f, "fpga.intel.com/arria10.dcp1.0-nlb0-orchestrated",
 			"fpga.intel.com/region-ce48969398f05f33946d560708be108a")
 
 	})

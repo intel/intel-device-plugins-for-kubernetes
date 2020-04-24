@@ -131,27 +131,30 @@ For the following mapping
 apiVersion: fpga.intel.com/v1
 kind: AcceleratorFunction
 metadata:
-  name: arria10.dcp1.1-nlb0
+  name: arria10.dcp1.2-nlb0-preprogrammed
 spec:
   afuId: d8424dc4a4a3c413f89e433683f9040b
-  interfaceId: 9926ab6d6c925a68aabca7d84c545738
+  interfaceId: 69528db6eb31577a8c3668f9faa081f6
   mode: af
 ```
 
 requested FPGA resources are translated to AF resources. For example,
-`fpga.intel.com/arria10.dcp1.1-nlb0` is translated to
-`fpga.intel.com/9926ab6d6c925a68aabca7d84c54573d8424dc4a4a3c413f89e433683f9040b`.
-The first 31 characters of the resource name part (`9926ab6d6c925a68aabca7d84c54573`)
-is the first 31 characters of the region interface ID for Arria10 with DCP1.1
-firmware. The next 32 characters (`d8424dc4a4a3c413f89e433683f9040b`) is an accelerator function ID.
-The format of resource names (e.g. `arria10.dcp1.1-nlb0`) can be any and is up
+`fpga.intel.com/arria10.dcp1.2-nlb0-preprogrammed` is translated to
+`fpga.intel.com/af-695.d84.aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs` where the `af-`
+prefix indicates the plugin's mode (`af`), `695` is the first three characters of
+the region interface ID, `d84` is the first three characters of the accelerator function ID
+and the last part `aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs` is a base64-encoded concatenation
+of the full region interface ID and accelerator function ID.
+The format of resource names (e.g. `arria10.dcp1.2-nlb0-preprogrammed`) can be any and is up
 to a cluster administrator.
 
-The same mapping, but with its mode field set to `region`, translates
-`fpga.intel.com/arria10.dcp1.1-nlb0` to `fpga.intel.com/region-9926ab6d6c925a68aabca7d84c545738`,
+The same mapping, but with its mode field set to `region`, would translate
+`fpga.intel.com/arria10.dcp1.2-nlb0-preprogrammed` to `fpga.intel.com/region-69528db6eb31577a8c3668f9faa081f6`,
 and the corresponding AF IDs are set in environment variables for the container.
-The [FPGA CRI-O hook](../fpga_crihook/README.md) then loads the requested bitstream to a region
-before the container is started.
+Though in this case the cluster administrator would probably want to rename
+the mapping `arria10.dcp1.2-nlb0-preprogrammed` to something like `arria10.dcp1.2-nlb0-orchestrated`
+to reflect its mode. The [FPGA CRI-O hook](../fpga_crihook/README.md) then loads the requested
+bitstream to a region before the container is started.
 
 Mappings of resource names are configured with objects of `AcceleratorFunction` and
 `FpgaRegion` custom resource definitions found respectively in

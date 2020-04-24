@@ -190,8 +190,7 @@ func (c *controller) syncAfHandler(key string) error {
 	}
 
 	klog.V(4).Info("Received", af)
-	patcher.addAf(af)
-	return nil
+	return patcher.addAf(af)
 }
 
 func (c *controller) syncRegionHandler(key string) error {

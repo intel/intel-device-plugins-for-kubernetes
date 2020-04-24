@@ -240,7 +240,7 @@ func TestGetAfuTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice("ce48969398f05f33946d560708be108d8424dc4a4a3c413f89e433683f9040b", "dfl-port.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+	expected.AddDevice("af-ce4.d84.zkiWk5jwXzOUbVYHCL4QithCTcSko8QT-J5DNoP5BAs", "dfl-port.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -250,7 +250,7 @@ func TestGetAfuTreeDFL(t *testing.T) {
 		},
 	}
 
-	expected.AddDevice("ce48969398f05f33946d560708be108d8424dc4a4a3c413f89e433683f9040b", "dfl-port.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+	expected.AddDevice("af-ce4.d84.zkiWk5jwXzOUbVYHCL4QithCTcSko8QT-J5DNoP5BAs", "dfl-port.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -259,7 +259,7 @@ func TestGetAfuTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice("ce48969398f05f33946d560708be108d8424dc4a4a3c413f89e433683f9040b", "dfl-port.2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+	expected.AddDevice("af-ce4.d84.zkiWk5jwXzOUbVYHCL4QithCTcSko8QT-J5DNoP5BAs", "dfl-port.2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -268,7 +268,7 @@ func TestGetAfuTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(unhealthyInterfaceID[:interfaceIDPrefixLength]+unhealthyAfuID, "dfl-port.3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
+	expected.AddDevice("af-fff.fff.__________________________________________8", "dfl-port.3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -277,7 +277,7 @@ func TestGetAfuTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(unhealthyInterfaceID[:interfaceIDPrefixLength]+unhealthyAfuID, "dfl-port.4", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
+	expected.AddDevice("af-fff.fff.__________________________________________8", "dfl-port.4", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil))
 
 	result := getAfuTree(getDevicesDFL())
 	if !reflect.DeepEqual(result, expected) {
