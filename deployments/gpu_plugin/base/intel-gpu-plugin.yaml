@@ -43,3 +43,5 @@ spec:
       - name: kubeletsockets
         hostPath:
           path: /var/lib/kubelet/device-plugins
+      nodeSelector:
+        kubernetes.io/arch: amd64
