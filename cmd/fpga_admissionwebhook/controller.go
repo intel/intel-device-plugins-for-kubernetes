@@ -29,7 +29,7 @@ import (
 
 	clientset "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned"
 	informers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/informers/externalversions"
-	listers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/listers/fpga.intel.com/v1"
+	listers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/listers/fpga.intel.com/v2"
 )
 
 const (
@@ -61,8 +61,8 @@ func newController(patcherManager patcherManager, config *rest.Config) (*control
 	informerFactory := informers.NewSharedInformerFactory(clientset, resyncPeriod)
 	stopCh := make(chan struct{})
 
-	afInformer := informerFactory.Fpga().V1().AcceleratorFunctions()
-	regionInformer := informerFactory.Fpga().V1().FpgaRegions()
+	afInformer := informerFactory.Fpga().V2().AcceleratorFunctions()
+	regionInformer := informerFactory.Fpga().V2().FpgaRegions()
 
 	controller := &controller{
 		patcherManager:  patcherManager,

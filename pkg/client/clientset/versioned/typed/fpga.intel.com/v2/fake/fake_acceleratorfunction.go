@@ -19,7 +19,7 @@ package fake
 import (
 	"context"
 
-	fpgaintelcomv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
+	v2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,29 +30,29 @@ import (
 
 // FakeAcceleratorFunctions implements AcceleratorFunctionInterface
 type FakeAcceleratorFunctions struct {
-	Fake *FakeFpgaV1
+	Fake *FakeFpgaV2
 	ns   string
 }
 
-var acceleratorfunctionsResource = schema.GroupVersionResource{Group: "fpga.intel.com", Version: "v1", Resource: "acceleratorfunctions"}
+var acceleratorfunctionsResource = schema.GroupVersionResource{Group: "fpga.intel.com", Version: "v2", Resource: "acceleratorfunctions"}
 
-var acceleratorfunctionsKind = schema.GroupVersionKind{Group: "fpga.intel.com", Version: "v1", Kind: "AcceleratorFunction"}
+var acceleratorfunctionsKind = schema.GroupVersionKind{Group: "fpga.intel.com", Version: "v2", Kind: "AcceleratorFunction"}
 
 // Get takes name of the acceleratorFunction, and returns the corresponding acceleratorFunction object, and an error if there is any.
-func (c *FakeAcceleratorFunctions) Get(ctx context.Context, name string, options v1.GetOptions) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
+func (c *FakeAcceleratorFunctions) Get(ctx context.Context, name string, options v1.GetOptions) (result *v2.AcceleratorFunction, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(acceleratorfunctionsResource, c.ns, name), &fpgaintelcomv1.AcceleratorFunction{})
+		Invokes(testing.NewGetAction(acceleratorfunctionsResource, c.ns, name), &v2.AcceleratorFunction{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*fpgaintelcomv1.AcceleratorFunction), err
+	return obj.(*v2.AcceleratorFunction), err
 }
 
 // List takes label and field selectors, and returns the list of AcceleratorFunctions that match those selectors.
-func (c *FakeAcceleratorFunctions) List(ctx context.Context, opts v1.ListOptions) (result *fpgaintelcomv1.AcceleratorFunctionList, err error) {
+func (c *FakeAcceleratorFunctions) List(ctx context.Context, opts v1.ListOptions) (result *v2.AcceleratorFunctionList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(acceleratorfunctionsResource, acceleratorfunctionsKind, c.ns, opts), &fpgaintelcomv1.AcceleratorFunctionList{})
+		Invokes(testing.NewListAction(acceleratorfunctionsResource, acceleratorfunctionsKind, c.ns, opts), &v2.AcceleratorFunctionList{})
 
 	if obj == nil {
 		return nil, err
@@ -62,8 +62,8 @@ func (c *FakeAcceleratorFunctions) List(ctx context.Context, opts v1.ListOptions
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &fpgaintelcomv1.AcceleratorFunctionList{ListMeta: obj.(*fpgaintelcomv1.AcceleratorFunctionList).ListMeta}
-	for _, item := range obj.(*fpgaintelcomv1.AcceleratorFunctionList).Items {
+	list := &v2.AcceleratorFunctionList{ListMeta: obj.(*v2.AcceleratorFunctionList).ListMeta}
+	for _, item := range obj.(*v2.AcceleratorFunctionList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -79,31 +79,31 @@ func (c *FakeAcceleratorFunctions) Watch(ctx context.Context, opts v1.ListOption
 }
 
 // Create takes the representation of a acceleratorFunction and creates it.  Returns the server's representation of the acceleratorFunction, and an error, if there is any.
-func (c *FakeAcceleratorFunctions) Create(ctx context.Context, acceleratorFunction *fpgaintelcomv1.AcceleratorFunction, opts v1.CreateOptions) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
+func (c *FakeAcceleratorFunctions) Create(ctx context.Context, acceleratorFunction *v2.AcceleratorFunction, opts v1.CreateOptions) (result *v2.AcceleratorFunction, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(acceleratorfunctionsResource, c.ns, acceleratorFunction), &fpgaintelcomv1.AcceleratorFunction{})
+		Invokes(testing.NewCreateAction(acceleratorfunctionsResource, c.ns, acceleratorFunction), &v2.AcceleratorFunction{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*fpgaintelcomv1.AcceleratorFunction), err
+	return obj.(*v2.AcceleratorFunction), err
 }
 
 // Update takes the representation of a acceleratorFunction and updates it. Returns the server's representation of the acceleratorFunction, and an error, if there is any.
-func (c *FakeAcceleratorFunctions) Update(ctx context.Context, acceleratorFunction *fpgaintelcomv1.AcceleratorFunction, opts v1.UpdateOptions) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
+func (c *FakeAcceleratorFunctions) Update(ctx context.Context, acceleratorFunction *v2.AcceleratorFunction, opts v1.UpdateOptions) (result *v2.AcceleratorFunction, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(acceleratorfunctionsResource, c.ns, acceleratorFunction), &fpgaintelcomv1.AcceleratorFunction{})
+		Invokes(testing.NewUpdateAction(acceleratorfunctionsResource, c.ns, acceleratorFunction), &v2.AcceleratorFunction{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*fpgaintelcomv1.AcceleratorFunction), err
+	return obj.(*v2.AcceleratorFunction), err
 }
 
 // Delete takes name of the acceleratorFunction and deletes it. Returns an error if one occurs.
 func (c *FakeAcceleratorFunctions) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(acceleratorfunctionsResource, c.ns, name), &fpgaintelcomv1.AcceleratorFunction{})
+		Invokes(testing.NewDeleteAction(acceleratorfunctionsResource, c.ns, name), &v2.AcceleratorFunction{})
 
 	return err
 }
@@ -112,17 +112,17 @@ func (c *FakeAcceleratorFunctions) Delete(ctx context.Context, name string, opts
 func (c *FakeAcceleratorFunctions) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(acceleratorfunctionsResource, c.ns, listOpts)
 
-	_, err := c.Fake.Invokes(action, &fpgaintelcomv1.AcceleratorFunctionList{})
+	_, err := c.Fake.Invokes(action, &v2.AcceleratorFunctionList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched acceleratorFunction.
-func (c *FakeAcceleratorFunctions) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *fpgaintelcomv1.AcceleratorFunction, err error) {
+func (c *FakeAcceleratorFunctions) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v2.AcceleratorFunction, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(acceleratorfunctionsResource, c.ns, name, pt, data, subresources...), &fpgaintelcomv1.AcceleratorFunction{})
+		Invokes(testing.NewPatchSubresourceAction(acceleratorfunctionsResource, c.ns, name, pt, data, subresources...), &v2.AcceleratorFunction{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*fpgaintelcomv1.AcceleratorFunction), err
+	return obj.(*v2.AcceleratorFunction), err
 }

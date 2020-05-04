@@ -4,7 +4,7 @@ metadata:
   name: acceleratorfunctions.fpga.intel.com
 spec:
   group: fpga.intel.com
-  version: v1
+  version: v2
   scope: Namespaced
   names:
     plural: acceleratorfunctions

@@ -2,4 +2,4 @@
 
 // +groupName=fpga.intel.com
 
-package v1
+package v2

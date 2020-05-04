@@ -128,7 +128,7 @@ translated into actual resources provided by the cluster.
 For the following mapping
 
 ```yaml
-apiVersion: fpga.intel.com/v1
+apiVersion: fpga.intel.com/v2
 kind: AcceleratorFunction
 metadata:
   name: arria10.dcp1.2-nlb0-preprogrammed

@@ -26,7 +26,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog"
 
-	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
+	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 )
 
@@ -71,20 +71,20 @@ var (
 type patcher struct {
 	sync.Mutex
 
-	afMap           map[string]*fpgav1.AcceleratorFunction
+	afMap           map[string]*fpgav2.AcceleratorFunction
 	resourceMap     map[string]string
 	resourceModeMap map[string]string
 }
 
 func newPatcher() *patcher {
 	return &patcher{
-		afMap:           make(map[string]*fpgav1.AcceleratorFunction),
+		afMap:           make(map[string]*fpgav2.AcceleratorFunction),
 		resourceMap:     make(map[string]string),
 		resourceModeMap: make(map[string]string),
 	}
 }
 
-func (p *patcher) addAf(accfunc *fpgav1.AcceleratorFunction) error {
+func (p *patcher) addAf(accfunc *fpgav2.AcceleratorFunction) error {
 	defer p.Unlock()
 	p.Lock()
 
@@ -104,7 +104,7 @@ func (p *patcher) addAf(accfunc *fpgav1.AcceleratorFunction) error {
 	return nil
 }
 
-func (p *patcher) addRegion(region *fpgav1.FpgaRegion) {
+func (p *patcher) addRegion(region *fpgav2.FpgaRegion) {
 	defer p.Unlock()
 	p.Lock()
 

@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
+	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 )
 
 func init() {
@@ -30,19 +30,19 @@ func init() {
 }
 
 func TestPatcherStorageFunctions(t *testing.T) {
-	af := &fpgav1.AcceleratorFunction{
+	af := &fpgav2.AcceleratorFunction{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "arria10-nlb0",
 		},
-		Spec: fpgav1.AcceleratorFunctionSpec{
+		Spec: fpgav2.AcceleratorFunctionSpec{
 			AfuID: "d8424dc4a4a3c413f89e433683f9040b",
 		},
 	}
-	region := &fpgav1.FpgaRegion{
+	region := &fpgav2.FpgaRegion{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "arria10",
 		},
-		Spec: fpgav1.FpgaRegionSpec{
+		Spec: fpgav2.FpgaRegionSpec{
 			InterfaceID: "ce48969398f05f33946d560708be108a",
 		},
 	}
@@ -74,8 +74,8 @@ func TestGetPatchOps(t *testing.T) {
 	tcases := []struct {
 		name        string
 		container   corev1.Container
-		afs         []*fpgav1.AcceleratorFunction
-		regions     []*fpgav1.FpgaRegion
+		afs         []*fpgav2.AcceleratorFunction
+		regions     []*fpgav2.FpgaRegion
 		expectedErr bool
 		expectedOps int
 	}{
@@ -101,12 +101,12 @@ func TestGetPatchOps(t *testing.T) {
 					},
 				},
 			},
-			afs: []*fpgav1.AcceleratorFunction{
+			afs: []*fpgav2.AcceleratorFunction{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "arria10-nlb0",
 					},
-					Spec: fpgav1.AcceleratorFunctionSpec{
+					Spec: fpgav2.AcceleratorFunctionSpec{
 						AfuID:       "d8424dc4a4a3c413f89e433683f9040b",
 						InterfaceID: "ce48969398f05f33946d560708be108a",
 						Mode:        region,
@@ -116,7 +116,7 @@ func TestGetPatchOps(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "arria10-nlb0-alias",
 					},
-					Spec: fpgav1.AcceleratorFunctionSpec{
+					Spec: fpgav2.AcceleratorFunctionSpec{
 						AfuID:       "d8424dc4a4a3c413f89e433683f9040b",
 						InterfaceID: "ce48969398f05f33946d560708be108a",
 						Mode:        region,
@@ -137,12 +137,12 @@ func TestGetPatchOps(t *testing.T) {
 					},
 				},
 			},
-			afs: []*fpgav1.AcceleratorFunction{
+			afs: []*fpgav2.AcceleratorFunction{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "arria10-nlb0",
 					},
-					Spec: fpgav1.AcceleratorFunctionSpec{
+					Spec: fpgav2.AcceleratorFunctionSpec{
 						AfuID:       "d8424dc4a4a3c413f89e433683f9040b",
 						InterfaceID: "ce48969398f05f33946d560708be108a",
 						Mode:        af,
@@ -163,12 +163,12 @@ func TestGetPatchOps(t *testing.T) {
 					},
 				},
 			},
-			regions: []*fpgav1.FpgaRegion{
+			regions: []*fpgav2.FpgaRegion{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "arria10",
 					},
-					Spec: fpgav1.FpgaRegionSpec{
+					Spec: fpgav2.FpgaRegionSpec{
 						InterfaceID: "ce48969398f05f33946d560708be108a",
 					},
 				},
@@ -260,12 +260,12 @@ func TestGetPatchOps(t *testing.T) {
 					},
 				},
 			},
-			afs: []*fpgav1.AcceleratorFunction{
+			afs: []*fpgav2.AcceleratorFunction{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "arria10-nlb0",
 					},
-					Spec: fpgav1.AcceleratorFunctionSpec{
+					Spec: fpgav2.AcceleratorFunctionSpec{
 						AfuID:       "d8424dc4a4a3c413f89e433683f9040b",
 						InterfaceID: "ce48969398f05f33946d560708be108a",
 						Mode:        region,
@@ -275,7 +275,7 @@ func TestGetPatchOps(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "arria10-nlb3",
 					},
-					Spec: fpgav1.AcceleratorFunctionSpec{
+					Spec: fpgav2.AcceleratorFunctionSpec{
 						AfuID:       "d8424dc4a4a3c413f89e433683f9040b",
 						InterfaceID: "f7df405cbd7acf7222f144b0b93acd18",
 						Mode:        af,
@@ -296,12 +296,12 @@ func TestGetPatchOps(t *testing.T) {
 					},
 				},
 			},
-			afs: []*fpgav1.AcceleratorFunction{
+			afs: []*fpgav2.AcceleratorFunction{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "arria10-nlb0",
 					},
-					Spec: fpgav1.AcceleratorFunctionSpec{
+					Spec: fpgav2.AcceleratorFunctionSpec{
 						AfuID:       "d8424dc4a4a3c413f89e433683f9040b",
 						InterfaceID: "ce48969398f05f33946d560708be108a",
 						Mode:        "unknown",

@@ -17,26 +17,26 @@
 package fake
 
 import (
-	v1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned/typed/fpga.intel.com/v1"
+	v2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned/typed/fpga.intel.com/v2"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeFpgaV1 struct {
+type FakeFpgaV2 struct {
 	*testing.Fake
 }
 
-func (c *FakeFpgaV1) AcceleratorFunctions(namespace string) v1.AcceleratorFunctionInterface {
+func (c *FakeFpgaV2) AcceleratorFunctions(namespace string) v2.AcceleratorFunctionInterface {
 	return &FakeAcceleratorFunctions{c, namespace}
 }
 
-func (c *FakeFpgaV1) FpgaRegions(namespace string) v1.FpgaRegionInterface {
+func (c *FakeFpgaV2) FpgaRegions(namespace string) v2.FpgaRegionInterface {
 	return &FakeFpgaRegions{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeFpgaV1) RESTClient() rest.Interface {
+func (c *FakeFpgaV2) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

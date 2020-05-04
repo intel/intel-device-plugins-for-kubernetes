@@ -1,4 +1,4 @@
-package v1
+package v2
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,7 +9,7 @@ import (
 )
 
 // SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: fpgaintel.GroupName, Version: "v1"}
+var SchemeGroupVersion = schema.GroupVersion{Group: fpgaintel.GroupName, Version: "v2"}
 
 // Kind takes an unqualified kind and returns back a Group qualified GroupKind
 func Kind(kind string) schema.GroupKind {

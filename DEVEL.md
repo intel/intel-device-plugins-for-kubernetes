@@ -162,7 +162,7 @@ https://github.com/kubernetes/code-generator/blob/master/generate-groups.sh
 ```
 $ generate-groups.sh all github.com/intel/intel-device-plugins-for-kubernetes/pkg/client \
                          github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis \
-                         fpga.intel.com:v1
+                         fpga.intel.com:v2
 ```
 
 Please note that the script (at least of v0.18.2-beta.0) expects the device plugins

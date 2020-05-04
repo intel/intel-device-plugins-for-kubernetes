@@ -24,7 +24,7 @@ import (
 	"strings"
 	"testing"
 
-	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
+	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 	"k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -239,11 +239,11 @@ func TestMutatePods(t *testing.T) {
 	for _, tcase := range tcases {
 		t.Run(tcase.name, func(t *testing.T) {
 			p := newPatcher()
-			p.addRegion(&fpgav1.FpgaRegion{
+			p.addRegion(&fpgav2.FpgaRegion{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "arria10",
 				},
-				Spec: fpgav1.FpgaRegionSpec{
+				Spec: fpgav2.FpgaRegionSpec{
 					InterfaceID: "ce48969398f05f33946d560708be108a",
 				},
 			})
