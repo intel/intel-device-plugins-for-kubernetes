@@ -16,6 +16,7 @@ package e2e_test
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"testing"
 
@@ -33,11 +34,26 @@ import (
 	"k8s.io/klog"
 	"k8s.io/kubernetes/test/e2e/framework"
 	"k8s.io/kubernetes/test/e2e/framework/config"
+	e2econfig "k8s.io/kubernetes/test/e2e/framework/config"
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 )
 
+type namespaceList []string
+
+func (wl *namespaceList) String() string {
+	return fmt.Sprintf("%+v", *wl)
+}
+
+func (wl *namespaceList) Set(value string) error {
+	*wl = append(*wl, value)
+	return nil
+}
+
+var whitelistNamespaces namespaceList
+
 func init() {
+	e2econfig.Flags.Var(&whitelistNamespaces, "intel.deviceplugin.whitelist-namespace", "Namespace to be preserved when running the test suite. Can be specified multiple times. By default, only kube-system, default, kube-public and kube-node-lease are preserved. ")
 	ginkgo.SynchronizedBeforeSuite(setupFirstNode, func(data []byte) {})
 }
 
@@ -47,15 +63,18 @@ func setupFirstNode() []byte {
 		framework.Failf("Error loading client: %v", err)
 	}
 
-	// Delete any namespaces except those created by the system. This ensures no
-	// lingering resources are left over from a previous test run.
-	deleted, err := framework.DeleteNamespaces(c, nil, /* deleteFilter */
+	skipFilter := append(
 		[]string{
 			metav1.NamespaceSystem,
 			metav1.NamespaceDefault,
 			metav1.NamespacePublic,
 			v1.NamespaceNodeLease,
-		})
+		}, whitelistNamespaces...)
+
+	// Delete any namespaces except those created by the system and
+	// whitelisted by the command line parameters. This ensures no
+	// lingering resources are left over from a previous test run.
+	deleted, err := framework.DeleteNamespaces(c, nil, skipFilter)
 	if err != nil {
 		framework.Failf("Error deleting orphaned namespaces: %v", err)
 	}
