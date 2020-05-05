@@ -17,7 +17,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync"
 	"text/template"
@@ -27,20 +26,19 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog"
 
-	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
+	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 )
 
 const (
 	namespace = "fpga.intel.com"
 
-	resourceReplaceOp = `{
-                "op": "remove",
-                "path": "/spec/containers/%d/resources/%s/%s"
-        }, {
-                "op": "add",
-                "path": "/spec/containers/%d/resources/%s/%s",
-                "value": %s
-        }`
+	af     = "af"
+	region = "region"
+	// "regiondevel" corresponds to the FPGA plugin's regiondevel mode. It requires
+	// FpgaRegion CRDs to be added to the cluster.
+	regiondevel = "regiondevel"
+
 	resourceRemoveOp = `{
                 "op": "remove",
                 "path": "/spec/containers/%d/resources/%s/%s"
@@ -68,44 +66,49 @@ const (
 
 var (
 	rfc6901Escaper = strings.NewReplacer("~", "~0", "/", "~1")
-	resourceRe     = regexp.MustCompile(namespace + `/(?P<Region>[[:alnum:].]+)(-(?P<Af>[[:alnum:]]+))?`)
 )
 
 type patcher struct {
 	sync.Mutex
 
-	mode        string
-	regionMap   map[string]string
-	afMap       map[string]string
-	resourceMap map[string]string
+	afMap           map[string]*fpgav2.AcceleratorFunction
+	resourceMap     map[string]string
+	resourceModeMap map[string]string
 }
 
-func newPatcher(mode string) (*patcher, error) {
-	if mode != preprogrammed && mode != orchestrated {
-		return nil, errors.Errorf("Unknown mode: %s", mode)
-	}
-
+func newPatcher() *patcher {
 	return &patcher{
-		mode:        mode,
-		regionMap:   make(map[string]string),
-		afMap:       make(map[string]string),
-		resourceMap: make(map[string]string),
-	}, nil
+		afMap:           make(map[string]*fpgav2.AcceleratorFunction),
+		resourceMap:     make(map[string]string),
+		resourceModeMap: make(map[string]string),
+	}
 }
 
-func (p *patcher) addAf(af *fpgav1.AcceleratorFunction) {
+func (p *patcher) addAf(accfunc *fpgav2.AcceleratorFunction) error {
 	defer p.Unlock()
 	p.Lock()
 
-	p.afMap[af.Name] = af.Spec.AfuID
-	p.resourceMap[namespace+"/"+af.Name] = rfc6901Escaper.Replace(namespace + "/af-" + af.Spec.AfuID)
+	p.afMap[namespace+"/"+accfunc.Name] = accfunc
+	if accfunc.Spec.Mode == af {
+		devtype, err := fpga.GetAfuDevType(accfunc.Spec.InterfaceID, accfunc.Spec.AfuID)
+		if err != nil {
+			return err
+		}
+
+		p.resourceMap[namespace+"/"+accfunc.Name] = rfc6901Escaper.Replace(namespace + "/" + devtype)
+	} else {
+		p.resourceMap[namespace+"/"+accfunc.Name] = rfc6901Escaper.Replace(namespace + "/region-" + accfunc.Spec.InterfaceID)
+	}
+	p.resourceModeMap[namespace+"/"+accfunc.Name] = accfunc.Spec.Mode
+
+	return nil
 }
 
-func (p *patcher) addRegion(region *fpgav1.FpgaRegion) {
+func (p *patcher) addRegion(region *fpgav2.FpgaRegion) {
 	defer p.Unlock()
 	p.Lock()
 
-	p.regionMap[region.Name] = region.Spec.InterfaceID
+	p.resourceModeMap[namespace+"/"+region.Name] = regiondevel
 	p.resourceMap[namespace+"/"+region.Name] = rfc6901Escaper.Replace(namespace + "/region-" + region.Spec.InterfaceID)
 }
 
@@ -113,149 +116,138 @@ func (p *patcher) removeAf(name string) {
 	defer p.Unlock()
 	p.Lock()
 
-	delete(p.afMap, name)
+	delete(p.afMap, namespace+"/"+name)
 	delete(p.resourceMap, namespace+"/"+name)
+	delete(p.resourceModeMap, namespace+"/"+name)
 }
 
 func (p *patcher) removeRegion(name string) {
 	defer p.Unlock()
 	p.Lock()
 
-	delete(p.regionMap, name)
 	delete(p.resourceMap, namespace+"/"+name)
+	delete(p.resourceModeMap, namespace+"/"+name)
+}
+
+// getRequestedResources validates the container's requirements first, then returns them as a map.
+func getRequestedResources(container corev1.Container) (map[string]int64, error) {
+	for _, v := range container.Env {
+		if strings.HasPrefix(v.Name, "FPGA_REGION") || strings.HasPrefix(v.Name, "FPGA_AFU") {
+			return nil, errors.Errorf("environment variable '%s' is not allowed", v.Name)
+		}
+	}
+
+	// Container may happen to have Requests, but not Limits. Check Requests first,
+	// then in the next loop iterate over Limits.
+	for resourceName, resourceQuantity := range container.Resources.Requests {
+		rname := strings.ToLower(string(resourceName))
+		if !strings.HasPrefix(rname, namespace) {
+			// Skip non-FPGA resources in Requests.
+			continue
+		}
+
+		if container.Resources.Limits[resourceName] != resourceQuantity {
+			return nil, errors.Errorf(
+				"'limits' and 'requests' for %q must be equal as extended resources cannot be overcommitted",
+				rname)
+		}
+	}
+
+	resources := make(map[string]int64)
+	for resourceName, resourceQuantity := range container.Resources.Limits {
+		rname := strings.ToLower(string(resourceName))
+		if !strings.HasPrefix(rname, namespace) {
+			// Skip non-FPGA resources in Limits.
+			continue
+		}
+
+		if container.Resources.Requests[resourceName] != resourceQuantity {
+			return nil, errors.Errorf(
+				"'limits' and 'requests' for %q must be equal as extended resources cannot be overcommitted",
+				rname)
+		}
+
+		quantity, ok := resourceQuantity.AsInt64()
+		if !ok {
+			return nil, errors.Errorf("resource quantity isn't of integral type for %q", rname)
+		}
+
+		resources[rname] = quantity
+	}
+
+	return resources, nil
 }
 
 func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]string, error) {
-	switch p.mode {
-	case preprogrammed:
-		return p.getPatchOpsPreprogrammed(containerIdx, container)
-	case orchestrated:
-		return p.getPatchOpsOrchestrated(containerIdx, container)
-	}
-
-	return nil, errors.Errorf("Uknown mode: %s", p.mode)
-}
-
-func (p *patcher) getPatchOpsPreprogrammed(containerIdx int, container corev1.Container) ([]string, error) {
 	var ops []string
 
-	for resourceName, resourceQuantity := range container.Resources.Limits {
-		newName, err := p.translateFpgaResourceName(resourceName)
-		if err != nil {
-			return nil, err
-		}
-		if len(newName) > 0 {
-			op := fmt.Sprintf(resourceReplaceOp, containerIdx,
-				"limits", rfc6901Escaper.Replace(string(resourceName)),
-				containerIdx, "limits", newName, resourceQuantity.String())
-			ops = append(ops, op)
-		}
-	}
-	for resourceName, resourceQuantity := range container.Resources.Requests {
-		newName, err := p.translateFpgaResourceName(resourceName)
-		if err != nil {
-			return nil, err
-		}
-		if len(newName) > 0 {
-			op := fmt.Sprintf(resourceReplaceOp, containerIdx,
-				"requests", rfc6901Escaper.Replace(string(resourceName)),
-				containerIdx, "requests", newName, resourceQuantity.String())
-			ops = append(ops, op)
-		}
-	}
-
-	return ops, nil
-}
-
-func (p *patcher) translateFpgaResourceName(oldname corev1.ResourceName) (string, error) {
-	rname := strings.ToLower(string(oldname))
-	if !strings.HasPrefix(rname, namespace) {
-		return "", nil
+	requestedResources, err := getRequestedResources(container)
+	if err != nil {
+		return nil, err
 	}
 
 	defer p.Unlock()
 	p.Lock()
 
-	if newname, ok := p.resourceMap[rname]; ok {
-		return newname, nil
-	}
-
-	return "", errors.Errorf("Unknown FPGA resource: %s", rname)
-}
-
-func (p *patcher) checkResourceRequests(container corev1.Container) error {
-	for resourceName, resourceQuantity := range container.Resources.Requests {
-		interfaceID, _, err := p.parseResourceName(string(resourceName))
-		if err != nil {
-			return err
-		}
-
-		if interfaceID == "" {
-			// Skip non-FPGA resources
-			continue
-		}
-		if container.Resources.Limits[resourceName] != resourceQuantity {
-			return errors.Errorf("'limits' and 'requests' for %s must be equal", string(resourceName))
-		}
-	}
-
-	return nil
-}
-
-func (p *patcher) getPatchOpsOrchestrated(containerIdx int, container corev1.Container) ([]string, error) {
-	var ops []string
-
-	for _, v := range container.Env {
-		if strings.HasPrefix(v.Name, "FPGA_REGION") || strings.HasPrefix(v.Name, "FPGA_AFU") {
-			return nil, errors.Errorf("The environment variable '%s' is not allowed", v.Name)
-		}
-	}
-
-	if err := p.checkResourceRequests(container); err != nil {
-		return nil, err
-	}
-
-	regions := make(map[string]int64)
+	fpgaPluginMode := ""
+	resources := make(map[string]int64)
 	envVars := make(map[string]string)
 	counter := 0
-	for resourceName, resourceQuantity := range container.Resources.Limits {
-		interfaceID, afuID, err := p.parseResourceName(string(resourceName))
-		if err != nil {
-			return nil, err
+	for rname, quantity := range requestedResources {
+
+		mode, found := p.resourceModeMap[rname]
+		if !found {
+			return nil, errors.Errorf("no such resource: %q", rname)
 		}
 
-		if interfaceID == "" && afuID == "" {
-			// Skip non-FPGA resources
-			continue
+		switch mode {
+		case regiondevel:
+			// Do nothing.
+			// The requested resources are exposed by FPGA plugins working in "regiondevel" mode.
+			// In this mode the workload is supposed to program FPGA regions.
+			// A cluster admin has to add FpgaRegion CRDs to allow this.
+		case af:
+			// Do nothing.
+			// The requested resources are exposed by FPGA plugins working in "af" mode.
+		case region:
+			// Let fpga_crihook know how to program the regions by setting ENV variables.
+			// The requested resources are exposed by FPGA plugins working in "region" mode.
+			for i := int64(0); i < quantity; i++ {
+				counter++
+				envVars[fmt.Sprintf("FPGA_REGION_%d", counter)] = p.afMap[rname].Spec.InterfaceID
+				envVars[fmt.Sprintf("FPGA_AFU_%d", counter)] = p.afMap[rname].Spec.AfuID
+			}
+		default:
+			msg := fmt.Sprintf("%q is registered with unknown mode %q instead of %q or %q",
+				rname, p.resourceModeMap[rname], af, region)
+			// Let admin know about broken af CRD.
+			klog.Error(msg)
+			return nil, errors.New(msg)
 		}
 
-		if container.Resources.Requests[resourceName] != resourceQuantity {
-			return nil, errors.Errorf("'limits' and 'requests' for %s must be equal", string(resourceName))
+		if fpgaPluginMode == "" {
+			fpgaPluginMode = mode
+		} else if fpgaPluginMode != mode {
+			return nil, errors.New("container cannot be scheduled as it requires resources operated in different modes")
 		}
 
-		quantity, ok := resourceQuantity.AsInt64()
-		if !ok {
-			return nil, errors.New("Resource quantity isn't of integral type")
-		}
-		regions[interfaceID] = regions[interfaceID] + quantity
+		mappedName := p.resourceMap[rname]
+		resources[mappedName] = resources[mappedName] + quantity
 
-		for i := int64(0); i < quantity; i++ {
-			counter++
-			envVars[fmt.Sprintf("FPGA_REGION_%d", counter)] = interfaceID
-			envVars[fmt.Sprintf("FPGA_AFU_%d", counter)] = afuID
-		}
-
-		ops = append(ops, fmt.Sprintf(resourceRemoveOp, containerIdx, "limits", rfc6901Escaper.Replace(string(resourceName))))
-		ops = append(ops, fmt.Sprintf(resourceRemoveOp, containerIdx, "requests", rfc6901Escaper.Replace(string(resourceName))))
+		// Add operations to remove unresolved resources from the pod.
+		ops = append(ops, fmt.Sprintf(resourceRemoveOp, containerIdx, "limits", rfc6901Escaper.Replace(rname)))
+		ops = append(ops, fmt.Sprintf(resourceRemoveOp, containerIdx, "requests", rfc6901Escaper.Replace(rname)))
 	}
 
-	for interfaceID, quantity := range regions {
-		op := fmt.Sprintf(resourceAddOp, containerIdx, "limits", rfc6901Escaper.Replace(namespace+"/region-"+interfaceID), quantity)
+	// Add operations to add resolved resources to the pod.
+	for resource, quantity := range resources {
+		op := fmt.Sprintf(resourceAddOp, containerIdx, "limits", resource, quantity)
 		ops = append(ops, op)
-		op = fmt.Sprintf(resourceAddOp, containerIdx, "requests", rfc6901Escaper.Replace(namespace+"/region-"+interfaceID), quantity)
+		op = fmt.Sprintf(resourceAddOp, containerIdx, "requests", resource, quantity)
 		ops = append(ops, op)
 	}
 
+	// Add the ENV variables to the pod if needed.
 	if len(envVars) > 0 {
 		for _, envvar := range container.Env {
 			envVars[envvar.Name] = envvar.Value
@@ -276,69 +268,21 @@ func (p *patcher) getPatchOpsOrchestrated(containerIdx int, container corev1.Con
 	return ops, nil
 }
 
-func (p *patcher) parseResourceName(input string) (string, string, error) {
-	var interfaceID, afuID string
-	var regionName, afName string
-	var ok bool
-
-	result := resourceRe.FindStringSubmatch(input)
-	if result == nil {
-		return "", "", nil
-	}
-
-	defer p.Unlock()
-	p.Lock()
-
-	for num, group := range resourceRe.SubexpNames() {
-		switch group {
-		case "Region":
-			regionName = result[num]
-			if interfaceID, ok = p.regionMap[result[num]]; !ok {
-				return "", "", errors.Errorf("Unknown region name: %s", result[num])
-			}
-		case "Af":
-			afName = result[num]
-		}
-	}
-
-	if afName != "" {
-		if afuID, ok = p.afMap[regionName+"-"+afName]; !ok {
-			return "", "", errors.Errorf("Unknown AF name: %s", regionName+"-"+afName)
-		}
-	}
-
-	return interfaceID, afuID, nil
-}
-
 // patcherManager keeps track of patchers registered for different Kubernetes namespaces.
-type patcherManager struct {
-	defaultMode string
-	patchers    map[string]*patcher
+type patcherManager map[string]*patcher
+
+func newPatcherManager() patcherManager {
+	return make(map[string]*patcher)
 }
 
-func newPatcherManager(defaultMode string) (*patcherManager, error) {
-	if defaultMode != preprogrammed && defaultMode != orchestrated {
-		return nil, errors.Errorf("Unknown mode: %s", defaultMode)
+func (pm patcherManager) getPatcher(namespace string) *patcher {
+	if p, ok := pm[namespace]; ok {
+		return p
 	}
 
-	return &patcherManager{
-		defaultMode: defaultMode,
-		patchers:    make(map[string]*patcher),
-	}, nil
-}
-
-func (pm *patcherManager) getPatcher(namespace string) (*patcher, error) {
-	if p, ok := pm.patchers[namespace]; ok {
-		return p, nil
-	}
-
-	p, err := newPatcher(pm.defaultMode)
-	if err != nil {
-		return nil, err
-	}
-
-	pm.patchers[namespace] = p
+	p := newPatcher()
+	pm[namespace] = p
 	klog.V(4).Info("created new patcher for namespace", namespace)
 
-	return p, nil
+	return p
 }

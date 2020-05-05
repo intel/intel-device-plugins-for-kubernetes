@@ -24,6 +24,7 @@ import (
 	"strings"
 	"testing"
 
+	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 	"k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -144,16 +145,39 @@ func TestMutatePods(t *testing.T) {
 			},
 		},
 	}
+	brokenPod := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "test-container",
+					Image: "test-image",
+					Resources: corev1.ResourceRequirements{
+						Limits: corev1.ResourceList{
+							"cpu":                    resource.MustParse("1"),
+							"fpga.intel.com/arria10": resource.MustParse("1"),
+						},
+					},
+				},
+			},
+		},
+	}
 	podRaw, err := json.Marshal(pod)
+	if err != nil {
+		t.Fatal(err)
+	}
+	brokenPodRaw, err := json.Marshal(brokenPod)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	tcases := []struct {
 		name             string
-		mode             string
 		ar               v1beta1.AdmissionReview
 		expectedResponse bool
+		expectedAllowed  bool
 		expectedPatchOps int
 	}{
 		{
@@ -161,7 +185,6 @@ func TestMutatePods(t *testing.T) {
 			ar: v1beta1.AdmissionReview{
 				Request: &v1beta1.AdmissionRequest{},
 			},
-			mode: preprogrammed,
 		},
 		{
 			name: "admission request without object",
@@ -170,8 +193,8 @@ func TestMutatePods(t *testing.T) {
 					Resource: metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
 				},
 			},
-			mode:             preprogrammed,
 			expectedResponse: true,
+			expectedAllowed:  true,
 		},
 		{
 			name: "admission request with corrupted object",
@@ -183,11 +206,10 @@ func TestMutatePods(t *testing.T) {
 					},
 				},
 			},
-			mode:             preprogrammed,
 			expectedResponse: true,
 		},
 		{
-			name: "non-empty admission request in preprogrammed mode",
+			name: "successful non-empty admission request",
 			ar: v1beta1.AdmissionReview{
 				Request: &v1beta1.AdmissionRequest{
 					Resource: metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
@@ -196,23 +218,9 @@ func TestMutatePods(t *testing.T) {
 					},
 				},
 			},
-			mode:             preprogrammed,
 			expectedResponse: true,
 			expectedPatchOps: 4,
-		},
-		{
-			name: "non-empty admission request in orchestrated mode",
-			ar: v1beta1.AdmissionReview{
-				Request: &v1beta1.AdmissionRequest{
-					Resource: metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
-					Object: runtime.RawExtension{
-						Raw: podRaw,
-					},
-				},
-			},
-			mode:             orchestrated,
-			expectedResponse: true,
-			expectedPatchOps: 5,
+			expectedAllowed:  true,
 		},
 		{
 			name: "handle error after wrong getPatchOps()",
@@ -220,48 +228,54 @@ func TestMutatePods(t *testing.T) {
 				Request: &v1beta1.AdmissionRequest{
 					Resource: metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
 					Object: runtime.RawExtension{
-						Raw: podRaw,
+						Raw: brokenPodRaw,
 					},
 				},
 			},
-			mode:             "unknown mode",
 			expectedResponse: true,
 		},
 	}
 
 	for _, tcase := range tcases {
-		p := &patcher{
-			mode: tcase.mode,
-			regionMap: map[string]string{
-				"arria10": "ce48969398f05f33946d560708be108a",
-			},
-			resourceMap: map[string]string{
-				"fpga.intel.com/arria10": "ce48969398f05f33946d560708be108a",
-			},
-		}
-		pm := &patcherManager{
-			defaultMode: tcase.mode,
-			patchers: map[string]*patcher{
-				"default": p,
-			},
-		}
-		resp := mutatePods(tcase.ar, pm)
+		t.Run(tcase.name, func(t *testing.T) {
+			p := newPatcher()
+			p.addRegion(&fpgav2.FpgaRegion{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "arria10",
+				},
+				Spec: fpgav2.FpgaRegionSpec{
+					InterfaceID: "ce48969398f05f33946d560708be108a",
+				},
+			})
+			pm := newPatcherManager()
+			pm["default"] = p
+			resp := mutatePods(tcase.ar, pm)
 
-		if !tcase.expectedResponse && resp != nil {
-			t.Errorf("Test case '%s': got unexpected response", tcase.name)
-		} else if tcase.expectedResponse && resp == nil {
-			t.Errorf("Test case '%s': got no response", tcase.name)
-		} else if tcase.expectedResponse && tcase.expectedPatchOps > 0 {
-			var ops interface{}
+			actualPatchOps := 0
+			if !tcase.expectedResponse && resp != nil {
+				t.Errorf("Test case '%s': got unexpected response", tcase.name)
+			} else if tcase.expectedResponse && resp == nil {
+				t.Errorf("Test case '%s': got no response", tcase.name)
+			} else if tcase.expectedResponse {
+				if tcase.expectedAllowed != resp.Allowed {
+					t.Errorf("Allowed expected to be %t but got %t", tcase.expectedAllowed, resp.Allowed)
+				} else if resp.Allowed && resp.Patch != nil {
+					var ops interface{}
 
-			err := json.Unmarshal(resp.Patch, &ops)
-			if err != nil {
-				t.Errorf("Test case '%s': got unparsable patch '%s'", tcase.name, resp.Patch)
-			} else if len(ops.([]interface{})) != tcase.expectedPatchOps {
-				t.Errorf("Test case '%s': got wrong number of operations in the patch. Expected %d, but got %d\n%s",
-					tcase.name, tcase.expectedPatchOps, len(ops.([]interface{})), string(resp.Patch))
+					err := json.Unmarshal(resp.Patch, &ops)
+					if err != nil {
+						t.Errorf("Test case '%s': got unparsable patch '%s'", tcase.name, resp.Patch)
+					} else {
+						actualPatchOps = len(ops.([]interface{}))
+					}
+				}
 			}
-		}
+
+			if actualPatchOps != tcase.expectedPatchOps {
+				t.Errorf("Test case '%s': got wrong number of operations in the patch. Expected %d, but got %d\n%s",
+					tcase.name, tcase.expectedPatchOps, actualPatchOps, string(resp.Patch))
+			}
+		})
 	}
 }
 
@@ -280,6 +294,6 @@ func (*fakeResponseWriter) WriteHeader(int) {
 }
 
 func TestMakePodsHandler(t *testing.T) {
-	serveFunc := makePodsHandler(&patcherManager{})
+	serveFunc := makePodsHandler(newPatcherManager())
 	serveFunc(&fakeResponseWriter{}, &http.Request{})
 }

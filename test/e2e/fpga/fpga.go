@@ -33,9 +33,10 @@ import (
 const (
 	pluginDeployScript  = "scripts/deploy-fpgaplugin.sh"
 	webhookDeployScript = "scripts/webhook-deploy.sh"
-	nlb0NodeResource    = "fpga.intel.com/af-d8424dc4a4a3c413f89e433683f9040b"
-	nlb0PodResource     = "fpga.intel.com/arria10.dcp1.2-nlb0"
-	nlb3PodResource     = "fpga.intel.com/arria10.dcp1.2-nlb3"
+	nlb0NodeResource    = "fpga.intel.com/af-695.d84.aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs"
+	nlb0PodResource     = "fpga.intel.com/arria10.dcp1.2-nlb0-orchestrated"
+	nlb3PodResource     = "fpga.intel.com/arria10.dcp1.2-nlb3-orchestrated"
+	nlb0PodResourceAF   = "fpga.intel.com/arria10.dcp1.2-nlb0-preprogrammed"
 	arria10NodeResource = "fpga.intel.com/region-69528db6eb31577a8c3668f9faa081f6"
 )
 
@@ -57,23 +58,23 @@ func describe() {
 	fmw := framework.NewDefaultFramework("fpgaplugin-e2e")
 
 	ginkgo.It("Run FPGA plugin tests", func() {
+		// Deploy webhook
+		ginkgo.By(fmt.Sprintf("namespace %s: deploying webhook", fmw.Namespace.Name))
+		_, _, err := framework.RunCmd(webhookDeployScriptPath, "--namespace", fmw.Namespace.Name)
+		framework.ExpectNoError(err)
+		waitForPod(fmw, "intel-fpga-webhook")
+
 		// Run region test case twice to ensure that device is reprogrammed at least once
-		runTestCase(fmw, webhookDeployScriptPath, pluginDeployScriptPath, "region", "orchestrated", arria10NodeResource, nlb3PodResource, "nlb3", "nlb0")
-		runTestCase(fmw, webhookDeployScriptPath, pluginDeployScriptPath, "region", "orchestrated", arria10NodeResource, nlb0PodResource, "nlb0", "nlb3")
+		runTestCase(fmw, pluginDeployScriptPath, "region", arria10NodeResource, nlb3PodResource, "nlb3", "nlb0")
+		runTestCase(fmw, pluginDeployScriptPath, "region", arria10NodeResource, nlb0PodResource, "nlb0", "nlb3")
 		// Run af test case
-		runTestCase(fmw, webhookDeployScriptPath, pluginDeployScriptPath, "af", "preprogrammed", nlb0NodeResource, nlb0PodResource, "nlb0", "nlb3")
+		runTestCase(fmw, pluginDeployScriptPath, "af", nlb0NodeResource, nlb0PodResourceAF, "nlb0", "nlb3")
 	})
 }
 
-func runTestCase(fmw *framework.Framework, webhookDeployScriptPath, pluginDeployScriptPath, pluginMode, webhookMode, nodeResource, podResource, cmd1, cmd2 string) {
-	ginkgo.By(fmt.Sprintf("deploying webhook in %s mode", webhookMode))
-	_, _, err := framework.RunCmd(webhookDeployScriptPath, "--mode", webhookMode, "--namespace", fmw.Namespace.Name)
-	framework.ExpectNoError(err)
-
-	waitForPod(fmw, "intel-fpga-webhook")
-
-	ginkgo.By(fmt.Sprintf("deploying FPGA plugin in %s mode", pluginMode))
-	_, _, err = framework.RunCmd(pluginDeployScriptPath, "--mode", pluginMode, "--namespace", fmw.Namespace.Name)
+func runTestCase(fmw *framework.Framework, pluginDeployScriptPath, pluginMode, nodeResource, podResource, cmd1, cmd2 string) {
+	ginkgo.By(fmt.Sprintf("namespace %s: deploying FPGA plugin in %s mode", fmw.Namespace.Name, pluginMode))
+	_, _, err := framework.RunCmd(pluginDeployScriptPath, "--mode", pluginMode, "--namespace", fmw.Namespace.Name)
 	framework.ExpectNoError(err)
 
 	waitForPod(fmw, "intel-fpga-plugin")
@@ -88,18 +89,17 @@ func runTestCase(fmw *framework.Framework, webhookDeployScriptPath, pluginDeploy
 	image := "intel/opae-nlb-demo:devel"
 
 	ginkgo.By("submitting a pod requesting correct FPGA resources")
-	pod := createPod(fmw, fmt.Sprintf("fpgaplugin-nlb-%s-%s-%s-correct", pluginMode, cmd1, cmd2), resource, image, []string{cmd1})
+	pod := createPod(fmw, fmt.Sprintf("fpgaplugin-%s-%s-%s-correct", pluginMode, cmd1, cmd2), resource, image, []string{cmd1, "-S0"})
 
 	ginkgo.By("waiting the pod to finish successfully")
 	fmw.PodClient().WaitForSuccess(pod.ObjectMeta.Name, 60*time.Second)
 	// If WaitForSuccess fails, ginkgo doesn't show the logs of the failed container.
 	// Replacing WaitForSuccess with WaitForFinish + 'kubelet logs' would show the logs
-	// fmw.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
-	// framework.RunKubectlOrDie(fmw.Namespace.Name, "--namespace", fmw.Namespace.Name, "logs", pod.ObjectMeta.Name)
-	// return
+	//fmw.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
+	//framework.RunKubectlOrDie(fmw.Namespace.Name, "--namespace", fmw.Namespace.Name, "logs", pod.ObjectMeta.Name)
 
 	ginkgo.By("submitting a pod requesting incorrect FPGA resources")
-	pod = createPod(fmw, fmt.Sprintf("fpgaplugin-nlb-%s-%s-%s-incorrect", pluginMode, cmd1, cmd2), resource, image, []string{cmd2})
+	pod = createPod(fmw, fmt.Sprintf("fpgaplugin-%s-%s-%s-incorrect", pluginMode, cmd1, cmd2), resource, image, []string{cmd2, "-S0"})
 
 	ginkgo.By("waiting the pod failure")
 	utils.WaitForPodFailure(fmw, pod.ObjectMeta.Name, 60*time.Second)

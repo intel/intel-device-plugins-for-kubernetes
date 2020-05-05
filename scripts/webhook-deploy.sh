@@ -15,7 +15,6 @@ function help {
     echo ''
     echo '    Options:'
     echo '      --kubectl <kubectl> - path to the kubectl utility'
-    echo '      --mode <mode> - "preprogrammed" (default) or "orchestrated" mode of operation'
     echo '      --ca-bundle-path <path> - path to CA bundle used for signing cerificates in the cluster'
     echo '      --namespace <name> - namespace to deploy the webhook in'
 }
@@ -28,10 +27,6 @@ while [[ $# -gt 0 ]]; do
             ;;
 	--ca-bundle-path)
 	    cabundlepath="$2"
-            shift
-            ;;
-	--mode)
-	    mode="$2"
             shift
             ;;
         --namespace)
@@ -54,7 +49,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 [ -z ${kubectl} ] && kubectl="kubectl"
-[ -z ${mode} ] && mode="preprogrammed"
 [ -z ${namespace} ] && namespace="default"
 
 which ${kubectl} > /dev/null 2>&1 || { echo "ERROR: ${kubectl} not found"; exit 1; }
@@ -75,11 +69,6 @@ if [ "x${command}" = "xcleanup" ]; then
     exit 0
 fi
 
-if [ "x${mode}" != "xpreprogrammed" -a "x${mode}" != "xorchestrated" ]; then
-    echo "ERROR: supported modes are 'preprogrammed' and 'orchestrated'"
-    exit 1
-fi
-
 if [ -z ${cabundlepath} ]; then
     CA_BUNDLE=$(${kubectl} get configmap -n kube-system extension-apiserver-authentication -o=jsonpath='{.data.client-ca-file}' | base64 -w 0)
 else
@@ -98,7 +87,7 @@ cat ${srcroot}/deployments/fpga_admissionwebhook/rbac-config-tpl.yaml | \
     ${kubectl} create -f -
 
 echo "Create webhook deployment"
-cat ${srcroot}/deployments/fpga_admissionwebhook/deployment-tpl.yaml | sed -e "s/{MODE}/${mode}/g" -e "s/{uid}/${uid}/g" -e "s/{gid}/${gid}/g" | ${kubectl} --namespace ${namespace} create -f -
+cat ${srcroot}/deployments/fpga_admissionwebhook/deployment-tpl.yaml | sed -e "s/{uid}/${uid}/g" -e "s/{gid}/${gid}/g" | ${kubectl} --namespace ${namespace} create -f -
 
 echo "Create webhook service"
 ${kubectl} --namespace ${namespace} create -f ${srcroot}/deployments/fpga_admissionwebhook/service.yaml

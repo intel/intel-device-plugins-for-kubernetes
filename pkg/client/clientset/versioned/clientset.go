@@ -19,7 +19,7 @@ package versioned
 import (
 	"fmt"
 
-	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned/typed/fpga.intel.com/v1"
+	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned/typed/fpga.intel.com/v2"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -27,19 +27,19 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	FpgaV1() fpgav1.FpgaV1Interface
+	FpgaV2() fpgav2.FpgaV2Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	fpgaV1 *fpgav1.FpgaV1Client
+	fpgaV2 *fpgav2.FpgaV2Client
 }
 
-// FpgaV1 retrieves the FpgaV1Client
-func (c *Clientset) FpgaV1() fpgav1.FpgaV1Interface {
-	return c.fpgaV1
+// FpgaV2 retrieves the FpgaV2Client
+func (c *Clientset) FpgaV2() fpgav2.FpgaV2Interface {
+	return c.fpgaV2
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -63,7 +63,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.fpgaV1, err = fpgav1.NewForConfig(&configShallowCopy)
+	cs.fpgaV2, err = fpgav2.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.fpgaV1 = fpgav1.NewForConfigOrDie(c)
+	cs.fpgaV2 = fpgav2.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -88,7 +88,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.fpgaV1 = fpgav1.New(c)
+	cs.fpgaV2 = fpgav2.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

@@ -19,7 +19,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v1"
+	v2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -50,11 +50,11 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=fpga.intel.com, Version=v1
-	case v1.SchemeGroupVersion.WithResource("acceleratorfunctions"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Fpga().V1().AcceleratorFunctions().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("fpgaregions"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Fpga().V1().FpgaRegions().Informer()}, nil
+	// Group=fpga.intel.com, Version=v2
+	case v2.SchemeGroupVersion.WithResource("acceleratorfunctions"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Fpga().V2().AcceleratorFunctions().Informer()}, nil
+	case v2.SchemeGroupVersion.WithResource("fpgaregions"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Fpga().V2().FpgaRegions().Informer()}, nil
 
 	}
 

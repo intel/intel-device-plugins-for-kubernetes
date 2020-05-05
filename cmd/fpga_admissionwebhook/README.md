@@ -30,16 +30,6 @@ The admission controller also keeps the user from bypassing namespaced mapping r
 by denying admission of any pods that are trying to use internal knowledge of InterfaceID or
 Bitstream ID environment variables used by the prestart hook.
 
-The admission controller can operate in two separate modes - preprogrammed or orchestration programmed.
-The mode must be chosen to match that of the [FPGA plugin](../fpga_plugin/README.md) configuraton, as
-shown in the following table:
-
-| FPGA plugin mode | matching admission controller mode |
-|:---------------- |:---------------------------------- |
-| region           | orchestrated                       |
-| af               | preprogrammed                      |
-
-
 # Dependencies
 
 This component is one of a set of components that work together. You may also want to
@@ -118,14 +108,6 @@ Register webhook
 mutatingwebhookconfiguration.admissionregistration.k8s.io/fpga-mutator-webhook-cfg created
 ```
 
-By default, the script deploys the webhook in a preprogrammed mode.
-
-Use the option `--mode` script option to deploy the webhook in orchestrated mode:
-
-```bash
-$ ./scripts/webhook-deploy.sh --mode orchestrated
-```
-
 The script needs the CA bundle used for signing certificate requests in your cluster.
 By default, the script fetches the bundle stored in the configmap
 `extension-apiserver-authentication`. However, your cluster may use a different signing
@@ -138,13 +120,41 @@ $ ./scripts/webhook-deploy.sh --ca-bundle-path /var/run/kubernetes/server-ca.crt
 
 # Mappings
 
-Requested FPGA resources are translated to AF resources. For example,
-`fpga.intel.com/arria10.dcp1.1-nlb0` is translated to `fpga.intel.com/af-d8424dc4a4a3c413f89e433683f9040b`.
+Mappings is a an essential part of the setup that gives a flexible instrument to a cluster
+administrator to manage FPGA bitstreams and to control access to them. Being a set of
+custom resource definitions they are used to configure the way FPGA resource requests get
+translated into actual resources provided by the cluster.
 
-In orchestrated mode, `fpga.intel.com/arria10.dcp1.1-nlb0` gets translated to
-`fpga.intel.com/region-9926ab6d6c925a68aabca7d84c545738`, and, the corresponding AF IDs are set in
-environment variables for the container. The [FPGA CRI-O hook](../fpga_crihook/README.md)
-then loads the requested bitstream to a region before the container is started.
+For the following mapping
+
+```yaml
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: arria10.dcp1.2-nlb0-preprogrammed
+spec:
+  afuId: d8424dc4a4a3c413f89e433683f9040b
+  interfaceId: 69528db6eb31577a8c3668f9faa081f6
+  mode: af
+```
+
+requested FPGA resources are translated to AF resources. For example,
+`fpga.intel.com/arria10.dcp1.2-nlb0-preprogrammed` is translated to
+`fpga.intel.com/af-695.d84.aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs` where the `af-`
+prefix indicates the plugin's mode (`af`), `695` is the first three characters of
+the region interface ID, `d84` is the first three characters of the accelerator function ID
+and the last part `aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs` is a base64-encoded concatenation
+of the full region interface ID and accelerator function ID.
+The format of resource names (e.g. `arria10.dcp1.2-nlb0-preprogrammed`) can be any and is up
+to a cluster administrator.
+
+The same mapping, but with its mode field set to `region`, would translate
+`fpga.intel.com/arria10.dcp1.2-nlb0-preprogrammed` to `fpga.intel.com/region-69528db6eb31577a8c3668f9faa081f6`,
+and the corresponding AF IDs are set in environment variables for the container.
+Though in this case the cluster administrator would probably want to rename
+the mapping `arria10.dcp1.2-nlb0-preprogrammed` to something like `arria10.dcp1.2-nlb0-orchestrated`
+to reflect its mode. The [FPGA CRI-O hook](../fpga_crihook/README.md) then loads the requested
+bitstream to a region before the container is started.
 
 Mappings of resource names are configured with objects of `AcceleratorFunction` and
 `FpgaRegion` custom resource definitions found respectively in

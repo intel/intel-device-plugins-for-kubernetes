@@ -1,19 +1,12 @@
 # DCP 1.0
-apiVersion: fpga.intel.com/v1
-kind: AcceleratorFunction
-metadata:
-  name: arria10.dcp1.0-compress
-spec:
-  afuId: 946c21d1e49704a5e5daa0805bc6b0785e1765bf
----
-apiVersion: fpga.intel.com/v1
+apiVersion: fpga.intel.com/v2
 kind: AcceleratorFunction
 metadata:
   name: arria10.dcp1.0-nlb0
 spec:
   afuId: d8424dc4a4a3c413f89e433683f9040b
 ---
-apiVersion: fpga.intel.com/v1
+apiVersion: fpga.intel.com/v2
 kind: AcceleratorFunction
 metadata:
   name: arria10.dcp1.0-nlb3
@@ -21,14 +14,14 @@ spec:
   afuId: f7df405cbd7acf7222f144b0b93acd18
 ---
 # DCP 1.1
-apiVersion: fpga.intel.com/v1
+apiVersion: fpga.intel.com/v2
 kind: AcceleratorFunction
 metadata:
   name: arria10.dcp1.1-nlb0
 spec:
   afuId: d8424dc4a4a3c413f89e433683f9040b
 ---
-apiVersion: fpga.intel.com/v1
+apiVersion: fpga.intel.com/v2
 kind: AcceleratorFunction
 metadata:
   name: arria10.dcp1.1-nlb3
@@ -36,14 +29,14 @@ spec:
   afuId: f7df405cbd7acf7222f144b0b93acd18
 ---
 # DCP 1.2
-apiVersion: fpga.intel.com/v1
+apiVersion: fpga.intel.com/v2
 kind: AcceleratorFunction
 metadata:
   name: arria10.dcp1.2-nlb0
 spec:
   afuId: d8424dc4a4a3c413f89e433683f9040b
 ---
-apiVersion: fpga.intel.com/v1
+apiVersion: fpga.intel.com/v2
 kind: AcceleratorFunction
 metadata:
   name: arria10.dcp1.2-nlb3
@@ -51,14 +44,14 @@ spec:
   afuId: f7df405cbd7acf7222f144b0b93acd18
 ---
 # D5005
-apiVersion: fpga.intel.com/v1
+apiVersion: fpga.intel.com/v2
 kind: AcceleratorFunction
 metadata:
   name: d5005-nlb0
 spec:
   afuId: d8424dc4a4a3c413f89e433683f9040b
 ---
-apiVersion: fpga.intel.com/v1
+apiVersion: fpga.intel.com/v2
 kind: AcceleratorFunction
 metadata:
   name: d5005-nlb3

@@ -18,7 +18,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -39,8 +38,6 @@ import (
 )
 
 const (
-	preprogrammed       = "preprogrammed"
-	orchestrated        = "orchestrated"
 	controllerThreadNum = 1
 )
 
@@ -69,7 +66,7 @@ func getTLSConfig(certFile string, keyFile string) *tls.Config {
 	}
 }
 
-func mutatePods(ar v1beta1.AdmissionReview, pm *patcherManager) *v1beta1.AdmissionResponse {
+func mutatePods(ar v1beta1.AdmissionReview, pm patcherManager) *v1beta1.AdmissionResponse {
 	var ops []string
 
 	klog.V(4).Info("mutating pods")
@@ -97,11 +94,7 @@ func mutatePods(ar v1beta1.AdmissionReview, pm *patcherManager) *v1beta1.Admissi
 		name = pod.ObjectMeta.GenerateName
 	}
 	klog.V(4).Infof("Received pod '%s' in name space '%s'", name, namespace)
-	patcher, err := pm.getPatcher(namespace)
-	if err != nil {
-		klog.Warningf("%+v", err)
-		return toAdmissionResponse(err)
-	}
+	patcher := pm.getPatcher(namespace)
 
 	reviewResponse := v1beta1.AdmissionResponse{}
 	reviewResponse.Allowed = true
@@ -198,7 +191,7 @@ func serve(w http.ResponseWriter, r *http.Request, admit admitFunc) {
 	}
 }
 
-func makePodsHandler(pm *patcherManager) func(w http.ResponseWriter, r *http.Request) {
+func makePodsHandler(pm patcherManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		serve(w, r, func(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 			return mutatePods(ar, pm)
@@ -211,7 +204,6 @@ func main() {
 	var master string
 	var certFile string
 	var keyFile string
-	var mode string
 	var config *rest.Config
 	var err error
 
@@ -220,7 +212,6 @@ func main() {
 	flag.StringVar(&certFile, "tls-cert-file", certFile,
 		"File containing the x509 Certificate for HTTPS. (CA cert, if any, concatenated after server cert).")
 	flag.StringVar(&keyFile, "tls-private-key-file", keyFile, "File containing the x509 private key matching --tls-cert-file.")
-	flag.StringVar(&mode, "mode", preprogrammed, fmt.Sprintf("webhook mode: '%s' (default) or '%s'", preprogrammed, orchestrated))
 	flag.Parse()
 
 	if certFile == "" {
@@ -248,18 +239,15 @@ func main() {
 		klog.Fatal("Failed to get cluster config ", err)
 	}
 
-	patcherManager, err := newPatcherManager(mode)
-	if err != nil {
-		klog.Fatalf("%+v", err)
-	}
+	pm := newPatcherManager()
 
-	controller, err := newController(patcherManager, config)
+	controller, err := newController(pm, config)
 	if err != nil {
 		klog.Fatalf("%+v", err)
 	}
 	go controller.run(controllerThreadNum)
 
-	http.HandleFunc("/pods", makePodsHandler(patcherManager))
+	http.HandleFunc("/pods", makePodsHandler(pm))
 
 	klog.V(4).Info("Webhook started")
 

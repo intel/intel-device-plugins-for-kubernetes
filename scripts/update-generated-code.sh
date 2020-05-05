@@ -28,6 +28,6 @@ PKG_PATH="github.com/intel/intel-device-plugins-for-kubernetes/pkg"
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 ${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
   ${PKG_PATH}/client ${PKG_PATH}/apis \
-  fpga.intel.com:v1 \
+  fpga.intel.com:v2 \
   --output-base "$(dirname ${BASH_SOURCE})/../../../.." \
   --go-header-file ${SCRIPT_ROOT}/build/boilerplate/boilerplate.go.txt

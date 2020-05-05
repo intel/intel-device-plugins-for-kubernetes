@@ -4,7 +4,7 @@ metadata:
   name: fpgaregions.fpga.intel.com
 spec:
   group: fpga.intel.com
-  version: v1
+  version: v2
   scope: Namespaced
   names:
     plural: fpgaregions
@@ -19,4 +19,4 @@ spec:
           properties:
             interfaceId:
               type: string
-              pattern: '^[0-9a-f]{8,128}$'
+              pattern: '^[0-9a-f]{8,32}$'

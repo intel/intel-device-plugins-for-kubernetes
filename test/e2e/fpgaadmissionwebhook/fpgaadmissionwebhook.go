@@ -51,25 +51,37 @@ func describe() {
 		return append(os.Environ(), "KUBECONFIG="+framework.TestContext.KubeConfig)
 	}
 
-	ginkgo.It("mutates created pods to reference resolved AFs in preprogrammed mode", func() {
-		ginkgo.By("deploying webhook in preprogrammed mode")
+	ginkgo.It("mutates created pods to reference resolved AFs", func() {
+		ginkgo.By("deploying webhook")
 		_, _, err := framework.RunCmdEnv(getEnv(), webhookDeployPath, "--kubectl", framework.TestContext.KubectlPath, "--namespace", f.Namespace.Name)
 		framework.ExpectNoError(err)
 
-		checkPodMutation(f, "fpga.intel.com/af-d8424dc4a4a3c413f89e433683f9040b")
+		checkPodMutation(f, "fpga.intel.com/d5005-nlb3-preprogrammed",
+			"fpga.intel.com/af-bfa.f7d.v6xNhR7oVv6MlYZc4buqLfffQFy9es9yIvFEsLk6zRg")
 	})
 
-	ginkgo.It("mutates created pods to reference resolved Regions in orchestrated mode", func() {
-		ginkgo.By("deploying webhook in orchestrated mode")
-		_, _, err := framework.RunCmdEnv(getEnv(), webhookDeployPath, "--kubectl", framework.TestContext.KubectlPath, "--namespace", f.Namespace.Name, "--mode", "orchestrated")
+	ginkgo.It("mutates created pods to reference resolved Regions", func() {
+		ginkgo.By("deploying webhook")
+		_, _, err := framework.RunCmdEnv(getEnv(), webhookDeployPath, "--kubectl", framework.TestContext.KubectlPath, "--namespace", f.Namespace.Name)
 		framework.ExpectNoError(err)
 
-		checkPodMutation(f, "fpga.intel.com/region-ce48969398f05f33946d560708be108a")
+		checkPodMutation(f, "fpga.intel.com/arria10.dcp1.0-nlb0-orchestrated",
+			"fpga.intel.com/region-ce48969398f05f33946d560708be108a")
+
+	})
+
+	ginkgo.It("mutates created pods to reference resolved Regions in regiondevel mode", func() {
+		ginkgo.By("deploying webhook")
+		_, _, err := framework.RunCmdEnv(getEnv(), webhookDeployPath, "--kubectl", framework.TestContext.KubectlPath, "--namespace", f.Namespace.Name)
+		framework.ExpectNoError(err)
+
+		checkPodMutation(f, "fpga.intel.com/arria10.dcp1.0",
+			"fpga.intel.com/region-ce48969398f05f33946d560708be108a")
 
 	})
 }
 
-func checkPodMutation(f *framework.Framework, expectedMutation v1.ResourceName) {
+func checkPodMutation(f *framework.Framework, source, expectedMutation v1.ResourceName) {
 	ginkgo.By("waiting for webhook's availability")
 	if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
 		labels.Set{"app": "intel-fpga-webhook"}.AsSelector(), 1 /* one replica */, 10*time.Second); err != nil {
@@ -80,8 +92,8 @@ func checkPodMutation(f *framework.Framework, expectedMutation v1.ResourceName) 
 
 	ginkgo.By("submitting a pod for addmission")
 	podSpec := f.NewTestPod("webhook-tester",
-		v1.ResourceList{"fpga.intel.com/arria10.dcp1.0-nlb0": resource.MustParse("1")},
-		v1.ResourceList{"fpga.intel.com/arria10.dcp1.0-nlb0": resource.MustParse("1")})
+		v1.ResourceList{source: resource.MustParse("1")},
+		v1.ResourceList{source: resource.MustParse("1")})
 	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(),
 		podSpec, metav1.CreateOptions{})
 	framework.ExpectNoError(err, "pod Create API error")

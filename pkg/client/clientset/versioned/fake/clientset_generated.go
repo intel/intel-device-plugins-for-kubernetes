@@ -18,8 +18,8 @@ package fake
 
 import (
 	clientset "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned"
-	fpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned/typed/fpga.intel.com/v1"
-	fakefpgav1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned/typed/fpga.intel.com/v1/fake"
+	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned/typed/fpga.intel.com/v2"
+	fakefpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned/typed/fpga.intel.com/v2/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -74,7 +74,7 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 
 var _ clientset.Interface = &Clientset{}
 
-// FpgaV1 retrieves the FpgaV1Client
-func (c *Clientset) FpgaV1() fpgav1.FpgaV1Interface {
-	return &fakefpgav1.FakeFpgaV1{Fake: &c.Fake}
+// FpgaV2 retrieves the FpgaV2Client
+func (c *Clientset) FpgaV2() fpgav2.FpgaV2Interface {
+	return &fakefpgav2.FakeFpgaV2{Fake: &c.Fake}
 }

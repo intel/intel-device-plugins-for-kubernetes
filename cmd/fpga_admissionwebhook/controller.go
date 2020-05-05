@@ -29,7 +29,7 @@ import (
 
 	clientset "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/clientset/versioned"
 	informers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/informers/externalversions"
-	listers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/listers/fpga.intel.com/v1"
+	listers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/client/listers/fpga.intel.com/v2"
 )
 
 const (
@@ -42,7 +42,7 @@ type fpgaObjectKey struct {
 }
 
 type controller struct {
-	patcherManager  *patcherManager
+	patcherManager  patcherManager
 	informerFactory informers.SharedInformerFactory
 	afsSynced       cache.InformerSynced
 	regionsSynced   cache.InformerSynced
@@ -52,7 +52,7 @@ type controller struct {
 	stopCh          chan struct{}
 }
 
-func newController(patcherManager *patcherManager, config *rest.Config) (*controller, error) {
+func newController(patcherManager patcherManager, config *rest.Config) (*controller, error) {
 	clientset, err := clientset.NewForConfig(config)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create REST clientset")
@@ -61,8 +61,8 @@ func newController(patcherManager *patcherManager, config *rest.Config) (*contro
 	informerFactory := informers.NewSharedInformerFactory(clientset, resyncPeriod)
 	stopCh := make(chan struct{})
 
-	afInformer := informerFactory.Fpga().V1().AcceleratorFunctions()
-	regionInformer := informerFactory.Fpga().V1().FpgaRegions()
+	afInformer := informerFactory.Fpga().V2().AcceleratorFunctions()
+	regionInformer := informerFactory.Fpga().V2().FpgaRegions()
 
 	controller := &controller{
 		patcherManager:  patcherManager,
@@ -172,11 +172,7 @@ func (c *controller) syncAfHandler(key string) error {
 		return nil
 	}
 
-	patcher, err := c.patcherManager.getPatcher(namespace)
-	if err != nil {
-		runtime.HandleError(errors.Wrapf(err, "can't get patcher for namespace %s", namespace))
-		return nil
-	}
+	patcher := c.patcherManager.getPatcher(namespace)
 
 	// Get the AcceleratorFunction resource with this namespace/name
 	af, err := c.afLister.AcceleratorFunctions(namespace).Get(name)
@@ -194,8 +190,7 @@ func (c *controller) syncAfHandler(key string) error {
 	}
 
 	klog.V(4).Info("Received", af)
-	patcher.addAf(af)
-	return nil
+	return patcher.addAf(af)
 }
 
 func (c *controller) syncRegionHandler(key string) error {
@@ -206,11 +201,7 @@ func (c *controller) syncRegionHandler(key string) error {
 		return nil
 	}
 
-	patcher, err := c.patcherManager.getPatcher(namespace)
-	if err != nil {
-		runtime.HandleError(errors.Wrapf(err, "can't get patcher for namespace %s", namespace))
-		return nil
-	}
+	patcher := c.patcherManager.getPatcher(namespace)
 
 	// Get the FpgaRegion resource with this namespace/name
 	region, err := c.regionLister.FpgaRegions(namespace).Get(name)

@@ -28,6 +28,7 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 	"github.com/pkg/errors"
 )
 
@@ -125,7 +126,11 @@ func getAfuTree(devices []device) dpapi.DeviceTree {
 				if afu.afuID == unhealthyAfuID {
 					health = pluginapi.Unhealthy
 				}
-				devType := fmt.Sprintf("%s-%s", afMode, afu.afuID)
+				devType, err := fpga.GetAfuDevType(region.interfaceID, afu.afuID)
+				if err != nil {
+					klog.Warningf("failed to get devtype: %+v", err)
+					continue
+				}
 				devNodes := []pluginapi.DeviceSpec{
 					{
 						HostPath:      afu.devNode,

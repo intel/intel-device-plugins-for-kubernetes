@@ -4,7 +4,7 @@ metadata:
   name: acceleratorfunctions.fpga.intel.com
 spec:
   group: fpga.intel.com
-  version: v1
+  version: v2
   scope: Namespaced
   names:
     plural: acceleratorfunctions
@@ -19,4 +19,10 @@ spec:
           properties:
             afuId:
               type: string
-              pattern: '^[0-9a-f]{8,128}$'
+              pattern: '^[0-9a-f]{8,32}$'
+            interfaceId:
+              type: string
+              pattern: '^[0-9a-f]{8,32}$'
+            mode:
+              type: string
+              pattern: '^af|region$'

@@ -12,7 +12,7 @@
     * [Verify node kubelet config](#verify-node-kubelet-config)
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
         * [Create a service account](#create-a-service-account)
-        * [Deploying `orchestrated` mode](#deploying-orchestrated-mode)
+        * [Deploying `region` mode](#deploying-region-mode)
         * [Deploying `af` mode](#deploying-af-mode)
         * [Deploy the DaemonSet](#deploy-the-daemonset)
         * [Verify plugin registration](#verify-plugin-registration)
@@ -75,26 +75,26 @@ development, initial deployment and debugging.
 
 The FPGA plugin set can run in one of two modes:
 
-- `region`/`orchestrated` mode, where the plugins locate and advertise
+- `region` mode, where the plugins locate and advertise
   regions of the FPGA, and facilitate programing of those regions with the
   requested bistreams.
-- `af`/`preprogrammed` mode, where the FPGA bitstreams are already loaded
+- `af` mode, where the FPGA bitstreams are already loaded
   onto the FPGA, and the plugins discover and advertises the existing
   Accelerator Functions (AF).
 
 The example YAML deployments described in this document only currently support
-`af`/`preprogrammed` mode. To utilise `region`/`orchestrated` mode, either modify
-the existing YAML appropriately, or deploy 'by hand'.
+`af` mode. To utilise `region` mode, either modify the existing YAML appropriately,
+or deploy 'by hand'.
 
-Overview diagrams of `preprogrammed` and `orchestrated` modes are below:
+Overview diagrams of `af` and `region` modes are below:
 
-Orchestrated/region mode:
+region mode:
 
-![Overview of `orchestrated` mode](pictures/FPGA-orchestrated.png)
+![Overview of `region` mode](pictures/FPGA-region.png)
 
-Preprogrammed/af mode:
+af mode:
 
-![Overview of `preprogrammed` mode](pictures/FPGA-preprogrammed.png)
+![Overview of `af` mode](pictures/FPGA-af.png)
 
 # Installation
 
@@ -136,12 +136,11 @@ major components:
 -   [FPGA admission controller webhook](../fpga_admissionwebhook/README.md)
 -   [FPGA prestart CRI-O hook](../fpga_crihook/README.md)
 
-The CRI-O hook is only *required* if `orchestrated` FPGA bitstream programming mode is
-being used, but is installed by default by the
+The CRI-O hook is only *required* if `region` mode is being used, but is installed by default by the
 [FPGA plugin DaemonSet YAML](../../deployments/fpga_plugin/fpga_plugin.yaml), and is benign
-in `preprogrammed` mode.
+in `af` mode.
 
-If using the `preprogrammed` mode, and therefore *not* using the
+If using the `af` mode, and therefore *not* using the
 CRI-O prestart hook, runtimes other than CRI-O can be used (that is, the CRI-O hook presently
 *only* works with the CRI-O runtime).
 
@@ -192,8 +191,8 @@ YAML deployment files to reference your required image.
 ### For beta testing: new deployment model
 
 The FPGA plugin deployment is currently being rewritten to enable
-straight-forward deployment of both `af/preprogrammed` and
-`region/orchestrated` modes. The deployment has two steps:
+straight-forward deployment of both `af` and
+`region` modes. The deployment has two steps:
 
 1. Run `scripts/fpga-plugin-prepare-for-kustomization.sh`. This will
    create the necessary secrets: a key and a signed certificate for
@@ -226,18 +225,15 @@ clusterrole.rbac.authorization.k8s.io/node-getter created
 clusterrolebinding.rbac.authorization.k8s.io/get-nodes created
 ```
 
-### Deploying `orchestrated` mode
+### Deploying `region` mode
 
-To deploy the FPGA plugin DaemonSet in `orchestrated` (`region`) mode, you need to set the plugin
+To deploy the FPGA plugin DaemonSet in `region` mode, you need to set the plugin
 mode annotation on all of your nodes, otherwise the FPGA plugin will run in its default
-`af` (`preprogrammed`) mode.
+`af` mode.
 
 ```bash
 $ kubectl annotate node --all 'fpga.intel.com/device-plugin-mode=region'
 ```
-
-Mixing of the two modes (`orchestrated` and `af`) across nodes in the same cluster is
-*not currently supported*.
 
 ### Deploying `af` mode
 
@@ -260,7 +256,7 @@ daemonset.apps/intel-fpga-plugin created
 ### Verify plugin registration
 
 Verify the FPGA plugin has been deployed on the nodes. The below shows the output
-you can expect in `region` mode, but similar output should be expected for `preprogrammed`
+you can expect in `region` mode, but similar output should be expected for `af`
 mode:
 
 ```bash
