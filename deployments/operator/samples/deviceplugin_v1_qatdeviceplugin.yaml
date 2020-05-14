@@ -1,0 +1,6 @@
+apiVersion: deviceplugin.intel.com/v1
+kind: QatDevicePlugin
+metadata:
+  name: qatdeviceplugin-sample
+spec:
+  image: intel/intel-qat-plugin:0.18.0

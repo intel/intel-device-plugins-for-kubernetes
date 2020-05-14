@@ -15,6 +15,7 @@
         * [CRI-O prestart hook](#cri-o-prestart-hook)
     * [QAT device plugin](#qat-device-plugin)
     * [VPU device plugin](#vpu-device-plugin)
+* [Device Plugins Operator](#device-plugins-operator)
 * [Demos](#demos)
 * [Developers](#developers)
 * [Running e2e Tests](#running-e2e-tests)
@@ -116,6 +117,33 @@ the card has:
 The demo subdirectory includes details of a OpenVINO deployment and use of the VPU plugin.
 Sources can be found in [openvino-demo](demo/ubuntu-demo-openvino)
 
+## Device Plugins Operator
+
+Currently the operator has limited support for the QAT and GPU device plugins:
+it validates container image references and extends reported statuses.
+
+To run an operator instance in the container run
+
+```bash
+$ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.0/cert-manager.yaml
+$ make deploy-operator
+```
+
+Then deploy your device plugin by applying its custom resource, e.g.
+`GpuDevicePlugin` with
+
+```bash
+$ kubectl apply -f ./deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml
+```
+
+Observe it is up and running:
+
+```bash
+$ kubectl get GpuDevicePlugin
+NAME                     DESIRED   READY   NODE SELECTOR   AGE
+gpudeviceplugin-sample   1         1                       5s
+```
+
 ## Demos
 
 The [demo subdirectory](demo/readme.md) contains a number of demonstrations for a variety of the
@@ -163,6 +191,23 @@ without a pre-configured Kubernetes cluster. Just make sure you have
 
 ```
 $ make test-with-kind
+```
+
+## Running controller tests with a local control plane
+
+The controller-runtime library provides a package for integration testing by
+starting a local control plane. The package is called
+[envtest](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest). The
+operator uses this package for its integration testing.
+Please have a look at `envtest`'s documentation to set up it properly. But basically
+you just need to have `etcd` and `kube-apiserver` binaries available on your
+host. By default they are expected to be located at `/usr/local/kubebuilder/bin`.
+But you can have it stored anywhere by setting the `KUBEBUILDER_ASSETS`
+environment variable. So, given you have the binaries copied to
+`$(HOME)/work/kubebuilder-assets` to run the tests just enter
+
+```bash
+$ KUBEBUILDER_ASSETS=$(HOME)/work/kubebuilder-assets make envtest
 ```
 
 ## Supported Kubernetes versions
