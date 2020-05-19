@@ -42,6 +42,9 @@ const (
 	// Device plugin settings.
 	namespace  = "gpu.intel.com"
 	deviceType = "i915"
+
+	// Period of device scans
+	scanPeriod = 5 * time.Second
 )
 
 type devicePlugin struct {
@@ -52,6 +55,9 @@ type devicePlugin struct {
 
 	gpuDeviceReg     *regexp.Regexp
 	controlDeviceReg *regexp.Regexp
+
+	scanTicker *time.Ticker
+	scanDone   chan bool
 }
 
 func newDevicePlugin(sysfsDir, devfsDir string, sharedDevNum int) *devicePlugin {
@@ -61,10 +67,13 @@ func newDevicePlugin(sysfsDir, devfsDir string, sharedDevNum int) *devicePlugin 
 		sharedDevNum:     sharedDevNum,
 		gpuDeviceReg:     regexp.MustCompile(gpuDeviceRE),
 		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
+		scanTicker:       time.NewTicker(scanPeriod),
+		scanDone:         make(chan bool, 1), // buffered as we may send to it before Scan starts receiving from it
 	}
 }
 
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
+	defer dp.scanTicker.Stop()
 	var previouslyFound int = -1
 
 	for {
@@ -81,7 +90,11 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 
 		notifier.Notify(devTree)
 
-		time.Sleep(5 * time.Second)
+		select {
+		case <-dp.scanDone:
+			return nil
+		case <-dp.scanTicker.C:
+		}
 	}
 }
 
