@@ -50,8 +50,8 @@ const (
 	unhealthyAfuID       = "ffffffffffffffffffffffffffffffff"
 	unhealthyInterfaceID = "ffffffffffffffffffffffffffffffff"
 
-	// Frequency of device scans
-	scanFrequency = 5 * time.Second
+	// Period of device scans
+	scanPeriod = 5 * time.Second
 )
 
 type getDevTreeFunc func(devices []device) dpapi.DeviceTree
@@ -206,7 +206,7 @@ func newDevicePlugin(mode string, rootPath string) (*devicePlugin, error) {
 		return nil, err
 	}
 
-	dp.scanTicker = time.NewTicker(scanFrequency)
+	dp.scanTicker = time.NewTicker(scanPeriod)
 	dp.scanDone = make(chan bool, 1) // buffered as we may send to it before Scan starts receiving from it
 
 	return dp, nil

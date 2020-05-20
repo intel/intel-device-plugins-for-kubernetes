@@ -16,56 +16,73 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
-	"time"
+
+	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
 
 func init() {
 	flag.Set("v", "4") //Enable debug output
 }
 
+// mockNotifier implements Notifier interface.
+type mockNotifier struct {
+	scanDone chan bool
+	devCount int
+}
+
+// Notify stops plugin Scan
+func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
+	n.devCount = len(newDeviceTree[deviceType])
+	n.scanDone <- true
+}
+
 func TestScan(t *testing.T) {
-	tmpdir := fmt.Sprintf("/tmp/gpuplugin-test-%d", time.Now().Unix())
-	sysfs := path.Join(tmpdir, "sysfs")
-	devfs := path.Join(tmpdir, "devfs")
+	root, err := ioutil.TempDir("", "test_new_device_plugin")
+	if err != nil {
+		t.Fatalf("can't create temporary directory: %+v", err)
+	}
+
+	defer os.RemoveAll(root)
+
+	sysfs := path.Join(root, "sys")
+	devfs := path.Join(root, "dev")
+
 	tcases := []struct {
+		name         string
 		devfsdirs    []string
 		sysfsdirs    []string
 		sysfsfiles   map[string][]byte
 		expectedDevs int
-		expectedErr  bool
 	}{
 		{
-			expectedErr:  true,
-			expectedDevs: 0,
+			name: "no sysfs mounted",
 		},
 		{
-			sysfsdirs:    []string{"card0"},
-			expectedDevs: 0,
-			expectedErr:  false,
+			name:      "no device installed",
+			sysfsdirs: []string{"card0"},
 		},
 		{
+			name:      "missing dev node",
 			sysfsdirs: []string{"card0/device"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
-			expectedDevs: 0,
-			expectedErr:  true,
 		},
 		{
-			sysfsdirs: []string{"card0/device/drm/card0"},
+			name:      "all is correct",
+			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
 			devfsdirs:    []string{"card0"},
 			expectedDevs: 1,
-			expectedErr:  false,
 		},
 		{
+			name: "two sysfs records but one dev node",
 			sysfsdirs: []string{
 				"card0/device/drm/card0",
 				"card1/device/drm/card1",
@@ -76,64 +93,53 @@ func TestScan(t *testing.T) {
 			},
 			devfsdirs:    []string{"card0"},
 			expectedDevs: 1,
-			expectedErr:  false,
 		},
 		{
+			name:      "wrong vendor",
 			sysfsdirs: []string{"card0/device/drm/card0"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0xbeef"),
 			},
-			devfsdirs:    []string{"card0"},
-			expectedDevs: 0,
-			expectedErr:  false,
+			devfsdirs: []string{"card0"},
 		},
 		{
-			sysfsdirs:    []string{"non_gpu_card"},
-			expectedDevs: 0,
-			expectedErr:  false,
+			name:      "no sysfs records",
+			sysfsdirs: []string{"non_gpu_card"},
 		},
 	}
 
-	testPlugin := newDevicePlugin(sysfs, devfs, 1)
-
-	if testPlugin == nil {
-		t.Fatal("Failed to create a deviceManager")
-	}
-
-	for _, tcase := range tcases {
-		for _, devfsdir := range tcase.devfsdirs {
-			err := os.MkdirAll(path.Join(devfs, devfsdir), 0755)
-			if err != nil {
-				t.Fatalf("Failed to create fake device directory: %+v", err)
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, devfsdir := range tc.devfsdirs {
+				if err := os.MkdirAll(path.Join(devfs, devfsdir), 0755); err != nil {
+					t.Fatalf("Failed to create fake device directory: %+v", err)
+				}
 			}
-		}
-		for _, sysfsdir := range tcase.sysfsdirs {
-			err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0755)
-			if err != nil {
-				t.Fatalf("Failed to create fake device directory: %+v", err)
+			for _, sysfsdir := range tc.sysfsdirs {
+				if err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0755); err != nil {
+					t.Fatalf("Failed to create fake device directory: %+v", err)
+				}
 			}
-		}
-		for filename, body := range tcase.sysfsfiles {
-			err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0644)
-			if err != nil {
-				t.Fatalf("Failed to create fake vendor file: %+v", err)
+			for filename, body := range tc.sysfsfiles {
+				if err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0644); err != nil {
+					t.Fatalf("Failed to create fake vendor file: %+v", err)
+				}
 			}
-		}
 
-		tree, err := testPlugin.scan()
-		if tcase.expectedErr && err == nil {
-			t.Error("Expected error hasn't been triggered")
-		}
-		if !tcase.expectedErr && err != nil {
-			t.Errorf("Unexpcted error: %+v", err)
-		}
-		if tcase.expectedDevs != len(tree[deviceType]) {
-			t.Errorf("Wrong number of discovered devices")
-		}
+			plugin := newDevicePlugin(sysfs, devfs, 1)
 
-		err = os.RemoveAll(tmpdir)
-		if err != nil {
-			t.Fatalf("Failed to remove fake device directory: %+v", err)
-		}
+			notifier := &mockNotifier{
+				scanDone: plugin.scanDone,
+			}
+
+			err := plugin.Scan(notifier)
+			// Scans in GPU plugin never fail
+			if err != nil {
+				t.Errorf("unexpected error: %+v", err)
+			}
+			if tc.expectedDevs != notifier.devCount {
+				t.Errorf("Wrong number of discovered devices")
+			}
+		})
 	}
 }
