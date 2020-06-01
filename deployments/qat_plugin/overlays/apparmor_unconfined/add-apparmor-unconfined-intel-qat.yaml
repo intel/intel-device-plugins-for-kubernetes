@@ -1,0 +1,9 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-qat-plugin
+spec:
+  template:
+    metadata:
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/intel-qat-plugin: unconfined
