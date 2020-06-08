@@ -30,7 +30,7 @@ const (
 	dflFmeRE    = `^dfl-fme\.[0-9]+$`
 )
 
-// getDFLRegion reads FME interface id from /sys/fpga/fpga_region/regionX/dfl-fme.k/dfl-fme-region.n/fpga_region/regionN/compat_id
+// getDFLRegion reads FME interface id from /sys/fpga/fpga_region/regionX/dfl-fme.k/dfl-fme-region.n/fpga_region/regionN/compat_id.
 func (dp *devicePlugin) getDFLRegion(regionFolder string, fme string) (*region, error) {
 	compatIDPattern := path.Join(regionFolder, fme, "dfl-fme-region.*", "fpga_region", "region*", "compat_id")
 	matches, err := filepath.Glob(compatIDPattern)
@@ -82,7 +82,7 @@ func getSysFsInfoDFL(dp *devicePlugin, deviceFolder string, deviceFiles []os.Fil
 	return regions, afus, nil
 }
 
-// newDevicePluginDFL returns new instance of devicePlugin
+// newDevicePluginDFL returns new instance of devicePlugin.
 func newDevicePluginDFL(sysfsDir string, devfsDir string, mode string) (*devicePlugin, error) {
 	getDevTree, ignoreAfuIDs, annotationValue, err := getPluginParams(mode)
 	if err != nil {

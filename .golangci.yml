@@ -1,0 +1,48 @@
+run:
+  tests: true
+  build-tags:
+    - kerneldrv
+
+linters:
+  disable-all: true
+  enable:
+    - asciicheck
+    - bodyclose
+    - deadcode
+    - dogsled
+    - gocognit
+    - goconst
+    - gocyclo
+    - godot
+    - gofmt
+    - goimports
+    - golint
+    - gomodguard
+    - gosimple
+    - govet
+    - goprintffuncname
+    - ineffassign
+    - interfacer
+    - maligned
+    - misspell
+    - nolintlint
+    - rowserrcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+    - whitespace
+
+linters-settings:
+  gofmt:
+    simplify: true
+  golint:
+    min-confidence: 0.9
+  govet:
+    check-shadowing: true
+  gocyclo:
+    min-complexity: 15
+  gocognit:
+    min-complexity: 31

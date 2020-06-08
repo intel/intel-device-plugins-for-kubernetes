@@ -34,7 +34,7 @@ type mockNotifier struct {
 	devCount int
 }
 
-// Notify stops plugin Scan
+// Notify stops plugin Scan.
 func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.devCount = len(newDeviceTree[deviceType])
 	n.scanDone <- true

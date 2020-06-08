@@ -33,7 +33,7 @@ const (
 	fileExtensionGBS        = ".gbs"
 )
 
-// Header represents header struct of the GBS file
+// Header represents header struct of the GBS file.
 type Header struct {
 	GUID1          uint64
 	GUID2          uint64
@@ -48,7 +48,7 @@ type FileGBS struct {
 	closer    io.Closer
 }
 
-// Metadata represents parsed JSON metadata of GBS file
+// Metadata represents parsed JSON metadata of GBS file.
 type Metadata struct {
 	Version      int    `json:"version"`
 	PlatformName string `json:"platform-name,omitempty"`
@@ -76,7 +76,7 @@ type Metadata struct {
 	} `json:"afu-image"`
 }
 
-// A Bitstream represents a raw bitsream data (RBF) in the GBS binary
+// A Bitstream represents a raw bitsream data (RBF) in the GBS binary.
 type Bitstream struct {
 	Size uint64
 	// Embed ReaderAt for ReadAt method.
@@ -127,13 +127,13 @@ func (f *FileGBS) Close() (err error) {
 	return
 }
 
-// InterfaceUUID returns normalized Metadata.AfuImage.InterfaceUUID
+// InterfaceUUID returns normalized Metadata.AfuImage.InterfaceUUID.
 func (f *FileGBS) InterfaceUUID() string {
 	return strings.ToLower(strings.Replace(f.Metadata.AfuImage.InterfaceUUID, "-", "", -1))
 }
 
 // AcceleratorTypeUUID returns list of normalized AFU UUID from the metadata.
-// Empty string returned in case of errors in Metadata
+// Empty string returned in case of errors in Metadata.
 func (f *FileGBS) AcceleratorTypeUUID() (ret string) {
 	if len(f.Metadata.AfuImage.AcceleratorClusters) == 1 {
 		ret = strings.ToLower(strings.Replace(f.Metadata.AfuImage.AcceleratorClusters[0].AcceleratorTypeUUID, "-", "", -1))
@@ -141,7 +141,7 @@ func (f *FileGBS) AcceleratorTypeUUID() (ret string) {
 	return
 }
 
-// We need both Seek and ReadAt
+// We need both Seek and ReadAt.
 type bitstreamReader interface {
 	io.ReadSeeker
 	io.ReaderAt
@@ -171,7 +171,7 @@ func NewFileGBS(r bitstreamReader) (*FileGBS, error) {
 		return nil, errors.Wrap(err, "unable to parse GBS metadata")
 	}
 	if afus := len(f.Metadata.AfuImage.AcceleratorClusters); afus != 1 {
-		return nil, errors.Errorf("incorect length of AcceleratorClusters in GBS metadata: %d", afus)
+		return nil, errors.Errorf("incorrect length of AcceleratorClusters in GBS metadata: %d", afus)
 	}
 	// 4. Create bitsream struct
 	b := new(Bitstream)
@@ -190,23 +190,23 @@ func NewFileGBS(r bitstreamReader) (*FileGBS, error) {
 
 // File interfaces implementations
 
-// RawBitstreamReader returns Reader for raw bitstream data
+// RawBitstreamReader returns Reader for raw bitstream data.
 func (f *FileGBS) RawBitstreamReader() io.ReadSeeker {
 	return f.Bitstream.Open()
 }
 
-// RawBitstreamData returns raw bitstream data
+// RawBitstreamData returns raw bitstream data.
 func (f *FileGBS) RawBitstreamData() ([]byte, error) {
 	return f.Bitstream.Data()
 }
 
 // UniqueUUID represents the unique field that identifies bitstream.
-// For GBS it is the AFU ID
+// For GBS it is the AFU ID.
 func (f *FileGBS) UniqueUUID() string {
 	return f.AcceleratorTypeUUID()
 }
 
-// InstallPath returns unique filename for bitstream relative to given directory
+// InstallPath returns unique filename for bitstream relative to given directory.
 func (f *FileGBS) InstallPath(root string) (ret string) {
 	interfaceID := f.InterfaceUUID()
 	uniqID := f.UniqueUUID()
@@ -216,7 +216,7 @@ func (f *FileGBS) InstallPath(root string) (ret string) {
 	return
 }
 
-// ExtraMetadata returns map of key/value with additional metadata that can be detected from bitstream
+// ExtraMetadata returns map of key/value with additional metadata that can be detected from bitstream.
 func (f *FileGBS) ExtraMetadata() map[string]string {
 	return map[string]string{"Size": strconv.FormatUint(f.Bitstream.Size, 10)}
 }

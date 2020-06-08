@@ -177,7 +177,7 @@ func TestGetConfig(t *testing.T) {
 	}
 }
 
-// testFpgaPort represent Fake FPGA Port device for testing purposes
+// testFpgaPort represent Fake FPGA Port device for testing purposes.
 type testFpgaPort struct {
 	fpga.Port
 	callNo          int
@@ -186,21 +186,21 @@ type testFpgaPort struct {
 	failProgramming bool
 }
 
-// GetInterfaceUUID returns Interface UUID
+// GetInterfaceUUID returns Interface UUID.
 func (p *testFpgaPort) GetInterfaceUUID() (id string) {
 	uuid := p.interfaceUUIDS[p.callNo]
 	p.callNo++
 	return uuid
 }
 
-// GetAcceleratorTypeUUID returns AFU UUID
+// GetAcceleratorTypeUUID returns AFU UUID.
 func (p *testFpgaPort) GetAcceleratorTypeUUID() string {
 	uuid := p.accelTypeUUIDS[p.callNo]
 	p.callNo++
 	return uuid
 }
 
-// PR fakes programming specified bitstream
+// PR fakes programming specified bitstream.
 func (p *testFpgaPort) PR(bs bitstream.File, dryRun bool) error {
 	if p.failProgramming {
 		return errors.New("fail to program device")

@@ -24,24 +24,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-// IsFpgaFME returns true if the name looks like any supported FME device
+// IsFpgaFME returns true if the name looks like any supported FME device.
 func IsFpgaFME(name string) bool {
 	devName := cleanBasename(name)
 	return strings.HasPrefix(devName, dflFpgaFmePrefix) || strings.HasPrefix(devName, intelFpgaFmePrefix)
 }
 
-// IsFpgaPort returns true if the name looks like any supported FME device
+// IsFpgaPort returns true if the name looks like any supported FME device.
 func IsFpgaPort(name string) bool {
 	devName := cleanBasename(name)
 	return strings.HasPrefix(devName, dflFpgaPortPrefix) || strings.HasPrefix(devName, intelFpgaPortPrefix)
 }
 
-// CanonizeID canonizes Interface and AFU ids
+// CanonizeID canonizes Interface and AFU ids.
 func CanonizeID(ID string) string {
 	return strings.ToLower(strings.Replace(strings.TrimSpace(ID), "-", "", -1))
 }
 
-// NewPort returns Port for specified device node
+// NewPort returns Port for specified device node.
 func NewPort(fname string) (Port, error) {
 	if strings.IndexByte(fname, byte('/')) < 0 {
 		fname = filepath.Join("/dev", fname)
@@ -56,7 +56,7 @@ func NewPort(fname string) (Port, error) {
 	return nil, errors.Errorf("unknown type of FPGA port %s", fname)
 }
 
-// NewFME returns FME for specified device node
+// NewFME returns FME for specified device node.
 func NewFME(fname string) (FME, error) {
 	if strings.IndexByte(fname, byte('/')) < 0 {
 		fname = filepath.Join("/dev", fname)
@@ -71,7 +71,7 @@ func NewFME(fname string) (FME, error) {
 	return nil, errors.Errorf("unknown type of FPGA FME %s", fname)
 }
 
-// ListFpgaDevices returns two lists of FPGA device nodes: FMEs and Ports
+// ListFpgaDevices returns two lists of FPGA device nodes: FMEs and Ports.
 func ListFpgaDevices() (FMEs, Ports []string) {
 	files, err := ioutil.ReadDir("/sys/bus/platform/devices")
 	if err != nil {

@@ -21,7 +21,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// GetFPGABitstream scans bitstream storage and returns first found bitstream by region and afu id
+// GetFPGABitstream scans bitstream storage and returns first found bitstream by region and afu id.
 func GetFPGABitstream(bitstreamDir, region, afu string) (File, error) {
 	bitstreamPath := ""
 	// Temporarily only support gbs bitstreams

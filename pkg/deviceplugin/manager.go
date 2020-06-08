@@ -76,7 +76,7 @@ type Manager struct {
 	createServer func(string, func(*pluginapi.AllocateResponse) error, func(*pluginapi.PreStartContainerRequest) error) devicePluginServer
 }
 
-// NewManager creates a new instance of Manager
+// NewManager creates a new instance of Manager.
 func NewManager(namespace string, devicePlugin Scanner) *Manager {
 	return &Manager{
 		devicePlugin: devicePlugin,
@@ -86,7 +86,7 @@ func NewManager(namespace string, devicePlugin Scanner) *Manager {
 	}
 }
 
-// Run prepares and launches event loop for updates from Scanner
+// Run prepares and launches event loop for updates from Scanner.
 func (m *Manager) Run() {
 	updatesCh := make(chan updateInfo)
 

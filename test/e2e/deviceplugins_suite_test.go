@@ -60,7 +60,7 @@ func setupFirstNode() []byte {
 		framework.Failf("Error deleting orphaned namespaces: %v", err)
 	}
 	framework.Logf("Waiting for deletion of the following namespaces: %v", deleted)
-	if err := framework.WaitForNamespacesDeleted(c, deleted, framework.DefaultPodDeletionTimeout); err != nil {
+	if err = framework.WaitForNamespacesDeleted(c, deleted, framework.DefaultPodDeletionTimeout); err != nil {
 		framework.Failf("Failed to delete orphaned namespaces %v: %v", deleted, err)
 	}
 
@@ -70,7 +70,7 @@ func setupFirstNode() []byte {
 	// cluster infrastructure pods that are being pulled or started can block
 	// test pods from running, and tests that ensure all pods are running and
 	// ready will fail).
-	if err := e2epod.WaitForPodsRunningReady(c, metav1.NamespaceSystem, int32(framework.TestContext.MinStartupPods),
+	if err = e2epod.WaitForPodsRunningReady(c, metav1.NamespaceSystem, int32(framework.TestContext.MinStartupPods),
 		int32(framework.TestContext.AllowedNotReadyNodes), framework.TestContext.SystemPodsStartupTimeout,
 		map[string]string{}); err != nil {
 		framework.DumpAllNamespaceInfo(c, metav1.NamespaceSystem)

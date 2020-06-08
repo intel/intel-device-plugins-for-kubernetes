@@ -21,7 +21,7 @@ import "io"
 
 // File defines interfaces that are common for all supported bitstream file formats
 // It should provide mechanisms to get raw bitstream data as a reader or as a byte array
-// as well as mechanisms to identify bitstreams
+// as well as mechanisms to identify bitstreams.
 type File interface {
 	io.Closer
 	// RawBitstreamReader returns Reader for raw bitstream data

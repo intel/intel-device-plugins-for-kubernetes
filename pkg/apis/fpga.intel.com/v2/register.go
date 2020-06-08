@@ -8,23 +8,23 @@ import (
 	fpgaintel "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com"
 )
 
-// SchemeGroupVersion is group version used to register these objects
+// SchemeGroupVersion is group version used to register these objects.
 var SchemeGroupVersion = schema.GroupVersion{Group: fpgaintel.GroupName, Version: "v2"}
 
-// Kind takes an unqualified kind and returns back a Group qualified GroupKind
+// Kind takes an unqualified kind and returns back a Group qualified GroupKind.
 func Kind(kind string) schema.GroupKind {
 	return SchemeGroupVersion.WithKind(kind).GroupKind()
 }
 
-// Resource takes an unqualified resource and returns a Group qualified GroupResource
+// Resource takes an unqualified resource and returns a Group qualified GroupResource.
 func Resource(resource string) schema.GroupResource {
 	return SchemeGroupVersion.WithResource(resource).GroupResource()
 }
 
 var (
-	// SchemeBuilder builds scheme
+	// SchemeBuilder builds scheme.
 	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
-	// AddToScheme adds known types to scheme
+	// AddToScheme adds known types to scheme.
 	AddToScheme = SchemeBuilder.AddToScheme
 )
 

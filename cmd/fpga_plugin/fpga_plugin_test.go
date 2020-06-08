@@ -159,7 +159,7 @@ type fakeNotifier struct {
 	scanDone chan bool
 }
 
-// Notify stops plugin Scan
+// Notify stops plugin Scan.
 func (n *fakeNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.scanDone <- true
 }

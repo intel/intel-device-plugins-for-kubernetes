@@ -57,7 +57,7 @@ const (
 type getDevTreeFunc func(devices []device) dpapi.DeviceTree
 type getSysFsInfoFunc func(dp *devicePlugin, deviceFolder string, deviceFiles []os.FileInfo, fname string) ([]region, []afu, error)
 
-// getRegionDevelTree returns mapping of region interface IDs to AF ports and FME devices
+// getRegionDevelTree returns mapping of region interface IDs to AF ports and FME devices.
 func getRegionDevelTree(devices []device) dpapi.DeviceTree {
 	regionTree := dpapi.NewDeviceTree()
 
@@ -89,7 +89,7 @@ func getRegionDevelTree(devices []device) dpapi.DeviceTree {
 	return regionTree
 }
 
-// getRegionTree returns mapping of region interface IDs to AF ports only
+// getRegionTree returns mapping of region interface IDs to AF ports only.
 func getRegionTree(devices []device) dpapi.DeviceTree {
 	regionTree := dpapi.NewDeviceTree()
 
@@ -115,7 +115,7 @@ func getRegionTree(devices []device) dpapi.DeviceTree {
 	return regionTree
 }
 
-// getAfuTree returns mapping of AFU IDs to AF ports
+// getAfuTree returns mapping of AFU IDs to AF ports.
 func getAfuTree(devices []device) dpapi.DeviceTree {
 	afuTree := dpapi.NewDeviceTree()
 
@@ -185,7 +185,7 @@ type devicePlugin struct {
 	scanDone   chan bool
 }
 
-// newDevicePlugin returns new instance of devicePlugin
+// newDevicePlugin returns new instance of devicePlugin.
 func newDevicePlugin(mode string, rootPath string) (*devicePlugin, error) {
 	var dp *devicePlugin
 	var err error
@@ -225,7 +225,7 @@ func (dp *devicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error
 	return nil
 }
 
-// Scan starts scanning FPGA devices on the host
+// Scan starts scanning FPGA devices on the host.
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
 	for {
@@ -344,8 +344,8 @@ func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
 	return dp.getDevTree(devices), nil
 }
 
-// getPluginParams is a helper function to avoid code duplication
-// it's used in newDevicePluginOPAE and newDevicePluginDFL
+// getPluginParams is a helper function to avoid code duplication.
+// It's used in newDevicePluginOPAE and newDevicePluginDFL.
 func getPluginParams(mode string) (getDevTreeFunc, bool, string, error) {
 	var getDevTree getDevTreeFunc
 

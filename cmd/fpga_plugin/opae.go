@@ -57,7 +57,7 @@ func getSysFsInfoOPAE(dp *devicePlugin, deviceFolder string, deviceFiles []os.Fi
 	return regions, afus, nil
 }
 
-// newDevicePlugin returns new instance of devicePlugin
+// newDevicePlugin returns new instance of devicePlugin.
 func newDevicePluginOPAE(sysfsDir string, devfsDir string, mode string) (*devicePlugin, error) {
 	getDevTree, ignoreAfuIDs, annotationValue, err := getPluginParams(mode)
 	if err != nil {

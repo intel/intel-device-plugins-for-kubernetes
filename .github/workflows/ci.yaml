@@ -14,6 +14,21 @@ env:
   GO_VERSION: 1.13.8
 jobs:
 
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install build dependencies needed for VPU plugin
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libusb-1.0-0-dev
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v1
+        with:
+          version: v1.27
+          args: --timeout 5m
+
   build:
     name: Build and check device plugins
     runs-on: ubuntu-18.04
@@ -37,21 +52,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y install libusb-1.0-0-dev
-      - name: Install tools
-        run: |
-          # checkers
-          cd /
-          go get -v golang.org/x/lint/golint
-          go get -v github.com/fzipp/gocyclo
-          go get -v golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
       - run: make go-mod-tidy
-      - run: make format
-      - run: make lint
       - run: make BUILDTAGS=kerneldrv
-      - run: make vet
-      - run: make cyclomatic-check
       - run: make test BUILDTAGS=kerneldrv
       - run: make check-github-actions
+      - name: Codecov report
+        run: bash <(curl -s https://codecov.io/bash)
 
   image:
     name: Build image

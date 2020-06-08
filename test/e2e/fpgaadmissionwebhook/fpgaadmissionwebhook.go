@@ -67,7 +67,6 @@ func describe() {
 
 		checkPodMutation(f, "fpga.intel.com/arria10.dcp1.0-nlb0-orchestrated",
 			"fpga.intel.com/region-ce48969398f05f33946d560708be108a")
-
 	})
 
 	ginkgo.It("mutates created pods to reference resolved Regions in regiondevel mode", func() {
@@ -77,7 +76,6 @@ func describe() {
 
 		checkPodMutation(f, "fpga.intel.com/arria10.dcp1.0",
 			"fpga.intel.com/region-ce48969398f05f33946d560708be108a")
-
 	})
 }
 
@@ -90,7 +88,7 @@ func checkPodMutation(f *framework.Framework, source, expectedMutation v1.Resour
 		framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 	}
 
-	ginkgo.By("submitting a pod for addmission")
+	ginkgo.By("submitting a pod for admission")
 	podSpec := f.NewTestPod("webhook-tester",
 		v1.ResourceList{source: resource.MustParse("1")},
 		v1.ResourceList{source: resource.MustParse("1")})

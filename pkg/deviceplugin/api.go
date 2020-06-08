@@ -20,7 +20,7 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
-// DeviceInfo contains information about device maintained by Device Plugin
+// DeviceInfo contains information about device maintained by Device Plugin.
 type DeviceInfo struct {
 	state    string
 	nodes    []pluginapi.DeviceSpec
@@ -33,7 +33,7 @@ func init() {
 	klog.InitFlags(nil)
 }
 
-// NewDeviceInfo makes DeviceInfo struct and adds topology information to it
+// NewDeviceInfo makes DeviceInfo struct and adds topology information to it.
 func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string) DeviceInfo {
 	deviceInfo := DeviceInfo{
 		state:  state,
@@ -59,7 +59,7 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 // DeviceTree contains a tree-like structure of device type -> device ID -> device info.
 type DeviceTree map[string]map[string]DeviceInfo
 
-// NewDeviceTree creates an instance of DeviceTree
+// NewDeviceTree creates an instance of DeviceTree.
 func NewDeviceTree() DeviceTree {
 	return make(map[string]map[string]DeviceInfo)
 }

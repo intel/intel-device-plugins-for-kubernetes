@@ -37,7 +37,7 @@ var (
 	pciAddressRE = regexp.MustCompile(pciAddressRegex)
 )
 
-// PCIDevice represents most valuable sysfs information about PCI device
+// PCIDevice represents most valuable sysfs information about PCI device.
 type PCIDevice struct {
 	SysFsPath string
 	BDF       string
@@ -51,7 +51,7 @@ type PCIDevice struct {
 	PhysFn    *PCIDevice
 }
 
-// NewPCIDevice returns sysfs entry for specified PCI device
+// NewPCIDevice returns sysfs entry for specified PCI device.
 func NewPCIDevice(devPath string) (*PCIDevice, error) {
 	realDevPath, err := filepath.EvalSymlinks(devPath)
 	if err != nil {
@@ -91,7 +91,7 @@ func NewPCIDevice(devPath string) (*PCIDevice, error) {
 	return pci, nil
 }
 
-// NumVFs returns number of configured VFs
+// NumVFs returns number of configured VFs.
 func (pci *PCIDevice) NumVFs() int64 {
 	if numvfs, err := strconv.ParseInt(pci.VFs, 10, 32); err == nil {
 		return numvfs
@@ -99,7 +99,7 @@ func (pci *PCIDevice) NumVFs() int64 {
 	return -1
 }
 
-// GetVFs returns array of PCI device sysfs entries for VFs
+// GetVFs returns array of PCI device sysfs entries for VFs.
 func (pci *PCIDevice) GetVFs() (ret []*PCIDevice, err error) {
 	if pci.NumVFs() > 0 {
 		dirs, _ := filepath.Glob(filepath.Join(pci.SysFsPath, "virtfn*"))
@@ -115,7 +115,7 @@ func (pci *PCIDevice) GetVFs() (ret []*PCIDevice, err error) {
 }
 
 // FindSysFsDevice returns sysfs entry for specified device node or device that holds specified file
-// If resulted device is virtual, error is returned
+// If resulted device is virtual, error is returned.
 func FindSysFsDevice(dev string) (string, error) {
 	fi, err := os.Stat(dev)
 	if err != nil {

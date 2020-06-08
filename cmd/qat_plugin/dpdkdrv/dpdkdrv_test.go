@@ -34,37 +34,35 @@ func init() {
 
 func createTestFiles(prefix string, dirs []string, files map[string][]byte, symlinks map[string]string) error {
 	for _, dir := range dirs {
-
 		err := os.MkdirAll(path.Join(prefix, dir), 0755)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake device directory")
 		}
-
 	}
-	for filename, body := range files {
 
+	for filename, body := range files {
 		err := ioutil.WriteFile(path.Join(prefix, filename), body, 0644)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake vendor file")
 		}
-
 	}
-	for link, target := range symlinks {
 
+	for link, target := range symlinks {
 		err := os.MkdirAll(path.Join(prefix, target), 0755)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake symlink target directory")
 		}
+
 		err = os.Symlink(path.Join(prefix, target), path.Join(prefix, link))
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake symlink")
 		}
 	}
+
 	return nil
 }
 
 func TestNewDevicePlugin(t *testing.T) {
-
 	tcases := []struct {
 		name            string
 		dpdkDriver      string
