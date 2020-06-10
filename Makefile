@@ -51,7 +51,7 @@ test-with-kind:
 	exit $$rc
 
 lint:
-	@golangci-lint run
+	@golangci-lint run --timeout 5m
 
 checks: lint go-mod-tidy
 

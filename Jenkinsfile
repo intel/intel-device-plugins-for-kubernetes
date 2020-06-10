@@ -10,6 +10,7 @@ pipeline {
     REG="cloud-native-image-registry.westus.cloudapp.azure.com/"
     RUNC_VERSION="v1.0.0-rc10"
     CRIO_VERSION="v1.17.0"
+    GOLANGCI_LINT_VERSION="v1.27.0"
     BUILDAH_VERSION="v1.14.0"
     GO_VERSION="1.13.7"
     GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
@@ -40,13 +41,9 @@ pipeline {
                 sh "curl -O https://dl.google.com/go/${GO_TAR}"
                 sh "tar -xvf $GO_TAR"
                 sh "sudo mv go $GOROOT"
-                sh "mkdir -p $GOPATH/src/github.com/intel"
+                sh "mkdir -p $GOPATH/src/github.com/intel $GOPATH/bin"
                 sh "cp -rf ${env.WORKSPACE} $REPO_DIR"
-                dir(path: "$GOPATH") {
-                  sh "go get -v golang.org/x/lint/golint"
-                  sh "go get -v golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow"
-                  sh "go get -v github.com/fzipp/gocyclo"
-                }
+                sh "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin ${GOLANGCI_LINT_VERSION}"
               }
             }
             stage("buildah") {
@@ -83,33 +80,12 @@ pipeline {
             }
           }
         }
-        stage("make vet, lint, cyclomatic"){
+        stage("make lint"){
           parallel {
             stage("make lint") {
               steps {
                 dir(path: "$REPO_DIR") {
                   sh "make lint"
-                }
-              }
-            }
-            stage("make format") {
-              steps {
-                dir(path: "$REPO_DIR") {
-                  sh "make format"
-                }
-              }
-            }
-            stage("make vet") {
-              steps {
-                dir(path: "$REPO_DIR") {
-                  sh "make vet"
-                }
-              }
-            }
-            stage("make cyclomatic-check") {
-              steps {
-                dir(path: "$REPO_DIR") {
-                  sh "make cyclomatic-check"
                 }
               }
             }
