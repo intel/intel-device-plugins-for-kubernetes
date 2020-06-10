@@ -34,7 +34,7 @@ type testCase struct {
 	sharedNum  int
 }
 
-//try to inject gousb compatible fake device info
+//OpenDevices tries to inject gousb compatible fake device info.
 func (t *testCase) OpenDevices(opener func(desc *gousb.DeviceDesc) bool) ([]*gousb.Device, error) {
 	var ret []*gousb.Device
 	for _, p := range t.productIDs {
@@ -56,7 +56,7 @@ type fakeNotifier struct {
 	tree     dpapi.DeviceTree
 }
 
-// Notify stops plugin Scan
+// Notify stops plugin Scan.
 func (n *fakeNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.tree = newDeviceTree
 	n.scanDone <- true
@@ -65,7 +65,7 @@ func (n *fakeNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 func TestScan(t *testing.T) {
 	var fN fakeNotifier
 
-	f, err := os.Create("/var/tmp/hddl_service.sock")
+	f, err := os.Create(hddlSockPath)
 	if err != nil {
 		t.Error("create fake hddl file failed")
 	}
@@ -110,7 +110,7 @@ func TestScan(t *testing.T) {
 	}
 
 	//test with sharedNum equals 0 case
-	testPlugin = newDevicePlugin(tc, vendorID, productIDs, 0)
+	testPlugin = newDevicePlugin(tc, vendorID, productIDs, tc.sharedNum)
 	if testPlugin != nil {
 		t.Error("vpu plugin test fail: newDevicePlugin should fail with 0 sharedDevNum")
 	}

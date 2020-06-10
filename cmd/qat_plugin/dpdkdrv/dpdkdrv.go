@@ -44,6 +44,9 @@ const (
 	driverUnbindSuffix = "driver/unbind"
 	vendorPrefix       = "8086 "
 	envVarPrefix       = "QAT"
+
+	igbUio  = "igb_uio"
+	vfioPci = "vfio-pci"
 )
 
 // DevicePlugin represents vfio based QAT plugin.
@@ -96,11 +99,10 @@ func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 }
 
 func (dp *DevicePlugin) getDpdkDevice(id string) (string, error) {
-
 	devicePCIAdd := "0000:" + id
 	switch dp.dpdkDriver {
 	// TODO: case "pci-generic" and "kernel":
-	case "igb_uio":
+	case igbUio:
 		uioDirPath := path.Join(dp.pciDeviceDir, devicePCIAdd, uioSuffix)
 		files, err := ioutil.ReadDir(uioDirPath)
 		if err != nil {
@@ -111,7 +113,7 @@ func (dp *DevicePlugin) getDpdkDevice(id string) (string, error) {
 		}
 		return files[0].Name(), nil
 
-	case "vfio-pci":
+	case vfioPci:
 		vfioDirPath := path.Join(dp.pciDeviceDir, devicePCIAdd, iommuGroupSuffix)
 		group, err := filepath.EvalSymlinks(vfioDirPath)
 		if err != nil {
@@ -134,7 +136,7 @@ func (dp *DevicePlugin) getDpdkDeviceSpecs(id string) ([]pluginapi.DeviceSpec, e
 
 	switch dp.dpdkDriver {
 	// TODO: case "pci-generic" and "kernel":
-	case "igb_uio":
+	case igbUio:
 		//Setting up with uio
 		uioDev := path.Join(uioDevicePath, dpdkDeviceName)
 		return []pluginapi.DeviceSpec{
@@ -144,7 +146,7 @@ func (dp *DevicePlugin) getDpdkDeviceSpecs(id string) ([]pluginapi.DeviceSpec, e
 				Permissions:   "rw",
 			},
 		}, nil
-	case "vfio-pci":
+	case vfioPci:
 		//Setting up with vfio
 		vfioDev1 := path.Join(vfioDevicePath, dpdkDeviceName)
 		vfioDev2 := path.Join(vfioDevicePath, "/vfio")
@@ -172,7 +174,7 @@ func (dp *DevicePlugin) getDpdkMounts(id string) ([]pluginapi.Mount, error) {
 	}
 
 	switch dp.dpdkDriver {
-	case "igb_uio":
+	case igbUio:
 		//Setting up with uio mountpoints
 		uioMountPoint := path.Join(uioMountPath, dpdkDeviceName, "/device")
 		return []pluginapi.Mount{
@@ -181,7 +183,7 @@ func (dp *DevicePlugin) getDpdkMounts(id string) ([]pluginapi.Mount, error) {
 				ContainerPath: uioMountPoint,
 			},
 		}, nil
-	case "vfio-pci":
+	case vfioPci:
 		//No mountpoint for vfio needs to be populated
 		return nil, nil
 	}
@@ -198,7 +200,7 @@ func (dp *DevicePlugin) getDeviceID(pciAddr string) (string, error) {
 	return strings.TrimPrefix(string(bytes.TrimSpace(devID)), "0x"), nil
 }
 
-// bindDevice unbinds given device from kernel driver and binds to DPDK driver
+// bindDevice unbinds given device from kernel driver and binds to DPDK driver.
 func (dp *DevicePlugin) bindDevice(id string) error {
 	devicePCIAddr := "0000:" + id
 	unbindDevicePath := path.Join(dp.pciDeviceDir, devicePCIAddr, driverUnbindSuffix)
@@ -207,7 +209,6 @@ func (dp *DevicePlugin) bindDevice(id string) error {
 	err := ioutil.WriteFile(unbindDevicePath, []byte(devicePCIAddr), 0644)
 	if err != nil {
 		return errors.Wrapf(err, "Unbinding from kernel driver failed for the device %s", id)
-
 	}
 	vfdevID, err := dp.getDeviceID(devicePCIAddr)
 	if err != nil {
@@ -232,7 +233,7 @@ func isValidKerneDriver(kernelvfDriver string) bool {
 
 func isValidDpdkDeviceDriver(dpdkDriver string) bool {
 	switch dpdkDriver {
-	case "igb_uio", "vfio-pci":
+	case igbUio, vfioPci:
 		return true
 	}
 	return false

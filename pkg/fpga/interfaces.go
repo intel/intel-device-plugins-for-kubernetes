@@ -42,7 +42,7 @@ type commonFpgaAPI interface {
 	GetPCIDevice() (*PCIDevice, error)
 }
 
-// FME represent interfaces provided by management interface of FPGA
+// FME represent interfaces provided by management interface of FPGA.
 type FME interface {
 	// Kernel IOCTL interfaces for FPGA ports:
 	commonFpgaAPI
@@ -74,7 +74,7 @@ type FME interface {
 	// GetPort(uint32) (FpgaPort, error)
 }
 
-// Port represent interfaces provided by AFU port of FPGA
+// Port represent interfaces provided by AFU port of FPGA.
 type Port interface {
 	// Kernel IOCTL interfaces for FPGA ports:
 	commonFpgaAPI
@@ -113,14 +113,14 @@ type Port interface {
 	PR(bitstream.File, bool) error
 }
 
-// PortInfo is a unified port info between drivers
+// PortInfo is a unified port info between drivers.
 type PortInfo struct {
 	Flags   uint32
 	Regions uint32
 	Umsgs   uint32
 }
 
-// PortRegionInfo is a unified Port Region info between drivers
+// PortRegionInfo is a unified Port Region info between drivers.
 type PortRegionInfo struct {
 	Flags  uint32
 	Index  uint32

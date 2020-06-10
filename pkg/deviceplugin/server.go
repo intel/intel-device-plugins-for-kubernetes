@@ -33,7 +33,7 @@ import (
 
 type serverState int
 
-// Server state
+// Server state.
 const (
 	uninitialized serverState = iota
 	serving
@@ -303,7 +303,7 @@ func registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string, opt
 }
 
 // waitForServer checks if grpc server is alive
-// by making grpc blocking connection to the server socket
+// by making grpc blocking connection to the server socket.
 func waitForServer(socket string, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

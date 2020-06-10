@@ -63,13 +63,12 @@ func TestGetFPGABitstream(t *testing.T) {
 			_, err := GetFPGABitstream(tc.bitstreamDir, tc.region, tc.afu)
 			if err != nil {
 				if !tc.expectedErr {
-					t.Errorf("unexpected error ocurred: %+v", err)
+					t.Errorf("unexpected error occurred: %+v", err)
 				}
 				return
 			}
 		})
 	}
-
 }
 
 func TestOpen(t *testing.T) {

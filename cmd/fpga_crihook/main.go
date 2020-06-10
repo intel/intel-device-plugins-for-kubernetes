@@ -38,7 +38,7 @@ const (
 	annotationValue = "fpga.intel.com/region"
 )
 
-// Stdin defines structure for standard JSONed input of the OCI platform hook
+// Stdin defines structure for standard JSONed input of the OCI platform hook.
 type Stdin struct {
 	Annotations struct {
 		ComIntelFpgaMode string `json:"com.intel.fpga.mode"`
@@ -46,7 +46,7 @@ type Stdin struct {
 	Bundle string `json:"bundle"`
 }
 
-// Config defines structure of OCI hook configuration
+// Config defines structure of OCI hook configuration.
 type Config struct {
 	Process struct {
 		Env []string `json:"env"`
@@ -56,10 +56,10 @@ type Config struct {
 	} `json:"linux"`
 }
 
-// newPortFun defines a function type that returns fpga.Port
+// newPortFun defines a function type that returns fpga.Port.
 type newPortFun func(string) (fpga.Port, error)
 
-// Device defines structure for Config.Linux.Devices entries
+// Device defines structure for Config.Linux.Devices entries.
 type Device struct {
 	// these fields are set by the hook
 	name      string
@@ -71,7 +71,7 @@ type Device struct {
 	Major int    `json:"major"`
 	Minor int    `json:"minor"`
 	UID   int    `json:"uid"`
-	Gid   int    `json:"gid"`
+	GID   int    `json:"gid"`
 }
 
 func (dev *Device) getName() string {

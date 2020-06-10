@@ -59,7 +59,7 @@ func TestNewDevicePluginDFL(t *testing.T) {
 	}
 }
 
-// getDevices returns static list of device structs for testing purposes
+// getDevices returns static list of device structs for testing purposes.
 func getDevicesDFL() []device {
 	return []device{
 		{

@@ -194,7 +194,6 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 	envVars := make(map[string]string)
 	counter := 0
 	for rname, quantity := range requestedResources {
-
 		mode, found := p.resourceModeMap[rname]
 		if !found {
 			return nil, errors.Errorf("no such resource: %q", rname)

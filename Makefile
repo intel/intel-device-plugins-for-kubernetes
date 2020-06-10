@@ -1,6 +1,5 @@
 GO := go
 GOFMT := gofmt
-GOCYCLO := gocyclo
 KUBECTL ?= kubectl
 KIND ?= kind
 PODMAN ?= podman
@@ -20,14 +19,8 @@ all: build
 format:
 	@report=`$(GOFMT) -s -d -w $$(find cmd pkg test -name \*.go)` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
 
-vet:
-	@$(GO) vet -v -vettool=$$(which shadow) $(pkgs)
-
 vendor:
 	@$(GO) mod vendor -v
-
-cyclomatic-check:
-	@report=`$(GOCYCLO) -over 15 cmd pkg test`; if [ -n "$$report" ]; then echo "Complexity is over 15 in"; echo $$report; exit 1; fi
 
 go-mod-tidy:
 	$(GO) mod download
@@ -58,9 +51,9 @@ test-with-kind:
 	exit $$rc
 
 lint:
-	@rc=0 ; for f in $$(find -name \*.go | grep -v \.\/vendor) ; do golint -set_exit_status $$f || rc=1 ; done ; exit $$rc
+	@golangci-lint run --timeout 5m
 
-checks: lint format cyclomatic-check go-mod-tidy
+checks: lint go-mod-tidy
 
 $(cmds):
 	cd cmd/$@; $(GO) build -tags $(BUILDTAGS)
@@ -118,4 +111,4 @@ check-github-actions:
 	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
 
-.PHONY: all format vet cyclomatic-check test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions
+.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions

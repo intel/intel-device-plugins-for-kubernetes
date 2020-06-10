@@ -34,10 +34,6 @@ import (
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
 
-const (
-	namespace = "qat.intel.com"
-)
-
 var (
 	adfCtlRegex = regexp.MustCompile(`type: (?P<devtype>[[:alnum:]]+), .* inst_id: (?P<instid>[0-9]+), .* bsf: ([0-9a-f]{4}:)?(?P<bsf>[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]), .* state: (?P<state>[[:alpha:]]+)$`)
 )
@@ -90,14 +86,12 @@ func getDevTree(sysfs string, qatDevs []device, config map[string]section) (dpap
 
 	uniqID := 0
 	for sname, svalue := range config {
-		var devType string
-
-		devType = fmt.Sprintf("cy%d_dc%d", svalue.cryptoEngines, svalue.compressionEngines)
+		devType := fmt.Sprintf("cy%d_dc%d", svalue.cryptoEngines, svalue.compressionEngines)
 		for _, ep := range svalue.endpoints {
 			for i := 0; i < ep.processes; i++ {
 				envs := map[string]string{
 					fmt.Sprintf("QAT_SECTION_NAME_%s_%d", devType, uniqID): sname,
-					// This env variable may get overriden if a container requests more than one QAT process.
+					// This env variable may get overridden if a container requests more than one QAT process.
 					// But we keep this code since the majority of pod workloads run only one QAT process.
 					// The rest should use QAT_SECTION_NAME_XXX variables.
 					"QAT_SECTION_NAME": sname,
@@ -213,7 +207,6 @@ func (dp *DevicePlugin) parseConfigs(devices []device) (map[string]section, erro
 				return nil, err
 			}
 		}
-
 	}
 
 	// check if the number of sections with LimitDevAccess=1 is equal to the number of endpoints

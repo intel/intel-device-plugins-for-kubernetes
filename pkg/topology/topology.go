@@ -29,7 +29,7 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
-// to mock in tests
+// Path to the directory to mock in tests.
 var (
 	mockRoot = ""
 )
@@ -40,7 +40,7 @@ const (
 	ProviderKubelet = "kubelet"
 )
 
-// Hint represents various hints that can be detected from sysfs for the device
+// Hint represents various hints that can be detected from sysfs for the device.
 type Hint struct {
 	Provider string
 	CPUs     string
@@ -48,7 +48,7 @@ type Hint struct {
 	Sockets  string
 }
 
-// Hints represents set of hints collected from multiple providers
+// Hints represents set of hints collected from multiple providers.
 type Hints map[string]Hint
 
 func getDevicesFromVirtual(realDevPath string) (devs []string, err error) {
@@ -224,7 +224,7 @@ func FindSysFsDevice(dev string) (string, error) {
 	return filepath.Join(mockRoot, realDevPath), nil
 }
 
-// readFilesInDirectory small helper to fill struct with content from sysfs entry
+// readFilesInDirectory small helper to fill struct with content from sysfs entry.
 func readFilesInDirectory(fileMap map[string]*string, dir string) error {
 	for k, v := range fileMap {
 		b, err := ioutil.ReadFile(filepath.Join(dir, k))
@@ -239,7 +239,7 @@ func readFilesInDirectory(fileMap map[string]*string, dir string) error {
 	return nil
 }
 
-// mapKeys is a small helper that returns slice of keys for a given map
+// mapKeys is a small helper that returns slice of keys for a given map.
 func mapKeys(m map[string]bool) []string {
 	ret := make([]string, len(m))
 	i := 0
@@ -250,7 +250,7 @@ func mapKeys(m map[string]bool) []string {
 	return ret
 }
 
-// GetTopologyInfo returns topology information for the list of device nodes
+// GetTopologyInfo returns topology information for the list of device nodes.
 func GetTopologyInfo(devs []string) (*pluginapi.TopologyInfo, error) {
 	var result pluginapi.TopologyInfo
 	nodeIDs := map[int64]struct{}{}

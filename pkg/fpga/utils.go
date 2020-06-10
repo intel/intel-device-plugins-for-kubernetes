@@ -23,7 +23,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// small helper function that reads several files into provided set of variables
+// small helper function that reads several files into provided set of variables.
 func readFilesInDirectory(fileMap map[string]*string, dir string) error {
 	for k, v := range fileMap {
 		fname := filepath.Join(dir, k)
@@ -52,7 +52,7 @@ func readFilesInDirectory(fileMap map[string]*string, dir string) error {
 	return nil
 }
 
-// returns filename of the argument after resolving symlinks
+// returns filename of the argument after resolving symlinks.
 func cleanBasename(name string) string {
 	realPath, err := filepath.EvalSymlinks(name)
 	if err != nil {
@@ -61,7 +61,7 @@ func cleanBasename(name string) string {
 	return filepath.Base(realPath)
 }
 
-// check that FPGA device is a compatible PCI device
+// check that FPGA device is a compatible PCI device.
 func checkVendorAndClass(dev commonFpgaAPI) error {
 	pci, err := dev.GetPCIDevice()
 	if err != nil {

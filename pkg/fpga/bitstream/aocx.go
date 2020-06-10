@@ -138,6 +138,9 @@ func NewFileAOCX(r io.ReaderAt) (*FileAOCX, error) {
 
 func parseFpgaBin(d []byte) (*FileGBS, error) {
 	gb, err := elf.NewFile(bytes.NewReader(d))
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to open file")
+	}
 	gz := gb.Section(".acl.gbs.gz")
 	if gz == nil {
 		return nil, errors.New("no .acl.gbs.gz section in .acl.fgpa.bin")
@@ -161,7 +164,7 @@ func parseFpgaBin(d []byte) (*FileGBS, error) {
 	return g, nil
 }
 
-// RawBitstreamReader returns Reader for raw bitstream data
+// RawBitstreamReader returns Reader for raw bitstream data.
 func (f *FileAOCX) RawBitstreamReader() io.ReadSeeker {
 	if f.GBS != nil {
 		return f.GBS.Bitstream.Open()
@@ -169,7 +172,7 @@ func (f *FileAOCX) RawBitstreamReader() io.ReadSeeker {
 	return nil
 }
 
-// RawBitstreamData returns raw bitstream data
+// RawBitstreamData returns raw bitstream data.
 func (f *FileAOCX) RawBitstreamData() ([]byte, error) {
 	if f.GBS != nil {
 		return f.GBS.Bitstream.Data()
@@ -183,7 +186,7 @@ func (f *FileAOCX) UniqueUUID() string {
 	return f.Hash
 }
 
-// InterfaceUUID returns underlying GBS InterfaceUUID
+// InterfaceUUID returns underlying GBS InterfaceUUID.
 func (f *FileAOCX) InterfaceUUID() (ret string) {
 	if f.GBS != nil {
 		ret = f.GBS.InterfaceUUID()
@@ -191,7 +194,7 @@ func (f *FileAOCX) InterfaceUUID() (ret string) {
 	return
 }
 
-// AcceleratorTypeUUID returns underlying GBS AFU ID
+// AcceleratorTypeUUID returns underlying GBS AFU ID.
 func (f *FileAOCX) AcceleratorTypeUUID() (ret string) {
 	if f.GBS != nil {
 		ret = f.GBS.AcceleratorTypeUUID()
@@ -199,7 +202,7 @@ func (f *FileAOCX) AcceleratorTypeUUID() (ret string) {
 	return
 }
 
-// InstallPath returns unique filename for bitstream relative to given directory
+// InstallPath returns unique filename for bitstream relative to given directory.
 func (f *FileAOCX) InstallPath(root string) (ret string) {
 	interfaceID := f.InterfaceUUID()
 	uniqID := f.UniqueUUID()
@@ -209,7 +212,7 @@ func (f *FileAOCX) InstallPath(root string) (ret string) {
 	return
 }
 
-// ExtraMetadata returns map of key/value with additional metadata that can be detected from bitstream
+// ExtraMetadata returns map of key/value with additional metadata that can be detected from bitstream.
 func (f *FileAOCX) ExtraMetadata() map[string]string {
 	return map[string]string{
 		"Board":   f.Board,

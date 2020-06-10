@@ -358,7 +358,7 @@ func TestAllocate(t *testing.T) {
 	}
 }
 
-// Minimal implementation of pluginapi.DevicePlugin_ListAndWatchServer
+// Minimal implementation of pluginapi.DevicePlugin_ListAndWatchServer.
 type listAndWatchServerStub struct {
 	testServer  *server
 	generateErr int

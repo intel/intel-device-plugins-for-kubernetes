@@ -1,6 +1,6 @@
 package fpgaintel
 
-// API parameters
+// API parameters.
 const (
 	GroupName = "fpga.intel.com"
 )

@@ -20,14 +20,11 @@ import (
 )
 
 func ioctl(fd uintptr, req uint, arg uintptr) (ret uintptr, err error) {
-	ret, _, en := syscall.Syscall(syscall.SYS_IOCTL, fd, uintptr(req), arg)
-	if en != 0 {
-		err = syscall.Errno(en)
-	}
+	ret, _, err = syscall.Syscall(syscall.SYS_IOCTL, fd, uintptr(req), arg)
 	return
 }
 
-// Same as above, but open device only for single operation
+// Same as above, but open device only for single operation.
 func ioctlDev(dev string, req uint, arg uintptr) (ret uintptr, err error) {
 	f, err := os.OpenFile(dev, os.O_RDWR, 0644)
 	if err != nil {

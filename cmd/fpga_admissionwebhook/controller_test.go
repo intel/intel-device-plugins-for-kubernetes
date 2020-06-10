@@ -248,10 +248,10 @@ func TestProcessNextWorkItem(t *testing.T) {
 	tcases := []struct {
 		name             string
 		obj              *fpgaObjectKey
-		shutdown         bool
 		afLister         *fakeAfLister
 		regionLister     *fakeRegionLister
 		expectedContinue bool
+		shutdown         bool
 	}{
 		{
 			name:             "Receive invalid object",
