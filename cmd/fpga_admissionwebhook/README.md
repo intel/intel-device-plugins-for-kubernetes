@@ -72,6 +72,39 @@ The script has some pre-requisite tools that must be installed on your system:
 - [`jq`](https://github.com/stedolan/jq)
 - [`cfssl`](https://github.com/cloudflare/cfssl)
 
+Also if your cluster operates behind a corporate proxy make sure that the API
+server is configured not to send requests to cluster services through the
+proxy. You can check that with the following command:
+
+```bash
+$ kubectl describe pod kube-apiserver --namespace kube-system | grep -i no_proxy | grep "\.svc"
+```
+
+In case there's no output and your cluster was deployed with `kubeadm` open
+`/etc/kubernetes/manifests/kube-apiserver.yaml` at the control plane nodes and
+append `.svc` to the `no_proxy` environment variable:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  ...
+spec:
+  containers:
+  - command:
+    - kube-apiserver
+    - --advertise-address=10.237.71.99
+    ...
+    env:
+    - name: http_proxy
+      value: http://proxy.host:8080
+    - name: https_proxy
+      value: http://proxy.host:8433
+    - name: no_proxy
+      value: 127.0.0.1,localhost,.example.com,10.0.0.0/8,.svc
+    ...
+```
+
 ### Build the webhook image
 
 Before the webhook can be deployed, its container image needs to be built:
