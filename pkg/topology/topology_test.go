@@ -139,7 +139,9 @@ func TestReadFilesInDirectory(t *testing.T) {
 		t.Fatalf("unable to create test directory: %+v", err)
 	}
 	defer os.RemoveAll(dir)
-	ioutil.WriteFile(filepath.Join(dir, fname), content, 0644)
+	if err = ioutil.WriteFile(filepath.Join(dir, fname), content, 0600); err != nil {
+		t.Fatalf("unexpected failure: %v", err)
+	}
 
 	if err = readFilesInDirectory(fileMap, dir); err != nil {
 		t.Fatalf("unexpected failure: %v", err)

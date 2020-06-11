@@ -25,7 +25,7 @@ import (
 )
 
 func init() {
-	flag.Set("v", "4") //Enable debug output
+	_ = flag.Set("v", "4") //Enable debug output
 }
 
 // mockNotifier implements Notifier interface.
@@ -111,17 +111,17 @@ func TestScan(t *testing.T) {
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, devfsdir := range tc.devfsdirs {
-				if err := os.MkdirAll(path.Join(devfs, devfsdir), 0755); err != nil {
+				if err := os.MkdirAll(path.Join(devfs, devfsdir), 0750); err != nil {
 					t.Fatalf("Failed to create fake device directory: %+v", err)
 				}
 			}
 			for _, sysfsdir := range tc.sysfsdirs {
-				if err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0755); err != nil {
+				if err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0750); err != nil {
 					t.Fatalf("Failed to create fake device directory: %+v", err)
 				}
 			}
 			for filename, body := range tc.sysfsfiles {
-				if err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0644); err != nil {
+				if err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0600); err != nil {
 					t.Fatalf("Failed to create fake vendor file: %+v", err)
 				}
 			}

@@ -29,26 +29,26 @@ import (
 )
 
 func init() {
-	flag.Set("v", "4") //Enable debug output
+	_ = flag.Set("v", "4") //Enable debug output
 }
 
 func createTestFiles(prefix string, dirs []string, files map[string][]byte, symlinks map[string]string) error {
 	for _, dir := range dirs {
-		err := os.MkdirAll(path.Join(prefix, dir), 0755)
+		err := os.MkdirAll(path.Join(prefix, dir), 0750)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
 
 	for filename, body := range files {
-		err := ioutil.WriteFile(path.Join(prefix, filename), body, 0644)
+		err := ioutil.WriteFile(path.Join(prefix, filename), body, 0600)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake vendor file")
 		}
 	}
 
 	for link, target := range symlinks {
-		err := os.MkdirAll(path.Join(prefix, target), 0755)
+		err := os.MkdirAll(path.Join(prefix, target), 0750)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake symlink target directory")
 		}
@@ -376,7 +376,7 @@ func TestScanPrivate(t *testing.T) {
 		},
 	}
 	for _, tt := range tcases {
-		if err := os.MkdirAll(tmpdir, 0755); err != nil {
+		if err := os.MkdirAll(tmpdir, 0750); err != nil {
 			t.Fatal(err)
 		}
 
@@ -440,7 +440,9 @@ func TestPostAllocate(t *testing.T) {
 		"03:04.4": {},
 	}
 	dp := &DevicePlugin{}
-	dp.PostAllocate(response)
+	if err := dp.PostAllocate(response); err != nil {
+		t.Errorf("Unexpected error: %+v", err)
+	}
 	if len(response.ContainerResponses[0].Envs) != 4 {
 		t.Fatal("Set wrong number of Environment Variables")
 	}

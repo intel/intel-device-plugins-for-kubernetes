@@ -29,26 +29,26 @@ import (
 )
 
 func init() {
-	flag.Set("v", "4") // Enable debug output
+	_ = flag.Set("v", "4") // Enable debug output
 }
 
 func createTestDirs(devfs, sysfs string, devfsDirs, sysfsDirs []string, sysfsFiles map[string][]byte) error {
 	var err error
 
 	for _, devfsdir := range devfsDirs {
-		err = os.MkdirAll(path.Join(devfs, devfsdir), 0755)
+		err = os.MkdirAll(path.Join(devfs, devfsdir), 0750)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
 	for _, sysfsdir := range sysfsDirs {
-		err = os.MkdirAll(path.Join(sysfs, sysfsdir), 0755)
+		err = os.MkdirAll(path.Join(sysfs, sysfsdir), 0750)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
 	for filename, body := range sysfsFiles {
-		err = ioutil.WriteFile(path.Join(sysfs, filename), body, 0644)
+		err = ioutil.WriteFile(path.Join(sysfs, filename), body, 0600)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake vendor file")
 		}
@@ -67,7 +67,9 @@ func TestPostAllocate(t *testing.T) {
 	dp := &devicePlugin{
 		annotationValue: testValue,
 	}
-	dp.PostAllocate(response)
+	if err := dp.PostAllocate(response); err != nil {
+		t.Errorf("Unexpected error: %+v", err)
+	}
 
 	if len(response.ContainerResponses[0].Annotations) != 1 {
 		t.Fatal("Set wrong number of annotations")

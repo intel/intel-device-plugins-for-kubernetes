@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package dpdkdrv implements QAT device plugin for DPDK driver.
 package dpdkdrv
 
 import (
@@ -192,7 +193,7 @@ func (dp *DevicePlugin) getDpdkMounts(id string) ([]pluginapi.Mount, error) {
 }
 
 func (dp *DevicePlugin) getDeviceID(pciAddr string) (string, error) {
-	devID, err := ioutil.ReadFile(path.Join(dp.pciDeviceDir, pciAddr, "device"))
+	devID, err := ioutil.ReadFile(path.Join(dp.pciDeviceDir, filepath.Clean(pciAddr), "device"))
 	if err != nil {
 		return "", errors.Wrapf(err, "Cannot obtain ID for the device %s", pciAddr)
 	}
@@ -206,7 +207,7 @@ func (dp *DevicePlugin) bindDevice(id string) error {
 	unbindDevicePath := path.Join(dp.pciDeviceDir, devicePCIAddr, driverUnbindSuffix)
 
 	// Unbind from the kernel driver
-	err := ioutil.WriteFile(unbindDevicePath, []byte(devicePCIAddr), 0644)
+	err := ioutil.WriteFile(unbindDevicePath, []byte(devicePCIAddr), 0600)
 	if err != nil {
 		return errors.Wrapf(err, "Unbinding from kernel driver failed for the device %s", id)
 	}
@@ -216,7 +217,7 @@ func (dp *DevicePlugin) bindDevice(id string) error {
 	}
 	bindDevicePath := path.Join(dp.pciDriverDir, dp.dpdkDriver, newIDSuffix)
 	//Bind to the the dpdk driver
-	err = ioutil.WriteFile(bindDevicePath, []byte(vendorPrefix+vfdevID), 0644)
+	err = ioutil.WriteFile(bindDevicePath, []byte(vendorPrefix+vfdevID), 0600)
 	if err != nil {
 		return errors.Wrapf(err, "Binding to the DPDK driver failed for the device %s", id)
 	}
