@@ -27,18 +27,18 @@ import (
 )
 
 func init() {
-	flag.Set("v", "4")
+	_ = flag.Set("v", "4")
 }
 
 func createTestDirs(sysfs string, sysfsDirs []string, sysfsFiles map[string][]byte) error {
 	for _, sysfsdir := range sysfsDirs {
-		err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0755)
+		err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0750)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
 	for filename, body := range sysfsFiles {
-		err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0644)
+		err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0600)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake vendor file")
 		}
