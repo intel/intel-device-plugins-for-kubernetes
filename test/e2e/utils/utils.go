@@ -12,22 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package utils contails utilities useful in the context of E2E tests.
 package utils
 
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
+	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	testutils "k8s.io/kubernetes/test/utils"
 )
@@ -110,4 +115,42 @@ func LocateRepoFile(repopath string) (string, error) {
 	}
 
 	return "", errors.New("no file found, try to define PLUGINS_REPO_DIR pointing to the root of the repository")
+}
+
+func createKustomizationOverlay(namespace, base, overlay string) error {
+	relPath := ""
+	for range strings.Split(overlay[1:], "/") {
+		relPath = relPath + "../"
+	}
+	relPath = relPath + base[1:]
+
+	content := fmt.Sprintf("namespace: %s\nbases:\n  - %s", namespace, relPath)
+	return ioutil.WriteFile(overlay+"/kustomization.yaml", []byte(content), 0600)
+}
+
+// DeployFpgaWebhook deploys FPGA admission webhook to a framework-specific namespace.
+func DeployFpgaWebhook(f *framework.Framework, kustomizationPath string) {
+	if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, "cert-manager",
+		labels.Set{"app.kubernetes.io/name": "cert-manager"}.AsSelector(), 1 /* one replica */, 10*time.Second); err != nil {
+		framework.Failf("unable to detect running cert-manager: %v", err)
+	}
+
+	tmpDir, err := ioutil.TempDir("", "fpgawebhooke2etest-"+f.Namespace.Name)
+	if err != nil {
+		framework.Failf("unable to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	err = createKustomizationOverlay(f.Namespace.Name, filepath.Dir(kustomizationPath), tmpDir)
+	if err != nil {
+		framework.Failf("unable to kustomization overlay: %v", err)
+	}
+
+	framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", tmpDir)
+	if _, err = e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
+		labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1 /* one replica */, 10*time.Second); err != nil {
+		framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
+		kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+		framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+	}
 }
