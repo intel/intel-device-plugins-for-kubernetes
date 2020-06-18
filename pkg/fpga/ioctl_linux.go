@@ -19,9 +19,15 @@ import (
 	"syscall"
 )
 
-func ioctl(fd uintptr, req uint, arg uintptr) (ret uintptr, err error) {
-	ret, _, err = syscall.Syscall(syscall.SYS_IOCTL, fd, uintptr(req), arg)
-	return
+// TODO(rojkov): drop this function when it lands in x/sys/unix.
+func ioctl(fd uintptr, req uint, arg uintptr) (uintptr, error) {
+	ret, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, uintptr(req), arg)
+	// Even though err is syscall.Errno which implements the error interface it's
+	// an unsigned number and can't be nil. So filter the zero value out.
+	if err != 0 {
+		return ret, err
+	}
+	return ret, nil
 }
 
 // Same as above, but open device only for single operation.
