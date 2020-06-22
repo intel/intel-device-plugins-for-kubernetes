@@ -9,9 +9,9 @@ on:
       - master
       - 'release-*'
 env:
-  RUNC_VERSION: v1.0.0-rc10
-  CRIO_VERSION: v1.17.0
-  GO_VERSION: 1.13.8
+  RUNC_VERSION: v1.0.0-rc90
+  CRIO_VERSION: v1.18.2
+  GO_VERSION: 1.13.12
 jobs:
 
   golangci:
