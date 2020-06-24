@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package fpga implements E2E tests for FPGA device plugin.
 package fpga
 
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
@@ -32,7 +34,7 @@ import (
 
 const (
 	pluginDeployScript  = "scripts/deploy-fpgaplugin.sh"
-	webhookDeployScript = "scripts/webhook-deploy.sh"
+	kustomizationYaml   = "deployments/fpga_admissionwebhook/default/kustomization.yaml"
 	nlb0NodeResource    = "fpga.intel.com/af-695.d84.aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs"
 	nlb0PodResource     = "fpga.intel.com/arria10.dcp1.2-nlb0-orchestrated"
 	nlb3PodResource     = "fpga.intel.com/arria10.dcp1.2-nlb3-orchestrated"
@@ -45,9 +47,9 @@ func init() {
 }
 
 func describe() {
-	webhookDeployScriptPath, err := utils.LocateRepoFile(webhookDeployScript)
+	kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
 	if err != nil {
-		framework.Failf("unable to locate %q: %v", webhookDeployScript, err)
+		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
 	}
 
 	pluginDeployScriptPath, err := utils.LocateRepoFile(pluginDeployScript)
@@ -60,9 +62,10 @@ func describe() {
 	ginkgo.It("Run FPGA plugin tests", func() {
 		// Deploy webhook
 		ginkgo.By(fmt.Sprintf("namespace %s: deploying webhook", fmw.Namespace.Name))
-		_, _, err := framework.RunCmd(webhookDeployScriptPath, "--namespace", fmw.Namespace.Name)
-		framework.ExpectNoError(err)
-		waitForPod(fmw, "intel-fpga-webhook")
+		utils.DeployFpgaWebhook(fmw, kustomizationPath)
+
+		ginkgo.By("deploying mappings")
+		framework.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-n", fmw.Namespace.Name, "-f", filepath.Dir(kustomizationPath)+"/../mappings-collection.yaml")
 
 		// Run region test case twice to ensure that device is reprogrammed at least once
 		runTestCase(fmw, pluginDeployScriptPath, "region", arria10NodeResource, nlb3PodResource, "nlb3", "nlb0")

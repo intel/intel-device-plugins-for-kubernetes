@@ -70,6 +70,8 @@ screen1()
   command 'kubectl get pods --all-namespaces'
   out 'Check if CRI-O is running k8s pods:'
   command 'sudo crictl ps'
+  out 'Check if cert-manager is running:'
+  command 'kubectl get pods --namespace cert-manager'
 }
 
 screen2()
@@ -85,12 +87,14 @@ screen3()
   clear
   cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
   out '3. Deploy admission controller webhook'
-  command 'cd scripts ; ./webhook-deploy.sh --mode orchestrated; cd ../'
+  command 'kubectl apply -k deployments/fpga_admissionwebhook/default'
   sleep 2
   out 'Check if its pod is running:'
-  command 'kubectl get pods | grep intel-fpga-webhook'
+  command 'kubectl get pods -n intelfpgawebhook-system'
+  out 'Deploy the mappings:'
+  command 'kubectl apply -f deployments/fpga_admissionwebhook/mappings-collection.yaml'
   out 'Check pod logs:'
-  command "kubectl logs $(kubectl get pods | grep intel-fpga-webhook | awk '{print $1}')"
+  command "kubectl logs $(kubectl get pods -n intelfpgawebhook-system| grep intelfpgawebhook-controller-manager | awk '{print $1}') -n intelfpgawebhook-system"
 }
 
 screen4()

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        args:
+        - -tls-cert-file=/tmp/k8s-webhook-server/serving-certs/tls.crt
+        - -tls-private-key-file=/tmp/k8s-webhook-server/serving-certs/tls.key
+        - -v=1
+        ports:
+        - containerPort: 8443
+          name: webhook-server
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert

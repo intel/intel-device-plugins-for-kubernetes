@@ -55,6 +55,7 @@ func setupFirstNode() []byte {
 			metav1.NamespaceDefault,
 			metav1.NamespacePublic,
 			v1.NamespaceNodeLease,
+			"cert-manager",
 		})
 	if err != nil {
 		framework.Failf("Error deleting orphaned namespaces: %v", err)

@@ -5,11 +5,8 @@
 * [Introduction](#introduction)
 * [Dependencies](#dependencies)
 * [Installation](#installation)
-    * [Getting the source code](#getting-the-source-code)
-    * [Deploying via the script](#deploying-via-the-script)
-        * [Pre-requisites](#pre-requisites)
-        * [Build the webhook image](#build-the-webhook-image)
-        * [Deploying via the script](#deploying-via-the-script)
+    * [Pre-requisites](#pre-requisites)
+    * [Deployment](#deployment)
 * [Mappings](#mappings)
 * [Next steps](#next-steps)
 
@@ -46,31 +43,14 @@ All components have the same basic dependencies as the
 The following sections detail how to obtain, build and deploy the admission
 controller webhook plugin.
 
-## Getting the source code
+## Pre-requisites
+
+The webhook depends on having [cert-manager](https://cert-manager.io/)
+installed:
 
 ```bash
-$ mkdir -p $(go env GOPATH)/src/github.com/intel
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml
 ```
-
-## Deploying via the script
-
-Deploying the webhook admission controller consists of a number of components,
-and actions, including:
-
-- Certificates (secrets)
-- CRDs
-- Deployment
-- Service
-- Registration
-
-A script is provided to make the whole process easier.
-
-### Pre-requisites
-
-The script has some pre-requisite tools that must be installed on your system:
-- [`jq`](https://github.com/stedolan/jq)
-- [`cfssl`](https://github.com/cloudflare/cfssl)
 
 Also if your cluster operates behind a corporate proxy make sure that the API
 server is configured not to send requests to cluster services through the
@@ -105,51 +85,24 @@ spec:
     ...
 ```
 
-### Build the webhook image
+## Deployment
 
-Before the webhook can be deployed, its container image needs to be built:
-
-```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
-$ make intel-fpga-admissionwebhook
-...
-Successfully tagged intel/intel-fpga-admissionwebhook:devel
-```
-
-### Deploying via the script
-
-To deploy the webhook, run the [`scripts/webhook-deploy.sh`](../../scripts/webhook-deploy.sh)
- script:
+To deploy the webhook, run
 
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
-$ ./scripts/webhook-deploy.sh
-Create secret including signed key/cert pair for the webhook
-...
-Create FPGA CRDs
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_admissionwebhook/default?ref=master
+namespace/intelfpgawebhook-system created
 customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
 customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
-...
-clusterrole.rbac.authorization.k8s.io/fpga-reader created
-clusterrolebinding.rbac.authorization.k8s.io/default-fpga-reader created
-...
-Create webhook deployment
-deployment.extensions/intel-fpga-webhook-deployment created
-Create webhook service
-service/intel-fpga-webhook-svc created
-Register webhook
-mutatingwebhookconfiguration.admissionregistration.k8s.io/fpga-mutator-webhook-cfg created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/intelfpgawebhook-mutating-webhook-configuration created
+clusterrole.rbac.authorization.k8s.io/intelfpgawebhook-manager-role created
+clusterrolebinding.rbac.authorization.k8s.io/intelfpgawebhook-manager-rolebinding created
+service/intelfpgawebhook-webhook-service created
+deployment.apps/intelfpgawebhook-controller-manager created
+certificate.cert-manager.io/intelfpgawebhook-serving-cert created
+issuer.cert-manager.io/intelfpgawebhook-selfsigned-issuer created
 ```
-
-The script needs the CA bundle used for signing certificate requests in your cluster.
-By default, the script fetches the bundle stored in the configmap
-`extension-apiserver-authentication`. However, your cluster may use a different signing
-certificate that is passed in the option `--cluster-signing-cert-file` to `kube-controller-manager`.
-In this case, you must point the script to the actual signing certificate as follows:
-
-```bash
-$ ./scripts/webhook-deploy.sh --ca-bundle-path /var/run/kubernetes/server-ca.crt
-```
+Now you can deploy your mappings.
 
 # Mappings
 
@@ -191,14 +144,17 @@ bitstream to a region before the container is started.
 
 Mappings of resource names are configured with objects of `AcceleratorFunction` and
 `FpgaRegion` custom resource definitions found respectively in
-[`./deployment/fpga_admissionwebhook/af-crd.yaml`](../../deployment/fpga_admissionwebhook/af-crd.yaml)
-and [`./deployment/fpga_admissionwebhook/region-crd.yaml`](../../deployment/fpga_admissionwebhook/region-crd.yaml.)
+[`./deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_af.yaml`](../../deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_af.yaml)
+and [`./deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_region.yaml`](../../deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_region.yaml).
 
 Mappings between 'names' and 'ID's are controlled by the admission controller
 mappings collection file found in
 [`./deployments/fpga_admissionwebhook/mappings-collection.yaml`](../../deployments/fpga_admissionwebhook/mappings-collection.yaml).
-This mappings file is deployed alongside the admission controller as part of the
-[webhook deploy script](../../scripts/webhook-deploy.sh).
+This mappings file can be deployed with
+
+```bash
+$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/deployments/fpga_admissionwebhook/mappings-collection.yaml
+```
 
 Note that the mappings are scoped to the namespaces they were created in
 and they are applicable to pods created in the corresponding namespaces.

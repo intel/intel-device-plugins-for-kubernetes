@@ -5,13 +5,17 @@ metadata:
 spec:
   group: fpga.intel.com
   version: v2
-  scope: Namespaced
+  versions:
+  - name: v2
+    served: true
+    storage: true
   names:
     plural: acceleratorfunctions
     singular: acceleratorfunction
     kind: AcceleratorFunction
     shortNames:
     - af
+  scope: Namespaced
   validation:
     openAPIV3Schema:
       properties:
