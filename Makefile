@@ -1,3 +1,4 @@
+CONTROLLER_GEN ?= controller-gen
 GO := go
 GOFMT := gofmt
 KUBECTL ?= kubectl
@@ -10,7 +11,7 @@ EXTRA_BUILD_ARGS ?= ""
 
 WEBHOOK_IMAGE_FILE = intel-fpga-admissionwebhook-devel.tgz
 
-pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e)
+pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e | grep -v envtest)
 cmds = $(shell ls cmd)
 e2e_tmp_dir := $(shell mktemp -u -t e2e-tests.XXXXXXXXXX)
 
@@ -50,15 +51,37 @@ test-with-kind:
 	rm -rf $(e2e_tmp_dir); \
 	exit $$rc
 
+envtest:
+	@$(GO) test ./test/envtest
+
 lint:
-	@golangci-lint run --timeout 5m
+	@golangci-lint run --timeout 15m
 
 checks: lint go-mod-tidy
+
+generate:
+	$(CONTROLLER_GEN) object:headerFile="build/boilerplate/boilerplate.go.txt" paths="./pkg/apis/deviceplugin/..."
+	$(CONTROLLER_GEN) crd:trivialVersions=true \
+		paths="./pkg/apis/deviceplugin/..." \
+		output:crd:artifacts:config=deployments/operator/crd/bases
+	$(CONTROLLER_GEN) webhook \
+		paths="./pkg/apis/deviceplugin/..." \
+		output:webhook:artifacts:config=deployments/operator/webhook
+	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./pkg/controllers/..." output:dir=deployments/operator/rbac
 
 $(cmds):
 	cd cmd/$@; $(GO) build -tags $(BUILDTAGS)
 
 build: $(cmds)
+
+deploy-operator: operator generate
+	kubectl apply -k deployments/operator/default
+
+undeploy-operator:
+	kubectl delete -k deployments/operator/default
+
+run-operator: deploy-operator
+	./cmd/operator/operator
 
 clean:
 	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; $(GO) clean ; cd $$pwd ; done
@@ -111,4 +134,4 @@ check-github-actions:
 	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
 
-.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions
+.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions run-operator envtest deploy-operator undeploy-operator

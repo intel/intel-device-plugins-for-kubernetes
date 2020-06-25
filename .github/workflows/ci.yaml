@@ -71,6 +71,7 @@ jobs:
           - intel-fpga-plugin
           - intel-qat-plugin
           - intel-vpu-plugin
+          - intel-deviceplugin-operator
 
           # Demo images
           - crypto-perf

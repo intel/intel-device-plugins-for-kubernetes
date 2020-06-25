@@ -5,9 +5,10 @@ go 1.13
 require (
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-ini/ini v1.46.0
+	github.com/go-logr/logr v0.1.0
 	github.com/google/gousb v0.0.0-20190812193832-18f4c1d8a750
 	github.com/onsi/ginkgo v1.11.0
-	github.com/onsi/gomega v1.7.0
+	github.com/onsi/gomega v1.8.1
 	github.com/pkg/errors v0.8.1
 	golang.org/x/sys v0.0.0-20191022100944-742c48ecaeb7
 	google.golang.org/grpc v1.26.0
@@ -20,6 +21,7 @@ require (
 	k8s.io/kubelet v0.17.3
 	k8s.io/kubernetes v1.18.2
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
+	sigs.k8s.io/controller-runtime v0.6.0
 )
 
 replace (

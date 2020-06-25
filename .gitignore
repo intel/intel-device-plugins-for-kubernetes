@@ -11,6 +11,7 @@ cmd/fpga_plugin/fpga_plugin
 cmd/fpga_tool/fpga_tool
 cmd/gpu_plugin/gpu_plugin
 cmd/qat_plugin/qat_plugin
+cmd/operator/operator
 
 deployments/fpga_admissionwebhook/base/intel-fpga-webhook-certs-secret
 
