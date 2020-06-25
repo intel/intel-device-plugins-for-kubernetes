@@ -23,7 +23,7 @@ spec:
           properties:
             afuId:
               type: string
-              pattern: '^[0-9a-f]{8,32}$'
+              pattern: '^[0-9a-f]{8,40}$'
             interfaceId:
               type: string
               pattern: '^[0-9a-f]{8,32}$'
