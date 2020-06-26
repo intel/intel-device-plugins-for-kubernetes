@@ -53,7 +53,7 @@ Only one worker node has a GPU. The time difference in transcoding speed is capt
 ## Intel® FPGA Device Plugin demo videos
 
 The screencasts demonstrate the deployment of the Intel® FPGA Device Plugin for
-Kubernetes. Demo 1 executes a native loopback 3 (NLB3) workload, and demo 2 runs an [OpenCL workload](https://www.intel.com/content/www/us/en/programmable/support/support-resources/design-examples/design-software/opencl/matrix-multiplication.html) to do English letter recognition. The demos begin
+Kubernetes. Demo 1 executes a native loopback 3 (NLB3) workload, and demo 2 runs an [OpenCL workload](https://www.intel.com/content/www/us/en/programmable/support/support-resources/design-examples/design-software/opencl/matrix-multiplication.html) to do English letters recognition, and compares time used with and without FPGA to show the acceleration. The demos begin
 with a fully [configured Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
 with the [Go runtime](https://golang.org/doc/install).
 
