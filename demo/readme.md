@@ -4,7 +4,7 @@
 
 - [Demo overview](#demo-overview)
 - [Intel® GPU Device Plugin demo video](#intel-gpu-device-plugin-demo-video)
-- [Intel® FPGA Device Plugin demo video](#intel-fpga-device-plugin-demo-video)
+- [Intel® FPGA Device Plugin demo videos](#intel-fpga-device-plugin-demo-videos)
 - [Intel® QuickAssist Technology Device Plugin OpenSSL demo video](#intel-quickassist-technology-device-plugin-openssl-demo-video)
 - [Intel® QuickAssist Technology Device Plugin with DPDK demo video](#intel-quickassist-technology-device-plugin-with-dpdk-demo-video)
 
@@ -50,14 +50,14 @@ Only one worker node has a GPU. The time difference in transcoding speed is capt
 
 [![Intel® GPU Device Plugin demo](https://img.youtube.com/vi/sg31rV1FdQk/0.jpg)](https://youtu.be/sg31rV1FdQk)
 
-## Intel® FPGA Device Plugin demo video
+## Intel® FPGA Device Plugin demo videos
 
-The screencast demonstrates the deployment of the Intel® FPGA Device Plugin for
-Kubernetes and executes a native loopback 3 (NLB3) workload. The demo begins
+The screencasts demonstrate the deployment of the Intel® FPGA Device Plugin for
+Kubernetes. Demo 1 executes a native loopback 3 (NLB3) workload, and demo 2 runs an [OpenCL workload](https://www.intel.com/content/www/us/en/programmable/support/support-resources/design-examples/design-software/opencl/matrix-multiplication.html) to do English letter recognition. The demos begin
 with a fully [configured Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
 with the [Go runtime](https://golang.org/doc/install).
 
-### Demo platform configuration
+### Demo 1 (NLB3) platform configuration
 
 - Hardware
     - 1-node, 2x Intel@ Xeon@ Gold 6140M CPU @ 2.30GHz
@@ -69,20 +69,36 @@ with the [Go runtime](https://golang.org/doc/install).
     - CRI-O 1.13.1
     - Intel® FPGA Device Plugin built from master branch
 
+### Demo 2 (OpenCL) platform configuration
+
+- Hardware
+    - Multi-node, FPGA host has 24 cores Intel(R) Xeon(R) Gold 6252N CPU @ 2.30GHz
+    - Total memory 195 GB
+    - Intel® FPGA Programmable Acceleration Card D5005
+- Software
+    - Centos 7 (Kernel: 3.10.0-1062.12.1.el7.x86_64) on worker node host
+    - Kubernetes* 1.17
+    - CRI-O 1.17.3
+    - Intel® FPGA Device Plugin built from master branch
+
 ### Demo steps
 
 1. Validate the status of the [Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/).
 2. Clone the [Intel Device Plugins for Kubernetes source](https://github.com/intel/intel-device-plugins-for-kubernetes).
 3. Provision the [admission controller webhook](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_admissionwebhook/README.md).
 4. Provision the [Intel® FPGA Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_plugin/README.md).
-5. Build the opae-nlb-demo image
-6. Run the NLB3 workload.
+5. Build the opae-nlb-demo or fpga-opencl-centos image
+6. Run the NLB3 or OpenCL workload.
 
 ### Screencast
 
-Intel® FPGA Device Plugin deployment
+Intel® FPGA Device Plugin deployment with orchestrated/region mode and NLB workload:
 
-[![Intel® FPGA Device Plugin deployment](https://asciinema.org/a/JuYzNxx9n0eQ1vQBzy86GYBki.png)](https://asciinema.org/a/JuYzNxx9n0eQ1vQBzy86GYBki)
+[<img src="https://asciinema.org/a/JuYzNxx9n0eQ1vQBzy86GYBki.svg" width="700">](https://asciinema.org/a/JuYzNxx9n0eQ1vQBzy86GYBki)
+
+Intel® FPGA Device Plugin deployment with orchestrated/region mode and OpenCL workload:
+
+[<img src="https://asciinema.org/a/343155.svg" width="700">](https://asciinema.org/a/343155)
 
 ## Intel® QuickAssist Technology Device Plugin OpenSSL demo video
 
@@ -118,7 +134,7 @@ and [Kata Containers](https://github.com/kata-containers/documentation/tree/mast
 ### Screencast
 Intel® QAT Device Plugin deployment
 
-[![Intel® QAT Device Plugin deployment](https://asciinema.org/a/2N7wF3c9oeCuB9sFqTNm2gmOr.png)](https://asciinema.org/a/2N7wF3c9oeCuB9sFqTNm2gmOr)
+[<img src="https://asciinema.org/a/2N7wF3c9oeCuB9sFqTNm2gmOr.svg" height=600>](https://asciinema.org/a/2N7wF3c9oeCuB9sFqTNm2gmOr)
 
 ## Intel® QuickAssist Technology Device Plugin with DPDK demo video
 
@@ -136,4 +152,4 @@ Intel® QAT Device Plugin deployment
 
 ### Screencast
 Intel® QAT Device Plugin with DPDK
-[![Intel® QAT Device Plugin with DPDK](https://asciinema.org/a/PoWOz4q2lX4AF4K9A2AV1RtSA.png)](https://asciinema.org/a/PoWOz4q2lX4AF4K9A2AV1RtSA)
+[<img src="https://asciinema.org/a/PoWOz4q2lX4AF4K9A2AV1RtSA.svg" width=700>](https://asciinema.org/a/PoWOz4q2lX4AF4K9A2AV1RtSA)
