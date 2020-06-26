@@ -90,7 +90,7 @@ with the [Go runtime](https://golang.org/doc/install).
 5. Build the opae-nlb-demo or fpga-opencl-centos image
 6. Run the NLB3 or OpenCL workload.
 
-### Screencast
+### Screencasts
 
 Intel® FPGA Device Plugin deployment with orchestrated/region mode and NLB workload:
 
@@ -151,5 +151,6 @@ Intel® QAT Device Plugin deployment
 9. Get a shell to the running container and run a DPDK application.
 
 ### Screencast
-Intel® QAT Device Plugin with DPDK
+Intel® QAT Device Plugin with DPDK:
+
 [<img src="https://asciinema.org/a/PoWOz4q2lX4AF4K9A2AV1RtSA.svg" width=700>](https://asciinema.org/a/PoWOz4q2lX4AF4K9A2AV1RtSA)
