@@ -1,8 +1,0 @@
-# make sure to change only the -mode=af argument
-- op: test
-  path: /spec/template/spec/containers/0/args/0
-  value: -mode=af
-
-- op: replace
-  path: /spec/template/spec/containers/0/args/0
-  value: -mode=region

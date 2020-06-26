@@ -11,17 +11,12 @@
     * [Getting the source code](#getting-the-source-code)
     * [Verify node kubelet config](#verify-node-kubelet-config)
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
-        * [Create a service account](#create-a-service-account)
-        * [Deploying `region` mode](#deploying-region-mode)
-        * [Deploying `af` mode](#deploying-af-mode)
-        * [Deploy the DaemonSet](#deploy-the-daemonset)
         * [Verify plugin registration](#verify-plugin-registration)
         * [Building the plugin image](#building-the-plugin-image)
     * [Deploy by hand](#deploy-by-hand)
         * [Build FPGA device plugin](#build-fpga-device-plugin)
         * [Run FPGA device plugin in af mode](#run-fpga-device-plugin-in-af-mode)
         * [Run FPGA device plugin in region mode](#run-fpga-device-plugin-in-region-mode)
-* [Next steps](#next-steps)
 
 # Introduction
 
@@ -177,81 +172,82 @@ $ ls /var/lib/kubelet/device-plugins/kubelet.sock
 
 ## Deploying as a DaemonSet
 
-You can deploy the plugin in either of the modes, using the
-[DaemonSet YAML](../../deployments/fpga_plugin/fpga_plugin.yaml)
-supplied. Details are in the following sections. Actions common to both deployment modes are detailed
-first. Mode specific actions are then detailed.
+As a pre-requisite you need to have [cert-manager](https://cert-manager.io)
+up and running:
+
+```bash
+$ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml
+$ kubectl get pods -n cert-manager
+NAME                                      READY   STATUS    RESTARTS   AGE
+cert-manager-7747db9d88-bd2nl             1/1     Running   0          1m
+cert-manager-cainjector-87c85c6ff-59sb5   1/1     Running   0          1m
+cert-manager-webhook-64dc9fff44-29cfc     1/1     Running   0          1m
+
+```
+
+Depending on the FPGA mode, run either
+```bash
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/af
+namespace/intelfpgaplugin-system created
+customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
+customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/intelfpgaplugin-mutating-webhook-configuration created
+clusterrole.rbac.authorization.k8s.io/intelfpgaplugin-manager-role created
+clusterrole.rbac.authorization.k8s.io/intelfpgaplugin-node-getter created
+clusterrolebinding.rbac.authorization.k8s.io/intelfpgaplugin-get-nodes created
+clusterrolebinding.rbac.authorization.k8s.io/intelfpgaplugin-manager-rolebinding created
+service/intelfpgaplugin-webhook-service created
+deployment.apps/intelfpgaplugin-webhook created
+daemonset.apps/intelfpgaplugin-fpgadeviceplugin created
+certificate.cert-manager.io/intelfpgaplugin-serving-cert created
+issuer.cert-manager.io/intelfpgaplugin-selfsigned-issuer created
+```
+or
+```bash
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/region
+namespace/intelfpgaplugin-system created
+customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
+customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/intelfpgaplugin-mutating-webhook-configuration created
+clusterrole.rbac.authorization.k8s.io/intelfpgaplugin-manager-role created
+clusterrole.rbac.authorization.k8s.io/intelfpgaplugin-node-getter created
+clusterrolebinding.rbac.authorization.k8s.io/intelfpgaplugin-get-nodes created
+clusterrolebinding.rbac.authorization.k8s.io/intelfpgaplugin-manager-rolebinding created
+service/intelfpgaplugin-webhook-service created
+deployment.apps/intelfpgaplugin-webhook created
+daemonset.apps/intelfpgaplugin-fpgadeviceplugin created
+certificate.cert-manager.io/intelfpgaplugin-serving-cert created
+issuer.cert-manager.io/intelfpgaplugin-selfsigned-issuer created
+```
+The command should result in two pods running:
+```bash
+$ kubectl get pods -n intelfpgaplugin-system
+NAME                                       READY   STATUS    RESTARTS   AGE
+intelfpgaplugin-fpgadeviceplugin-skcw5     1/1     Running   0          57s
+intelfpgaplugin-webhook-7d6bcb8b57-k52b9   1/1     Running   0          57s
+```
 
 If you intend to deploy your own image, you will need to reference the
 [image build section](#build-the-plugin-image) first.
 
-If you do not want to deploy the `devel` tagged image, you will need to edit the
-YAML deployment files to reference your required image.
+If you do not want to deploy the `devel` or release tagged image, you will need to create your
+own kustomization overlay referencing your required image.
 
-### For beta testing: new deployment model
-
-The FPGA plugin deployment is currently being rewritten to enable
-straight-forward deployment of both `af` and
-`region` modes. The deployment has two steps:
-
-1. Run `scripts/fpga-plugin-prepare-for-kustomization.sh`. This will
-   create the necessary secrets: a key and a signed certificate for
-   the FPGA admission controller.
-
-2. Depending on the FPGA mode, run either
-   ```bash
-   $ kubectl create -k deployments/fpga_plugin/overlays/af
-   ```
-   or
-   ```bash
-   $ kubectl create -k deployments/fpga_plugin/overlays/region
-   ```
-   This will create the service account and deploy
-   both the FPGA plugin and the admission controller in the chosen mode.
-
-This deployment model is under development. The remaining part of this
-document goes through the current deployment model: here for the
-FPGA plugin and in the next document for the FPGA admission controller.
-
-### Create a service account
-
-To deploy the plugin in a production cluster, create a service account
-for the plugin:
+If you need the FPGA plugin on some nodes to operate in a different mode then add this
+annotation to the nodes:
 
 ```bash
-$ kubectl create -f deployments/fpga_plugin/fpga_plugin_service_account.yaml
-serviceaccount/intel-fpga-plugin-controller created
-clusterrole.rbac.authorization.k8s.io/node-getter created
-clusterrolebinding.rbac.authorization.k8s.io/get-nodes created
+$ kubectl annotate node <node_name> 'fpga.intel.com/device-plugin-mode=region'
 ```
-
-### Deploying `region` mode
-
-To deploy the FPGA plugin DaemonSet in `region` mode, you need to set the plugin
-mode annotation on all of your nodes, otherwise the FPGA plugin will run in its default
-`af` mode.
-
+or
 ```bash
-$ kubectl annotate node --all 'fpga.intel.com/device-plugin-mode=region'
+$ kubectl annotate node <node_name> 'fpga.intel.com/device-plugin-mode=af'
 ```
+And restart the pods on the nodes.
 
-### Deploying `af` mode
-
-To deploy the FPGA plugin DaemonSet in `af` mode, you do not need to set the mode annotation on
-your nodes, as the FPGA plugin runs in `af` mode by default.
-
-> **Note:** The FPGA plugin [DaemonSet YAML](../../deployments/fpga_plugin/fpga_plugin.yaml)
+> **Note:** The FPGA plugin [DaemonSet YAML](../../deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml)
 > also deploys the [FPGA CRI-O hook](../fpga_criohook) `initcontainer` image, but it will be
 > benign (un-used) when running the FPGA plugin in `af` mode.
-
-### Deploy the DaemonSet
-
-You can then use the example DaemonSet YAML file provided to deploy the plugin.
-
-```bash
-$ kubectl create -f deployments/fpga_plugin/fpga_plugin.yaml
-daemonset.apps/intel-fpga-plugin created
-```
 
 ### Verify plugin registration
 
@@ -288,8 +284,8 @@ Successfully tagged intel/intel-fpga-plugin:devel
 
 This image launches `fpga_plugin` in `af` mode by default.
 
-To use your own container image, modify the
-[`deployments/fpga_plugin/fpga_plugin.yaml`](../../deployments/fpga_plugin/fpga_plugin.yaml)
+To use your own container image, create you own kustomization overlay patching
+[`deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml`](../../deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml)
 file.
 
 ## Deploy by hand
@@ -337,6 +333,3 @@ FPGA device plugin started in region mode
 device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-region-ce48969398f05f33946d560708be108a.sock
 device-plugin registered
 ```
-# Next steps
-
-Continue installation with the [FPGA admission controller webhook](../fpga_admissionwebhook/README.md).

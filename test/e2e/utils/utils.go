@@ -117,7 +117,8 @@ func LocateRepoFile(repopath string) (string, error) {
 	return "", errors.New("no file found, try to define PLUGINS_REPO_DIR pointing to the root of the repository")
 }
 
-func createKustomizationOverlay(namespace, base, overlay string) error {
+// CreateKustomizationOverlay creates an overlay with overridden namespace.
+func CreateKustomizationOverlay(namespace, base, overlay string) error {
 	relPath := ""
 	for range strings.Split(overlay[1:], "/") {
 		relPath = relPath + "../"
@@ -141,7 +142,7 @@ func DeployFpgaWebhook(f *framework.Framework, kustomizationPath string) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	err = createKustomizationOverlay(f.Namespace.Name, filepath.Dir(kustomizationPath), tmpDir)
+	err = CreateKustomizationOverlay(f.Namespace.Name, filepath.Dir(kustomizationPath), tmpDir)
 	if err != nil {
 		framework.Failf("unable to kustomization overlay: %v", err)
 	}

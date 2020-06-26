@@ -1,12 +1,9 @@
+namespace: intelfpgaplugin-system
+namePrefix: intelfpgaplugin-
+
 bases:
   - ../../base
-  - ../../../fpga_admissionwebhook/overlays/orchestrated
+  - ../../../fpga_admissionwebhook/base
 
-patchesJson6902:
-  - target:
-      group: apps
-      version: v1
-      kind: DaemonSet
-      name: intel-fpga-plugin
-    path:
-      change-mode-region.yaml
+patchesStrategicMerge:
+  - mode-region.yaml

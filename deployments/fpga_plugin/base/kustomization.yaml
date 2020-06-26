@@ -1,3 +1,4 @@
 resources:
-  - intel-fpga-plugin-controller-serviceaccount.yaml
+  - role.yaml
+  - role_binding.yaml
   - intel-fpga-plugin-daemonset.yaml

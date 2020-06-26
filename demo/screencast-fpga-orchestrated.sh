@@ -39,18 +39,12 @@ cleanup()
   out 'Cleanup demo artifacts' 20
   out 'delete test pod:' 20
   command 'kubectl delete pod test-fpga-region || true' 20
-  out 'delete ServiceAccount:' 20
-  command 'kubectl delete ServiceAccount intel-fpga-plugin-controller --namespace kube-system || true' 20
-  out 'delete ClusterRole:' 20
-  command 'kubectl delete ClusterRole node-getter --namespace kube-system || true' 20
-  out 'delete ClusterRoleBinding:' 20
-  command 'kubectl delete ClusterRoleBinding get-nodes --namespace kube-system || true' 20
+  out 'delete mappings' 20
+  command 'kubectl delete -f plugins/deployments/fpga_admissionwebhook/mappings-collection.yaml || true' 200
+  out 'delete namespace and all the objects in the intelfpgaplugin-system namespace:' 20
+  command 'kubectl delete namespace intelfpgaplugin-system || true' 20
   out 'delete node annotation:' 20
   command 'kubectl annotate node --all fpga.intel.com/device-plugin-mode- || true' 20
-  out 'delete plugin daemonset:' 20
-  command 'kubectl delete daemonset intel-fpga-plugin --namespace kube-system || true' 20
-  out 'delete webhook deployment:' 20
-  command 'kubectl delete deployment intel-fpga-webhook-deployment || true' 20
 }
 
 record()
@@ -85,24 +79,9 @@ screen2()
 screen3()
 {
   clear
-  cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
-  out '3. Deploy admission controller webhook'
-  command 'kubectl apply -k deployments/fpga_admissionwebhook/default'
-  sleep 2
-  out 'Check if its pod is running:'
-  command 'kubectl get pods -n intelfpgawebhook-system'
-  out 'Deploy the mappings:'
-  command 'kubectl apply -f deployments/fpga_admissionwebhook/mappings-collection.yaml'
-  out 'Check pod logs:'
-  command "kubectl logs $(kubectl get pods -n intelfpgawebhook-system| grep intelfpgawebhook-controller-manager | awk '{print $1}') -n intelfpgawebhook-system"
-}
-
-screen4()
-{
-  clear
   cd /srv/demo
   sudo rm -rf /srv/intel.com/fpga/Arria10.dcp1.2 /srv/intel.com/fpga/69528db6eb31577a8c3668f9faa081f6
-  out '4. Create bistream storage'
+  out '3. Create bistream storage'
   out 'Create directory for Arria10.dcp1.2 interface id:'
   command 'sudo mkdir -p /srv/intel.com/fpga/69528db6eb31577a8c3668f9faa081f6'
   out 'Create Arria10.dcp1.2 symlink for convenience:'
@@ -116,30 +95,30 @@ screen4()
   command 'ls -la /srv/intel.com/fpga/Arria10.dcp1.2/'
 }
 
-screen5()
+screen4()
 {
   clear
   cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
-  out '5. Deploy FPGA plugin'
-  out 'Create a service account for the plugin'
-  command 'kubectl create -f deployments/fpga_plugin/fpga_plugin_service_account.yaml'
-  out 'Set region mode for the plugin:'
-  command "kubectl annotate node --all 'fpga.intel.com/device-plugin-mode=region'"
-  out 'Create plugin daemonset:'
-  command 'kubectl create -f deployments/fpga_plugin/fpga_plugin.yaml'
-  out 'Check if its pod is runnning:'
-  command 'kubectl get pod --namespace kube-system |grep intel-fpga-plugin'
-  out 'Check if it runs in 'region' mode:'
-  command "kubectl logs $(kubectl  get pods --namespace kube-system |grep intel-fpga-plugin|cut -f1 -d' ') --namespace kube-system"
+  out '4. Deploy FPGA plugin'
+  command 'kubectl apply -k deployments/fpga_plugin/overlays/region'
+  sleep 2
+  out 'Check if its pods are running:'
+  command 'kubectl get pods -n intelfpgaplugin-system'
+  out 'Deploy the mappings:'
+  command 'kubectl apply -f deployments/fpga_admissionwebhook/mappings-collection.yaml'
+  out 'Check webhook pod logs:'
+  command "kubectl logs $(kubectl get pods -n intelfpgaplugin-system| grep intelfpgaplugin-webhook | awk '{print $1}') -n intelfpgaplugin-system"
+  out 'Check if the plugin runs in 'region' mode:'
+  command "kubectl logs $(kubectl  get pods --namespace intelfpgaplugin-system |grep fpgadeviceplugin|cut -f1 -d' ') --namespace intelfpgaplugin-system"
   out 'Check if resource fpga.intel.com/region-<FPGA interface id> is allocatable:'
   command 'kubectl describe node  |grep -A5 Allocatable'
 }
 
-screen6()
+screen5()
 {
   clear
   cd $GOPATH/src/github.com/intel/intel-device-plugins-for-kubernetes
-  out '6. Run OPAE workload that uses NLB3 bitstream'
+  out '5. Run OPAE workload that uses NLB3 bitstream'
   out 'Program devices with a NLB0 bitstream that is not wanted by the workload:'
   command "sudo /opt/intel/fpga-sw/fpgatool -b /srv/intel.com/fpga/Arria10.dcp1.2/nlb0.gbs -d ${DEVICE_PREFIX}.0 pr"
   command "sudo /opt/intel/fpga-sw/fpgatool -b /srv/intel.com/fpga/Arria10.dcp1.2/nlb0.gbs -d ${DEVICE_PREFIX}.1 pr"
@@ -154,7 +133,7 @@ screen6()
   command 'cat /sys/class/*/*/*/afu_id'
 }
 
-screen7()
+screen6()
 {
   clear
   out 'Summary:' 15
@@ -171,7 +150,7 @@ if [ "$1" == 'play' ] ; then
   if [ -n "$2" ] ; then
     screen$2
   else
-    for n in $(seq 7) ; do screen$n ; sleep 3; done
+    for n in $(seq 6) ; do screen$n ; sleep 3; done
   fi
 elif [ "$1" == 'cleanup' ] ; then
   cleanup

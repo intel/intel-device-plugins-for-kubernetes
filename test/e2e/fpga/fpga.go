@@ -18,6 +18,8 @@ package fpga
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -33,13 +35,13 @@ import (
 )
 
 const (
-	pluginDeployScript  = "scripts/deploy-fpgaplugin.sh"
-	kustomizationYaml   = "deployments/fpga_admissionwebhook/default/kustomization.yaml"
-	nlb0NodeResource    = "fpga.intel.com/af-695.d84.aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs"
-	nlb0PodResource     = "fpga.intel.com/arria10.dcp1.2-nlb0-orchestrated"
-	nlb3PodResource     = "fpga.intel.com/arria10.dcp1.2-nlb3-orchestrated"
-	nlb0PodResourceAF   = "fpga.intel.com/arria10.dcp1.2-nlb0-preprogrammed"
-	arria10NodeResource = "fpga.intel.com/region-69528db6eb31577a8c3668f9faa081f6"
+	pluginKustomizationYaml  = "deployments/fpga_plugin/base/kustomization.yaml"
+	webhookKustomizationYaml = "deployments/fpga_admissionwebhook/default/kustomization.yaml"
+	nlb0NodeResource         = "fpga.intel.com/af-695.d84.aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs"
+	nlb0PodResource          = "fpga.intel.com/arria10.dcp1.2-nlb0-orchestrated"
+	nlb3PodResource          = "fpga.intel.com/arria10.dcp1.2-nlb3-orchestrated"
+	nlb0PodResourceAF        = "fpga.intel.com/arria10.dcp1.2-nlb0-preprogrammed"
+	arria10NodeResource      = "fpga.intel.com/region-69528db6eb31577a8c3668f9faa081f6"
 )
 
 func init() {
@@ -47,14 +49,14 @@ func init() {
 }
 
 func describe() {
-	kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
+	webhookKustomizationPath, err := utils.LocateRepoFile(webhookKustomizationYaml)
 	if err != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
+		framework.Failf("unable to locate %q: %v", webhookKustomizationYaml, err)
 	}
 
-	pluginDeployScriptPath, err := utils.LocateRepoFile(pluginDeployScript)
+	pluginKustomizationPath, err := utils.LocateRepoFile(pluginKustomizationYaml)
 	if err != nil {
-		framework.Failf("unable to locate %q: %v", pluginDeployScript, err)
+		framework.Failf("unable to locate %q: %v", pluginKustomizationYaml, err)
 	}
 
 	fmw := framework.NewDefaultFramework("fpgaplugin-e2e")
@@ -62,23 +64,34 @@ func describe() {
 	ginkgo.It("Run FPGA plugin tests", func() {
 		// Deploy webhook
 		ginkgo.By(fmt.Sprintf("namespace %s: deploying webhook", fmw.Namespace.Name))
-		utils.DeployFpgaWebhook(fmw, kustomizationPath)
+		utils.DeployFpgaWebhook(fmw, webhookKustomizationPath)
 
 		ginkgo.By("deploying mappings")
-		framework.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-n", fmw.Namespace.Name, "-f", filepath.Dir(kustomizationPath)+"/../mappings-collection.yaml")
+		framework.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-n", fmw.Namespace.Name, "-f", filepath.Dir(webhookKustomizationPath)+"/../mappings-collection.yaml")
 
 		// Run region test case twice to ensure that device is reprogrammed at least once
-		runTestCase(fmw, pluginDeployScriptPath, "region", arria10NodeResource, nlb3PodResource, "nlb3", "nlb0")
-		runTestCase(fmw, pluginDeployScriptPath, "region", arria10NodeResource, nlb0PodResource, "nlb0", "nlb3")
+		runTestCase(fmw, pluginKustomizationPath, "region", arria10NodeResource, nlb3PodResource, "nlb3", "nlb0")
+		runTestCase(fmw, pluginKustomizationPath, "region", arria10NodeResource, nlb0PodResource, "nlb0", "nlb3")
 		// Run af test case
-		runTestCase(fmw, pluginDeployScriptPath, "af", nlb0NodeResource, nlb0PodResourceAF, "nlb0", "nlb3")
+		runTestCase(fmw, pluginKustomizationPath, "af", nlb0NodeResource, nlb0PodResourceAF, "nlb0", "nlb3")
 	})
 }
 
-func runTestCase(fmw *framework.Framework, pluginDeployScriptPath, pluginMode, nodeResource, podResource, cmd1, cmd2 string) {
+func runTestCase(fmw *framework.Framework, pluginKustomizationPath, pluginMode, nodeResource, podResource, cmd1, cmd2 string) {
+	tmpDir, err := ioutil.TempDir("", "fpgaplugine2etest-"+fmw.Namespace.Name)
+	if err != nil {
+		framework.Failf("unable to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	err = utils.CreateKustomizationOverlay(fmw.Namespace.Name, filepath.Dir(pluginKustomizationPath)+"/../overlays/"+pluginMode, tmpDir)
+	if err != nil {
+		framework.Failf("unable to kustomization overlay: %v", err)
+	}
+
 	ginkgo.By(fmt.Sprintf("namespace %s: deploying FPGA plugin in %s mode", fmw.Namespace.Name, pluginMode))
-	_, _, err := framework.RunCmd(pluginDeployScriptPath, "--mode", pluginMode, "--namespace", fmw.Namespace.Name)
-	framework.ExpectNoError(err)
+	_, _ = framework.RunKubectl(fmw.Namespace.Name, "delete", "-k", tmpDir)
+	framework.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-k", tmpDir)
 
 	waitForPod(fmw, "intel-fpga-plugin")
 
