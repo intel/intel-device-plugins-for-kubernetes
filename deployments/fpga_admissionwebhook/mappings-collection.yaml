@@ -85,6 +85,15 @@ spec:
   interfaceId: 69528db6eb31577a8c3668f9faa081f6
   mode: region
 ---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: arria10.dcp1.2-nlb3-preprogrammed
+spec:
+  afuId: f7df405cbd7acf7222f144b0b93acd18
+  interfaceId: 69528db6eb31577a8c3668f9faa081f6
+  mode: af
+---
 # D5005
 apiVersion: fpga.intel.com/v2
 kind: FpgaRegion
