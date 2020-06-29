@@ -180,7 +180,11 @@ func (c *controller) UpdateDaemonSet(rawObj runtime.Object, ds *apps.DaemonSet) 
 		updated = true
 	}
 
-	dp.Spec.NodeSelector["kubernetes.io/arch"] = "amd64"
+	if dp.Spec.NodeSelector == nil {
+		dp.Spec.NodeSelector = map[string]string{"kubernetes.io/arch": "amd64"}
+	} else {
+		dp.Spec.NodeSelector["kubernetes.io/arch"] = "amd64"
+	}
 	if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
 		ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector
 		updated = true
