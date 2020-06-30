@@ -128,3 +128,12 @@ spec:
   afuId: f7df405cbd7acf7222f144b0b93acd18
   interfaceId: bfac4d851ee856fe8c95865ce1bbaa2d
   mode: af
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: d5005-matrix-mult-orchestrated
+spec:
+  afuId: 40007c0623210742000ebc58df6f5343e668b03a
+  interfaceId: bfac4d851ee856fe8c95865ce1bbaa2d
+  mode: region
