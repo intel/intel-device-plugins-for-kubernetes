@@ -53,23 +53,29 @@ Only one worker node has a GPU. The time difference in transcoding speed is capt
 ## Intel® FPGA Device Plugin demo videos
 
 The screencasts demonstrate the deployment of the Intel® FPGA Device Plugin for
-Kubernetes. Demo 1 executes a native loopback 3 (NLB3) workload, and demo 2 runs an [OpenCL workload](https://www.intel.com/content/www/us/en/programmable/support/support-resources/design-examples/design-software/opencl/matrix-multiplication.html) to do English letters recognition, and compares time used with and without FPGA to show the acceleration. The demos begin
-with a fully [configured Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
-with the [Go runtime](https://golang.org/doc/install).
+Kubernetes.
 
-### Demo 1 (NLB3) platform configuration
+- Demo 1 executes a native loopback 3 (NLB3) workload in preprogrammed mode
+- Demo 2 executes NLB3 workload in orchestrated mode
+- Demo 3 runs an [OpenCL workload](https://www.intel.com/content/www/us/en/programmable/support/support-resources/design-examples/design-software/opencl/matrix-multiplication.html) to do English letters recognition, and compares time used with and without FPGA to show the acceleration.
+
+The demos begin with a fully [configured Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/).
+
+### Demo 1 and 2 (NLB3) platform configuration
 
 - Hardware
-    - 1-node, 2x Intel@ Xeon@ Gold 6140M CPU @ 2.30GHz
-    - Total memory 377 GB
-    - Intel® Arria® 10 GX FPGA
+    - 1-node, Intel(R) Xeon(R) CPU E5-2650 0 @ 2.00GHz
+    - Total memory 62 GB
+    - 2 x Intel® Arria® 10 GX FPGA Programmable Acceleration Card(PAC)
 - Software
-    - Ubuntu 18.04.2 LTS (Kernel: 4.15.0-60-generic)
-    - Kubernetes* 1.13
-    - CRI-O 1.13.1
+    - openSUSE Leap 15.1 (Kernel: 5.4.5-1.g47eef04-default)
+    - Kubernetes* 1.17
+    - CRI-O 1.13.1 (for orchestrated mode)
+    - Docker 19.03.1 (for preprogrammed mode)
+    - runc 1.0.0-rc8
     - Intel® FPGA Device Plugin built from master branch
 
-### Demo 2 (OpenCL) platform configuration
+### Demo 3 (OpenCL) platform configuration
 
 - Hardware
     - Multi-node, FPGA host has 24 cores Intel(R) Xeon(R) Gold 6252N CPU @ 2.30GHz
@@ -86,17 +92,21 @@ with the [Go runtime](https://golang.org/doc/install).
 1. Validate the status of the [Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/).
 2. Clone the [Intel Device Plugins for Kubernetes source](https://github.com/intel/intel-device-plugins-for-kubernetes).
 3. Provision the [admission controller webhook](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_admissionwebhook/README.md).
-4. Provision the [Intel® FPGA Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_plugin/README.md).
-5. Build the opae-nlb-demo or fpga-opencl-centos image
+4. Create bitstream storage (for orchestrated mode only)
+5. Provision the [Intel® FPGA Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_plugin/README.md).
 6. Run the NLB3 or OpenCL workload.
 
 ### Screencasts
 
-Intel® FPGA Device Plugin deployment with orchestrated/region mode and NLB workload:
+- Intel® FPGA Device Plugin deployment in preprogrammed mode
+
+[<img src="https://asciinema.org/a/78iLCNz4W344vm4oSrDuJ6g6i.svg" width="700">](https://asciinema.org/a/78iLCNz4W344vm4oSrDuJ6g6i)
+
+- Intel® FPGA Device Plugin deployment with orchestrated/region mode and NLB workload:
 
 [<img src="https://asciinema.org/a/JuYzNxx9n0eQ1vQBzy86GYBki.svg" width="700">](https://asciinema.org/a/JuYzNxx9n0eQ1vQBzy86GYBki)
 
-Intel® FPGA Device Plugin deployment with orchestrated/region mode and OpenCL workload:
+- Intel® FPGA Device Plugin deployment with orchestrated/region mode and OpenCL workload:
 
 [<img src="https://asciinema.org/a/344184.svg" width="700">](https://asciinema.org/a/344184)
 
