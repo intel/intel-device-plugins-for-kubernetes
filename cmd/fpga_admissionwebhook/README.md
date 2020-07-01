@@ -98,7 +98,7 @@ mutatingwebhookconfiguration.admissionregistration.k8s.io/intelfpgawebhook-mutat
 clusterrole.rbac.authorization.k8s.io/intelfpgawebhook-manager-role created
 clusterrolebinding.rbac.authorization.k8s.io/intelfpgawebhook-manager-rolebinding created
 service/intelfpgawebhook-webhook-service created
-deployment.apps/intelfpgawebhook-controller-manager created
+deployment.apps/intelfpgawebhook-webhook created
 certificate.cert-manager.io/intelfpgawebhook-serving-cert created
 issuer.cert-manager.io/intelfpgawebhook-selfsigned-issuer created
 ```

@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fpgadeviceplugin
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: intel-fpga-plugin
+        args:
+        - -mode=region
