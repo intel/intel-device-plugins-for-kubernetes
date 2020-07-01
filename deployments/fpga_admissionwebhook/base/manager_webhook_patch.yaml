@@ -9,8 +9,6 @@ spec:
       containers:
       - name: manager
         args:
-        - -tls-cert-file=/tmp/k8s-webhook-server/serving-certs/tls.crt
-        - -tls-private-key-file=/tmp/k8s-webhook-server/serving-certs/tls.key
         - -v=1
         ports:
         - containerPort: 8443

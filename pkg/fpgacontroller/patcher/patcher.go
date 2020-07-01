@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+// Package patcher provides functionality required to patch pods by the FPGA admission webhook.
+package patcher
 
 import (
 	"bytes"
@@ -21,10 +22,10 @@ import (
 	"sync"
 	"text/template"
 
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/klog"
 
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
@@ -71,20 +72,23 @@ var (
 type patcher struct {
 	sync.Mutex
 
+	log logr.Logger
+
 	afMap           map[string]*fpgav2.AcceleratorFunction
 	resourceMap     map[string]string
 	resourceModeMap map[string]string
 }
 
-func newPatcher() *patcher {
+func newPatcher(log logr.Logger) *patcher {
 	return &patcher{
+		log:             log,
 		afMap:           make(map[string]*fpgav2.AcceleratorFunction),
 		resourceMap:     make(map[string]string),
 		resourceModeMap: make(map[string]string),
 	}
 }
 
-func (p *patcher) addAf(accfunc *fpgav2.AcceleratorFunction) error {
+func (p *patcher) AddAf(accfunc *fpgav2.AcceleratorFunction) error {
 	defer p.Unlock()
 	p.Lock()
 
@@ -104,7 +108,7 @@ func (p *patcher) addAf(accfunc *fpgav2.AcceleratorFunction) error {
 	return nil
 }
 
-func (p *patcher) addRegion(region *fpgav2.FpgaRegion) {
+func (p *patcher) AddRegion(region *fpgav2.FpgaRegion) {
 	defer p.Unlock()
 	p.Lock()
 
@@ -112,7 +116,7 @@ func (p *patcher) addRegion(region *fpgav2.FpgaRegion) {
 	p.resourceMap[namespace+"/"+region.Name] = rfc6901Escaper.Replace(namespace + "/region-" + region.Spec.InterfaceID)
 }
 
-func (p *patcher) removeAf(name string) {
+func (p *patcher) RemoveAf(name string) {
 	defer p.Unlock()
 	p.Lock()
 
@@ -121,7 +125,7 @@ func (p *patcher) removeAf(name string) {
 	delete(p.resourceModeMap, namespace+"/"+name)
 }
 
-func (p *patcher) removeRegion(name string) {
+func (p *patcher) RemoveRegion(name string) {
 	defer p.Unlock()
 	p.Lock()
 
@@ -217,11 +221,11 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 				envVars[fmt.Sprintf("FPGA_AFU_%d", counter)] = p.afMap[rname].Spec.AfuID
 			}
 		default:
-			msg := fmt.Sprintf("%q is registered with unknown mode %q instead of %q or %q",
-				rname, p.resourceModeMap[rname], af, region)
 			// Let admin know about broken af CRD.
-			klog.Error(msg)
-			return nil, errors.New(msg)
+			err := errors.Errorf("%q is registered with unknown mode %q instead of %q or %q",
+				rname, p.resourceModeMap[rname], af, region)
+			p.log.Error(err, "unable to construct patching operations")
+			return nil, err
 		}
 
 		if fpgaPluginMode == "" {
@@ -260,28 +264,11 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 		}
 		t := template.Must(template.New("add_operation").Parse(envAddOpTpl))
 		buf := new(bytes.Buffer)
-		t.Execute(buf, data)
+		if err := t.Execute(buf, data); err != nil {
+			return nil, errors.Wrap(err, "unable to execute template")
+		}
 		ops = append(ops, buf.String())
 	}
 
 	return ops, nil
-}
-
-// patcherManager keeps track of patchers registered for different Kubernetes namespaces.
-type patcherManager map[string]*patcher
-
-func newPatcherManager() patcherManager {
-	return make(map[string]*patcher)
-}
-
-func (pm patcherManager) getPatcher(namespace string) *patcher {
-	if p, ok := pm[namespace]; ok {
-		return p
-	}
-
-	p := newPatcher()
-	pm[namespace] = p
-	klog.V(4).Info("created new patcher for namespace", namespace)
-
-	return p
 }
