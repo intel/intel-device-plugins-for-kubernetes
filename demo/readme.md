@@ -90,21 +90,19 @@ The demos begin with a fully [configured Kubernetes cluster](https://kubernetes.
 ### Demo steps
 
 1. Validate the status of the [Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/).
-2. Clone the [Intel Device Plugins for Kubernetes source](https://github.com/intel/intel-device-plugins-for-kubernetes).
-3. Provision the [admission controller webhook](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_admissionwebhook/README.md).
-4. Create bitstream storage (for orchestrated mode only)
-5. Provision the [Intel® FPGA Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_plugin/README.md).
-6. Run the NLB3 or OpenCL workload.
+2. Provision the [Intel® FPGA Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_plugin/README.md).
+3. Create bitstream storage (for orchestrated mode only)
+4. Run the NLB3 or OpenCL workload.
 
 ### Screencasts
 
-- Intel® FPGA Device Plugin deployment in preprogrammed mode
+- Intel® FPGA Device Plugin deployment in preprogrammed mode and NLB workload:
 
-[<img src="https://asciinema.org/a/78iLCNz4W344vm4oSrDuJ6g6i.svg" width="700">](https://asciinema.org/a/78iLCNz4W344vm4oSrDuJ6g6i)
+[<img src="https://asciinema.org/a/oIwOtM8hflsWTDu6UhNVS8401.svg" width="700">](https://asciinema.org/a/oIwOtM8hflsWTDu6UhNVS8401)
 
 - Intel® FPGA Device Plugin deployment with orchestrated/region mode and NLB workload:
 
-[<img src="https://asciinema.org/a/JuYzNxx9n0eQ1vQBzy86GYBki.svg" width="700">](https://asciinema.org/a/JuYzNxx9n0eQ1vQBzy86GYBki)
+[<img src="https://asciinema.org/a/sUnLNwpazbUXKdpC66g09W5w1.svg" width="700">](https://asciinema.org/a/sUnLNwpazbUXKdpC66g09W5w1)
 
 - Intel® FPGA Device Plugin deployment with orchestrated/region mode and OpenCL workload:
 

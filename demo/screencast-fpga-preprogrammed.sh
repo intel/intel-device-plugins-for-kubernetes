@@ -38,10 +38,9 @@ cleanup()
   clear
   out 'Cleanup demo artifacts' 200
   command 'kubectl delete pod test-fpga-preprogrammed || true' 200
-  command 'kubectl delete -f plugins/deployments/fpga_admissionwebhook/mappings-collection.yaml || true' 200
-  command 'kubectl delete namespace intelfpgaplugin-system || true' 20
+  command 'kubectl delete -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/deployments/fpga_admissionwebhook/mappings-collection.yaml || true' 200
+  command 'kubectl delete namespace intelfpgaplugin-system || true' 200
   command 'kubectl annotate node --all fpga.intel.com/device-plugin-mode-' 200
-  command 'rm -rf plugins' 200
 }
 
 record()
@@ -71,50 +70,39 @@ screen1()
 screen2()
 {
   clear
-  rm -rf plugins
-  out '2. Clone Intel Device Plugins for Kubernetes repository'
-  command "git clone https://github.com/intel/intel-device-plugins-for-kubernetes plugins" 15
-  sleep 1
-}
-
-screen3()
-{
-  clear
-  out '3. Deploy FPGA plugin'
-  command 'kubectl apply -k plugins/deployments/fpga_plugin/overlays/af'
-  sleep 3
+  out '2. Deploy FPGA plugin'
+  command 'kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/af' 100
+  sleep 2
   out 'Deploy example mappings:'
-  command 'kubectl apply -f plugins/deployments/fpga_admissionwebhook/mappings-collection.yaml'
-  sleep 3
+  command 'kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/deployments/fpga_admissionwebhook/mappings-collection.yaml' 100
+  sleep 2
   out 'Check if the plugin pods are running:'
   command 'kubectl get pods -n intelfpgaplugin-system'
   sleep 2
   out 'Check webhook pod logs:'
   command "kubectl logs $(kubectl get pods -n intelfpgaplugin-system| grep intelfpgaplugin-webhook | awk '{print $1}') -n intelfpgaplugin-system"
-  out 'Check if the plugin runs in 'region' mode:'
-  command "kubectl logs $(kubectl  get pods --namespace intelfpgaplugin-system |grep fpgadeviceplugin|cut -f1 -d' ') --namespace intelfpgaplugin-system"
   sleep 2
   out 'Check if resource fpga.intel.com/af-<af id> is allocatable:'
   command 'kubectl describe node  |grep -A4 Allocatable'
   sleep 2
 }
 
-screen4()
+screen3()
 {
   clear
-  out '4. Run OPAE workload that uses NLB3 bitstream'
+  out '3. Run OPAE workload that uses NLB3 bitstream'
   out 'Check if devices are programmed with NLB3:'
   command 'cat /sys/class/*/*/*/afu_id'
   out 'Run workload:'
-  command 'cat plugins/demo/test-fpga-preprogrammed.yaml'
-  command 'kubectl create -f plugins/demo/test-fpga-preprogrammed.yaml'
+  command 'curl https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/demo/test-fpga-preprogrammed.yaml' 100
+  command 'kubectl create -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/demo/test-fpga-preprogrammed.yaml' 100
   sleep 5
   out 'Look at the test output'
   command 'kubectl logs test-fpga-preprogrammed'
   sleep 2
 }
 
-screen5()
+screen4()
 {
   clear
   out 'Summary:' 15
@@ -130,7 +118,7 @@ if [ "$1" == 'play' ] ; then
   if [ -n "$2" ] ; then
     screen$2
   else
-    for n in $(seq 5) ; do screen$n ; sleep 3; done
+    for n in $(seq 4) ; do screen$n ; sleep 3; done
   fi
 elif [ "$1" == 'cleanup' ] ; then
   cleanup
