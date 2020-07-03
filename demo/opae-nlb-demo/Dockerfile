@@ -6,11 +6,11 @@
 #
 # This is used on release branches before tagging a stable version.
 # The master branch defaults to using the latest Clear Linux.
-ARG CLEAR_LINUX_BASE=clearlinux:latest
+ARG CLEAR_LINUX_BASE=clearlinux@sha256:fc47d67eaa0f22c0a6c96250b485ae59e65b1b863ec91941935907c9e7210ae1
 
 FROM ${CLEAR_LINUX_BASE} as builder
 
-ARG CLEAR_LINUX_VERSION=
+ARG CLEAR_LINUX_VERSION="--version=33450"
 
 RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION} && \
     swupd bundle-add wget c-basic devpkg-json-c devpkg-util-linux devpkg-hwloc doxygen patch

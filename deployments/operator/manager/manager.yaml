@@ -23,7 +23,7 @@ spec:
         control-plane: controller-manager
     spec:
       containers:
-      - image: intel/intel-deviceplugin-operator:devel
+      - image: intel/intel-deviceplugin-operator:0.18.0
         name: manager
         resources:
           limits:

@@ -90,7 +90,7 @@ spec:
 To deploy the webhook, run
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_admissionwebhook/default?ref=master
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_admissionwebhook/default?ref=<target branch, e.g, release-xyz>
 namespace/intelfpgawebhook-system created
 customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
 customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
