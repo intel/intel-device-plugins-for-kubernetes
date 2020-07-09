@@ -1,0 +1,6 @@
+apiVersion: deviceplugin.intel.com/v1
+kind: FpgaDevicePlugin
+metadata:
+  name: fpgadeviceplugin-sample
+spec:
+  image: intel/intel-fpga-plugin:0.19.0

@@ -62,18 +62,18 @@ checks: lint go-mod-tidy
 generate:
 	$(CONTROLLER_GEN) object:headerFile="build/boilerplate/boilerplate.go.txt" paths="./pkg/apis/..."
 	$(CONTROLLER_GEN) crd:trivialVersions=true \
-		paths="./pkg/apis/deviceplugin/..." \
+		paths="./pkg/apis/..." \
 		output:crd:artifacts:config=deployments/operator/crd/bases
 	$(CONTROLLER_GEN) crd:trivialVersions=true \
 		paths="./pkg/apis/fpga.intel.com/..." \
 		output:crd:artifacts:config=deployments/fpga_admissionwebhook/crd/bases
 	$(CONTROLLER_GEN) webhook \
-		paths="./pkg/apis/deviceplugin/..." \
+		paths="./pkg/..." \
 		output:webhook:artifacts:config=deployments/operator/webhook
 	$(CONTROLLER_GEN) webhook \
 		paths="./pkg/fpgacontroller/..." \
 		output:webhook:artifacts:config=deployments/fpga_admissionwebhook/webhook
-	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./pkg/controllers/..." output:dir=deployments/operator/rbac
+	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./pkg/..." output:dir=deployments/operator/rbac
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./pkg/fpgacontroller/..." output:dir=deployments/fpga_admissionwebhook/rbac
 
 $(cmds):

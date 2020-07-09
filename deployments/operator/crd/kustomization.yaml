@@ -4,6 +4,9 @@
 resources:
 - bases/deviceplugin.intel.com_gpudeviceplugins.yaml
 - bases/deviceplugin.intel.com_qatdeviceplugins.yaml
+- bases/deviceplugin.intel.com_fpgadeviceplugins.yaml
+- bases/fpga.intel.com_acceleratorfunctions.yaml
+- bases/fpga.intel.com_fpgaregions.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
@@ -11,12 +14,14 @@ patchesStrategicMerge:
 # patches here are for enabling the conversion webhook for each CRD
 - patches/webhook_in_gpudeviceplugins.yaml
 - patches/webhook_in_qatdeviceplugins.yaml
+- patches/webhook_in_fpgadeviceplugins.yaml
 # +kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable webhook, uncomment all the sections with [CERTMANAGER] prefix.
 # patches here are for enabling the CA injection for each CRD
 - patches/cainjection_in_gpudeviceplugins.yaml
 - patches/cainjection_in_qatdeviceplugins.yaml
+- patches/cainjection_in_fpgadeviceplugins.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # TODO(rojkov): enable Prometheus
