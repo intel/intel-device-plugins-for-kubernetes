@@ -79,6 +79,7 @@ jobs:
           - crypto-perf
           - opae-nlb-demo
           - openssl-qat-engine
+          - sgx-sdk-demo
           - ubuntu-demo-opencl
           - ubuntu-demo-openvino
         builder: [buildah, docker]
