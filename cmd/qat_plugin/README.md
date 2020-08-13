@@ -162,7 +162,7 @@ $ make intel-qat-plugin
 Successfully tagged intel/intel-qat-plugin:devel
 ```
 
-> **Note**: `kerneldrv` mode is excluded from the build by default. Add `BUILDTAGS=kerneldrv` to `make`
+> **Note**: `kerneldrv` mode is excluded from the build by default. Add `EXTRA_BUILD_ARGS="--build-arg TAGS_KERNELDRV=kerneldrv"` to `make`
 > to get `kerneldrv` functionality added to the build.
 
 ### Deploy the DaemonSet
