@@ -1,3 +1,5 @@
+
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -5,7 +7,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - "fpga.intel.com"
+  - fpga.intel.com
   resources:
   - acceleratorfunctions
   - fpgaregions

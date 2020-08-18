@@ -12,6 +12,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /pods
+  failurePolicy: Ignore
   name: fpga.mutator.webhooks.intel.com
   rules:
   - apiGroups:

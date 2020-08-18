@@ -155,22 +155,10 @@ Just run it inside the repo's root, e.g.
 ```
 $ ./k8s_gomod_update.sh 1.18.1
 ```
-
-Then run the code generator script which can be found at
-https://github.com/kubernetes/code-generator/blob/master/generate-groups.sh
-
-```
-$ generate-groups.sh all github.com/intel/intel-device-plugins-for-kubernetes/pkg/client \
-                         github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis \
-                         fpga.intel.com:v2
-```
-
-Please note that the script (at least of v0.18.2-beta.0) expects the device plugins
-repo to be located under $GOPATH/src.
-
 Finally run
 
 ```
+$ make generate
 $ make test
 ```
 

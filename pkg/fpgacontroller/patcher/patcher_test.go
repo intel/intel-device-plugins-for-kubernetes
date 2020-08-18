@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package patcher
 
 import (
 	"flag"
@@ -21,21 +21,32 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 )
 
 func init() {
-	flag.Set("v", "4")
+	_ = flag.Set("v", "4")
 }
 
 func TestPatcherStorageFunctions(t *testing.T) {
-	af := &fpgav2.AcceleratorFunction{
+	goodAf := &fpgav2.AcceleratorFunction{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "arria10-nlb0",
 		},
 		Spec: fpgav2.AcceleratorFunctionSpec{
 			AfuID: "d8424dc4a4a3c413f89e433683f9040b",
+		},
+	}
+	brokenAf := &fpgav2.AcceleratorFunction{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "arria10-nlb0",
+		},
+		Spec: fpgav2.AcceleratorFunctionSpec{
+			AfuID:       "wrong string",
+			InterfaceID: "wrong string",
+			Mode:        af,
 		},
 	}
 	region := &fpgav2.FpgaRegion{
@@ -47,24 +58,29 @@ func TestPatcherStorageFunctions(t *testing.T) {
 		},
 	}
 
-	p := newPatcher()
+	p := newPatcher(ctrl.Log.WithName("test"))
 
-	p.addAf(af)
+	if err := p.AddAf(goodAf); err != nil {
+		t.Error("unexpected error")
+	}
 	if len(p.resourceModeMap) != 1 || len(p.afMap) != 1 || len(p.resourceMap) != 1 {
 		t.Error("Failed to add AF to patcher")
 	}
+	if err := p.AddAf(brokenAf); err == nil {
+		t.Error("AddAf() must fail")
+	}
 
-	p.removeAf(af.Name)
+	p.RemoveAf(goodAf.Name)
 	if len(p.resourceModeMap) != 0 || len(p.afMap) != 0 || len(p.resourceMap) != 0 {
 		t.Error("Failed to remove AF from patcher")
 	}
 
-	p.addRegion(region)
+	p.AddRegion(region)
 	if len(p.resourceModeMap) != 1 || len(p.resourceMap) != 1 {
 		t.Error("Failed to add fpga region to patcher")
 	}
 
-	p.removeRegion(region.Name)
+	p.RemoveRegion(region.Name)
 	if len(p.resourceModeMap) != 0 || len(p.resourceMap) != 0 {
 		t.Error("Failed to remove fpga region from patcher")
 	}
@@ -314,12 +330,12 @@ func TestGetPatchOps(t *testing.T) {
 
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
-			p := newPatcher()
+			p := newPatcher(ctrl.Log.WithName("test"))
 			for _, af := range tt.afs {
-				p.addAf(af)
+				_ = p.AddAf(af)
 			}
 			for _, region := range tt.regions {
-				p.addRegion(region)
+				p.AddRegion(region)
 			}
 			ops, err := p.getPatchOps(0, tt.container)
 			if tt.expectedErr && err == nil {
@@ -330,31 +346,6 @@ func TestGetPatchOps(t *testing.T) {
 			}
 			if len(ops) != tt.expectedOps {
 				t.Errorf("test case '%s': expected %d ops, but got %d\n%v", tt.name, tt.expectedOps, len(ops), ops)
-			}
-		})
-	}
-}
-
-func TestGetPatcher(t *testing.T) {
-	namespace := "test"
-	tcases := []struct {
-		name string
-		pm   patcherManager
-	}{
-		{
-			name: "Create new patcher",
-			pm:   newPatcherManager(),
-		},
-		{
-			name: "Return existing patcher",
-			pm:   map[string]*patcher{namespace: newPatcher()},
-		},
-	}
-	for _, tt := range tcases {
-		t.Run(tt.name, func(t *testing.T) {
-			p := tt.pm.getPatcher(namespace)
-			if p != tt.pm[namespace] {
-				t.Error("stored and received patchers are not equal")
 			}
 		})
 	}
