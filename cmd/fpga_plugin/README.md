@@ -58,6 +58,10 @@ Kubernetes:
     The webhook can also set environment variables to instruct the CRI-O prestart hook to program the FPGA
     before launching the container.
 
+    > **NOTE:** Installation of the [FPGA admission controller webhook](../fpga_admissionwebhook/README.md) can be skipped if the
+    > FPGA device plugin is operated with the Intel Device Plugins Operator
+    > since it integrates the controller's functionality.
+
 -   [FPGA CRI-O prestart hook](../fpga_crihook/README.md)
 
     A [CRI-O](https://github.com/cri-o/cri-o) prestart hook that, upon instruction from the FPGA admission

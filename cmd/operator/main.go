@@ -22,10 +22,16 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
+	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/qat"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller/patcher"
 )
 
 var (
@@ -34,9 +40,11 @@ var (
 )
 
 func init() {
+	// Add schemes for DaemonSets, Pods etc...
 	_ = clientgoscheme.AddToScheme(scheme)
 
 	_ = devicepluginv1.AddToScheme(scheme)
+	_ = fpgav2.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -78,6 +86,41 @@ func main() {
 	}
 	if err = (&devicepluginv1.QatDevicePlugin{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "QatDevicePlugin")
+		os.Exit(1)
+	}
+
+	pm := patcher.NewPatcherManager(ctrl.Log.WithName("webhooks").WithName("Fpga"))
+
+	mgr.GetWebhookServer().Register("/pods", &webhook.Admission{
+		Handler: admission.HandlerFunc(pm.GetPodMutator()),
+	})
+
+	if err = fpga.SetupReconciler(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "FpgaDevicePlugin")
+		os.Exit(1)
+	}
+	if err = (&devicepluginv1.FpgaDevicePlugin{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "FpgaDevicePlugin")
+		os.Exit(1)
+	}
+
+	if err = (&fpgacontroller.AcceleratorFunctionReconciler{
+		Client:         mgr.GetClient(),
+		Log:            ctrl.Log.WithName("controllers").WithName("AcceleratorFunction"),
+		Scheme:         mgr.GetScheme(),
+		PatcherManager: pm,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AcceleratorFunction")
+		os.Exit(1)
+	}
+
+	if err = (&fpgacontroller.FpgaRegionReconciler{
+		Client:         mgr.GetClient(),
+		Log:            ctrl.Log.WithName("controllers").WithName("FpgaRegion"),
+		Scheme:         mgr.GetScheme(),
+		PatcherManager: pm,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "FpgaRegion")
 		os.Exit(1)
 	}
 

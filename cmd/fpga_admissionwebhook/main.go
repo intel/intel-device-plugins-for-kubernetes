@@ -56,7 +56,7 @@ func main() {
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
-		Port:               8443,
+		Port:               9443,
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "f2c6a4df.intel.com",
 	})

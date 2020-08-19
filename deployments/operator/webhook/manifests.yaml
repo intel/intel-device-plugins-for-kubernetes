@@ -11,6 +11,24 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-deviceplugin-intel-com-v1-fpgadeviceplugin
+  failurePolicy: Fail
+  name: mfpgadeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - fpgadeviceplugins
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-deviceplugin-intel-com-v1-gpudeviceplugin
   failurePolicy: Fail
   name: mgpudeviceplugin.kb.io
@@ -42,6 +60,24 @@ webhooks:
     - UPDATE
     resources:
     - qatdeviceplugins
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /pods
+  failurePolicy: Ignore
+  name: fpga.mutator.webhooks.intel.com
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - pods
 
 ---
 apiVersion: admissionregistration.k8s.io/v1beta1
@@ -50,6 +86,24 @@ metadata:
   creationTimestamp: null
   name: validating-webhook-configuration
 webhooks:
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-deviceplugin-intel-com-v1-fpgadeviceplugin
+  failurePolicy: Fail
+  name: vfpgadeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - fpgadeviceplugins
 - clientConfig:
     caBundle: Cg==
     service:

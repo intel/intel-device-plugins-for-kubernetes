@@ -15,6 +15,10 @@
 The FPGA admission controller is one of the components used to add support for Intel FPGA
 devices to Kubernetes.
 
+> **NOTE:** Installation of the FPGA admission controller can be skipped if the
+> [FPGA device plugin](../fpga_plugin/README.md) is operated with the Intel Device Plugins Operator
+> since it integrates the controller's functionality.
+
 The FPGA admission controller webhook is responsible for performing mapping from user-friendly
 function IDs to the Interface ID and Bitstream ID that are required for FPGA programming by
 the [FPGA CRI-O hook](../fpga_crihook/README.md).

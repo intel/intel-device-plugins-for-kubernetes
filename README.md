@@ -204,10 +204,10 @@ you just need to have `etcd` and `kube-apiserver` binaries available on your
 host. By default they are expected to be located at `/usr/local/kubebuilder/bin`.
 But you can have it stored anywhere by setting the `KUBEBUILDER_ASSETS`
 environment variable. So, given you have the binaries copied to
-`$(HOME)/work/kubebuilder-assets` to run the tests just enter
+`${HOME}/work/kubebuilder-assets` to run the tests just enter
 
 ```bash
-$ KUBEBUILDER_ASSETS=$(HOME)/work/kubebuilder-assets make envtest
+$ KUBEBUILDER_ASSETS=${HOME}/work/kubebuilder-assets make envtest
 ```
 
 ## Supported Kubernetes versions

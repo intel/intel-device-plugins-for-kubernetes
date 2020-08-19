@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
+	fpgactr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	gpuctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
 	qatctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/qat"
 )
@@ -76,6 +77,8 @@ var _ = BeforeSuite(func(done Done) {
 	err = gpuctr.SetupReconciler(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 	err = qatctr.SetupReconciler(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+	err = fpgactr.SetupReconciler(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {

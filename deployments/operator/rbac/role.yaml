@@ -29,6 +29,26 @@ rules:
 - apiGroups:
   - deviceplugin.intel.com
   resources:
+  - fpgadeviceplugins
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - fpgadeviceplugins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
   - gpudeviceplugins
   verbs:
   - create
@@ -66,3 +86,12 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - fpga.intel.com
+  resources:
+  - acceleratorfunctions
+  - fpgaregions
+  verbs:
+  - get
+  - list
+  - watch
