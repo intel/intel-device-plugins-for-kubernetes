@@ -52,11 +52,14 @@ type Hint struct {
 type Hints map[string]Hint
 
 func getDevicesFromVirtual(realDevPath string) (devs []string, err error) {
-	if !filepath.HasPrefix(realDevPath, "/sys/devices/virtual") {
-		return nil, fmt.Errorf("%s is not a virtual device", realDevPath)
+	relPath, err := filepath.Rel("/sys/devices/virtual", realDevPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to find relative path")
 	}
 
-	relPath, _ := filepath.Rel("/sys/devices/virtual", realDevPath)
+	if strings.HasPrefix(relPath, "..") {
+		return nil, errors.Errorf("%s is not a virtual device", realDevPath)
+	}
 
 	dir, file := filepath.Split(relPath)
 	switch dir {

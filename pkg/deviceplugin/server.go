@@ -90,7 +90,7 @@ func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer)
 	}
 	klog.V(4).Info("Sending to kubelet", resp.Devices)
 	if err := stream.Send(resp); err != nil {
-		srv.Stop()
+		_ = srv.Stop()
 		return errors.Wrapf(err, "Cannot update device list")
 	}
 
@@ -204,7 +204,8 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 		if err := waitForServer(pluginSocket, time.Second); err == nil {
 			return errors.Errorf("Socket %s is already in use", pluginSocket)
 		}
-		os.Remove(pluginSocket)
+		// We don't care if the plugin's socket file doesn't exist.
+		_ = os.Remove(pluginSocket)
 
 		lis, err := net.Listen("unix", pluginSocket)
 		if err != nil {
@@ -217,7 +218,9 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 		// Starts device plugin service.
 		go func() {
 			klog.V(1).Infof("Start server for %s at: %s", srv.devType, pluginSocket)
-			srv.grpcServer.Serve(lis)
+			if serveErr := srv.grpcServer.Serve(lis); serveErr != nil {
+				klog.Errorf("unable to start gRPC server: %+v", serveErr)
+			}
 		}()
 
 		// Wait for the server to start
@@ -278,9 +281,10 @@ func watchFile(file string) error {
 }
 
 func registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string, options *pluginapi.DevicePluginOptions) error {
-	conn, err := grpc.Dial(kubeletSocket, grpc.WithInsecure(),
-		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
-			return net.DialTimeout("unix", addr, timeout)
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, kubeletSocket, grpc.WithInsecure(),
+		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
 		}))
 	if err != nil {
 		return errors.Wrap(err, "Cannot connect to kubelet service")
@@ -294,7 +298,7 @@ func registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string, opt
 		Options:      options,
 	}
 
-	_, err = client.Register(context.Background(), reqt)
+	_, err = client.Register(ctx, reqt)
 	if err != nil {
 		return errors.Wrap(err, "Cannot register to kubelet service")
 	}
@@ -308,12 +312,12 @@ func waitForServer(socket string, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, socket, grpc.WithInsecure(), grpc.WithBlock(),
-		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
-			return net.DialTimeout("unix", addr, timeout)
+		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
 		}),
 	)
 	if conn != nil {
-		conn.Close()
+		_ = conn.Close()
 	}
 	return errors.Wrapf(err, "Failed dial context at %s", socket)
 }

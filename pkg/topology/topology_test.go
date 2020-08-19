@@ -188,6 +188,12 @@ func TestGetDevicesFromVirtual(t *testing.T) {
 			output:      nil,
 			expectedErr: true,
 		},
+		{
+			name:        "garbage",
+			input:       "./sys/devices/virtual/vfio/42",
+			output:      nil,
+			expectedErr: true,
+		},
 	}
 
 	for _, tc := range cases {

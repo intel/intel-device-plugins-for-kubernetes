@@ -51,7 +51,7 @@ type kubeletStub struct {
 }
 
 func init() {
-	flag.Set("v", "4") //Enable debug output
+	_ = flag.Set("v", "4") //Enable debug output
 }
 
 // newKubeletStub returns an initialized kubeletStub for testing purpose.
@@ -71,7 +71,7 @@ func (k *kubeletStub) Register(ctx context.Context, r *pluginapi.RegisterRequest
 }
 
 func (k *kubeletStub) start() error {
-	os.Remove(k.socket)
+	_ = os.Remove(k.socket)
 	s, err := net.Listen("unix", k.socket)
 	if err != nil {
 		return errors.Wrap(err, "Can't listen at the socket")
@@ -83,9 +83,7 @@ func (k *kubeletStub) start() error {
 	go k.server.Serve(s)
 
 	// Wait till the grpcServer is ready to serve services.
-	waitForServer(k.socket, 10*time.Second)
-
-	return nil
+	return waitForServer(k.socket, 10*time.Second)
 }
 
 func TestRegisterWithKublet(t *testing.T) {
@@ -114,7 +112,9 @@ func TestSetupAndServe(t *testing.T) {
 	var pEndpoint string
 
 	kubelet := newKubeletStub(kubeletSocket)
-	kubelet.start()
+	if err := kubelet.start(); err != nil {
+		t.Fatalf("unable to start kubelet stub: %+v", err)
+	}
 	defer kubelet.server.Stop()
 
 	srv := &server{
@@ -152,16 +152,17 @@ func TestSetupAndServe(t *testing.T) {
 		t.Fatalf("Server was able to start on occupied socket %s: %+v", pluginSocket, err)
 	}
 
-	conn, err := grpc.Dial(pluginSocket, grpc.WithInsecure(),
-		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
-			return net.DialTimeout("unix", addr, timeout)
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, pluginSocket, grpc.WithInsecure(),
+		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
 		}))
 	if err != nil {
 		t.Fatalf("Failed to get connection: %+v", err)
 	}
 
 	client := pluginapi.NewDevicePluginClient(conn)
-	_, err = client.Allocate(context.Background(), &pluginapi.AllocateRequest{
+	_, err = client.Allocate(ctx, &pluginapi.AllocateRequest{
 		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
 			{
 				DevicesIDs: []string{"dev1", "dev2"},
@@ -171,7 +172,7 @@ func TestSetupAndServe(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to allocate device dev1: %+v", err)
 	}
-	conn.Close()
+	_ = conn.Close()
 
 	// Check if plugins re-registers after its socket has been removed
 	kubelet.Lock()
@@ -180,7 +181,7 @@ func TestSetupAndServe(t *testing.T) {
 	if pEndpoint == "" {
 		t.Fatal("After successful Allocate() pluginEndpoint is empty")
 	}
-	os.Remove(path.Join(devicePluginPath, pEndpoint))
+	_ = os.Remove(path.Join(devicePluginPath, pEndpoint))
 	for {
 		kubelet.Lock()
 		pEndpoint = kubelet.pluginEndpoint
@@ -194,16 +195,16 @@ func TestSetupAndServe(t *testing.T) {
 		klog.V(1).Info("No plugin socket. Waiting...")
 		time.Sleep(1 * time.Second)
 	}
-	conn, err = grpc.Dial(pluginSocket, grpc.WithInsecure(),
-		grpc.WithDialer(func(addr string, timeout time.Duration) (net.Conn, error) {
-			return net.DialTimeout("unix", addr, timeout)
+	conn, err = grpc.DialContext(ctx, pluginSocket, grpc.WithInsecure(),
+		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
+			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
 		}))
 	if err != nil {
 		t.Fatalf("Failed to get connection: %+v", err)
 	}
 
 	client = pluginapi.NewDevicePluginClient(conn)
-	_, err = client.Allocate(context.Background(), &pluginapi.AllocateRequest{
+	_, err = client.Allocate(ctx, &pluginapi.AllocateRequest{
 		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
 			{
 				DevicesIDs: []string{"dev1", "dev2"},
@@ -213,7 +214,7 @@ func TestSetupAndServe(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to allocate device dev1: %+v", err)
 	}
-	conn.Close()
+	_ = conn.Close()
 }
 
 func TestStop(t *testing.T) {
@@ -337,7 +338,7 @@ func TestAllocate(t *testing.T) {
 	for _, tt := range tcases {
 		srv.devices = tt.devices
 		srv.postAllocate = tt.postAllocate
-		resp, err := srv.Allocate(nil, rqt)
+		resp, err := srv.Allocate(context.Background(), rqt)
 
 		if tt.expectedErr && err == nil {
 			t.Errorf("Test case '%s': no error returned", tt.name)
@@ -481,7 +482,9 @@ func TestListAndWatch(t *testing.T) {
 
 func TestGetDevicePluginOptions(t *testing.T) {
 	srv := &server{}
-	srv.GetDevicePluginOptions(nil, nil)
+	if _, err := srv.GetDevicePluginOptions(context.Background(), nil); err != nil {
+		t.Errorf("unexpected error: %+v", err)
+	}
 }
 
 func TestPreStartContainer(t *testing.T) {
@@ -506,7 +509,7 @@ func TestPreStartContainer(t *testing.T) {
 			srv := &server{
 				preStartContainer: tc.preStartContainer,
 			}
-			_, err := srv.PreStartContainer(nil, nil)
+			_, err := srv.PreStartContainer(context.Background(), nil)
 			if !tc.expectedError && err != nil {
 				t.Errorf("unexpected error: %v", err)
 			} else if tc.expectedError && err == nil {
