@@ -53,6 +53,12 @@ type FME interface {
 	//   some errors during PR, under this case, the user can fetch HW error info
 	//   from the status of FME's fpga manager.
 	PortPR(uint32, []byte) error
+	// PortRelease releases the port per Port ID provided by caller.
+	// * Return: 0 on success, -errno on failure.
+	PortRelease(uint32) error
+	// PortAssign assigns the port back per Port ID provided by caller.
+	// * Return: 0 on success, -errno on failure.
+	PortAssign(uint32) error
 	// TODO: (not implemented IOCTLs)
 	// Port release / assign
 	// Get Info
