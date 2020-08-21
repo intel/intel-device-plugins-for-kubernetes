@@ -36,7 +36,7 @@ var (
 
 const (
 	// ProviderKubelet is a constant to distinguish that topology hint comes
-	// from parameters passed to CRI create/update requests from Kubelet
+	// from parameters passed to CRI create/update requests from Kubelet.
 	ProviderKubelet = "kubelet"
 )
 

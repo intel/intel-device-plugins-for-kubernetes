@@ -41,16 +41,16 @@ const (
 	namespace      = "fpga.intel.com"
 	annotationName = "com.intel.fpga.mode"
 
-	// Scanner's mode of operation
+	// Scanner's mode of operation.
 	afMode          = "af"
 	regionMode      = "region"
 	regionDevelMode = "regiondevel"
 
-	// When the device's firmware crashes the driver reports these values
+	// When the device's firmware crashes the driver reports these values.
 	unhealthyAfuID       = "ffffffffffffffffffffffffffffffff"
 	unhealthyInterfaceID = "ffffffffffffffffffffffffffffffff"
 
-	// Period of device scans
+	// Period of device scans.
 	scanPeriod = 5 * time.Second
 )
 

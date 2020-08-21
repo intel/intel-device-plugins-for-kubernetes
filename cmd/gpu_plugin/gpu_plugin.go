@@ -43,7 +43,7 @@ const (
 	namespace  = "gpu.intel.com"
 	deviceType = "i915"
 
-	// Period of device scans
+	// Period of device scans.
 	scanPeriod = 5 * time.Second
 )
 

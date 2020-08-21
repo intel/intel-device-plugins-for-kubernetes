@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	// OpenCLUUID is a special AFU UUID that is used for all OpenCL BSP based FPGA bitstreams
+	// OpenCLUUID is a special AFU UUID that is used for all OpenCL BSP based FPGA bitstreams.
 	OpenCLUUID        = "18b79ffa2ee54aa096ef4230dafacb5f"
 	fileExtensionAOCX = ".aocx"
 )
