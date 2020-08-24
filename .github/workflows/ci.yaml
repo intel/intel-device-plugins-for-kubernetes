@@ -9,9 +9,9 @@ on:
       - master
       - 'release-*'
 env:
-  RUNC_VERSION: v1.0.0-rc90
+  RUNC_VERSION: v1.0.0-rc92
   CRIO_VERSION: v1.18.2
-  GO_VERSION: 1.13.12
+  GO_VERSION: 1.13.15
 jobs:
 
   golangci:
@@ -26,7 +26,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v1
         with:
-          version: v1.27
+          version: v1.30
           args: --timeout 5m
 
   build:
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2-beta
+      - uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Set up environment
@@ -87,7 +87,7 @@ jobs:
         with:
           path: vendor
           key: ${{ runner.os }}-vendor-${{ hashFiles('**/go.sum') }}
-      - uses: actions/setup-go@v2-beta
+      - uses: actions/setup-go@v2
         if: steps.cache-vendor.outputs.cache-hit != 'true'
         with:
           go-version: ${{ env.GO_VERSION }}

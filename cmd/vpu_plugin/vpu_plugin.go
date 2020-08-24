@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	// Movidius MyriadX Vendor ID
+	// Movidius MyriadX Vendor ID.
 	vendorID = 0x03e7
 	// Device plugin settings.
 	namespace  = "vpu.intel.com"
@@ -39,12 +39,12 @@ const (
 	hddlServicePath1 = "/var/tmp/hddl_service_ready.mutex"
 	hddlServicePath2 = "/var/tmp/hddl_service_alive.mutex"
 	ionDevNode       = "/dev/ion"
-	// Frequency of device scans
+	// Frequency of device scans.
 	scanFrequency = 5 * time.Second
 )
 
 var (
-	// Movidius MyriadX Product IDs
+	// Movidius MyriadX Product IDs.
 	productIDs = []int{0x2485, 0xf63b}
 )
 
