@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-sgx-plugin
+  labels:
+    app: intel-sgx-plugin
+spec:
+  selector:
+    matchLabels:
+      app: intel-sgx-plugin
+  template:
+    metadata:
+      labels:
+        app: intel-sgx-plugin
+    spec:
+      containers:
+      - name: intel-sgx-plugin
+        image: intel/intel-sgx-plugin:devel
+        securityContext:
+          readOnlyRootFilesystem: true
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: kubeletsockets
+          mountPath: /var/lib/kubelet/device-plugins
+        - name: sgxdevices
+          mountPath: /dev/sgx
+          readOnly: true
+      volumes:
+      - name: kubeletsockets
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+      - name: sgxdevices
+        hostPath:
+          path: /dev/sgx

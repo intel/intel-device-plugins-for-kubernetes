@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: intel-sgx-hookinstall-job
+  labels:
+    jobgroup: intel-sgx-hookinstall-job
+spec:
+  template:
+    metadata:
+      labels:
+        jobgroup: intel-sgx-hookinstall-job
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: intel-sgx-hookinstall-job
+          image: intel/intel-sgx-initcontainer:devel
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            readOnlyRootFilesystem: true
+          volumeMounts:
+          - mountPath: /etc/kubernetes/node-feature-discovery/source.d/
+            name: nfd-source-hooks
+      volumes:
+      - name: nfd-source-hooks
+        hostPath:
+          path: /etc/kubernetes/node-feature-discovery/source.d/
+          type: DirectoryOrCreate

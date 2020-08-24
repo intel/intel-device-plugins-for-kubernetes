@@ -1,0 +1,3 @@
+resources:
+  - intel-sgx-hookinstall.yaml
+  - intel-sgx-plugin.yaml

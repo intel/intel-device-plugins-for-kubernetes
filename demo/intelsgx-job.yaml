@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: intelsgx-demo-job
+  labels:
+    jobgroup: intelsgx-demo
+spec:
+  template:
+    metadata:
+      labels:
+        jobgroup: intelsgx-demo
+    spec:
+      restartPolicy: Never
+      containers:
+        -
+          name: intelsgx-demo-job-1
+          image: intel/sgx-sdk-demo:devel
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            readOnlyRootFilesystem: true
+            capabilities:
+              add: ["IPC_LOCK"]
+          resources:
+            limits:
+              sgx.intel.com/enclave: 1
+              sgx.intel.com/epc: 1234 # TODO: update
