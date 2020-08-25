@@ -17,9 +17,7 @@
 
 # Introduction
 
-The GPU device plugin for Kubernetes supports Intel
-[GVT-d](https://github.com/intel/gvt-linux/wiki/GVTd_Setup_Guide) device passthrough
-and acceleration, supporting GPUs of the following hardware families:
+The GPU device plugin for Kubernetes supports acceleration using the following Intel GPU hardware families:
 
 - Integrated GPUs within Intel Core processors
 - Integrated GPUs within Intel Xeon processors
@@ -33,8 +31,8 @@ There are two primary use cases:
 
 For example, the Intel Media SDK can offload video transcoding operations, and the OpenCL libraries can provide computation acceleration for Intel GPUs
 
-For information on Intel GVT-g virtual GPU device passthrough (as opposed to full device passthrough), see
-[this site](https://github.com/intel/gvt-linux/wiki/GVTg_Setup_Guide).
+The device plugin can also be used with [GVT-d](https://github.com/intel/gvt-linux/wiki/GVTd_Setup_Guide) device
+passthrough and acceleration.
 
 # Installation
 
