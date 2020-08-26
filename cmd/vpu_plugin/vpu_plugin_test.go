@@ -25,7 +25,7 @@ import (
 )
 
 func init() {
-	flag.Set("v", "4")
+	_ = flag.Set("v", "4")
 }
 
 type testCase struct {
@@ -78,7 +78,7 @@ func TestScan(t *testing.T) {
 	testPlugin := newDevicePlugin(tc, vendorID, productIDs, 10)
 
 	if testPlugin == nil {
-		t.Error("vpu plugin test failed with newDevicePlugin().")
+		t.Fatal("vpu plugin test failed with newDevicePlugin().")
 	}
 
 	fN.scanDone = testPlugin.scanDone
@@ -92,12 +92,12 @@ func TestScan(t *testing.T) {
 	klog.V(4).Infof("tree len is %d", len(fN.tree[deviceType]))
 
 	//remove the hddl_service.sock and test with no hddl socket case
-	f.Close()
-	os.Remove("/var/tmp/hddl_service.sock")
+	_ = f.Close()
+	_ = os.Remove("/var/tmp/hddl_service.sock")
 	testPlugin = newDevicePlugin(tc, vendorID, productIDs, 10)
 
 	if testPlugin == nil {
-		t.Error("vpu plugin test failed with newDevicePlugin() in no hddl_service.sock case.")
+		t.Fatal("vpu plugin test failed with newDevicePlugin() in no hddl_service.sock case.")
 	}
 
 	fN.scanDone = testPlugin.scanDone

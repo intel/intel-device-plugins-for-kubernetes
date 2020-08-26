@@ -14,6 +14,7 @@
 
 // +build kerneldrv
 
+// Package kerneldrv populates a device tree with QAT devices using the kernel QAT driver.
 package kerneldrv
 
 import (
@@ -199,7 +200,7 @@ func (dp *DevicePlugin) parseConfigs(devices []device) (map[string]section, erro
 		devNum++
 
 		for _, section := range config.Sections() {
-			if section.Name() == "GENERAL" || section.Name() == "KERNEL" || section.Name() == "KERNEL_QAT" || section.Name() == ini.DEFAULT_SECTION {
+			if section.Name() == "GENERAL" || section.Name() == "KERNEL" || section.Name() == "KERNEL_QAT" || section.Name() == ini.DefaultSection {
 				continue
 			}
 			klog.V(4).Info(section.Name())

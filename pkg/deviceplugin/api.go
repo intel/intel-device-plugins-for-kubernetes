@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package deviceplugin provides API for reporting available devices to kubelet.
 package deviceplugin
 
 import (
