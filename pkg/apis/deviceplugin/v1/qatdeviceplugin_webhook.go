@@ -98,7 +98,7 @@ func (r *QatDevicePlugin) validatePlugin() error {
 	parts = strings.Split(namespacedName, "/")
 	name := parts[len(parts)-1]
 	if name != "intel-qat-plugin" {
-		return errors.Errorf("incorrect image name %q. Make sure you use '<vendor>/image-qat-plugin:<version>'", name)
+		return errors.Errorf("incorrect image name %q. Make sure you use '<vendor>/intel-qat-plugin:<version>'", name)
 	}
 
 	ver, err := version.ParseSemantic(versionStr)

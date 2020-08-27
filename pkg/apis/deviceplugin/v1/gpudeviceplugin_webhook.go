@@ -98,7 +98,7 @@ func (r *GpuDevicePlugin) validatePlugin() error {
 	parts = strings.Split(namespacedName, "/")
 	name := parts[len(parts)-1]
 	if name != "intel-gpu-plugin" {
-		return errors.Errorf("incorrect image name %q. Make sure you use '<vendor>/image-gpu-plugin:<version>'", name)
+		return errors.Errorf("incorrect image name %q. Make sure you use '<vendor>/intel-gpu-plugin:<version>'", name)
 	}
 
 	ver, err := version.ParseSemantic(versionStr)

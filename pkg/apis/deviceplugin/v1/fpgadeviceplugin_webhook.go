@@ -92,14 +92,14 @@ func (r *FpgaDevicePlugin) ValidateDelete() error {
 }
 
 func (r *FpgaDevicePlugin) validatePlugin() error {
-	if err := validatePluginImage(r.Spec.Image, "intel-fpga-plugin"); err != nil {
+	if err := validatePluginImage(r.Spec.Image, "intel-fpga-plugin", fpgaMinVersion); err != nil {
 		return err
 	}
 
-	return validatePluginImage(r.Spec.InitImage, "intel-fpga-initcontainer")
+	return validatePluginImage(r.Spec.InitImage, "intel-fpga-initcontainer", fpgaMinVersion)
 }
 
-func validatePluginImage(image, expectedName string) error {
+func validatePluginImage(image, expectedName string, expectedMinVersion *version.Version) error {
 	parts := strings.SplitN(image, ":", 2)
 	if len(parts) != 2 {
 		return errors.Errorf("incorrect image field %q", image)
@@ -118,8 +118,8 @@ func validatePluginImage(image, expectedName string) error {
 		return errors.Wrapf(err, "unable to parse version %q", versionStr)
 	}
 
-	if !ver.AtLeast(fpgaMinVersion) {
-		return errors.Errorf("version %q is too low. Should be at least %q", ver, fpgaMinVersion)
+	if !ver.AtLeast(expectedMinVersion) {
+		return errors.Errorf("version %q is too low. Should be at least %q", ver, expectedMinVersion)
 	}
 
 	return nil

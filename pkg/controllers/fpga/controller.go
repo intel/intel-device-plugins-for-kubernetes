@@ -207,6 +207,11 @@ func (c *controller) UpdateDaemonSet(rawObj runtime.Object, ds *apps.DaemonSet) 
 		updated = true
 	}
 
+	if ds.Spec.Template.Spec.InitContainers[0].Image != dp.Spec.InitImage {
+		ds.Spec.Template.Spec.InitContainers[0].Image = dp.Spec.InitImage
+		updated = true
+	}
+
 	if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
 		ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector
 		updated = true
