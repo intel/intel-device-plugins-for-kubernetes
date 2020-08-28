@@ -103,13 +103,13 @@ func (b *Bitstream) Data() ([]byte, error) {
 
 // OpenGBS opens the named file using os.Open and prepares it for use as GBS.
 func OpenGBS(name string) (*FileGBS, error) {
-	f, err := os.Open(name)
+	f, err := os.Open(filepath.Clean(name))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	ff, err := NewFileGBS(f)
 	if err != nil {
-		f.Close()
+		_ = f.Close()
 		return nil, err
 	}
 	ff.closer = f
@@ -154,7 +154,9 @@ func NewFileGBS(r bitstreamReader) (*FileGBS, error) {
 
 	f := new(FileGBS)
 	// 1. Read file header
-	sr.Seek(0, io.SeekStart)
+	if _, err := sr.Seek(0, io.SeekStart); err != nil {
+		return nil, errors.Wrap(err, "unable to seek")
+	}
 	if err := binary.Read(sr, binary.LittleEndian, &f.Header); err != nil {
 		return nil, errors.Wrap(err, "unable to read header")
 	}

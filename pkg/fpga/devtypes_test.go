@@ -20,7 +20,7 @@ import (
 )
 
 func init() {
-	flag.Set("v", "4")
+	_ = flag.Set("v", "4")
 }
 
 func TestGetAfuDevType(t *testing.T) {

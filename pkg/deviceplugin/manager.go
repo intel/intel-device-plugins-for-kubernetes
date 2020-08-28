@@ -132,7 +132,9 @@ func (m *Manager) handleUpdate(update updateInfo) {
 		m.servers[devType].Update(devices)
 	}
 	for devType := range update.Removed {
-		m.servers[devType].Stop()
+		if err := m.servers[devType].Stop(); err != nil {
+			klog.Errorf("Unable to stop gRPC server for %q: %+v", devType, err)
+		}
 		delete(m.servers, devType)
 	}
 }

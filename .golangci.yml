@@ -10,6 +10,7 @@ linters:
     - bodyclose
     - deadcode
     - dogsled
+    - errcheck
     - gocognit
     - goconst
     - gocyclo
@@ -27,6 +28,7 @@ linters:
     - maligned
     - misspell
     - nakedret
+    - noctx
     - nolintlint
     - rowserrcheck
     - staticcheck

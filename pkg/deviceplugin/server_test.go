@@ -80,7 +80,7 @@ func (k *kubeletStub) start() error {
 	k.server = grpc.NewServer()
 
 	pluginapi.RegisterRegistrationServer(k.server, k)
-	go k.server.Serve(s)
+	go maybeLogError(func() error { return k.server.Serve(s) }, "unable to start server")
 
 	// Wait till the grpcServer is ready to serve services.
 	return waitForServer(k.socket, 10*time.Second)
@@ -130,8 +130,10 @@ func TestSetupAndServe(t *testing.T) {
 		updatesCh: make(chan map[string]DeviceInfo),
 	}
 
-	defer srv.Stop()
-	go srv.setupAndServe(namespace, devicePluginPath, kubeletSocket)
+	defer maybeLogError(srv.Stop, "unable to stop server")
+	go maybeLogError(func() error {
+		return srv.setupAndServe(namespace, devicePluginPath, kubeletSocket)
+	}, "unable to start server")
 
 	// Wait till the grpcServer is ready to serve services.
 	for {
@@ -529,4 +531,10 @@ func TestUpdate(t *testing.T) {
 		updatesCh: make(chan map[string]DeviceInfo, 1),
 	}
 	srv.Update(make(map[string]DeviceInfo))
+}
+
+func maybeLogError(f func() error, message string) {
+	if err := f(); err != nil {
+		klog.Errorf(message+":%+v", err)
+	}
 }
