@@ -65,6 +65,25 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-deviceplugin-intel-com-v1-sgxdeviceplugin
+  failurePolicy: Fail
+  name: msgxdeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - sgxdeviceplugins
+  sideEffects: None
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
       path: /pods
   failurePolicy: Ignore
   name: fpga.mutator.webhooks.intel.com
@@ -78,6 +97,25 @@ webhooks:
     - UPDATE
     resources:
     - pods
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /pods-sgx
+  failurePolicy: Ignore
+  name: sgx.mutator.webhooks.intel.com
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - pods
+  sideEffects: NoneOnDryRun
 
 ---
 apiVersion: admissionregistration.k8s.io/v1beta1
@@ -140,3 +178,22 @@ webhooks:
     - UPDATE
     resources:
     - qatdeviceplugins
+- clientConfig:
+    caBundle: Cg==
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-deviceplugin-intel-com-v1-sgxdeviceplugin
+  failurePolicy: Fail
+  name: vsgxdeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - sgxdeviceplugins
+  sideEffects: NoneOnDryRun

@@ -33,6 +33,7 @@ import (
 	fpgactr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	gpuctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
 	qatctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/qat"
+	sgxctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/sgx"
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
@@ -75,6 +76,8 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	err = gpuctr.SetupReconciler(k8sManager)
+	Expect(err).ToNot(HaveOccurred())
+	err = sgxctr.SetupReconciler(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 	err = qatctr.SetupReconciler(k8sManager)
 	Expect(err).ToNot(HaveOccurred())

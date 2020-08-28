@@ -30,8 +30,10 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/qat"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/sgx"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller/patcher"
+	sgxwebhook "github.com/intel/intel-device-plugins-for-kubernetes/pkg/webhooks/sgx"
 )
 
 var (
@@ -90,10 +92,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = sgx.SetupReconciler(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "SgxDevicePlugin")
+		os.Exit(1)
+	}
+	if err = (&devicepluginv1.SgxDevicePlugin{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "SgxDevicePlugin")
+		os.Exit(1)
+	}
+
 	pm := patcher.NewPatcherManager(mgr.GetLogger().WithName("webhooks").WithName("Fpga"))
 
 	mgr.GetWebhookServer().Register("/pods", &webhook.Admission{
 		Handler: admission.HandlerFunc(pm.GetPodMutator()),
+	})
+
+	mgr.GetWebhookServer().Register("/pods-sgx", &webhook.Admission{
+		Handler: &sgxwebhook.SgxMutator{Client: mgr.GetClient()},
 	})
 
 	if err = fpga.SetupReconciler(mgr); err != nil {
