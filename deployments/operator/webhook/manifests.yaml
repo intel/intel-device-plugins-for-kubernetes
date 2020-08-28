@@ -1,12 +1,14 @@
 
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   creationTimestamp: null
   name: mutating-webhook-configuration
 webhooks:
-- clientConfig:
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
     caBundle: Cg==
     service:
       name: webhook-service
@@ -24,7 +26,10 @@ webhooks:
     - UPDATE
     resources:
     - fpgadeviceplugins
-- clientConfig:
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
     caBundle: Cg==
     service:
       name: webhook-service
@@ -42,7 +47,10 @@ webhooks:
     - UPDATE
     resources:
     - gpudeviceplugins
-- clientConfig:
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
     caBundle: Cg==
     service:
       name: webhook-service
@@ -60,7 +68,10 @@ webhooks:
     - UPDATE
     resources:
     - qatdeviceplugins
-- clientConfig:
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
     caBundle: Cg==
     service:
       name: webhook-service
@@ -79,7 +90,9 @@ webhooks:
     resources:
     - sgxdeviceplugins
   sideEffects: None
-- clientConfig:
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
     caBundle: Cg==
     service:
       name: webhook-service
@@ -97,7 +110,10 @@ webhooks:
     - UPDATE
     resources:
     - pods
-- clientConfig:
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
     caBundle: Cg==
     service:
       name: webhook-service
@@ -115,16 +131,18 @@ webhooks:
     - UPDATE
     resources:
     - pods
-  sideEffects: NoneOnDryRun
+  sideEffects: None
 
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   creationTimestamp: null
   name: validating-webhook-configuration
 webhooks:
-- clientConfig:
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
     caBundle: Cg==
     service:
       name: webhook-service
@@ -142,7 +160,10 @@ webhooks:
     - UPDATE
     resources:
     - fpgadeviceplugins
-- clientConfig:
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
     caBundle: Cg==
     service:
       name: webhook-service
@@ -160,7 +181,10 @@ webhooks:
     - UPDATE
     resources:
     - gpudeviceplugins
-- clientConfig:
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
     caBundle: Cg==
     service:
       name: webhook-service
@@ -178,7 +202,10 @@ webhooks:
     - UPDATE
     resources:
     - qatdeviceplugins
-- clientConfig:
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
     caBundle: Cg==
     service:
       name: webhook-service
@@ -196,4 +223,4 @@ webhooks:
     - UPDATE
     resources:
     - sgxdeviceplugins
-  sideEffects: NoneOnDryRun
+  sideEffects: None
