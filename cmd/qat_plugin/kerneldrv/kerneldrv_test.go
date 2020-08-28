@@ -60,7 +60,7 @@ There is 7 QAT acceleration device(s) in the system:
 )
 
 func init() {
-	flag.Set("v", "4") //Enable debug output
+	_ = flag.Set("v", "4") //Enable debug output
 }
 
 func TestGetOnlineDevices(t *testing.T) {
@@ -156,7 +156,7 @@ func TestGetUIODevices(t *testing.T) {
 			sysfs := filepath.Join(tmpdir, "sys")
 
 			for _, uiodev := range tt.uiodevs {
-				err = os.MkdirAll(filepath.Join(getUIODeviceListPath(sysfs, tt.devType, tt.bsf), uiodev), 0755)
+				err = os.MkdirAll(filepath.Join(getUIODeviceListPath(sysfs, tt.devType, tt.bsf), uiodev), 0750)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -305,14 +305,14 @@ func TestGetDevTree(t *testing.T) {
 			var err error
 
 			sysfs := filepath.Join(tmpdir, "sys")
-			err = os.MkdirAll(sysfs, 0755)
+			err = os.MkdirAll(sysfs, 0750)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			for _, qatdev := range tt.qatdevs {
 				for _, uiodev := range tt.uiodevs[qatdev.bsf] {
-					err = os.MkdirAll(filepath.Join(getUIODeviceListPath(sysfs, qatdev.devtype, qatdev.bsf), uiodev), 0755)
+					err = os.MkdirAll(filepath.Join(getUIODeviceListPath(sysfs, qatdev.devtype, qatdev.bsf), uiodev), 0750)
 					if err != nil {
 						t.Fatal(err)
 					}

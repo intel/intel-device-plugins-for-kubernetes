@@ -25,7 +25,7 @@ import (
 )
 
 func init() {
-	flag.Set("v", "4") // Enable debug output
+	_ = flag.Set("v", "4") // Enable debug output
 }
 
 // mockNotifier implements Notifier interface.
@@ -70,9 +70,13 @@ func TestPodCount(t *testing.T) {
 	}
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
-			os.Unsetenv(podsPerCoreEnvVariable)
+			if err := os.Unsetenv(podsPerCoreEnvVariable); err != nil {
+				t.Fatalf("Unable to unset environment: %+v", err)
+			}
 			if tc.envValue != "" {
-				os.Setenv(podsPerCoreEnvVariable, tc.envValue)
+				if err := os.Setenv(podsPerCoreEnvVariable, tc.envValue); err != nil {
+					t.Fatalf("Unable to set environment: %+v", err)
+				}
 			}
 
 			count := getDefaultPodCount(tc.nCPUs)
@@ -137,10 +141,10 @@ func TestScan(t *testing.T) {
 			if err != nil {
 				t.Fatalf("can't create temporary directory: %+v", err)
 			}
-			defer os.RemoveAll(root)
+			defer func() { _ = os.RemoveAll(root) }()
 
 			devfs := path.Join(root, "dev")
-			err = os.MkdirAll(path.Join(devfs, "sgx"), 0755)
+			err = os.MkdirAll(path.Join(devfs, "sgx"), 0750)
 			if err != nil {
 				t.Fatalf("Failed to create fake device directory: %+v", err)
 			}

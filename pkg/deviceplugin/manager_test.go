@@ -22,7 +22,7 @@ import (
 )
 
 func init() {
-	flag.Set("v", "4") //Enable debug output
+	_ = flag.Set("v", "4") //Enable debug output
 }
 
 func TestNotify(t *testing.T) {

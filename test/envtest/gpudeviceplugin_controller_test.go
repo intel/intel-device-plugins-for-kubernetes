@@ -56,7 +56,7 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 
 			fetched := &devicepluginv1.GpuDevicePlugin{}
 			Eventually(func() bool {
-				k8sClient.Get(context.Background(), key, fetched)
+				_ = k8sClient.Get(context.Background(), key, fetched)
 				return len(fetched.Status.ControlledDaemonSet.UID) > 0
 			}, timeout, interval).Should(BeTrue())
 
@@ -67,14 +67,14 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
 			fetchedUpdated := &devicepluginv1.GpuDevicePlugin{}
 			Eventually(func() string {
-				k8sClient.Get(context.Background(), key, fetchedUpdated)
+				_ = k8sClient.Get(context.Background(), key, fetchedUpdated)
 				return fetchedUpdated.Spec.Image
 			}, timeout, interval).Should(Equal(updatedImage))
 
 			By("deleting GpuDevicePlugin successfully")
 			Eventually(func() error {
 				f := &devicepluginv1.GpuDevicePlugin{}
-				k8sClient.Get(context.Background(), key, f)
+				_ = k8sClient.Get(context.Background(), key, f)
 				return k8sClient.Delete(context.Background(), f)
 			}, timeout, interval).Should(Succeed())
 
