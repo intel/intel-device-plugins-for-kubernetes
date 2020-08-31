@@ -104,7 +104,7 @@ func (pm *PatcherManager) mutate(ctx context.Context, req webhook.AdmissionReque
 		Allowed: true,
 	}
 
-	var ops []string
+	ops := []string{}
 	for containerIdx, container := range pod.Spec.Containers {
 		patchOps, err := patcher.getPatchOps(containerIdx, container)
 		if err != nil {

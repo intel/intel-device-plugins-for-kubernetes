@@ -11,6 +11,7 @@ linters:
     - deadcode
     - dogsled
     - errcheck
+    - exportloopref
     - gocognit
     - goconst
     - gocyclo
@@ -30,7 +31,9 @@ linters:
     - nakedret
     - noctx
     - nolintlint
+    - prealloc
     - rowserrcheck
+    - scopelint
     - staticcheck
     - structcheck
     - stylecheck
@@ -51,3 +54,11 @@ linters-settings:
     min-complexity: 15
   gocognit:
     min-complexity: 31
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        # Until the testing package allows pinning variables disable scopelint
+        # for tests. See https://github.com/kyoh86/scopelint/issues/4.
+        - scopelint

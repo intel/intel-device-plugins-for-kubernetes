@@ -183,8 +183,6 @@ func getRequestedResources(container corev1.Container) (map[string]int64, error)
 }
 
 func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]string, error) {
-	var ops []string
-
 	requestedResources, err := getRequestedResources(container)
 	if err != nil {
 		return nil, err
@@ -197,6 +195,7 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 	resources := make(map[string]int64)
 	envVars := make(map[string]string)
 	counter := 0
+	ops := make([]string, 0, 2*len(requestedResources))
 	for rname, quantity := range requestedResources {
 		mode, found := p.resourceModeMap[rname]
 		if !found {
