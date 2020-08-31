@@ -13,6 +13,15 @@ spec:
       labels:
         app: intel-sgx-plugin
     spec:
+      initContainers:
+      - name: intel-sgx-initcontainer
+        image: intel/intel-sgx-initcontainer:devel
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /etc/kubernetes/node-feature-discovery/source.d/
+          name: nfd-source-hooks
       containers:
       - name: intel-sgx-plugin
         image: intel/intel-sgx-plugin:devel
@@ -32,3 +41,7 @@ spec:
       - name: sgxdevices
         hostPath:
           path: /dev/sgx
+      - name: nfd-source-hooks
+        hostPath:
+          path: /etc/kubernetes/node-feature-discovery/source.d/
+          type: DirectoryOrCreate
