@@ -80,7 +80,10 @@ func TestAcceleratorFunctionReconcile(t *testing.T) {
 
 func TestAcceleratorFunctionSetupWithManager(t *testing.T) {
 	r := &AcceleratorFunctionReconciler{}
-	err := r.SetupWithManager(&mockManager{scheme: scheme})
+	err := r.SetupWithManager(&mockManager{
+		scheme: scheme,
+		log:    log,
+	})
 	if err != nil {
 		t.Errorf("unexpected error: %+v", err)
 	}
@@ -128,7 +131,10 @@ func TestFpgaRegionReconcile(t *testing.T) {
 
 func TestFpgaRegionSetupWithManager(t *testing.T) {
 	r := &FpgaRegionReconciler{}
-	err := r.SetupWithManager(&mockManager{scheme: scheme})
+	err := r.SetupWithManager(&mockManager{
+		scheme: scheme,
+		log:    log,
+	})
 	if err != nil {
 		t.Errorf("unexpected error: %+v", err)
 	}
