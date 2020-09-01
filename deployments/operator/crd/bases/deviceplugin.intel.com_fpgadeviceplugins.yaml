@@ -50,7 +50,11 @@ spec:
           description: FpgaDevicePluginSpec defines the desired state of FpgaDevicePlugin.
           properties:
             image:
-              description: Image is a container image with GPU device plugin executable.
+              description: Image is a container image with FPGA device plugin executable.
+              type: string
+            initImage:
+              description: InitImage is a container image with tools used to initialize
+                the host before starting FPGA workloads on it.
               type: string
             logLevel:
               description: LogLevel sets the plugin's log level.
