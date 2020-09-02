@@ -36,20 +36,22 @@ func main() {
 	var err error
 	var bitstream, device string
 	var dryRun, force, quiet bool
+	var port uint
 	flag.StringVar(&bitstream, "b", "", "Path to bitstream file (GBS or AOCX)")
 	flag.StringVar(&device, "d", "", "Path to device node (FME or Port)")
 	flag.BoolVar(&dryRun, "dry-run", false, "Don't write/program, just validate and log")
 	flag.BoolVar(&force, "force", false, "Force overwrite operation for installing bitstreams")
 	flag.BoolVar(&quiet, "q", false, "Quiet mode. Only errors will be reported")
+	flag.UintVar(&port, "p", 0, "Port number for release/assign operations. Default: 0")
 
 	flag.Parse()
 
 	if flag.NArg() < 1 {
-		log.Fatal("Please provide command: info, fpgainfo, install, list, fmeinfo, portinfo, list-fme, list-port, pr")
+		log.Fatal("Please provide command: info, fpgainfo, install, list, fmeinfo, portinfo, list-fme, list-port, pr, release, assign")
 	}
 
 	cmd := flag.Arg(0)
-	err = validateFlags(cmd, bitstream, device)
+	err = validateFlags(cmd, bitstream, device, port)
 	if err != nil {
 		log.Fatalf("Invalid arguments: %+v", err)
 	}
@@ -59,12 +61,9 @@ func main() {
 		err = printBitstreamInfo(bitstream, quiet)
 	case "pr":
 		err = doPR(device, bitstream, dryRun, quiet)
-	case "fpgainfo":
+	case "fpgainfo", "fmeinfo", "portinfo":
+		// Inefficient code, but making gocyclo happy...
 		err = fpgaInfo(device, quiet)
-	case "fmeinfo":
-		err = fmeInfo(device, quiet)
-	case "portinfo":
-		err = portInfo(device, quiet)
 	case "install":
 		err = installBitstream(bitstream, dryRun, force, quiet)
 	case "list":
@@ -73,6 +72,10 @@ func main() {
 		err = listDevices(true, false, quiet)
 	case "list-port":
 		err = listDevices(false, true, quiet)
+	case "release":
+		err = portReleaseOrAssign(device, port, true, quiet)
+	case "assign":
+		err = portReleaseOrAssign(device, port, false, quiet)
 	default:
 		err = errors.Errorf("unknown command %+v", flag.Args())
 	}
@@ -81,14 +84,14 @@ func main() {
 	}
 }
 
-func validateFlags(cmd, bitstream, device string) error {
+func validateFlags(cmd, bitstream, device string, port uint) error {
 	switch cmd {
 	case "info", "install":
 		// bitstream must not be empty
 		if bitstream == "" {
 			return errors.Errorf("bitstream filename is missing")
 		}
-	case "fpgainfo", "fmeinfo", "portinfo":
+	case "fpgainfo", "fmeinfo", "portinfo", "release", "assign":
 		// device must not be empty
 		if device == "" {
 			return errors.Errorf("FPGA device name is missing")
@@ -212,6 +215,20 @@ func printFpgaFME(f fpga.FME, quiet bool) (err error) {
 	}
 
 	return
+}
+
+func portReleaseOrAssign(fname string, port uint, release, quiet bool) error {
+	var f fpga.FME
+	var err error
+	f, err = fpga.NewFME(fname)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if release {
+		return f.PortRelease(uint32(port))
+	}
+	return f.PortAssign(uint32(port))
 }
 
 func portInfo(fname string, quiet bool) error {

@@ -144,49 +144,7 @@ func (f *DflPort) CheckExtension() (int, error) {
 	return commonDflCheckExtension(f.DevPath)
 }
 
-// PortReset Reset the FPGA Port and its AFU. No parameters are supported.
-// Userspace can do Port reset at any time, e.g. during DMA or PR. But
-// it should never cause any system level issue, only functional failure
-// (e.g. DMA or PR operation failure) and be recoverable from the failure.
-// * Return: 0 on success, -errno of failure.
-func (f *DflPort) PortReset() error {
-	_, err := ioctlDev(f.DevPath, DFL_FPGA_PORT_RESET, 0)
-	return err
-}
-
-// PortGetInfo Retrieve information about the fpga port.
-// Driver fills the info in provided struct dfl_fpga_port_info.
-// * Return: 0 on success, -errno on failure.
-func (f *DflPort) PortGetInfo() (ret PortInfo, err error) {
-	var value DflFpgaPortInfo
-	value.Argsz = uint32(unsafe.Sizeof(value))
-	_, err = ioctlDev(f.DevPath, DFL_FPGA_PORT_GET_INFO, uintptr(unsafe.Pointer(&value)))
-	if err == nil {
-		ret.Flags = value.Flags
-		ret.Regions = value.Regions
-		ret.Umsgs = value.Umsgs
-	}
-	return
-}
-
-// PortGetRegionInfo Retrieve information about the fpga port.
-// * Retrieve information about a device memory region.
-// * Caller provides struct dfl_fpga_port_region_info with index value set.
-// * Driver returns the region info in other fields.
-// * Return: 0 on success, -errno on failure.
-func (f *DflPort) PortGetRegionInfo(index uint32) (ret PortRegionInfo, err error) {
-	var value DflFpgaPortRegionInfo
-	value.Argsz = uint32(unsafe.Sizeof(value))
-	value.Index = index
-	_, err = ioctlDev(f.DevPath, DFL_FPGA_PORT_GET_REGION_INFO, uintptr(unsafe.Pointer(&value)))
-	if err == nil {
-		ret.Flags = value.Flags
-		ret.Index = value.Index
-		ret.Offset = value.Offset
-		ret.Size = value.Size
-	}
-	return
-}
+// FME interfaces
 
 // PortPR does Partial Reconfiguration based on Port ID and Buffer (Image)
 // provided by caller.
@@ -204,7 +162,21 @@ func (f *DflFME) PortPR(port uint32, bitstream []byte) error {
 	return err
 }
 
-// FME interfaces
+// PortRelease releases the port per Port ID provided by caller.
+// * Return: 0 on success, -errno on failure.
+func (f *DflFME) PortRelease(port uint32) error {
+	value := port
+	_, err := ioctlDev(f.DevPath, FPGA_FME_PORT_RELEASE, uintptr(unsafe.Pointer(&value)))
+	return err
+}
+
+// PortAssign assigns the port back per Port ID provided by caller.
+// * Return: 0 on success, -errno on failure.
+func (f *DflFME) PortAssign(port uint32) error {
+	value := port
+	_, err := ioctlDev(f.DevPath, FPGA_FME_PORT_ASSIGN, uintptr(unsafe.Pointer(&value)))
+	return err
+}
 
 // GetDevPath returns path to device node.
 func (f *DflFME) GetDevPath() string {
@@ -309,6 +281,50 @@ func (f *DflFME) updateProperties() error {
 }
 
 // Port interfaces
+
+// PortReset Reset the FPGA Port and its AFU. No parameters are supported.
+// Userspace can do Port reset at any time, e.g. during DMA or PR. But
+// it should never cause any system level issue, only functional failure
+// (e.g. DMA or PR operation failure) and be recoverable from the failure.
+// * Return: 0 on success, -errno of failure.
+func (f *DflPort) PortReset() error {
+	_, err := ioctlDev(f.DevPath, DFL_FPGA_PORT_RESET, 0)
+	return err
+}
+
+// PortGetInfo Retrieve information about the fpga port.
+// Driver fills the info in provided struct dfl_fpga_port_info.
+// * Return: 0 on success, -errno on failure.
+func (f *DflPort) PortGetInfo() (ret PortInfo, err error) {
+	var value DflFpgaPortInfo
+	value.Argsz = uint32(unsafe.Sizeof(value))
+	_, err = ioctlDev(f.DevPath, DFL_FPGA_PORT_GET_INFO, uintptr(unsafe.Pointer(&value)))
+	if err == nil {
+		ret.Flags = value.Flags
+		ret.Regions = value.Regions
+		ret.Umsgs = value.Umsgs
+	}
+	return
+}
+
+// PortGetRegionInfo Retrieve information about the fpga port.
+// * Retrieve information about a device memory region.
+// * Caller provides struct dfl_fpga_port_region_info with index value set.
+// * Driver returns the region info in other fields.
+// * Return: 0 on success, -errno on failure.
+func (f *DflPort) PortGetRegionInfo(index uint32) (ret PortRegionInfo, err error) {
+	var value DflFpgaPortRegionInfo
+	value.Argsz = uint32(unsafe.Sizeof(value))
+	value.Index = index
+	_, err = ioctlDev(f.DevPath, DFL_FPGA_PORT_GET_REGION_INFO, uintptr(unsafe.Pointer(&value)))
+	if err == nil {
+		ret.Flags = value.Flags
+		ret.Index = value.Index
+		ret.Offset = value.Offset
+		ret.Size = value.Size
+	}
+	return
+}
 
 // GetDevPath returns path to device node.
 func (f *DflPort) GetDevPath() string {
