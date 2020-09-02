@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -259,7 +260,7 @@ func (dp *devicePlugin) getAFU(fpath string, devName string) (*afu, error) {
 	if dp.ignoreAfuIDs {
 		afuID = "unused_afu_id"
 	} else {
-		data, err := ioutil.ReadFile(fpath)
+		data, err := ioutil.ReadFile(filepath.Clean(fpath))
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -278,7 +279,7 @@ func (dp *devicePlugin) getAFU(fpath string, devName string) (*afu, error) {
 }
 
 func (dp *devicePlugin) getFME(interfaceIDPath string, devName string) (*region, error) {
-	data, err := ioutil.ReadFile(interfaceIDPath)
+	data, err := ioutil.ReadFile(filepath.Clean(interfaceIDPath))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -295,8 +296,6 @@ func (dp *devicePlugin) getFME(interfaceIDPath string, devName string) (*region,
 }
 
 func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
-	var devices []device
-
 	klog.V(4).Info("Start new FPGA scan")
 
 	fpgaFiles, err := ioutil.ReadDir(dp.sysfsDir)
@@ -305,6 +304,7 @@ func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
 		return dp.getDevTree([]device{}), nil
 	}
 
+	devices := make([]device, 0, len(fpgaFiles))
 	for _, fpgaFile := range fpgaFiles {
 		fname := fpgaFile.Name()
 
