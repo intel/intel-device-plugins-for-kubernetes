@@ -2,7 +2,7 @@
 # Syntax and details are here: https://help.github.com/articles/about-codeowners/
 #
 # Global code ownership, fallback
-*                   @kad @mythi
+*                   @kad @mythi @bart0sh @rojkov
 
 # CI and building
 .github/workflows/  @rojkov @bart0sh @kad @mythi
@@ -17,7 +17,7 @@ Makefile            @rojkov @bart0sh @kad @mythi
 /cmd/fpga_tool/     @bart0sh @kad @rojkov
 /cmd/gpu_plugin/    @rojkov @bart0sh @uniemimu
 /cmd/qat_plugin/    @rojkov @mythi
-/cmd/vpu_plugin/    @rojkov @mythi @alekdu 
+/cmd/vpu_plugin/    @rojkov @mythi @alekdu
 
 # Framework
 /pkg/               @rojkov @bart0sh
@@ -30,9 +30,9 @@ Makefile            @rojkov @bart0sh @kad @mythi
 # Demos
 /demo/              @rojkov @bart0sh @mythi @kad
 
-# e2e testing 
+# e2e testing
 /tests/e2e/         @rojkov
 
 # New dependencies review
-/go.sum              @kad @mythi
-/go.mod              @kad @mythi
+/go.sum              @kad @mythi @bart0sh @rojkov
+/go.mod              @kad @mythi @bart0sh @rojkov
