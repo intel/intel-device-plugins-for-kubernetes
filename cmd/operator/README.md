@@ -18,7 +18,7 @@ The operator depends on [cert-manager](https://cert-manager.io/) running in the 
 To install it run:
 
 ```
-$ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml
+$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.0.0/cert-manager.yaml
 ```
 
 Make sure all the pods in the `cert-manager` namespace are up and running:
