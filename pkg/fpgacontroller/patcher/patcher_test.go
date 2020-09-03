@@ -86,6 +86,71 @@ func TestPatcherStorageFunctions(t *testing.T) {
 	}
 }
 
+func TestValidateContainerEnv(t *testing.T) {
+	tcases := []struct {
+		name        string
+		container   corev1.Container
+		expectedErr bool
+	}{
+		{
+			name: "Container OK",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"cpu": resource.MustParse("1"),
+					},
+				},
+			},
+			expectedErr: false,
+		},
+		{
+			name: "Wrong ENV FPGA_AFU",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"cpu": resource.MustParse("1"),
+					},
+				},
+				Env: []corev1.EnvVar{
+					{
+						Name:  "FPGA_AFU",
+						Value: "fake value",
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			name: "Wrong ENV FPGA_REGION",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"cpu": resource.MustParse("1"),
+					},
+				},
+				Env: []corev1.EnvVar{
+					{
+						Name:  "FPGA_REGION",
+						Value: "fake value",
+					},
+				},
+			},
+			expectedErr: true,
+		},
+	}
+	for _, tt := range tcases {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateContainer(tt.container)
+			if tt.expectedErr && err == nil {
+				t.Errorf("Test case '%s': no error returned", tt.name)
+			}
+			if !tt.expectedErr && err != nil {
+				t.Errorf("Test case '%s': unexpected error: %+v", tt.name, err)
+			}
+		})
+	}
+}
+
 func TestGetPatchOps(t *testing.T) {
 	tcases := []struct {
 		name        string
@@ -224,23 +289,6 @@ func TestGetPatchOps(t *testing.T) {
 					},
 					Limits: corev1.ResourceList{
 						"fpga.intel.com/unknown-nlb0": resource.MustParse("1"),
-					},
-				},
-			},
-			expectedErr: true,
-		},
-		{
-			name: "Wrong ENV",
-			container: corev1.Container{
-				Resources: corev1.ResourceRequirements{
-					Limits: corev1.ResourceList{
-						"cpu": resource.MustParse("1"),
-					},
-				},
-				Env: []corev1.EnvVar{
-					{
-						Name:  "FPGA_REGION",
-						Value: "fake value",
 					},
 				},
 			},
