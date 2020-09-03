@@ -29,6 +29,7 @@ import (
 
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/internal/containers"
 )
 
 const (
@@ -142,55 +143,12 @@ func validateContainer(container corev1.Container) error {
 	return nil
 }
 
-// getRequestedResources validates the container's requirements first, then returns them as a map.
-func getRequestedResources(container corev1.Container) (map[string]int64, error) {
-	// Container may happen to have Requests, but not Limits. Check Requests first,
-	// then in the next loop iterate over Limits.
-	for resourceName, resourceQuantity := range container.Resources.Requests {
-		rname := strings.ToLower(string(resourceName))
-		if !strings.HasPrefix(rname, namespace) {
-			// Skip non-FPGA resources in Requests.
-			continue
-		}
-
-		if container.Resources.Limits[resourceName] != resourceQuantity {
-			return nil, errors.Errorf(
-				"'limits' and 'requests' for %q must be equal as extended resources cannot be overcommitted",
-				rname)
-		}
-	}
-
-	resources := make(map[string]int64)
-	for resourceName, resourceQuantity := range container.Resources.Limits {
-		rname := strings.ToLower(string(resourceName))
-		if !strings.HasPrefix(rname, namespace) {
-			// Skip non-FPGA resources in Limits.
-			continue
-		}
-
-		if container.Resources.Requests[resourceName] != resourceQuantity {
-			return nil, errors.Errorf(
-				"'limits' and 'requests' for %q must be equal as extended resources cannot be overcommitted",
-				rname)
-		}
-
-		quantity, ok := resourceQuantity.AsInt64()
-		if !ok {
-			return nil, errors.Errorf("resource quantity isn't of integral type for %q", rname)
-		}
-
-		resources[rname] = quantity
-	}
-
-	return resources, nil
-}
-
 func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]string, error) {
 	if err := validateContainer(container); err != nil {
 		return nil, err
 	}
 
-	requestedResources, err := getRequestedResources(container)
+	requestedResources, err := containers.GetRequestedResources(container, namespace)
 	if err != nil {
 		return nil, err
 	}
