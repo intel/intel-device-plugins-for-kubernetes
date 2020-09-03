@@ -18,6 +18,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/go-logr/logr"
+
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -68,6 +70,7 @@ func (c *mockClient) Update(context.Context, runtime.Object, ...client.UpdateOpt
 
 type mockManager struct {
 	scheme *runtime.Scheme
+	log    logr.Logger
 }
 
 func (m *mockManager) Add(manager.Runnable) error {
@@ -124,6 +127,10 @@ func (m *mockManager) GetScheme() *runtime.Scheme {
 
 func (m *mockManager) GetWebhookServer() *webhook.Server {
 	return nil
+}
+
+func (m *mockManager) GetLogger() logr.Logger {
+	return m.log
 }
 
 func (m *mockManager) SetFields(interface{}) error {

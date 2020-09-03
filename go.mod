@@ -3,26 +3,26 @@ module github.com/intel/intel-device-plugins-for-kubernetes
 go 1.13
 
 require (
-	github.com/fsnotify/fsnotify v1.4.7
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ini/ini v1.46.0
 	github.com/go-logr/logr v0.1.0
 	github.com/google/gousb v0.0.0-20190812193832-18f4c1d8a750
 	github.com/klauspost/cpuid v1.3.1
-	github.com/onsi/ginkgo v1.11.0
-	github.com/onsi/gomega v1.8.1
+	github.com/onsi/ginkgo v1.12.1
+	github.com/onsi/gomega v1.10.1
 	github.com/pkg/errors v0.8.1
-	golang.org/x/sys v0.0.0-20191022100944-742c48ecaeb7
+	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
 	google.golang.org/grpc v1.26.0
 	gopkg.in/ini.v1 v1.46.0 // indirect
-	k8s.io/api v0.18.2
-	k8s.io/apimachinery v0.18.2
-	k8s.io/client-go v0.18.2
+	k8s.io/api v0.18.6
+	k8s.io/apimachinery v0.18.6
+	k8s.io/client-go v0.18.6
 	k8s.io/component-base v0.18.2
 	k8s.io/klog v1.0.0
 	k8s.io/kubelet v0.17.3
 	k8s.io/kubernetes v1.18.2
-	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
-	sigs.k8s.io/controller-runtime v0.6.0
+	k8s.io/utils v0.0.0-20200603063816-c1c6865ac451
+	sigs.k8s.io/controller-runtime v0.6.2
 )
 
 replace (

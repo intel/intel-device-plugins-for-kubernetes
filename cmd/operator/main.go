@@ -63,6 +63,7 @@ func main() {
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
+		Logger:             ctrl.Log.WithName("intel-device-plugins-manager"),
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "d1c7b6d5.intel.com",
 	})
@@ -89,7 +90,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	pm := patcher.NewPatcherManager(ctrl.Log.WithName("webhooks").WithName("Fpga"))
+	pm := patcher.NewPatcherManager(mgr.GetLogger().WithName("webhooks").WithName("Fpga"))
 
 	mgr.GetWebhookServer().Register("/pods", &webhook.Admission{
 		Handler: admission.HandlerFunc(pm.GetPodMutator()),
@@ -106,7 +107,7 @@ func main() {
 
 	if err = (&fpgacontroller.AcceleratorFunctionReconciler{
 		Client:         mgr.GetClient(),
-		Log:            ctrl.Log.WithName("controllers").WithName("AcceleratorFunction"),
+		Log:            mgr.GetLogger().WithName("controllers").WithName("AcceleratorFunction"),
 		Scheme:         mgr.GetScheme(),
 		PatcherManager: pm,
 	}).SetupWithManager(mgr); err != nil {
@@ -116,7 +117,7 @@ func main() {
 
 	if err = (&fpgacontroller.FpgaRegionReconciler{
 		Client:         mgr.GetClient(),
-		Log:            ctrl.Log.WithName("controllers").WithName("FpgaRegion"),
+		Log:            mgr.GetLogger().WithName("controllers").WithName("FpgaRegion"),
 		Scheme:         mgr.GetScheme(),
 		PatcherManager: pm,
 	}).SetupWithManager(mgr); err != nil {
