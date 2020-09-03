@@ -1,6 +1,6 @@
 # Intel FPGA admission controller for Kubernetes
 
-# Table of Contents
+Table of Contents
 
 * [Introduction](#introduction)
 * [Dependencies](#dependencies)
@@ -10,7 +10,7 @@
 * [Mappings](#mappings)
 * [Next steps](#next-steps)
 
-# Introduction
+## Introduction
 
 The FPGA admission controller is one of the components used to add support for Intel FPGA
 devices to Kubernetes.
@@ -31,7 +31,7 @@ The admission controller also keeps the user from bypassing namespaced mapping r
 by denying admission of any pods that are trying to use internal knowledge of InterfaceID or
 Bitstream ID environment variables used by the prestart hook.
 
-# Dependencies
+## Dependencies
 
 This component is one of a set of components that work together. You may also want to
 install the following:
@@ -42,12 +42,12 @@ install the following:
 All components have the same basic dependencies as the
 [generic plugin framework dependencies](../../README.md#about)
 
-# Installation
+## Installation
 
 The following sections detail how to obtain, build and deploy the admission
 controller webhook plugin.
 
-## Pre-requisites
+### Pre-requisites
 
 The webhook depends on having [cert-manager](https://cert-manager.io/)
 installed:
@@ -89,7 +89,7 @@ spec:
     ...
 ```
 
-## Deployment
+### Deployment
 
 To deploy the webhook, run
 
@@ -108,7 +108,7 @@ issuer.cert-manager.io/intelfpgawebhook-selfsigned-issuer created
 ```
 Now you can deploy your mappings.
 
-# Mappings
+## Mappings
 
 Mappings is a an essential part of the setup that gives a flexible instrument to a cluster
 administrator to manage FPGA bitstreams and to control access to them. Being a set of
@@ -148,12 +148,12 @@ bitstream to a region before the container is started.
 
 Mappings of resource names are configured with objects of `AcceleratorFunction` and
 `FpgaRegion` custom resource definitions found respectively in
-[`./deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_af.yaml`](../../deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_af.yaml)
-and [`./deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_region.yaml`](../../deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_region.yaml).
+[`./deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_af.yaml`](/deployments/fpga_admissionwebhook/crd/bases/fpga.intel.com_acceleratorfunctions.yaml)
+and [`./deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_region.yaml`](/deployments/fpga_admissionwebhook/crd/bases/fpga.intel.com_fpgaregions.yaml).
 
 Mappings between 'names' and 'ID's are controlled by the admission controller
 mappings collection file found in
-[`./deployments/fpga_admissionwebhook/mappings-collection.yaml`](../../deployments/fpga_admissionwebhook/mappings-collection.yaml).
+[`./deployments/fpga_admissionwebhook/mappings-collection.yaml`](/deployments/fpga_admissionwebhook/mappings-collection.yaml).
 This mappings file can be deployed with
 
 ```bash
@@ -163,6 +163,6 @@ $ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-
 Note that the mappings are scoped to the namespaces they were created in
 and they are applicable to pods created in the corresponding namespaces.
 
-# Next steps
+## Next steps
 
 Continue with [FPGA prestart CRI-O hook](../fpga_crihook/README.md).

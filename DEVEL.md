@@ -1,5 +1,7 @@
-How to develop simple device plugins
-====================================
+# Development
+
+
+## How to develop simple device plugins
 
 To create a simple device plugin without the hassle of developing your own gRPC
 server, you can use a package included in this repository called
@@ -62,8 +64,7 @@ Optionally, your device plugin may also implement the
 before they are sent to `kubelet`. To see an example, refer to the FPGA
 plugin which implements this interface to annotate its responses.
 
-Logging
--------
+### Logging
 
 The framework uses [`klog`](https://github.com/kubernetes/klog) as its logging
 framework. It is encouraged for plugins to also use `klog` to maintain uniformity
@@ -83,8 +84,7 @@ The default is to not log `Info()` calls. This can be changed using the plugin c
 line `-v` parameter. The additional annotations prepended to log lines by 'klog' can be disabled
 with the `-skip_headers` option.
 
-Error Conventions
------------------
+### Error Conventions
 
 The framework has a convention for producing and logging errors. Ideally plugins will also adhere
 to the convention.
@@ -121,8 +121,7 @@ Otherwise, they can be logged as simple values:
     klog.Warningf("Example of a warning due to an external error: %v", err)
 ```
 
-How to build against a newer version of Kubernetes
-==================================================
+## How to build against a newer version of Kubernetes
 
 First you need to update module dependencies. The easiest way is to use the
 script copied from https://github.com/kubernetes/kubernetes/issues/79384#issuecomment-521493597:

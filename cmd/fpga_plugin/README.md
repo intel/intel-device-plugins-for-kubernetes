@@ -1,6 +1,6 @@
 # Intel FPGA device plugin for Kubernetes
 
-# Table of Contents
+Table of Contents
 
 * [Introduction](#introduction)
 * [Component overview](#component-overview)
@@ -18,7 +18,7 @@
         * [Run FPGA device plugin in af mode](#run-fpga-device-plugin-in-af-mode)
         * [Run FPGA device plugin in region mode](#run-fpga-device-plugin-in-region-mode)
 
-# Introduction
+## Introduction
 
 This FPGA device plugin is part of a collection of Kubernetes components found within this
 repository that enable integration of Intel FPGA hardware into Kubernetes.
@@ -38,7 +38,7 @@ The components together implement the following features:
 - orchestration of FPGA programming
 - access control for FPGA hardware
 
-# Component overview
+## Component overview
 
 The following components are part of this repository, and work together to support Intel FPGAs under
 Kubernetes:
@@ -70,7 +70,7 @@ Kubernetes:
 The repository also contains an [FPGA helper tool](../fpga_tool/README.md) that may be useful during
 development, initial deployment and debugging.
 
-# FPGA modes
+## FPGA modes
 
 The FPGA plugin set can run in one of two modes:
 
@@ -95,14 +95,14 @@ af mode:
 
 ![Overview of `af` mode](pictures/FPGA-af.png)
 
-# Installation
+## Installation
 
 The below sections cover how to obtain, build and install this component.
 
 Components can generally be installed either using DaemonSets or running them
 'by hand' on each node.
 
-## Pre-built images
+### Pre-built images
 
 Pre-built images of the components are available on the [Docker hub](https://hub.docker.com/u/intel).
 These images are automatically built and uploaded to the hub from the latest `master` branch of
@@ -123,7 +123,7 @@ The following images are available on the Docker hub:
 - [The FPGA admisson webhook](https://hub.docker.com/r/intel/intel-fpga-admissionwebhook)
 - [The FPGA CRI-O prestart hook (in the `initcontainer` image)](https://hub.docker.com/r/intel/intel-fpga-initcontainer)
 
-## Dependencies
+### Dependencies
 
 All components have the same basic dependencies as the
 [generic plugin framework dependencies](../../README.md#about)
@@ -136,7 +136,7 @@ major components:
 -   [FPGA prestart CRI-O hook](../fpga_crihook/README.md)
 
 The CRI-O hook is only *required* if `region` mode is being used, but is installed by default by the
-[FPGA plugin DaemonSet YAML](../../deployments/fpga_plugin/fpga_plugin.yaml), and is benign
+[FPGA plugin DaemonSet YAML](/deployments/fpga_plugin/fpga_plugin.yaml), and is benign
 in `af` mode.
 
 If using the `af` mode, and therefore *not* using the
@@ -153,7 +153,7 @@ which is present and thus to use:
 Install this component (FPGA device plugin) first, and then follow the links
 and instructions to install the other components.
 
-## Getting the source code
+### Getting the source code
 
 To obtain the YAML files used for deployment, or to obtain the source tree if you intend to
 do a hand-deployment or build your own image, you will require access to the source code:
@@ -163,7 +163,7 @@ $ mkdir -p $(go env GOPATH)/src/github.com/intel
 $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 ```
 
-## Verify node kubelet config
+### Verify node kubelet config
 
 Every node that will be running the FPGA plugin must have the
 [kubelet device-plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/)
@@ -174,7 +174,7 @@ $ ls /var/lib/kubelet/device-plugins/kubelet.sock
 /var/lib/kubelet/device-plugins/kubelet.sock
 ```
 
-## Deploying as a DaemonSet
+### Deploying as a DaemonSet
 
 As a pre-requisite you need to have [cert-manager](https://cert-manager.io)
 up and running:
@@ -249,11 +249,11 @@ $ kubectl annotate node <node_name> 'fpga.intel.com/device-plugin-mode=af'
 ```
 And restart the pods on the nodes.
 
-> **Note:** The FPGA plugin [DaemonSet YAML](../../deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml)
-> also deploys the [FPGA CRI-O hook](../fpga_criohook) `initcontainer` image, but it will be
+> **Note:** The FPGA plugin [DaemonSet YAML](/deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml)
+> also deploys the [FPGA CRI-O hook](../fpga_crihook/README.md) `initcontainer` image, but it will be
 > benign (un-used) when running the FPGA plugin in `af` mode.
 
-### Verify plugin registration
+#### Verify plugin registration
 
 Verify the FPGA plugin has been deployed on the nodes. The below shows the output
 you can expect in `region` mode, but similar output should be expected for `af`
@@ -265,20 +265,20 @@ fpga.intel.com/region-ce48969398f05f33946d560708be108a:  1
 fpga.intel.com/region-ce48969398f05f33946d560708be108a:  1
 ```
 
-### Building the plugin image
+#### Building the plugin image
 
 If you need to build your own image from sources, and are not using the images
 available on the Docker Hub, follow the below details.
 
-> **Note:** The FPGA plugin [DaemonSet YAML](../../deployments/fpga_plugin/fpga_plugin.yaml)
-> also deploys the [FPGA CRI-O hook](../fpga_criohook) `initcontainer` image as well. You may
+> **Note:** The FPGA plugin [DaemonSet YAML](/deployments/fpga_plugin/fpga_plugin.yaml)
+> also deploys the [FPGA CRI-O hook](../fpga_crihook/README.md) `initcontainer` image as well. You may
 > also wish to build that image locally before deploying the FPGA plugin to avoid deploying
 > the Docker hub default image.
 
 The following will use `docker` to build a local container image called
 `intel/intel-fpga-plugin` with the tag `devel`.
 The image build tool can be changed from the default docker by setting the `BUILDER` argument
-to the [Makefile](../../Makefile).
+to the [Makefile](/Makefile).
 
 ```bash
 $ make intel-fpga-plugin
@@ -289,10 +289,10 @@ Successfully tagged intel/intel-fpga-plugin:devel
 This image launches `fpga_plugin` in `af` mode by default.
 
 To use your own container image, create you own kustomization overlay patching
-[`deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml`](../../deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml)
+[`deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml`](/deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml)
 file.
 
-## Deploy by hand
+### Deploy by hand
 
 For development purposes, it is sometimes convenient to deploy the plugin 'by hand'
 on a node. In this case, you do not need to build the complete container image,
@@ -302,7 +302,7 @@ and can build just the plugin.
 > to be configured or installed. It is recommended you reference the actions of the
 > DaemonSet YAML deployment for more details.
 
-### Build FPGA device plugin
+#### Build FPGA device plugin
 
 When deploying by hand, you only need to build the plugin itself, and not the whole
 container image:
@@ -312,7 +312,7 @@ $ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make fpga_plugin
 ```
 
-### Run FPGA device plugin in af mode
+#### Run FPGA device plugin in af mode
 
 ```bash
 $ export KUBE_CONF=/var/run/kubernetes/admin.kubeconfig # path to kubeconfig with admin's credentials
@@ -327,7 +327,7 @@ device-plugin registered
 the nodes' DAC rules must be configured to device plugin socket creation and kubelet registration.
 Furthermore, the deployments `securityContext` must be configured with appropriate `runAsUser/runAsGroup`.
 
-### Run FPGA device plugin in region mode
+#### Run FPGA device plugin in region mode
 
 ```bash
 $ export KUBE_CONF=/var/run/kubernetes/admin.kubeconfig # path to kubeconfig with admin's credentials

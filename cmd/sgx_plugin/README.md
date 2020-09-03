@@ -1,6 +1,6 @@
 # Intel Software Guard Extensions (SGX) device plugin for Kubernetes
 
-# Table of Contents
+Contents
 
 * [Introduction](#introduction)
 * [Installation](#installation)
@@ -15,7 +15,7 @@
         * [Build SGX device plugin](#build-sgx-device-plugin)
         * [Deploy SGX plugin](#deploy-sgx-plugin)
 
-# Introduction
+## Introduction
 
 **Note:** The work is still WIP. The SGX device plugin can be tested to run simple enclaves
 but the full e2e deployment (including the SGX remote attestation) is not yet finished. See
@@ -23,7 +23,7 @@ the open issues for details.
 
 This Intel SGX device plugin provides support for Intel SGX TEE under Kubernetes.
 
-## Modes and Configuration options
+### Modes and Configuration options
 
 The SGX plugin can take a number of command line arguments, summarised in the following table:
 
@@ -35,13 +35,13 @@ The SGX plugin can take a number of command line arguments, summarised in the fo
 The plugin also accepts a number of other arguments related to logging. Please use the `-h` option to see
 the complete list of logging related options.
 
-# Installation
+## Installation
 
 The below sections cover how to obtain, build and install this component.
 
 The component can be installed either using a DaemonSet or running 'by hand' on each node.
 
-## Prerequisites
+### Prerequisites
 
 The component has the same basic dependancies as the
 [generic plugin framework dependencies](../../README.md#about).
@@ -49,14 +49,14 @@ The component has the same basic dependancies as the
 The SGX plugin requires Linux Kernel SGX drivers to be available. These drivers
 are currently available via RFC patches on Linux Kernel Mailing List.
 
-## Getting the source code
+### Getting the source code
 
 ```bash
 $ mkdir -p $(go env GOPATH)/src/github.com/intel
 $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 ```
 
-## Verify node kubelet config
+### Verify node kubelet config
 
 Every node that will be running the plugin must have the
 [kubelet device-plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/)
@@ -67,16 +67,16 @@ $ ls /var/lib/kubelet/device-plugins/kubelet.sock
 /var/lib/kubelet/device-plugins/kubelet.sock
 ```
 
-## Deploying as a DaemonSet
+### Deploying as a DaemonSet
 
 To deploy the plugin as a DaemonSet, you first need to build a container image for the plugin and
 ensure that is visible to your nodes.
 
-### Build the plugin and EPC source images
+#### Build the plugin and EPC source images
 
 The following will use `docker` to build a local container images called `intel/intel-sgx-plugin`
 and `intel/intel-sgx-initcontainer` with the tag `devel`. The image build tool can be changed from the
-default docker by setting the `BUILDER` argument to the [Makefile](../../Makefile).
+default docker by setting the `BUILDER` argument to the [Makefile](/Makefile).
 
 ```bash
 $ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
@@ -88,11 +88,11 @@ $ make intel-sgx-initcontainer
 Successfully tagged intel/intel-sgx-initcontainer:devel
 ```
 
-### Deploy the DaemonSet
+#### Deploy the DaemonSet
 
 Deploying the plugin involves the deployment of a
-[NFD EPC Source InitContainer Job](../../deployments/sgx_plugin/base/intel-sgx-hookinstall.yaml) the
-[DaemonSet YAML](../../deployments/sgx_plugin/base/intel-sgx-plugin.yaml), and node-feature-discovery
+[NFD EPC Source InitContainer Job](/deployments/sgx_plugin/base/intel-sgx-hookinstall.yaml) the
+[DaemonSet YAML](/deployments/sgx_plugin/base/intel-sgx-plugin.yaml), and node-feature-discovery
 with the necessary configuration.
 
 There is a kustomization for deploying everything:
@@ -101,7 +101,7 @@ $ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ kubectl apply -k deployments/sgx_plugin/overlays/nfd
 ```
 
-### Verify SGX device plugin is registered on master:
+#### Verify SGX device plugin is registered on master:
 
 Verification of the plugin deployment and detection of SGX hardware can be confirmed by
 examining the resource allocations on the nodes:
@@ -120,19 +120,19 @@ $ kubectl describe node <node name> | grep sgx.intel.com
  sgx.intel.com/provision  1           1
 ```
 
-## Deploying by hand
+### Deploying by hand
 
 For development purposes, it is sometimes convenient to deploy the plugin 'by hand' on a node.
 In this case, you do not need to build the complete container image, and can build just the plugin.
 
-### Build SGX device plugin
+#### Build SGX device plugin
 
 ```bash
 $ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make sgx_plugin
 ```
 
-### Deploy SGX plugin
+#### Deploy SGX plugin
 
 Deploy the plugin on a node by running it as `root`. The below is just an example - modify the
 paramaters as necessary for your setup:

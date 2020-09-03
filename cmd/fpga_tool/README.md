@@ -1,11 +1,11 @@
 # Intel FPGA test tool
 
-# Introduction
+## Introduction
 
 This directory contains an FPGA test tool that can be used to locate, examine and program Intel
 FPGAs.
 
-## Command line and usage
+### Command line and usage
 
 The tool has the following command line arguments:
 

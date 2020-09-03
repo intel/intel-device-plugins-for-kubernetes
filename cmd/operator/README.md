@@ -1,18 +1,18 @@
 # Intel One Operator for Device Plugins
 
-# Table of Contents
+Table of Contents
 
 * [Introduction](#introduction)
 * [Installation](#installation)
 
-# Introduction
+## Introduction
 
 This One Operator is a Kubernetes custom controller whose goal is to serve the
 installation and lifecycle management of Intel device plugins for Kubernetes.
 It provides a single point of control for GPU, QAT and FPGA devices to a cluster
 administrators.
 
-# Installation
+## Installation
 
 The operator depends on [cert-manager](https://cert-manager.io/) running in the cluster.
 To install it run:
@@ -71,4 +71,4 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 ```
 
 Now you can deploy the device plugins by creating corresponding custom resources.
-The samples for them are available [here](../../deployments/operator/samples/).
+The samples for them are available [here](/deployments/operator/samples/).

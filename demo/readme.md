@@ -1,4 +1,4 @@
-# Intel Device Plugin Demo for Kubernetes
+# Demo
 
 ## Table of Contents
 

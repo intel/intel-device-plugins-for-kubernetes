@@ -1,6 +1,6 @@
 # Intel GPU device plugin for Kubernetes
 
-# Table of Contents
+Table of Contents
 
 * [Introduction](#introduction)
 * [Installation](#installation)
@@ -15,7 +15,7 @@
     * [Verify plugin registration](#verify-plugin-registration)
     * [Testing the plugin](#testing-the-plugin)
 
-# Introduction
+## Introduction
 
 The GPU device plugin for Kubernetes supports acceleration using the following Intel GPU hardware families:
 
@@ -34,13 +34,13 @@ For example, the Intel Media SDK can offload video transcoding operations, and t
 The device plugin can also be used with [GVT-d](https://github.com/intel/gvt-linux/wiki/GVTd_Setup_Guide) device
 passthrough and acceleration.
 
-# Installation
+## Installation
 
 The following sections detail how to obtain, build, deploy and test the GPU device plugin.
 
 Examples are provided showing how to deploy the plugin either using a DaemonSet or by hand on a per-node basis.
 
-## Getting the source code
+### Getting the source code
 
 > **Note:** It is presumed you have a valid and configured [golang](https://golang.org/) environment
 > that meets the minimum required version.
@@ -50,7 +50,7 @@ $ mkdir -p $(go env GOPATH)/src/github.com/intel
 $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 ```
 
-## Verify node kubelet config
+### Verify node kubelet config
 
 Every node that will be running the gpu plugin must have the
 [kubelet device-plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/)
@@ -61,12 +61,12 @@ $ ls /var/lib/kubelet/device-plugins/kubelet.sock
 /var/lib/kubelet/device-plugins/kubelet.sock
 ```
 
-## Deploying as a DaemonSet
+### Deploying as a DaemonSet
 
 To deploy the gpu plugin as a daemonset, you first need to build a container image for the
 plugin and ensure that is visible to your nodes.
 
-### Build the plugin image
+#### Build the plugin image
 
 The following will use `docker` to build a local container image called
 `intel/intel-gpu-plugin` with the tag `devel`.
@@ -81,9 +81,9 @@ $ make intel-gpu-plugin
 Successfully tagged intel/intel-gpu-plugin:devel
 ```
 
-### Deploy plugin DaemonSet
+#### Deploy plugin DaemonSet
 
-You can then use the [example DaemonSet YAML](../../deployments/gpu_plugin/base/intel-gpu-plugin.yaml)
+You can then use the [example DaemonSet YAML](/deployments/gpu_plugin/base/intel-gpu-plugin.yaml)
 file provided to deploy the plugin. The default kustomization that deploys the YAML as is:
 
 ```bash
@@ -94,7 +94,7 @@ daemonset.apps/intel-gpu-plugin created
 Alternatively, if your cluster runs
 [Node Feature Discovery](https://github.com/kubernetes-sigs/node-feature-discovery),
 you can deploy the device plugin only on nodes with Intel GPU.
-The [nfd_labeled_nodes](../../deployments/gpu_plugin/overlays/nfd_labeled_nodes/)
+The [nfd_labeled_nodes](/deployments/gpu_plugin/overlays/nfd_labeled_nodes/)
 kustomization adds the nodeSelector to the DaemonSet:
 
 ```bash
@@ -106,12 +106,12 @@ daemonset.apps/intel-gpu-plugin created
 the nodes' DAC rules must be configured to device plugin socket creation and kubelet registration.
 Furthermore, the deployments `securityContext` must be configured with appropriate `runAsUser/runAsGroup`.
 
-## Deploy by hand
+### Deploy by hand
 
 For development purposes, it is sometimes convenient to deploy the plugin 'by hand' on a node.
 In this case, you do not need to build the complete container image, and can build just the plugin.
 
-### Build the plugin
+#### Build the plugin
 
 First we build the plugin:
 
@@ -120,7 +120,7 @@ $ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 $ make gpu_plugin
 ```
 
-### Run the plugin as administrator
+#### Run the plugin as administrator
 
 Now we can run the plugin directly on the node:
 
@@ -130,7 +130,7 @@ device-plugin start server at: /var/lib/kubelet/device-plugins/gpu.intel.com-i91
 device-plugin registered
 ```
 
-## Verify plugin registration
+### Verify plugin registration
 
 You can verify the plugin has been registered with the expected nodes by searching for the relevant
 resource allocation status on the nodes:
@@ -141,7 +141,7 @@ master
  i915: 1
 ```
 
-## Testing the plugin
+### Testing the plugin
 
 We can test the plugin is working by deploying the provided example OpenCL image with FFT offload enabled.
 
