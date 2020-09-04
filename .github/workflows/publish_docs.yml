@@ -24,7 +24,7 @@ jobs:
       run: |
         PATH="$HOME/.local/bin:$PATH" make html
         mkdir $HOME/output
-        mv -v _build/html* $HOME/output
+        mv -v _build/html/* $HOME/output
         cd $HOME/output
         touch .nojekyll
         git init
