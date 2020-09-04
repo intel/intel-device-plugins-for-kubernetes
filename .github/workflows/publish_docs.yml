@@ -28,6 +28,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         mkdir $HOME/output
+        cp index.html _build/html/index.html
         mv -v _build/html/* $HOME/output
         touch $HOME/output/.nojekyll
         cd $HOME/output
