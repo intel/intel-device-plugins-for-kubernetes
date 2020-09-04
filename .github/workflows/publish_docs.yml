@@ -24,6 +24,8 @@ jobs:
         export PATH="$HOME/.local/bin:$PATH"
         make html
     - name: Deploy docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         mkdir $HOME/output
         mv -v _build/html/* $HOME/output
