@@ -14,7 +14,7 @@ jobs:
       run: |
         export PATH="$HOME/.local/bin:$PATH"
         sudo apt-get install -y python3-setuptools
-        pip3 install --user -r docs/requirements.txt
+        pip3 install --user -r requirements.txt
     - name: Branch off base for updated gh-pages
       run: |
         git branch gh-pages
