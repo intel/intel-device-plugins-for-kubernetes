@@ -24,6 +24,7 @@ jobs:
         export PATH="$HOME/.local/bin:$PATH"
         make html
     - name: Deploy docs
+      run: |
         mkdir $HOME/output
         mv -v _build/html/* $HOME/output
         touch $HOME/output/.nojekyll
