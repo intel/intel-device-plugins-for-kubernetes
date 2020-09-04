@@ -76,7 +76,7 @@ The following will use `docker` to build a local container image called
 `intel/intel-vpu-plugin` with the tag `devel`.
 
 The image build tool can be changed from the default `docker` by setting the `BUILDER` argument
-to the [`Makefile`](Makefile).
+to the [`Makefile`](/Makefile).
 
 ```bash
 $ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
