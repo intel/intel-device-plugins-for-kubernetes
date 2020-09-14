@@ -5,6 +5,7 @@ resources:
 - bases/deviceplugin.intel.com_gpudeviceplugins.yaml
 - bases/deviceplugin.intel.com_qatdeviceplugins.yaml
 - bases/deviceplugin.intel.com_fpgadeviceplugins.yaml
+- bases/deviceplugin.intel.com_sgxdeviceplugins.yaml
 - bases/fpga.intel.com_acceleratorfunctions.yaml
 - bases/fpga.intel.com_fpgaregions.yaml
 # +kubebuilder:scaffold:crdkustomizeresource

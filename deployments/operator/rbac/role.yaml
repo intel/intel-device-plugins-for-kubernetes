@@ -87,6 +87,26 @@ rules:
   - patch
   - update
 - apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - sgxdeviceplugins
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - sgxdeviceplugins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - fpga.intel.com
   resources:
   - acceleratorfunctions

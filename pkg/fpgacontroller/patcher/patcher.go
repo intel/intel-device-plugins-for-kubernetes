@@ -29,6 +29,7 @@ import (
 
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/internal/containers"
 )
 
 const (
@@ -133,57 +134,21 @@ func (p *patcher) RemoveRegion(name string) {
 	delete(p.resourceModeMap, namespace+"/"+name)
 }
 
-// getRequestedResources validates the container's requirements first, then returns them as a map.
-func getRequestedResources(container corev1.Container) (map[string]int64, error) {
+func validateContainer(container corev1.Container) error {
 	for _, v := range container.Env {
 		if strings.HasPrefix(v.Name, "FPGA_REGION") || strings.HasPrefix(v.Name, "FPGA_AFU") {
-			return nil, errors.Errorf("environment variable '%s' is not allowed", v.Name)
+			return errors.Errorf("environment variable '%s' is not allowed", v.Name)
 		}
 	}
-
-	// Container may happen to have Requests, but not Limits. Check Requests first,
-	// then in the next loop iterate over Limits.
-	for resourceName, resourceQuantity := range container.Resources.Requests {
-		rname := strings.ToLower(string(resourceName))
-		if !strings.HasPrefix(rname, namespace) {
-			// Skip non-FPGA resources in Requests.
-			continue
-		}
-
-		if container.Resources.Limits[resourceName] != resourceQuantity {
-			return nil, errors.Errorf(
-				"'limits' and 'requests' for %q must be equal as extended resources cannot be overcommitted",
-				rname)
-		}
-	}
-
-	resources := make(map[string]int64)
-	for resourceName, resourceQuantity := range container.Resources.Limits {
-		rname := strings.ToLower(string(resourceName))
-		if !strings.HasPrefix(rname, namespace) {
-			// Skip non-FPGA resources in Limits.
-			continue
-		}
-
-		if container.Resources.Requests[resourceName] != resourceQuantity {
-			return nil, errors.Errorf(
-				"'limits' and 'requests' for %q must be equal as extended resources cannot be overcommitted",
-				rname)
-		}
-
-		quantity, ok := resourceQuantity.AsInt64()
-		if !ok {
-			return nil, errors.Errorf("resource quantity isn't of integral type for %q", rname)
-		}
-
-		resources[rname] = quantity
-	}
-
-	return resources, nil
+	return nil
 }
 
 func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]string, error) {
-	requestedResources, err := getRequestedResources(container)
+	if err := validateContainer(container); err != nil {
+		return nil, err
+	}
+
+	requestedResources, err := containers.GetRequestedResources(container, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -203,14 +168,11 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 		}
 
 		switch mode {
-		case regiondevel:
+		case regiondevel, af:
 			// Do nothing.
-			// The requested resources are exposed by FPGA plugins working in "regiondevel" mode.
-			// In this mode the workload is supposed to program FPGA regions.
+			// The requested resources are exposed by FPGA plugins working in "regiondevel/af" mode.
+			// In "regiondevel" mode the workload is supposed to program FPGA regions.
 			// A cluster admin has to add FpgaRegion CRDs to allow this.
-		case af:
-			// Do nothing.
-			// The requested resources are exposed by FPGA plugins working in "af" mode.
 		case region:
 			// Let fpga_crihook know how to program the regions by setting ENV variables.
 			// The requested resources are exposed by FPGA plugins working in "region" mode.
