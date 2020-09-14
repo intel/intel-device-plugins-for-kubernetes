@@ -1,6 +1,6 @@
-# Intel Device Plugin Demo for Kubernetes
+# Demo
 
-## Table of Contents
+Table of Contents
 
 - [Demo overview](#demo-overview)
 - [Intel® GPU Device Plugin demo video](#intel-gpu-device-plugin-demo-video)
