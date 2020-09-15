@@ -75,7 +75,8 @@ options to your plugin, which can be viewed with the `-h` command line option of
 plugin.
 
 The framework tries to adhere to the Kubernetes
-[Logging Conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md). The advise is to use the `V()` levels for `Info()` calls, as calling `Info()`
+[Logging Conventions](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md).
+The advise is to use the `V()` levels for `Info()` calls, as calling `Info()`
 with no set level will make configuration and filtering of logging via the command
 line more difficult.
 

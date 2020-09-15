@@ -52,8 +52,8 @@ are currently available via RFC patches on Linux Kernel Mailing List.
 ## Getting the source code
 
 ```bash
-$ mkdir -p $(go env GOPATH)/src/github.com/intel
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ export INTEL_DEVICE_PLUGINS_SRC=/path/to/intel-device-plugins-for-kubernetes
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL_DEVICE_PLUGINS_SRC}
 ```
 
 ## Verify node kubelet config
@@ -79,7 +79,7 @@ and `intel/intel-sgx-initcontainer` with the tag `devel`. The image build tool c
 default docker by setting the `BUILDER` argument to the [Makefile](../../Makefile).
 
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd ${INTEL_DEVICE_PLUGINS_SRC}
 $ make intel-sgx-plugin
 ...
 Successfully tagged intel/intel-sgx-plugin:devel
@@ -97,8 +97,7 @@ with the necessary configuration.
 
 There is a kustomization for deploying everything:
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
-$ kubectl apply -k deployments/sgx_plugin/overlays/nfd
+$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/sgx_plugin/overlays/nfd
 ```
 
 ### Verify SGX device plugin is registered on master:
@@ -128,7 +127,7 @@ In this case, you do not need to build the complete container image, and can bui
 ### Build SGX device plugin
 
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd ${INTEL_DEVICE_PLUGINS_SRC}
 $ make sgx_plugin
 ```
 
@@ -138,8 +137,7 @@ Deploy the plugin on a node by running it as `root`. The below is just an exampl
 paramaters as necessary for your setup:
 
 ```bash
-$ sudo $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/sgx_plugin/sgx_plugin \
--enclave-limit 50 -provision-limit 1 -v 2
+$ sudo -E ${INTEL_DEVICE_PLUGINS_SRC}/cmd/sgx_plugin/sgx_plugin -enclave-limit 50 -provision-limit 1 -v 2
 I0626 20:33:01.414446  964346 server.go:219] Start server for provision at: /var/lib/kubelet/device-plugins/sgx.intel.com-provision.sock
 I0626 20:33:01.414640  964346 server.go:219] Start server for enclave at: /var/lib/kubelet/device-plugins/sgx.intel.com-enclave.sock
 I0626 20:33:01.417315  964346 server.go:237] Device plugin for provision registered
