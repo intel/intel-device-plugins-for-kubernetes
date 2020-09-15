@@ -13,24 +13,21 @@ FROM ${CLEAR_LINUX_BASE} as builder
 ARG CLEAR_LINUX_VERSION=
 
 RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION} && \
-    swupd bundle-add wget c-basic devpkg-json-c devpkg-util-linux devpkg-hwloc doxygen patch
+    swupd bundle-add wget c-basic devpkg-json-c devpkg-util-linux devpkg-hwloc devpkg-tbb git
 # Fetch dependencies and source code
-ARG OPAE_RELEASE=1.4.0-1
+ARG OPAE_RELEASE=1.5.0-2
 
 # workaround for a swupd failure discussed in https://github.com/clearlinux/distribution/issues/831
 RUN ldconfig
 RUN mkdir -p /usr/src/opae && \
     cd /usr/src/opae && \
-    wget https://github.com/OPAE/opae-sdk/archive/${OPAE_RELEASE}.tar.gz && \
-    tar xf *.tar.gz
+    wget -q https://github.com/OPAE/opae-sdk/archive/${OPAE_RELEASE}.tar.gz -O- | tar -zx
 
 # Build OPAE
-ADD 0001-OPAE-in-containers-don-t-enumerate-missing-device.patch /usr/src/opae/opae-sdk-${OPAE_RELEASE}
 RUN cd /usr/src/opae/opae-sdk-${OPAE_RELEASE} && \
-    patch -p1 < 0001-OPAE-in-containers-don-t-enumerate-missing-device.patch && \
     mkdir build && \
     cd build && \
-    cmake .. -DBUILD_ASE=0 -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_SKIP_RPATH=true && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DOPAE_BUILD_LIBOPAE_PY=OFF .. && \
     make xfpga nlb0 nlb3
 
 # Install clean os-core and libstdcpp bundle in target directory
