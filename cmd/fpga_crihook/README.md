@@ -26,7 +26,7 @@ programmed mode, and is benign (un-used) otherwise.
 > **Note:** The fpga CRI-O webhook is usually installed by the same DaemonSet as the
 > FPGA device plugin. If building and installing the CRI-O webhook by hand, it is
 > recommended you reference the
-> [fpga plugin DaemonSet YAML](../../deployments/fpga_plugin/fpga_plugin.yaml) for
+> [fpga plugin DaemonSet YAML](../../deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml) for
 > more details.
 
 # Dependencies
@@ -48,14 +48,14 @@ prestart hook.
 ## Getting the source code
 
 ```bash
-$ mkdir -p $(go env GOPATH)/src/github.com/intel
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ export INTEL_DEVICE_PLUGINS_SRC=/path/to/intel-device-plugins-for-kubernetes
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL_DEVICE_PLUGINS_SRC}
 ```
 
 ## Building the image
 
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd ${INTEL_DEVICE_PLUGINS_SRC}
 $ make intel-fpga-initcontainer
 ...
 Successfully tagged intel/intel-fpga-initcontainer:devel

@@ -119,13 +119,13 @@ Sources can be found in [openvino-demo](demo/ubuntu-demo-openvino)
 
 ## Device Plugins Operator
 
-Currently the operator has limited support for the QAT and GPU device plugins:
+Currently the operator has limited support for the QAT, GPU, FPGA and SGX device plugins:
 it validates container image references and extends reported statuses.
 
 To run an operator instance in the container run
 
 ```bash
-$ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.0/cert-manager.yaml
+$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.0.0/cert-manager.yaml
 $ make deploy-operator
 ```
 

@@ -159,8 +159,8 @@ To obtain the YAML files used for deployment, or to obtain the source tree if yo
 do a hand-deployment or build your own image, you will require access to the source code:
 
 ```bash
-$ mkdir -p $(go env GOPATH)/src/github.com/intel
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ export INTEL_DEVICE_PLUGINS_SRC=/path/to/intel-device-plugins-for-kubernetes
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL_DEVICE_PLUGINS_SRC}
 ```
 
 ## Verify node kubelet config
@@ -281,6 +281,7 @@ The image build tool can be changed from the default docker by setting the `BUIL
 to the [Makefile](../../Makefile).
 
 ```bash
+$ cd ${INTEL_DEVICE_PLUGINS_SRC}
 $ make intel-fpga-plugin
 ...
 Successfully tagged intel/intel-fpga-plugin:devel
@@ -308,7 +309,7 @@ When deploying by hand, you only need to build the plugin itself, and not the wh
 container image:
 
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd ${INTEL_DEVICE_PLUGINS_SRC}
 $ make fpga_plugin
 ```
 
@@ -317,7 +318,7 @@ $ make fpga_plugin
 ```bash
 $ export KUBE_CONF=/var/run/kubernetes/admin.kubeconfig # path to kubeconfig with admin's credentials
 $ export NODE_NAME="<node name>" # if the node's name was overridden and differs from hostname
-$ sudo -E $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode af -kubeconfig $KUBE_CONF
+$ sudo -E ${INTEL_DEVICE_PLUGINS_SRC}/cmd/fpga_plugin/fpga_plugin -mode af -kubeconfig $KUBE_CONF
 FPGA device plugin started in af mode
 device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-af-f7df405cbd7acf7222f144b0b93acd18.sock
 device-plugin registered
@@ -332,7 +333,7 @@ Furthermore, the deployments `securityContext` must be configured with appropria
 ```bash
 $ export KUBE_CONF=/var/run/kubernetes/admin.kubeconfig # path to kubeconfig with admin's credentials
 $ export NODE_NAME="<node name>" # if the node's name was overridden and differs from hostname
-$ sudo -E $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/fpga_plugin/fpga_plugin -mode region -kubeconfig $KUBE_CONF
+$ sudo -E ${INTEL_DEVICE_PLUGINS_SRC}/cmd/fpga_plugin/fpga_plugin -mode region -kubeconfig $KUBE_CONF
 FPGA device plugin started in region mode
 device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-region-ce48969398f05f33946d560708be108a.sock
 device-plugin registered

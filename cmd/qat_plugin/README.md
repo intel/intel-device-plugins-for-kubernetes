@@ -5,8 +5,8 @@
 * [Introduction](#introduction)
     * [Modes and Configuration options](#modes-and-configuration-options)
 * [Installation](#installation)
-    * [Pre-built image](#pre-built-image)
     * [Prerequisites](#prerequisites)
+    * [Pre-built image](#pre-built-image)
     * [Getting the source code:](#getting-the-source-code)
     * [Verify node kubelet config](#verify-node-kubelet-config)
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
@@ -92,24 +92,6 @@ The below sections cover how to obtain, build and install this component.
 
 The component can be installed either using a DaemonSet or running 'by hand' on each node.
 
-## Pre-built image
-
-[Pre-built images](https://hub.docker.com/r/intel/intel-qat-plugin)
-of this component are available on the Docker hub. These images are automatically built and uploaded
-to the hub from the latest master branch of this repository.
-
-Release tagged images of the components are also available on the Docker hub, tagged with their
-release version numbers in the format `x.y.z`, corresponding to the branches and releases in this
-repository.
-
-The deployment YAML files supplied with the component in this repository use the images with the `devel`
-tag by default. If you do not build your own local images, your Kubernetes cluster may pull down
-the devel images from the Docker hub by default.
-
-To use the release tagged versions of the images, edit the
-[YAML deployment files](../../deployments/qat_plugin/base/)
-appropriately.
-
 ## Prerequisites
 
 The component has the same basic dependancies as the
@@ -125,11 +107,41 @@ are available via two methods. One of them must be installed and enabled:
 
 The demonstrations have their own requirements, listed in their own specific sections.
 
+## Pre-built image
+
+[Pre-built images](https://hub.docker.com/r/intel/intel-qat-plugin)
+of this component are available on the Docker hub. These images are automatically built and uploaded
+to the hub from the latest master branch of this repository.
+
+Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers in the format `x.y.z`, corresponding to the branches and releases in this
+repository. Thus the easiest way to deploy the plugin in your cluster is to run this command
+
+```bash
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/qat_plugin?ref=<RELEASE_VERSION>
+```
+
+Where `<RELEASE_VERSION>` needs to be substituted with the desired release version, e.g. `v0.18.0`.
+
+An alternative kustomization for deploying the plugin is with the debug mode switched on:
+
+```bash
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/qat_plugin/overlays/debug?ref=<RELEASE_VERSION>
+```
+
+The deployment YAML files supplied with the component in this repository use the images with the `devel`
+tag by default. If you do not build your own local images, your Kubernetes cluster may pull down
+the devel images from the Docker hub by default.
+
+To use the release tagged versions of the images, edit the
+[YAML deployment files](../../deployments/qat_plugin/base/)
+appropriately.
+
 ## Getting the source code
 
 ```bash
-$ mkdir -p $(go env GOPATH)/src/github.com/intel
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ export INTEL_DEVICE_PLUGINS_SRC=/path/to/intel-device-plugins-for-kubernetes
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL_DEVICE_PLUGINS_SRC}
 ```
 
 ## Verify node kubelet config
@@ -156,7 +168,7 @@ with the tag `devel`. The image build tool can be changed from the default docke
 `BUILDER` argument to the [Makefile](../../Makefile).
 
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd ${INTEL_DEVICE_PLUGINS_SRC}
 $ make intel-qat-plugin
 ...
 Successfully tagged intel/intel-qat-plugin:devel
@@ -173,20 +185,19 @@ Deploying the plugin involves first the deployment of a
 
 There is a kustomization for deploying both:
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
-$ kubectl apply -k deployments/qat_plugin
+$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/qat_plugin
 ```
 and an alternative kustomization for deploying the plugin in the debug mode:
 
 ```bash
-$ kubectl apply -k deployments/qat_plugin/overlays/debug
+$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/qat_plugin/overlays/debug
 ```
 
 The third option is to deploy the `yaml`s separately:
 
 ```bash
-$ kubectl create -f deployments/qat_plugin/base/intel-qat-plugin-config.yaml
-$ kubectl create -f deployments/qat_plugin/base/intel-qat-plugin.yaml
+$ kubectl create -f ${INTEL_DEVICE_PLUGINS_SRC}/deployments/qat_plugin/base/intel-qat-plugin-config.yaml
+$ kubectl create -f ${INTEL_DEVICE_PLUGINS_SRC}/deployments/qat_plugin/base/intel-qat-plugin.yaml
 ```
 
 > **Note**: It is also possible to run the QAT device plugin using a non-root user. To do this,
@@ -213,7 +224,7 @@ In this case, you do not need to build the complete container image, and can bui
 ### Build QAT device plugin
 
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ cd ${INTEL_DEVICE_PLUGINS_SRC}
 $ make qat_plugin
 ```
 
@@ -223,7 +234,7 @@ Deploy the plugin on a node by running it as `root`. The below is just an exampl
 paramaters as necessary for your setup:
 
 ```bash
-$ sudo $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/qat_plugin/qat_plugin \
+$ sudo -E ${INTEL_DEVICE_PLUGINS_SRC}/cmd/qat_plugin/qat_plugin \
 -dpdk-driver igb_uio -kernel-vf-drivers dh895xccvf -max-num-devices 10 -debug
 QAT device plugin started
 Discovered Devices below:
@@ -271,7 +282,7 @@ The demo uses a container image. You can either use the
 To build the DPDK demo image:
 
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes/demo
+$ cd ${INTEL_DEVICE_PLUGINS_SRC}
 $ ./build-image.sh crypto-perf
 ...
 Successfully tagged crypto-perf:devel
@@ -285,8 +296,7 @@ For example, `qat.intel.com/generic: <number of devices>` for a container reques
 For a DPDK-based workload, you may need to add hugepage request and limit.
 
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
-$ kubectl apply -k deployments/qat_dpdk_app/base/
+$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/qat_dpdk_app/base/
 $ kubectl get pods
   NAME                     READY     STATUS    RESTARTS   AGE
   qat-dpdk                 1/1       Running   0          27m
@@ -320,9 +330,8 @@ It is also possible to deploy and run `crypto-perf` using the following
 `kustomize` overlays:
 
 ```bash
-$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
-$ kubectl apply -k deployments/qat_dpdk_app/test-crypto1
-$ kubectl apply -k deployments/qat_dpdk_app/test-compress1
+$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/qat_dpdk_app/test-crypto1
+$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/qat_dpdk_app/test-compress1
 $ kubectl logs qat-dpdk-test-crypto-perf-tc1
 $ kubectl logs qat-dpdk-test-compress-perf-tc1
 ```

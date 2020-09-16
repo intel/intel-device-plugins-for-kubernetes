@@ -10,7 +10,7 @@ FPGAs.
 The tool has the following command line arguments:
 
 ```bash
-info, fpgainfo, install, list, fmeinfo, portinfo, list-fme, list-port, pr
+info, fpgainfo, install, list, fmeinfo, portinfo, list-fme, list-port, pr, release, assign
 ```
 
 and the following command line options:
