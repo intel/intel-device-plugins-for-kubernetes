@@ -22,10 +22,10 @@ RUN apt-get update && \
 # SGX SDK is installed in /opt/intel directory.
 WORKDIR /opt/intel
 
-ARG SGX_SDK_INSTALLER=sgx_linux_x64_sdk_2.10.100.2.bin
+ARG SGX_SDK_INSTALLER=sgx_linux_x64_sdk_2.11.100.2.bin
 
 # Install SGX SDK
-RUN wget https://download.01.org/intel-sgx/sgx-linux/2.10/distro/ubuntu18.04-server/$SGX_SDK_INSTALLER \
+RUN wget https://download.01.org/intel-sgx/sgx-linux/2.11/distro/ubuntu18.04-server/$SGX_SDK_INSTALLER \
  && chmod +x  $SGX_SDK_INSTALLER \
  && echo "yes" | ./$SGX_SDK_INSTALLER \
  && rm $SGX_SDK_INSTALLER
