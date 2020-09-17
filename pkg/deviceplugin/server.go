@@ -127,6 +127,7 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 	response := new(pluginapi.AllocateResponse)
 	for _, crqt := range rqt.ContainerRequests {
 		cresp := new(pluginapi.ContainerAllocateResponse)
+		sep := ""
 		for _, id := range crqt.DevicesIDs {
 			dev, ok := srv.devices[id]
 			if !ok {
@@ -141,6 +142,12 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 			for i := range dev.mounts {
 				cresp.Mounts = append(cresp.Mounts, &dev.mounts[i])
 			}
+			if cresp.Annotations == nil {
+				cresp.Annotations = make(map[string]string)
+			}
+			cresp.Annotations["INTEL_PLUGIN_DEVICES"] = cresp.Annotations["INTEL_PLUGIN_DEVICES"] + sep + id
+			sep = ","
+
 			for key, value := range dev.envs {
 				if cresp.Envs == nil {
 					cresp.Envs = make(map[string]string)
@@ -185,6 +192,7 @@ func (srv *server) Stop() error {
 	if srv.grpcServer == nil {
 		return errors.New("Can't stop non-existing gRPC server. Calling Stop() before Serve()?")
 	}
+	klog.V(3).Info("Server stopping")
 	srv.setState(terminating)
 	srv.grpcServer.Stop()
 	close(srv.updatesCh)

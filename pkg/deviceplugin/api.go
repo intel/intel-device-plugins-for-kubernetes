@@ -57,6 +57,16 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 	return deviceInfo
 }
 
+// Nodes gives access to the DeviceSpec slice.
+func (di *DeviceInfo) Nodes() []pluginapi.DeviceSpec {
+	return di.nodes
+}
+
+// Mounts gives access to the Mounts slice.
+func (di *DeviceInfo) Mounts() []pluginapi.Mount {
+	return di.mounts
+}
+
 // DeviceTree contains a tree-like structure of device type -> device ID -> device info.
 type DeviceTree map[string]map[string]DeviceInfo
 

@@ -52,8 +52,9 @@ const (
 )
 
 type cliOptions struct {
-	sharedDevNum     int
-	enableMonitoring bool
+	sharedDevNum       int
+	enableMonitoring   bool
+	resourceManagement bool
 }
 
 type devicePlugin struct {
@@ -67,6 +68,8 @@ type devicePlugin struct {
 
 	scanTicker *time.Ticker
 	scanDone   chan bool
+
+	resMan *resourceManager
 }
 
 func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugin {
@@ -78,6 +81,7 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
 		scanTicker:       time.NewTicker(scanPeriod),
 		scanDone:         make(chan bool, 1), // buffered as we may send to it before Scan starts receiving from it
+		resMan:           newResourceManager(options.resourceManagement),
 	}
 }
 
@@ -189,18 +193,35 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		devTree.AddDevice(monitorType, monitorID, deviceInfo)
 	}
 
+	if dp.resMan != nil {
+		dp.resMan.setDevTree(devTree)
+	}
+
 	return devTree, nil
+}
+
+func (dp *devicePlugin) PostAllocate(allocateResponse *pluginapi.AllocateResponse) error {
+	if dp.resMan != nil {
+		return dp.resMan.reallocateWithFractionalResources(allocateResponse)
+	}
+	return nil
 }
 
 func main() {
 	var opts cliOptions
 
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable 'i915_monitoring' (= all GPUs) resource")
+	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.Parse()
 
 	if opts.sharedDevNum < 1 {
 		klog.Warning("The number of containers sharing the same GPU must greater than zero")
+		os.Exit(1)
+	}
+
+	if opts.sharedDevNum == 1 && opts.resourceManagement {
+		klog.Warning("Trying to use fractional resources with shared-dev-num 1 is pointless")
 		os.Exit(1)
 	}
 
