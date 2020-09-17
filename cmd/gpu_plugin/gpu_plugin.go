@@ -29,6 +29,7 @@ import (
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
 
@@ -52,8 +53,9 @@ const (
 )
 
 type cliOptions struct {
-	sharedDevNum     int
-	enableMonitoring bool
+	sharedDevNum       int
+	enableMonitoring   bool
+	resourceManagement bool
 }
 
 type devicePlugin struct {
@@ -67,10 +69,12 @@ type devicePlugin struct {
 
 	scanTicker *time.Ticker
 	scanDone   chan bool
+
+	resMan rm.ResourceManager
 }
 
 func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugin {
-	return &devicePlugin{
+	dp := &devicePlugin{
 		sysfsDir:         sysfsDir,
 		devfsDir:         devfsDir,
 		options:          options,
@@ -79,6 +83,17 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 		scanTicker:       time.NewTicker(scanPeriod),
 		scanDone:         make(chan bool, 1), // buffered as we may send to it before Scan starts receiving from it
 	}
+
+	if options.resourceManagement {
+		var err error
+		dp.resMan, err = rm.NewResourceManager(monitorID, namespace+"/"+deviceType)
+		if err != nil {
+			klog.Errorf("Failed to create resource manager: %+v", err)
+			return nil
+		}
+	}
+
+	return dp
 }
 
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
@@ -132,6 +147,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 	var monitor []pluginapi.DeviceSpec
 	devTree := dpapi.NewDeviceTree()
+	rmDevInfos := rm.NewDeviceInfoMap()
 	for _, f := range files {
 		var nodes []pluginapi.DeviceSpec
 
@@ -180,6 +196,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				// Currently only one device type (i915) is supported.
 				// TODO: check model ID to differentiate device models.
 				devTree.AddDevice(deviceType, devID, deviceInfo)
+				rmDevInfos[devID] = rm.NewDeviceInfo(nodes, nil, nil)
 			}
 		}
 	}
@@ -189,18 +206,36 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		devTree.AddDevice(monitorType, monitorID, deviceInfo)
 	}
 
+	if dp.resMan != nil {
+		dp.resMan.SetDevInfos(rmDevInfos)
+	}
+
 	return devTree, nil
+}
+
+func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
+	if dp.resMan != nil {
+		return dp.resMan.ReallocateWithFractionalResources(request)
+	}
+
+	return nil, &dpapi.UseDefaultMethodError{}
 }
 
 func main() {
 	var opts cliOptions
 
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable 'i915_monitoring' (= all GPUs) resource")
+	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.Parse()
 
 	if opts.sharedDevNum < 1 {
-		klog.Warning("The number of containers sharing the same GPU must greater than zero")
+		klog.Error("The number of containers sharing the same GPU must greater than zero")
+		os.Exit(1)
+	}
+
+	if opts.sharedDevNum == 1 && opts.resourceManagement {
+		klog.Error("Trying to use fractional resources with shared-dev-num 1 is pointless")
 		os.Exit(1)
 	}
 

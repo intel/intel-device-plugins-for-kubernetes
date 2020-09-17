@@ -22,7 +22,9 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
 
@@ -44,6 +46,13 @@ func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.scanDone <- true
 }
 
+type mockResourceManager struct{}
+
+func (m *mockResourceManager) ReallocateWithFractionalResources(*v1beta1.AllocateRequest) (*v1beta1.AllocateResponse, error) {
+	return &v1beta1.AllocateResponse{}, &dpapi.UseDefaultMethodError{}
+}
+func (m *mockResourceManager) SetDevInfos(rm.DeviceInfoMap) {}
+
 func createTestFiles(root string, devfsdirs, sysfsdirs []string, sysfsfiles map[string][]byte) (string, string, error) {
 	sysfs := path.Join(root, "sys")
 	devfs := path.Join(root, "dev")
@@ -64,6 +73,30 @@ func createTestFiles(root string, devfsdirs, sysfsdirs []string, sysfsfiles map[
 		}
 	}
 	return sysfs, devfs, nil
+}
+
+func TestNewDevicePlugin(t *testing.T) {
+	if newDevicePlugin("", "", cliOptions{sharedDevNum: 2, resourceManagement: false}) == nil {
+		t.Error("Failed to create plugin")
+	}
+	if newDevicePlugin("", "", cliOptions{sharedDevNum: 2, resourceManagement: true}) != nil {
+		t.Error("Unexpectedly managed to create resource management enabled plugin inside unit tests")
+	}
+}
+
+func TestAllocate(t *testing.T) {
+	plugin := newDevicePlugin("", "", cliOptions{sharedDevNum: 2, resourceManagement: false})
+	_, err := plugin.Allocate(&v1beta1.AllocateRequest{})
+	if _, ok := err.(*dpapi.UseDefaultMethodError); !ok {
+		t.Errorf("Unexpected return value: %+v", err)
+	}
+
+	// mock the rm
+	plugin.resMan = &mockResourceManager{}
+	_, err = plugin.Allocate(&v1beta1.AllocateRequest{})
+	if _, ok := err.(*dpapi.UseDefaultMethodError); !ok {
+		t.Errorf("Unexpected return value: %+v", err)
+	}
 }
 
 func TestScan(t *testing.T) {
@@ -203,6 +236,8 @@ func TestScan(t *testing.T) {
 			notifier := &mockNotifier{
 				scanDone: plugin.scanDone,
 			}
+
+			plugin.resMan = &mockResourceManager{}
 
 			err = plugin.Scan(notifier)
 			// Scans in GPU plugin never fail

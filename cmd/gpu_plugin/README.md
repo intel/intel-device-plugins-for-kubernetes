@@ -119,6 +119,30 @@ $ kubectl apply -k deployments/gpu_plugin/overlays/nfd_labeled_nodes
 daemonset.apps/intel-gpu-plugin created
 ```
 
+The experimental fractional-resource feature can be enabled by running:
+
+```bash
+$ kubectl apply -k deployments/gpu_plugin/overlays/fractional_resources
+serviceaccount/resource-reader-sa created
+clusterrole.rbac.authorization.k8s.io/resource-reader created
+clusterrolebinding.rbac.authorization.k8s.io/resource-reader-rb created
+daemonset.apps/intel-gpu-plugin created
+```
+
+Usage of fractional GPU resources, such as GPU memory, requires that the cluster has node
+extended resources with the name prefix `gpu.intel.com/`. Those can be created with NFD
+by running the hook installed by the plugin initcontainer. When fractional resources are
+enabled, the plugin lets a scheduler extender do card selection decisions based on resource
+availability and the amount of extended resources requested in the pod spec.
+
+The scheduler extender then needs to annotate the pod objects with unique
+increasing numeric timestamps in the annotation `gas-ts` and container card selections in
+`gas-container-cards` annotation. The latter has container separator `|` and card separator
+`,`. Example for a pod with two containers and both containers getting two cards:
+`gas-container-cards:card0,card1|card2,card3`. Enabling the fractional-resource support
+in the plugin without running such an annotation adding scheduler extender in the cluster
+will only slow down GPU-deployments, so do not enable this feature unnecessarily.
+
 > **Note**: It is also possible to run the GPU device plugin using a non-root user. To do this,
 the nodes' DAC rules must be configured to device plugin socket creation and kubelet registration.
 Furthermore, the deployments `securityContext` must be configured with appropriate `runAsUser/runAsGroup`.
