@@ -1,0 +1,9 @@
+resources:
+- intel-sgx-aesmd.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+- name: sgx-attestation-conf
+  files:
+  - aesmd.conf
+  - sgx_default_qcnl.conf

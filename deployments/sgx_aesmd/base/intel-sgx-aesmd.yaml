@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-sgx-aesmd
+  labels:
+    app: intel-sgx-aesmd
+spec:
+  selector:
+    matchLabels:
+      app: intel-sgx-aesmd
+  template:
+    metadata:
+      labels:
+        app: intel-sgx-aesmd
+      annotations:
+        sgx.intel.com/quote-provider: "aesmd"
+    spec:
+      hostNetwork: true
+      containers:
+      - name: aesmd
+        image: intel/sgx-aesmd-demo:devel
+        securityContext:
+          readOnlyRootFilesystem: true
+        resources:
+          limits:
+            sgx.intel.com/epc: "1Mi"
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: aesmdconf
+          mountPath: /etc/aesmd.conf
+          subPath: aesmd.conf
+        - name: qplconf
+          mountPath: /etc/sgx_default_qcnl.conf
+          subPath: sgx_default_qcnl.conf
+      volumes:
+      - name: aesmdconf
+        configMap:
+          name: sgx-attestation-conf
+          items:
+          - key: aesmd.conf
+            path: aesmd.conf
+      - name: qplconf
+        configMap:
+          name: sgx-attestation-conf
+          items:
+          - key: sgx_default_qcnl.conf
+            path: sgx_default_qcnl.conf
