@@ -26,6 +26,7 @@ import (
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/fpgaadmissionwebhook"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/gpu"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/qat"
+	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/sgx"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/component-base/logs"
