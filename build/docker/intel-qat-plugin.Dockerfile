@@ -45,7 +45,7 @@ RUN cd cmd/qat_plugin; echo "build tags: ${TAGS_KERNELDRV}"; GO111MODULE=${GO111
 RUN chmod a+x /go/bin/qat_plugin \
     && install -D /go/bin/qat_plugin /install_root/usr/local/bin/intel_qat_device_plugin \
     && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
-    && scripts/copy-modules-licenses.sh ./cmd/qat_plugin /install_root/usr/local/share/package-licenses/
+    && scripts/copy-modules-licenses.sh ./cmd/qat_plugin /install_root/usr/local/share/
 
 FROM scratch as final
 COPY --from=builder /install_root /
