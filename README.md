@@ -225,6 +225,15 @@ matching Kubernetes versions are listed below:
 [Go environment]: https://golang.org/doc/install
 [Kubernetes cluster]: https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
 
+## License
+
+All of the source code required to build intel-device-plugins-for-kubernetes
+is available under Open Source licenses. The source code files identify external Go
+modules used. Binaries are distributed as container images on
+DockerHub. Those images contain license texts under
+`/usr/local/share/package-licenses` and source code under
+`/usr/local/share/package-sources`.
+
 ## Related code
 
 A related Intel SRIOV network device plugin can be found in [this repository](https://github.com/intel/sriov-network-device-plugin)

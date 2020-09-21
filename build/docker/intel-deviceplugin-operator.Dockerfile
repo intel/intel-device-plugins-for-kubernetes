@@ -31,7 +31,7 @@ RUN cd cmd/operator; GO111MODULE=${GO111MODULE} go install; cd -
 RUN chmod a+x /go/bin/operator \
     && install -D /go/bin/operator /install_root/usr/local/bin/intel_deviceplugin_operator \
     && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
-    && scripts/copy-modules-licenses.sh ./cmd/operator /install_root/usr/local/share/package-licenses/
+    && scripts/copy-modules-licenses.sh ./cmd/operator /install_root/usr/local/share/
 
 FROM scratch as final
 COPY --from=builder /install_root /
