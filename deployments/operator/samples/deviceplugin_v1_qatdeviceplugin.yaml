@@ -3,4 +3,4 @@ kind: QatDevicePlugin
 metadata:
   name: qatdeviceplugin-sample
 spec:
-  image: intel/intel-qat-plugin:0.18.0
+  image: intel/intel-qat-plugin:0.18.1
