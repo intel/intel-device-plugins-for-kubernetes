@@ -31,7 +31,7 @@ RUN cd cmd/fpga_plugin; GO111MODULE=${GO111MODULE} go install; cd -
 RUN chmod a+x /go/bin/fpga_plugin \
     && install -D /go/bin/fpga_plugin /install_root/usr/local/bin/intel_fpga_device_plugin \
     && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
-    && scripts/copy-modules-licenses.sh ./cmd/fpga_plugin /install_root/usr/local/share/package-licenses/
+    && scripts/copy-modules-licenses.sh ./cmd/fpga_plugin /install_root/usr/local/share/
 
 FROM scratch as final
 COPY --from=builder /install_root /

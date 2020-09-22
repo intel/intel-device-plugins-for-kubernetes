@@ -34,7 +34,7 @@ RUN cd $DIR/cmd/sgx_epchook && \
     chmod a+x /go/bin/sgx_epchook && \
     cd $DIR && \
     install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE && \
-    scripts/copy-modules-licenses.sh ./cmd/sgx_epchook /install_root/usr/local/share/package-licenses/
+    scripts/copy-modules-licenses.sh ./cmd/sgx_epchook /install_root/usr/local/share/
 
 FROM scratch as final
 COPY --from=builder /install_root /
