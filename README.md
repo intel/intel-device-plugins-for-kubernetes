@@ -1,11 +1,14 @@
-# Intel® Device Plugins for Kubernetes
+# Overview
 [![Build Status](https://github.com/intel/intel-device-plugins-for-kubernetes/workflows/CI/badge.svg?branch=master)](https://github.com/intel/intel-device-plugins-for-kubernetes/actions?query=workflow%3ACI)
 [![Go Report Card](https://goreportcard.com/badge/github.com/intel/intel-device-plugins-for-kubernetes)](https://goreportcard.com/report/github.com/intel/intel-device-plugins-for-kubernetes)
 [![GoDoc](https://godoc.org/github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin?status.svg)](https://godoc.org/github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin)
 
-## Table of Contents
+This repository contains a framework for developing plugins for the Kubernetes
+[device plugins framework](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/),
+along with a number of device plugin implementations utilising that framework.
 
-* [About](#about)
+Table of Contents
+
 * [Prerequisites](#prerequisites)
 * [Plugins](#plugins)
     * [GPU device plugin](#gpu-device-plugin)
@@ -21,12 +24,6 @@
 * [Running e2e Tests](#running-e2e-tests)
 * [Supported Kubernetes versions](#supported-kubernetes-versions)
 * [Related code](#related-code)
-
-## About
-
-This repository contains a framework for developing plugins for the Kubernetes
-[device plugins framework](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/),
-along with a number of device plugin implementations utilising that framework.
 
 ## Prerequisites
 
@@ -212,7 +209,7 @@ $ KUBEBUILDER_ASSETS=${HOME}/work/kubebuilder-assets make envtest
 
 ## Supported Kubernetes versions
 
-Releases are made under the github [releases area](../../releases). Supported releases and
+Releases are made under the github [releases area](https://github.com/intel/intel-device-plugins-for-kubernetes/releases). Supported releases and
 matching Kubernetes versions are listed below:
 
 | Branch            | Kubernetes branch/version      |
