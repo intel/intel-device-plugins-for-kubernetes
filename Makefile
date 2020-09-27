@@ -143,3 +143,28 @@ check-github-actions:
 	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
 
 .PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions run-operator envtest deploy-operator undeploy-operator
+
+SPHINXOPTS    =
+SPHINXBUILD   = sphinx-build
+SOURCEDIR     = .
+BUILDDIR      = _build
+
+# Generate doc site under _build/html with Sphinx.
+vhtml: _work/venv/.stamp
+	. _work/venv/bin/activate && \
+		$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+		cp docs/index.html $(BUILDDIR)/html/index.html
+
+html:
+		$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+		cp docs/index.html $(BUILDDIR)/html/index.html
+
+clean-html:
+	rm -rf $(BUILDDIR)/html
+
+# Set up a Python3 environment with the necessary tools for document creation.
+_work/venv/.stamp: docs/requirements.txt
+	rm -rf ${@D}
+	python3 -m venv ${@D}
+	. ${@D}/bin/activate && pip install -r $<
+	touch $@

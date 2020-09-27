@@ -22,3 +22,6 @@ deployments/fpga_admissionwebhook/base/intel-fpga-webhook-certs-secret
 *.gbs.*
 *.aocx
 *.aocx.*
+
+_build
+_work
