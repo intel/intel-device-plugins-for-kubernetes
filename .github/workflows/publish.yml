@@ -1,0 +1,43 @@
+name: Publish
+
+on:
+  push:
+    branches:
+        - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-venv git
+    - uses: actions/checkout@v2
+    - name: Set up doc directory
+      run: |
+        mkdir $HOME/output
+        touch $HOME/output/.nojekyll
+    - name: Build latest
+      run: |
+        rm -rf _work/venv
+        make vhtml
+        mv _build/html/* $HOME/output/
+    - name: Deploy the docs
+      run: |
+        cd $HOME/output
+        git init
+        author=$(git log --merges --pretty=format:%an -n 1)
+        email=$(git log --merges --pretty=format:%ae -n 1)
+        git config --global user.name "$author"
+        git config --global user.email "$email"
+        git add .
+        git commit -m "latest html output"
+    - name: Publish/force-push to gh-pages
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git push -f https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git HEAD:gh-pages
