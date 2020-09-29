@@ -13,6 +13,14 @@ spec:
       labels:
         app: intel-gpu-plugin
     spec:
+      initContainers:
+      - name: intel-gpu-initcontainer
+        image: intel/intel-gpu-initcontainer:devel
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /etc/kubernetes/node-feature-discovery/source.d/
+          name: nfd-source-hooks
       containers:
       - name: intel-gpu-plugin
         env:
@@ -43,5 +51,9 @@ spec:
       - name: kubeletsockets
         hostPath:
           path: /var/lib/kubelet/device-plugins
+      - name: nfd-source-hooks
+        hostPath:
+          path: /etc/kubernetes/node-feature-discovery/source.d/
+          type: DirectoryOrCreate
       nodeSelector:
         kubernetes.io/arch: amd64
