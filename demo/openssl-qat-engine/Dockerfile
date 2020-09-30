@@ -5,10 +5,11 @@ FROM clearlinux:base as builder
 ARG QAT_DRIVER_RELEASE="qat1.7.l.4.9.0-00008"
 ARG QAT_ENGINE_VERSION="v0.5.44"
 ARG QAT_ENGINE_FLAGS="--disable-multibuff-offload"
+ARG IPP_CRYPTO_VERSION="ippcp_2020u2"
 
 RUN swupd bundle-add --skip-diskspace-check devpkg-systemd devpkg-openssl c-basic wget git && \
     git clone -b $QAT_ENGINE_VERSION https://github.com/intel/QAT_Engine && \
-    git clone https://github.com/intel/ipp-crypto && \
+    git clone -b $IPP_CRYPTO_VERSION https://github.com/intel/ipp-crypto && \
     wget https://01.org/sites/default/files/downloads/$QAT_DRIVER_RELEASE.tar.gz && \
     tar xf *.tar.gz
 

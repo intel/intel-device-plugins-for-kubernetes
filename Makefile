@@ -41,9 +41,9 @@ endif
 
 test-with-kind:
 	@build/docker/build-image.sh intel/intel-fpga-admissionwebhook buildah
-	@$(PODMAN) tag localhost/intel/intel-fpga-admissionwebhook:0.18.0 docker.io/intel/intel-fpga-admissionwebhook:0.18.0
+	@$(PODMAN) tag localhost/intel/intel-fpga-admissionwebhook:0.18.1 docker.io/intel/intel-fpga-admissionwebhook:0.18.1
 	@mkdir -p $(e2e_tmp_dir)
-	@$(PODMAN) save "docker.io/intel/intel-fpga-admissionwebhook:0.18.0" -o $(e2e_tmp_dir)/$(WEBHOOK_IMAGE_FILE)
+	@$(PODMAN) save "docker.io/intel/intel-fpga-admissionwebhook:0.18.1" -o $(e2e_tmp_dir)/$(WEBHOOK_IMAGE_FILE)
 	@$(KIND) create cluster --name "intel-device-plugins" --kubeconfig $(e2e_tmp_dir)/kubeconfig --image "kindest/node:v1.17.0"
 	@$(KIND) load image-archive --name "intel-device-plugins" $(e2e_tmp_dir)/$(WEBHOOK_IMAGE_FILE)
 	@$(GO) test -v ./test/e2e -args -kubeconfig $(e2e_tmp_dir)/kubeconfig -kubectl-path $(KUBECTL) -ginkgo.focus "Webhook" || rc=1; \
@@ -88,7 +88,7 @@ clean:
 
 ORG?=intel
 REG?=$(ORG)/
-TAG?=0.18.0
+TAG?=0.18.1
 export TAG
 
 pre-pull:

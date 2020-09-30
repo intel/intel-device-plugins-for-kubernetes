@@ -6,9 +6,9 @@
 #
 # This is used on release branches before tagging a stable version.
 # The master branch defaults to using the latest Clear Linux.
-ARG CLEAR_LINUX_BASE=clearlinux/golang@sha256:9f04d3cc0ca3f6951ab3646639b43eb73e963a7cee7322d619a02c7eeecce711
+ARG CLEAR_LINUX_BASE=clearlinux/golang@sha256:7f790763c87853f6e553f7317101d6e5eb337b7d0454c081d40890b5f062de4a
 FROM ${CLEAR_LINUX_BASE} as builder
-ARG CLEAR_LINUX_VERSION="--version=33450"
+ARG CLEAR_LINUX_VERSION="--version=33720"
 
 RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
 RUN swupd bundle-add devpkg-libusb
@@ -22,13 +22,14 @@ RUN mkdir /install_root \
     && rm -rf /install_root/var/lib/swupd/*
 
 ARG DIR=/intel-device-plugins-for-kubernetes
+ARG GO111MODULE=on
 WORKDIR $DIR
 COPY . .
-RUN cd cmd/vpu_plugin; go install
+RUN cd cmd/vpu_plugin; GO111MODULE=${GO111MODULE} go install; cd -
 RUN chmod a+x /go/bin/vpu_plugin \
     && install -D /go/bin/vpu_plugin /install_root/usr/local/bin/intel_vpu_device_plugin \
     && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
-    && scripts/copy-modules-licenses.sh ./cmd/vpu_plugin /install_root/usr/local/share/package-licenses/ \
+    && scripts/copy-modules-licenses.sh ./cmd/vpu_plugin /install_root/usr/local/share/ \
     && install -D /usr/share/package-licenses/libusb/* -t /install_root/usr/local/share/package-licenses/libusb \
     && install -D /lib64/libusb-1.0.so.0 /install_root/lib64
 

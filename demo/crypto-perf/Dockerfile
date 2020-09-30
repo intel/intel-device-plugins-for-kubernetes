@@ -6,11 +6,11 @@
 #
 # This is used on release branches before tagging a stable version.
 # The master branch defaults to using the latest Clear Linux.
-ARG CLEAR_LINUX_BASE=clearlinux@sha256:fc47d67eaa0f22c0a6c96250b485ae59e65b1b863ec91941935907c9e7210ae1
+ARG CLEAR_LINUX_BASE=clearlinux@sha256:15c95ae65db75e7690461e595cee692dbf18a2ac98c36efc1059ddcfea8ab622
 
 FROM ${CLEAR_LINUX_BASE} as builder
 
-ARG CLEAR_LINUX_VERSION="--version=33450"
+ARG CLEAR_LINUX_VERSION="--version=33720"
 
 RUN mkdir /install_root && \
     swupd os-install \
