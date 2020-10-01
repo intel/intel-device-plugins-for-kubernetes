@@ -67,6 +67,7 @@ jobs:
         image:
           - intel-fpga-admissionwebhook
           - intel-fpga-initcontainer
+          - intel-gpu-initcontainer
           - intel-gpu-plugin
           - intel-fpga-plugin
           - intel-qat-plugin
