@@ -15,8 +15,6 @@
 package v1
 
 import (
-	"strings"
-
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/version"
@@ -88,27 +86,11 @@ func (r *GpuDevicePlugin) ValidateDelete() error {
 }
 
 func (r *GpuDevicePlugin) validatePlugin() error {
-	parts := strings.SplitN(r.Spec.Image, ":", 2)
-	if len(parts) != 2 {
-		return errors.Errorf("incorrect image field %q", r.Spec.Image)
-	}
-	namespacedName := parts[0]
-	versionStr := parts[1]
-
-	parts = strings.Split(namespacedName, "/")
-	name := parts[len(parts)-1]
-	if name != "intel-gpu-plugin" {
-		return errors.Errorf("incorrect image name %q. Make sure you use '<vendor>/intel-gpu-plugin:<version>'", name)
+	if r.Spec.InitImage != "" {
+		if err := validatePluginImage(r.Spec.InitImage, "intel-gpu-initcontainer", gpuMinVersion); err != nil {
+			return err
+		}
 	}
 
-	ver, err := version.ParseSemantic(versionStr)
-	if err != nil {
-		return errors.Wrapf(err, "unable to parse version %q", versionStr)
-	}
-
-	if !ver.AtLeast(gpuMinVersion) {
-		return errors.Errorf("version %q is too low. Should be at least %q", ver, gpuMinVersion)
-	}
-
-	return nil
+	return validatePluginImage(r.Spec.Image, "intel-gpu-plugin", gpuMinVersion)
 }

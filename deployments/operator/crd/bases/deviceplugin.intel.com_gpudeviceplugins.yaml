@@ -52,6 +52,10 @@ spec:
             image:
               description: Image is a container image with GPU device plugin executable.
               type: string
+            initImage:
+              description: InitImage is a container image with tools (e.g., GPU NFD
+                source hook) installed on each node.
+              type: string
             logLevel:
               description: LogLevel sets the plugin's log level.
               minimum: 0

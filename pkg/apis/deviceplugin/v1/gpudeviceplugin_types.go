@@ -28,6 +28,9 @@ type GpuDevicePluginSpec struct {
 	// Image is a container image with GPU device plugin executable.
 	Image string `json:"image,omitempty"`
 
+	// InitImage is a container image with tools (e.g., GPU NFD source hook) installed on each node.
+	InitImage string `json:"initImage,omitempty"`
+
 	// SharedDevNum is a number of containers that can share the same GPU device.
 	// +kubebuilder:validation:Minimum=1
 	SharedDevNum int `json:"sharedDevNum,omitempty"`

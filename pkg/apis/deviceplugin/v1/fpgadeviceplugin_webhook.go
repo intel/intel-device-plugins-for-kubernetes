@@ -15,8 +15,6 @@
 package v1
 
 import (
-	"strings"
-
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/version"
@@ -97,30 +95,4 @@ func (r *FpgaDevicePlugin) validatePlugin() error {
 	}
 
 	return validatePluginImage(r.Spec.InitImage, "intel-fpga-initcontainer", fpgaMinVersion)
-}
-
-func validatePluginImage(image, expectedName string, expectedMinVersion *version.Version) error {
-	parts := strings.SplitN(image, ":", 2)
-	if len(parts) != 2 {
-		return errors.Errorf("incorrect image field %q", image)
-	}
-	namespacedName := parts[0]
-	versionStr := parts[1]
-
-	parts = strings.Split(namespacedName, "/")
-	name := parts[len(parts)-1]
-	if name != expectedName {
-		return errors.Errorf("incorrect image name %q. Make sure you use '<vendor>/%s:<version>'", name, expectedName)
-	}
-
-	ver, err := version.ParseSemantic(versionStr)
-	if err != nil {
-		return errors.Wrapf(err, "unable to parse version %q", versionStr)
-	}
-
-	if !ver.AtLeast(expectedMinVersion) {
-		return errors.Errorf("version %q is too low. Should be at least %q", ver, expectedMinVersion)
-	}
-
-	return nil
 }
