@@ -180,7 +180,7 @@ As a pre-requisite you need to have [cert-manager](https://cert-manager.io)
 up and running:
 
 ```bash
-$ kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml
+$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.0.3/cert-manager.yaml
 $ kubectl get pods -n cert-manager
 NAME                                      READY   STATUS    RESTARTS   AGE
 cert-manager-7747db9d88-bd2nl             1/1     Running   0          1m
