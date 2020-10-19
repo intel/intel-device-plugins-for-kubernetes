@@ -15,76 +15,19 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"path"
-	"path/filepath"
 	"regexp"
 
-	"github.com/pkg/errors"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 )
 
 const (
 	dflDeviceRE = `^region[0-9]+$`
 	dflPortRE   = `^dfl-port\.[0-9]+$`
-	dflFmeRE    = `^dfl-fme\.[0-9]+$`
 )
-
-// getDFLRegion reads FME interface id from /sys/fpga/fpga_region/regionX/dfl-fme.k/dfl-fme-region.n/fpga_region/regionN/compat_id.
-func (dp *devicePlugin) getDFLRegion(regionFolder string, fme string) (*region, error) {
-	compatIDPattern := path.Join(regionFolder, fme, "dfl-fme-region.*", "fpga_region", "region*", "compat_id")
-	matches, err := filepath.Glob(compatIDPattern)
-	if err != nil {
-		return nil, err
-	}
-	if len(matches) == 0 {
-		return nil, fmt.Errorf("no compat_id found with pattern '%s'", compatIDPattern)
-	}
-	if len(matches) > 1 {
-		return nil, fmt.Errorf("compat_id path pattern '%s' matches multiple files", compatIDPattern)
-	}
-
-	reg, err := dp.getFME(matches[0], fme)
-	if err != nil {
-		return nil, err
-	}
-
-	return reg, nil
-}
-
-func getSysFsInfoDFL(dp *devicePlugin, deviceFolder string, deviceFiles []os.FileInfo, fname string) ([]region, []afu, error) {
-	var regions []region
-	var afus []afu
-
-	for _, deviceFile := range deviceFiles {
-		name := deviceFile.Name()
-
-		if dp.fmeReg.MatchString(name) {
-			if len(regions) > 0 {
-				return nil, nil, errors.Errorf("Detected more than one FPGA region for device %s. Only one region per FPGA device is supported", fname)
-			}
-
-			region, err := dp.getDFLRegion(deviceFolder, name)
-			if err != nil {
-				return nil, nil, err
-			}
-			regions = append(regions, *region)
-		} else if dp.portReg.MatchString(name) {
-			afuPath := path.Join(deviceFolder, name, "afu_id")
-			afu, err := dp.getAFU(afuPath, name)
-			if err != nil {
-				return nil, nil, err
-			}
-			afus = append(afus, *afu)
-		}
-	}
-
-	return regions, afus, nil
-}
 
 // newDevicePluginDFL returns new instance of devicePlugin.
 func newDevicePluginDFL(sysfsDir string, devfsDir string, mode string) (*devicePlugin, error) {
-	getDevTree, ignoreAfuIDs, annotationValue, err := getPluginParams(mode)
+	getDevTree, annotationValue, err := getPluginParams(mode)
 	if err != nil {
 		return nil, err
 	}
@@ -97,13 +40,10 @@ func newDevicePluginDFL(sysfsDir string, devfsDir string, mode string) (*deviceP
 
 		deviceReg: regexp.MustCompile(dflDeviceRE),
 		portReg:   regexp.MustCompile(dflPortRE),
-		fmeReg:    regexp.MustCompile(dflFmeRE),
 
-		getDevTree:   getDevTree,
-		getSysFsInfo: getSysFsInfoDFL,
+		getDevTree: getDevTree,
+		newPort:    fpga.NewDflPort,
 
-		ignoreEmptyRegions: true,
-		ignoreAfuIDs:       ignoreAfuIDs,
-		annotationValue:    annotationValue,
+		annotationValue: annotationValue,
 	}, nil
 }
