@@ -41,7 +41,7 @@ $ kubectl describe pod kube-apiserver --namespace kube-system | grep -i no_proxy
 
 In case there's no output and your cluster was deployed with `kubeadm` open
 `/etc/kubernetes/manifests/kube-apiserver.yaml` at the control plane nodes and
-append `.svc` to the `no_proxy` environment variable:
+append `.svc` and `.svc.cluster.local` to the `no_proxy` environment variable:
 
 ```yaml
 apiVersion: v1
@@ -60,8 +60,15 @@ spec:
     - name: https_proxy
       value: http://proxy.host:8433
     - name: no_proxy
-      value: 127.0.0.1,localhost,.example.com,10.0.0.0/8,.svc
+      value: 127.0.0.1,localhost,.example.com,10.0.0.0/8,.svc,.svc.cluster.local
     ...
+```
+
+**Note:** To build clusters using `kubeadm` with the right `no_proxy` settings from the very beginning,
+set the cluster service names to `$no_proxy` before `kubeadm init`:
+
+```
+$ export no_proxy=$no_proxy,.svc,.svc.cluster.local
 ```
 
 Finally deploy the operator itself:
