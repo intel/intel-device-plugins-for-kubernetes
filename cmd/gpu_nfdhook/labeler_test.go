@@ -29,6 +29,7 @@ type testcase struct {
 	devfsdirs      []string
 	name           string
 	memoryOverride uint64
+	memoryReserved uint64
 	capabilityFile map[string][]byte
 	expectedRetval error
 	expectedLabels labelMap
@@ -40,12 +41,96 @@ func getTestCases() []testcase {
 		{
 			sysfsdirs: []string{
 				"card0/device/drm/card0",
+				"card0/gt/gt0",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor":     []byte("0x8086"),
+				"card0/gt/gt0/addr_range": []byte("8086"),
+			},
+			devfsdirs:      []string{"card0"},
+			name:           "successful labeling via gt0/addr_range",
+			memoryOverride: 16000000000,
+			capabilityFile: map[string][]byte{
+				"0/i915_capabilities": []byte(
+					"platform: new\n" +
+						"gen: 9"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/millicores":           "1000",
+				"gpu.intel.com/memory.max":           "8086",
+				"gpu.intel.com/platform_new.count":   "1",
+				"gpu.intel.com/platform_new.present": "true",
+				"gpu.intel.com/platform_gen":         "9",
+				"gpu.intel.com/cards":                "card0",
+			},
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card0/gt/gt0",
+				"card0/gt/gt1",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor":     []byte("0x8086"),
+				"card0/gt/gt0/addr_range": []byte("8086"),
+				"card0/gt/gt1/addr_range": []byte("2"),
+			},
+			devfsdirs:      []string{"card0"},
+			name:           "successful labeling via gt0/addr_range and gt1/addr_range",
+			memoryOverride: 16000000000,
+			capabilityFile: map[string][]byte{
+				"0/i915_capabilities": []byte(
+					"platform: new\n" +
+						"gen: 9"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/millicores":           "1000",
+				"gpu.intel.com/memory.max":           "8088",
+				"gpu.intel.com/platform_new.count":   "1",
+				"gpu.intel.com/platform_new.present": "true",
+				"gpu.intel.com/platform_gen":         "9",
+				"gpu.intel.com/cards":                "card0",
+			},
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card0/gt/gt0",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor":     []byte("0x8086"),
+				"card0/gt/gt0/addr_range": []byte("8086"),
+			},
+			devfsdirs:      []string{"card0"},
+			name:           "successful labeling via gt0/addr_range and reserved memory",
+			memoryOverride: 16000000000,
+			memoryReserved: 86,
+			capabilityFile: map[string][]byte{
+				"0/i915_capabilities": []byte(
+					"platform: new\n" +
+						"gen: 9"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/millicores":           "1000",
+				"gpu.intel.com/memory.max":           "8000",
+				"gpu.intel.com/platform_new.count":   "1",
+				"gpu.intel.com/platform_new.present": "true",
+				"gpu.intel.com/platform_gen":         "9",
+				"gpu.intel.com/cards":                "card0",
+			},
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
 			},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
 			devfsdirs:      []string{"card0"},
-			name:           "successful labeling",
+			name:           "successful labeling via memory override",
 			memoryOverride: 16000000000,
 			capabilityFile: map[string][]byte{
 				"0/i915_capabilities": []byte(
@@ -159,6 +244,7 @@ func TestLabeling(t *testing.T) {
 			tc.createFiles(t, sysfs, devfs, root)
 
 			os.Setenv(memoryOverrideEnv, strconv.FormatUint(tc.memoryOverride, 10))
+			os.Setenv(memoryReservedEnv, strconv.FormatUint(tc.memoryReserved, 10))
 
 			labeler := newLabeler(sysfs, devfs, root)
 			err = labeler.createLabels()
@@ -171,6 +257,9 @@ func TestLabeling(t *testing.T) {
 			}
 			for filename := range tc.capabilityFile {
 				os.Remove(path.Join(root, filename))
+			}
+			for filename := range tc.sysfsfiles {
+				os.Remove(path.Join(sysfs, filename))
 			}
 		})
 	}
