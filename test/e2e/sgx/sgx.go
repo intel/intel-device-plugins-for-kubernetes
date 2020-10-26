@@ -56,7 +56,7 @@ func describe() {
 		}
 		defer os.RemoveAll(tmpDir)
 
-		err = utils.CreateKustomizationOverlay(f.Namespace.Name, filepath.Dir(kustomizationPath)+"/../overlays/nfd", tmpDir)
+		err = utils.CreateKustomizationOverlay(f.Namespace.Name, filepath.Dir(kustomizationPath), tmpDir)
 		if err != nil {
 			framework.Failf("unable to create kustomization overlay: %v", err)
 		}

@@ -90,14 +90,14 @@ Successfully tagged intel/intel-sgx-initcontainer:devel
 
 #### Deploy the DaemonSet
 
-Deploying the plugin involves the deployment of a
-[NFD EPC Source InitContainer Job](/deployments/sgx_plugin/base/intel-sgx-hookinstall.yaml) the
-[DaemonSet YAML](/deployments/sgx_plugin/base/intel-sgx-plugin.yaml), and node-feature-discovery
+Deploying the plugin involves the deployment of the
+[SGX DaemonSet YAML](/deployments/sgx_plugin/base/intel-sgx-plugin.yaml)
+and [node-feature-discovery](/deployments/sgx_nfd/kustomization.yaml)
 with the necessary configuration.
 
 There is a kustomization for deploying everything:
 ```bash
-$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/sgx_plugin/overlays/nfd
+$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/sgx_plugin/
 ```
 
 #### Verify SGX device plugin is registered on master:
