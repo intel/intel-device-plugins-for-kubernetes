@@ -1,0 +1,9 @@
+apiVersion: deviceplugin.intel.com/v1
+kind: SgxDevicePlugin
+metadata:
+  name: sgxdeviceplugin-sample
+spec:
+  image: intel/intel-sgx-plugin:0.19.0
+  initImage: intel/intel-sgx-initcontainer:0.19.0
+  enclaveLimit: 110
+  provisionLimit: 110
