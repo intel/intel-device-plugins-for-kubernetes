@@ -1,0 +1,4 @@
+[
+  {"op": "replace", "path": "/spec/template/spec/containers/0/workingDir", "value": "/opt/intel/sgx-quote-generation/"},
+  {"op": "replace", "path": "/spec/template/spec/containers/0/command", "value": ["/opt/intel/sgx-quote-generation/sgx-quote-generation"]}
+]

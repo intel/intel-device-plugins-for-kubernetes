@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: intelsgx-demo-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: intelsgx-demo-job-1
+        image: intel/sgx-sdk-demo:devel
+        volumeMounts:
+        - name: qplconf
+          mountPath: /etc/sgx_default_qcnl.conf
+          subPath: sgx_default_qcnl.conf
+      volumes:
+      - name: qplconf
+        configMap:
+          name: sgx-attestation-conf
+          items:
+          - key: sgx_default_qcnl.conf
+            path: sgx_default_qcnl.conf

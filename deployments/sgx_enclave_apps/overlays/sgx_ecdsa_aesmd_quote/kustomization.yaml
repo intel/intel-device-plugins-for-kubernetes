@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namePrefix: "ecdsa-quote-"
+bases:
+  - ../../base
+commonAnnotations:
+  sgx.intel.com/quote-provider: "aesmd"
+patchesJson6902:
+- target:
+    group: batch
+    version: v1
+    kind: Job
+    name: intelsgx-demo-job
+  path: change_workingdir_and_command.json

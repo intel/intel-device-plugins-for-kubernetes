@@ -16,11 +16,12 @@ spec:
           name: intelsgx-demo-job-1
           image: intel/sgx-sdk-demo:devel
           imagePullPolicy: IfNotPresent
+          workingDir: "/opt/intel/sgx-sample-app/"
+          command: ["/opt/intel/sgx-sample-app/sgx-sample-app"]
           securityContext:
             readOnlyRootFilesystem: true
             capabilities:
               add: ["IPC_LOCK"]
           resources:
             limits:
-              sgx.intel.com/enclave: 1
-              sgx.intel.com/epc: 1234 # TODO: update
+              sgx.intel.com/epc: "512Ki"

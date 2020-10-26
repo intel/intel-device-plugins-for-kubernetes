@@ -1,0 +1,11 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: intelsgx-demo-job
+spec:
+  template:
+    spec:
+      hostNetwork: true
+      containers:
+      - name: intelsgx-demo-job-1
+        image: intel/sgx-sdk-demo:devel
