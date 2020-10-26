@@ -35,6 +35,7 @@ const (
 	millicoreLabelName = "millicores"
 	millicoresPerGPU   = 1000
 	memoryOverrideEnv  = "GPU_MEMORY_OVERRIDE"
+	memoryReservedEnv  = "GPU_MEMORY_RESERVED"
 	gpuDeviceRE        = `^card[0-9]+$`
 	controlDeviceRE    = `^controlD[0-9]+$`
 	vendorString       = "0x8086"
@@ -43,8 +44,8 @@ const (
 type labelMap map[string]string
 
 type labeler struct {
-	sysfsDir      string
-	devfsDir      string
+	sysfsDRMDir   string
+	devfsDRIDir   string
 	debugfsDRIDir string
 
 	gpuDeviceReg     *regexp.Regexp
@@ -52,10 +53,10 @@ type labeler struct {
 	labels           labelMap
 }
 
-func newLabeler(sysfsDir, devfsDir, debugfsDRIDir string) *labeler {
+func newLabeler(sysfsDRMDir, devfsDRIDir, debugfsDRIDir string) *labeler {
 	return &labeler{
-		sysfsDir:         sysfsDir,
-		devfsDir:         devfsDir,
+		sysfsDRMDir:      sysfsDRMDir,
+		devfsDRIDir:      devfsDRIDir,
 		debugfsDRIDir:    debugfsDRIDir,
 		gpuDeviceReg:     regexp.MustCompile(gpuDeviceRE),
 		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
@@ -64,7 +65,7 @@ func newLabeler(sysfsDir, devfsDir, debugfsDRIDir string) *labeler {
 }
 
 func (l *labeler) scan() ([]string, error) {
-	files, err := ioutil.ReadDir(l.sysfsDir)
+	files, err := ioutil.ReadDir(l.sysfsDRMDir)
 	gpuNameList := []string{}
 
 	if err != nil {
@@ -77,7 +78,7 @@ func (l *labeler) scan() ([]string, error) {
 			continue
 		}
 
-		dat, err := ioutil.ReadFile(path.Join(l.sysfsDir, f.Name(), "device/vendor"))
+		dat, err := ioutil.ReadFile(path.Join(l.sysfsDRMDir, f.Name(), "device/vendor"))
 		if err != nil {
 			klog.Warning("Skipping. Can't read vendor file: ", err)
 			continue
@@ -88,7 +89,7 @@ func (l *labeler) scan() ([]string, error) {
 			continue
 		}
 
-		drmFiles, err := ioutil.ReadDir(path.Join(l.sysfsDir, f.Name(), "device/drm"))
+		drmFiles, err := ioutil.ReadDir(path.Join(l.sysfsDRMDir, f.Name(), "device/drm"))
 		if err != nil {
 			return gpuNameList, errors.Wrap(err, "Can't read device folder")
 		}
@@ -98,7 +99,7 @@ func (l *labeler) scan() ([]string, error) {
 				//Skipping possible drm control node
 				continue
 			}
-			devPath := path.Join(l.devfsDir, drmFile.Name())
+			devPath := path.Join(l.devfsDRIDir, drmFile.Name())
 			if _, err := os.Stat(devPath); err != nil {
 				continue
 			}
@@ -111,11 +112,8 @@ func (l *labeler) scan() ([]string, error) {
 	return gpuNameList, nil
 }
 
-// getMemoryValues reads the GPU memory amount from the system.
-func (l *labeler) getMemoryAmount( /*cardNum*/ string) uint64 {
-	// reading GPU local memory amount is not yet available in the driver,
-	// so just return the environment variable value
-	envValue := os.Getenv(memoryOverrideEnv)
+func getEnvVarNumber(envVarName string) uint64 {
+	envValue := os.Getenv(envVarName)
 	if envValue != "" {
 		val, err := strconv.ParseUint(envValue, 10, 64)
 		if err == nil {
@@ -123,6 +121,45 @@ func (l *labeler) getMemoryAmount( /*cardNum*/ string) uint64 {
 		}
 	}
 	return 0
+}
+
+func fallback() uint64 {
+	return getEnvVarNumber(memoryOverrideEnv)
+}
+
+// getMemoryAmount reads the GPU memory amount from the system.
+func (l *labeler) getMemoryAmount(gpuName string) uint64 {
+	reserved := getEnvVarNumber(memoryReservedEnv)
+	filePath := filepath.Join(l.sysfsDRMDir, gpuName, "gt/gt*/addr_range")
+
+	files, err := filepath.Glob(filePath)
+	if err != nil {
+		klog.V(4).Info("Can't read sysfs folder", err)
+		return fallback()
+	}
+
+	mem := uint64(0)
+	for _, fileName := range files {
+		dat, err := ioutil.ReadFile(fileName)
+		if err != nil {
+			klog.Warning("Skipping. Can't read file: ", err)
+			continue
+		}
+
+		n, err := strconv.ParseUint(strings.TrimSpace(string(dat)), 10, 64)
+		if err != nil {
+			klog.Warning("Skipping. Can't convert addr_range: ", err)
+			continue
+		}
+
+		mem += n
+	}
+
+	if mem == 0 {
+		return fallback()
+	}
+
+	return mem - reserved
 }
 
 // addNumericLabel creates a new label if one doesn't exist. Else the new value is added to the previous value.
@@ -193,7 +230,7 @@ func (l *labeler) createLabels() error {
 		l.createCapabilityLabels(gpuNum)
 
 		// read the memory amount to find a proper max allocation value
-		l.labels.addNumericLabel(labelNamespace+"memory.max", int64(l.getMemoryAmount(gpuNum)))
+		l.labels.addNumericLabel(labelNamespace+"memory.max", int64(l.getMemoryAmount(gpuName)))
 	}
 	gpuCount := len(gpuNameList)
 	// add gpu list label (example: "card0.card1.card2")
