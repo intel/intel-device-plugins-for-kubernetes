@@ -166,7 +166,7 @@ func (f *DflFME) PortPR(port uint32, bitstream []byte) error {
 // * Return: 0 on success, -errno on failure.
 func (f *DflFME) PortRelease(port uint32) error {
 	value := port
-	_, err := ioctlDev(f.DevPath, FPGA_FME_PORT_RELEASE, uintptr(unsafe.Pointer(&value)))
+	_, err := ioctlDev(f.DevPath, DFL_FPGA_FME_PORT_RELEASE, uintptr(unsafe.Pointer(&value)))
 	return err
 }
 
@@ -174,7 +174,7 @@ func (f *DflFME) PortRelease(port uint32) error {
 // * Return: 0 on success, -errno on failure.
 func (f *DflFME) PortAssign(port uint32) error {
 	value := port
-	_, err := ioctlDev(f.DevPath, FPGA_FME_PORT_ASSIGN, uintptr(unsafe.Pointer(&value)))
+	_, err := ioctlDev(f.DevPath, DFL_FPGA_FME_PORT_ASSIGN, uintptr(unsafe.Pointer(&value)))
 	return err
 }
 
