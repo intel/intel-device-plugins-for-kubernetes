@@ -5,6 +5,7 @@ Table of Contents
 - [Demo overview](#demo-overview)
 - [Intel® GPU Device Plugin demo video](#intel-gpu-device-plugin-demo-video)
 - [Intel® FPGA Device Plugin demo videos](#intel-fpga-device-plugin-demo-videos)
+- [Intel® SGX Device Plugin demo videos](#intel-sgx-device-plugin-demo-videos)
 - [Intel® QuickAssist Technology Device Plugin OpenSSL demo video](#intel-quickassist-technology-device-plugin-openssl-demo-video)
 - [Intel® QuickAssist Technology Device Plugin with DPDK demo video](#intel-quickassist-technology-device-plugin-with-dpdk-demo-video)
 
@@ -107,6 +108,33 @@ The demos begin with a fully [configured Kubernetes cluster](https://kubernetes.
 - Intel® FPGA Device Plugin deployment with orchestrated/region mode and OpenCL workload:
 
 [<img src="https://asciinema.org/a/344184.svg" width="700">](https://asciinema.org/a/344184)
+
+## Intel® SGX Device Plugin demo videos
+
+This video demonstrates the Intel® Software Guard Extensions ECDSA Quote Generation in Kubernetes*
+
+- Hardware
+    - 1-node, 3rd Generation Intel® Xeon® Scalable Platform, code-named “Ice Lake”
+- Software
+    - 18.04.5 LTS
+    - Kubernetes* 1.19
+    - containerd 1.3.3
+    - Intel® SGX Device Plugin built from master branch
+    - Intel® SGX SDK 2.12 and DCAP 1.9
+    - node-feature-discovery 0.6.0
+
+### Demo steps
+
+1. Validate the status of the [Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/).
+2. Provision [node-feature-discovery](https://github.com/kubernetes-sigs/node-feature-discovery).
+3. Provision the [Intel® SGX Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/sgx_plugin/README.md) using [Intel® Device Plugin Operator](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/operator/README.md).
+4. Check the SGX resources and labels are correctly registered.
+5. Run Intel® SGX DCAP ECDSA Quote Generation in both "out-of-proc" and "in-proc" modes.
+
+### Screencasts
+
+Intel® SGX Device Plugin and SGX DCAP ECDSA Quote Generation demo
+[<img src="https://asciinema.org/a/0xa888OjktVyz6xf0RSQ6Pi0w.svg" width="700">](https://asciinema.org/a/0xa888OjktVyz6xf0RSQ6Pi0w)
 
 ## Intel® QuickAssist Technology Device Plugin OpenSSL demo video
 

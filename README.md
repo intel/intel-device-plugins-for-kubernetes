@@ -127,13 +127,17 @@ platforms with SGX Flexible Launch Control enabled, e.g.,:
 
 The SGX plugin comes in three parts.
 
-- the [SGX device plugin](#sgx-device-plugin)
+- the [SGX plugin](#sgx-plugin)
 - the [SGX admission webhook](#sgx-admission-webhook)
 - the [SGX EPC memory registration](#sgx-epc-memory-registration)
 
-Brief overviews of the sub-components are given below.
+The demo subdirectory contains a [video](demo#intel-sgx-device-plugin-demo-video) showing the deployment
+and use of the SGX device plugin. Sources relating to the demo can be found in the
+[sgx-sdk-demo](demo/sgx-sdk-demo) and [sgx-aesmd-demo](demo/sgx-aesmd-demo) subdirectories.
 
-#### SGX Device plugin
+Brief overviews of the SGX sub-components are given below.
+
+#### SGX plugin
 
 The [SGX device plugin](cmd/sgx_plugin/README.md) is responsible for discovering and reporting SGX
 device nodes to `kubelet`.
