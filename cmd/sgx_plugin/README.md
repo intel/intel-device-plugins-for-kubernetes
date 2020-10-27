@@ -5,23 +5,38 @@ Contents
 * [Introduction](#introduction)
 * [Installation](#installation)
     * [Prerequisites](#prerequisites)
-    * [Getting the source code:](#getting-the-source-code)
+    * [Pre-built images](#pre-built-images)
+    * [Getting the source code](#getting-the-source-code)
     * [Verify node kubelet config](#verify-node-kubelet-config)
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
         * [Build the plugin image](#build-the-plugin-image)
         * [Deploy the DaemonSet](#deploy-the-daemonset)
-        * [Verify SGX device plugin is registered on master:](#verify-sgx-device-plugin-is-registered-on-master)
+        * [Verify SGX device plugin is registered on master](#verify-sgx-device-plugin-is-registered-on-master)
     * [Deploying by hand](#deploying-by-hand)
         * [Build SGX device plugin](#build-sgx-device-plugin)
         * [Deploy SGX plugin](#deploy-sgx-plugin)
+    * [SGX device plugin demos](#sgx-device-plugin-demos)
+        * [SGX ECDSA Remote Attestation](#sgx-ecdsa-remote-attestation)
+            * [Remote Attestation Prerequisites](#remote-attestation-prerequisites)
+            * [Build the images](#build-the-image)
+            * [Deploy the pod](#deploy-the-pod)
 
 ## Introduction
 
-**Note:** The work is still WIP. The SGX device plugin can be tested to run simple enclaves
-but the full e2e deployment (including the SGX remote attestation) is not yet finished. See
-the open issues for details.
+The Intel SGX device plugin and related components allow workloads to use Intel SGX on
+platforms with SGX Flexible Launch Control enabled, e.g.,:
 
-This Intel SGX device plugin provides support for Intel SGX TEE under Kubernetes.
+- 3rd Generation Intel® Xeon® Scalable Platform, code-named “Ice Lake”
+- Intel® Xeon® E3
+- Intel® NUC Kit NUC7CJYH
+
+The SGX solution comes in three parts:
+
+- the [SGX Device plugin](/README.md#sgx-device-plugin)
+- the [SGX Admission webhook](/README.md#sgx-admission-webhook)
+- the [SGX EPC memory registration](/README.md#sgx-epc-memory-registration)
+
+This README covers setting up all three components.
 
 ### Modes and Configuration options
 
@@ -37,17 +52,64 @@ the complete list of logging related options.
 
 ## Installation
 
-The below sections cover how to obtain, build and install this component.
+The following sections cover how to obtain, build and install the necessary Kubernetes SGX specific
+components.
 
-The component can be installed either using a DaemonSet or running 'by hand' on each node.
+They can be installed either using a DaemonSet or running 'by hand' on each node.
 
 ### Prerequisites
 
 The component has the same basic dependancies as the
 [generic plugin framework dependencies](../../README.md#about).
 
-The SGX plugin requires Linux Kernel SGX drivers to be available. These drivers
-are currently available via RFC patches on Linux Kernel Mailing List.
+The SGX device plugin requires Linux Kernel SGX drivers to be available. These drivers
+are currently available via [RFC patches on Linux Kernel Mailing List](https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-sgx.git/tag/?h=v39).
+RFC *v39* was used to validate what is written in this document.
+
+The hardware platform must support SGX Flexible Launch Control.
+
+### Pre-built images
+
+[Pre-built images](https://hub.docker.com/u/intel/)
+are available on Docker Hub. These images are automatically built and uploaded
+to the hub from the latest master branch of this repository.
+
+Release tagged images of the components are also available on Docker Hub, tagged with their
+release version numbers in the format `x.y.z`, corresponding to the branches and releases in this
+repository. Thus the easiest way to deploy Intel SGX components in your cluster is to follow the steps
+below.
+
+The deployment YAML files supplied with the components in this repository use the images with the `devel`
+tag by default. If you do not build your own local images, your Kubernetes cluster may pull down
+the devel images from Docker Hub by default.
+
+`<RELEASE_VERSION>` needs to be substituted with the desired release version, e.g. `v0.19.0` or master.
+
+#### Deploy node-feature-discovery
+
+```bash
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_nfd?ref=<RELEASE_VERSION>
+```
+
+#### Deploy cert-manager
+
+```bash
+$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.0.3/cert-manager.yaml
+```
+
+#### Deploy Intel Device plugin operator
+
+```bash
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=<RELEASE_VERSION>
+```
+
+**Note:** See the operator [deployment details](/cmd/operator/README.md) for setting it up on systems behind proxies.
+
+#### Deploy SGX device plugin with the operator
+
+```bash
+$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml
+```
 
 ### Getting the source code
 
@@ -143,3 +205,74 @@ I0626 20:33:01.414640  964346 server.go:219] Start server for enclave at: /var/l
 I0626 20:33:01.417315  964346 server.go:237] Device plugin for provision registered
 I0626 20:33:01.417748  964346 server.go:237] Device plugin for enclave registered
 ```
+
+### SGX device plugin demos
+#### SGX ECDSA Remote Attestation
+
+The SGX remote attestation allows a relying party to verify that the software is running inside an Intel® SGX enclave on a platform
+that has the trusted computing base up to date.
+
+The demo guides to run an SGX DCAP/ECDSA quote generation in on a single-node kubernetes cluster using Intel® reference
+SGX PCK Certificate Cache Service (PCCS) that is configured to service localhost connections.
+
+Read more about [SGX Remote Attestation](https://software.intel.com/content/www/us/en/develop/topics/software-guard-extensions/attestation-services.html).
+
+##### Remote Attestation Prerequisites
+
+For the SGX ECDSA Remote Attestation demo to work, the platform must be correctly registered and a PCCS running.
+
+For documentation to set up Intel® reference PCCS, refer to:
+[Intel® Software Guard Extensions (Intel® SGX) Services](https://api.portal.trustedservices.intel.com/) and
+[Intel® Software Guard Extensions SDK for Linux](https://01.org/intel-software-guard-extensions)
+
+Furthermore, the Kubernetes cluster must be set up according the [instructions above](#pre-built-images).
+
+##### Build the image
+
+The demo uses container images build from Intel® SGX SDK and DCAP releases.
+
+To build the demo images:
+
+```bash
+$ cd ${INTEL_DEVICE_PLUGINS_SRC}
+$ make sgx-aesmd-demo
+...
+Successfully tagged intel/sgx-aesmd-demo:devel
+$ make sgx-sdk-demo
+...
+Successfully tagged intel/sgx-sdk-demo:devel
+```
+
+##### Deploy the pods
+
+The demo runs Intel aesmd (architectural enclaves service daemon) that is responsible
+for generating SGX quotes for workloads. It is deployed with `hostNetwork: true`
+to allow connections to localhost PCCS.
+
+```bash
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_aesmd?ref=<RELEASE_VERSION>
+$ kubectl get pods
+  NAME                     READY     STATUS    RESTARTS   AGE
+  intel-sgx-aesmd-mrnm8                1/1     Running   0          3h47m
+  sgxdeviceplugin-sample-z5dcq-llwlw   1/1     Running   0          28m
+```
+
+The sample application runs SGX DCAP Quote Generation sample:
+
+```bash
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_enclave_apps/overlays/sgx_ecdsa_aesmd_quote?ref=<RELEASE_VERSION>
+$ kubectl get pods
+  NAME                                 READY   STATUS      RESTARTS   AGE
+  intel-sgx-aesmd-mrnm8                1/1     Running     0          3h55m
+  ecdsa-quote-intelsgx-demo-job-vtq84  0/1     Completed   0          4s
+  sgxdeviceplugin-sample-z5dcq-llwlw   1/1     Running     0          35m
+$ kubectl logs ecdsa-quote-intelsgx-demo-job-vtq84
+
+  Step1: Call sgx_qe_get_target_info:succeed!
+  Step2: Call create_app_report:succeed!
+  Step3: Call sgx_qe_get_quote_size:succeed!
+  Step4: Call sgx_qe_get_quote:succeed!cert_key_type = 0x5
+```
+
+> **Note**: The deployment example above uses [kustomize](https://github.com/kubernetes-sigs/kustomize)
+> that is available in kubectl since Kubernetes v1.14 release.

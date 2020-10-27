@@ -18,6 +18,7 @@ Table of Contents
         * [CRI-O prestart hook](#cri-o-prestart-hook)
     * [QAT device plugin](#qat-device-plugin)
     * [VPU device plugin](#vpu-device-plugin)
+    * [SGX device plugin](#sgx-device-plugin)
 * [Device Plugins Operator](#device-plugins-operator)
 * [Demos](#demos)
 * [Developers](#developers)
@@ -113,6 +114,49 @@ the card has:
 
 The demo subdirectory includes details of a OpenVINO deployment and use of the VPU plugin.
 Sources can be found in [openvino-demo](demo/ubuntu-demo-openvino)
+
+### SGX device plugin
+
+The [SGX device plugin](cmd/sgx_plugin/README.md) allows workloads to use Intel SGX on
+platforms with SGX Flexible Launch Control enabled, e.g.,:
+
+- 3rd Generation Intel® Xeon® Scalable Platform, code-named “Ice Lake”
+- Intel® Xeon® E3
+- Intel® NUC Kit NUC7CJYH
+
+The SGX plugin comes in three parts.
+
+- the [SGX device plugin](#sgx-device-plugin)
+- the [SGX admission webhook](#sgx-admission-webhook)
+- the [SGX EPC memory registration](#sgx-epc-memory-registration)
+
+Brief overviews of the sub-components are given below.
+
+#### SGX Device plugin
+
+The [SGX device plugin](cmd/sgx_plugin/README.md) is responsible for discovering and reporting SGX
+device nodes to `kubelet`.
+
+Containers requesting SGX resources in the cluster should not use the device plugins resources directly.
+
+#### SGX Admission webhook
+
+The SGX admission webhook is responsible for performing Pod mutations based on the `sgx.intel.com/quote-provider`
+pod annotation set by the user. The purpose of the webhook is to hide the details of setting the necessary
+device resources and volume mounts for using SGX remote attestation in the cluster. Furthermore,
+the SGX admission webhook is responsible for writing a pod/sandbox `sgx.intel.com/total_epc` annotation that
+is used by Kata Containers to dynamically adjust its virtualized SGX encrypted page cache (EPC) bank(s) size.
+
+The SGX admission webhook is implemented as part of [Intel Device Plugin Operator](cmd/operator/README.md).
+
+#### SGX EPC memory registration
+
+The SGX EPC memory available on each node is registered as a Kubernetes extended resource using
+node-feature-discovery (NFD). A custom NFD source hook is installed as part of [SGX device plugin](cmd/sgx_plugin/README.md)
+operator deployment and NFD is configured to register the SGX EPC memory extended resource reported by the hook.
+
+Containers requesting SGX EPC resources in the cluster use `sgx.intel.com/epc` resource which is of
+type [memory](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory).
 
 ## Device Plugins Operator
 
