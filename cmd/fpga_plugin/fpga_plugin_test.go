@@ -16,6 +16,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -54,6 +55,21 @@ func createTestDirs(devfs, sysfs string, devfsDirs, sysfsDirs []string, sysfsFil
 		}
 	}
 
+	return nil
+}
+
+// validateDevTree is a helper that reduces code complexity to make golangci-lint happy.
+func validateDevTree(expectedDevTreeKeys map[string][]string, devTree dpapi.DeviceTree) error {
+	for resource, devices := range expectedDevTreeKeys {
+		if _, ok := devTree[resource]; !ok {
+			return fmt.Errorf("device tree: resource %s missing", resource)
+		}
+		for _, device := range devices {
+			if _, ok := devTree[resource][device]; !ok {
+				return fmt.Errorf("device tree resource %s: device %s missing", resource, device)
+			}
+		}
+	}
 	return nil
 }
 
@@ -167,52 +183,59 @@ func (n *fakeNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 }
 
 func TestScan(t *testing.T) {
-	root, err := ioutil.TempDir("", "test_new_device_plugin")
+	root, err := ioutil.TempDir("", "TestScan")
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}
 	defer os.RemoveAll(root)
 
-	devfs := path.Join(root, "dev")
+	sysfs := path.Join(root, "sys")
+	dev := path.Join(root, "dev")
 
 	tcases := []struct {
-		name        string
-		mode        string
-		sysfs       string
-		devfsdirs   []string
-		sysfsdirs   []string
-		sysfsfiles  map[string][]byte
-		expectedErr bool
+		name       string
+		mode       string
+		devs       []string
+		sysfsdirs  []string
+		sysfsfiles map[string][]byte
+		newPort    newPortFunc
 	}{
 		{
-			name:  "valid OPAE scan",
-			mode:  afMode,
-			sysfs: path.Join(root, "sys", "class", "fpga"),
+			name: "valid OPAE scan in af mode",
+			mode: afMode,
+			devs: []string{
+				"intel-fpga-fme.0", "intel-fpga-port.0",
+				"intel-fpga-fme.1", "intel-fpga-port.1",
+			},
 			sysfsdirs: []string{
-				"intel-fpga-dev.0/intel-fpga-port.0",
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
-				"intel-fpga-dev.1/intel-fpga-port.1",
-				"intel-fpga-dev.1/intel-fpga-fme.1/pr",
+				"class/fpga/intel-fpga-dev.0/intel-fpga-port.0",
+				"class/fpga/intel-fpga-dev.1/intel-fpga-port.1",
+				"class/fpga/dir", // this should be skipped by plugin.ScanFPGAs
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-port.0",
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-fme.0/pr",
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-port.1/",
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-fme.1/pr",
 			},
 			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-port.0/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-				"intel-fpga-dev.1/intel-fpga-port.1/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
-				"intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-port.1/afu_id": []byte("f7df405cbd7acf7222f144b0b93acd18\n"),
+
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("69528db6eb31577a8c3668f9faa081f6\n"),
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("69528db6eb31577a8c3668f9faa081f6\n"),
 			},
-			devfsdirs: []string{
-				"intel-fpga-port.0", "intel-fpga-fme.0",
-				"intel-fpga-port.1", "intel-fpga-fme.1",
-			},
-			expectedErr: false,
+			newPort: genNewIntelFpgaPort(sysfs, dev,
+				map[string][]string{
+					"intel-fpga-port.0": {"devices/pci0000:00/0000:00:03.2/0000:06:00.0", "intel-fpga-fme.0", "devices/pci0000:00/0000:00:03.2/0000:06:00.0"},
+					"intel-fpga-port.1": {"devices/pci0000:40/0000:40:02.0/0000:42:00.0", "intel-fpga-fme.1", "devices/pci0000:40/0000:40:02.0/0000:42:00.0"},
+				}),
 		},
 	}
 
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
-			err = createTestDirs(devfs, tc.sysfs, tc.devfsdirs, tc.sysfsdirs, tc.sysfsfiles)
+			err := createTestDirs(dev, sysfs, tc.devs, tc.sysfsdirs, tc.sysfsfiles)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("%+v", err)
 			}
 
 			plugin, err := newDevicePlugin(tc.mode, root)
@@ -220,20 +243,17 @@ func TestScan(t *testing.T) {
 				t.Fatalf("failed to create a device plugin: %+v", err)
 			}
 
+			plugin.newPort = tc.newPort
+
 			err = plugin.Scan(&fakeNotifier{plugin.scanDone})
 
-			if tc.expectedErr && err == nil {
-				t.Error("unexpected success")
-			}
-			if !tc.expectedErr && err != nil {
+			if err != nil {
 				t.Errorf("unexpected error: %+v", err)
 			}
 
-			for _, dir := range []string{"sys", "dev"} {
-				err = os.RemoveAll(path.Join(root, dir))
-				if err != nil {
-					t.Fatalf("Failed to remove fake sysfs directory: %+v", err)
-				}
+			err = os.RemoveAll(root)
+			if err != nil {
+				t.Fatal(err)
 			}
 		})
 	}

@@ -20,9 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
 	"k8s.io/klog"
@@ -55,8 +53,8 @@ const (
 	scanPeriod = 5 * time.Second
 )
 
+type newPortFunc func(fname string) (fpga.Port, error)
 type getDevTreeFunc func(devices []device) dpapi.DeviceTree
-type getSysFsInfoFunc func(dp *devicePlugin, deviceFolder string, deviceFiles []os.FileInfo, fname string) ([]region, []afu, error)
 
 // getRegionDevelTree returns mapping of region interface IDs to AF ports and FME devices.
 func getRegionDevelTree(devices []device) dpapi.DeviceTree {
@@ -173,14 +171,11 @@ type devicePlugin struct {
 
 	deviceReg *regexp.Regexp
 	portReg   *regexp.Regexp
-	fmeReg    *regexp.Regexp
 
-	getDevTree   getDevTreeFunc
-	getSysFsInfo getSysFsInfoFunc
+	getDevTree getDevTreeFunc
+	newPort    newPortFunc
 
-	ignoreAfuIDs       bool
-	ignoreEmptyRegions bool
-	annotationValue    string
+	annotationValue string
 
 	scanTicker *time.Ticker
 	scanDone   chan bool
@@ -245,111 +240,75 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	}
 }
 
-func (dp *devicePlugin) getDevNode(devName string) (string, error) {
-	devNode := path.Join(dp.devfsDir, devName)
-	if _, err := os.Stat(devNode); err != nil {
-		return "", errors.Wrapf(err, "Device %s doesn't exist", devNode)
-	}
+func (dp *devicePlugin) getRegions(deviceFiles []os.FileInfo) ([]region, error) {
+	regions := map[string]region{}
+	for _, deviceFile := range deviceFiles {
+		name := deviceFile.Name()
+		if dp.portReg.MatchString(name) {
+			port, err := dp.newPort(name)
+			if err != nil {
+				return nil, errors.Wrapf(err, "can't get port info for %s", name)
+			}
+			fme, err := port.GetFME()
+			if err != nil {
+				return nil, errors.Wrapf(err, "can't get FME info for %s", name)
+			}
 
-	return devNode, nil
-}
-
-func (dp *devicePlugin) getAFU(fpath string, devName string) (*afu, error) {
-	var afuID string
-
-	if dp.ignoreAfuIDs {
-		afuID = "unused_afu_id"
-	} else {
-		data, err := ioutil.ReadFile(filepath.Clean(fpath))
-		if err != nil {
-			return nil, errors.WithStack(err)
+			afuInfo := afu{id: port.GetName(), afuID: port.GetAcceleratorTypeUUID(), devNode: port.GetDevPath()}
+			regionName := fme.GetName()
+			reg, ok := regions[regionName]
+			if ok {
+				reg.afus = append(reg.afus, afuInfo)
+			} else {
+				regions[regionName] = region{id: regionName, interfaceID: fme.GetInterfaceUUID(), devNode: fme.GetDevPath(), afus: []afu{afuInfo}}
+			}
 		}
-		afuID = strings.TrimSpace(string(data))
 	}
-
-	devNode, err := dp.getDevNode(devName)
-	if err != nil {
-		return nil, err
+	result := make([]region, 0, len(regions))
+	// Get list of regions from the map
+	for _, reg := range regions {
+		result = append(result, reg)
 	}
-	return &afu{
-		id:      devName,
-		afuID:   afuID,
-		devNode: devNode,
-	}, nil
-}
-
-func (dp *devicePlugin) getFME(interfaceIDPath string, devName string) (*region, error) {
-	data, err := ioutil.ReadFile(filepath.Clean(interfaceIDPath))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	devNode, err := dp.getDevNode(devName)
-	if err != nil {
-		return nil, err
-	}
-
-	return &region{
-		id:          devName,
-		interfaceID: strings.TrimSpace(string(data)),
-		devNode:     devNode,
-	}, nil
+	return result, nil
 }
 
 func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
-	klog.V(4).Info("Start new FPGA scan")
-
-	fpgaFiles, err := ioutil.ReadDir(dp.sysfsDir)
+	files, err := ioutil.ReadDir(dp.sysfsDir)
 	if err != nil {
 		klog.Warningf("Can't read folder %s. Kernel driver not loaded?", dp.sysfsDir)
 		return dp.getDevTree([]device{}), nil
 	}
 
-	devices := make([]device, 0, len(fpgaFiles))
-	for _, fpgaFile := range fpgaFiles {
-		fname := fpgaFile.Name()
+	devices := []device{}
+	for _, file := range files {
+		devName := file.Name()
 
-		if !dp.deviceReg.MatchString(fname) {
+		if !dp.deviceReg.MatchString(devName) {
 			continue
 		}
 
-		deviceFolder := path.Join(dp.sysfsDir, fname)
-		deviceFiles, err := ioutil.ReadDir(deviceFolder)
+		deviceFiles, err := ioutil.ReadDir(path.Join(dp.sysfsDir, devName))
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
-		regions, afus, err := dp.getSysFsInfo(dp, deviceFolder, deviceFiles, fname)
+		regions, err := dp.getRegions(deviceFiles)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(regions) == 0 {
-			if len(afus) > 0 {
-				return nil, errors.Errorf("%s: AFU without corresponding FME found", fname)
-			}
-			if dp.ignoreEmptyRegions {
-				continue // not a base DFL region, skipping
-			}
-			return nil, errors.Errorf("%s: No regions found", fname)
+		if len(regions) > 0 {
+			devices = append(devices, device{name: devName, regions: regions})
 		}
-
-		// Currently only one region per device is supported.
-		regions[0].afus = afus
-		devices = append(devices, device{
-			name:    fname,
-			regions: regions,
-		})
 	}
-
 	return dp.getDevTree(devices), nil
 }
 
 // getPluginParams is a helper function to avoid code duplication.
 // It's used in newDevicePluginOPAE and newDevicePluginDFL.
-func getPluginParams(mode string) (getDevTreeFunc, bool, string, error) {
+func getPluginParams(mode string) (getDevTreeFunc, string, error) {
 	var getDevTree getDevTreeFunc
 
-	ignoreAfuIDs := false
 	annotationValue := ""
 
 	switch mode {
@@ -357,16 +316,14 @@ func getPluginParams(mode string) (getDevTreeFunc, bool, string, error) {
 		getDevTree = getAfuTree
 	case regionMode:
 		getDevTree = getRegionTree
-		ignoreAfuIDs = true
 		annotationValue = fmt.Sprintf("%s/%s", namespace, regionMode)
 	case regionDevelMode:
 		getDevTree = getRegionDevelTree
-		ignoreAfuIDs = true
 	default:
-		return nil, ignoreAfuIDs, annotationValue, errors.Errorf("Wrong mode: '%s'", mode)
+		return nil, annotationValue, errors.Errorf("Wrong mode: '%s'", mode)
 	}
 
-	return getDevTree, ignoreAfuIDs, annotationValue, nil
+	return getDevTree, annotationValue, nil
 }
 
 func main() {

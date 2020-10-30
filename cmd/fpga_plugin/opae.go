@@ -15,51 +15,19 @@
 package main
 
 import (
-	"os"
-	"path"
 	"regexp"
 
-	"github.com/pkg/errors"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 )
 
 const (
 	opaeDeviceRE = `^intel-fpga-dev.[0-9]+$`
 	opaePortRE   = `^intel-fpga-port.[0-9]+$`
-	opaeFmeRE    = `^intel-fpga-fme.[0-9]+$`
 )
-
-func getSysFsInfoOPAE(dp *devicePlugin, deviceFolder string, deviceFiles []os.FileInfo, fname string) ([]region, []afu, error) {
-	var regions []region
-	var afus []afu
-	for _, deviceFile := range deviceFiles {
-		name := deviceFile.Name()
-
-		if dp.fmeReg.MatchString(name) {
-			if len(regions) > 0 {
-				return nil, nil, errors.Errorf("Detected more than one FPGA region for device %s. Only one region per FPGA device is supported", fname)
-			}
-			interfaceIDFile := path.Join(deviceFolder, name, "pr", "interface_id")
-			region, err := dp.getFME(interfaceIDFile, name)
-			if err != nil {
-				return nil, nil, err
-			}
-			regions = append(regions, *region)
-		} else if dp.portReg.MatchString(name) {
-			afuPath := path.Join(deviceFolder, name, "afu_id")
-			afu, err := dp.getAFU(afuPath, name)
-			if err != nil {
-				return nil, nil, err
-			}
-			afus = append(afus, *afu)
-		}
-	}
-
-	return regions, afus, nil
-}
 
 // newDevicePlugin returns new instance of devicePlugin.
 func newDevicePluginOPAE(sysfsDir string, devfsDir string, mode string) (*devicePlugin, error) {
-	getDevTree, ignoreAfuIDs, annotationValue, err := getPluginParams(mode)
+	getDevTree, annotationValue, err := getPluginParams(mode)
 	if err != nil {
 		return nil, err
 	}
@@ -72,12 +40,10 @@ func newDevicePluginOPAE(sysfsDir string, devfsDir string, mode string) (*device
 
 		deviceReg: regexp.MustCompile(opaeDeviceRE),
 		portReg:   regexp.MustCompile(opaePortRE),
-		fmeReg:    regexp.MustCompile(opaeFmeRE),
 
-		getDevTree:   getDevTree,
-		getSysFsInfo: getSysFsInfoOPAE,
+		getDevTree: getDevTree,
+		newPort:    fpga.NewIntelFpgaPort,
 
 		annotationValue: annotationValue,
-		ignoreAfuIDs:    ignoreAfuIDs,
 	}, nil
 }

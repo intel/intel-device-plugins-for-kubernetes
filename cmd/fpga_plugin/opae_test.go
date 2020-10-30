@@ -19,10 +19,10 @@ import (
 	"os"
 	"path"
 	"reflect"
-	"strings"
 	"testing"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
@@ -236,153 +236,178 @@ func TestGetAfuTreeOPAE(t *testing.T) {
 	}
 }
 
+// genNewIntelFpgaPort generates newPortFunc function.
+func genNewIntelFpgaPort(sysFsPrefix, devDir string, sysFsInfo map[string][]string) newPortFunc {
+	return func(portName string) (fpga.Port, error) {
+		portPciDev := sysFsInfo[portName][0]
+		portPciDevSysFs := path.Join(sysFsPrefix, portPciDev)
+
+		fmeName := sysFsInfo[portName][1]
+		fmePciDev := sysFsInfo[portName][2]
+		fmePciDevSysFs := path.Join(sysFsPrefix, fmePciDev)
+
+		return &fpga.IntelFpgaPort{
+			Name:      portName,
+			DevPath:   path.Join(devDir, portName),
+			SysFsPath: path.Join(portPciDevSysFs, "fpga", "intel-fpga-dev*", portName),
+			FME: &fpga.IntelFpgaFME{
+				Name:      fmeName,
+				DevPath:   path.Join(devDir, fmeName),
+				SysFsPath: fmePciDevSysFs,
+				PCIDevice: &fpga.PCIDevice{SysFsPath: fmePciDevSysFs},
+			},
+		}, nil
+	}
+}
+
 func TestScanFPGAsOPAE(t *testing.T) {
 	tmpdir, err := ioutil.TempDir("", "TestScanFPGAsOPAE")
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}
-	sysfs := path.Join(tmpdir, "sys", "class", "fpga")
-	devfs := path.Join(tmpdir, "dev")
+	sysfs := path.Join(tmpdir, "sys")
+	dev := path.Join(tmpdir, "dev")
 	tcases := []struct {
-		name            string
-		devfsdirs       []string
-		sysfsdirs       []string
-		sysfsfiles      map[string][]byte
-		errorContains   string
-		expectedDevTree map[string]map[string]dpapi.DeviceInfo
-		mode            string
+		name                string
+		mode                string
+		devs                []string
+		sysfsdirs           []string
+		sysfsfiles          map[string][]byte
+		newPort             newPortFunc
+		expectedDevTreeKeys map[string][]string
 	}{
 		{
-			name: "No sysfs folder exists",
+			name: "Valid OPAE scan in af mode",
 			mode: afMode,
-		},
-		{
-			name:          "FPGA device without FME and ports",
-			mode:          afMode,
-			sysfsdirs:     []string{"intel-fpga-dev.0", "incorrect-file-name"},
-			errorContains: "No regions found",
-		},
-		{
-			name:          "AFU without ID",
-			mode:          afMode,
-			sysfsdirs:     []string{"intel-fpga-dev.0/intel-fpga-port.0"},
-			errorContains: "afu_id: no such file or directory",
-		},
-		{
-			name:      "No device node for detected AFU",
-			mode:      afMode,
-			sysfsdirs: []string{"intel-fpga-dev.0/intel-fpga-port.0"},
-			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+			devs: []string{
+				"intel-fpga-fme.0", "intel-fpga-port.0",
+				"intel-fpga-fme.1", "intel-fpga-port.1",
 			},
-			errorContains: "/dev/intel-fpga-port.0: no such file or directory",
-		},
-		{
-			name:      "AFU without corresponding FME",
-			mode:      afMode,
-			sysfsdirs: []string{"intel-fpga-dev.0/intel-fpga-port.0"},
-			devfsdirs: []string{"intel-fpga-port.0"},
-			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-			},
-			errorContains: "intel-fpga-dev.0: AFU without corresponding FME found",
-		},
-		{
-			name: "More than one FME per FPGA device",
-			mode: afMode,
 			sysfsdirs: []string{
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
-				"intel-fpga-dev.0/intel-fpga-fme.1/pr",
+				"class/fpga/intel-fpga-dev.0/intel-fpga-port.0",
+				"class/fpga/intel-fpga-dev.1/intel-fpga-port.1",
+				"class/fpga/dir", // this should be skipped by plugin.ScanFPGAs
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-port.0",
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-fme.0/pr",
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-port.1/",
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-fme.1/pr",
 			},
 			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-				"intel-fpga-dev.0/intel-fpga-fme.1/pr/interface_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-port.1/afu_id": []byte("f7df405cbd7acf7222f144b0b93acd18\n"),
+
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("69528db6eb31577a8c3668f9faa081f6\n"),
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("69528db6eb31577a8c3668f9faa081f6\n"),
 			},
-			devfsdirs: []string{
-				"intel-fpga-fme.0",
-				"intel-fpga-fme.1",
+			newPort: genNewIntelFpgaPort(sysfs, dev,
+				map[string][]string{
+					"intel-fpga-port.0": {"devices/pci0000:00/0000:00:03.2/0000:06:00.0", "intel-fpga-fme.0", "devices/pci0000:00/0000:00:03.2/0000:06:00.0"},
+					"intel-fpga-port.1": {"devices/pci0000:40/0000:40:02.0/0000:42:00.0", "intel-fpga-fme.1", "devices/pci0000:40/0000:40:02.0/0000:42:00.0"},
+				}),
+			expectedDevTreeKeys: map[string][]string{
+				"af-695.d84.aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs": {"intel-fpga-port.0"},
+				"af-695.f7d.aVKNtusxV3qMNmj5-qCB9vffQFy9es9yIvFEsLk6zRg": {"intel-fpga-port.1"},
 			},
-			errorContains: "Detected more than one FPGA region",
 		},
 		{
-			name:          "FME without interface ID",
-			mode:          afMode,
-			sysfsdirs:     []string{"intel-fpga-dev.0/intel-fpga-fme.0"},
-			errorContains: "interface_id: no such file or directory",
-		},
-		{
-			name:      "No device node for detected region",
-			mode:      afMode,
-			sysfsdirs: []string{"intel-fpga-dev.0/intel-fpga-fme.0/pr"},
-			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-			},
-			errorContains: "/dev/intel-fpga-fme.0: no such file or directory",
-		},
-		{
-			name: "No errors expected in af mode",
+			name: "Valid OPAE scan in af mode (SR-IOV)",
 			mode: afMode,
+			devs: []string{
+				"intel-fpga-fme.0", "intel-fpga-port.0",
+				"intel-fpga-fme.1", "intel-fpga-port.2",
+			},
 			sysfsdirs: []string{
-				"intel-fpga-dev.0/intel-fpga-port.0",
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
-				"intel-fpga-dev.1/intel-fpga-port.1",
-				"intel-fpga-dev.1/intel-fpga-fme.1/pr",
+				"class/fpga/intel-fpga-dev.0/intel-fpga-port.0",
+				"class/fpga/intel-fpga-dev.1/intel-fpga-fme.1",
+				"class/fpga/intel-fpga-dev.2/intel-fpga-port.2",
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-port.0",
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-fme.0/pr",
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-fme.1/pr",
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.1/fpga/intel-fpga-dev.2/intel-fpga-port.2",
 			},
 			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-port.0/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-				"intel-fpga-dev.1/intel-fpga-port.1/afu_id":         []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
-				"intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.1/fpga/intel-fpga-dev.2/intel-fpga-port.2/afu_id": []byte("f7df405cbd7acf7222f144b0b93acd18\n"),
+
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("69528db6eb31577a8c3668f9faa081f6\n"),
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("69528db6eb31577a8c3668f9faa081f6\n"),
 			},
-			devfsdirs: []string{
-				"intel-fpga-port.0", "intel-fpga-fme.0",
-				"intel-fpga-port.1", "intel-fpga-fme.1",
+			newPort: genNewIntelFpgaPort(sysfs, dev,
+				map[string][]string{
+					"intel-fpga-port.0": {"devices/pci0000:00/0000:00:03.2/0000:06:00.0", "intel-fpga-fme.0", "devices/pci0000:00/0000:00:03.2/0000:06:00.0"},
+					"intel-fpga-port.2": {"devices/pci0000:40/0000:40:02.0/0000:42:00.1", "intel-fpga-fme.1", "devices/pci0000:40/0000:40:02.0/0000:42:00.0"},
+				}),
+			expectedDevTreeKeys: map[string][]string{
+				"af-695.d84.aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs": {"intel-fpga-port.0"},
+				"af-695.f7d.aVKNtusxV3qMNmj5-qCB9vffQFy9es9yIvFEsLk6zRg": {"intel-fpga-port.2"},
 			},
 		},
 		{
-			name: "No errors expected in region mode",
+			name: "Valid OPAE scan in region mode (SR-IOV)",
 			mode: regionMode,
+			devs: []string{
+				"intel-fpga-fme.0", "intel-fpga-port.0",
+				"intel-fpga-fme.1", "intel-fpga-port.2",
+			},
 			sysfsdirs: []string{
-				"intel-fpga-dev.0/intel-fpga-port.0",
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr",
-				"intel-fpga-dev.1/intel-fpga-port.1",
-				"intel-fpga-dev.1/intel-fpga-fme.1/pr",
+				"class/fpga/intel-fpga-dev.0/intel-fpga-port.0",
+				"class/fpga/intel-fpga-dev.1/intel-fpga-fme.1",
+				"class/fpga/intel-fpga-dev.2/intel-fpga-port.2",
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-port.0",
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-fme.0/pr",
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-fme.1/pr",
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.1/fpga/intel-fpga-dev.2/intel-fpga-port.2",
 			},
 			sysfsfiles: map[string][]byte{
-				"intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
-				"intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("ce48969398f05f33946d560708be108a\n"),
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-port.0/afu_id": []byte("d8424dc4a4a3c413f89e433683f9040b\n"),
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.1/fpga/intel-fpga-dev.2/intel-fpga-port.2/afu_id": []byte("f7df405cbd7acf7222f144b0b93acd18\n"),
+
+				"devices/pci0000:00/0000:00:03.2/0000:06:00.0/fpga/intel-fpga-dev.0/intel-fpga-fme.0/pr/interface_id": []byte("69528db6eb31577a8c3668f9faa081f6\n"),
+				"devices/pci0000:40/0000:40:02.0/0000:42:00.0/fpga/intel-fpga-dev.1/intel-fpga-fme.1/pr/interface_id": []byte("69528db6eb31577a8c3668f9faa081f6\n"),
 			},
-			devfsdirs: []string{
-				"intel-fpga-port.0", "intel-fpga-fme.0",
-				"intel-fpga-port.1", "intel-fpga-fme.1",
+			newPort: genNewIntelFpgaPort(sysfs, dev,
+				map[string][]string{
+					"intel-fpga-port.0": {"devices/pci0000:00/0000:00:03.2/0000:06:00.0", "intel-fpga-fme.0", "devices/pci0000:00/0000:00:03.2/0000:06:00.0"},
+					"intel-fpga-port.2": {"devices/pci0000:40/0000:40:02.0/0000:42:00.1", "intel-fpga-fme.1", "devices/pci0000:40/0000:40:02.0/0000:42:00.0"},
+				}),
+			expectedDevTreeKeys: map[string][]string{
+				"region-69528db6eb31577a8c3668f9faa081f6": {"intel-fpga-fme.0", "intel-fpga-fme.1"},
 			},
+		},
+
+		{
+			name: "No sysfs device entries",
+			mode: afMode,
 		},
 	}
 
 	for _, tcase := range tcases {
 		t.Run(tcase.name, func(t *testing.T) {
-			err := createTestDirs(devfs, sysfs, tcase.devfsdirs, tcase.sysfsdirs, tcase.sysfsfiles)
+			err := createTestDirs(dev, sysfs, tcase.devs, tcase.sysfsdirs, tcase.sysfsfiles)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			plugin, err := newDevicePluginOPAE(sysfs, devfs, tcase.mode)
-
-			plugin.getDevTree = func(devices []device) dpapi.DeviceTree {
-				return dpapi.NewDeviceTree()
-			}
+			plugin, err := newDevicePluginOPAE(path.Join(sysfs, "class", "fpga"), dev, tcase.mode)
 
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			_, err = plugin.scanFPGAs()
-			if tcase.errorContains != "" {
-				if err == nil || !strings.Contains(err.Error(), tcase.errorContains) {
-					t.Errorf("expected error '%s', but got '%v'", tcase.errorContains, err)
+			plugin.newPort = tcase.newPort
+
+			devTree, err := plugin.scanFPGAs()
+			if err != nil {
+				t.Errorf("unexpected error: '%+v'", err)
+			} else {
+				// Validate devTree
+				if len(devTree) != len(tcase.expectedDevTreeKeys) {
+					t.Errorf("unexpected device tree size: %d, expected: %d", len(devTree), len(tcase.expectedDevTreeKeys))
 				}
-			} else if err != nil {
-				t.Errorf("expected no error, but got '%+v'", err)
+				err = validateDevTree(tcase.expectedDevTreeKeys, devTree)
+				if err != nil {
+					t.Errorf("device tree validation failed: %+v", err)
+				}
 			}
 
 			err = os.RemoveAll(tmpdir)
