@@ -16,8 +16,6 @@ package main
 
 import (
 	"regexp"
-
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 )
 
 const (
@@ -42,7 +40,6 @@ func newDevicePluginDFL(sysfsDir string, devfsDir string, mode string) (*deviceP
 		portReg:   regexp.MustCompile(dflPortRE),
 
 		getDevTree: getDevTree,
-		newPort:    fpga.NewDflPort,
 
 		annotationValue: annotationValue,
 	}, nil
