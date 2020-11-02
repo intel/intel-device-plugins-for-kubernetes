@@ -16,8 +16,6 @@ package main
 
 import (
 	"regexp"
-
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 )
 
 const (
@@ -42,7 +40,6 @@ func newDevicePluginOPAE(sysfsDir string, devfsDir string, mode string) (*device
 		portReg:   regexp.MustCompile(opaePortRE),
 
 		getDevTree: getDevTree,
-		newPort:    fpga.NewIntelFpgaPort,
 
 		annotationValue: annotationValue,
 	}, nil

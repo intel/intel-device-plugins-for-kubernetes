@@ -202,6 +202,7 @@ func newDevicePlugin(mode string, rootPath string) (*devicePlugin, error) {
 		return nil, err
 	}
 
+	dp.newPort = fpga.NewPort
 	dp.scanTicker = time.NewTicker(scanPeriod)
 	dp.scanDone = make(chan bool, 1) // buffered as we may send to it before Scan starts receiving from it
 
