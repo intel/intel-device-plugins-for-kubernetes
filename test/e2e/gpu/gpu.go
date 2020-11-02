@@ -65,13 +65,24 @@ func describe() {
 		}
 
 		ginkgo.By("submitting a pod requesting GPU resources")
-		podSpec := f.NewTestPod("gpuplugin-tester",
-			v1.ResourceList{"gpu.intel.com/i915": resource.MustParse("1")},
-			v1.ResourceList{"gpu.intel.com/i915": resource.MustParse("1")})
-		podSpec.Spec.RestartPolicy = v1.RestartPolicyNever
-		podSpec.Spec.Containers[0].Image = imageutils.GetE2EImage(imageutils.BusyBox)
-		podSpec.Spec.Containers[0].Command = []string{"/bin/sh"}
-		podSpec.Spec.Containers[0].Args = []string{"-c", "echo hello world"}
+		podSpec := &v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{Name: "gpuplugin-tester"},
+			Spec: v1.PodSpec{
+				Containers: []v1.Container{
+					{
+						Args:    []string{"-c", "echo hello world"},
+						Name:    "testcontainer",
+						Image:   imageutils.GetE2EImage(imageutils.BusyBox),
+						Command: []string{"/bin/sh"},
+						Resources: v1.ResourceRequirements{
+							Requests: v1.ResourceList{"gpu.intel.com/i915": resource.MustParse("1")},
+							Limits:   v1.ResourceList{"gpu.intel.com/i915": resource.MustParse("1")},
+						},
+					},
+				},
+				RestartPolicy: v1.RestartPolicyNever,
+			},
+		}
 		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), podSpec, metav1.CreateOptions{})
 		framework.ExpectNoError(err, "pod Create API error")
 

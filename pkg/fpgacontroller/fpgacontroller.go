@@ -20,11 +20,11 @@ package fpgacontroller
 import (
 	"context"
 
-	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller/patcher"
@@ -35,15 +35,13 @@ import (
 // AcceleratorFunctionReconciler reconciles AcceleratorFunction objects.
 type AcceleratorFunctionReconciler struct {
 	client.Client
-	Log            logr.Logger
 	Scheme         *runtime.Scheme
 	PatcherManager *patcher.PatcherManager
 }
 
 // Reconcile reconciles updates for AcceleratorFunction objects.
-func (r *AcceleratorFunctionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
-	log := r.Log.WithValues("af", req.NamespacedName)
+func (r *AcceleratorFunctionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := log.FromContext(ctx).WithValues("af", req.NamespacedName)
 
 	p := r.PatcherManager.GetPatcher(req.NamespacedName.Namespace)
 	var af fpgav2.AcceleratorFunction
@@ -72,15 +70,13 @@ func (r *AcceleratorFunctionReconciler) SetupWithManager(mgr ctrl.Manager) error
 // FpgaRegionReconciler reconciles AcceleratorFunction objects.
 type FpgaRegionReconciler struct {
 	client.Client
-	Log            logr.Logger
 	Scheme         *runtime.Scheme
 	PatcherManager *patcher.PatcherManager
 }
 
 // Reconcile reconciles updates for FpgaRegion objects.
-func (r *FpgaRegionReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
-	log := r.Log.WithValues("af", req.NamespacedName)
+func (r *FpgaRegionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := log.FromContext(ctx).WithValues("fpgaregion", req.NamespacedName)
 
 	p := r.PatcherManager.GetPatcher(req.NamespacedName.Namespace)
 	var region fpgav2.FpgaRegion

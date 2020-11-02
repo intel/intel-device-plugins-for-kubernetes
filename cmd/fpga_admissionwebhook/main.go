@@ -57,6 +57,7 @@ func main() {
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
+		Logger:             ctrl.Log.WithName("FpgaAdmissionWebhook"),
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "f2c6a4df.intel.com",
 	})
@@ -73,7 +74,6 @@ func main() {
 
 	if err = (&controllers.AcceleratorFunctionReconciler{
 		Client:         mgr.GetClient(),
-		Log:            ctrl.Log.WithName("controllers").WithName("AcceleratorFunction"),
 		Scheme:         mgr.GetScheme(),
 		PatcherManager: pm,
 	}).SetupWithManager(mgr); err != nil {
@@ -83,7 +83,6 @@ func main() {
 
 	if err = (&controllers.FpgaRegionReconciler{
 		Client:         mgr.GetClient(),
-		Log:            ctrl.Log.WithName("controllers").WithName("FpgaRegion"),
 		Scheme:         mgr.GetScheme(),
 		PatcherManager: pm,
 	}).SetupWithManager(mgr); err != nil {

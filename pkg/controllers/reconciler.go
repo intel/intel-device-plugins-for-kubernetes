@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var (
@@ -63,19 +64,20 @@ func GetDevicePluginCount(pluginKind string) int {
 
 // +kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
+// +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=create
+// +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,resourceNames=d1c7b6d5.intel.com,verbs=get;update
 
 // DevicePluginController provides functionality for manipulating actual device plugin CRD objects.
 type DevicePluginController interface {
-	CreateEmptyObject() (devicePlugin runtime.Object)
+	CreateEmptyObject() (devicePlugin client.Object)
 	GetTotalObjectCount(ctx context.Context, client client.Client) (count int, err error)
-	NewDaemonSet(devicePlugin runtime.Object) *apps.DaemonSet
-	UpdateDaemonSet(runtime.Object, *apps.DaemonSet) (updated bool)
-	UpdateStatus(runtime.Object, *apps.DaemonSet, []string) (updated bool, err error)
+	NewDaemonSet(devicePlugin client.Object) *apps.DaemonSet
+	UpdateDaemonSet(client.Object, *apps.DaemonSet) (updated bool)
+	UpdateStatus(client.Object, *apps.DaemonSet, []string) (updated bool, err error)
 }
 
 type reconciler struct {
 	client.Client
-	log        logr.Logger
 	scheme     *runtime.Scheme
 	pluginKind string
 	ownerKey   string
@@ -83,9 +85,8 @@ type reconciler struct {
 }
 
 // Reconcile reconciles a device plugin object.
-func (r *reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
-	log := r.log.WithValues(r.pluginKind, req.NamespacedName)
+func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := log.FromContext(ctx).WithValues(r.pluginKind, req.NamespacedName)
 
 	if err := r.updateBookKeeper(ctx); err != nil {
 		log.Error(err, "unable to total count of device plugins")
@@ -101,7 +102,7 @@ func (r *reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	devicePlugin := r.controller.CreateEmptyObject()
 	if err := r.Get(ctx, req.NamespacedName, devicePlugin); err != nil {
-		return r.maybeDeleteDaemoSets(ctx, err, childDaemonSets.Items, log)
+		return r.maybeDeleteDaemonSets(ctx, err, childDaemonSets.Items, log)
 	}
 
 	// Create a daemon set for the plugin if it doesn't exist.
@@ -154,7 +155,6 @@ func (r *reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 func SetupWithManager(mgr ctrl.Manager, controller DevicePluginController, apiGVString, pluginKind, ownerKey string) error {
 	r := &reconciler{
 		Client:     mgr.GetClient(),
-		log:        ctrl.Log.WithName("controllers").WithName(pluginKind),
 		scheme:     mgr.GetScheme(),
 		ownerKey:   ownerKey,
 		controller: controller,
@@ -165,7 +165,7 @@ func SetupWithManager(mgr ctrl.Manager, controller DevicePluginController, apiGV
 
 	// Index DaemonSets with their owner (e.g. QatDevicePlugin).
 	if err := mgr.GetFieldIndexer().IndexField(ctx, &apps.DaemonSet{}, ownerKey,
-		func(rawObj runtime.Object) []string {
+		func(rawObj client.Object) []string {
 			// grab the DaemonSet object, extract the owner...
 			ds := rawObj.(*apps.DaemonSet)
 			owner := metav1.GetControllerOf(ds)
@@ -186,7 +186,7 @@ func SetupWithManager(mgr ctrl.Manager, controller DevicePluginController, apiGV
 
 	// Index Pods with their owner (DaemonSet).
 	if err := mgr.GetFieldIndexer().IndexField(ctx, &v1.Pod{}, ownerKey,
-		func(rawObj runtime.Object) []string {
+		func(rawObj client.Object) []string {
 			// grab the Pod object, extract the owner...
 			pod := rawObj.(*v1.Pod)
 			owner := metav1.GetControllerOf(pod)
@@ -221,7 +221,7 @@ func (r *reconciler) updateBookKeeper(ctx context.Context) error {
 	return nil
 }
 
-func (r *reconciler) createDaemonSet(ctx context.Context, dp runtime.Object, log logr.Logger) (ctrl.Result, error) {
+func (r *reconciler) createDaemonSet(ctx context.Context, dp client.Object, log logr.Logger) (ctrl.Result, error) {
 	ds := r.controller.NewDaemonSet(dp)
 
 	if err := ctrl.SetControllerReference(dp.(metav1.Object), ds, r.scheme); err != nil {
@@ -237,11 +237,11 @@ func (r *reconciler) createDaemonSet(ctx context.Context, dp runtime.Object, log
 	return ctrl.Result{}, nil
 }
 
-func (r *reconciler) maybeDeleteDaemoSets(ctx context.Context, err error, daemonSets []apps.DaemonSet, log logr.Logger) (ctrl.Result, error) {
+func (r *reconciler) maybeDeleteDaemonSets(ctx context.Context, err error, daemonSets []apps.DaemonSet, log logr.Logger) (ctrl.Result, error) {
 	if apierrors.IsNotFound(err) {
-		for _, ds := range daemonSets {
-			if err = r.Delete(ctx, ds.DeepCopyObject(), client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
-				log.Error(err, "unable to delete DaemonSet", "DaemonSet", ds)
+		for i := range daemonSets {
+			if err = r.Delete(ctx, &daemonSets[i], client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
+				log.Error(err, "unable to delete DaemonSet", "DaemonSet", daemonSets[i])
 				return ctrl.Result{}, err
 			}
 		}
@@ -258,11 +258,12 @@ func (r *reconciler) maybeDeleteRedundantDaemonSets(ctx context.Context, dsets [
 	count := len(dsets)
 	if count > 1 {
 		log.V(0).Info("there are redundant DaemonSets", "redundantDS", count-1)
-		for _, ds := range dsets[1:] {
-			if err := r.Delete(ctx, ds.DeepCopyObject(), client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
-				log.Error(err, "unable to delete redundant DaemonSet", "DaemonSet", ds)
+		redundantSets := dsets[1:]
+		for i := range redundantSets {
+			if err := r.Delete(ctx, &redundantSets[i], client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
+				log.Error(err, "unable to delete redundant DaemonSet", "DaemonSet", redundantSets[i])
 			} else {
-				log.V(1).Info("deleted redundant DaemonSet", "DaemonSet", ds)
+				log.V(1).Info("deleted redundant DaemonSet", "DaemonSet", redundantSets[i])
 			}
 		}
 	}

@@ -122,7 +122,6 @@ func main() {
 
 	if err = (&fpgacontroller.AcceleratorFunctionReconciler{
 		Client:         mgr.GetClient(),
-		Log:            mgr.GetLogger().WithName("controllers").WithName("AcceleratorFunction"),
 		Scheme:         mgr.GetScheme(),
 		PatcherManager: pm,
 	}).SetupWithManager(mgr); err != nil {
@@ -132,7 +131,6 @@ func main() {
 
 	if err = (&fpgacontroller.FpgaRegionReconciler{
 		Client:         mgr.GetClient(),
-		Log:            mgr.GetLogger().WithName("controllers").WithName("FpgaRegion"),
 		Scheme:         mgr.GetScheme(),
 		PatcherManager: pm,
 	}).SetupWithManager(mgr); err != nil {

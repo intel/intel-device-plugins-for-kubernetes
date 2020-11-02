@@ -522,6 +522,13 @@ func TestPreStartContainer(t *testing.T) {
 	}
 }
 
+func TestGetPreferredAllocation(t *testing.T) {
+	srv := &server{}
+	if _, err := srv.GetPreferredAllocation(context.Background(), nil); err == nil {
+		t.Error("expected an unimplemented error, but got success")
+	}
+}
+
 func TestNewServer(t *testing.T) {
 	_ = newServer("test", nil, nil)
 }

@@ -27,6 +27,21 @@ rules:
   - update
   - watch
 - apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+- apiGroups:
+  - coordination.k8s.io
+  resourceNames:
+  - d1c7b6d5.intel.com
+  resources:
+  - leases
+  verbs:
+  - get
+  - update
+- apiGroups:
   - deviceplugin.intel.com
   resources:
   - fpgadeviceplugins
