@@ -30,7 +30,7 @@ RUN mkdir /install_root \
     --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
-ARG QAT_DRIVER_RELEASE="qat1.7.l.4.10.0-00014"
+ARG QAT_DRIVER_RELEASE="qat1.7.l.4.11.0-00001"
 
 RUN test -z "${TAGS_KERNELDRV}" \
     || ( swupd bundle-add wget c-basic \
