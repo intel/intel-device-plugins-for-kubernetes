@@ -75,6 +75,7 @@ jobs:
           - intel-deviceplugin-operator
           - intel-sgx-plugin
           - intel-sgx-initcontainer
+          - intel-dsa-plugin
 
           # Demo images
           - crypto-perf
