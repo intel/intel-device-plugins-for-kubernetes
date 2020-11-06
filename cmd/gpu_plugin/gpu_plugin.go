@@ -40,8 +40,9 @@ const (
 	vendorString      = "0x8086"
 
 	// Device plugin settings.
-	namespace  = "gpu.intel.com"
-	deviceType = "i915"
+	namespace            = "gpu.intel.com"
+	deviceType           = "i915"
+	monitoringDeviceType = deviceType + "_monitoring"
 
 	// Period of device scans.
 	scanPeriod = 5 * time.Second
@@ -51,6 +52,7 @@ type devicePlugin struct {
 	sysfsDir string
 	devfsDir string
 
+	monitoring   bool
 	sharedDevNum int
 
 	gpuDeviceReg     *regexp.Regexp
@@ -60,10 +62,11 @@ type devicePlugin struct {
 	scanDone   chan bool
 }
 
-func newDevicePlugin(sysfsDir, devfsDir string, sharedDevNum int) *devicePlugin {
+func newDevicePlugin(sysfsDir, devfsDir string, sharedDevNum int, monitoring bool) *devicePlugin {
 	return &devicePlugin{
 		sysfsDir:         sysfsDir,
 		devfsDir:         devfsDir,
+		monitoring:       monitoring,
 		sharedDevNum:     sharedDevNum,
 		gpuDeviceReg:     regexp.MustCompile(gpuDeviceRE),
 		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
@@ -105,6 +108,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	}
 
 	devTree := dpapi.NewDeviceTree()
+	var allNodes []pluginapi.DeviceSpec
 	for _, f := range files {
 		var nodes []pluginapi.DeviceSpec
 
@@ -140,11 +144,13 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			}
 
 			klog.V(4).Infof("Adding %s to GPU %s", devPath, f.Name())
-			nodes = append(nodes, pluginapi.DeviceSpec{
+			deviceSpec := pluginapi.DeviceSpec{
 				HostPath:      devPath,
 				ContainerPath: devPath,
 				Permissions:   "rw",
-			})
+			}
+			nodes = append(nodes, deviceSpec)
+			allNodes = append(allNodes, deviceSpec)
 		}
 
 		if len(nodes) > 0 {
@@ -157,14 +163,20 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			}
 		}
 	}
+	if dp.monitoring && len(allNodes) > 0 {
+		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, allNodes, nil, nil)
+		devTree.AddDevice(monitoringDeviceType, "mon-0", deviceInfo)
+	}
 
 	return devTree, nil
 }
 
 func main() {
 	var sharedDevNum int
+	var monitoringDev bool
 
 	flag.IntVar(&sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
+	flag.BoolVar(&monitoringDev, "monitoring", false, "enable monitoring device which gives access to all GPUs")
 	flag.Parse()
 
 	if sharedDevNum < 1 {
@@ -174,7 +186,7 @@ func main() {
 
 	klog.V(1).Info("GPU device plugin started")
 
-	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory, sharedDevNum)
+	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory, sharedDevNum, monitoringDev)
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }

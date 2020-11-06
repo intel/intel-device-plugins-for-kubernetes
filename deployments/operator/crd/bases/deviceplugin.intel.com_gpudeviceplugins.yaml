@@ -60,6 +60,9 @@ spec:
               description: LogLevel sets the plugin's log level.
               minimum: 0
               type: integer
+            monitoringDev:
+              description: MonitoringDev enables the monitoring device which gives access to all GPUs.
+              type: boolean
             nodeSelector:
               additionalProperties:
                 type: string

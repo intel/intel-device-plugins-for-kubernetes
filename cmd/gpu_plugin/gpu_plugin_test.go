@@ -126,7 +126,7 @@ func TestScan(t *testing.T) {
 				}
 			}
 
-			plugin := newDevicePlugin(sysfs, devfs, 1)
+			plugin := newDevicePlugin(sysfs, devfs, 1, false)
 
 			notifier := &mockNotifier{
 				scanDone: plugin.scanDone,

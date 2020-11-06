@@ -304,5 +304,9 @@ func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
 		args = append(args, "-shared-dev-num", "1")
 	}
 
+	if gdp.Spec.MonitoringDev {
+		args = append(args, "-monitoring")
+	}
+
 	return args
 }
