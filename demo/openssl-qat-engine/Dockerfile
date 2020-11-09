@@ -30,6 +30,13 @@ RUN sed -i -e 's/cmn_ko$//' -e 's/lac_kernel$//' quickassist/Makefile && \
     cd /intel-ipsec-mb && \
     make && make install LIB_INSTALL_DIR=/usr/lib64
 
+# Build QAT Engine twice: ISA optimized qat-sw and QAT HW
+# optimized qat-hw.
+#
+# NB: The engine build needs 'make clean' between the builds but
+# that removes the installed engine too. Therefore, we need to
+# take a backup before 'make clean' and restore it afterwards.
+# See: https://github.com/intel/QAT_Engine/issues/172
 RUN cd /QAT_Engine && \
     ./autogen.sh && \
     ./configure \
@@ -38,6 +45,9 @@ RUN cd /QAT_Engine && \
     --with-multibuff_install_dir=/usr/local \
     --with-qat_engine_id=qat-sw && \
     make && make install && \
+    mv /usr/lib64/engines-1.1/qat-sw.so /usr/lib64/engines-1.1/qat-sw.so.tmp && \
+    make clean && \
+    mv /usr/lib64/engines-1.1/qat-sw.so.tmp /usr/lib64/engines-1.1/qat-sw.so && \
     ./configure \
     --with-qat_dir=/ \
     --disable-ipsec_offload \
@@ -51,6 +61,7 @@ FROM $FINAL_BASE_IMAGE
 COPY --from=builder /usr/lib/libqat_s.so /usr/lib/
 COPY --from=builder /usr/lib/libusdm_drv_s.so /usr/lib/
 COPY --from=builder /usr/lib64/libIPSec_MB.so.0 /usr/lib64/
+COPY --from=builder /usr/local/lib/libcrypto_mb.so /usr/lib64/
 COPY --from=builder /usr/bin/adf_ctl /usr/bin
 COPY --from=builder /usr/lib64/engines-1.1/qat-sw.so /usr/lib64/engines-1.1/qat-sw.so
 COPY --from=builder /usr/lib64/engines-1.1/qat-hw.so /usr/lib64/engines-1.1/qat-hw.so
