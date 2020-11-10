@@ -56,10 +56,6 @@ func (f *DflFME) Close() error {
 // NewDflFME Opens device.
 func NewDflFME(dev string) (FME, error) {
 	fme := &DflFME{DevPath: dev}
-	// check that kernel API is compatible
-	if _, err := fme.GetAPIVersion(); err != nil {
-		return nil, errors.Wrap(err, "kernel API mismatch")
-	}
 	if err := checkVendorAndClass(fme); err != nil {
 		return nil, err
 	}
@@ -96,10 +92,6 @@ func (f *DflPort) Close() error {
 // NewDflPort Opens device.
 func NewDflPort(dev string) (Port, error) {
 	port := &DflPort{DevPath: dev}
-	// check that kernel API is compatible
-	if _, err := port.GetAPIVersion(); err != nil {
-		return nil, errors.Wrap(err, "kernel API mismatch")
-	}
 	if err := checkVendorAndClass(port); err != nil {
 		return nil, err
 	}

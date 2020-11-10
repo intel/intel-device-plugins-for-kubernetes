@@ -53,10 +53,6 @@ func (f *IntelFpgaFME) Close() error {
 // NewIntelFpgaFME Opens device.
 func NewIntelFpgaFME(dev string) (FME, error) {
 	fme := &IntelFpgaFME{DevPath: dev}
-	// check that kernel API is compatible
-	if _, err := fme.GetAPIVersion(); err != nil {
-		return nil, errors.Wrap(err, "kernel API mismatch")
-	}
 	if err := checkVendorAndClass(fme); err != nil {
 		return nil, err
 	}
@@ -90,11 +86,6 @@ func (f *IntelFpgaPort) Close() error {
 // NewIntelFpgaPort Opens device.
 func NewIntelFpgaPort(dev string) (Port, error) {
 	port := &IntelFpgaPort{DevPath: dev}
-	// check that kernel API is compatible
-	if _, err := port.GetAPIVersion(); err != nil {
-		port.Close()
-		return nil, errors.Wrap(err, "kernel API mismatch")
-	}
 	if err := checkVendorAndClass(port); err != nil {
 		port.Close()
 		return nil, err
