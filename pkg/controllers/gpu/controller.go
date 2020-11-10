@@ -81,7 +81,7 @@ func (c *controller) NewDaemonSet(rawObj runtime.Object) *apps.DaemonSet {
 	}
 
 	yes := true
-	return &apps.DaemonSet{
+	daemonSet := apps.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:    devicePlugin.Namespace,
 			GenerateName: devicePlugin.Name + "-",
@@ -170,6 +170,59 @@ func (c *controller) NewDaemonSet(rawObj runtime.Object) *apps.DaemonSet {
 			},
 		},
 	}
+	// add the optional InitImage
+	if devicePlugin.Spec.InitImage != "" {
+		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
+	}
+	return &daemonSet
+}
+
+func setInitContainer(spec *v1.PodSpec, imageName string) {
+	yes := true
+	spec.InitContainers = []v1.Container{
+		{
+			Image:           imageName,
+			ImagePullPolicy: "IfNotPresent",
+			Name:            "intel-gpu-initcontainer",
+			SecurityContext: &v1.SecurityContext{
+				ReadOnlyRootFilesystem: &yes,
+			},
+			VolumeMounts: []v1.VolumeMount{
+				{
+					MountPath: "/etc/kubernetes/node-feature-discovery/source.d/",
+					Name:      "nfd-source-hooks",
+				},
+			},
+		}}
+	directoryOrCreate := v1.HostPathDirectoryOrCreate
+	missing := true
+	for _, vol := range spec.Volumes {
+		if vol.Name == "nfd-source-hooks" {
+			missing = false
+			break
+		}
+	}
+	if missing {
+		spec.Volumes = append(spec.Volumes, v1.Volume{
+			Name: "nfd-source-hooks",
+			VolumeSource: v1.VolumeSource{
+				HostPath: &v1.HostPathVolumeSource{
+					Path: "/etc/kubernetes/node-feature-discovery/source.d/",
+					Type: &directoryOrCreate,
+				},
+			},
+		})
+	}
+}
+
+func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
+	newVolumes := []v1.Volume{}
+	for _, volume := range volumes {
+		if volume.Name != name {
+			newVolumes = append(newVolumes, volume)
+		}
+	}
+	return newVolumes
 }
 
 func (c *controller) UpdateDaemonSet(rawObj runtime.Object, ds *apps.DaemonSet) (updated bool) {
@@ -177,6 +230,17 @@ func (c *controller) UpdateDaemonSet(rawObj runtime.Object, ds *apps.DaemonSet) 
 
 	if ds.Spec.Template.Spec.Containers[0].Image != dp.Spec.Image {
 		ds.Spec.Template.Spec.Containers[0].Image = dp.Spec.Image
+		updated = true
+	}
+
+	if dp.Spec.InitImage == "" {
+		if ds.Spec.Template.Spec.InitContainers != nil {
+			ds.Spec.Template.Spec.InitContainers = nil
+			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "nfd-source-hooks")
+			updated = true
+		}
+	} else {
+		setInitContainer(&ds.Spec.Template.Spec, dp.Spec.InitImage)
 		updated = true
 	}
 
