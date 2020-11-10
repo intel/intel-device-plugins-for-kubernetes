@@ -81,6 +81,21 @@ func getAesmdVolume(needsAesmd bool, epcUserCount int32, aesmdPresent bool) *cor
 	}
 }
 
+func warnWrongResources(resources map[string]int64) []string {
+	warnings := make([]string, 0)
+
+	_, ok := resources[encl]
+	if ok {
+		warnings = append(warnings, encl+" should not be used in Pod spec directly")
+	}
+
+	_, ok = resources[provision]
+	if ok {
+		warnings = append(warnings, provision+" should not be used in Pod spec directly")
+	}
+	return warnings
+}
+
 func (s *SgxMutator) Handle(ctx context.Context, req admission.Request) admission.Response {
 	pod := &corev1.Pod{}
 
@@ -91,6 +106,7 @@ func (s *SgxMutator) Handle(ctx context.Context, req admission.Request) admissio
 	totalEpc := int64(0)
 	epcUserCount := int32(0)
 	aesmdPresent := bool(false)
+	warnings := make([]string, 0)
 
 	if pod.Annotations == nil {
 		pod.Annotations = make(map[string]string)
@@ -103,6 +119,8 @@ func (s *SgxMutator) Handle(ctx context.Context, req admission.Request) admissio
 		if err != nil {
 			return admission.Errored(http.StatusInternalServerError, err)
 		}
+
+		warnings = append(warnings, warnWrongResources(requestedResources)...)
 
 		// the container has no sgx.intel.com/epc
 		epcSize, ok := requestedResources[epc]
@@ -190,7 +208,7 @@ func (s *SgxMutator) Handle(ctx context.Context, req admission.Request) admissio
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
 
-	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod)
+	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod).WithWarnings(warnings...)
 }
 
 // SgxMutator implements admission.DecoderInjector.
