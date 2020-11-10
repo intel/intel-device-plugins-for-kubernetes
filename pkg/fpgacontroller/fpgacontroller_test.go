@@ -15,6 +15,7 @@
 package fpgacontroller
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -23,13 +24,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller/patcher"
 )
 
 var (
-	log    = ctrl.Log.WithName("test")
+	logger = ctrl.Log.WithName("test")
 	scheme = runtime.NewScheme()
 )
 
@@ -64,10 +66,10 @@ func TestAcceleratorFunctionReconcile(t *testing.T) {
 				Client: &mockClient{
 					getError: tt.getError,
 				},
-				Log:            log,
-				PatcherManager: patcher.NewPatcherManager(log),
+				PatcherManager: patcher.NewPatcherManager(logger),
 			}
-			_, err := reconciler.Reconcile(ctrl.Request{})
+			ctx := log.IntoContext(context.Background(), logger)
+			_, err := reconciler.Reconcile(ctx, ctrl.Request{})
 			if err != nil && !tt.expectedErr {
 				t.Errorf("unexpected error: %+v", err)
 			}
@@ -82,7 +84,7 @@ func TestAcceleratorFunctionSetupWithManager(t *testing.T) {
 	r := &AcceleratorFunctionReconciler{}
 	err := r.SetupWithManager(&mockManager{
 		scheme: scheme,
-		log:    log,
+		log:    logger,
 	})
 	if err != nil {
 		t.Errorf("unexpected error: %+v", err)
@@ -115,10 +117,10 @@ func TestFpgaRegionReconcile(t *testing.T) {
 				Client: &mockClient{
 					getError: tt.getError,
 				},
-				Log:            log,
-				PatcherManager: patcher.NewPatcherManager(log),
+				PatcherManager: patcher.NewPatcherManager(logger),
 			}
-			_, err := reconciler.Reconcile(ctrl.Request{})
+			ctx := log.IntoContext(context.Background(), logger)
+			_, err := reconciler.Reconcile(ctx, ctrl.Request{})
 			if err != nil && !tt.expectedErr {
 				t.Errorf("unexpected error: %+v", err)
 			}
@@ -133,7 +135,7 @@ func TestFpgaRegionSetupWithManager(t *testing.T) {
 	r := &FpgaRegionReconciler{}
 	err := r.SetupWithManager(&mockManager{
 		scheme: scheme,
-		log:    log,
+		log:    logger,
 	})
 	if err != nil {
 		t.Errorf("unexpected error: %+v", err)

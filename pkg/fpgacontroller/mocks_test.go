@@ -36,27 +36,27 @@ type mockClient struct {
 	getError error
 }
 
-func (c *mockClient) Create(context.Context, runtime.Object, ...client.CreateOption) error {
+func (c *mockClient) Create(context.Context, client.Object, ...client.CreateOption) error {
 	return nil
 }
 
-func (c *mockClient) Delete(context.Context, runtime.Object, ...client.DeleteOption) error {
+func (c *mockClient) Delete(context.Context, client.Object, ...client.DeleteOption) error {
 	return nil
 }
 
-func (c *mockClient) DeleteAllOf(context.Context, runtime.Object, ...client.DeleteAllOfOption) error {
+func (c *mockClient) DeleteAllOf(context.Context, client.Object, ...client.DeleteAllOfOption) error {
 	return nil
 }
 
-func (c *mockClient) Get(context.Context, types.NamespacedName, runtime.Object) error {
+func (c *mockClient) Get(context.Context, types.NamespacedName, client.Object) error {
 	return c.getError
 }
 
-func (c *mockClient) List(context.Context, runtime.Object, ...client.ListOption) error {
+func (c *mockClient) List(context.Context, client.ObjectList, ...client.ListOption) error {
 	return nil
 }
 
-func (c *mockClient) Patch(context.Context, runtime.Object, client.Patch, ...client.PatchOption) error {
+func (c *mockClient) Patch(context.Context, client.Object, client.Patch, ...client.PatchOption) error {
 	return nil
 }
 
@@ -64,7 +64,15 @@ func (c *mockClient) Status() client.StatusWriter {
 	return nil
 }
 
-func (c *mockClient) Update(context.Context, runtime.Object, ...client.UpdateOption) error {
+func (c *mockClient) Update(context.Context, client.Object, ...client.UpdateOption) error {
+	return nil
+}
+
+func (c *mockClient) Scheme() *runtime.Scheme {
+	return nil
+}
+
+func (c *mockClient) RESTMapper() meta.RESTMapper {
 	return nil
 }
 
@@ -137,6 +145,6 @@ func (m *mockManager) SetFields(interface{}) error {
 	return nil
 }
 
-func (m *mockManager) Start(<-chan struct{}) error {
+func (m *mockManager) Start(context.Context) error {
 	return nil
 }

@@ -52,7 +52,7 @@ type controller struct {
 	scheme *runtime.Scheme
 }
 
-func (c *controller) CreateEmptyObject() runtime.Object {
+func (c *controller) CreateEmptyObject() client.Object {
 	return &devicepluginv1.FpgaDevicePlugin{}
 }
 
@@ -65,7 +65,7 @@ func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client
 	return len(list.Items), nil
 }
 
-func (c *controller) NewDaemonSet(rawObj runtime.Object) *apps.DaemonSet {
+func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.FpgaDevicePlugin)
 	yes := true
 	directoryOrCreate := v1.HostPathDirectoryOrCreate
@@ -199,7 +199,7 @@ func (c *controller) NewDaemonSet(rawObj runtime.Object) *apps.DaemonSet {
 	}
 }
 
-func (c *controller) UpdateDaemonSet(rawObj runtime.Object, ds *apps.DaemonSet) (updated bool) {
+func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
 	dp := rawObj.(*devicepluginv1.FpgaDevicePlugin)
 
 	if ds.Spec.Template.Spec.Containers[0].Image != dp.Spec.Image {
@@ -226,7 +226,7 @@ func (c *controller) UpdateDaemonSet(rawObj runtime.Object, ds *apps.DaemonSet) 
 	return updated
 }
 
-func (c *controller) UpdateStatus(rawObj runtime.Object, ds *apps.DaemonSet, nodeNames []string) (updated bool, err error) {
+func (c *controller) UpdateStatus(rawObj client.Object, ds *apps.DaemonSet, nodeNames []string) (updated bool, err error) {
 	dp := rawObj.(*devicepluginv1.FpgaDevicePlugin)
 
 	dsRef, err := reference.GetReference(c.scheme, ds)

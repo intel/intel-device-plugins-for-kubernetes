@@ -68,13 +68,24 @@ func describeQatKernelPlugin() {
 		}
 
 		ginkgo.By("submitting a pod requesting QAT resources")
-		podSpec := f.NewTestPod("qatplugin-tester",
-			v1.ResourceList{"qat.intel.com/cy1_dc0": resource.MustParse("1")},
-			v1.ResourceList{"qat.intel.com/cy1_dc0": resource.MustParse("1")})
-		podSpec.Spec.RestartPolicy = v1.RestartPolicyNever
-		podSpec.Spec.Containers[0].Image = imageutils.GetE2EImage(imageutils.BusyBox)
-		podSpec.Spec.Containers[0].Command = []string{"/bin/sh"}
-		podSpec.Spec.Containers[0].Args = []string{"-c", "echo mode"}
+		podSpec := &v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{Name: "qatplugin-tester"},
+			Spec: v1.PodSpec{
+				Containers: []v1.Container{
+					{
+						Args:    []string{"-c", "echo mode"},
+						Name:    "testcontainer",
+						Image:   imageutils.GetE2EImage(imageutils.BusyBox),
+						Command: []string{"/bin/sh"},
+						Resources: v1.ResourceRequirements{
+							Requests: v1.ResourceList{"qat.intel.com/cy1_dc0": resource.MustParse("1")},
+							Limits:   v1.ResourceList{"qat.intel.com/cy1_dc0": resource.MustParse("1")},
+						},
+					},
+				},
+				RestartPolicy: v1.RestartPolicyNever,
+			},
+		}
 		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(),
 			podSpec, metav1.CreateOptions{})
 		framework.ExpectNoError(err, "pod Create API error")

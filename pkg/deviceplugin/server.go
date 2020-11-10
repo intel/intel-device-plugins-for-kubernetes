@@ -76,7 +76,10 @@ func newServer(devType string,
 }
 
 func (srv *server) GetDevicePluginOptions(ctx context.Context, empty *pluginapi.Empty) (*pluginapi.DevicePluginOptions, error) {
-	return &pluginapi.DevicePluginOptions{PreStartRequired: srv.preStartContainer != nil}, nil
+	return &pluginapi.DevicePluginOptions{
+		PreStartRequired:                srv.preStartContainer != nil,
+		GetPreferredAllocationAvailable: false,
+	}, nil
 }
 
 func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer) error {
@@ -156,6 +159,10 @@ func (srv *server) PreStartContainer(ctx context.Context, rqt *pluginapi.PreStar
 	}
 
 	return nil, errors.New("PreStartContainer() should not be called as this device plugin doesn't implement it")
+}
+
+func (srv *server) GetPreferredAllocation(ctx context.Context, rqt *pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error) {
+	return nil, errors.New("GetPreferredAllocation should not be called as this device plugin doesn't implement it")
 }
 
 // Serve starts a gRPC server to serve pluginapi.PluginInterfaceServer interface.

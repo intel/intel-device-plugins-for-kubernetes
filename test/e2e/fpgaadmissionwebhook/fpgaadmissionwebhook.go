@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubernetes/test/e2e/framework"
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
+	imageutils "k8s.io/kubernetes/test/utils/image"
 )
 
 const (
@@ -78,9 +79,21 @@ func checkPodMutation(f *framework.Framework, mappingsNamespace string, source, 
 	framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-n", mappingsNamespace, "-f", filepath.Dir(kustomizationPath)+"/../mappings-collection.yaml")
 
 	ginkgo.By("submitting a pod for admission")
-	podSpec := f.NewTestPod("webhook-tester",
-		v1.ResourceList{source: resource.MustParse("1")},
-		v1.ResourceList{source: resource.MustParse("1")})
+	podSpec := &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "webhook-tester"},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:  "testcontainer",
+					Image: imageutils.GetPauseImageName(),
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{source: resource.MustParse("1")},
+						Limits:   v1.ResourceList{source: resource.MustParse("1")},
+					},
+				},
+			},
+		},
+	}
 	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(),
 		podSpec, metav1.CreateOptions{})
 

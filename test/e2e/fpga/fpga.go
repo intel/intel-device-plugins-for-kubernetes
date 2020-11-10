@@ -121,13 +121,25 @@ func createPod(fmw *framework.Framework, name string, resourceName v1.ResourceNa
 	resourceList := v1.ResourceList{resourceName: resource.MustParse("1"),
 		"cpu":           resource.MustParse("1"),
 		"hugepages-2Mi": resource.MustParse("20Mi")}
-	podSpec := fmw.NewTestPod(name, resourceList, resourceList)
-	podSpec.Spec.RestartPolicy = v1.RestartPolicyNever
-	podSpec.Spec.Containers[0].Image = image
-	podSpec.Spec.Containers[0].Command = command
-	podSpec.Spec.Containers[0].SecurityContext = &v1.SecurityContext{
-		Capabilities: &v1.Capabilities{
-			Add: []v1.Capability{"IPC_LOCK"},
+	podSpec := &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: name},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:    "testcontainer",
+					Image:   image,
+					Command: command,
+					Resources: v1.ResourceRequirements{
+						Requests: resourceList,
+						Limits:   resourceList,
+					},
+					SecurityContext: &v1.SecurityContext{
+						Capabilities: &v1.Capabilities{
+							Add: []v1.Capability{"IPC_LOCK"},
+						},
+					},
+				},
+			},
 		},
 	}
 
