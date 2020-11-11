@@ -35,8 +35,6 @@ pipeline {
       }
       stages {
         stage("Get requirements") {
-          parallel {
-            stage("go") {
               steps {
                 sh "curl -O https://dl.google.com/go/${GO_TAR}"
                 sh "tar -xvf $GO_TAR"
@@ -44,10 +42,6 @@ pipeline {
                 sh "mkdir -p $GOPATH/src/github.com/intel $GOPATH/bin"
                 sh "cp -rf ${env.WORKSPACE} $REPO_DIR"
                 sh "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin ${GOLANGCI_LINT_VERSION}"
-              }
-            }
-            stage("buildah") {
-              steps {
                 sh "sudo apt-get update"
                 sh "sudo apt-get -y install e2fslibs-dev libfuse-dev libgpgme11-dev libdevmapper-dev libglib2.0-dev libprotobuf-dev libusb-1.0-0-dev"
                 sh "mkdir -p ${GOPATH}/src/github.com/containers"
@@ -70,8 +64,6 @@ pipeline {
                   sh "sudo chmod +x /usr/bin/runc"
                 }
               }
-            }
-          }
         }
         stage("make go-mod-tidy") {
           steps {
