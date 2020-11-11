@@ -181,14 +181,16 @@ func fpgaInfo(fname string, quiet bool) error {
 }
 
 func fmeInfo(fname string, quiet bool) error {
-	var f fpga.FME
-	var err error
-	f, err = fpga.NewFME(fname)
+	fme, err := fpga.NewFME(fname)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	return printFpgaFME(f, quiet)
+	defer fme.Close()
+	// check that kernel API is compatible
+	if _, err := fme.GetAPIVersion(); err != nil {
+		return errors.Wrap(err, "kernel API mismatch")
+	}
+	return printFpgaFME(fme, quiet)
 }
 
 func printFpgaFME(f fpga.FME, quiet bool) (err error) {
@@ -218,28 +220,33 @@ func printFpgaFME(f fpga.FME, quiet bool) (err error) {
 }
 
 func portReleaseOrAssign(fname string, port uint, release, quiet bool) error {
-	var f fpga.FME
-	var err error
-	f, err = fpga.NewFME(fname)
+	fme, err := fpga.NewFME(fname)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	if release {
-		return f.PortRelease(uint32(port))
+	defer fme.Close()
+	// check that kernel API is compatible
+	if _, err := fme.GetAPIVersion(); err != nil {
+		return errors.Wrap(err, "kernel API mismatch")
 	}
-	return f.PortAssign(uint32(port))
+	if release {
+		return fme.PortRelease(uint32(port))
+	}
+	return fme.PortAssign(uint32(port))
 }
 
 func portInfo(fname string, quiet bool) error {
-	var f fpga.Port
-	var err error
-	f, err = fpga.NewPort(fname)
+	port, err := fpga.NewPort(fname)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	return printFpgaPort(f, quiet)
+	defer port.Close()
+	// check that kernel API is compatible
+	if _, err = port.GetAPIVersion(); err != nil {
+		return errors.Wrap(err, "kernel API mismatch")
+	}
+
+	return printFpgaPort(port, quiet)
 }
 
 func printFpgaPort(f fpga.Port, quiet bool) (err error) {
@@ -313,32 +320,37 @@ func printPCIeInfo(pci *fpga.PCIDevice, quiet bool) {
 	}
 }
 
-func doPR(dev, fname string, dryRun, quiet bool) (err error) {
-	fp, err := fpga.NewPort(dev)
+func doPR(dev, fname string, dryRun, quiet bool) error {
+	port, err := fpga.NewPort(dev)
 	if err != nil {
-		return
+		return err
 	}
-	defer fp.Close()
+	defer port.Close()
+	// check that kernel API is compatible
+	if _, err = port.GetAPIVersion(); err != nil {
+		return errors.Wrap(err, "kernel API mismatch")
+	}
+
 	bs, err := bitstream.Open(fname)
 	if err != nil {
-		return
+		return err
 	}
 	defer bs.Close()
 
 	if !quiet {
-		fmt.Printf("Before: Interface ID: %q AFU ID: %q\n", fp.GetInterfaceUUID(), fp.GetAcceleratorTypeUUID())
+		fmt.Printf("Before: Interface ID: %q AFU ID: %q\n", port.GetInterfaceUUID(), port.GetAcceleratorTypeUUID())
 		fmt.Printf("Programming %q to port %q: ", fname, dev)
 	}
-	err = fp.PR(bs, dryRun)
+	err = port.PR(bs, dryRun)
 	if !quiet {
 		if err != nil {
 			fmt.Println("FAILED")
 		} else {
 			fmt.Println("OK")
 		}
-		fmt.Printf("After : Interface ID: %q AFU ID: %q\n", fp.GetInterfaceUUID(), fp.GetAcceleratorTypeUUID())
+		fmt.Printf("After : Interface ID: %q AFU ID: %q\n", port.GetInterfaceUUID(), port.GetAcceleratorTypeUUID())
 	}
-	return
+	return err
 }
 
 func listDevices(listFMEs, listPorts, quiet bool) error {
