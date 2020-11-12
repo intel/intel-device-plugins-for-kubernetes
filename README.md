@@ -24,6 +24,7 @@ Table of Contents
 * [Developers](#developers)
 * [Running e2e Tests](#running-e2e-tests)
 * [Supported Kubernetes versions](#supported-kubernetes-versions)
+* [Pre-built plugin images](#pre-built-plugin-images)
 * [Related code](#related-code)
 
 ## Prerequisites
@@ -265,6 +266,14 @@ matching Kubernetes versions are listed below:
 
 [Go environment]: https://golang.org/doc/install
 [Kubernetes cluster]: https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
+
+## Pre-built plugin images
+
+Pre-built images of the plugins are available on the Docker hub. These images are automatically built and uploaded to the hub from the latest master branch of this repository.
+
+Release tagged images of the components are also available on the Docker hub, tagged with their release version numbers in the format x.y.z, corresponding to the branches and releases in this repository.
+
+**Note:** the default deployment files and operators are configured with [imagePullPolicy](https://kubernetes.io/docs/concepts/containers/images/#updating-images) ```IfNotPresent``` and can be changed with ```scripts/set-image-pull-policy.sh```.
 
 ## License
 
