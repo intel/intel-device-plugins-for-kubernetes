@@ -27,7 +27,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
+	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga/v2"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/internal/containers"
 )

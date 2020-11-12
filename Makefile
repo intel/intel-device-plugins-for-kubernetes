@@ -1,13 +1,29 @@
 CONTROLLER_GEN ?= controller-gen
 GO := go
 GOFMT := gofmt
-KUBECTL ?= kubectl
 KIND ?= kind
+KUBECTL ?= kubectl
+KUSTOMIZE ?= kustomize
+OPERATOR_SDK ?= operator-sdk
 PODMAN ?= podman
 
 BUILDTAGS ?= ""
 BUILDER ?= "docker"
 EXTRA_BUILD_ARGS ?= ""
+
+# Current Operator version
+OPERATOR_VERSION ?= 0.19.0
+# Default bundle image tag
+BUNDLE_IMG ?= intel-device-plugins-controller-bundle:$(OPERATOR_VERSION)
+# Options for 'bundle-build'
+ifneq ($(origin CHANNELS), undefined)
+BUNDLE_CHANNELS := --channels=$(CHANNELS)
+endif
+ifneq ($(origin DEFAULT_CHANNEL), undefined)
+BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
+endif
+BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
+OLM_MANIFESTS = deployments/operator/manifests
 
 WEBHOOK_IMAGE_FILE = intel-fpga-admissionwebhook-devel.tgz
 
@@ -66,7 +82,7 @@ generate:
 		paths="./pkg/apis/..." \
 		output:crd:artifacts:config=deployments/operator/crd/bases
 	$(CONTROLLER_GEN) crd:crdVersions=v1beta1,trivialVersions=true \
-		paths="./pkg/apis/fpga.intel.com/..." \
+		paths="./pkg/apis/fpga/..." \
 		output:crd:artifacts:config=deployments/fpga_admissionwebhook/crd/bases
 	$(CONTROLLER_GEN) webhook \
 		paths="./pkg/..." \
@@ -90,6 +106,20 @@ undeploy-operator:
 
 run-operator: deploy-operator
 	./cmd/operator/operator
+
+.PHONY: bundle
+bundle:
+	$(OPERATOR_SDK) generate kustomize manifests -q --input-dir $(OLM_MANIFESTS) --output-dir $(OLM_MANIFESTS) --apis-dir pkg/apis
+	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(OPERATOR_VERSION)|" | $(OPERATOR_SDK) generate bundle -q --overwrite --kustomize-dir $(OLM_MANIFESTS) --version $(OPERATOR_VERSION) $(BUNDLE_METADATA_OPTS)
+	$(OPERATOR_SDK) bundle validate ./bundle
+
+.PHONY: packagemanifests
+packagemanifests:
+	$(OPERATOR_SDK) generate kustomize manifests -q --input-dir $(OLM_MANIFESTS) --output-dir $(OLM_MANIFESTS) --apis-dir pkg/apis
+	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(OPERATOR_VERSION)|" | $(OPERATOR_SDK) generate packagemanifests -q --kustomize-dir $(OLM_MANIFESTS) --version $(OPERATOR_VERSION) $(BUNDLE_METADATA_OPTS)
+	# Remove unneeded resources
+	rm packagemanifests/$(OPERATOR_VERSION)/*service.yaml
+	rm packagemanifests/$(OPERATOR_VERSION)/*clusterrole.yaml
 
 clean:
 	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; $(GO) clean ; cd $$pwd ; done

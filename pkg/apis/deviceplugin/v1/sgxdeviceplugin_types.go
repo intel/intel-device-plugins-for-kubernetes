@@ -75,8 +75,11 @@ type SgxDevicePluginStatus struct {
 // +kubebuilder:printcolumn:name="Ready",type=integer,JSONPath=`.status.numberReady`
 // +kubebuilder:printcolumn:name="Node Selector",type=string,JSONPath=`.spec.nodeSelector`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+// +operator-sdk:csv:customresourcedefinitions:displayName="Intel Software Guard Extensions Device Plugin"
 
-// SgxDevicePlugin is the Schema for the sgxdeviceplugins API.
+// SgxDevicePlugin is the Schema for the sgxdeviceplugins API. It represents
+// the SGX device plugin responsible for advertising SGX device nodes to
+// the kubelet.
 type SgxDevicePlugin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

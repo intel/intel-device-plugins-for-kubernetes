@@ -38,4 +38,5 @@ spec:
           runAsUser: 3210
           runAsGroup: 3210
           readOnlyRootFilesystem: true
+      serviceAccountName: default
       terminationGracePeriodSeconds: 10

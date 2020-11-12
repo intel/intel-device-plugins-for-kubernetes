@@ -19,7 +19,8 @@ spec:
   scope: Namespaced
   validation:
     openAPIV3Schema:
-      description: FpgaRegion is a specification for a FpgaRegion resource.
+      description: FpgaRegion is a specification for a FPGA region resource which
+        can be programmed with a bitstream.
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -41,6 +42,9 @@ spec:
               type: string
           required:
           - interfaceId
+          type: object
+        status:
+          description: FpgaRegionStatus is an empty object used to satisfy operator-sdk.
           type: object
       required:
       - spec

@@ -1,0 +1,6 @@
+resources:
+  - deviceplugin_v1_fpgadeviceplugin.yaml
+  - deviceplugin_v1_gpudeviceplugin.yaml
+  - deviceplugin_v1_qatdeviceplugin.yaml
+  - deviceplugin_v1_sgxdeviceplugin.yaml
+  - mappings-collection.yaml

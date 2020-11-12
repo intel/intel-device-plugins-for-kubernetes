@@ -71,8 +71,11 @@ type FpgaDevicePluginStatus struct {
 // +kubebuilder:printcolumn:name="Ready",type=integer,JSONPath=`.status.numberReady`
 // +kubebuilder:printcolumn:name="Node Selector",type=string,JSONPath=`.spec.nodeSelector`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+// +operator-sdk:csv:customresourcedefinitions:displayName="Intel FPGA Device Plugin"
 
-// FpgaDevicePlugin is the Schema for the fpgadeviceplugins API.
+// FpgaDevicePlugin is the Schema for the fpgadeviceplugins API. It represents
+// the FPGA device plugin responsible for advertising Intel FPGA hardware resources to
+// the kubelet.
 type FpgaDevicePlugin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

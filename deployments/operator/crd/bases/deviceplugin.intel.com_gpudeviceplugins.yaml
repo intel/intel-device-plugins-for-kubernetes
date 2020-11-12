@@ -32,7 +32,9 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      description: GpuDevicePlugin is the Schema for the gpudeviceplugins API.
+      description: GpuDevicePlugin is the Schema for the gpudeviceplugins API. It
+        represents the GPU device plugin responsible for advertising GPU hardware
+        resources to the kubelet.
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation

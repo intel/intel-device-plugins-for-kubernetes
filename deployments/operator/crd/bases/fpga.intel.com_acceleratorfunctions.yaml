@@ -19,8 +19,8 @@ spec:
   scope: Namespaced
   validation:
     openAPIV3Schema:
-      description: AcceleratorFunction is a specification for an AcceleratorFunction
-        resource.
+      description: AcceleratorFunction is a specification for an Accelerator Function
+        resource provided by a FPGA-based programmable hardware accelerator.
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -50,6 +50,10 @@ spec:
           - afuId
           - interfaceId
           - mode
+          type: object
+        status:
+          description: AcceleratorFunctionStatus is an empty object used to satisfy
+            operator-sdk.
           type: object
       required:
       - spec

@@ -81,8 +81,11 @@ type QatDevicePluginStatus struct {
 // +kubebuilder:printcolumn:name="Ready",type=integer,JSONPath=`.status.numberReady`
 // +kubebuilder:printcolumn:name="Node Selector",type=string,JSONPath=`.spec.nodeSelector`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+// +operator-sdk:csv:customresourcedefinitions:displayName="Intel QuickAssist Technology Device Plugin"
 
-// QatDevicePlugin is the Schema for the qatdeviceplugins API.
+// QatDevicePlugin is the Schema for the qatdeviceplugins API. It represents the QAT device
+// plugin responsible for advertising Intel QuickAssist Technology hardware resources
+// to the kubelet.
 type QatDevicePlugin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
