@@ -4,6 +4,7 @@ Table of Contents
 
 * [Introduction](#introduction)
 * [Installation](#installation)
+* [Known issues](#known-issues)
 
 ## Introduction
 
@@ -79,3 +80,12 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 
 Now you can deploy the device plugins by creating corresponding custom resources.
 The samples for them are available [here](/deployments/operator/samples/).
+
+## Known issues
+
+When the operator is run with leader election enabled, that is with the option
+`--enable-leader-election`, make sure the cluster is not overloaded with excessive
+number of pods. Otherwise a heart beat used by the leader election code may trigger
+a timeout and crash. We are going to use different clients for the controller and
+leader election code to alleviate the issue. See more details in
+https://github.com/intel/intel-device-plugins-for-kubernetes/issues/476.
