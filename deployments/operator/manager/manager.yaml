@@ -24,6 +24,7 @@ spec:
     spec:
       containers:
       - image: intel/intel-deviceplugin-operator:devel
+        imagePullPolicy: IfNotPresent
         name: manager
         resources:
           limits:

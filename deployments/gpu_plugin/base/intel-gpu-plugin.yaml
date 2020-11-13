@@ -16,6 +16,7 @@ spec:
       initContainers:
       - name: intel-gpu-initcontainer
         image: intel/intel-gpu-initcontainer:devel
+        imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true
         volumeMounts:
