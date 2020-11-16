@@ -35,4 +35,5 @@ RUN chmod a+x /go/bin/operator \
 
 FROM scratch as final
 COPY --from=builder /install_root /
+RUN groupadd -g 3210 operator && useradd operator -u 3210 -g 3210
 ENTRYPOINT ["/usr/local/bin/intel_deviceplugin_operator"]
