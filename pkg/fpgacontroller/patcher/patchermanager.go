@@ -71,7 +71,7 @@ func (pm *PatcherManager) GetPodMutator() func(ctx context.Context, req webhook.
 	return pm.mutate
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/pods,mutating=true,failurePolicy=Ignore,groups="",resources=pods,versions=v1,name=fpga.mutator.webhooks.intel.com,sideEffects=None
+// +kubebuilder:webhook:verbs=create;update,path=/pods,mutating=true,failurePolicy=Ignore,groups="",resources=pods,versions=v1,name=fpga.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1beta1
 
 func (pm *PatcherManager) mutate(ctx context.Context, req webhook.AdmissionRequest) webhook.AdmissionResponse {
 	podResource := metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
