@@ -43,7 +43,7 @@ func (r *SgxDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-sgxdeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=sgxdeviceplugins,verbs=create;update,versions=v1,name=msgxdeviceplugin.kb.io,sideEffects=None
+// +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-sgxdeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=sgxdeviceplugins,verbs=create;update,versions=v1,name=msgxdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1beta1
 
 var _ webhook.Defaulter = &SgxDevicePlugin{}
 
@@ -60,7 +60,7 @@ func (r *SgxDevicePlugin) Default() {
 	}
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-sgxdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=sgxdeviceplugins,versions=v1,name=vsgxdeviceplugin.kb.io,sideEffects=None
+// +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-sgxdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=sgxdeviceplugins,versions=v1,name=vsgxdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1beta1
 
 var _ webhook.Validator = &SgxDevicePlugin{}
 

@@ -45,7 +45,7 @@ func (r *QatDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-qatdeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=qatdeviceplugins,verbs=create;update,versions=v1,name=mqatdeviceplugin.kb.io,sideEffects=None
+// +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-qatdeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=qatdeviceplugins,verbs=create;update,versions=v1,name=mqatdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1beta1
 
 var _ webhook.Defaulter = &QatDevicePlugin{}
 
@@ -58,7 +58,7 @@ func (r *QatDevicePlugin) Default() {
 	}
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-qatdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=qatdeviceplugins,versions=v1,name=vqatdeviceplugin.kb.io,sideEffects=None
+// +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-qatdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=qatdeviceplugins,versions=v1,name=vqatdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1beta1
 
 var _ webhook.Validator = &QatDevicePlugin{}
 
