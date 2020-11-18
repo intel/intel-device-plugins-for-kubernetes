@@ -68,9 +68,9 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	devTree := dpapi.NewDeviceTree()
 
-	// Assume that both /dev/sgx/enclave and /dev/sgx/provision must be present.
-	sgxEnclavePath := path.Join(dp.devfsDir, "sgx", "enclave")
-	sgxProvisionPath := path.Join(dp.devfsDir, "sgx", "provision")
+	// Assume that both /dev/sgx_enclave and /dev/sgx_provision must be present.
+	sgxEnclavePath := path.Join(dp.devfsDir, "sgx_enclave")
+	sgxProvisionPath := path.Join(dp.devfsDir, "sgx_provision")
 	if _, err := os.Stat(sgxEnclavePath); err != nil {
 		klog.Error("No SGX enclave file available: ", err)
 		return devTree, nil
@@ -80,15 +80,22 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		return devTree, nil
 	}
 
+	deprecatedMounts := []pluginapi.Mount{
+		{
+			HostPath:      "/dev/sgx",
+			ContainerPath: "/dev/sgx",
+		},
+	}
+
 	for i := uint(0); i < dp.nEnclave; i++ {
 		devID := fmt.Sprintf("%s-%d", "sgx-enclave", i)
 		nodes := []pluginapi.DeviceSpec{{HostPath: sgxEnclavePath, ContainerPath: sgxEnclavePath, Permissions: "rw"}}
-		devTree.AddDevice(deviceTypeEnclave, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+		devTree.AddDevice(deviceTypeEnclave, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, deprecatedMounts, nil))
 	}
 	for i := uint(0); i < dp.nProvision; i++ {
 		devID := fmt.Sprintf("%s-%d", "sgx-provision", i)
 		nodes := []pluginapi.DeviceSpec{{HostPath: sgxProvisionPath, ContainerPath: sgxProvisionPath, Permissions: "rw"}}
-		devTree.AddDevice(deviceTypeProvision, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil))
+		devTree.AddDevice(deviceTypeProvision, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, deprecatedMounts, nil))
 	}
 	return devTree, nil
 }
