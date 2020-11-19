@@ -5,6 +5,7 @@ Contents
 * [Introduction](#introduction)
 * [Installation](#installation)
     * [Prerequisites](#prerequisites)
+        * [Backwards compatiblity note](#backwards-compatibility-note)
     * [Pre-built images](#pre-built-images)
     * [Getting the source code](#getting-the-source-code)
     * [Verify node kubelet config](#verify-node-kubelet-config)
@@ -63,10 +64,43 @@ The component has the same basic dependancies as the
 [generic plugin framework dependencies](../../README.md#about).
 
 The SGX device plugin requires Linux Kernel SGX drivers to be available. These drivers
-are currently available via [RFC patches on Linux Kernel Mailing List](https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-sgx.git/tag/?h=v39).
-RFC *v39* was used to validate what is written in this document.
+are currently available via [RFC patches on Linux Kernel Mailing List](https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-sgx.git).
+RFC *v41* was used to validate what is written in this document.
 
 The hardware platform must support SGX Flexible Launch Control.
+
+#### Backwards compatibility note
+
+The SGX device nodes have changed from `/dev/sgx/[enclave|provision]`
+to `/dev/sgx_[enclave|provision]` in v4x RFC patches according to the
+LKML feedback.
+
+Backwards compatibility is provided by adding `/dev/sgx` directory volume
+mount to containers. This assumes the cluster admin has installed the
+udev rules provided below to make the old device nodes as symlinks to the
+new device nodes.
+
+**Note:** the symlinks become visible in all containers requesting SGX
+resources but are potentially dangling links if the device the corresponding
+device resource is not requested.
+
+```bash
+$ cat /etc/udev/rules/9*.rules
+SUBSYSTEM=="misc",KERNEL=="enclave",MODE="0666"
+SUBSYSTEM=="misc",KERNEL=="sgx_enclave",MODE="0666",SYMLINK+="sgx/enclave"
+SUBSYSTEM=="sgx",KERNEL=="sgx/enclave",MODE="0666"
+SUBSYSTEM=="misc",KERNEL=="provision",MODE="0660"
+SUBSYSTEM=="misc",KERNEL=="sgx_provision",SYMLINK+="sgx/provision",MODE="0660"
+SUBSYSTEM=="sgx",KERNEL=="sgx/provision",MODE="0660"
+$ sudo udevadm trigger
+$ ls -la /dev/sgx/*
+lrwxrwxrwx 1 root root 14 Nov 18 01:01 /dev/sgx/enclave -> ../sgx_enclave
+lrwxrwxrwx 1 root root 16 Nov 18 01:01 /dev/sgx/provision -> ../sgx_provision
+```
+
+The backwards compatibility will be removed in the next release (v0.20) and
+from the main development branch once the SGX SDK and DCAP releases default to
+the new devices.
 
 ### Pre-built images
 

@@ -103,22 +103,22 @@ func TestScan(t *testing.T) {
 		},
 		{
 			name:                  "only enclave file",
-			enclaveDevice:         "enclave",
+			enclaveDevice:         "sgx_enclave",
 			requestedEnclaveDevs:  1,
 			expectedEnclaveDevs:   0,
 			expectedProvisionDevs: 0,
 		},
 		{
 			name:                   "only provision file",
-			provisionDevice:        "provision",
+			provisionDevice:        "sgx_provision",
 			requestedProvisionDevs: 1,
 			expectedEnclaveDevs:    0,
 			expectedProvisionDevs:  0,
 		},
 		{
 			name:                   "one device",
-			enclaveDevice:          "enclave",
-			provisionDevice:        "provision",
+			enclaveDevice:          "sgx_enclave",
+			provisionDevice:        "sgx_provision",
 			requestedEnclaveDevs:   1,
 			expectedEnclaveDevs:    1,
 			requestedProvisionDevs: 1,
@@ -126,8 +126,8 @@ func TestScan(t *testing.T) {
 		},
 		{
 			name:                   "one device",
-			enclaveDevice:          "enclave",
-			provisionDevice:        "provision",
+			enclaveDevice:          "sgx_enclave",
+			provisionDevice:        "sgx_provision",
 			requestedEnclaveDevs:   10,
 			expectedEnclaveDevs:    10,
 			requestedProvisionDevs: 20,
@@ -144,20 +144,20 @@ func TestScan(t *testing.T) {
 			defer func() { _ = os.RemoveAll(root) }()
 
 			devfs := path.Join(root, "dev")
-			err = os.MkdirAll(path.Join(devfs, "sgx"), 0750)
+			err = os.MkdirAll(devfs, 0750)
 			if err != nil {
 				t.Fatalf("Failed to create fake device directory: %+v", err)
 			}
 			if tc.enclaveDevice != "" {
-				err = ioutil.WriteFile(path.Join(devfs, "sgx", tc.enclaveDevice), []byte{}, 0600)
+				err = ioutil.WriteFile(path.Join(devfs, tc.enclaveDevice), []byte{}, 0600)
 				if err != nil {
-					t.Fatalf("Failed to create fake vendor file: %+v", err)
+					t.Fatalf("Failed to create fake enclave file: %+v", err)
 				}
 			}
 			if tc.provisionDevice != "" {
-				err = ioutil.WriteFile(path.Join(devfs, "sgx", tc.provisionDevice), []byte{}, 0600)
+				err = ioutil.WriteFile(path.Join(devfs, tc.provisionDevice), []byte{}, 0600)
 				if err != nil {
-					t.Fatalf("Failed to create fake vendor file: %+v", err)
+					t.Fatalf("Failed to create fake provision file: %+v", err)
 				}
 			}
 
