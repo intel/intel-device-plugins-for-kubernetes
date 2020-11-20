@@ -6,11 +6,11 @@
 #
 # This is used on release branches before tagging a stable version.
 # The master branch defaults to using the latest Clear Linux.
-ARG CLEAR_LINUX_BASE=clearlinux/golang:latest
+ARG CLEAR_LINUX_BASE=clearlinux/golang@sha256:dd553780525a1e7be6da637178e6515939cdb9b1ac4e2381e552fbd163bdd61b
 
 FROM ${CLEAR_LINUX_BASE} as builder
 
-ARG CLEAR_LINUX_VERSION=
+ARG CLEAR_LINUX_VERSION="--version=33970"
 
 RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
 

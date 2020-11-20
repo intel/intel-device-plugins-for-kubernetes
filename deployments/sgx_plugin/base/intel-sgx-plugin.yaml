@@ -15,7 +15,7 @@ spec:
     spec:
       initContainers:
       - name: intel-sgx-initcontainer
-        image: intel/intel-sgx-initcontainer:devel
+        image: intel/intel-sgx-initcontainer:0.19.0
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true
@@ -24,7 +24,7 @@ spec:
           name: nfd-source-hooks
       containers:
       - name: intel-sgx-plugin
-        image: intel/intel-sgx-plugin:devel
+        image: intel/intel-sgx-plugin:0.19.0
         securityContext:
           readOnlyRootFilesystem: true
         imagePullPolicy: IfNotPresent
