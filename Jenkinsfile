@@ -11,7 +11,7 @@ pipeline {
     RUNC_VERSION="v1.0.0-rc92"
     CRIO_VERSION="v1.18.2"
     GOLANGCI_LINT_VERSION="v1.30.0"
-    BUILDAH_VERSION="v1.15.0"
+    BUILDAH_VERSION="v1.18.0"
     GO_VERSION="1.15.3"
     GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
     GOROOT="/usr/local/go"
@@ -50,7 +50,7 @@ pipeline {
                 }
                 dir(path: "${GOPATH}/src/github.com/containers/buildah") {
                   sh 'make buildah TAGS=""'
-                  sh "sudo cp buildah /usr/local/bin"
+                  sh "sudo cp ./bin/buildah /usr/local/bin"
                   sh "sudo mkdir -p /etc/containers"
                   sh "sudo mkdir -p /etc/cni/net.d"
                   sh "sudo mkdir -p /opt/cni/bin"
