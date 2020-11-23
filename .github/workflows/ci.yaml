@@ -10,7 +10,7 @@ on:
       - 'release-*'
 env:
   RUNC_VERSION: v1.0.0-rc92
-  CRIO_VERSION: v1.18.2
+  CRIO_VERSION: v1.19.0
   GO_VERSION: 1.15.3
 jobs:
 

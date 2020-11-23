@@ -9,7 +9,7 @@ pipeline {
     GO111MODULE="on"
     REG="cloud-native-image-registry.westus.cloudapp.azure.com/"
     RUNC_VERSION="v1.0.0-rc92"
-    CRIO_VERSION="v1.18.2"
+    CRIO_VERSION="v1.19.0"
     GOLANGCI_LINT_VERSION="v1.30.0"
     BUILDAH_VERSION="v1.15.0"
     GO_VERSION="1.15.3"
