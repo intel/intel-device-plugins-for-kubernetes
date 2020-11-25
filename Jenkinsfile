@@ -3,15 +3,14 @@ pipeline {
     label "master"
   }
   options {
-    timeout(time: 3, unit: "HOURS")
+    timeout(time: 4, unit: "HOURS")
   }
   environment {
     GO111MODULE="on"
     REG="cloud-native-image-registry.westus.cloudapp.azure.com/"
     RUNC_VERSION="v1.0.0-rc92"
-    CRIO_VERSION="v1.18.2"
+    CRIO_VERSION="v1.19.0"
     GOLANGCI_LINT_VERSION="v1.30.0"
-    BUILDAH_VERSION="v1.15.0"
     GO_VERSION="1.15.3"
     GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
     GOROOT="/usr/local/go"
@@ -31,7 +30,7 @@ pipeline {
     }
     stage("Build && Publish") {
       agent {
-        label "xenial-intel-device-plugins"
+        label "bionic-intel-device-plugins"
       }
       stages {
         stage("Get requirements") {
@@ -42,27 +41,19 @@ pipeline {
                 sh "mkdir -p $GOPATH/src/github.com/intel $GOPATH/bin"
                 sh "cp -rf ${env.WORKSPACE} $REPO_DIR"
                 sh "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin ${GOLANGCI_LINT_VERSION}"
-                sh "sudo apt-get update"
-                sh "sudo apt-get -y install e2fslibs-dev libfuse-dev libgpgme11-dev libdevmapper-dev libglib2.0-dev libprotobuf-dev libusb-1.0-0-dev"
-                sh "mkdir -p ${GOPATH}/src/github.com/containers"
-                dir(path: "${GOPATH}/src/github.com/containers") {
-                  sh "git clone --single-branch --depth 1 -b $BUILDAH_VERSION https://github.com/containers/buildah"
-                }
-                dir(path: "${GOPATH}/src/github.com/containers/buildah") {
-                  sh 'make buildah TAGS=""'
-                  sh "sudo cp buildah /usr/local/bin"
-                  sh "sudo mkdir -p /etc/containers"
-                  sh "sudo mkdir -p /etc/cni/net.d"
-                  sh "sudo mkdir -p /opt/cni/bin"
-                  sh "sed -i -e 's/build.sh/build_linux.sh/' Makefile"
-                  sh "make install.cni.sudo"
-                  sh '''echo '[registries.search]' > registries.conf'''
-                  sh '''echo 'registries = ["docker.io"]' >> registries.conf'''
-                  sh "sudo mv registries.conf /etc/containers/registries.conf"
-                  sh "sudo curl https://raw.githubusercontent.com/kubernetes-sigs/cri-o/$CRIO_VERSION/test/policy.json -o /etc/containers/policy.json"
-                  sh "sudo curl -L https://github.com/opencontainers/runc/releases/download/$RUNC_VERSION/runc.amd64 -o /usr/bin/runc"
-                  sh "sudo chmod +x /usr/bin/runc"
-                }
+		sh '''#!/usr/bin/env bash
+		   . /etc/os-release
+		   REPOURL=http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x${ID^}_${VERSION_ID}
+		   echo "deb ${REPOURL} /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+		   wget -nv ${REPOURL}/Release.key -O - | sudo apt-key add -
+                '''
+		sh "sudo apt-get update -qq"
+		sh "sudo apt-get -qq -y install libusb-1.0-0-dev buildah make gcc pkg-config"
+		sh "sudo curl https://raw.githubusercontent.com/cri-o/cri-o/${CRIO_VERSION}/test/policy.json -o /etc/containers/policy.json"
+		sh "sudo curl https://raw.githubusercontent.com/cri-o/cri-o/${CRIO_VERSION}/test/registries.conf -o /etc/containers/registries.conf"
+		sh "sudo sed -i -e 's/quay/docker/' /etc/containers/registries.conf"
+		sh "sudo curl -L https://github.com/opencontainers/runc/releases/download/$RUNC_VERSION/runc.amd64 -o /usr/bin/runc"
+		sh "sudo chmod +x /usr/bin/runc"
               }
         }
         stage("make go-mod-tidy") {

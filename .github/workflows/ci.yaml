@@ -10,7 +10,7 @@ on:
       - 'release-*'
 env:
   RUNC_VERSION: v1.0.0-rc92
-  CRIO_VERSION: v1.18.2
+  CRIO_VERSION: v1.19.0
   GO_VERSION: 1.15.3
 jobs:
 
@@ -31,7 +31,7 @@ jobs:
 
   build:
     name: Build and check device plugins
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -108,7 +108,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get -qq -y install buildah
           echo -e '[registries.search]\nregistries = ["docker.io"]\n\n' | sudo tee /etc/containers/registries.conf
-          sudo curl https://raw.githubusercontent.com/kubernetes-sigs/cri-o/${CRIO_VERSION}/test/policy.json -o /etc/containers/policy.json
+          sudo curl https://raw.githubusercontent.com/cri-o/cri-o/${CRIO_VERSION}/test/policy.json -o /etc/containers/policy.json
           # install runc
           sudo curl -L https://github.com/opencontainers/runc/releases/download/${RUNC_VERSION}/runc.amd64 -o /usr/bin/runc
           sudo chmod +x /usr/bin/runc
