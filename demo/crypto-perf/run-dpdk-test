@@ -8,15 +8,15 @@ if [ "${TESTCMD}" != "crypto" ] && [ "${TESTCMD}" != "compress" ]; then
 	exit 1
 fi
 
-PCI_WHITELIST=""
+PCI_ALLOWLIST=""
 
-for i in `echo ${!QAT*}`; do PCI_WHITELIST="$PCI_WHITELIST -w ${!i}"; done
+for i in `echo ${!QAT*}`; do PCI_ALLOWLIST="$PCI_ALLOWLIST -w ${!i}"; done
 
 # "The default mempool handler is ring based."
 MEMPOOL=$(ls /usr/lib64/librte_mempool_ring.so*|tail -1)
 PMD_QAT=$(ls /usr/lib64/librte_pmd_qat.so*|tail -1)
 LCORE=$(cat /sys/fs/cgroup/cpuset/cpuset.cpus)
 
-EAL="-l ${LCORE} ${PCI_WHITELIST} -d ${MEMPOOL} -d ${PMD_QAT}"
+EAL="-l ${LCORE} ${PCI_ALLOWLIST} -d ${MEMPOOL} -d ${PMD_QAT}"
 
 dpdk-test-${TESTCMD}-perf ${EAL} -- ${PTEST} \
