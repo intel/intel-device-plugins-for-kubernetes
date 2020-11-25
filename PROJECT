@@ -1,0 +1,27 @@
+domain: intel.com
+layout: go.kubebuilder.io/v2
+multigroup: true
+projectName: intel-device-plugins-operator
+repo: github.com/intel/intel-device-plugins-for-kubernetes
+resources:
+- group: fpga
+  kind: AcceleratorFunction
+  version: v2
+- group: deviceplugin
+  kind: FpgaDevicePlugin
+  version: v1
+- group: fpga
+  kind: FpgaRegion
+  version: v2
+- group: deviceplugin
+  kind: GpuDevicePlugin
+  version: v1
+- group: deviceplugin
+  kind: QatDevicePlugin
+  version: v1
+- group: deviceplugin
+  kind: SgxDevicePlugin
+  version: v1
+version: 3-alpha
+plugins:
+  go.sdk.operatorframework.io/v2-alpha: {}

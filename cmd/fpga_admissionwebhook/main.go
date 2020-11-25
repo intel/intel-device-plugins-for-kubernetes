@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga.intel.com/v2"
+	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga/v2"
 	controllers "github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller/patcher"
 )

@@ -72,8 +72,11 @@ type GpuDevicePluginStatus struct {
 // +kubebuilder:printcolumn:name="Ready",type=integer,JSONPath=`.status.numberReady`
 // +kubebuilder:printcolumn:name="Node Selector",type=string,JSONPath=`.spec.nodeSelector`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+// +operator-sdk:csv:customresourcedefinitions:displayName="Intel GPU Device Plugin"
 
-// GpuDevicePlugin is the Schema for the gpudeviceplugins API.
+// GpuDevicePlugin is the Schema for the gpudeviceplugins API. It represents
+// the GPU device plugin responsible for advertising Intel GPU hardware resources to
+// the kubelet.
 type GpuDevicePlugin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

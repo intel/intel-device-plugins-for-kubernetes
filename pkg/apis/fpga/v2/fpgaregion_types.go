@@ -18,39 +18,39 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// AcceleratorFunctionSpec contains actual specs for AcceleratorFunction.
-type AcceleratorFunctionSpec struct {
-	// +kubebuilder:validation:Pattern=`^[0-9a-f]{8,40}$`
-	AfuID string `json:"afuId"`
-
+// FpgaRegionSpec contains actual specs for FpgaRegion.
+type FpgaRegionSpec struct {
 	// +kubebuilder:validation:Pattern=`^[0-9a-f]{8,32}$`
 	InterfaceID string `json:"interfaceId"`
-
-	// +kubebuilder:validation:Pattern=`^af|region$`
-	Mode string `json:"mode"`
 }
 
-// +kubebuilder:object:root=true
-// +kubebuilder:resource:shortName=af
+// FpgaRegionStatus is an empty object used to satisfy operator-sdk.
+type FpgaRegionStatus struct{}
 
-// AcceleratorFunction is a specification for an AcceleratorFunction resource.
-type AcceleratorFunction struct {
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:shortName=fpga
+// +operator-sdk:csv:customresourcedefinitions:displayName="FPGA Region"
+
+// FpgaRegion is a specification for a FPGA region resource which can be programmed
+// with a bitstream.
+type FpgaRegion struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec AcceleratorFunctionSpec `json:"spec"`
+	Status FpgaRegionStatus `json:"status,omitempty"`
+	Spec   FpgaRegionSpec   `json:"spec"`
 }
 
 // +kubebuilder:object:root=true
 
-// AcceleratorFunctionList is a list of AcceleratorFunction resources.
-type AcceleratorFunctionList struct {
+// FpgaRegionList is a list of FpgaRegion resources.
+type FpgaRegionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []AcceleratorFunction `json:"items"`
+	Items []FpgaRegion `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&AcceleratorFunction{}, &AcceleratorFunctionList{})
+	SchemeBuilder.Register(&FpgaRegion{}, &FpgaRegionList{})
 }

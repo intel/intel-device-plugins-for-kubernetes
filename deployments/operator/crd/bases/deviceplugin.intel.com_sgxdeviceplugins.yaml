@@ -32,7 +32,9 @@ spec:
     status: {}
   validation:
     openAPIV3Schema:
-      description: SgxDevicePlugin is the Schema for the sgxdeviceplugins API.
+      description: SgxDevicePlugin is the Schema for the sgxdeviceplugins API. It
+        represents the SGX device plugin responsible for advertising SGX hardware
+        resources to the kubelet.
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation

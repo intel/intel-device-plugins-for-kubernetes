@@ -163,3 +163,38 @@ $ make test
 ```
 
 and fix all new compilation issues.
+
+## How to publish a new version of the One operator
+
+Generate package manifests with:
+```
+$ make packagemanifests OPERATOR_VERSION=0.X.Y
+```
+
+Verify the operator deployment works OK via OLM in your development cluster:
+```
+$ operator-sdk olm install
+$ kubectl create namespace testoperator
+$ operator-sdk run packagemanifests --namespace testoperator --version 0.X.Y
+# do verification checks
+...
+# do clean up
+$ operator-sdk cleanup intel-device-plugins-operator --namespace testoperator
+$ kubectl delete namespace testoperator
+$ operator-sdk olm uninstall
+```
+
+Review the package manifests by uploading the generated `packagemanifests` folder to
+https://operatorhub.io -> Contribute -> Package Your Operator.
+
+Clone the [Community Operators](https://github.com/operator-framework/community-operators) repo:
+```
+$ git clone https://github.com/operator-framework/community-operators
+```
+
+Copy the generated files to the Comminuty Operators repo:
+```
+$ cp -r packagemanifests/* community-operators/upstream-community-operators/intel-device-plugins/
+```
+
+Finally, submit a PR.
