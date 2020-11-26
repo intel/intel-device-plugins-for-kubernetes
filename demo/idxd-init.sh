@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-DEV="${VARIABLE:-dsa}"
+DEV="${IDXD_DEVICE_TYPE:-dsa}"
 NODE_NAME="${NODE_NAME:-}"
 
 function cmd() {

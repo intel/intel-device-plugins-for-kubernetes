@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-iaa-plugin
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: intel-iaa-initcontainer
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: IDXD_DEVICE_TYPE
+            value: "iaa"
+        image: intel/intel-idxd-config-initcontainer:devel
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /sys/devices
+          name: sys-devices
+        - mountPath: /idxd-init/conf
+          name: intel-iaa-config-volume
+      volumes:
+      - name: sys-devices
+        hostPath:
+          path: /sys/devices
+      - name: intel-iaa-config-volume
+        configMap:
+          name: intel-iaa-config

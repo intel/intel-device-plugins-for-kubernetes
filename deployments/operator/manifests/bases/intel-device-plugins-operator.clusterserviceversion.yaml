@@ -73,10 +73,15 @@ spec:
       kind: SgxDevicePlugin
       name: sgxdeviceplugins.deviceplugin.intel.com
       version: v1
+      description: IaaDevicePlugin is the Schema for the iaadeviceplugins API. It represents the IAA device plugin responsible for advertising Intel IAA hardware resources to the kubelet.
+      displayName: Intel IAA Device Plugin
+      kind: IaaDevicePlugin
+      name: iaadeviceplugins.deviceplugin.intel.com
+      version: v1
   description: |
     [Intel Device Plugins for Kubernetes](https://github.com/intel/intel-device-plugins-for-kubernetes) is a collection of
     [device plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/) advertising Intel specific hardware resources
-    to the kubelet. Currently the operator has basic support for the QAT, GPU, FPGA, SGX and DSA device plugins: it validates container image references and extends
+    to the kubelet. Currently the operator has basic support for the QAT, GPU, FPGA, SGX, DSA, IAA device plugins: it validates container image references and extends
     reported statuses.
   displayName: Intel Device Plugins Operator
   icon:

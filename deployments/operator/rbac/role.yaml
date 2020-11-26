@@ -157,6 +157,26 @@ rules:
 - apiGroups:
   - deviceplugin.intel.com
   resources:
+  - iaadeviceplugins
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - iaadeviceplugins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
   - qatdeviceplugins
   verbs:
   - create

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-iaa-plugin
+  labels:
+    app: intel-iaa-plugin
+spec:
+  selector:
+    matchLabels:
+      app: intel-iaa-plugin
+  template:
+    metadata:
+      labels:
+        app: intel-iaa-plugin
+    spec:
+      containers:
+      - name: intel-iaa-plugin
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+        image: intel/intel-iaa-plugin:devel
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: devfs
+          mountPath: /dev/iax
+          readOnly: true
+        - name: chardevs
+          mountPath: /dev/char
+          readOnly: true
+        - name: sysfs
+          mountPath: /sys/bus/iax
+          readOnly: true
+        - name: kubeletsockets
+          mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+      - name: devfs
+        hostPath:
+          path: /dev/iax
+      - name: chardevs
+        hostPath:
+          path: /dev/char
+      - name: sysfs
+        hostPath:
+          path: /sys/bus/iax
+      - name: kubeletsockets
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+      nodeSelector:
+        kubernetes.io/arch: amd64
