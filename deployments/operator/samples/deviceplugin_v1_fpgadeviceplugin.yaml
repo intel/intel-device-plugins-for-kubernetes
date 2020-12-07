@@ -4,3 +4,8 @@ metadata:
   name: fpgadeviceplugin-sample
 spec:
   image: intel/intel-fpga-plugin:0.19.0
+  initImage: intel/intel-fpga-initcontainer:0.19.0
+  mode: region
+  logLevel: 4
+  nodeSelector:
+    feature.node.kubernetes.io/fpga-arria10: 'true'
