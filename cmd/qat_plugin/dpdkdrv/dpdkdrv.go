@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -103,7 +102,7 @@ func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 func (dp *DevicePlugin) getDpdkDevice(vfBdf string) (string, error) {
 	switch dp.dpdkDriver {
 	case igbUio:
-		uioDirPath := path.Join(dp.pciDeviceDir, vfBdf, uioSuffix)
+		uioDirPath := filepath.Join(dp.pciDeviceDir, vfBdf, uioSuffix)
 		files, err := ioutil.ReadDir(uioDirPath)
 		if err != nil {
 			return "", err
@@ -114,12 +113,12 @@ func (dp *DevicePlugin) getDpdkDevice(vfBdf string) (string, error) {
 		return files[0].Name(), nil
 
 	case vfioPci:
-		vfioDirPath := path.Join(dp.pciDeviceDir, vfBdf, iommuGroupSuffix)
+		vfioDirPath := filepath.Join(dp.pciDeviceDir, vfBdf, iommuGroupSuffix)
 		group, err := filepath.EvalSymlinks(vfioDirPath)
 		if err != nil {
 			return "", errors.WithStack(err)
 		}
-		s := path.Base(group)
+		s := filepath.Base(group)
 		klog.V(1).Infof("The vfio device group detected is %v", s)
 		return s, nil
 	}
@@ -131,7 +130,7 @@ func (dp *DevicePlugin) getDpdkDeviceSpecs(dpdkDeviceName string) []pluginapi.De
 	switch dp.dpdkDriver {
 	case igbUio:
 		//Setting up with uio
-		uioDev := path.Join(uioDevicePath, dpdkDeviceName)
+		uioDev := filepath.Join(uioDevicePath, dpdkDeviceName)
 		return []pluginapi.DeviceSpec{
 			{
 				HostPath:      uioDev,
@@ -141,7 +140,7 @@ func (dp *DevicePlugin) getDpdkDeviceSpecs(dpdkDeviceName string) []pluginapi.De
 		}
 	case vfioPci:
 		//Setting up with vfio
-		vfioDev := path.Join(vfioDevicePath, dpdkDeviceName)
+		vfioDev := filepath.Join(vfioDevicePath, dpdkDeviceName)
 		return []pluginapi.DeviceSpec{
 			{
 				HostPath:      vfioDev,
@@ -163,7 +162,7 @@ func (dp *DevicePlugin) getDpdkMounts(dpdkDeviceName string) []pluginapi.Mount {
 	switch dp.dpdkDriver {
 	case igbUio:
 		//Setting up with uio mountpoints
-		uioMountPoint := path.Join(uioMountPath, dpdkDeviceName, "/device")
+		uioMountPoint := filepath.Join(uioMountPath, dpdkDeviceName, "/device")
 		return []pluginapi.Mount{
 			{
 				HostPath:      uioMountPoint,
@@ -179,7 +178,7 @@ func (dp *DevicePlugin) getDpdkMounts(dpdkDeviceName string) []pluginapi.Mount {
 }
 
 func (dp *DevicePlugin) getDeviceID(pciAddr string) (string, error) {
-	devID, err := ioutil.ReadFile(path.Join(dp.pciDeviceDir, filepath.Clean(pciAddr), "device"))
+	devID, err := ioutil.ReadFile(filepath.Join(dp.pciDeviceDir, filepath.Clean(pciAddr), "device"))
 	if err != nil {
 		return "", errors.Wrapf(err, "Cannot obtain ID for the device %s", pciAddr)
 	}
@@ -189,7 +188,7 @@ func (dp *DevicePlugin) getDeviceID(pciAddr string) (string, error) {
 
 // bindDevice unbinds given device from kernel driver and binds to DPDK driver.
 func (dp *DevicePlugin) bindDevice(vfBdf string) error {
-	unbindDevicePath := path.Join(dp.pciDeviceDir, vfBdf, driverUnbindSuffix)
+	unbindDevicePath := filepath.Join(dp.pciDeviceDir, vfBdf, driverUnbindSuffix)
 
 	// Unbind from the kernel driver
 	err := ioutil.WriteFile(unbindDevicePath, []byte(vfBdf), 0600)
@@ -200,7 +199,7 @@ func (dp *DevicePlugin) bindDevice(vfBdf string) error {
 	if err != nil {
 		return err
 	}
-	bindDevicePath := path.Join(dp.pciDriverDir, dp.dpdkDriver, newIDSuffix)
+	bindDevicePath := filepath.Join(dp.pciDriverDir, dp.dpdkDriver, newIDSuffix)
 	//Bind to the the dpdk driver
 	err = ioutil.WriteFile(bindDevicePath, []byte(vendorPrefix+vfdevID), 0600)
 	if err != nil {
@@ -250,7 +249,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 	devTree := dpapi.NewDeviceTree()
 	n := 0
 	for _, driver := range append([]string{dp.dpdkDriver}, dp.kernelVfDrivers...) {
-		files, err := ioutil.ReadDir(path.Join(dp.pciDriverDir, driver))
+		files, err := ioutil.ReadDir(filepath.Join(dp.pciDriverDir, driver))
 		if err != nil {
 			klog.Warningf("Can't read sysfs for driver as Driver %s is not available: Skipping", driver)
 			continue
