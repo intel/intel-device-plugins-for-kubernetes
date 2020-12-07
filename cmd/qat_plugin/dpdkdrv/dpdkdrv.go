@@ -36,6 +36,7 @@ import (
 const (
 	uioDevicePath      = "/dev"
 	vfioDevicePath     = "/dev/vfio"
+	vfioCtrlDevicePath = vfioDevicePath + "/vfio"
 	uioMountPath       = "/sys/class/uio"
 	pciDeviceDirectory = "/sys/bus/pci/devices"
 	pciDriverDirectory = "/sys/bus/pci/drivers"
@@ -99,12 +100,10 @@ func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 	}
 }
 
-func (dp *DevicePlugin) getDpdkDevice(id string) (string, error) {
-	devicePCIAdd := "0000:" + id
+func (dp *DevicePlugin) getDpdkDevice(vfBdf string) (string, error) {
 	switch dp.dpdkDriver {
-	// TODO: case "pci-generic" and "kernel":
 	case igbUio:
-		uioDirPath := path.Join(dp.pciDeviceDir, devicePCIAdd, uioSuffix)
+		uioDirPath := path.Join(dp.pciDeviceDir, vfBdf, uioSuffix)
 		files, err := ioutil.ReadDir(uioDirPath)
 		if err != nil {
 			return "", err
@@ -115,7 +114,7 @@ func (dp *DevicePlugin) getDpdkDevice(id string) (string, error) {
 		return files[0].Name(), nil
 
 	case vfioPci:
-		vfioDirPath := path.Join(dp.pciDeviceDir, devicePCIAdd, iommuGroupSuffix)
+		vfioDirPath := path.Join(dp.pciDeviceDir, vfBdf, iommuGroupSuffix)
 		group, err := filepath.EvalSymlinks(vfioDirPath)
 		if err != nil {
 			return "", errors.WithStack(err)
@@ -128,15 +127,8 @@ func (dp *DevicePlugin) getDpdkDevice(id string) (string, error) {
 	return "", errors.New("Unknown DPDK driver")
 }
 
-func (dp *DevicePlugin) getDpdkDeviceSpecs(id string) ([]pluginapi.DeviceSpec, error) {
-	dpdkDeviceName, err := dp.getDpdkDevice(id)
-	if err != nil {
-		return nil, err
-	}
-	klog.V(1).Infof("%s device: corresponding DPDK device detected is %s", id, dpdkDeviceName)
-
+func (dp *DevicePlugin) getDpdkDeviceSpecs(dpdkDeviceName string) []pluginapi.DeviceSpec {
 	switch dp.dpdkDriver {
-	// TODO: case "pci-generic" and "kernel":
 	case igbUio:
 		//Setting up with uio
 		uioDev := path.Join(uioDevicePath, dpdkDeviceName)
@@ -146,34 +138,28 @@ func (dp *DevicePlugin) getDpdkDeviceSpecs(id string) ([]pluginapi.DeviceSpec, e
 				ContainerPath: uioDev,
 				Permissions:   "rw",
 			},
-		}, nil
+		}
 	case vfioPci:
 		//Setting up with vfio
-		vfioDev1 := path.Join(vfioDevicePath, dpdkDeviceName)
-		vfioDev2 := path.Join(vfioDevicePath, "/vfio")
+		vfioDev := path.Join(vfioDevicePath, dpdkDeviceName)
 		return []pluginapi.DeviceSpec{
 			{
-				HostPath:      vfioDev1,
-				ContainerPath: vfioDev1,
+				HostPath:      vfioDev,
+				ContainerPath: vfioDev,
 				Permissions:   "rw",
 			},
 			{
-				HostPath:      vfioDev2,
-				ContainerPath: vfioDev2,
+				HostPath:      vfioCtrlDevicePath,
+				ContainerPath: vfioCtrlDevicePath,
 				Permissions:   "rw",
 			},
-		}, nil
+		}
+	default:
+		return nil
 	}
-
-	return nil, errors.New("Unknown DPDK driver")
 }
 
-func (dp *DevicePlugin) getDpdkMounts(id string) ([]pluginapi.Mount, error) {
-	dpdkDeviceName, err := dp.getDpdkDevice(id)
-	if err != nil {
-		return nil, err
-	}
-
+func (dp *DevicePlugin) getDpdkMounts(dpdkDeviceName string) []pluginapi.Mount {
 	switch dp.dpdkDriver {
 	case igbUio:
 		//Setting up with uio mountpoints
@@ -183,13 +169,13 @@ func (dp *DevicePlugin) getDpdkMounts(id string) ([]pluginapi.Mount, error) {
 				HostPath:      uioMountPoint,
 				ContainerPath: uioMountPoint,
 			},
-		}, nil
+		}
 	case vfioPci:
 		//No mountpoint for vfio needs to be populated
-		return nil, nil
+		return nil
+	default:
+		return nil
 	}
-
-	return nil, errors.New("Unknown DPDK driver")
 }
 
 func (dp *DevicePlugin) getDeviceID(pciAddr string) (string, error) {
@@ -202,16 +188,15 @@ func (dp *DevicePlugin) getDeviceID(pciAddr string) (string, error) {
 }
 
 // bindDevice unbinds given device from kernel driver and binds to DPDK driver.
-func (dp *DevicePlugin) bindDevice(id string) error {
-	devicePCIAddr := "0000:" + id
-	unbindDevicePath := path.Join(dp.pciDeviceDir, devicePCIAddr, driverUnbindSuffix)
+func (dp *DevicePlugin) bindDevice(vfBdf string) error {
+	unbindDevicePath := path.Join(dp.pciDeviceDir, vfBdf, driverUnbindSuffix)
 
 	// Unbind from the kernel driver
-	err := ioutil.WriteFile(unbindDevicePath, []byte(devicePCIAddr), 0600)
+	err := ioutil.WriteFile(unbindDevicePath, []byte(vfBdf), 0600)
 	if err != nil {
-		return errors.Wrapf(err, "Unbinding from kernel driver failed for the device %s", id)
+		return errors.Wrapf(err, "Unbinding from kernel driver failed for the device %s", vfBdf)
 	}
-	vfdevID, err := dp.getDeviceID(devicePCIAddr)
+	vfdevID, err := dp.getDeviceID(vfBdf)
 	if err != nil {
 		return err
 	}
@@ -219,7 +204,7 @@ func (dp *DevicePlugin) bindDevice(id string) error {
 	//Bind to the the dpdk driver
 	err = ioutil.WriteFile(bindDevicePath, []byte(vendorPrefix+vfdevID), 0600)
 	if err != nil {
-		return errors.Wrapf(err, "Binding to the DPDK driver failed for the device %s", id)
+		return errors.Wrapf(err, "Binding to the DPDK driver failed for the device %s", vfBdf)
 	}
 	return nil
 }
@@ -253,7 +238,7 @@ func (dp *DevicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error
 	for _, cresp := range response.ContainerResponses {
 		counter := 0
 		for k := range cresp.Envs {
-			tempMap[strings.Join([]string{"QAT", strconv.Itoa(counter)}, "")] = cresp.Envs[k]
+			tempMap[strings.Join([]string{envVarPrefix, strconv.Itoa(counter)}, "")] = cresp.Envs[k]
 			counter++
 		}
 		cresp.Envs = tempMap
@@ -288,31 +273,28 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 				break
 			}
 
-			vfpciaddr := strings.TrimPrefix(file.Name(), "0000:")
-
 			// initialize newly found devices which aren't bound to DPDK driver yet
 			if driver != dp.dpdkDriver {
-				err = dp.bindDevice(vfpciaddr)
+				err = dp.bindDevice(file.Name())
 				if err != nil {
 					return nil, err
 				}
 			}
 
-			devNodes, err := dp.getDpdkDeviceSpecs(vfpciaddr)
+			dpdkDeviceName, err := dp.getDpdkDevice(file.Name())
 			if err != nil {
 				return nil, err
 			}
-			devMounts, err := dp.getDpdkMounts(vfpciaddr)
-			if err != nil {
-				return nil, err
-			}
+
+			klog.V(1).Infof("%s device: corresponding DPDK device detected is %s", file.Name(), dpdkDeviceName)
 
 			envs := map[string]string{
 				fmt.Sprintf("%s%d", envVarPrefix, n): file.Name(),
 			}
-			devinfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devNodes, devMounts, envs)
 
-			devTree.AddDevice("generic", vfpciaddr, devinfo)
+			devinfo := dpapi.NewDeviceInfo(pluginapi.Healthy, dp.getDpdkDeviceSpecs(dpdkDeviceName), dp.getDpdkMounts(dpdkDeviceName), envs)
+
+			devTree.AddDevice("generic", file.Name(), devinfo)
 		}
 	}
 
