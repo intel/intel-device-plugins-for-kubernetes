@@ -19,6 +19,7 @@ Table of Contents
     * [QAT device plugin](#qat-device-plugin)
     * [VPU device plugin](#vpu-device-plugin)
     * [SGX device plugin](#sgx-device-plugin)
+    * [DSA device pugin](#dsa-device-plugin)
 * [Device Plugins Operator](#device-plugins-operator)
 * [Demos](#demos)
 * [Developers](#developers)
@@ -162,6 +163,11 @@ operator deployment and NFD is configured to register the SGX EPC memory extende
 
 Containers requesting SGX EPC resources in the cluster use `sgx.intel.com/epc` resource which is of
 type [memory](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory).
+
+
+### DSA device plugin
+
+The [DSA device plugin](cmd/dsa_plugin/README.md) supports acceleration using the Intel Data Streaming accelerator(DSA).
 
 ## Device Plugins Operator
 
