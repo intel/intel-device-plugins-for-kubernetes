@@ -17,7 +17,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/klauspost/cpuid"
+	"github.com/klauspost/cpuid/v2"
 )
 
 func main() {
