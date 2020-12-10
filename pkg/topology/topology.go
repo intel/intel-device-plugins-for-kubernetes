@@ -127,7 +127,8 @@ func getTopologyHint(sysFSPath string) (*Hint, error) {
 	return &hint, nil
 }
 
-// NewTopologyHints return array of hints for the device and its slaves (e.g. RAID).
+// NewTopologyHints return array of hints for the main device and its
+// dependend devices (e.g. RAID).
 func NewTopologyHints(devPath string) (hints Hints, err error) {
 	hints = make(Hints)
 	realDevPath, err := filepath.EvalSymlinks(devPath)
@@ -145,8 +146,8 @@ func NewTopologyHints(devPath string) (hints Hints, err error) {
 		}
 	}
 	fromVirtual, _ := getDevicesFromVirtual(realDevPath)
-	slaves, _ := filepath.Glob(filepath.Join(realDevPath, "slaves/*"))
-	for _, device := range append(slaves, fromVirtual...) {
+	deps, _ := filepath.Glob(filepath.Join(realDevPath, "slaves/*"))
+	for _, device := range append(deps, fromVirtual...) {
 		deviceHints, er := NewTopologyHints(device)
 		if er != nil {
 			return nil, er
