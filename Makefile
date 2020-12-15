@@ -149,7 +149,7 @@ $(demos):
 
 demos: $(demos)
 
-image_tags = $(patsubst %,$(REG)%,$(images) $(demos))
+image_tags = $(patsubst %,$(REG)%\:$(TAG),$(images) $(demos))
 $(image_tags):
 	@docker push $@
 
