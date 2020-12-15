@@ -132,6 +132,6 @@
 				"gid": 0
 			}
 		],
-		"rootfsPropagation": "rslave"
+		"rootfsPropagation": "shared"
 	}
 }
