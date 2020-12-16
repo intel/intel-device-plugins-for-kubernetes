@@ -210,7 +210,7 @@ func (dp *DevicePlugin) bindDevice(vfBdf string) error {
 
 func isValidKerneDriver(kernelvfDriver string) bool {
 	switch kernelvfDriver {
-	case "dh895xccvf", "c6xxvf", "c3xxxvf", "d15xxvf":
+	case "dh895xccvf", "c6xxvf", "c3xxxvf", "d15xxvf", "c4xxvf", "4xxxvf":
 		return true
 	}
 	return false
@@ -225,7 +225,7 @@ func isValidDpdkDeviceDriver(dpdkDriver string) bool {
 }
 func isValidVfDeviceID(vfDevID string) bool {
 	switch vfDevID {
-	case "0442", "0443", "37c9", "19e3":
+	case "0442", "0443", "37c9", "19e3", "4941", "18a1":
 		return true
 	}
 	return false
