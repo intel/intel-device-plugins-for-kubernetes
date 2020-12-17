@@ -34,7 +34,7 @@ spec:
     openAPIV3Schema:
       description: QatDevicePlugin is the Schema for the qatdeviceplugins API. It
         represents the QAT device plugin responsible for advertising Intel QuickAssist
-        hardware resources to the kubelet.
+        Technology hardware resources to the kubelet.
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation

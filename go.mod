@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ini/ini v1.46.0
-	github.com/go-logr/logr v0.2.1
+	github.com/go-logr/logr v0.3.0
 	github.com/google/gousb v1.1.0
 	github.com/klauspost/cpuid/v2 v2.0.2
 	github.com/onsi/ginkgo v1.14.1
@@ -22,7 +22,7 @@ require (
 	k8s.io/kubelet v0.19.3
 	k8s.io/kubernetes v1.19.3
 	k8s.io/utils v0.0.0-20200912215256-4140de9c8800
-	sigs.k8s.io/controller-runtime v0.7.0-alpha.6
+	sigs.k8s.io/controller-runtime v0.7.0
 )
 
 replace (

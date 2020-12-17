@@ -33,7 +33,7 @@ spec:
   validation:
     openAPIV3Schema:
       description: FpgaDevicePlugin is the Schema for the fpgadeviceplugins API. It
-        represents the FPGA device plugin responsible for advertising FPGA hardware
+        represents the FPGA device plugin responsible for advertising Intel FPGA hardware
         resources to the kubelet.
       properties:
         apiVersion:

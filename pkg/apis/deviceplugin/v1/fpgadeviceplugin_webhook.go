@@ -43,7 +43,7 @@ func (r *FpgaDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-fpgadeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=fpgadeviceplugins,verbs=create;update,versions=v1,name=mfpgadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1beta1
+// +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-fpgadeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=fpgadeviceplugins,verbs=create;update,versions=v1,name=mfpgadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &FpgaDevicePlugin{}
 
@@ -60,7 +60,7 @@ func (r *FpgaDevicePlugin) Default() {
 	}
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-fpgadeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=fpgadeviceplugins,versions=v1,name=vfpgadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-fpgadeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=fpgadeviceplugins,versions=v1,name=vfpgadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
 var _ webhook.Validator = &FpgaDevicePlugin{}
 

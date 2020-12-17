@@ -21,7 +21,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 
-	admissionv1beta1 "k8s.io/api/admission/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -71,7 +71,7 @@ func (pm *PatcherManager) GetPodMutator() func(ctx context.Context, req webhook.
 	return pm.mutate
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/pods,mutating=true,failurePolicy=Ignore,groups="",resources=pods,versions=v1,name=fpga.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/pods,mutating=true,failurePolicy=Ignore,groups="",resources=pods,versions=v1,name=fpga.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1
 
 func (pm *PatcherManager) mutate(ctx context.Context, req webhook.AdmissionRequest) webhook.AdmissionResponse {
 	podResource := metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
@@ -100,7 +100,7 @@ func (pm *PatcherManager) mutate(ctx context.Context, req webhook.AdmissionReque
 	pm.log.V(1).Info("Received pod", "Pod", name, "Namespace", namespace)
 	patcher := pm.GetPatcher(namespace)
 
-	reviewResponse := admissionv1beta1.AdmissionResponse{
+	reviewResponse := admissionv1.AdmissionResponse{
 		Allowed: true,
 	}
 
@@ -115,7 +115,7 @@ func (pm *PatcherManager) mutate(ctx context.Context, req webhook.AdmissionReque
 
 	if len(ops) > 0 {
 		reviewResponse.Patch = []byte("[ " + strings.Join(ops, ",") + " ]")
-		pt := admissionv1beta1.PatchTypeJSONPatch
+		pt := admissionv1.PatchTypeJSONPatch
 		reviewResponse.PatchType = &pt
 	}
 	return webhook.AdmissionResponse{
@@ -125,7 +125,7 @@ func (pm *PatcherManager) mutate(ctx context.Context, req webhook.AdmissionReque
 
 func toAdmissionResponse(err error) webhook.AdmissionResponse {
 	return webhook.AdmissionResponse{
-		AdmissionResponse: admissionv1beta1.AdmissionResponse{
+		AdmissionResponse: admissionv1.AdmissionResponse{
 			Result: &metav1.Status{
 				Message: err.Error(),
 			},
