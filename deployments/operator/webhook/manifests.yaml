@@ -7,7 +7,7 @@ metadata:
   name: mutating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
-  - v1beta1
+  - v1
   clientConfig:
     service:
       name: webhook-service
@@ -27,7 +27,7 @@ webhooks:
     - fpgadeviceplugins
   sideEffects: None
 - admissionReviewVersions:
-  - v1beta1
+  - v1
   clientConfig:
     service:
       name: webhook-service
@@ -47,7 +47,7 @@ webhooks:
     - gpudeviceplugins
   sideEffects: None
 - admissionReviewVersions:
-  - v1beta1
+  - v1
   clientConfig:
     service:
       name: webhook-service
@@ -67,7 +67,7 @@ webhooks:
     - qatdeviceplugins
   sideEffects: None
 - admissionReviewVersions:
-  - v1beta1
+  - v1
   clientConfig:
     service:
       name: webhook-service
@@ -87,7 +87,7 @@ webhooks:
     - sgxdeviceplugins
   sideEffects: None
 - admissionReviewVersions:
-  - v1beta1
+  - v1
   clientConfig:
     service:
       name: webhook-service
@@ -107,7 +107,7 @@ webhooks:
     - pods
   sideEffects: None
 - admissionReviewVersions:
-  - v1beta1
+  - v1
   clientConfig:
     service:
       name: webhook-service
@@ -135,7 +135,7 @@ metadata:
   name: validating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
-  - v1beta1
+  - v1
   clientConfig:
     service:
       name: webhook-service
@@ -155,7 +155,7 @@ webhooks:
     - fpgadeviceplugins
   sideEffects: None
 - admissionReviewVersions:
-  - v1beta1
+  - v1
   clientConfig:
     service:
       name: webhook-service
@@ -175,7 +175,7 @@ webhooks:
     - gpudeviceplugins
   sideEffects: None
 - admissionReviewVersions:
-  - v1beta1
+  - v1
   clientConfig:
     service:
       name: webhook-service
@@ -195,7 +195,7 @@ webhooks:
     - qatdeviceplugins
   sideEffects: None
 - admissionReviewVersions:
-  - v1beta1
+  - v1
   clientConfig:
     service:
       name: webhook-service

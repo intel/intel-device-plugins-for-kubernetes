@@ -19,7 +19,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"k8s.io/api/admission/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -113,24 +113,24 @@ func TestMutate(t *testing.T) {
 
 	tcases := []struct {
 		name             string
-		ar               v1beta1.AdmissionRequest
+		ar               admissionv1.AdmissionRequest
 		expectedAllowed  bool
 		expectedPatchOps int
 	}{
 		{
 			name: "empty admission request",
-			ar:   v1beta1.AdmissionRequest{},
+			ar:   admissionv1.AdmissionRequest{},
 		},
 		{
 			name: "admission request without object",
-			ar: v1beta1.AdmissionRequest{
+			ar: admissionv1.AdmissionRequest{
 				Resource: metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
 			},
 			expectedAllowed: true,
 		},
 		{
 			name: "admission request with corrupted object",
-			ar: v1beta1.AdmissionRequest{
+			ar: admissionv1.AdmissionRequest{
 				Resource: metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
 				Object: runtime.RawExtension{
 					Raw: []byte(`{"corrupted json":}`),
@@ -139,7 +139,7 @@ func TestMutate(t *testing.T) {
 		},
 		{
 			name: "successful non-empty admission request",
-			ar: v1beta1.AdmissionRequest{
+			ar: admissionv1.AdmissionRequest{
 				Resource: metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
 				Object: runtime.RawExtension{
 					Raw: podRaw,
@@ -150,7 +150,7 @@ func TestMutate(t *testing.T) {
 		},
 		{
 			name: "handle error after wrong getPatchOps()",
-			ar: v1beta1.AdmissionRequest{
+			ar: admissionv1.AdmissionRequest{
 				Namespace: "test",
 				Resource:  metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
 				Object: runtime.RawExtension{
