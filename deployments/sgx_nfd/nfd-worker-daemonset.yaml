@@ -21,8 +21,14 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          image: quay.io/kubernetes_incubator/node-feature-discovery:v0.6.0
+          image: k8s.gcr.io/nfd/node-feature-discovery:v0.7.0
           name: nfd-worker
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
           command:
             - "nfd-worker"
           args:
@@ -44,12 +50,16 @@ spec:
               readOnly: true
             - name: host-sys
               mountPath: "/host-sys"
+              readOnly: true
             - name: source-d
               mountPath: "/etc/kubernetes/node-feature-discovery/source.d/"
+              readOnly: true
             - name: features-d
               mountPath: "/etc/kubernetes/node-feature-discovery/features.d/"
+              readOnly: true
             - name: nfd-worker-config-cm
               mountPath: "/etc/kubernetes/node-feature-discovery/"
+              readOnly: true
 ## Enable TLS authentication (2/3)
 #            - name: nfd-ca-cert
 #              mountPath: "/etc/kubernetes/node-feature-discovery/trust"
