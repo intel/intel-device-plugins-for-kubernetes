@@ -51,7 +51,7 @@ The QAT plugin can take a number of command line arguments, summarised in the fo
 | Flag | Argument | Meaning |
 |:---- |:-------- |:------- |
 | -dpdk-driver | string | DPDK Device driver for configuring the QAT device (default: `vfio-pci`) |
-| -kernel-vf-drivers | string | Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC,C62x,C3xxx and D15xx (default: `dh895xccvf,c6xxvf,c3xxxvf,d15xxvf`) |
+| -kernel-vf-drivers | string | Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC, C62x, C3xxx, 4xxx, C4xxx and D15xx (default: `dh895xccvf,c6xxvf,c3xxxvf`) |
 | -max-num-devices | int | maximum number of QAT devices to be provided to the QuickAssist device plugin (default: `32`) |
 | -mode | string | plugin mode which can be either `dpdk` or `kernel` (default: `dpdk`) |
 
@@ -66,7 +66,7 @@ table summarises the defaults:
 | Argument | Variable | Default setting | Explanation |
 |:-------- |:-------- |:--------------- |:----------- |
 | -dpdk-driver | `$DPDK_DRIVER` | vfio-pci | A more robust and secure choice than the `igb_uio` alternative |
-| -kernel-vf-drivers | `$KERNEL_VF_DRIVERS` | dh895xccvf,c6xxvf,c3xxxvf,d15xxvf | Modify to suit your hardware setup |
+| -kernel-vf-drivers | `$KERNEL_VF_DRIVERS` | dh895xccvf,c6xxvf,c3xxxvf | Modify to suit your hardware setup |
 | -max-num-devices | `$MAX_NUM_DEVICES` | 32 | Modify to suit your hardware setup if necessary |
 
 For more details on the `-dpdk-driver` choice, see
