@@ -50,6 +50,17 @@ const (
 	vfioPci = "vfio-pci"
 )
 
+// QAT PCI VF Device ID -> kernel QAT VF device driver mappings.
+var qatDeviceDriver = map[string]string{
+	"0442": "dh895xccvf",
+	"0443": "dh895xccvf",
+	"18a1": "c4xxvf",
+	"19e3": "c3xxxvf",
+	"4941": "4xxxvf",
+	"37c9": "c6xxvf",
+	"6f55": "d15xxvf",
+}
+
 // DevicePlugin represents vfio based QAT plugin.
 type DevicePlugin struct {
 	maxDevices      int
@@ -209,9 +220,10 @@ func (dp *DevicePlugin) bindDevice(vfBdf string) error {
 }
 
 func isValidKernelDriver(kernelvfDriver string) bool {
-	switch kernelvfDriver {
-	case "dh895xccvf", "c6xxvf", "c3xxxvf", "d15xxvf", "c4xxvf", "4xxxvf":
-		return true
+	for _, driver := range qatDeviceDriver {
+		if driver == kernelvfDriver {
+			return true
+		}
 	}
 	return false
 }
@@ -223,11 +235,18 @@ func isValidDpdkDeviceDriver(dpdkDriver string) bool {
 	}
 	return false
 }
-func isValidVfDeviceID(vfDevID string) bool {
-	switch vfDevID {
-	case "0442", "0443", "37c9", "19e3", "4941", "18a1":
-		return true
+
+func (dp *DevicePlugin) isValidVfDeviceID(vfDevID string) bool {
+	if driver, ok := qatDeviceDriver[vfDevID]; ok {
+		for _, enabledDriver := range dp.kernelVfDrivers {
+			if driver == enabledDriver {
+				return true
+			}
+		}
 	}
+
+	klog.Warningf("device ID %s is not a QAT device or not enabled by kernelVfDrivers.", vfDevID)
+
 	return false
 }
 
@@ -315,9 +334,10 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		vfdevID, err := dp.getDeviceID(vfBdf)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Cannot obtain device ID for %s", vfBdf)
+			return nil, err
 		}
-		if !isValidVfDeviceID(vfdevID) {
+
+		if !dp.isValidVfDeviceID(vfdevID) {
 			continue
 		}
 		n = n + 1
