@@ -4,3 +4,10 @@ metadata:
   name: qatdeviceplugin-sample
 spec:
   image: intel/intel-qat-plugin:0.18.0
+  dpdkDriver: vfio-pci
+  kernelVfDriver:
+    - c6xxvf
+  maxNumDevices: 1
+  logLevel: 4
+  nodeSelector:
+    feature.node.kubernetes.io/qat-c6xx: 'true'

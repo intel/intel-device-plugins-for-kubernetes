@@ -31,7 +31,7 @@ type FpgaDevicePluginSpec struct {
 	// InitImage is a container image with tools used to initialize the host before starting FPGA workloads on it.
 	InitImage string `json:"initImage,omitempty"`
 
-	// Mode is a mode the plugin's operation.
+	// Mode is a mode of the plugin's operation.
 	// +kubebuilder:validation:Enum=af;region;regiondevel
 	Mode string `json:"mode,omitempty"`
 
