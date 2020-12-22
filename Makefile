@@ -48,7 +48,7 @@ ifndef WHAT
 	@$(GO) test -tags $(BUILDTAGS) -race -coverprofile=coverage.txt -covermode=atomic $(pkgs)
 else
 	@cd $(WHAT) && \
-            $(GO) test -tags $(BUILDTAGS) -v -cover -coverprofile cover.out || rc=1; \
+            $(GO) test -tags $(BUILDTAGS) -v -race -cover -coverprofile cover.out || rc=1; \
             $(GO) tool cover -html=cover.out -o coverage.html; \
             rm cover.out; \
             echo "Coverage report: file://$$(realpath coverage.html)"; \
