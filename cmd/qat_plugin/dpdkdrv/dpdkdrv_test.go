@@ -16,12 +16,10 @@ package dpdkdrv
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
-	"time"
 
 	"github.com/pkg/errors"
 
@@ -109,9 +107,6 @@ func TestNewDevicePlugin(t *testing.T) {
 }
 
 func TestScanPrivate(t *testing.T) {
-	tmpdir := fmt.Sprintf("/tmp/qatplugin-TestScanPrivate-%d", time.Now().Unix())
-	pciDrvDir := path.Join(tmpdir, "sys/bus/pci/drivers")
-	pciDevDir := path.Join(tmpdir, "sys/bus/pci/devices")
 	tcases := []struct {
 		name            string
 		dpdkDriver      string
@@ -157,7 +152,6 @@ func TestScanPrivate(t *testing.T) {
 			symlinks: map[string]string{
 				"sys/bus/pci/drivers/c6xx/0000:02:00.0":    "sys/bus/pci/devices/0000:02:00.0",
 				"sys/bus/pci/devices/0000:02:00.0/virtfn0": "sys/bus/pci/devices/0000:02:01.0",
-				"sys/bus/pci/devices/0000:02:01.0/driver":  "sys/bus/pci/drivers/c6xxvf",
 			},
 			maxDevNum:   1,
 			expectedErr: true,
@@ -333,7 +327,7 @@ func TestScanPrivate(t *testing.T) {
 				"sys/bus/pci/drivers/vfio-pci",
 				"sys/bus/pci/drivers/c6xx",
 				"sys/bus/pci/devices/0000:02:01.0/driver",
-				"sys/bus/pci/devices/0000:02:01.0",
+				"sys/bus/pci/devices/0000:02:00.0",
 				"sys/bus/pci/devices/0000:02:01.0/vfio-pci/vfiotestfile",
 			},
 			files: map[string][]byte{
@@ -371,36 +365,39 @@ func TestScanPrivate(t *testing.T) {
 		},
 	}
 	for _, tt := range tcases {
-		if err := os.MkdirAll(tmpdir, 0750); err != nil {
-			t.Fatal(err)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			tmpdir, err := ioutil.TempDir("/tmp/", "qatplugin-TestScanPrivate-*")
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		if err := createTestFiles(tmpdir, tt.dirs, tt.files, tt.symlinks); err != nil {
-			t.Fatalf("%+v", err)
-		}
+			if err = createTestFiles(tmpdir, tt.dirs, tt.files, tt.symlinks); err != nil {
+				t.Fatalf("%+v", err)
+			}
 
-		dp := &DevicePlugin{
-			maxDevices:      tt.maxDevNum,
-			pciDriverDir:    pciDrvDir,
-			pciDeviceDir:    pciDevDir,
-			dpdkDriver:      tt.dpdkDriver,
-			kernelVfDrivers: tt.kernelVfDrivers,
-		}
+			dp := &DevicePlugin{
+				maxDevices:      tt.maxDevNum,
+				pciDriverDir:    path.Join(tmpdir, "sys/bus/pci/drivers"),
+				pciDeviceDir:    path.Join(tmpdir, "sys/bus/pci/devices"),
+				dpdkDriver:      tt.dpdkDriver,
+				kernelVfDrivers: tt.kernelVfDrivers,
+			}
 
-		tree, err := dp.scan()
-		if tt.expectedErr && err == nil {
-			t.Errorf("Test case '%s': expected error, but got success", tt.name)
-		}
-		if !tt.expectedErr && err != nil {
-			t.Errorf("Test case '%s': got unexpected error: %+v", tt.name, err)
-		}
-		if len(tree) != tt.expectedDevNum {
-			t.Errorf("Test case '%s': expected %d, but got %d devices", tt.name, tt.expectedDevNum, len(tree))
-		}
+			tree, err := dp.scan()
+			if tt.expectedErr && err == nil {
+				t.Errorf("expected error, but got success")
+			}
+			if !tt.expectedErr && err != nil {
+				t.Errorf("got unexpected error: %+v", err)
+			}
+			if len(tree) != tt.expectedDevNum {
+				t.Errorf("expected %d, but got %d devices", tt.expectedDevNum, len(tree))
+			}
 
-		if err = os.RemoveAll(tmpdir); err != nil {
-			t.Fatal(err)
-		}
+			if err = os.RemoveAll(tmpdir); err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }
 func eleInSlice(a string, list []string) bool {
