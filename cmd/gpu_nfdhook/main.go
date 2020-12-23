@@ -22,14 +22,12 @@ import (
 
 const (
 	sysfsDirectory      = "/host-sys"
-	devfsDirectory      = "/host-dev"
 	sysfsDRMDirectory   = sysfsDirectory + "/class/drm"
-	devfsDRIDirectory   = devfsDirectory + "/dri"
 	debugfsDRIDirectory = sysfsDirectory + "/kernel/debug/dri"
 )
 
 func main() {
-	l := newLabeler(sysfsDRMDirectory, devfsDRIDirectory, debugfsDRIDirectory)
+	l := newLabeler(sysfsDRMDirectory, debugfsDRIDirectory)
 	err := l.createLabels()
 	if err != nil {
 		klog.Errorf("%+v", err)

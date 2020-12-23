@@ -45,7 +45,6 @@ type labelMap map[string]string
 
 type labeler struct {
 	sysfsDRMDir   string
-	devfsDRIDir   string
 	debugfsDRIDir string
 
 	gpuDeviceReg     *regexp.Regexp
@@ -53,10 +52,9 @@ type labeler struct {
 	labels           labelMap
 }
 
-func newLabeler(sysfsDRMDir, devfsDRIDir, debugfsDRIDir string) *labeler {
+func newLabeler(sysfsDRMDir, debugfsDRIDir string) *labeler {
 	return &labeler{
 		sysfsDRMDir:      sysfsDRMDir,
-		devfsDRIDir:      devfsDRIDir,
 		debugfsDRIDir:    debugfsDRIDir,
 		gpuDeviceReg:     regexp.MustCompile(gpuDeviceRE),
 		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
@@ -89,24 +87,12 @@ func (l *labeler) scan() ([]string, error) {
 			continue
 		}
 
-		drmFiles, err := ioutil.ReadDir(path.Join(l.sysfsDRMDir, f.Name(), "device/drm"))
+		_, err = ioutil.ReadDir(path.Join(l.sysfsDRMDir, f.Name(), "device/drm"))
 		if err != nil {
 			return gpuNameList, errors.Wrap(err, "Can't read device folder")
 		}
 
-		for _, drmFile := range drmFiles {
-			if l.controlDeviceReg.MatchString(drmFile.Name()) {
-				//Skipping possible drm control node
-				continue
-			}
-			devPath := path.Join(l.devfsDRIDir, drmFile.Name())
-			if _, err := os.Stat(devPath); err != nil {
-				continue
-			}
-
-			gpuNameList = append(gpuNameList, f.Name())
-			break
-		}
+		gpuNameList = append(gpuNameList, f.Name())
 	}
 
 	return gpuNameList, nil
