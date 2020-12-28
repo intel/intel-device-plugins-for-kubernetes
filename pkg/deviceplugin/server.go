@@ -51,27 +51,30 @@ type devicePluginServer interface {
 
 // server implements devicePluginServer and pluginapi.PluginInterfaceServer interfaces.
 type server struct {
-	devType           string
-	grpcServer        *grpc.Server
-	updatesCh         chan map[string]DeviceInfo
-	devices           map[string]DeviceInfo
-	postAllocate      func(*pluginapi.AllocateResponse) error
-	preStartContainer func(*pluginapi.PreStartContainerRequest) error
-	state             serverState
-	stateMutex        sync.Mutex
+	devType                string
+	grpcServer             *grpc.Server
+	updatesCh              chan map[string]DeviceInfo
+	devices                map[string]DeviceInfo
+	postAllocate           postAllocateFunc
+	preStartContainer      preStartContainerFunc
+	getPreferredAllocation getPreferredAllocationFunc
+	state                  serverState
+	stateMutex             sync.Mutex
 }
 
 // newServer creates a new server satisfying the devicePluginServer interface.
 func newServer(devType string,
-	postAllocate func(*pluginapi.AllocateResponse) error,
-	preStartContainer func(*pluginapi.PreStartContainerRequest) error) devicePluginServer {
+	postAllocate postAllocateFunc,
+	preStartContainer preStartContainerFunc,
+	getPreferredAllocation getPreferredAllocationFunc) devicePluginServer {
 	return &server{
-		devType:           devType,
-		updatesCh:         make(chan map[string]DeviceInfo, 1), // TODO: is 1 needed?
-		devices:           make(map[string]DeviceInfo),
-		postAllocate:      postAllocate,
-		preStartContainer: preStartContainer,
-		state:             uninitialized,
+		devType:                devType,
+		updatesCh:              make(chan map[string]DeviceInfo, 1), // TODO: is 1 needed?
+		devices:                make(map[string]DeviceInfo),
+		postAllocate:           postAllocate,
+		preStartContainer:      preStartContainer,
+		getPreferredAllocation: getPreferredAllocation,
+		state:                  uninitialized,
 	}
 }
 
@@ -162,6 +165,9 @@ func (srv *server) PreStartContainer(ctx context.Context, rqt *pluginapi.PreStar
 }
 
 func (srv *server) GetPreferredAllocation(ctx context.Context, rqt *pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error) {
+	if srv.getPreferredAllocation != nil {
+		return srv.getPreferredAllocation(rqt)
+	}
 	return nil, errors.New("GetPreferredAllocation should not be called as this device plugin doesn't implement it")
 }
 

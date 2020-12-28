@@ -96,6 +96,12 @@ type PostAllocator interface {
 	PostAllocate(*pluginapi.AllocateResponse) error
 }
 
+// PreferredAllocator is an optional interface implemented by device plugins.
+type PreferredAllocator interface {
+	// GetPreferredAllocation defines the list of devices preferred for allocating next.
+	GetPreferredAllocation(*pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error)
+}
+
 // ContainerPreStarter is an optional interface implemented by device plugins.
 type ContainerPreStarter interface {
 	// PreStartContainer  defines device initialization function before container is started.

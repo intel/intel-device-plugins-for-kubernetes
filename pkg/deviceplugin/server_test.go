@@ -530,7 +530,7 @@ func TestGetPreferredAllocation(t *testing.T) {
 }
 
 func TestNewServer(t *testing.T) {
-	_ = newServer("test", nil, nil)
+	_ = newServer("test", nil, nil, nil)
 }
 
 func TestUpdate(t *testing.T) {
