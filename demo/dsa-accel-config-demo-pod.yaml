@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dsa-accel-config-demo
+spec:
+  containers:
+  - name: dsa-accel-config-demo
+    image: dsa-accel-config-demo:devel
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        dsa.intel.com/wq-user-dedicated: 1
+        dsa.intel.com/wq-user-shared: 1
+        cpu: 1
+
+  restartPolicy: Never

@@ -14,6 +14,7 @@ Table of Contents
         * [Build the plugin](#build-the-plugin)
         * [Run the plugin as administrator](#run-the-plugin-as-administrator)
     * [Verify plugin registration](#verify-plugin-registration)
+    * [Testing the plugin](#testing-the-plugin)
 
 ## Introduction
 
@@ -128,3 +129,64 @@ master
   dsa.intel.com/wq-user-dedicated:  1
   dsa.intel.com/wq-user-shared:     1
 ```
+
+### Testing the plugin
+
+We can test the plugin is working by deploying the provided example accel-config test image.
+
+1. Build a Docker image with an accel-config tests:
+
+    ```bash
+    $ make dsa-accel-config-demo
+    ...
+    Successfully tagged dsa-accel-config-demo:devel
+    ```
+
+1. Create a pod running unit tests off the local Docker image:
+
+    ```bash
+    $ kubectl apply -f ${INTEL_DEVICE_PLUGINS_SRC}/demo/dsa-accel-config-demo-pod.yaml
+    pod/dsa-accel-config-demo created
+    ```
+
+1. Wait until pod is completed:
+
+    ```bash
+    $ kubectl get pods  |grep dsa-accel-config-demo
+    dsa-accel-config-demo    0/1     Completed   0          31m
+
+1. Review the job's logs:
+
+    ```bash
+    $ kubectl logs dsa-accel-config-demo | tail
+    [debug] PF in sub-task[6], consider as passed
+    [debug] PF in sub-task[7], consider as passed
+    [debug] PF in sub-task[8], consider as passed
+    [debug] PF in sub-task[9], consider as passed
+    [debug] PF in sub-task[10], consider as passed
+    [debug] PF in sub-task[11], consider as passed
+    [debug] PF in sub-task[12], consider as passed
+    [debug] PF in sub-task[13], consider as passed
+    [debug] PF in sub-task[14], consider as passed
+    [debug] PF in sub-task[15], consider as passed
+    ```
+
+    If the pod did not successfully launch, possibly because it could not obtain the DSA
+    resource, it will be stuck in the `Pending` status:
+
+    ```bash
+    $ kubectl get pods
+    NAME                      READY   STATUS    RESTARTS   AGE
+    dsa-accel-config-demo     0/1     Pending   0          7s
+    ```
+
+    This can be verified by checking the Events of the pod:
+
+    ```bash
+
+    $ kubectl describe pod dsa-accel-config-demo | grep -A3 Events:
+    Events:
+      Type     Reason            Age    From               Message
+      ----     ------            ----   ----               -------
+      Warning  FailedScheduling  2m26s  default-scheduler  0/1 nodes are available: 1 Insufficient dsa.intel.com/wq-user-dedicated, 1 Insufficient dsa.intel.com/wq-user-shared.
+    ```

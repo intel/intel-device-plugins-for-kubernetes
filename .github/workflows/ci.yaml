@@ -79,6 +79,7 @@ jobs:
 
           # Demo images
           - crypto-perf
+          - dsa-accel-config-demo
           - opae-nlb-demo
           - openssl-qat-engine
           - sgx-sdk-demo
