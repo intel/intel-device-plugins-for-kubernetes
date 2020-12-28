@@ -26,7 +26,6 @@ import (
 type testcase struct {
 	sysfsdirs      []string
 	sysfsfiles     map[string][]byte
-	devfsdirs      []string
 	name           string
 	memoryOverride uint64
 	memoryReserved uint64
@@ -47,7 +46,6 @@ func getTestCases() []testcase {
 				"card0/device/vendor":     []byte("0x8086"),
 				"card0/gt/gt0/addr_range": []byte("8086"),
 			},
-			devfsdirs:      []string{"card0"},
 			name:           "successful labeling via gt0/addr_range",
 			memoryOverride: 16000000000,
 			capabilityFile: map[string][]byte{
@@ -76,7 +74,6 @@ func getTestCases() []testcase {
 				"card0/gt/gt0/addr_range": []byte("8086"),
 				"card0/gt/gt1/addr_range": []byte("2"),
 			},
-			devfsdirs:      []string{"card0"},
 			name:           "successful labeling via gt0/addr_range and gt1/addr_range",
 			memoryOverride: 16000000000,
 			capabilityFile: map[string][]byte{
@@ -103,7 +100,6 @@ func getTestCases() []testcase {
 				"card0/device/vendor":     []byte("0x8086"),
 				"card0/gt/gt0/addr_range": []byte("8086"),
 			},
-			devfsdirs:      []string{"card0"},
 			name:           "successful labeling via gt0/addr_range and reserved memory",
 			memoryOverride: 16000000000,
 			memoryReserved: 86,
@@ -129,7 +125,6 @@ func getTestCases() []testcase {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
-			devfsdirs:      []string{"card0"},
 			name:           "successful labeling via memory override",
 			memoryOverride: 16000000000,
 			capabilityFile: map[string][]byte{
@@ -154,7 +149,6 @@ func getTestCases() []testcase {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
-			devfsdirs:      []string{"card0"},
 			name:           "when gen:capability info is missing",
 			memoryOverride: 16000000000,
 			capabilityFile: map[string][]byte{
@@ -179,7 +173,6 @@ func getTestCases() []testcase {
 				"card0/device/vendor": []byte("0x8086"),
 				"card1/device/vendor": []byte("0x8086"),
 			},
-			devfsdirs:      []string{"card0", "card1"},
 			name:           "when capability file is missing (foobar), related labels don't appear",
 			memoryOverride: 16000000000,
 			capabilityFile: map[string][]byte{
@@ -197,16 +190,11 @@ func getTestCases() []testcase {
 	}
 }
 
-func (tc *testcase) createFiles(t *testing.T, sysfs, devfs, root string) {
+func (tc *testcase) createFiles(t *testing.T, sysfs, root string) {
 	var err error
 	for filename, body := range tc.capabilityFile {
 		if err = ioutil.WriteFile(path.Join(root, filename), body, 0600); err != nil {
 			t.Fatalf("Failed to create fake capability file: %+v", err)
-		}
-	}
-	for _, devfsdir := range tc.devfsdirs {
-		if err := os.MkdirAll(path.Join(devfs, devfsdir), 0750); err != nil {
-			t.Fatalf("Failed to create fake device directory: %+v", err)
 		}
 	}
 	for _, sysfsdir := range tc.sysfsdirs {
@@ -239,14 +227,13 @@ func TestLabeling(t *testing.T) {
 				t.Fatalf("couldn't create dir: %s", err.Error())
 			}
 			sysfs := path.Join(root, sysfsDirectory)
-			devfs := path.Join(root, devfsDirectory)
 
-			tc.createFiles(t, sysfs, devfs, root)
+			tc.createFiles(t, sysfs, root)
 
 			os.Setenv(memoryOverrideEnv, strconv.FormatUint(tc.memoryOverride, 10))
 			os.Setenv(memoryReservedEnv, strconv.FormatUint(tc.memoryReserved, 10))
 
-			labeler := newLabeler(sysfs, devfs, root)
+			labeler := newLabeler(sysfs, root)
 			err = labeler.createLabels()
 			if err != nil && tc.expectedRetval == nil ||
 				err == nil && tc.expectedRetval != nil {
