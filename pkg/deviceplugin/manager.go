@@ -22,6 +22,10 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
+type postAllocateFunc func(*pluginapi.AllocateResponse) error
+type preStartContainerFunc func(*pluginapi.PreStartContainerRequest) error
+type getPreferredAllocationFunc func(*pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error)
+
 // updateInfo contains info for added, updated and deleted devices.
 type updateInfo struct {
 	Added   DeviceTree
@@ -73,7 +77,7 @@ type Manager struct {
 	devicePlugin Scanner
 	namespace    string
 	servers      map[string]devicePluginServer
-	createServer func(string, func(*pluginapi.AllocateResponse) error, func(*pluginapi.PreStartContainerRequest) error) devicePluginServer
+	createServer func(string, postAllocateFunc, preStartContainerFunc, getPreferredAllocationFunc) devicePluginServer
 }
 
 // NewManager creates a new instance of Manager.
@@ -107,8 +111,9 @@ func (m *Manager) Run() {
 func (m *Manager) handleUpdate(update updateInfo) {
 	klog.V(4).Info("Received dev updates:", update)
 	for devType, devices := range update.Added {
-		var postAllocate func(*pluginapi.AllocateResponse) error
-		var preStartContainer func(*pluginapi.PreStartContainerRequest) error
+		var postAllocate postAllocateFunc
+		var preStartContainer preStartContainerFunc
+		var getPreferredAllocation getPreferredAllocationFunc
 
 		if postAllocator, ok := m.devicePlugin.(PostAllocator); ok {
 			postAllocate = postAllocator.PostAllocate
@@ -118,7 +123,11 @@ func (m *Manager) handleUpdate(update updateInfo) {
 			preStartContainer = containerPreStarter.PreStartContainer
 		}
 
-		m.servers[devType] = m.createServer(devType, postAllocate, preStartContainer)
+		if preferredAllocator, ok := m.devicePlugin.(PreferredAllocator); ok {
+			getPreferredAllocation = preferredAllocator.GetPreferredAllocation
+		}
+
+		m.servers[devType] = m.createServer(devType, postAllocate, preStartContainer, getPreferredAllocation)
 		go func(dt string) {
 			err := m.servers[dt].Serve(m.namespace)
 			if err != nil {
