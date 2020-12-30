@@ -492,7 +492,7 @@ func TestGetDevicePluginOptions(t *testing.T) {
 func TestPreStartContainer(t *testing.T) {
 	tcases := []struct {
 		name              string
-		preStartContainer func(*pluginapi.PreStartContainerRequest) error
+		preStartContainer preStartContainerFunc
 		expectedError     bool
 	}{
 		{
@@ -523,9 +523,35 @@ func TestPreStartContainer(t *testing.T) {
 }
 
 func TestGetPreferredAllocation(t *testing.T) {
-	srv := &server{}
-	if _, err := srv.GetPreferredAllocation(context.Background(), nil); err == nil {
-		t.Error("expected an unimplemented error, but got success")
+	tcases := []struct {
+		name                   string
+		getPreferredAllocation getPreferredAllocationFunc
+		expectedError          bool
+	}{
+		{
+			name: "success",
+			getPreferredAllocation: func(*pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error) {
+				return nil, nil
+			},
+		},
+		{
+			name:          "error",
+			expectedError: true,
+		},
+	}
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := &server{
+				getPreferredAllocation: tc.getPreferredAllocation,
+			}
+			_, err := srv.GetPreferredAllocation(context.Background(), nil)
+			if !tc.expectedError && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			} else if tc.expectedError && err == nil {
+				t.Error("didn't failed when expected to fail")
+				return
+			}
+		})
 	}
 }
 
