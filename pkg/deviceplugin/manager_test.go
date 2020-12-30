@@ -164,6 +164,10 @@ func (*devicePluginStub) PreStartContainer(*pluginapi.PreStartContainerRequest) 
 	return nil
 }
 
+func (*devicePluginStub) GetPreferredAllocation(*pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error) {
+	return nil, nil
+}
+
 func TestHandleUpdate(t *testing.T) {
 	tcases := []struct {
 		name            string
