@@ -124,10 +124,13 @@ You can verify the plugin has been registered with the expected nodes by searchi
 resource allocation status on the nodes:
 
 ```bash
-$ kubectl get nodes -o=jsonpath="{range .items[*]}{.metadata.name}{'\n'}{' i915: '}{.status.allocatable.dsa\.intel\.com/*}{'\n'}"
+$ kubectl get nodes -o go-template='{{range .items}}{{.metadata.name}}{{"\n"}}{{range $k,$v:=.status.allocatable}}{{"  "}}{{$k}}{{": "}}{{$v}}{{"\n"}}{{end}}{{end}}' | grep '^\([^ ]\)\|\(  dsa\)'
 master
-  dsa.intel.com/wq-user-dedicated:  1
-  dsa.intel.com/wq-user-shared:     1
+  dsa.intel.com/wq-user-dedicated: 2
+  dsa.intel.com/wq-user-shared: 8
+node1
+ dsa.intel.com/wq-user-dedicated: 4
+ dsa.intel.com/wq-user-shared: 20
 ```
 
 ### Testing the plugin
