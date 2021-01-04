@@ -78,11 +78,15 @@ func newServer(devType string,
 	}
 }
 
-func (srv *server) GetDevicePluginOptions(ctx context.Context, empty *pluginapi.Empty) (*pluginapi.DevicePluginOptions, error) {
+func (srv *server) getDevicePluginOptions() *pluginapi.DevicePluginOptions {
 	return &pluginapi.DevicePluginOptions{
 		PreStartRequired:                srv.preStartContainer != nil,
-		GetPreferredAllocationAvailable: false,
-	}, nil
+		GetPreferredAllocationAvailable: srv.getPreferredAllocation != nil,
+	}
+}
+
+func (srv *server) GetDevicePluginOptions(ctx context.Context, empty *pluginapi.Empty) (*pluginapi.DevicePluginOptions, error) {
+	return srv.getDevicePluginOptions(), nil
 }
 
 func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer) error {
@@ -241,12 +245,8 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 			return err
 		}
 
-		options := &pluginapi.DevicePluginOptions{
-			PreStartRequired: srv.preStartContainer != nil,
-		}
-
 		// Register with Kubelet.
-		err = registerWithKubelet(kubeletSocket, pluginEndpoint, resourceName, options)
+		err = srv.registerWithKubelet(kubeletSocket, pluginEndpoint, resourceName)
 		if err != nil {
 			return err
 		}
@@ -293,7 +293,7 @@ func watchFile(file string) error {
 	}
 }
 
-func registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string, options *pluginapi.DevicePluginOptions) error {
+func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string) error {
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, kubeletSocket, grpc.WithInsecure(),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
@@ -308,7 +308,7 @@ func registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string, opt
 		Version:      pluginapi.Version,
 		Endpoint:     pluginEndPoint,
 		ResourceName: resourceName,
-		Options:      options,
+		Options:      srv.getDevicePluginOptions(),
 	}
 
 	_, err = client.Register(ctx, reqt)
