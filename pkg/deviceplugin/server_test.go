@@ -61,6 +61,22 @@ func newKubeletStub(socket string) *kubeletStub {
 	}
 }
 
+// newTestServer returns a server with devices for testing purposes.
+func newTestServer() *server {
+	return &server{
+		devType: "testtype",
+		devices: map[string]DeviceInfo{
+			"dev1": {
+				state: pluginapi.Healthy,
+			},
+			"dev2": {
+				state: pluginapi.Healthy,
+			},
+		},
+		updatesCh: make(chan map[string]DeviceInfo, 1),
+	}
+}
+
 // Minimal implementation of deviceplugin.RegistrationServer interface
 
 func (k *kubeletStub) Register(ctx context.Context, r *pluginapi.RegisterRequest) (*pluginapi.Empty, error) {
@@ -89,7 +105,9 @@ func (k *kubeletStub) start() error {
 func TestRegisterWithKublet(t *testing.T) {
 	pluginSocket := path.Join(devicePluginPath, pluginEndpoint)
 
-	err := registerWithKubelet(kubeletSocket, pluginSocket, resourceName, nil)
+	srv := newTestServer()
+
+	err := srv.registerWithKubelet(kubeletSocket, pluginSocket, resourceName)
 	if err == nil {
 		t.Error("No error triggered when kubelet is not accessible")
 	}
@@ -101,7 +119,7 @@ func TestRegisterWithKublet(t *testing.T) {
 	}
 	defer kubelet.server.Stop()
 
-	err = registerWithKubelet(kubeletSocket, pluginSocket, resourceName, nil)
+	err = srv.registerWithKubelet(kubeletSocket, pluginSocket, resourceName)
 	if err != nil {
 		t.Errorf("Can't register device plugin: %+v", err)
 	}
@@ -117,18 +135,7 @@ func TestSetupAndServe(t *testing.T) {
 	}
 	defer kubelet.server.Stop()
 
-	srv := &server{
-		devType: "testtype",
-		devices: map[string]DeviceInfo{
-			"dev1": {
-				state: pluginapi.Healthy,
-			},
-			"dev2": {
-				state: pluginapi.Healthy,
-			},
-		},
-		updatesCh: make(chan map[string]DeviceInfo),
-	}
+	srv := newTestServer()
 
 	defer maybeLogError(srv.Stop, "unable to stop server")
 	go maybeLogError(func() error {
@@ -220,7 +227,7 @@ func TestSetupAndServe(t *testing.T) {
 }
 
 func TestStop(t *testing.T) {
-	srv := &server{}
+	srv := newTestServer()
 	if err := srv.Stop(); err == nil {
 		t.Error("Calling Stop() before Serve() is successful")
 	}
@@ -234,7 +241,7 @@ func TestAllocate(t *testing.T) {
 			},
 		},
 	}
-	srv := &server{}
+	srv := newTestServer()
 
 	tcases := []struct {
 		name              string
@@ -456,9 +463,8 @@ func TestListAndWatch(t *testing.T) {
 
 	for _, tt := range tcases {
 		devCh := make(chan map[string]DeviceInfo, len(tt.updates))
-		testServer := &server{
-			updatesCh: devCh,
-		}
+		testServer := newTestServer()
+		testServer.updatesCh = devCh
 
 		server := &listAndWatchServerStub{
 			testServer:  testServer,
@@ -483,7 +489,7 @@ func TestListAndWatch(t *testing.T) {
 }
 
 func TestGetDevicePluginOptions(t *testing.T) {
-	srv := &server{}
+	srv := newTestServer()
 	if _, err := srv.GetDevicePluginOptions(context.Background(), nil); err != nil {
 		t.Errorf("unexpected error: %+v", err)
 	}
@@ -508,9 +514,8 @@ func TestPreStartContainer(t *testing.T) {
 	}
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
-			srv := &server{
-				preStartContainer: tc.preStartContainer,
-			}
+			srv := newTestServer()
+			srv.preStartContainer = tc.preStartContainer
 			_, err := srv.PreStartContainer(context.Background(), nil)
 			if !tc.expectedError && err != nil {
 				t.Errorf("unexpected error: %v", err)
@@ -541,9 +546,8 @@ func TestGetPreferredAllocation(t *testing.T) {
 	}
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
-			srv := &server{
-				getPreferredAllocation: tc.getPreferredAllocation,
-			}
+			srv := newTestServer()
+			srv.getPreferredAllocation = tc.getPreferredAllocation
 			_, err := srv.GetPreferredAllocation(context.Background(), nil)
 			if !tc.expectedError && err != nil {
 				t.Errorf("unexpected error: %v", err)
@@ -560,9 +564,7 @@ func TestNewServer(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	srv := &server{
-		updatesCh: make(chan map[string]DeviceInfo, 1),
-	}
+	srv := newTestServer()
 	srv.Update(make(map[string]DeviceInfo))
 }
 
