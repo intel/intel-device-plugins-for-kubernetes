@@ -8,7 +8,7 @@ spec:
       initContainers:
       - name: vfio-pci
         image: busybox
-        command: ["/bin/sh", "-c", "modprobe vfio-pci"]
+        command: ["/bin/sh", "-c", "modprobe vfio-pci disable_denylist=1"]
         securityContext:
           capabilities:
             add:
