@@ -72,6 +72,9 @@ table summarises the defaults:
 For more details on the `-dpdk-driver` choice, see
 [DPDK Linux Driver Guide](http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html).
 
+> **Note:**: With Linux 5.9+ kernels the `vfio-pci` module must be loaded with
+> `disable_denylist=1` parameter for the QAT device plugin to work correctly.
+
 For more details on the available options to the `-kernel-vf-drivers` option, see the list of
 vf drivers available in the [Linux Kernel](https://github.com/torvalds/linux/tree/master/drivers/crypto/qat).
 
