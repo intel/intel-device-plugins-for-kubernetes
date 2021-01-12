@@ -50,16 +50,15 @@ func TestPodCount(t *testing.T) {
 		expectedPodCount uint
 	}{
 		{
-			name:             "Only CPU count",
+			name:             "Default pod count",
 			envValue:         "",
-			nCPUs:            5,
-			expectedPodCount: defaultPodsPerCore * 5,
+			expectedPodCount: defaultPodCount,
 		},
 		{
 			name:             "Broken ENV",
 			envValue:         "foobar",
 			nCPUs:            5,
-			expectedPodCount: defaultPodsPerCore * 5,
+			expectedPodCount: defaultPodCount,
 		},
 		{
 			name:             "Valid ENV",
