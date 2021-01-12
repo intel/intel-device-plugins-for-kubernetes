@@ -163,17 +163,6 @@ $ export INTEL_DEVICE_PLUGINS_SRC=/path/to/intel-device-plugins-for-kubernetes
 $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL_DEVICE_PLUGINS_SRC}
 ```
 
-### Verify node kubelet config
-
-Every node that will be running the FPGA plugin must have the
-[kubelet device-plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/)
-configured. For each node, check that the kubelet device plugin socket exists:
-
-```bash
-$ ls /var/lib/kubelet/device-plugins/kubelet.sock
-/var/lib/kubelet/device-plugins/kubelet.sock
-```
-
 ### Deploying as a DaemonSet
 
 As a pre-requisite you need to have [cert-manager](https://cert-manager.io)
