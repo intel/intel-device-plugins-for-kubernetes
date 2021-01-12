@@ -54,17 +54,6 @@ $ mkdir -p $(go env GOPATH)/src/github.com/intel
 $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
 ```
 
-### Verify node kubelet config
-
-Every node that will be running the vpu plugin must have the
-[kubelet device-plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/)
-configured. For each node, check that the kubelet device plugin socket exists:
-
-```bash
-$ ls /var/lib/kubelet/device-plugins/kubelet.sock
-/var/lib/kubelet/device-plugins/kubelet.sock
-```
-
 ### Deploying as a DaemonSet
 
 To deploy the vpu plugin as a daemonset, you first need to build a container image for the
