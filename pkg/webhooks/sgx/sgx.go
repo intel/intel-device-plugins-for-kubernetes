@@ -96,6 +96,7 @@ func warnWrongResources(resources map[string]int64) []string {
 	return warnings
 }
 
+// Handle implements controller-runtimes's admission.Handler inteface.
 func (s *SgxMutator) Handle(ctx context.Context, req admission.Request) admission.Response {
 	pod := &corev1.Pod{}
 
@@ -156,7 +157,7 @@ func (s *SgxMutator) Handle(ctx context.Context, req admission.Request) admissio
 		// we count how many containers within the pod request SGX resources. If the container
 		// count is >= 1 and one of them is named aesmdQuoteProvKey, 'aesmd sidecar' deployment
 		// assumed.
-		epcUserCount += 1
+		epcUserCount++
 
 		switch quoteProvider {
 		// container mutate logic for Intel aesmd users
@@ -211,7 +212,7 @@ func (s *SgxMutator) Handle(ctx context.Context, req admission.Request) admissio
 	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod).WithWarnings(warnings...)
 }
 
-// SgxMutator implements admission.DecoderInjector.
+// InjectDecoder implements controller-runtime's admission.DecoderInjector interface.
 // A decoder will be automatically injected.
 func (s *SgxMutator) InjectDecoder(d *admission.Decoder) error {
 	s.decoder = d
