@@ -34,7 +34,7 @@ const (
 	deviceTypeProvision         = "provision"
 	devicePath                  = "/dev"
 	podsPerCoreEnvVariable      = "PODS_PER_CORE"
-	defaultPodsPerCore     uint = 10
+	defaultPodCount        uint = 110
 )
 
 type devicePlugin struct {
@@ -107,29 +107,27 @@ func getDefaultPodCount(nCPUs uint) uint {
 	// limit by multiplying the number of cores in the system with env variable
 	// "PODS_PER_CORE".
 
-	podsPerCore := defaultPodsPerCore
-
 	envPodsPerCore := os.Getenv(podsPerCoreEnvVariable)
 	if envPodsPerCore != "" {
 		tmp, err := strconv.ParseUint(envPodsPerCore, 10, 32)
 		if err != nil {
 			klog.Errorf("Error: failed to parse %s value as uint, using default value.", podsPerCoreEnvVariable)
 		} else {
-			podsPerCore = uint(tmp)
+			return uint(tmp) * nCPUs
 		}
 	}
 
-	return podsPerCore * nCPUs
+	return defaultPodCount
 }
 
 func main() {
 	var enclaveLimit uint
 	var provisionLimit uint
 
-	defaultPodCount := getDefaultPodCount(uint(runtime.NumCPU()))
+	podCount := getDefaultPodCount(uint(runtime.NumCPU()))
 
-	flag.UintVar(&enclaveLimit, "enclave-limit", defaultPodCount, "Number of \"enclave\" resources")
-	flag.UintVar(&provisionLimit, "provision-limit", defaultPodCount, "Number of \"provision\" resources")
+	flag.UintVar(&enclaveLimit, "enclave-limit", podCount, "Number of \"enclave\" resources")
+	flag.UintVar(&provisionLimit, "provision-limit", podCount, "Number of \"provision\" resources")
 	flag.Parse()
 
 	klog.V(4).Infof("SGX device plugin started with %d \"%s/enclave\" resources and %d \"%s/provision\" resources.", enclaveLimit, namespace, provisionLimit, namespace)
