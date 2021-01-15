@@ -60,9 +60,9 @@ author = 'various'
 ##############################################################################
 
 baseBranch = "master"
-useGitHubURL = True
+sphinx_md_useGitHubURL = True
 commitSHA = getenv('GITHUB_SHA')
-githubBaseURL = "https://github.com/intel/intel-device-plugins-for-kubernetes/"
+githubBaseURL = 'https://github.com/' + (getenv('GITHUB_REPOSITORY') or 'intel/intel-device-plugins-for-kubernetes') + '/'
 githubFileURL = githubBaseURL + "blob/"
 githubDirURL = githubBaseURL + "tree/"
 if commitSHA:
@@ -71,6 +71,8 @@ if commitSHA:
 else:
     githubFileURL = githubFileURL + baseBranch + "/"
     githubDirURL = githubDirURL + baseBranch + "/"
+sphinx_md_githubFileURL = githubFileURL
+sphinx_md_githubDirURL = githubDirURL
 
 # -- General configuration ---------------------------------------------------
 

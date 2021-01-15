@@ -7,6 +7,9 @@ This repository contains a framework for developing plugins for the Kubernetes
 [device plugins framework](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/),
 along with a number of device plugin implementations utilising that framework.
 
+The [v0.19 release](https://github.com/intel/intel-device-plugins-for-kubernetes/releases/latest)
+is the latest feature release with its documentation available [here](https://intel.github.io/intel-device-plugins-for-kubernetes/0.19/).
+
 Table of Contents
 
 * [Prerequisites](#prerequisites)
@@ -52,7 +55,7 @@ and acceleration using GPUs of the following hardware families:
 - Intel Xeon processors
 - Intel Visual Compute Accelerator (Intel VCA)
 
-The demo subdirectory contains both a [GPU plugin demo video](demo#intel-gpu-device-plugin-demo-video)
+The demo subdirectory contains both a [GPU plugin demo video](demo/readme.md#intel-gpu-device-plugin-demo-video)
 as well as code for an OpenCL [FFT demo](demo/ubuntu-demo-opencl).
 
 ### FPGA device plugin
@@ -66,13 +69,13 @@ the following hardware:
 The FPGA plugin comes as three parts.
 
 - the [device plugin](#device-plugin)
-- the [admissing controller](#admission-controller)
+- the [admission controller](#admission-controller)
 - the [CRIO-O prestart hook](#cri-o-prestart-hook)
 
 Refer to each individual sub-components documentation for more details. Brief overviews
 of the sub-components are below.
 
-The demo subdirectory contains a [video](demo#intel-fpga-device-plugin-demo-video) showing deployment
+The demo subdirectory contains a [video](demo/readme.md#intel-fpga-device-plugin-demo-video) showing deployment
 and use of the FPGA plugin. Sources relating to the demo can be found in the
 [opae-nlb-demo](demo/opae-nlb-demo) subdirectory.
 
@@ -99,8 +102,8 @@ The [QAT plugin](cmd/qat_plugin/README.md) supports device plugin for Intel QAT 
 code [showing deployment](cmd/qat_plugin/dpdkdrv) via [DPDK](https://doc.dpdk.org/guides/cryptodevs/qat.html).
 
 The demo subdirectory includes details of both a
-[QAT DPDK demo](demo#intel-quickassist-technology-device-plugin-with-dpdk-demo-video)
-and a [QAT OpenSSL demo](demo#intel-quickassist-technology-device-plugin-openssl-demo-video).
+[QAT DPDK demo](demo/readme.md#intel-quickassist-technology-device-plugin-with-dpdk-demo-video)
+and a [QAT OpenSSL demo](demo/readme.md#intel-quickassist-technology-device-plugin-openssl-demo-video).
 Source for the OpenSSL demo can be found in the [relevant subdirectory](demo/openssl-qat-engine).
 
 Details for integrating the QAT device plugin into [Kata Containers](https://katacontainers.io/)
@@ -130,17 +133,18 @@ platforms with SGX Flexible Launch Control enabled, e.g.,:
 
 The SGX plugin comes in three parts.
 
-- the [SGX plugin](#sgx-plugin)
-- the [SGX admission webhook](#sgx-admission-webhook)
+- the [device plugin](#sgx-plugin)
+- the [admission webhook](#sgx-admission-webhook)
 - the [SGX EPC memory registration](#sgx-epc-memory-registration)
 
-The demo subdirectory contains a [video](demo#intel-sgx-device-plugin-demo-video) showing the deployment
+The demo subdirectory contains a [video](demo/readme.md#intel-sgx-device-plugin-demo-video) showing the deployment
 and use of the SGX device plugin. Sources relating to the demo can be found in the
 [sgx-sdk-demo](demo/sgx-sdk-demo) and [sgx-aesmd-demo](demo/sgx-aesmd-demo) subdirectories.
 
 Brief overviews of the SGX sub-components are given below.
 
-#### SGX plugin
+<a name="sgx-plugin"></a>
+#### device plugin
 
 The [SGX device plugin](cmd/sgx_plugin/README.md) is responsible for discovering and reporting SGX
 device nodes to `kubelet`.
@@ -166,14 +170,13 @@ operator deployment and NFD is configured to register the SGX EPC memory extende
 Containers requesting SGX EPC resources in the cluster use `sgx.intel.com/epc` resource which is of
 type [memory](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory).
 
-
 ### DSA device plugin
 
 The [DSA device plugin](cmd/dsa_plugin/README.md) supports acceleration using the Intel Data Streaming accelerator(DSA).
 
 ## Device Plugins Operator
 
-Currently the operator has limited support for the QAT, GPU, FPGA and SGX device plugins:
+Currently the operator has support for the QAT, GPU, FPGA and SGX device plugins:
 it validates container image references and extends reported statuses.
 
 To run an operator instance in the container run
@@ -269,13 +272,13 @@ $ KUBEBUILDER_ASSETS=${HOME}/work/kubebuilder-assets make envtest
 Releases are made under the github [releases area](https://github.com/intel/intel-device-plugins-for-kubernetes/releases). Supported releases and
 matching Kubernetes versions are listed below:
 
-| Branch            | Kubernetes branch/version      |
-|:------------------|:-------------------------------|
-| release-0.19      | Kubernetes 1.19 branch v1.19.x |
-| release-0.18      | Kubernetes 1.18 branch v1.18.x |
-| release-0.17      | Kubernetes 1.17 branch v1.17.x |
-| release-0.15      | Kubernetes 1.15 branch v1.15.x |
-| release-0.11      | Kubernetes 1.11 branch v1.11.x |
+| Branch            | Kubernetes branch/version      | Status      |
+|:------------------|:-------------------------------|:------------|
+| release-0.19      | Kubernetes 1.19 branch v1.19.x | supported   |
+| release-0.18      | Kubernetes 1.18 branch v1.18.x | supported   |
+| release-0.17      | Kubernetes 1.17 branch v1.17.x | unsupported |
+| release-0.15      | Kubernetes 1.15 branch v1.15.x | unsupported |
+| release-0.11      | Kubernetes 1.11 branch v1.11.x | unsupported |
 
 [Go environment]: https://golang.org/doc/install
 [Kubernetes cluster]: https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
