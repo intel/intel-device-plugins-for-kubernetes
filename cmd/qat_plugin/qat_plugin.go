@@ -24,7 +24,7 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/qat_plugin/dpdkdrv"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/qat_plugin/kerneldrv"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 const (

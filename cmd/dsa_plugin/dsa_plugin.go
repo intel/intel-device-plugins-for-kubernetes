@@ -21,7 +21,7 @@ import (
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/idxd"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 const (

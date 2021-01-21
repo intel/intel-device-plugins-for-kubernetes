@@ -28,7 +28,7 @@ import (
 	"github.com/go-ini/ini"
 	"github.com/pkg/errors"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 	utilsexec "k8s.io/utils/exec"
 

@@ -17,7 +17,7 @@ package deviceplugin
 
 import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/topology"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
