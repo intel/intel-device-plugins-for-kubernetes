@@ -23,7 +23,7 @@ import (
 	"strconv"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 

@@ -34,7 +34,6 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework"
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
-	testutils "k8s.io/kubernetes/test/utils"
 )
 
 const (
@@ -51,9 +50,6 @@ func WaitForNodesWithResource(c clientset.Interface, res v1.ResourceName, timeou
 			for t := time.Now(); time.Since(t) < nodeListTimeout; time.Sleep(poll) {
 				nodelist, err := c.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 				if err != nil {
-					if testutils.IsRetryableAPIError(err) {
-						continue
-					}
 					return false, err
 				}
 
@@ -64,7 +60,9 @@ func WaitForNodesWithResource(c clientset.Interface, res v1.ResourceName, timeou
 					}
 				}
 				framework.Logf("Found %d of %q. Elapsed: %s", resNum, res, time.Since(start))
-				return resNum > 0, nil
+				if resNum > 0 {
+					return true, nil
+				}
 			}
 
 			return false, errors.New("unable to list nodes")

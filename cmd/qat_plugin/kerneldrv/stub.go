@@ -20,7 +20,7 @@ import (
 	"os"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // NewDevicePlugin creates a non-functional stub for kernel mode device plugins.

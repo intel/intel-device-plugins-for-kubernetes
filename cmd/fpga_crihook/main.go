@@ -25,7 +25,7 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga/bitstream"
 	"github.com/pkg/errors"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 const (
