@@ -34,7 +34,7 @@ import (
 )
 
 const (
-	kustomizationYaml = "deployments/sgx_plugin/base/kustomization.yaml"
+	kustomizationYaml = "deployments/sgx_plugin/overlays/epc-nfd/kustomization.yaml"
 )
 
 func init() {

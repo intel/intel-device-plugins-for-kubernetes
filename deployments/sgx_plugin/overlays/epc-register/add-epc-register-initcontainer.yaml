@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-sgx-plugin
+spec:
+  template:
+    spec:
+      serviceAccountName: sgx-epc-extres
+      initContainers:
+      - name: intel-sgx-initcontainer
+        image: intel/intel-sgx-initcontainer:devel
+        imagePullPolicy: IfNotPresent
+        command:
+          - /usr/local/bin/sgx-sw/intel-sgx-epchook
+          - -register
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
