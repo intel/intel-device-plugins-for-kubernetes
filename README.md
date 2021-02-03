@@ -173,7 +173,7 @@ The [DSA device plugin](cmd/dsa_plugin/README.md) supports acceleration using th
 
 ## Device Plugins Operator
 
-Currently the operator has support for the QAT, GPU, FPGA and SGX device plugins:
+Currently the operator has support for the QAT, GPU, FPGA, SGX and DSA device plugins:
 it validates container image references and extends reported statuses.
 
 To run an operator instance in the container run
