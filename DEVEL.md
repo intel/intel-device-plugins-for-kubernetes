@@ -164,7 +164,7 @@ $ make test
 
 and fix all new compilation issues.
 
-## How to publish a new version of the One operator
+## How to publish a new version of the Intel Device Plugins operator
 
 Generate package manifests with:
 ```
@@ -192,7 +192,7 @@ Clone the [Community Operators](https://github.com/operator-framework/community-
 $ git clone https://github.com/operator-framework/community-operators
 ```
 
-Copy the generated files to the Comminuty Operators repo:
+Copy the generated files to the Community Operators repo:
 ```
 $ cp -r packagemanifests/* community-operators/upstream-community-operators/intel-device-plugins/
 ```
