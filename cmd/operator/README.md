@@ -1,4 +1,4 @@
-# Intel One Operator for Device Plugins
+# Intel Device Plugins Operator
 
 Table of Contents
 
@@ -8,9 +8,9 @@ Table of Contents
 
 ## Introduction
 
-This One Operator is a Kubernetes custom controller whose goal is to serve the
+Intel Device Plugins Operator is a Kubernetes custom controller whose goal is to serve the
 installation and lifecycle management of Intel device plugins for Kubernetes.
-It provides a single point of control for GPU, QAT and FPGA devices to a cluster
+It provides a single point of control for GPU, QAT, SGX and FPGA devices to a cluster
 administrators.
 
 ## Installation
