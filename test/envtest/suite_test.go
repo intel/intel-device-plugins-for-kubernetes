@@ -20,16 +20,18 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/klog/v2/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
+	dsactr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dsa"
 	fpgactr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	gpuctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
 	qatctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/qat"
@@ -53,7 +55,7 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func(done Done) {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	logf.SetLogger(klogr.New())
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -75,13 +77,17 @@ var _ = BeforeSuite(func(done Done) {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	err = gpuctr.SetupReconciler(k8sManager)
+	withWebhook := true
+
+	err = gpuctr.SetupReconciler(k8sManager, metav1.NamespaceSystem, !withWebhook)
 	Expect(err).ToNot(HaveOccurred())
-	err = sgxctr.SetupReconciler(k8sManager)
+	err = sgxctr.SetupReconciler(k8sManager, metav1.NamespaceSystem, !withWebhook)
 	Expect(err).ToNot(HaveOccurred())
-	err = qatctr.SetupReconciler(k8sManager)
+	err = qatctr.SetupReconciler(k8sManager, metav1.NamespaceSystem, !withWebhook)
 	Expect(err).ToNot(HaveOccurred())
-	err = fpgactr.SetupReconciler(k8sManager)
+	err = fpgactr.SetupReconciler(k8sManager, metav1.NamespaceSystem, !withWebhook)
+	Expect(err).ToNot(HaveOccurred())
+	err = dsactr.SetupReconciler(k8sManager, metav1.NamespaceSystem, !withWebhook)
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {

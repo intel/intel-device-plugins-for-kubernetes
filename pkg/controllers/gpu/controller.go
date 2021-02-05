@@ -43,13 +43,22 @@ const (
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins/status,verbs=get;update;patch
 
 // SetupReconciler creates a new reconciler for GpuDevicePlugin objects.
-func SetupReconciler(mgr ctrl.Manager) error {
-	c := &controller{scheme: mgr.GetScheme()}
-	return controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "GpuDevicePlugin", ownerKey)
+func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error {
+	c := &controller{scheme: mgr.GetScheme(), ns: namespace}
+	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "GpuDevicePlugin", ownerKey); err != nil {
+		return err
+	}
+
+	if withWebhook {
+		return (&devicepluginv1.GpuDevicePlugin{}).SetupWebhookWithManager(mgr)
+	}
+
+	return nil
 }
 
 type controller struct {
 	scheme *runtime.Scheme
+	ns     string
 }
 
 func (c *controller) CreateEmptyObject() client.Object {
@@ -83,7 +92,7 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	yes := true
 	daemonSet := apps.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    devicePlugin.Namespace,
+			Namespace:    c.ns,
 			GenerateName: devicePlugin.Name + "-",
 			Labels: map[string]string{
 				"app": appLabel,

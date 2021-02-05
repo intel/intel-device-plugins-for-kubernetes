@@ -27,7 +27,7 @@ spec:
     listKind: FpgaDevicePluginList
     plural: fpgadeviceplugins
     singular: fpgadeviceplugin
-  scope: Namespaced
+  scope: Cluster
   subresources:
     status: {}
   validation:

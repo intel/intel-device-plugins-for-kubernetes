@@ -38,14 +38,12 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			}
 
 			key := types.NamespacedName{
-				Name:      "qatdeviceplugin-test",
-				Namespace: "default",
+				Name: "qatdeviceplugin-test",
 			}
 
 			toCreate := &devicepluginv1.QatDevicePlugin{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      key.Name,
-					Namespace: key.Namespace,
+					Name: key.Name,
 				},
 				Spec: spec,
 			}

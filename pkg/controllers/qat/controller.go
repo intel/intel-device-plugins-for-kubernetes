@@ -43,13 +43,22 @@ const (
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins/status,verbs=get;update;patch
 
 // SetupReconciler creates a new reconciler for QatDevicePlugin objects.
-func SetupReconciler(mgr ctrl.Manager) error {
-	c := &controller{scheme: mgr.GetScheme()}
-	return controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "QatDevicePlugin", ownerKey)
+func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error {
+	c := &controller{scheme: mgr.GetScheme(), ns: namespace}
+	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "QatDevicePlugin", ownerKey); err != nil {
+		return err
+	}
+
+	if withWebhook {
+		return (&devicepluginv1.QatDevicePlugin{}).SetupWebhookWithManager(mgr)
+	}
+
+	return nil
 }
 
 type controller struct {
 	scheme *runtime.Scheme
+	ns     string
 }
 
 func (c *controller) CreateEmptyObject() client.Object {
@@ -70,7 +79,7 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	yes := true
 	return &apps.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    devicePlugin.Namespace,
+			Namespace:    c.ns,
 			GenerateName: devicePlugin.Name + "-",
 			Labels: map[string]string{
 				"app": appLabel,

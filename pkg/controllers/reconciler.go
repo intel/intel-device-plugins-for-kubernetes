@@ -86,7 +86,7 @@ type reconciler struct {
 
 // Reconcile reconciles a device plugin object.
 func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx).WithValues(r.pluginKind, req.NamespacedName)
+	log := log.FromContext(ctx)
 
 	if err := r.updateBookKeeper(ctx); err != nil {
 		log.Error(err, "unable to total count of device plugins")
@@ -95,7 +95,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// Fetch the plugin's DaemonSet.
 	var childDaemonSets apps.DaemonSetList
-	if err := r.List(ctx, &childDaemonSets, client.InNamespace(req.Namespace), client.MatchingFields{r.ownerKey: req.Name}); err != nil {
+	if err := r.List(ctx, &childDaemonSets, client.MatchingFields{r.ownerKey: req.Name}); err != nil {
 		log.Error(err, "unable to list child DaemonSets")
 		return ctrl.Result{}, err
 	}

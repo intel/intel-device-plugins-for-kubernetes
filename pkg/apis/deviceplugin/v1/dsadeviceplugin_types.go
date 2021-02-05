@@ -63,6 +63,7 @@ type DsaDevicePluginStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:path=dsadeviceplugins,scope=Cluster
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Desired",type=integer,JSONPath=`.status.desiredNumberScheduled`
 // +kubebuilder:printcolumn:name="Ready",type=integer,JSONPath=`.status.numberReady`

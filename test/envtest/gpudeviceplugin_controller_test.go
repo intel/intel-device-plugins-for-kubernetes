@@ -38,14 +38,12 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 			}
 
 			key := types.NamespacedName{
-				Name:      "gpudeviceplugin-test",
-				Namespace: "default",
+				Name: "gpudeviceplugin-test",
 			}
 
 			toCreate := &devicepluginv1.GpuDevicePlugin{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      key.Name,
-					Namespace: key.Namespace,
+					Name: key.Name,
 				},
 				Spec: spec,
 			}

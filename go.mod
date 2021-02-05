@@ -20,8 +20,8 @@ require (
 	k8s.io/klog/v2 v2.4.0
 	k8s.io/kubelet v0.20.2
 	k8s.io/kubernetes v1.20.2
-	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
-	sigs.k8s.io/controller-runtime v0.7.0
+	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
+	sigs.k8s.io/controller-runtime v0.8.1
 )
 
 replace (
