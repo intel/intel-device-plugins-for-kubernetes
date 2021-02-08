@@ -1,0 +1,7 @@
+bases:
+  - ../../base
+namespace: kube-system
+resources:
+  - service-account.yaml
+patches:
+  - add-epc-register-initcontainer.yaml

@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-sgx-plugin
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: intel-sgx-initcontainer
+        image: intel/intel-sgx-initcontainer:devel
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /etc/kubernetes/node-feature-discovery/source.d/
+          name: nfd-source-hooks
+      volumes:
+      - name: nfd-source-hooks
+        hostPath:
+          path: /etc/kubernetes/node-feature-discovery/source.d/
+          type: DirectoryOrCreate

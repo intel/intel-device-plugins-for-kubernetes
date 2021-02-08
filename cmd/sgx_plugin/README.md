@@ -182,7 +182,7 @@ with the necessary configuration.
 
 There is a kustomization for deploying everything:
 ```bash
-$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/sgx_plugin/
+$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/sgx_plugin/overlays/epc-nfd/
 ```
 
 #### Verify SGX device plugin is registered on master:
