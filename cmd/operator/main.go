@@ -27,6 +27,7 @@ import (
 
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga/v2"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dsa"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/qat"
@@ -71,6 +72,15 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+
+	if err = dsa.SetupReconciler(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "DsaDevicePlugin")
+		os.Exit(1)
+	}
+	if err = (&devicepluginv1.DsaDevicePlugin{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "DsaDevicePlugin")
 		os.Exit(1)
 	}
 

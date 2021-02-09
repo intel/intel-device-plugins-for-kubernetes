@@ -12,6 +12,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-deviceplugin-intel-com-v1-dsadeviceplugin
+  failurePolicy: Fail
+  name: mdsadeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - dsadeviceplugins
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-deviceplugin-intel-com-v1-fpgadeviceplugin
   failurePolicy: Fail
   name: mfpgadeviceplugin.kb.io
@@ -134,6 +154,26 @@ metadata:
   creationTimestamp: null
   name: validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-deviceplugin-intel-com-v1-dsadeviceplugin
+  failurePolicy: Fail
+  name: vdsadeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - dsadeviceplugins
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   clientConfig:
