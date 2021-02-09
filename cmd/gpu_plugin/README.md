@@ -45,7 +45,7 @@ Examples are provided showing how to deploy the plugin either using a DaemonSet 
 
 [Pre-built images](https://hub.docker.com/r/intel/intel-gpu-plugin)
 of this component are available on the Docker hub. These images are automatically built and uploaded
-to the hub from the latest master branch of this repository.
+to the hub from the latest main branch of this repository.
 
 Release tagged images of the components are also available on the Docker hub, tagged with their
 release version numbers in the format `x.y.z`, corresponding to the branches and releases in this
@@ -154,7 +154,7 @@ resource allocation status on the nodes:
 
 ```bash
 $ kubectl get nodes -o=jsonpath="{range .items[*]}{.metadata.name}{'\n'}{' i915: '}{.status.allocatable.gpu\.intel\.com/i915}{'\n'}"
-master
+main
  i915: 1
 ```
 
