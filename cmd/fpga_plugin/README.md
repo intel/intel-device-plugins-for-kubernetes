@@ -105,7 +105,7 @@ Components can generally be installed either using DaemonSets or running them
 ### Pre-built images
 
 Pre-built images of the components are available on the [Docker hub](https://hub.docker.com/u/intel).
-These images are automatically built and uploaded to the hub from the latest `master` branch of
+These images are automatically built and uploaded to the hub from the latest `main` branch of
 this repository.
 
 Release tagged images of the components are also available on the Docker hub, tagged with their
