@@ -101,7 +101,7 @@ $ export no_proxy=$no_proxy,.svc,.svc.cluster.local
 To deploy the webhook, run
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_admissionwebhook/default?ref=master
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_admissionwebhook/default?ref=main
 namespace/intelfpgawebhook-system created
 customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
 customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
@@ -164,7 +164,7 @@ mappings collection file found in
 This mappings file can be deployed with
 
 ```bash
-$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/deployments/fpga_admissionwebhook/mappings-collection.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/deployments/fpga_admissionwebhook/mappings-collection.yaml
 ```
 
 Note that the mappings are scoped to the namespaces they were created in
