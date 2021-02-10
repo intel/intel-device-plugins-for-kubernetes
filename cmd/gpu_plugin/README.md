@@ -154,7 +154,7 @@ resource allocation status on the nodes:
 
 ```bash
 $ kubectl get nodes -o=jsonpath="{range .items[*]}{.metadata.name}{'\n'}{' i915: '}{.status.allocatable.gpu\.intel\.com/i915}{'\n'}"
-main
+master
  i915: 1
 ```
 
