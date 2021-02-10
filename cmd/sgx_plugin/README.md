@@ -12,7 +12,7 @@ Contents
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
         * [Build the plugin image](#build-the-plugin-image)
         * [Deploy the DaemonSet](#deploy-the-daemonset)
-        * [Verify SGX device plugin is registered on master](#verify-sgx-device-plugin-is-registered-on-master)
+        * [Verify SGX device plugin is registered](#verify-sgx-device-plugin-is-registered)
     * [Deploying by hand](#deploying-by-hand)
         * [Build SGX device plugin](#build-sgx-device-plugin)
         * [Deploy SGX plugin](#deploy-sgx-plugin)
@@ -106,7 +106,7 @@ the new devices.
 
 [Pre-built images](https://hub.docker.com/u/intel/)
 are available on Docker Hub. These images are automatically built and uploaded
-to the hub from the latest master branch of this repository.
+to the hub from the latest main branch of this repository.
 
 Release tagged images of the components are also available on Docker Hub, tagged with their
 release version numbers in the format `x.y.z`, corresponding to the branches and releases in this
@@ -117,7 +117,7 @@ The deployment YAML files supplied with the components in this repository use th
 tag by default. If you do not build your own local images, your Kubernetes cluster may pull down
 the devel images from Docker Hub by default.
 
-`<RELEASE_VERSION>` needs to be substituted with the desired release version, e.g. `v0.19.0` or master.
+`<RELEASE_VERSION>` needs to be substituted with the desired release version, e.g. `v0.19.0` or main.
 
 #### Deploy node-feature-discovery
 
@@ -142,7 +142,7 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 #### Deploy SGX device plugin with the operator
 
 ```bash
-$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml
 ```
 
 ### Getting the source code
@@ -185,7 +185,7 @@ There is a kustomization for deploying everything:
 $ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/sgx_plugin/overlays/epc-nfd/
 ```
 
-#### Verify SGX device plugin is registered on master:
+#### Verify SGX device plugin is registered:
 
 Verification of the plugin deployment and detection of SGX hardware can be confirmed by
 examining the resource allocations on the nodes:
