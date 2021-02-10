@@ -75,7 +75,7 @@ $ export no_proxy=$no_proxy,.svc,.svc.cluster.local
 Finally deploy the operator itself:
 
 ```
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=master
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=main
 ```
 
 Now you can deploy the device plugins by creating corresponding custom resources.
