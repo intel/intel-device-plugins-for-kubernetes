@@ -36,7 +36,7 @@ This card has:
 
 > **Note:** This device plugin need HDDL daemon service to be running either natively or from a container.
 >      To get VCAC-A or Mustang card running hddl, please refer to:
-> https://github.com/OpenVisualCloud/Dockerfiles/blob/master/VCAC-A/script/setup_hddl.sh
+> https://github.com/OpenVisualCloud/Dockerfiles/blob/main/VCAC-A/script/setup_hddl.sh
 
 ## Installation
 
