@@ -12,7 +12,7 @@ Table of Contents
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
         * [Build the plugin image](#build-the-plugin-image)
         * [Deploy the DaemonSet](#deploy-the-daemonset)
-        * [Verify QAT device plugin is registered on master:](#verify-qat-device-plugin-is-registered-on-master)
+        * [Verify QAT device plugin is registered:](#verify-qat-device-plugin-is-registered)
     * [Deploying by hand](#deploying-by-hand)
         * [Build QAT device plugin](#build-qat-device-plugin)
         * [Deploy QAT plugin](#deploy-qat-plugin)
@@ -76,7 +76,7 @@ For more details on the `-dpdk-driver` choice, see
 > `disable_denylist=1` parameter for the QAT device plugin to work correctly.
 
 For more details on the available options to the `-kernel-vf-drivers` option, see the list of
-vf drivers available in the [Linux Kernel](https://github.com/torvalds/linux/tree/master/drivers/crypto/qat).
+vf drivers available in the [Linux Kernel](https://github.com/torvalds/linux/tree/main/drivers/crypto/qat).
 
 If the `-mode` parameter is set to `kerneldrv`, no other parameter documented above are valid,
 except the `klog` logging related parameters.
@@ -105,7 +105,7 @@ You will also need [appropriate hardware installed](#checking-for-hardware).
 The QAT plugin requires Linux Kernel VF QAT drivers to be available. These drivers
 are available via two methods. One of them must be installed and enabled:
 
-- [Linux Kernel upstream drivers](https://github.com/torvalds/linux/tree/master/drivers/crypto/qat)
+- [Linux Kernel upstream drivers](https://github.com/torvalds/linux/tree/main/drivers/crypto/qat)
 - [Intel QuickAssist Technology software for Linux][9]
 
 The demonstrations have their own requirements, listed in their own specific sections.
@@ -114,7 +114,7 @@ The demonstrations have their own requirements, listed in their own specific sec
 
 [Pre-built images](https://hub.docker.com/r/intel/intel-qat-plugin)
 of this component are available on the Docker hub. These images are automatically built and uploaded
-to the hub from the latest master branch of this repository.
+to the hub from the latest main branch of this repository.
 
 Release tagged images of the components are also available on the Docker hub, tagged with their
 release version numbers in the format `x.y.z`, corresponding to the branches and releases in this
@@ -197,7 +197,7 @@ $ kubectl create -f ${INTEL_DEVICE_PLUGINS_SRC}/deployments/qat_plugin/base/inte
 > socket creation and kubelet registration. Furthermore, the deployments `securityContext` must
 > be configured with appropriate `runAsUser/runAsGroup`.
 
-#### Verify QAT device plugin is registered on master:
+#### Verify QAT device plugin is registered:
 
 Verification of the plugin deployment and detection of QAT hardware can be confirmed by
 examining the resource allocations on the nodes:
@@ -348,7 +348,7 @@ for i in 0442 0443 37c9 19e3; do lspci -d 8086:$i; done
 [1]:https://www-ssl.intel.com/content/www/us/en/design/products-and-solutions/processors-and-chipsets/purley/intel-xeon-scalable-processors.html
 [2]:https://www.intel.com/content/www/us/en/design/products-and-solutions/processors-and-chipsets/denverton/ns/atom-processor-c3000-series.html
 [3]:https://www.intel.com/content/www/us/en/ethernet-products/gigabit-server-adapters/quickassist-adapter-8950-brief.html
-[6]:https://github.com/kata-containers/documentation/blob/master/use-cases/using-Intel-QAT-and-kata.md
+[6]:https://github.com/kata-containers/documentation/blob/main/use-cases/using-Intel-QAT-and-kata.md
 [7]:https://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdfhttps://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdf
-[8]:https://github.com/kata-containers/documentation/blob/master/use-cases/using-Intel-QAT-and-kata.md#build-openssl-intel-qat-engine-container
+[8]:https://github.com/kata-containers/documentation/blob/main/use-cases/using-Intel-QAT-and-kata.md#build-openssl-intel-qat-engine-container
 [9]:https://01.org/sites/default/files/downloads/intelr-quickassist-technology/336212qatswgettingstartedguiderev003.pdf
