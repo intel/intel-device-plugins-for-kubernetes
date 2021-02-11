@@ -38,5 +38,10 @@ spec:
           runAsUser: 3210
           runAsGroup: 3210
           readOnlyRootFilesystem: true
+        env:
+          - name: DEVICEPLUGIN_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
       serviceAccountName: default
       terminationGracePeriodSeconds: 10

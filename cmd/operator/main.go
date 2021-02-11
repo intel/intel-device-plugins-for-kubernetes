@@ -18,6 +18,7 @@ import (
 	"flag"
 	"os"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2/klogr"
@@ -51,16 +52,28 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
+type devicePluginControllerAndWebhook map[string](func(ctrl.Manager, string, bool) error)
+
 func main() {
 	var metricsAddr string
+	var devicePluginNamespace string
 	var enableLeaderElection bool
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&devicePluginNamespace, "deviceplugin-namespace", metav1.NamespaceSystem, "The namespace where deviceplugin daemonsets are created")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
 	ctrl.SetLogger(klogr.New())
+
+	setupControllerAndWebhook := devicePluginControllerAndWebhook{
+		"dsa":  dsa.SetupReconciler,
+		"gpu":  gpu.SetupReconciler,
+		"fpga": fpga.SetupReconciler,
+		"qat":  qat.SetupReconciler,
+		"sgx":  sgx.SetupReconciler,
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -75,40 +88,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = dsa.SetupReconciler(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "DsaDevicePlugin")
-		os.Exit(1)
-	}
-	if err = (&devicepluginv1.DsaDevicePlugin{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "DsaDevicePlugin")
-		os.Exit(1)
+	ns := os.Getenv("DEVICEPLUGIN_NAMESPACE")
+	if ns == "" {
+		ns = devicePluginNamespace
 	}
 
-	if err = gpu.SetupReconciler(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "GpuDevicePlugin")
-		os.Exit(1)
-	}
-	if err = (&devicepluginv1.GpuDevicePlugin{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "GpuDevicePlugin")
-		os.Exit(1)
-	}
+	withWebhook := true
 
-	if err = qat.SetupReconciler(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "QatDevicePlugin")
-		os.Exit(1)
-	}
-	if err = (&devicepluginv1.QatDevicePlugin{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "QatDevicePlugin")
-		os.Exit(1)
-	}
-
-	if err = sgx.SetupReconciler(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "SgxDevicePlugin")
-		os.Exit(1)
-	}
-	if err = (&devicepluginv1.SgxDevicePlugin{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "SgxDevicePlugin")
-		os.Exit(1)
+	// TODO(mythi): add a StringVar flag to select which controllers to enable
+	for _, device := range []string{"dsa", "fpga", "gpu", "qat", "sgx"} {
+		if err = setupControllerAndWebhook[device](mgr, ns, withWebhook); err != nil {
+			setupLog.Error(err, "unable to initialize controller", "controller", device)
+			os.Exit(1)
+		}
 	}
 
 	pm := patcher.NewPatcherManager(mgr.GetLogger().WithName("webhooks").WithName("Fpga"))
@@ -120,15 +112,6 @@ func main() {
 	mgr.GetWebhookServer().Register("/pods-sgx", &webhook.Admission{
 		Handler: &sgxwebhook.SgxMutator{Client: mgr.GetClient()},
 	})
-
-	if err = fpga.SetupReconciler(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "FpgaDevicePlugin")
-		os.Exit(1)
-	}
-	if err = (&devicepluginv1.FpgaDevicePlugin{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "FpgaDevicePlugin")
-		os.Exit(1)
-	}
 
 	if err = (&fpgacontroller.AcceleratorFunctionReconciler{
 		Client:         mgr.GetClient(),

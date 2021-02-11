@@ -38,14 +38,12 @@ var _ = Describe("DsaDevicePlugin Controller", func() {
 			}
 
 			key := types.NamespacedName{
-				Name:      "dsadeviceplugin-test",
-				Namespace: "default",
+				Name: "dsadeviceplugin-test",
 			}
 
 			toCreate := &devicepluginv1.DsaDevicePlugin{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      key.Name,
-					Namespace: key.Namespace,
+					Name: key.Name,
 				},
 				Spec: spec,
 			}

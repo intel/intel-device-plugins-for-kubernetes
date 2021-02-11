@@ -27,7 +27,7 @@ spec:
     listKind: GpuDevicePluginList
     plural: gpudeviceplugins
     singular: gpudeviceplugin
-  scope: Namespaced
+  scope: Cluster
   subresources:
     status: {}
   validation:

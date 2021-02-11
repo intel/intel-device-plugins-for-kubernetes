@@ -27,7 +27,7 @@ spec:
     listKind: DsaDevicePluginList
     plural: dsadeviceplugins
     singular: dsadeviceplugin
-  scope: Namespaced
+  scope: Cluster
   subresources:
     status: {}
   validation:

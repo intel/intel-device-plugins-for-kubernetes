@@ -39,14 +39,12 @@ var _ = Describe("FpgaDevicePlugin Controller", func() {
 			}
 
 			key := types.NamespacedName{
-				Name:      "fpgadeviceplugin-test",
-				Namespace: "default",
+				Name: "fpgadeviceplugin-test",
 			}
 
 			toCreate := &devicepluginv1.FpgaDevicePlugin{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      key.Name,
-					Namespace: key.Namespace,
+					Name: key.Name,
 				},
 				Spec: spec,
 			}

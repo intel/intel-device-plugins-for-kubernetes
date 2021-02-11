@@ -43,13 +43,22 @@ const (
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=fpgadeviceplugins/status,verbs=get;update;patch
 
 // SetupReconciler creates a new reconciler for FpgaDevicePlugin objects.
-func SetupReconciler(mgr ctrl.Manager) error {
-	c := &controller{scheme: mgr.GetScheme()}
-	return controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "FpgaDevicePlugin", ownerKey)
+func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error {
+	c := &controller{scheme: mgr.GetScheme(), ns: namespace}
+	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "FpgaDevicePlugin", ownerKey); err != nil {
+		return err
+	}
+
+	if withWebhook {
+		return (&devicepluginv1.FpgaDevicePlugin{}).SetupWebhookWithManager(mgr)
+	}
+
+	return nil
 }
 
 type controller struct {
 	scheme *runtime.Scheme
+	ns     string
 }
 
 func (c *controller) CreateEmptyObject() client.Object {
@@ -71,7 +80,7 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	directoryOrCreate := v1.HostPathDirectoryOrCreate
 	return &apps.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    devicePlugin.Namespace,
+			Namespace:    c.ns,
 			GenerateName: devicePlugin.Name + "-",
 			Labels: map[string]string{
 				"app": appLabel,

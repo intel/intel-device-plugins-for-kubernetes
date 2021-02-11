@@ -27,7 +27,7 @@ spec:
     listKind: QatDevicePluginList
     plural: qatdeviceplugins
     singular: qatdeviceplugin
-  scope: Namespaced
+  scope: Cluster
   subresources:
     status: {}
   validation:

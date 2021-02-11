@@ -39,14 +39,12 @@ var _ = Describe("SgxDevicePlugin Controller", func() {
 			}
 
 			key := types.NamespacedName{
-				Name:      "sgxdeviceplugin-test",
-				Namespace: "default",
+				Name: "sgxdeviceplugin-test",
 			}
 
 			toCreate := &devicepluginv1.SgxDevicePlugin{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      key.Name,
-					Namespace: key.Namespace,
+					Name: key.Name,
 				},
 				Spec: spec,
 			}

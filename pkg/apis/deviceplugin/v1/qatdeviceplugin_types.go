@@ -76,6 +76,7 @@ type QatDevicePluginStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:path=qatdeviceplugins,scope=Cluster
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Desired",type=integer,JSONPath=`.status.desiredNumberScheduled`
 // +kubebuilder:printcolumn:name="Ready",type=integer,JSONPath=`.status.numberReady`
