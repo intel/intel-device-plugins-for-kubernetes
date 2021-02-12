@@ -156,7 +156,7 @@ Total memory 251 GB; Intel(R) QAT C62x;
 OpenSUSE* 15 (Kernel: 4.12.14-lp150.12.25-default); 1-node Kubernetes* 1.12;
 Containerd v1.2; QAT 1.7 L.4.3.0-00033.
 
-Intel(R) QAT Device Plugin built from master branch.
+Intel(R) QAT Device Plugin built from main branch.
 
 Intel and the Intel logo are trademarks of Intel Corporation in the U.S.
 and/or other countries.
