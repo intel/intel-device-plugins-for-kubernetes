@@ -19,9 +19,9 @@ for the acceleration of your workloads orchestrated by Kubernetes.
 
 The current list of supported Intel Device Plugins includes:
 
-- [GPU Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/gpu_plugin/README.md) with support for [Intel® Graphics Technology](https://www.intel.com/content/www/us/en/architecture-and-technology/visual-technology/graphics-overview.html)
-- [Intel® FPGA Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_plugin/README.md)
-- [Intel® QuickAssist Technology (QAT) Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/qat_plugin/README.md)
+- [GPU Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/gpu_plugin/README.md) with support for [Intel® Graphics Technology](https://www.intel.com/content/www/us/en/architecture-and-technology/visual-technology/graphics-overview.html)
+- [Intel® FPGA Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/fpga_plugin/README.md)
+- [Intel® QuickAssist Technology (QAT) Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/qat_plugin/README.md)
 
 We have included an example demo and configuration information for the Intel
 Device Plugins for Kubernetes below. Please join us on the sig-node-rtk channel
@@ -45,7 +45,7 @@ Only one worker node has a GPU. The time difference in transcoding speed is capt
     - Ubuntu* 18.04 (Kernel: 4.15.0-36-generic)
     - Kubernetes* 1.11
     - Docker* 18.3.1
-    - Intel® GPU Device Plugin built from master branch
+    - Intel® GPU Device Plugin built from main branch
 
 ### Screencast
 
@@ -74,7 +74,7 @@ The demos begin with a fully [configured Kubernetes cluster](https://kubernetes.
     - CRI-O 1.13.1 (for orchestrated mode)
     - Docker 19.03.1 (for preprogrammed mode)
     - runc 1.0.0-rc8
-    - Intel® FPGA Device Plugin built from master branch
+    - Intel® FPGA Device Plugin built from main branch
 
 ### Demo 3 (OpenCL) platform configuration
 
@@ -86,12 +86,12 @@ The demos begin with a fully [configured Kubernetes cluster](https://kubernetes.
     - Centos 7 (Kernel: 3.10.0-1062.12.1.el7.x86_64) on worker node host
     - Kubernetes* 1.17
     - CRI-O 1.17.3
-    - Intel® FPGA Device Plugin built from master branch
+    - Intel® FPGA Device Plugin built from main branch
 
 ### Demo steps
 
 1. Validate the status of the [Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/).
-2. Provision the [Intel® FPGA Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/fpga_plugin/README.md).
+2. Provision the [Intel® FPGA Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/fpga_plugin/README.md).
 3. Create bitstream storage (for orchestrated mode only)
 4. Run the NLB3 or OpenCL workload.
 
@@ -119,7 +119,7 @@ This video demonstrates the Intel® Software Guard Extensions ECDSA Quote Genera
     - 18.04.5 LTS
     - Kubernetes* 1.19
     - containerd 1.3.3
-    - Intel® SGX Device Plugin built from master branch
+    - Intel® SGX Device Plugin built from main branch
     - Intel® SGX SDK 2.12 and DCAP 1.9
     - node-feature-discovery 0.6.0
 
@@ -127,7 +127,7 @@ This video demonstrates the Intel® Software Guard Extensions ECDSA Quote Genera
 
 1. Validate the status of the [Kubernetes cluster](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/).
 2. Provision [node-feature-discovery](https://github.com/kubernetes-sigs/node-feature-discovery).
-3. Provision the [Intel® SGX Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/sgx_plugin/README.md) using [Intel® Device Plugin Operator](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/operator/README.md).
+3. Provision the [Intel® SGX Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/sgx_plugin/README.md) using [Intel® Device Plugin Operator](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/operator/README.md).
 4. Check the SGX resources and labels are correctly registered.
 5. Run Intel® SGX DCAP ECDSA Quote Generation in both "out-of-proc" and "in-proc" modes.
 
@@ -138,7 +138,7 @@ Intel® SGX Device Plugin and SGX DCAP ECDSA Quote Generation demo
 
 ## Intel® QuickAssist Technology Device Plugin OpenSSL demo video
 
-The screencast demonstrates the deployment of the [Intel® QAT Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/cmd/qat_plugin/README.md) for
+The screencast demonstrates the deployment of the [Intel® QAT Device Plugin](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/qat_plugin/README.md) for
 Kubernetes and executes a sample QAT accelerated OpenSSL workload with the OCI
 compatible Kata Containers runtime, a lightweight Virtual Machine (VM) that feels
 and performs like traditional containers, but provides the workload isolation
@@ -156,7 +156,7 @@ and [Kata Containers](https://github.com/kata-containers/documentation/tree/mast
     - Kubernetes* 1.12
     - Containerd 1.2
     - Kata Containers* 1.3.0
-    - Intel® QAT Device Plugin built from master
+    - Intel® QAT Device Plugin built from main
     - QAT 1.7 L.4.3.0-00033
 
 ### Demo steps
