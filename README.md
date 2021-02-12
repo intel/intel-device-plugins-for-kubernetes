@@ -179,7 +179,7 @@ it validates container image references and extends reported statuses.
 To run an operator instance in the container run
 
 ```bash
-$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.0.3/cert-manager.yaml
+$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.2.0/cert-manager.yaml
 $ make deploy-operator
 ```
 

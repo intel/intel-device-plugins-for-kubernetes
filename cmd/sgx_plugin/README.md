@@ -128,7 +128,7 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 #### Deploy cert-manager
 
 ```bash
-$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.0.3/cert-manager.yaml
+$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.2.0/cert-manager.yaml
 ```
 
 #### Deploy Intel Device plugin operator
