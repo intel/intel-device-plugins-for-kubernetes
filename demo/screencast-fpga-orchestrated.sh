@@ -38,7 +38,7 @@ cleanup()
   clear
   out 'Cleanup demo artifacts' 200
   command 'kubectl delete pod test-fpga-orchestrated || true' 200
-  command 'kubectl delete -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/deployments/fpga_admissionwebhook/mappings-collection.yaml || true' 200
+  command 'kubectl delete -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/deployments/fpga_admissionwebhook/mappings-collection.yaml || true' 200
   command 'kubectl delete namespace intelfpgaplugin-system || true' 200
   command 'kubectl annotate node --all fpga.intel.com/device-plugin-mode-' 200
 }
@@ -75,7 +75,7 @@ screen2()
   command 'kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/region' 100
   sleep 2
   out 'Deploy example mappings:'
-  command 'kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/deployments/fpga_admissionwebhook/mappings-collection.yaml' 100
+  command 'kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/deployments/fpga_admissionwebhook/mappings-collection.yaml' 100
   sleep 2
   out 'Check if the plugin pods are running:'
   command 'kubectl get pods -n intelfpgaplugin-system'
@@ -112,8 +112,8 @@ screen4()
   out 'Check if devices are programmed with it:'
   command 'cat /sys/class/*/*/*/afu_id'
   out 'Run workload:'
-  command 'curl https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/demo/test-fpga-orchestrated.yaml' 100
-  command 'kubectl create -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/master/demo/test-fpga-orchestrated.yaml' 100
+  command 'curl https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/demo/test-fpga-orchestrated.yaml' 100
+  command 'kubectl create -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/demo/test-fpga-orchestrated.yaml' 100
   sleep 5
   out 'Look at the test output'
   command 'kubectl logs test-fpga-region'
