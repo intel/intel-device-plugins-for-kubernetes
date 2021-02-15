@@ -9,4 +9,4 @@ spec:
   provisionLimit: 110
   logLevel: 4
   nodeSelector:
-    feature.node.kubernetes.io/sgx: 'true'
+    feature.node.kubernetes.io/custom-intel.sgx: 'true'
