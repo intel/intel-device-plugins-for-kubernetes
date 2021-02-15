@@ -5,7 +5,7 @@
 # CLEAR_LINUX_VERSION="--version=29970"
 #
 # This is used on release branches before tagging a stable version.
-# The master branch defaults to using the latest Clear Linux.
+# The main branch defaults to using the latest Clear Linux.
 ARG CLEAR_LINUX_BASE=clearlinux:latest
 
 FROM ${CLEAR_LINUX_BASE} as builder
