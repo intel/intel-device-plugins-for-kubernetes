@@ -49,7 +49,6 @@ pipeline {
                 '''
 		sh "sudo apt-get update -qq"
 		sh "sudo apt-get -qq -y install libusb-1.0-0-dev buildah make gcc pkg-config"
-		sh "sudo curl https://raw.githubusercontent.com/cri-o/cri-o/${CRIO_VERSION}/test/policy.json -o /etc/containers/policy.json"
 		sh "sudo curl https://raw.githubusercontent.com/cri-o/cri-o/${CRIO_VERSION}/test/registries.conf -o /etc/containers/registries.conf"
 		sh "sudo sed -i -e 's/quay/docker/' /etc/containers/registries.conf"
 		sh "sudo curl -L https://github.com/opencontainers/runc/releases/download/$RUNC_VERSION/runc.amd64 -o /usr/bin/runc"
