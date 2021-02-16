@@ -27,6 +27,8 @@ RUN mkdir /install_root \
     --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
+RUN mkdir -p /go/cache
+ENV GOCACHE=/go/cache
 RUN cd cmd/sgx_plugin; GO111MODULE=${GO111MODULE} go install; cd -
 RUN chmod a+x /go/bin/sgx_plugin \
     && install -D /go/bin/sgx_plugin /install_root/usr/local/bin/intel_sgx_device_plugin \

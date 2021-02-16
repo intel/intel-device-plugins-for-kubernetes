@@ -27,6 +27,8 @@ RUN mkdir /install_root \
     --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
+RUN mkdir -p /go/cache
+ENV GOCACHE=/go/cache
 RUN cd cmd/fpga_admissionwebhook; GO111MODULE=${GO111MODULE} go install; cd -
 RUN chmod a+x /go/bin/fpga_admissionwebhook \
     && install -D /go/bin/fpga_admissionwebhook /install_root/usr/local/bin/intel_fpga_admissionwebhook \
