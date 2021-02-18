@@ -1,4 +1,5 @@
 CONTROLLER_GEN ?= controller-gen
+CRD_VERSIONS := v1
 GO := go
 GOFMT := gofmt
 KIND ?= kind
@@ -78,10 +79,10 @@ checks: lint go-mod-tidy
 
 generate:
 	$(CONTROLLER_GEN) object:headerFile="build/boilerplate/boilerplate.go.txt" paths="./pkg/apis/..."
-	$(CONTROLLER_GEN) crd:crdVersions=v1beta1,trivialVersions=true \
+	$(CONTROLLER_GEN) crd:crdVersions=$(CRD_VERSIONS),trivialVersions=true \
 		paths="./pkg/apis/..." \
 		output:crd:artifacts:config=deployments/operator/crd/bases
-	$(CONTROLLER_GEN) crd:crdVersions=v1beta1,trivialVersions=true \
+	$(CONTROLLER_GEN) crd:crdVersions=$(CRD_VERSIONS),trivialVersions=true \
 		paths="./pkg/apis/fpga/..." \
 		output:crd:artifacts:config=deployments/fpga_admissionwebhook/crd/bases
 	$(CONTROLLER_GEN) webhook \
