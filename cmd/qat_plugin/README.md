@@ -12,7 +12,7 @@ Table of Contents
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
         * [Build the plugin image](#build-the-plugin-image)
         * [Deploy the DaemonSet](#deploy-the-daemonset)
-        * [Verify QAT device plugin is registered on master:](#verify-qat-device-plugin-is-registered-on-master)
+        * [Verify QAT device plugin is registered:](#verify-qat-device-plugin-is-registered)
     * [Deploying by hand](#deploying-by-hand)
         * [Build QAT device plugin](#build-qat-device-plugin)
         * [Deploy QAT plugin](#deploy-qat-plugin)
@@ -114,7 +114,7 @@ The demonstrations have their own requirements, listed in their own specific sec
 
 [Pre-built images](https://hub.docker.com/r/intel/intel-qat-plugin)
 of this component are available on the Docker hub. These images are automatically built and uploaded
-to the hub from the latest master branch of this repository.
+to the hub from the latest main branch of this repository.
 
 Release tagged images of the components are also available on the Docker hub, tagged with their
 release version numbers in the format `x.y.z`, corresponding to the branches and releases in this
@@ -197,7 +197,7 @@ $ kubectl create -f ${INTEL_DEVICE_PLUGINS_SRC}/deployments/qat_plugin/base/inte
 > socket creation and kubelet registration. Furthermore, the deployments `securityContext` must
 > be configured with appropriate `runAsUser/runAsGroup`.
 
-#### Verify QAT device plugin is registered on master:
+#### Verify QAT device plugin is registered
 
 Verification of the plugin deployment and detection of QAT hardware can be confirmed by
 examining the resource allocations on the nodes:
