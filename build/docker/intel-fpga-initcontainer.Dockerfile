@@ -29,6 +29,8 @@ RUN mkdir /install_root \
     && rm -rf /install_root/var/lib/swupd/*
 
 # Build CRI Hook
+RUN mkdir -p /go/cache
+ENV GOCACHE=/go/cache
 RUN cd $DIR/cmd/fpga_crihook && \
     GO111MODULE=${GO111MODULE} go install && \
     chmod a+x /go/bin/fpga_crihook && \

@@ -10,7 +10,6 @@ on:
       - 'release-*'
 env:
   RUNC_VERSION: v1.0.0-rc93
-  CRIO_VERSION: v1.20.0
   GO_VERSION: 1.15.7
 jobs:
 
@@ -103,6 +102,7 @@ jobs:
       - name: Install Buildah and RunC
         if: matrix.builder == 'buildah'
         run: |
+          sudo apt-get -qq -y purge podman containers-image buildah
           . /etc/os-release
           sudo sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x${ID^}_${VERSION_ID}/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list"
           wget -nv https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/x${ID^}_${VERSION_ID}/Release.key -O Release.key
@@ -110,7 +110,6 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get -qq -y install buildah
           echo -e '[registries.search]\nregistries = ["docker.io"]\n\n' | sudo tee /etc/containers/registries.conf
-          sudo curl https://raw.githubusercontent.com/cri-o/cri-o/${CRIO_VERSION}/test/policy.json -o /etc/containers/policy.json
           # install runc
           sudo curl -L https://github.com/opencontainers/runc/releases/download/${RUNC_VERSION}/runc.amd64 -o /usr/bin/runc
           sudo chmod +x /usr/bin/runc

@@ -27,6 +27,8 @@ RUN mkdir /install_root \
     --no-boot-update \
     && rm -rf /install_root/var/lib/swupd/*
 
+RUN mkdir -p /go/cache
+ENV GOCACHE=/go/cache
 RUN cd cmd/operator; GO111MODULE=${GO111MODULE} go install; cd -
 RUN chmod a+x /go/bin/operator \
     && install -D /go/bin/operator /install_root/usr/local/bin/intel_deviceplugin_operator \
