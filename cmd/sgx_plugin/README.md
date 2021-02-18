@@ -64,8 +64,7 @@ The component has the same basic dependancies as the
 [generic plugin framework dependencies](../../README.md#about).
 
 The SGX device plugin requires Linux Kernel SGX drivers to be available. These drivers
-are currently available via [RFC patches on Linux Kernel Mailing List](https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-sgx.git).
-RFC *v41* was used to validate what is written in this document.
+are available in Linux 5.11.
 
 The hardware platform must support SGX Flexible Launch Control.
 
