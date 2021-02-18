@@ -3,6 +3,7 @@ name: Publish
 on:
   push:
     branches:
+        - main
         - master
         - release-0.19
 
