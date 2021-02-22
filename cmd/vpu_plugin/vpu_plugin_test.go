@@ -86,10 +86,10 @@ func TestScan(t *testing.T) {
 	if err != nil {
 		t.Error("vpu plugin test failed with testPlugin.Scan()")
 	}
-	if len(fN.tree[deviceType]) == 0 {
+	if len(fN.tree.AsMap()[deviceType]) == 0 {
 		t.Error("vpu plugin test failed with testPlugin.Scan(): tree len is 0")
 	}
-	klog.V(4).Infof("tree len is %d", len(fN.tree[deviceType]))
+	klog.V(4).Infof("tree len is %d", len(fN.tree.AsMap()[deviceType]))
 
 	//remove the hddl_service.sock and test with no hddl socket case
 	_ = f.Close()
@@ -105,7 +105,7 @@ func TestScan(t *testing.T) {
 	if err != nil {
 		t.Error("vpu plugin test failed with testPlugin.Scan() in no hddl_service.sock case.")
 	}
-	if len(fN.tree[deviceType]) != 0 {
+	if len(fN.tree.AsMap()[deviceType]) != 0 {
 		t.Error("vpu plugin test failed with testPlugin.Scan(): tree len should be 0 in no hddl_service.sock case.")
 	}
 

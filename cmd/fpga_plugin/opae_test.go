@@ -401,8 +401,8 @@ func TestScanFPGAsOPAE(t *testing.T) {
 				t.Errorf("unexpected error: '%+v'", err)
 			} else {
 				// Validate devTree
-				if len(devTree) != len(tcase.expectedDevTreeKeys) {
-					t.Errorf("unexpected device tree size: %d, expected: %d", len(devTree), len(tcase.expectedDevTreeKeys))
+				if len(devTree.AsMap()) != len(tcase.expectedDevTreeKeys) {
+					t.Errorf("unexpected device tree size: %d, expected: %d", len(devTree.AsMap()), len(tcase.expectedDevTreeKeys))
 				}
 				err = validateDevTree(tcase.expectedDevTreeKeys, devTree)
 				if err != nil {

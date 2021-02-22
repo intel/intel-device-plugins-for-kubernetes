@@ -237,12 +237,12 @@ func genTest(sysfs, statePattern string, tc testCase) func(t *testing.T) {
 // checkDeviceTree checks discovered device types and number of discovered devices.
 func checkDeviceTree(deviceTree dpapi.DeviceTree, expectedResult map[string]int, expectedError bool) error {
 	if !expectedError && deviceTree != nil {
-		for key := range deviceTree {
+		for key := range deviceTree.AsMap() {
 			val, ok := expectedResult[key]
 			if !ok {
 				return fmt.Errorf("unexpected device type: %s", key)
 			}
-			numberDev := len(deviceTree[key])
+			numberDev := len(deviceTree.AsMap()[key])
 			if numberDev != val {
 				return fmt.Errorf("%s: unexpected number of devices: %d, expected: %d", key, numberDev, val)
 			}

@@ -28,14 +28,14 @@ type getPreferredAllocationFunc func(*pluginapi.PreferredAllocationRequest) (*pl
 
 // updateInfo contains info for added, updated and deleted devices.
 type updateInfo struct {
-	Added   DeviceTree
-	Updated DeviceTree
-	Removed DeviceTree
+	Added   deviceTree
+	Updated deviceTree
+	Removed deviceTree
 }
 
 // notifier implements Notifier interface.
 type notifier struct {
-	deviceTree DeviceTree
+	deviceTree deviceTree
 	updatesCh  chan<- updateInfo
 }
 
@@ -46,10 +46,15 @@ func newNotifier(updatesCh chan<- updateInfo) *notifier {
 }
 
 func (n *notifier) Notify(newDeviceTree DeviceTree) {
-	added := NewDeviceTree()
-	updated := NewDeviceTree()
+	if newDeviceTree == nil {
+		klog.Warning("device plugin manager got notified with <nil> object. scanning problems?")
+		return
+	}
 
-	for devType, new := range newDeviceTree {
+	added := make(deviceTree)
+	updated := make(deviceTree)
+
+	for devType, new := range newDeviceTree.AsMap() {
 		if old, ok := n.deviceTree[devType]; ok {
 			if !reflect.DeepEqual(old, new) {
 				updated[devType] = new
@@ -68,7 +73,7 @@ func (n *notifier) Notify(newDeviceTree DeviceTree) {
 		}
 	}
 
-	n.deviceTree = newDeviceTree
+	n.deviceTree = newDeviceTree.AsMap()
 }
 
 // Manager manages life cycle of device plugins and handles the scan results

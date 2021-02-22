@@ -82,7 +82,7 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 			klog.Warning("Failed to scan: ", err)
 		}
 
-		found := len(devTree)
+		found := len(devTree.AsMap())
 		if found != previouslyFound {
 			klog.V(1).Info("GPU scan update: devices found: ", found)
 			previouslyFound = found
@@ -99,12 +99,13 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 }
 
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
+	devTree := dpapi.NewDeviceTree()
+
 	files, err := ioutil.ReadDir(dp.sysfsDir)
 	if err != nil {
-		return nil, errors.Wrap(err, "Can't read sysfs folder")
+		return devTree, errors.Wrap(err, "Can't read sysfs folder")
 	}
 
-	devTree := dpapi.NewDeviceTree()
 	for _, f := range files {
 		var nodes []pluginapi.DeviceSpec
 
@@ -126,7 +127,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		drmFiles, err := ioutil.ReadDir(path.Join(dp.sysfsDir, f.Name(), "device/drm"))
 		if err != nil {
-			return nil, errors.Wrap(err, "Can't read device folder")
+			return devTree, errors.Wrap(err, "Can't read device folder")
 		}
 
 		for _, drmFile := range drmFiles {

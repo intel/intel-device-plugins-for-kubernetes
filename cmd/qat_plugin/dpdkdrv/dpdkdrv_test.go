@@ -390,8 +390,8 @@ func TestScanPrivate(t *testing.T) {
 			if !tt.expectedErr && err != nil {
 				t.Errorf("got unexpected error: %+v", err)
 			}
-			if len(tree) != tt.expectedDevNum {
-				t.Errorf("expected %d, but got %d devices", tt.expectedDevNum, len(tree))
+			if tree != nil && len(tree.AsMap()) != tt.expectedDevNum {
+				t.Errorf("expected %d, but got %d devices", tt.expectedDevNum, len(tree.AsMap()))
 			}
 
 			if err = os.RemoveAll(tmpdir); err != nil {

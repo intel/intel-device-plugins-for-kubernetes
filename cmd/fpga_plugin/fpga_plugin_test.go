@@ -61,11 +61,11 @@ func createTestDirs(devfs, sysfs string, devfsDirs, sysfsDirs []string, sysfsFil
 // validateDevTree is a helper that reduces code complexity to make golangci-lint happy.
 func validateDevTree(expectedDevTreeKeys map[string][]string, devTree dpapi.DeviceTree) error {
 	for resource, devices := range expectedDevTreeKeys {
-		if _, ok := devTree[resource]; !ok {
+		if _, ok := devTree.AsMap()[resource]; !ok {
 			return fmt.Errorf("device tree: resource %s missing", resource)
 		}
 		for _, device := range devices {
-			if _, ok := devTree[resource][device]; !ok {
+			if _, ok := devTree.AsMap()[resource][device]; !ok {
 				return fmt.Errorf("device tree resource %s: device %s missing", resource, device)
 			}
 		}

@@ -58,19 +58,34 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 }
 
 // DeviceTree contains a tree-like structure of device type -> device ID -> device info.
-type DeviceTree map[string]map[string]DeviceInfo
+type DeviceTree interface {
+	// AddDevice adds device info to DeviceTree.
+	AddDevice(devType, id string, info DeviceInfo)
+	// AsMap returns a map of maps representing the device tree.
+	// The first dimension of the map is a device type.
+	// The second dimension is a device ID.
+	// The value of the secondary maps are instances of DeviceInfo.
+	AsMap() map[string]map[string]DeviceInfo
+}
+
+// deviceTree implements DeviceTree interface.
+type deviceTree map[string]map[string]DeviceInfo
 
 // NewDeviceTree creates an instance of DeviceTree.
 func NewDeviceTree() DeviceTree {
-	return make(map[string]map[string]DeviceInfo)
+	return make(deviceTree)
 }
 
 // AddDevice adds device info to DeviceTree.
-func (tree DeviceTree) AddDevice(devType, id string, info DeviceInfo) {
+func (tree deviceTree) AddDevice(devType, id string, info DeviceInfo) {
 	if _, present := tree[devType]; !present {
 		tree[devType] = make(map[string]DeviceInfo)
 	}
 	tree[devType][id] = info
+}
+
+func (tree deviceTree) AsMap() map[string]map[string]DeviceInfo {
+	return tree
 }
 
 // Notifier receives updates from Scanner, detects changes and sends the

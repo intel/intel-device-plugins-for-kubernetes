@@ -31,8 +31,8 @@ func TestNotify(t *testing.T) {
 		expectedAdded   int
 		expectedUpdated int
 		expectedRemoved int
-		oldmap          map[string]map[string]DeviceInfo
-		newmap          map[string]map[string]DeviceInfo
+		oldmap          deviceTree
+		newmap          deviceTree
 	}{
 		{
 			name: "No devices found",
