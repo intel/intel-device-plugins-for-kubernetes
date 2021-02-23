@@ -59,7 +59,7 @@ author = 'various'
 #
 ##############################################################################
 
-baseBranch = "master"
+baseBranch = "main"
 sphinx_md_useGitHubURL = True
 commitSHA = getenv('GITHUB_SHA')
 githubBaseURL = 'https://github.com/' + (getenv('GITHUB_REPOSITORY') or 'intel/intel-device-plugins-for-kubernetes') + '/'

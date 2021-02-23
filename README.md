@@ -1,5 +1,5 @@
 # Overview
-[![Build Status](https://github.com/intel/intel-device-plugins-for-kubernetes/workflows/CI/badge.svg?branch=master)](https://github.com/intel/intel-device-plugins-for-kubernetes/actions?query=workflow%3ACI)
+[![Build Status](https://github.com/intel/intel-device-plugins-for-kubernetes/workflows/CI/badge.svg?branch=main)](https://github.com/intel/intel-device-plugins-for-kubernetes/actions?query=workflow%3ACI)
 [![Go Report Card](https://goreportcard.com/badge/github.com/intel/intel-device-plugins-for-kubernetes)](https://goreportcard.com/report/github.com/intel/intel-device-plugins-for-kubernetes)
 [![GoDoc](https://godoc.org/github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin?status.svg)](https://godoc.org/github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin)
 
@@ -282,7 +282,7 @@ matching Kubernetes versions are listed below:
 
 ## Pre-built plugin images
 
-Pre-built images of the plugins are available on the Docker hub. These images are automatically built and uploaded to the hub from the latest master branch of this repository.
+Pre-built images of the plugins are available on the Docker hub. These images are automatically built and uploaded to the hub from the latest main branch of this repository.
 
 Release tagged images of the components are also available on the Docker hub, tagged with their release version numbers in the format x.y.z, corresponding to the branches and releases in this repository.
 

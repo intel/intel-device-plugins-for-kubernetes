@@ -4,7 +4,6 @@ on:
   push:
     branches:
         - main
-        - master
         - release-0.19
 
 jobs:
@@ -20,7 +19,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0
-        ref: master
+        ref: main
     - name: Set up doc directory
       run: |
         mkdir $HOME/output
