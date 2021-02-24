@@ -93,8 +93,8 @@ screen5()
 {
   clear
   out "4. Verify node resources"
-  command "kubectl get nodes -o json | jq .items[].status.allocatable | grep -i sgx"
-  command "kubectl get nodes -o json | jq .items[].metadata.labels | grep SGX"
+  command "kubectl get nodes -o json | jq .items[].status.allocatable | grep sgx"
+  command "kubectl get nodes -o json | jq .items[].metadata.labels | grep sgx"
   out "Both node labels and resources for SGX are in place"
 }
 
