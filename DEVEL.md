@@ -122,6 +122,21 @@ Otherwise, they can be logged as simple values:
     klog.Warningf("Example of a warning due to an external error: %v", err)
 ```
 
+### Checklist for new device plugins
+
+For new device plugins contributed to this repository, below is a
+checklist to get the plugin on par feature and quality wise with
+others:
+
+1. Plugin binary available in [`cmd/`](cmd), its corresponding Dockerfile in [`build/docker/`](build/docker) and deployment Kustomization/YAMLs in [`deployments/`](deployments).
+2. Plugin binary Go unit tests implemented and passing with >80% coverage: `make test WHAT=./cmd/<plugin>`.
+3. Plugin binary linter checks passing: `make lint`.
+4. Plugin e2e tests implemented in [`test/e2e/`](test/e2e) and passing: `go test -v ./test/e2e/... -args -ginkgo.focus "<plugin>"`.
+5. Plugin CRD API added to [`pkg/apis/deviceplugin/v1`](pkg/apis/deviceplugin/v1) and CRDs generated: `make generate`.
+6. Plugin CRD validation tests implemented in [`test/envtest/`](test/envtest) and passing: `make envtest`.
+7. Plugin CRD controller implemented in [`pkg/controllers/`](pkg/controllers) and added to the manager in `cmd/operator/main.go`.
+8. Plugin documentation written `cmd/<plugin>/README.md` and optionally end to end demos created in [`demo`](demo).
+
 ## How to build against a newer version of Kubernetes
 
 First you need to update module dependencies. The easiest way is to use the
