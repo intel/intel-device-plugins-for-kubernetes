@@ -32,7 +32,7 @@ fi
 if [ -z "${BUILDER}" -o "${BUILDER}" = 'docker' ] ; then
     docker build --pull -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .
 elif [ "${BUILDER}" = 'buildah' ] ; then
-    buildah bud --pull-always -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .
+    BUILDAH_RUNTIME=runc buildah bud --pull-always -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .
 else
     (>&2 echo "Unknown builder ${BUILDER}")
     exit 1

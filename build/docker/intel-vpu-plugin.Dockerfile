@@ -25,8 +25,6 @@ ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
 WORKDIR $DIR
 COPY . .
-RUN mkdir -p /go/cache
-ENV GOCACHE=/go/cache
 RUN cd cmd/vpu_plugin; GO111MODULE=${GO111MODULE} go install; cd -
 RUN chmod a+x /go/bin/vpu_plugin \
     && install -D /go/bin/vpu_plugin /install_root/usr/local/bin/intel_vpu_device_plugin \

@@ -41,8 +41,6 @@ RUN test -z "${TAGS_KERNELDRV}" \
     && cd /usr/src/qat/quickassist/utilities/adf_ctl \
     && make KERNEL_SOURCE_DIR=/usr/src/qat/quickassist/qat \
     && install -D adf_ctl /install_root/usr/local/bin/adf_ctl )
-RUN mkdir -p /go/cache
-ENV GOCACHE=/go/cache
 RUN cd cmd/qat_plugin; echo "build tags: ${TAGS_KERNELDRV}"; GO111MODULE=${GO111MODULE} go install -tags "${TAGS_KERNELDRV}"; cd -
 RUN chmod a+x /go/bin/qat_plugin \
     && install -D /go/bin/qat_plugin /install_root/usr/local/bin/intel_qat_device_plugin \
