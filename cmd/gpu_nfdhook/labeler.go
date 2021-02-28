@@ -113,18 +113,17 @@ func fallback() uint64 {
 	return getEnvVarNumber(memoryOverrideEnv)
 }
 
-// getMemoryAmount reads the GPU memory amount from the system.
-func (l *labeler) getMemoryAmount(gpuName string) uint64 {
+// getTileMemoryAmount reads the total GPU memory amount from the GPU tiles and returns it and the tile count.
+func (l *labeler) getTileMemoryAmount(gpuName string) (mem, numTiles uint64) {
 	reserved := getEnvVarNumber(memoryReservedEnv)
 	filePath := filepath.Join(l.sysfsDRMDir, gpuName, "gt/gt*/addr_range")
 
 	files, err := filepath.Glob(filePath)
 	if err != nil {
 		klog.V(4).Info("Can't read sysfs folder", err)
-		return fallback()
+		return fallback(), 1
 	}
 
-	mem := uint64(0)
 	for _, fileName := range files {
 		dat, err := ioutil.ReadFile(fileName)
 		if err != nil {
@@ -138,14 +137,15 @@ func (l *labeler) getMemoryAmount(gpuName string) uint64 {
 			continue
 		}
 
+		numTiles++
 		mem += n
 	}
 
 	if mem == 0 {
-		return fallback()
+		return fallback(), 1
 	}
 
-	return mem - reserved
+	return mem - reserved, numTiles
 }
 
 // addNumericLabel creates a new label if one doesn't exist. Else the new value is added to the previous value.
@@ -159,7 +159,7 @@ func (lm labelMap) addNumericLabel(labelName string, valueToAdd int64) {
 }
 
 // createCapabilityLabels creates labels from the gpu capability file under debugfs.
-func (l *labeler) createCapabilityLabels(cardNum string) {
+func (l *labeler) createCapabilityLabels(cardNum string, numTiles uint64) {
 	// try to read the capabilities from the i915_capabilities file
 	file, err := os.Open(filepath.Join(l.debugfsDRIDir, cardNum, "i915_capabilities"))
 	if err != nil {
@@ -172,6 +172,7 @@ func (l *labeler) createCapabilityLabels(cardNum string) {
 	searchStringActionMap := map[string]func(string){
 		"platform: ": func(platformName string) {
 			l.labels.addNumericLabel(labelNamespace+"platform_"+platformName+".count", 1)
+			l.labels[labelNamespace+"platform_"+platformName+".tiles"] = strconv.FormatInt(int64(numTiles), 10)
 			l.labels[labelNamespace+"platform_"+platformName+".present"] = "true"
 		},
 		"gen: ": func(genName string) {
@@ -212,11 +213,13 @@ func (l *labeler) createLabels() error {
 			return errors.Wrap(err, "gpu name parsing error")
 		}
 
-		// try to add capability labels
-		l.createCapabilityLabels(gpuNum)
-
 		// read the memory amount to find a proper max allocation value
-		l.labels.addNumericLabel(labelNamespace+"memory.max", int64(l.getMemoryAmount(gpuName)))
+		memoryAmount, numTiles := l.getTileMemoryAmount(gpuName)
+
+		// try to add capability labels
+		l.createCapabilityLabels(gpuNum, numTiles)
+
+		l.labels.addNumericLabel(labelNamespace+"memory.max", int64(memoryAmount))
 	}
 	gpuCount := len(gpuNameList)
 	// add gpu list label (example: "card0.card1.card2")
