@@ -1,0 +1,358 @@
+{
+	"ociVersion": "1.0.2-dev",
+	"process": {
+		"user": {
+			"uid": 0,
+			"gid": 0
+		},
+		"args": [
+			"/opt/intel/sgx-sample-app/sgx-sample-app"
+		],
+		"env": [
+			"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+			"TERM=xterm",
+			"HOSTNAME=intelsgx-demo-job-w2ng5",
+			"SGX_EPC_SIZE=10Mi",
+			"KUBERNETES_SERVICE_PORT=443",
+			"KUBERNETES_SERVICE_PORT_HTTPS=443",
+			"KUBERNETES_PORT=tcp://10.96.0.1:443",
+			"KUBERNETES_PORT_443_TCP=tcp://10.96.0.1:443",
+			"KUBERNETES_PORT_443_TCP_PROTO=tcp",
+			"KUBERNETES_PORT_443_TCP_PORT=443",
+			"KUBERNETES_PORT_443_TCP_ADDR=10.96.0.1",
+			"KUBERNETES_SERVICE_HOST=10.96.0.1",
+			"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+		],
+		"cwd": "/opt/intel/sgx-sample-app/",
+		"capabilities": {
+			"bounding": [
+				"CAP_IPC_LOCK",
+				"CAP_CHOWN",
+				"CAP_DAC_OVERRIDE",
+				"CAP_FSETID",
+				"CAP_FOWNER",
+				"CAP_SETGID",
+				"CAP_SETUID",
+				"CAP_SETPCAP",
+				"CAP_NET_BIND_SERVICE",
+				"CAP_KILL"
+			],
+			"effective": [
+				"CAP_IPC_LOCK",
+				"CAP_CHOWN",
+				"CAP_DAC_OVERRIDE",
+				"CAP_FSETID",
+				"CAP_FOWNER",
+				"CAP_SETGID",
+				"CAP_SETUID",
+				"CAP_SETPCAP",
+				"CAP_NET_BIND_SERVICE",
+				"CAP_KILL"
+			],
+			"inheritable": [
+				"CAP_IPC_LOCK",
+				"CAP_CHOWN",
+				"CAP_DAC_OVERRIDE",
+				"CAP_FSETID",
+				"CAP_FOWNER",
+				"CAP_SETGID",
+				"CAP_SETUID",
+				"CAP_SETPCAP",
+				"CAP_NET_BIND_SERVICE",
+				"CAP_KILL"
+			],
+			"permitted": [
+				"CAP_IPC_LOCK",
+				"CAP_CHOWN",
+				"CAP_DAC_OVERRIDE",
+				"CAP_FSETID",
+				"CAP_FOWNER",
+				"CAP_SETGID",
+				"CAP_SETUID",
+				"CAP_SETPCAP",
+				"CAP_NET_BIND_SERVICE",
+				"CAP_KILL"
+			]
+		},
+		"oomScoreAdj": 1000
+	},
+	"root": {
+		"path": "/var/lib/containers/storage/overlay/b32407c46b1a9987aebf48b032fd8e182685b0278bb04379a7f20305a303d05d/merged",
+		"readonly": true
+	},
+	"hostname": "intelsgx-demo-job-w2ng5",
+	"mounts": [
+		{
+			"destination": "/proc",
+			"type": "proc",
+			"source": "proc",
+			"options": [
+				"nosuid",
+				"noexec",
+				"nodev"
+			]
+		},
+		{
+			"destination": "/dev",
+			"type": "tmpfs",
+			"source": "tmpfs",
+			"options": [
+				"nosuid",
+				"strictatime",
+				"mode=755",
+				"size=65536k"
+			]
+		},
+		{
+			"destination": "/dev/pts",
+			"type": "devpts",
+			"source": "devpts",
+			"options": [
+				"nosuid",
+				"noexec",
+				"newinstance",
+				"ptmxmode=0666",
+				"mode=0620",
+				"gid=5"
+			]
+		},
+		{
+			"destination": "/dev/mqueue",
+			"type": "mqueue",
+			"source": "mqueue",
+			"options": [
+				"nosuid",
+				"noexec",
+				"nodev"
+			]
+		},
+		{
+			"destination": "/sys",
+			"type": "sysfs",
+			"source": "sysfs",
+			"options": [
+				"nosuid",
+				"noexec",
+				"nodev",
+				"ro"
+			]
+		},
+		{
+			"destination": "/sys/fs/cgroup",
+			"type": "cgroup",
+			"source": "cgroup",
+			"options": [
+				"nosuid",
+				"noexec",
+				"nodev",
+				"relatime",
+				"ro"
+			]
+		},
+		{
+			"destination": "/dev/shm",
+			"type": "bind",
+			"source": "/run/containers/storage/overlay-containers/e296c4c328df414b85eefc036ac463a485d4faa1c90ad74cad6d686274bfae29/userdata/shm",
+			"options": [
+				"rw",
+				"bind"
+			]
+		},
+		{
+			"destination": "/etc/resolv.conf",
+			"type": "bind",
+			"source": "/run/containers/storage/overlay-containers/e296c4c328df414b85eefc036ac463a485d4faa1c90ad74cad6d686274bfae29/userdata/resolv.conf",
+			"options": [
+				"ro",
+				"bind",
+				"nodev",
+				"nosuid",
+				"noexec"
+			]
+		},
+		{
+			"destination": "/etc/hostname",
+			"type": "bind",
+			"source": "/run/containers/storage/overlay-containers/e296c4c328df414b85eefc036ac463a485d4faa1c90ad74cad6d686274bfae29/userdata/hostname",
+			"options": [
+				"ro",
+				"bind"
+			]
+		},
+		{
+			"destination": "/dev/sgx",
+			"type": "bind",
+			"source": "/dev/sgx",
+			"options": [
+				"rw",
+				"rbind",
+				"rprivate",
+				"bind"
+			]
+		},
+		{
+			"destination": "/etc/hosts",
+			"type": "bind",
+			"source": "/var/lib/kubelet/pods/39f43e74-2c8b-48f1-a4f3-a7ddd513eca5/etc-hosts",
+			"options": [
+				"rw",
+				"rbind",
+				"rprivate",
+				"bind"
+			]
+		},
+		{
+			"destination": "/dev/termination-log",
+			"type": "bind",
+			"source": "/var/lib/kubelet/pods/39f43e74-2c8b-48f1-a4f3-a7ddd513eca5/containers/intelsgx-demo-job-1/8b234cc0",
+			"options": [
+				"rw",
+				"rbind",
+				"rprivate",
+				"bind"
+			]
+		},
+		{
+			"destination": "/var/run/secrets/kubernetes.io/serviceaccount",
+			"type": "bind",
+			"source": "/var/lib/kubelet/pods/39f43e74-2c8b-48f1-a4f3-a7ddd513eca5/volumes/kubernetes.io~secret/default-token-m996z",
+			"options": [
+				"ro",
+				"rbind",
+				"rprivate",
+				"bind"
+			]
+		}
+	],
+	"hooks": {
+		"prestart": [
+			{
+				"path": "/usr/libexec/oci/hooks.d/sgx_oci_epchook"
+			}
+		]
+	},
+	"annotations": {
+		"com.intel.sgx": "container_sgx_epc_limit",
+		"io.container.manager": "cri-o",
+		"io.kubernetes.container.hash": "81600667",
+		"io.kubernetes.container.name": "intelsgx-demo-job-1",
+		"io.kubernetes.container.restartCount": "0",
+		"io.kubernetes.container.terminationMessagePath": "/dev/termination-log",
+		"io.kubernetes.container.terminationMessagePolicy": "File",
+		"io.kubernetes.cri-o.Annotations": "{\"com.intel.sgx\":\"container_sgx_epc_limit\",\"io.kubernetes.container.hash\":\"81600667\",\"io.kubernetes.container.restartCount\":\"0\",\"io.kubernetes.container.terminationMessagePath\":\"/dev/termination-log\",\"io.kubernetes.container.terminationMessagePolicy\":\"File\",\"io.kubernetes.pod.terminationGracePeriod\":\"30\"}",
+		"io.kubernetes.cri-o.ContainerID": "35594b315b822de0bd3b94fcdc50347691ac8dc8e4769d5c0a07a591b247518b",
+		"io.kubernetes.cri-o.ContainerType": "container",
+		"io.kubernetes.cri-o.Created": "2021-03-05T19:47:23.965302706Z",
+		"io.kubernetes.cri-o.IP.0": "10.32.0.11",
+		"io.kubernetes.cri-o.Image": "fe8a154411405dffa795e395a1e5d183231e8d47f25babe038b88b2e57ce40aa",
+		"io.kubernetes.cri-o.ImageName": "localhost/intel/sgx-sdk-demo:devel",
+		"io.kubernetes.cri-o.ImageRef": "fe8a154411405dffa795e395a1e5d183231e8d47f25babe038b88b2e57ce40aa",
+		"io.kubernetes.cri-o.Labels": "{\"io.kubernetes.container.name\":\"intelsgx-demo-job-1\",\"io.kubernetes.pod.name\":\"intelsgx-demo-job-w2ng5\",\"io.kubernetes.pod.namespace\":\"default\",\"io.kubernetes.pod.uid\":\"39f43e74-2c8b-48f1-a4f3-a7ddd513eca5\"}",
+		"io.kubernetes.cri-o.LogPath": "/var/log/pods/default_intelsgx-demo-job-w2ng5_39f43e74-2c8b-48f1-a4f3-a7ddd513eca5/intelsgx-demo-job-1/0.log",
+		"io.kubernetes.cri-o.Metadata": "{\"name\":\"intelsgx-demo-job-1\"}",
+		"io.kubernetes.cri-o.MountPoint": "/var/lib/containers/storage/overlay/b32407c46b1a9987aebf48b032fd8e182685b0278bb04379a7f20305a303d05d/merged",
+		"io.kubernetes.cri-o.Name": "k8s_intelsgx-demo-job-1_intelsgx-demo-job-w2ng5_default_39f43e74-2c8b-48f1-a4f3-a7ddd513eca5_0",
+		"io.kubernetes.cri-o.ResolvPath": "/run/containers/storage/overlay-containers/e296c4c328df414b85eefc036ac463a485d4faa1c90ad74cad6d686274bfae29/userdata/resolv.conf",
+		"io.kubernetes.cri-o.SandboxID": "e296c4c328df414b85eefc036ac463a485d4faa1c90ad74cad6d686274bfae29",
+		"io.kubernetes.cri-o.SandboxName": "k8s_intelsgx-demo-job-w2ng5_default_39f43e74-2c8b-48f1-a4f3-a7ddd513eca5_0",
+		"io.kubernetes.cri-o.SeccompProfilePath": "",
+		"io.kubernetes.cri-o.Stdin": "false",
+		"io.kubernetes.cri-o.StdinOnce": "false",
+		"io.kubernetes.cri-o.TTY": "false",
+		"io.kubernetes.cri-o.Volumes": "[{\"container_path\":\"/dev/sgx\",\"host_path\":\"/dev/sgx\",\"readonly\":false},{\"container_path\":\"/etc/hosts\",\"host_path\":\"/var/lib/kubelet/pods/39f43e74-2c8b-48f1-a4f3-a7ddd513eca5/etc-hosts\",\"readonly\":false},{\"container_path\":\"/dev/termination-log\",\"host_path\":\"/var/lib/kubelet/pods/39f43e74-2c8b-48f1-a4f3-a7ddd513eca5/containers/intelsgx-demo-job-1/8b234cc0\",\"readonly\":false},{\"container_path\":\"/var/run/secrets/kubernetes.io/serviceaccount\",\"host_path\":\"/var/lib/kubelet/pods/39f43e74-2c8b-48f1-a4f3-a7ddd513eca5/volumes/kubernetes.io~secret/default-token-m996z\",\"readonly\":true}]",
+		"io.kubernetes.pod.name": "intelsgx-demo-job-w2ng5",
+		"io.kubernetes.pod.namespace": "default",
+		"io.kubernetes.pod.terminationGracePeriod": "30",
+		"io.kubernetes.pod.uid": "39f43e74-2c8b-48f1-a4f3-a7ddd513eca5",
+		"kubernetes.io/config.seen": "2021-03-05T19:47:23.151798691Z",
+		"kubernetes.io/config.source": "api",
+		"org.systemd.property.CollectMode": "'inactive-or-failed'",
+		"org.systemd.property.TimeoutStopUSec": "uint64 30000000",
+		"sgx.intel.com/epc": "10Mi"
+	},
+	"linux": {
+		"resources": {
+			"devices": [
+				{
+					"allow": false,
+					"access": "rwm"
+				},
+				{
+					"allow": true,
+					"type": "c",
+					"major": 10,
+					"minor": 125,
+					"access": "rw"
+				}
+			],
+			"cpu": {
+				"shares": 2,
+				"quota": 0,
+				"period": 100000
+			},
+			"pids": {
+				"limit": 1024
+			},
+			"hugepageLimits": [
+				{
+					"pageSize": "1GB",
+					"limit": 0
+				},
+				{
+					"pageSize": "2MB",
+					"limit": 0
+				}
+			]
+		},
+		"cgroupsPath": "kubepods-besteffort-pod39f43e74_2c8b_48f1_a4f3_a7ddd513eca5.slice:crio:35594b315b822de0bd3b94fcdc50347691ac8dc8e4769d5c0a07a591b247518b",
+		"namespaces": [
+			{
+				"type": "pid"
+			},
+			{
+				"type": "network",
+				"path": "/var/run/netns/ed193bcc-c437-4a58-a41d-c246de735844"
+			},
+			{
+				"type": "ipc",
+				"path": "/var/run/ipcns/ed193bcc-c437-4a58-a41d-c246de735844"
+			},
+			{
+				"type": "uts",
+				"path": "/var/run/utsns/ed193bcc-c437-4a58-a41d-c246de735844"
+			},
+			{
+				"type": "mount"
+			}
+		],
+		"devices": [
+			{
+				"path": "/dev/sgx_enclave",
+				"type": "c",
+				"major": 10,
+				"minor": 125,
+				"uid": 0,
+				"gid": 0
+			}
+		],
+		"maskedPaths": [
+			"/proc/acpi",
+			"/proc/kcore",
+			"/proc/keys",
+			"/proc/latency_stats",
+			"/proc/timer_list",
+			"/proc/timer_stats",
+			"/proc/sched_debug",
+			"/proc/scsi",
+			"/sys/firmware"
+		],
+		"readonlyPaths": [
+			"/proc/asound",
+			"/proc/bus",
+			"/proc/fs",
+			"/proc/irq",
+			"/proc/sys",
+			"/proc/sysrq-trigger"
+		]
+	}
+}
