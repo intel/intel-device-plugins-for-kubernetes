@@ -43,6 +43,10 @@ const (
 	namespace  = "gpu.intel.com"
 	deviceType = "i915"
 
+	// telemetry resource settings.
+	monitorType = "i915_monitoring"
+	monitorID   = "all"
+
 	// Period of device scans.
 	scanPeriod = 5 * time.Second
 )
@@ -104,6 +108,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		return nil, errors.Wrap(err, "Can't read sysfs folder")
 	}
 
+	var monitor []pluginapi.DeviceSpec
 	devTree := dpapi.NewDeviceTree()
 	for _, f := range files {
 		var nodes []pluginapi.DeviceSpec
@@ -139,12 +144,17 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				continue
 			}
 
-			klog.V(4).Infof("Adding %s to GPU %s", devPath, f.Name())
-			nodes = append(nodes, pluginapi.DeviceSpec{
+			// even querying metrics requires device to be writable
+			devSpec := pluginapi.DeviceSpec{
 				HostPath:      devPath,
 				ContainerPath: devPath,
 				Permissions:   "rw",
-			})
+			}
+			klog.V(4).Infof("Adding %s to GPU %s", devPath, f.Name())
+			nodes = append(nodes, devSpec)
+
+			klog.V(4).Infof("Adding %s to GPU %s/%s", devPath, monitorType, monitorID)
+			monitor = append(monitor, devSpec)
 		}
 
 		if len(nodes) > 0 {
@@ -156,6 +166,11 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				devTree.AddDevice(deviceType, devID, deviceInfo)
 			}
 		}
+	}
+	// all Intel GPUs are under single monitoring resource
+	if len(monitor) > 0 {
+		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, monitor, nil, nil)
+		devTree.AddDevice(monitorType, monitorID, deviceInfo)
 	}
 
 	return devTree, nil

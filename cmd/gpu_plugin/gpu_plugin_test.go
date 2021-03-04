@@ -21,6 +21,8 @@ import (
 	"path"
 	"testing"
 
+	"github.com/pkg/errors"
+
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
 
@@ -30,33 +32,48 @@ func init() {
 
 // mockNotifier implements Notifier interface.
 type mockNotifier struct {
-	scanDone chan bool
-	devCount int
+	scanDone     chan bool
+	devCount     int
+	monitorCount int
 }
 
 // Notify stops plugin Scan.
 func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
+	n.monitorCount = len(newDeviceTree[monitorType])
 	n.devCount = len(newDeviceTree[deviceType])
 	n.scanDone <- true
 }
 
-func TestScan(t *testing.T) {
-	root, err := ioutil.TempDir("", "test_new_device_plugin")
-	if err != nil {
-		t.Fatalf("can't create temporary directory: %+v", err)
-	}
-
-	defer os.RemoveAll(root)
-
+func createTestFiles(root string, devfsdirs, sysfsdirs []string, sysfsfiles map[string][]byte) (string, string, error) {
 	sysfs := path.Join(root, "sys")
 	devfs := path.Join(root, "dev")
 
+	for _, devfsdir := range devfsdirs {
+		if err := os.MkdirAll(path.Join(devfs, devfsdir), 0750); err != nil {
+			return "", "", errors.Wrap(err, "Failed to create fake device directory")
+		}
+	}
+	for _, sysfsdir := range sysfsdirs {
+		if err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0750); err != nil {
+			return "", "", errors.Wrap(err, "Failed to create fake device directory")
+		}
+	}
+	for filename, body := range sysfsfiles {
+		if err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0600); err != nil {
+			return "", "", errors.Wrap(err, "Failed to create fake vendor file")
+		}
+	}
+	return sysfs, devfs, nil
+}
+
+func TestScan(t *testing.T) {
 	tcases := []struct {
-		name         string
-		devfsdirs    []string
-		sysfsdirs    []string
-		sysfsfiles   map[string][]byte
-		expectedDevs int
+		name             string
+		devfsdirs        []string
+		sysfsdirs        []string
+		sysfsfiles       map[string][]byte
+		expectedDevs     int
+		expectedMonitors int
 	}{
 		{
 			name: "no sysfs mounted",
@@ -78,8 +95,9 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
-			devfsdirs:    []string{"card0"},
-			expectedDevs: 1,
+			devfsdirs:        []string{"card0"},
+			expectedDevs:     1,
+			expectedMonitors: 1,
 		},
 		{
 			name: "two sysfs records but one dev node",
@@ -91,8 +109,9 @@ func TestScan(t *testing.T) {
 				"card0/device/vendor": []byte("0x8086"),
 				"card1/device/vendor": []byte("0x8086"),
 			},
-			devfsdirs:    []string{"card0"},
-			expectedDevs: 1,
+			devfsdirs:        []string{"card0"},
+			expectedDevs:     1,
+			expectedMonitors: 1,
 		},
 		{
 			name: "two devices",
@@ -104,8 +123,9 @@ func TestScan(t *testing.T) {
 				"card0/device/vendor": []byte("0x8086"),
 				"card1/device/vendor": []byte("0x8086"),
 			},
-			devfsdirs:    []string{"card0", "card1"},
-			expectedDevs: 2,
+			devfsdirs:        []string{"card0", "card1"},
+			expectedDevs:     2,
+			expectedMonitors: 1,
 		},
 		{
 			name:      "wrong vendor",
@@ -123,20 +143,16 @@ func TestScan(t *testing.T) {
 
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
-			for _, devfsdir := range tc.devfsdirs {
-				if err := os.MkdirAll(path.Join(devfs, devfsdir), 0750); err != nil {
-					t.Fatalf("Failed to create fake device directory: %+v", err)
-				}
+			root, err := ioutil.TempDir("", "test_new_device_plugin")
+			if err != nil {
+				t.Fatalf("can't create temporary directory: %+v", err)
 			}
-			for _, sysfsdir := range tc.sysfsdirs {
-				if err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0750); err != nil {
-					t.Fatalf("Failed to create fake device directory: %+v", err)
-				}
-			}
-			for filename, body := range tc.sysfsfiles {
-				if err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0600); err != nil {
-					t.Fatalf("Failed to create fake vendor file: %+v", err)
-				}
+			// dirs/files need to be removed for the next test
+			defer os.RemoveAll(root)
+
+			sysfs, devfs, err := createTestFiles(root, tc.devfsdirs, tc.sysfsdirs, tc.sysfsfiles)
+			if err != nil {
+				t.Errorf("unexpected error: %+v", err)
 			}
 
 			plugin := newDevicePlugin(sysfs, devfs, 1)
@@ -145,7 +161,7 @@ func TestScan(t *testing.T) {
 				scanDone: plugin.scanDone,
 			}
 
-			err := plugin.Scan(notifier)
+			err = plugin.Scan(notifier)
 			// Scans in GPU plugin never fail
 			if err != nil {
 				t.Errorf("unexpected error: %+v", err)
@@ -154,9 +170,10 @@ func TestScan(t *testing.T) {
 				t.Errorf("Expected %d, discovered %d devices",
 					tc.expectedDevs, notifier.devCount)
 			}
-			// remove dirs/files for next test
-			os.RemoveAll(sysfs)
-			os.RemoveAll(devfs)
+			if tc.expectedMonitors != notifier.monitorCount {
+				t.Errorf("Expected %d, discovered %d monitors",
+					tc.expectedMonitors, notifier.monitorCount)
+			}
 		})
 	}
 }
