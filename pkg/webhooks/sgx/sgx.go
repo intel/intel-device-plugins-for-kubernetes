@@ -17,7 +17,9 @@ package sgx
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -93,6 +95,12 @@ func warnWrongResources(resources map[string]int64) []string {
 	if ok {
 		warnings = append(warnings, provision+" should not be used in Pod spec directly")
 	}
+
+	epcSize, ok := resources[epc]
+	if ok && (int(epcSize)&(os.Getpagesize()-1) != 0) {
+		warnings = append(warnings, fmt.Sprintf("%s size (%d) must be aligned to page size (%d)", epc, epcSize, os.Getpagesize()))
+	}
+
 	return warnings
 }
 
@@ -128,6 +136,16 @@ func (s *SgxMutator) Handle(ctx context.Context, req admission.Request) admissio
 		if !ok {
 			continue
 		}
+
+		if container.Env == nil {
+			container.Env = make([]corev1.EnvVar, 0)
+		}
+
+		container.Env = append(container.Env,
+			corev1.EnvVar{
+				Name:  "SGX_EPC_SIZE",
+				Value: resource.NewQuantity(epcSize, resource.BinarySI).String(),
+			})
 
 		totalEpc += epcSize
 
@@ -174,10 +192,6 @@ func (s *SgxMutator) Handle(ctx context.Context, req admission.Request) admissio
 
 			if container.Name == aesmdQuoteProvKey {
 				aesmdPresent = true
-			}
-
-			if container.Env == nil {
-				container.Env = make([]corev1.EnvVar, 0)
 			}
 
 			// this sets SGX_AESM_ADDR for aesmd itself too but it's harmless
