@@ -73,7 +73,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name:      "all is correct",
+			name:      "one device",
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
@@ -93,6 +93,19 @@ func TestScan(t *testing.T) {
 			},
 			devfsdirs:    []string{"card0"},
 			expectedDevs: 1,
+		},
+		{
+			name: "two devices",
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card1/device/drm/card1",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card1/device/vendor": []byte("0x8086"),
+			},
+			devfsdirs:    []string{"card0", "card1"},
+			expectedDevs: 2,
 		},
 		{
 			name:      "wrong vendor",
