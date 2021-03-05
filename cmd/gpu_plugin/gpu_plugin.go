@@ -109,7 +109,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		var nodes []pluginapi.DeviceSpec
 
 		if !dp.gpuDeviceReg.MatchString(f.Name()) {
-			klog.V(4).Info("Not compatible device", f.Name())
+			klog.V(4).Info("Not compatible device: ", f.Name())
 			continue
 		}
 
@@ -120,7 +120,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		}
 
 		if strings.TrimSpace(string(dat)) != vendorString {
-			klog.V(4).Info("Non-Intel GPU", f.Name())
+			klog.V(4).Info("Non-Intel GPU: ", f.Name())
 			continue
 		}
 
