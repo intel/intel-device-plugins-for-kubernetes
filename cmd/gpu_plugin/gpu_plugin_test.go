@@ -138,8 +138,12 @@ func TestScan(t *testing.T) {
 				t.Errorf("unexpected error: %+v", err)
 			}
 			if tc.expectedDevs != notifier.devCount {
-				t.Errorf("Wrong number of discovered devices")
+				t.Errorf("Expected %d, discovered %d devices",
+					tc.expectedDevs, notifier.devCount)
 			}
+			// remove dirs/files for next test
+			os.RemoveAll(sysfs)
+			os.RemoveAll(devfs)
 		})
 	}
 }
