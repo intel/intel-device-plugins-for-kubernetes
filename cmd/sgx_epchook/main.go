@@ -20,6 +20,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/klauspost/cpuid/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,22 +32,26 @@ import (
 )
 
 const (
-	namespace  = "sgx.intel.com"
-	epc        = "epc"
-	pathPrefix = "/status/capacity"
+	namespace = "sgx.intel.com"
+	epc       = "epc"
+	capable   = "capable"
 )
 
-type patchExtendedResource struct {
-	Op    string `json:"op"`
-	Path  string `json:"path"`
-	Value uint64 `json:"value"`
+type patchNodeOp struct {
+	Op    string      `json:"op"`
+	Path  string      `json:"path"`
+	Value interface{} `json:"value"`
 }
 
 func main() {
-	var register, affirm bool
+	var register, affirm, label, daemon bool
 	flag.BoolVar(&register, "register", false, "register EPC as extended resource")
 	flag.BoolVar(&affirm, "affirm", false, "return error if EPC is not available")
+	flag.BoolVar(&label, "node-label", false, "create node label")
+	flag.BoolVar(&daemon, "daemon", false, "run as a daemon")
 	flag.Parse()
+
+	klog.Infof("starting sgx_epchook")
 
 	// get the EPC size
 	var epcSize uint64
@@ -54,21 +60,55 @@ func main() {
 			epcSize += s.EPCSize
 		}
 	}
+	klog.Infof("epc capacity: %d bytes", epcSize)
 
 	if epcSize == 0 && affirm {
 		klog.Fatal("SGX EPC is not available")
 	}
 
-	if register {
-		if err := registerExtendedResource(epcSize); err != nil {
-			klog.Fatal(err.Error())
-		}
-	} else {
+	if err := updateNode(epcSize, register, label); err != nil {
+		klog.Fatal(err.Error())
+	}
+
+	// if the "register" flag is FALSE, we assume that sgx_epchook is used as NFD hook
+	if !register {
 		fmt.Printf("%s/%s=%d", namespace, epc, epcSize)
+	}
+
+	if daemon {
+		klog.Info("waiting for termination signal")
+		term := make(chan os.Signal, 1)
+		signal.Notify(term, os.Interrupt, syscall.SIGTERM)
+		<-term
 	}
 }
 
-func registerExtendedResource(epcSize uint64) error {
+func updateNode(epcSize uint64, register, label bool) error {
+	// create patch payload
+	payload := []patchNodeOp{}
+	if register {
+		payload = append(payload, patchNodeOp{
+			Op:    "add",
+			Path:  fmt.Sprintf("/status/capacity/%s~1%s", namespace, epc),
+			Value: epcSize,
+		})
+	}
+	if label && epcSize > 0 {
+		payload = append(payload, patchNodeOp{
+			Op:    "add",
+			Path:  fmt.Sprintf("/metadata/labels/%s~1%s", namespace, capable),
+			Value: "true",
+		})
+	}
+	if len(payload) == 0 {
+		return nil
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
 	// create the in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -87,19 +127,7 @@ func registerExtendedResource(epcSize uint64) error {
 		return err
 	}
 
-	// create and send patch request
-	payload := []patchExtendedResource{{
-		Op:    "add",
-		Path:  fmt.Sprintf("%s/%s~1%s", pathPrefix, namespace, epc),
-		Value: epcSize,
-	}}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
+	// patch the node
 	_, err = clientset.CoreV1().Nodes().Patch(context.TODO(), node.Name, types.JSONPatchType, payloadBytes, metav1.PatchOptions{}, "status")
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

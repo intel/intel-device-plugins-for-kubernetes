@@ -1,0 +1,9 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-sgx-plugin
+spec:
+  template:
+    spec:
+      nodeSelector:
+        sgx.intel.com/capable: 'true'
