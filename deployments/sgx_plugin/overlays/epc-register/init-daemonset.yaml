@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: sgx-node-init
+  labels:
+    app: sgx-node-init
+spec:
+  selector:
+    matchLabels:
+      app: sgx-node-init
+  template:
+    metadata:
+      labels:
+        app: sgx-node-init
+    spec:
+      serviceAccountName: sgx-plugin
+      containers:
+      - name: sgx-node-init
+        image: intel/intel-sgx-initcontainer:devel
+        imagePullPolicy: IfNotPresent
+        command:
+          - /usr/local/bin/sgx-sw/intel-sgx-epchook
+          - -register
+          - -node-label
+          - -daemon
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
