@@ -1,0 +1,7 @@
+bases:
+- ../manager
+- ../webhook
+
+patchesStrategicMerge:
+  # Enable webhook
+- manager_webhook_patch.yaml
