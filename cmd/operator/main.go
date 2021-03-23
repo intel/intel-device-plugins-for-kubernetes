@@ -16,7 +16,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -54,18 +56,58 @@ func init() {
 
 type devicePluginControllerAndWebhook map[string](func(ctrl.Manager, string, bool) error)
 
+type flagList []string
+
+var supportedDevices = flagList{"dsa", "fpga", "gpu", "qat", "sgx"}
+var devices flagList
+
+func (flag *flagList) String() string {
+	return strings.Join(*flag, ", ")
+}
+
+func (flag *flagList) Set(value string) error {
+	if !contains(supportedDevices, value) {
+		setupLog.Error(nil, fmt.Sprintf("Unsupported device: %s", value))
+		os.Exit(1)
+	}
+
+	if contains(devices, value) {
+		setupLog.Error(nil, fmt.Sprintf("Duplicate device: %s", value))
+		os.Exit(1)
+	}
+
+	*flag = append(*flag, value)
+	return nil
+}
+
+func contains(arr []string, val string) bool {
+	for _, s := range arr {
+		if s == val {
+			return true
+		}
+	}
+	return false
+}
+
 func main() {
 	var metricsAddr string
 	var devicePluginNamespace string
 	var enableLeaderElection bool
+	var pm *patcher.PatcherManager
+
+	ctrl.SetLogger(klogr.New())
+
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&devicePluginNamespace, "deviceplugin-namespace", metav1.NamespaceSystem, "The namespace where deviceplugin daemonsets are created")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.Var(&devices, "devices", "Device(s) to set up.")
 	flag.Parse()
 
-	ctrl.SetLogger(klogr.New())
+	if len(devices) == 0 {
+		devices = supportedDevices
+	}
 
 	setupControllerAndWebhook := devicePluginControllerAndWebhook{
 		"dsa":  dsa.SetupReconciler,
@@ -95,40 +137,43 @@ func main() {
 
 	withWebhook := true
 
-	// TODO(mythi): add a StringVar flag to select which controllers to enable
-	for _, device := range []string{"dsa", "fpga", "gpu", "qat", "sgx"} {
+	for _, device := range devices {
 		if err = setupControllerAndWebhook[device](mgr, ns, withWebhook); err != nil {
 			setupLog.Error(err, "unable to initialize controller", "controller", device)
 			os.Exit(1)
 		}
 	}
 
-	pm := patcher.NewPatcherManager(mgr.GetLogger().WithName("webhooks").WithName("Fpga"))
-
-	mgr.GetWebhookServer().Register("/pods", &webhook.Admission{
-		Handler: admission.HandlerFunc(pm.GetPodMutator()),
-	})
-
-	mgr.GetWebhookServer().Register("/pods-sgx", &webhook.Admission{
-		Handler: &sgxwebhook.SgxMutator{Client: mgr.GetClient()},
-	})
-
-	if err = (&fpgacontroller.AcceleratorFunctionReconciler{
-		Client:         mgr.GetClient(),
-		Scheme:         mgr.GetScheme(),
-		PatcherManager: pm,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "AcceleratorFunction")
-		os.Exit(1)
+	if contains(devices, "sgx") {
+		mgr.GetWebhookServer().Register("/pods-sgx", &webhook.Admission{
+			Handler: &sgxwebhook.SgxMutator{Client: mgr.GetClient()},
+		})
 	}
 
-	if err = (&fpgacontroller.FpgaRegionReconciler{
-		Client:         mgr.GetClient(),
-		Scheme:         mgr.GetScheme(),
-		PatcherManager: pm,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "FpgaRegion")
-		os.Exit(1)
+	if contains(devices, "fpga") {
+		pm = patcher.NewPatcherManager(mgr.GetLogger().WithName("webhooks").WithName("Fpga"))
+
+		mgr.GetWebhookServer().Register("/pods", &webhook.Admission{
+			Handler: admission.HandlerFunc(pm.GetPodMutator()),
+		})
+
+		if err = (&fpgacontroller.AcceleratorFunctionReconciler{
+			Client:         mgr.GetClient(),
+			Scheme:         mgr.GetScheme(),
+			PatcherManager: pm,
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "AcceleratorFunction")
+			os.Exit(1)
+		}
+
+		if err = (&fpgacontroller.FpgaRegionReconciler{
+			Client:         mgr.GetClient(),
+			Scheme:         mgr.GetScheme(),
+			PatcherManager: pm,
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "FpgaRegion")
+			os.Exit(1)
+		}
 	}
 
 	setupLog.Info("starting manager")
