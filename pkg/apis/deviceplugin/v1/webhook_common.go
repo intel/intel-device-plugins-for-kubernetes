@@ -15,6 +15,7 @@
 package v1
 
 import (
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -23,18 +24,19 @@ import (
 
 // common functions for webhooks
 
-func validatePluginImage(image, expectedName string, expectedMinVersion *version.Version) error {
-	parts := strings.SplitN(image, ":", 2)
+func validatePluginImage(image, expectedImageName string, expectedMinVersion *version.Version) error {
+	// Ignore registry, vendor and extract the image name with the tag
+
+	parts := strings.SplitN(filepath.Base(image), ":", 2)
 	if len(parts) != 2 {
 		return errors.Errorf("incorrect image field %q", image)
 	}
-	namespacedName := parts[0]
+
+	imageName := parts[0]
 	versionStr := parts[1]
 
-	parts = strings.Split(namespacedName, "/")
-	name := parts[len(parts)-1]
-	if name != expectedName {
-		return errors.Errorf("incorrect image name %q. Make sure you use '<vendor>/%s:<version>'", name, expectedName)
+	if imageName != expectedImageName {
+		return errors.Errorf("incorrect image name %q. Make sure you use '<vendor>/%s:<version>'", imageName, expectedImageName)
 	}
 
 	ver, err := version.ParseSemantic(versionStr)
