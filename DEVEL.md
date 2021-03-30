@@ -179,7 +179,17 @@ $ make test
 
 and fix all new compilation issues.
 
-## How to publish a new version of the Intel Device Plugins operator
+## How to work with Intel Device Plugins operator modifications
+
+There are few useful steps when working with changes to Device Plugins CRDs and controllers:
+
+1. Install controller-gen: `GO111MODULE=on go get -u sigs.k8s.io/controller-tools/cmd/controller-gen@<release ver>, e.g, v0.4.1`
+2. Generate CRD and Webhook artifacts: `make generate`
+3. Test local changes using [envtest](https://book.kubebuilder.io/reference/envtest.html): `make envtest`
+4. Build a custom operator image: `make intel-deviceplugin-operator`
+5. (Un)deploy operator: `kubectl [apply|delete] -k deployments/operator/default`
+
+## How to publish a new version of the Intel Device Plugins operator to operatorhub.io
 
 Generate package manifests with:
 ```

@@ -99,15 +99,6 @@ $(cmds):
 
 build: $(cmds)
 
-deploy-operator: operator generate
-	kubectl apply -k deployments/operator/default
-
-undeploy-operator:
-	kubectl delete -k deployments/operator/default
-
-run-operator: deploy-operator
-	./cmd/operator/operator
-
 .PHONY: bundle
 bundle:
 	$(OPERATOR_SDK) generate kustomize manifests -q --input-dir $(OLM_MANIFESTS) --output-dir $(OLM_MANIFESTS) --apis-dir pkg/apis
@@ -173,7 +164,7 @@ check-github-actions:
 	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
 
-.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions run-operator envtest deploy-operator undeploy-operator
+.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest
 
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
