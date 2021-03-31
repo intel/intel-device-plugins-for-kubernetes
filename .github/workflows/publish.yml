@@ -5,6 +5,7 @@ on:
     branches:
         - main
         - release-0.19
+        - release-0.20
 
 jobs:
   build:
@@ -48,6 +49,17 @@ jobs:
         rm -rf _work/venv
         make vhtml
         mv _build/html $HOME/output/0.19
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        ref: release-0.20
+    - name: Build release-0.20
+      run: |
+        GITHUB_SHA=$(git rev-parse HEAD)
+        export GITHUB_SHA
+        rm -rf _work/venv
+        make vhtml
+        mv _build/html $HOME/output/0.20
     - name: Deploy the docs
       shell: bash
       env:
