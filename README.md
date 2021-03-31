@@ -173,30 +173,14 @@ The [DSA device plugin](cmd/dsa_plugin/README.md) supports acceleration using th
 
 ## Device Plugins Operator
 
-Currently the operator has support for the QAT, GPU, FPGA, SGX and DSA device plugins:
-it validates container image references and extends reported statuses.
+To simplify the deployment of the device plugins, a unified device plugins operator is implemented.
 
-To run an operator instance in the container run
+Currently the operator has support for the QAT, GPU, FPGA, SGX and DSA device plugins. Each
+device plugin has its own custom resource definition (CRD) and the corresponding controller that
+watches CRUD operations to those custom resources.
 
-```bash
-$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.2.0/cert-manager.yaml
-$ make deploy-operator
-```
-
-Then deploy your device plugin by applying its custom resource, e.g.
-`GpuDevicePlugin` with
-
-```bash
-$ kubectl apply -f ./deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml
-```
-
-Observe it is up and running:
-
-```bash
-$ kubectl get GpuDevicePlugin
-NAME                     DESIRED   READY   NODE SELECTOR   AGE
-gpudeviceplugin-sample   1         1                       5s
-```
+The [Device plugins operator README](cmd/operator/README.md) gives the installation and usage
+details. The operator is also available via [operatorhub.io](https://operatorhub.io/operator/intel-device-plugins-operator).
 
 ## Demos
 

@@ -75,11 +75,28 @@ $ export no_proxy=$no_proxy,.svc,.svc.cluster.local
 Finally deploy the operator itself:
 
 ```
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=main
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=<RELEASE_VERSION>
 ```
 
 Now you can deploy the device plugins by creating corresponding custom resources.
 The samples for them are available [here](/deployments/operator/samples/).
+
+## Usage
+
+Deploy your device plugin by applying its custom resource, e.g.
+`GpuDevicePlugin` with
+
+```bash
+$ kubectl apply -f https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml
+```
+
+Observe it is up and running:
+
+```bash
+$ kubectl get GpuDevicePlugin
+NAME                     DESIRED   READY   NODE SELECTOR   AGE
+gpudeviceplugin-sample   1         1                       5s
+```
 
 ## Known issues
 
