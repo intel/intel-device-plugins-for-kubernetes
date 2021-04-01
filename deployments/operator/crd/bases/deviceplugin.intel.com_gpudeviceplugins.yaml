@@ -51,6 +51,10 @@ spec:
           spec:
             description: GpuDevicePluginSpec defines the desired state of GpuDevicePlugin.
             properties:
+              enableMonitoring:
+                description: EnableMonitoring enables the monitoring resource ('i915_monitoring')
+                  which gives access to all GPU devices on given node.
+                type: boolean
               image:
                 description: Image is a container image with GPU device plugin executable.
                 type: string

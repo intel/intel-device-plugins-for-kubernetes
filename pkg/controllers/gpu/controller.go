@@ -393,6 +393,10 @@ func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
 	args := make([]string, 0, 4)
 	args = append(args, "-v", strconv.Itoa(gdp.Spec.LogLevel))
 
+	if gdp.Spec.EnableMonitoring {
+		args = append(args, "-enable-monitoring")
+	}
+
 	if gdp.Spec.SharedDevNum > 0 {
 		args = append(args, "-shared-dev-num", strconv.Itoa(gdp.Spec.SharedDevNum))
 	} else {
