@@ -131,7 +131,7 @@ func (l *labeler) getTileMemoryAmount(gpuName string) (mem, numTiles uint64) {
 			continue
 		}
 
-		n, err := strconv.ParseUint(strings.TrimSpace(string(dat)), 10, 64)
+		n, err := strconv.ParseUint(strings.TrimSpace(string(dat)), 0, 64)
 		if err != nil {
 			klog.Warning("Skipping. Can't convert addr_range: ", err)
 			continue
