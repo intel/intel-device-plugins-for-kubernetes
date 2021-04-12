@@ -98,6 +98,20 @@ NAME                     DESIRED   READY   NODE SELECTOR   AGE
 gpudeviceplugin-sample   1         1                       5s
 ```
 
+In order to limit the deployment to a specific device type,
+use one of kustomizations under deployments/operator/device.
+
+For example, to limit the deployment to FPGA, use:
+
+```bash
+$ kubectl apply -k deployments/operator/device/fpga
+```
+
+Operator also supports deployments with multiple selected device types.
+In this case, create a new kustomization with the necessary resources
+that passes the desired device types to the operator using `--device`
+command line argument multiple times.
+
 ## Known issues
 
 When the operator is run with leader election enabled, that is with the option
@@ -106,3 +120,7 @@ number of pods. Otherwise a heart beat used by the leader election code may trig
 a timeout and crash. We are going to use different clients for the controller and
 leader election code to alleviate the issue. See more details in
 https://github.com/intel/intel-device-plugins-for-kubernetes/issues/476.
+
+In case the deployment is limited to specific device type(s),
+the CRDs for other device types are still created, but no controllers
+for them are registered.
