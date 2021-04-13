@@ -153,8 +153,8 @@ Containers requesting SGX resources in the cluster should not use the device plu
 The SGX admission webhook is responsible for performing Pod mutations based on the `sgx.intel.com/quote-provider`
 pod annotation set by the user. The purpose of the webhook is to hide the details of setting the necessary
 device resources and volume mounts for using SGX remote attestation in the cluster. Furthermore,
-the SGX admission webhook is responsible for writing a pod/sandbox `sgx.intel.com/total_epc` annotation that
-is used by Kata Containers to dynamically adjust its virtualized SGX encrypted page cache (EPC) bank(s) size.
+the SGX admission webhook is responsible for writing a pod/sandbox `sgx.intel.com/epc` annotation that is used by
+Kata Containers to dynamically adjust its virtualized SGX encrypted page cache (EPC) bank(s) size.
 
 The SGX admission webhook is implemented as part of [Intel Device Plugin Operator](cmd/operator/README.md).
 
