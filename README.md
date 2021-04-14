@@ -156,7 +156,8 @@ device resources and volume mounts for using SGX remote attestation in the clust
 the SGX admission webhook is responsible for writing a pod/sandbox `sgx.intel.com/epc` annotation that is used by
 Kata Containers to dynamically adjust its virtualized SGX encrypted page cache (EPC) bank(s) size.
 
-The SGX admission webhook is implemented as part of [Intel Device Plugin Operator](cmd/operator/README.md).
+The SGX admission webhook is available as part of [Intel Device Plugin Operator](cmd/operator/README.md) or
+as a standalone [SGX Admission webhook image](cmd/sgx_admissionwebhook/README.md).
 
 #### SGX EPC memory registration
 
