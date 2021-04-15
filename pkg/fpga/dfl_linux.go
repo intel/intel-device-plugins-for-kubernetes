@@ -56,7 +56,7 @@ func (f *DflFME) Close() error {
 // NewDflFME Opens device.
 func NewDflFME(dev string) (FME, error) {
 	fme := &DflFME{DevPath: dev}
-	if err := checkVendorAndClass(fme); err != nil {
+	if err := checkPCIDeviceType(fme); err != nil {
 		return nil, err
 	}
 	if err := fme.updateProperties(); err != nil {
@@ -92,7 +92,7 @@ func (f *DflPort) Close() error {
 // NewDflPort Opens device.
 func NewDflPort(dev string) (Port, error) {
 	port := &DflPort{DevPath: dev}
-	if err := checkVendorAndClass(port); err != nil {
+	if err := checkPCIDeviceType(port); err != nil {
 		return nil, err
 	}
 	if err := port.updateProperties(); err != nil {

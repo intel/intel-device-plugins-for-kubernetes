@@ -62,13 +62,14 @@ func cleanBasename(name string) string {
 }
 
 // check that FPGA device is a compatible PCI device.
-func checkVendorAndClass(dev commonFpgaAPI) error {
+func checkPCIDeviceType(dev commonFpgaAPI) error {
 	pci, err := dev.GetPCIDevice()
 	if err != nil {
 		return err
 	}
-	if pci.Vendor != vendorIntel || pci.Class != fpgaClass {
-		return errors.Errorf("unsupported PCI device %s  VID=%s PID=%s Class=%s", pci.BDF, pci.Vendor, pci.Device, pci.Class)
+
+	if pci.Class != fpgaClass {
+		return errors.Errorf("unsupported PCI class device %s  VID=%s PID=%s Class=%s", pci.BDF, pci.Vendor, pci.Device, pci.Class)
 	}
 	return nil
 }
