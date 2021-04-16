@@ -8,12 +8,17 @@ metadata:
     description: This One Operator is a Kubernetes custom controller whose goal is to serve the installation and lifecycle management of Intel device plugins for Kubernetes.
     operators.operatorframework.io/builder: operator-sdk-v1.2.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
-  name: intel-device-plugins-operator.vX.Y.Z
+  name: intel-device-plugins-operator.v0.0.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+    - description: DsaDevicePlugin is the Schema for the dsadeviceplugins API. It represents the DSA device plugin responsible for advertising Intel DSA hardware resources to the kubelet.
+      displayName: Intel DSA Device Plugin
+      kind: DsaDevicePlugin
+      name: dsadeviceplugins.deviceplugin.intel.com
+      version: v1
     - description: AcceleratorFunction is a specification for an Accelerator Function resource provided by a FPGA-based programmable hardware accelerator.
       displayName: Accelerator Function
       kind: AcceleratorFunction
@@ -44,11 +49,6 @@ spec:
       kind: SgxDevicePlugin
       name: sgxdeviceplugins.deviceplugin.intel.com
       version: v1
-      description: DsaDevicePlugin is the Schema for the dsadeviceplugins API. It represents the DSA device plugin responsible for advertising Intel DSA hardware resources to the kubelet.
-      displayName: Intel DSA Device Plugin
-      kind: DsaDevicePlugin
-      name: dsadeviceplugins.deviceplugin.intel.com
-      version: v1
   description: |
     [Intel Device Plugins for Kubernetes](https://github.com/intel/intel-device-plugins-for-kubernetes) is a collection of
     [device plugins](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/) advertising Intel specific hardware resources
@@ -76,6 +76,7 @@ spec:
   - qat
   - sgx
   - gpu
+  - dsa
   links:
   - name: Intel Device Plugins Operator
     url: https://github.com/intel/intel-device-plugins-for-kubernetes

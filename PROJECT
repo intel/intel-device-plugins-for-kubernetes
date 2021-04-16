@@ -4,24 +4,60 @@ multigroup: true
 projectName: intel-device-plugins-operator
 repo: github.com/intel/intel-device-plugins-for-kubernetes
 resources:
-- group: fpga
+-
+  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
+  # controller: true
+  domain: intel.com
+  group: fpga
   kind: AcceleratorFunction
+  # TODO(user): Update the package path for your API if the below value is incorrect.
+  path: github.com/intel/intel-device-plugins-for-kubernetes/apis/fpga/v2
   version: v2
-- group: deviceplugin
+-
+  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
+  # controller: true
+  domain: intel.com
+  group: deviceplugin
   kind: FpgaDevicePlugin
+  # TODO(user): Update the package path for your API if the below value is incorrect.
+  path: github.com/intel/intel-device-plugins-for-kubernetes/apis/deviceplugin/v1
   version: v1
-- group: fpga
+-
+  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
+  # controller: true
+  domain: intel.com
+  group: fpga
   kind: FpgaRegion
+  # TODO(user): Update the package path for your API if the below value is incorrect.
+  path: github.com/intel/intel-device-plugins-for-kubernetes/apis/fpga/v2
   version: v2
-- group: deviceplugin
+-
+  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
+  # controller: true
+  domain: intel.com
+  group: deviceplugin
   kind: GpuDevicePlugin
+  # TODO(user): Update the package path for your API if the below value is incorrect.
+  path: github.com/intel/intel-device-plugins-for-kubernetes/apis/deviceplugin/v1
   version: v1
-- group: deviceplugin
+-
+  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
+  # controller: true
+  domain: intel.com
+  group: deviceplugin
   kind: QatDevicePlugin
+  # TODO(user): Update the package path for your API if the below value is incorrect.
+  path: github.com/intel/intel-device-plugins-for-kubernetes/apis/deviceplugin/v1
   version: v1
-- group: deviceplugin
+-
+  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
+  # controller: true
+  domain: intel.com
+  group: deviceplugin
   kind: SgxDevicePlugin
+  # TODO(user): Update the package path for your API if the below value is incorrect.
+  path: github.com/intel/intel-device-plugins-for-kubernetes/apis/deviceplugin/v1
   version: v1
-version: 3-alpha
+version: "3"
 plugins:
   go.sdk.operatorframework.io/v2-alpha: {}
