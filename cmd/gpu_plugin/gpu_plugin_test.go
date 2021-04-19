@@ -155,6 +155,8 @@ func TestScan(t *testing.T) {
 		},
 	}
 
+	opts := cliOptions{sharedDevNum: 1}
+
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
 			root, err := ioutil.TempDir("", "test_new_device_plugin")
@@ -169,7 +171,7 @@ func TestScan(t *testing.T) {
 				t.Errorf("unexpected error: %+v", err)
 			}
 
-			plugin := newDevicePlugin(sysfs, devfs, 1)
+			plugin := newDevicePlugin(sysfs, devfs, opts)
 
 			notifier := &mockNotifier{
 				scanDone: plugin.scanDone,
