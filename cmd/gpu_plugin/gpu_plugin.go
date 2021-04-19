@@ -52,7 +52,8 @@ const (
 )
 
 type cliOptions struct {
-	sharedDevNum int
+	sharedDevNum     int
+	enableMonitoring bool
 }
 
 type devicePlugin struct {
@@ -166,8 +167,10 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				klog.V(4).Infof("Adding %s to GPU %s", devPath, f.Name())
 				nodes = append(nodes, devSpec)
 			}
-			klog.V(4).Infof("Adding %s to GPU %s/%s", devPath, monitorType, monitorID)
-			monitor = append(monitor, devSpec)
+			if dp.options.enableMonitoring {
+				klog.V(4).Infof("Adding %s to GPU %s/%s", devPath, monitorType, monitorID)
+				monitor = append(monitor, devSpec)
+			}
 		}
 
 		if len(nodes) > 0 {
@@ -192,6 +195,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 func main() {
 	var opts cliOptions
 
+	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable 'i915_monitoring' (= all GPUs) resource")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.Parse()
 

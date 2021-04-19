@@ -155,7 +155,7 @@ func TestScan(t *testing.T) {
 		},
 	}
 
-	opts := cliOptions{sharedDevNum: 1}
+	opts := cliOptions{sharedDevNum: 1, enableMonitoring: true}
 
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
