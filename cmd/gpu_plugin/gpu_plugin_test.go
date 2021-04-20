@@ -1,4 +1,4 @@
-// Copyright 2017 Intel Corporation. All Rights Reserved.
+// Copyright 2017-2021 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ func TestScan(t *testing.T) {
 			},
 		},
 		{
-			name:      "all is correct",
+			name:      "one device",
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
@@ -93,6 +93,19 @@ func TestScan(t *testing.T) {
 			},
 			devfsdirs:    []string{"card0"},
 			expectedDevs: 1,
+		},
+		{
+			name: "two devices",
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card1/device/drm/card1",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card1/device/vendor": []byte("0x8086"),
+			},
+			devfsdirs:    []string{"card0", "card1"},
+			expectedDevs: 2,
 		},
 		{
 			name:      "wrong vendor",
@@ -138,8 +151,12 @@ func TestScan(t *testing.T) {
 				t.Errorf("unexpected error: %+v", err)
 			}
 			if tc.expectedDevs != notifier.devCount {
-				t.Errorf("Wrong number of discovered devices")
+				t.Errorf("Expected %d, discovered %d devices",
+					tc.expectedDevs, notifier.devCount)
 			}
+			// remove dirs/files for next test
+			os.RemoveAll(sysfs)
+			os.RemoveAll(devfs)
 		})
 	}
 }
