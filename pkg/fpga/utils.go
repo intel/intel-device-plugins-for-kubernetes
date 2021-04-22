@@ -35,7 +35,6 @@ func readFilesInDirectory(fileMap map[string]*string, dir string) error {
 				continue
 			case len(files) != 1:
 				// doesn't match unique file, skip it
-				// fmt.Println("KAD2: ", files)
 				continue
 			}
 			fname = files[0]
