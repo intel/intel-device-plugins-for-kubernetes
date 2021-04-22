@@ -33,7 +33,7 @@ The simplest webhook deployment depends on having [cert-manager](https://cert-ma
 installed:
 
 ```bash
-$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.2.0/cert-manager.yaml
+$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
 ```
 
 Also if your cluster operates behind a corporate proxy make sure that the API
