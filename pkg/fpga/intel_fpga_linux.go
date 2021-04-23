@@ -53,7 +53,7 @@ func (f *IntelFpgaFME) Close() error {
 // NewIntelFpgaFME Opens device.
 func NewIntelFpgaFME(dev string) (FME, error) {
 	fme := &IntelFpgaFME{DevPath: dev}
-	if err := checkVendorAndClass(fme); err != nil {
+	if err := checkPCIDeviceType(fme); err != nil {
 		return nil, err
 	}
 	if err := fme.updateProperties(); err != nil {
@@ -86,7 +86,7 @@ func (f *IntelFpgaPort) Close() error {
 // NewIntelFpgaPort Opens device.
 func NewIntelFpgaPort(dev string) (Port, error) {
 	port := &IntelFpgaPort{DevPath: dev}
-	if err := checkVendorAndClass(port); err != nil {
+	if err := checkPCIDeviceType(port); err != nil {
 		port.Close()
 		return nil, err
 	}
