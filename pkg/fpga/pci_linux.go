@@ -47,6 +47,7 @@ type PCIDevice struct {
 	NUMA      string
 	VFs       string
 	TotalVFs  string
+	Driver    string
 	PhysFn    *PCIDevice
 }
 
@@ -86,6 +87,9 @@ func NewPCIDevice(devPath string) (*PCIDevice, error) {
 	}
 	if physFn, err := NewPCIDevice(filepath.Join(pci.SysFsPath, "physfn")); err == nil {
 		pci.PhysFn = physFn
+	}
+	if driver, err := filepath.EvalSymlinks(filepath.Join(pci.SysFsPath, "driver")); err == nil {
+		pci.Driver = filepath.Base(driver)
 	}
 	return pci, nil
 }
