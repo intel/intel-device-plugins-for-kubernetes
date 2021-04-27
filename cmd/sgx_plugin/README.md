@@ -64,7 +64,8 @@ The component has the same basic dependancies as the
 [generic plugin framework dependencies](../../README.md#about).
 
 The SGX device plugin requires Linux Kernel SGX drivers to be available. These drivers
-are available in Linux 5.11.
+are available in Linux 5.11. [The SGX DCAP out-of-tree driver v1.41](https://github.com/intel/SGXDataCenterAttestationPrimitives)
+is also known to work.
 
 The hardware platform must support SGX Flexible Launch Control.
 
@@ -123,6 +124,9 @@ the devel images from Docker Hub by default.
 ```bash
 $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_nfd?ref=<RELEASE_VERSION>
 ```
+
+**Note:** The default `nfd-worker.conf` assumes that the in-tree driver is used and enabled (`CONFIG_X86_SGX=y`). If
+the SGX DCAP out-of-tree driver is used, the `kConfig` match in `nfd-worker.conf` must be removed.
 
 #### Deploy cert-manager
 
