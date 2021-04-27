@@ -47,7 +47,7 @@ for lic in $LICENSE_FILES; do
 			if [ ! -d $2/package-sources ]; then
 				mkdir $2/package-sources
 			fi
-			tar -Jvcf  $2/package-sources/$(echo $DIR | tr / _).tar.xz $DIR
+			tar -zvcf  $2/package-sources/$(echo $DIR | tr / _).tar.gz $DIR
 		fi
 	fi
 done

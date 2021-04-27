@@ -21,8 +21,8 @@ spec:
         name: manager
         securityContext:
           runAsNonRoot: true
-          runAsUser: 3210
-          runAsGroup: 3210
+          runAsUser: 65532
+          runAsGroup: 65532
           readOnlyRootFilesystem: true
         resources:
           limits:

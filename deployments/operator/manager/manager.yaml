@@ -35,8 +35,8 @@ spec:
             memory: 20Mi
         securityContext:
           runAsNonRoot: true
-          runAsUser: 3210
-          runAsGroup: 3210
+          runAsUser: 65532
+          runAsGroup: 65532
           readOnlyRootFilesystem: true
         env:
           - name: DEVICEPLUGIN_NAMESPACE
