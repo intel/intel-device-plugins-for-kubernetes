@@ -100,6 +100,17 @@ func TestScan(t *testing.T) {
 			expectedMonitors: 1,
 		},
 		{
+			name:      "sriov-1-pf-no-vfs",
+			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor":       []byte("0x8086"),
+				"card0/device/sriov_numvfs": []byte("0"),
+			},
+			devfsdirs:        []string{"card0"},
+			expectedDevs:     1,
+			expectedMonitors: 1,
+		},
+		{
 			name: "two sysfs records but one dev node",
 			sysfsdirs: []string{
 				"card0/device/drm/card0",
@@ -114,16 +125,19 @@ func TestScan(t *testing.T) {
 			expectedMonitors: 1,
 		},
 		{
-			name: "two devices",
+			name: "sriov-1-pf-and-2-vfs",
 			sysfsdirs: []string{
 				"card0/device/drm/card0",
 				"card1/device/drm/card1",
+				"card2/device/drm/card2",
 			},
 			sysfsfiles: map[string][]byte{
-				"card0/device/vendor": []byte("0x8086"),
-				"card1/device/vendor": []byte("0x8086"),
+				"card0/device/vendor":       []byte("0x8086"),
+				"card0/device/sriov_numvfs": []byte("2"),
+				"card1/device/vendor":       []byte("0x8086"),
+				"card2/device/vendor":       []byte("0x8086"),
 			},
-			devfsdirs:        []string{"card0", "card1"},
+			devfsdirs:        []string{"card0", "card1", "card2"},
 			expectedDevs:     2,
 			expectedMonitors: 1,
 		},

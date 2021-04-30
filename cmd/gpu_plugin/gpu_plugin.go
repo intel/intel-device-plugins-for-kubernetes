@@ -134,6 +134,9 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			return nil, errors.Wrap(err, "Can't read device folder")
 		}
 
+		dat, err = ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/sriov_numvfs"))
+		isPFwithVFs := (err == nil && strings.TrimSpace(string(dat)) != "0")
+
 		for _, drmFile := range drmFiles {
 			if dp.controlDeviceReg.MatchString(drmFile.Name()) {
 				//Skipping possible drm control node
@@ -150,9 +153,10 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				ContainerPath: devPath,
 				Permissions:   "rw",
 			}
-			klog.V(4).Infof("Adding %s to GPU %s", devPath, f.Name())
-			nodes = append(nodes, devSpec)
-
+			if !isPFwithVFs {
+				klog.V(4).Infof("Adding %s to GPU %s", devPath, f.Name())
+				nodes = append(nodes, devSpec)
+			}
 			klog.V(4).Infof("Adding %s to GPU %s/%s", devPath, monitorType, monitorID)
 			monitor = append(monitor, devSpec)
 		}
