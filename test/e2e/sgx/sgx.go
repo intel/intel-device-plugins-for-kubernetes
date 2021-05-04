@@ -16,7 +16,6 @@ package sgx
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -50,7 +49,7 @@ func describe() {
 	}
 
 	ginkgo.It("checks availability of SGX resources", func() {
-		tmpDir, err := ioutil.TempDir("", "sgxplugine2etest-"+f.Namespace.Name)
+		tmpDir, err := os.MkdirTemp("", "sgxplugine2etest-"+f.Namespace.Name)
 		if err != nil {
 			framework.Failf("unable to create temp directory: %v", err)
 		}

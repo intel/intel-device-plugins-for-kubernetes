@@ -16,7 +16,6 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -61,11 +60,11 @@ func createDevice(pciBusRootDir string, bdf string, vid string, pid string) erro
 	vidHex := append([]byte(vid), 0xa)
 	pidHex := append([]byte(pid), 0xa)
 
-	err = ioutil.WriteFile(filepath.Join(pciBusRootDir, bdf, "vendor"), vidHex, 0444)
+	err = os.WriteFile(filepath.Join(pciBusRootDir, bdf, "vendor"), vidHex, 0444)
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(filepath.Join(pciBusRootDir, bdf, "device"), pidHex, 0444)
+	err = os.WriteFile(filepath.Join(pciBusRootDir, bdf, "device"), pidHex, 0444)
 	if err != nil {
 		return err
 	}
@@ -112,7 +111,7 @@ func TestScanPci(t *testing.T) {
 	}
 
 	//create a temporary folder to create fake devices files for PCI scanning
-	tmpPciDir, err := ioutil.TempDir("/tmp", "fake-pci-devices")
+	tmpPciDir, err := os.MkdirTemp("/tmp", "fake-pci-devices")
 	if err != nil {
 		t.Fatal(err)
 	}

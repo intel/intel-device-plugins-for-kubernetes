@@ -18,7 +18,7 @@ package dpdkdrv
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -114,7 +114,7 @@ func (dp *DevicePlugin) getDpdkDevice(vfBdf string) (string, error) {
 	switch dp.dpdkDriver {
 	case igbUio:
 		uioDirPath := filepath.Join(dp.pciDeviceDir, vfBdf, uioSuffix)
-		files, err := ioutil.ReadDir(uioDirPath)
+		files, err := os.ReadDir(uioDirPath)
 		if err != nil {
 			return "", err
 		}
@@ -189,7 +189,7 @@ func (dp *DevicePlugin) getDpdkMounts(dpdkDeviceName string) []pluginapi.Mount {
 }
 
 func (dp *DevicePlugin) getDeviceID(pciAddr string) (string, error) {
-	devID, err := ioutil.ReadFile(filepath.Join(dp.pciDeviceDir, filepath.Clean(pciAddr), "device"))
+	devID, err := os.ReadFile(filepath.Join(dp.pciDeviceDir, filepath.Clean(pciAddr), "device"))
 	if err != nil {
 		return "", errors.Wrapf(err, "Cannot obtain ID for the device %s", pciAddr)
 	}
@@ -202,7 +202,7 @@ func (dp *DevicePlugin) bindDevice(vfBdf string) error {
 	unbindDevicePath := filepath.Join(dp.pciDeviceDir, vfBdf, driverUnbindSuffix)
 
 	// Unbind from the kernel driver
-	err := ioutil.WriteFile(unbindDevicePath, []byte(vfBdf), 0600)
+	err := os.WriteFile(unbindDevicePath, []byte(vfBdf), 0600)
 	if err != nil {
 		return errors.Wrapf(err, "Unbinding from kernel driver failed for the device %s", vfBdf)
 	}
@@ -212,7 +212,7 @@ func (dp *DevicePlugin) bindDevice(vfBdf string) error {
 	}
 	bindDevicePath := filepath.Join(dp.pciDriverDir, dp.dpdkDriver, newIDSuffix)
 	//Bind to the the dpdk driver
-	err = ioutil.WriteFile(bindDevicePath, []byte(vendorPrefix+vfdevID), 0600)
+	err = os.WriteFile(bindDevicePath, []byte(vendorPrefix+vfdevID), 0600)
 	if err != nil {
 		return errors.Wrapf(err, "Binding to the DPDK driver failed for the device %s", vfBdf)
 	}

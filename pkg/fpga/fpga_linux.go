@@ -15,7 +15,7 @@
 package fpga
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -73,7 +73,7 @@ func NewFME(fname string) (FME, error) {
 
 // ListFpgaDevices returns two lists of FPGA device nodes: FMEs and Ports.
 func ListFpgaDevices() (FMEs, Ports []string) {
-	files, err := ioutil.ReadDir("/sys/bus/platform/devices")
+	files, err := os.ReadDir("/sys/bus/platform/devices")
 	if err != nil {
 		return
 	}

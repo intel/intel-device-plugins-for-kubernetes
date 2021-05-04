@@ -15,7 +15,6 @@
 package topology
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -134,12 +133,12 @@ func TestReadFilesInDirectory(t *testing.T) {
 		"non_existing": &empty,
 	}
 
-	dir, err := ioutil.TempDir("", "readFilesInDirectory")
+	dir, err := os.MkdirTemp("", "readFilesInDirectory")
 	if err != nil {
 		t.Fatalf("unable to create test directory: %+v", err)
 	}
 	defer os.RemoveAll(dir)
-	if err = ioutil.WriteFile(filepath.Join(dir, fname), content, 0600); err != nil {
+	if err = os.WriteFile(filepath.Join(dir, fname), content, 0600); err != nil {
 		t.Fatalf("unexpected failure: %v", err)
 	}
 

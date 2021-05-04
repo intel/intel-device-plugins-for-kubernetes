@@ -17,7 +17,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -49,7 +48,7 @@ func createTestDirs(devfs, sysfs string, devfsDirs, sysfsDirs []string, sysfsFil
 		}
 	}
 	for filename, body := range sysfsFiles {
-		err = ioutil.WriteFile(path.Join(sysfs, filename), body, 0600)
+		err = os.WriteFile(path.Join(sysfs, filename), body, 0600)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake vendor file")
 		}
@@ -102,7 +101,7 @@ func TestPostAllocate(t *testing.T) {
 }
 
 func TestNewDevicePlugin(t *testing.T) {
-	root, err := ioutil.TempDir("", "test_new_device_plugin")
+	root, err := os.MkdirTemp("", "test_new_device_plugin")
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}
@@ -183,7 +182,7 @@ func (n *fakeNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 }
 
 func TestScan(t *testing.T) {
-	root, err := ioutil.TempDir("", "TestScan")
+	root, err := os.MkdirTemp("", "TestScan")
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}

@@ -17,7 +17,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -63,7 +62,7 @@ func newLabeler(sysfsDRMDir, debugfsDRIDir string) *labeler {
 }
 
 func (l *labeler) scan() ([]string, error) {
-	files, err := ioutil.ReadDir(l.sysfsDRMDir)
+	files, err := os.ReadDir(l.sysfsDRMDir)
 	gpuNameList := []string{}
 
 	if err != nil {
@@ -76,7 +75,7 @@ func (l *labeler) scan() ([]string, error) {
 			continue
 		}
 
-		dat, err := ioutil.ReadFile(path.Join(l.sysfsDRMDir, f.Name(), "device/vendor"))
+		dat, err := os.ReadFile(path.Join(l.sysfsDRMDir, f.Name(), "device/vendor"))
 		if err != nil {
 			klog.Warning("Skipping. Can't read vendor file: ", err)
 			continue
@@ -87,7 +86,7 @@ func (l *labeler) scan() ([]string, error) {
 			continue
 		}
 
-		_, err = ioutil.ReadDir(path.Join(l.sysfsDRMDir, f.Name(), "device/drm"))
+		_, err = os.ReadDir(path.Join(l.sysfsDRMDir, f.Name(), "device/drm"))
 		if err != nil {
 			return gpuNameList, errors.Wrap(err, "Can't read device folder")
 		}
@@ -125,7 +124,7 @@ func (l *labeler) getTileMemoryAmount(gpuName string) (mem, numTiles uint64) {
 	}
 
 	for _, fileName := range files {
-		dat, err := ioutil.ReadFile(fileName)
+		dat, err := os.ReadFile(fileName)
 		if err != nil {
 			klog.Warning("Skipping. Can't read file: ", err)
 			continue

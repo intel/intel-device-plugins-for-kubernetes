@@ -15,7 +15,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
@@ -261,7 +260,7 @@ func genNewIntelFpgaPort(sysFsPrefix, devDir string, sysFsInfo map[string][]stri
 }
 
 func TestScanFPGAsOPAE(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "TestScanFPGAsOPAE")
+	tmpdir, err := os.MkdirTemp("", "TestScanFPGAsOPAE")
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}

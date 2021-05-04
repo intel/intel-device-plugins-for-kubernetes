@@ -15,7 +15,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
@@ -198,7 +197,7 @@ func getTestCases() []testcase {
 func (tc *testcase) createFiles(t *testing.T, sysfs, root string) {
 	var err error
 	for filename, body := range tc.capabilityFile {
-		if err = ioutil.WriteFile(path.Join(root, filename), body, 0600); err != nil {
+		if err = os.WriteFile(path.Join(root, filename), body, 0600); err != nil {
 			t.Fatalf("Failed to create fake capability file: %+v", err)
 		}
 	}
@@ -208,14 +207,14 @@ func (tc *testcase) createFiles(t *testing.T, sysfs, root string) {
 		}
 	}
 	for filename, body := range tc.sysfsfiles {
-		if err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0600); err != nil {
+		if err := os.WriteFile(path.Join(sysfs, filename), body, 0600); err != nil {
 			t.Fatalf("Failed to create fake vendor file: %+v", err)
 		}
 	}
 }
 
 func TestLabeling(t *testing.T) {
-	root, err := ioutil.TempDir("", "test_new_device_plugin")
+	root, err := os.MkdirTemp("", "test_new_device_plugin")
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}

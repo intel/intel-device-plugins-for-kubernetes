@@ -19,7 +19,7 @@ package kerneldrv
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -171,7 +171,7 @@ func getUIODevices(sysfs, devtype, bsf string) ([]string, error) {
 	sysfsDir := getUIODeviceListPath(sysfs, devtype, bsf)
 	klog.V(4).Info("Path to uio devices:", sysfsDir)
 
-	devFiles, err := ioutil.ReadDir(sysfsDir)
+	devFiles, err := os.ReadDir(sysfsDir)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Can't read %s", sysfsDir)
 	}
@@ -281,7 +281,7 @@ func (drvConfig driverConfig) update(devID string, iniSection *ini.Section) erro
 }
 
 func getIOMMUStatus() (bool, error) {
-	iommus, err := ioutil.ReadDir("/sys/class/iommu/")
+	iommus, err := os.ReadDir("/sys/class/iommu/")
 	if err != nil {
 		return false, errors.Wrapf(err, "Unable to read IOMMU status")
 	}
