@@ -102,6 +102,23 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	}
 }
 
+func (dp *devicePlugin) isCompatibleDevice(name string) bool {
+	if !dp.gpuDeviceReg.MatchString(name) {
+		klog.V(4).Info("Not compatible device: ", name)
+		return false
+	}
+	dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, name, "device/vendor"))
+	if err != nil {
+		klog.Warning("Skipping. Can't read vendor file: ", err)
+		return false
+	}
+	if strings.TrimSpace(string(dat)) != vendorString {
+		klog.V(4).Info("Non-Intel GPU: ", name)
+		return false
+	}
+	return true
+}
+
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	files, err := ioutil.ReadDir(dp.sysfsDir)
 	if err != nil {
@@ -113,19 +130,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	for _, f := range files {
 		var nodes []pluginapi.DeviceSpec
 
-		if !dp.gpuDeviceReg.MatchString(f.Name()) {
-			klog.V(4).Info("Not compatible device: ", f.Name())
-			continue
-		}
-
-		dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/vendor"))
-		if err != nil {
-			klog.Warning("Skipping. Can't read vendor file: ", err)
-			continue
-		}
-
-		if strings.TrimSpace(string(dat)) != vendorString {
-			klog.V(4).Info("Non-Intel GPU: ", f.Name())
+		if !dp.isCompatibleDevice(f.Name()) {
 			continue
 		}
 
@@ -134,7 +139,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			return nil, errors.Wrap(err, "Can't read device folder")
 		}
 
-		dat, err = ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/sriov_numvfs"))
+		dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/sriov_numvfs"))
 		isPFwithVFs := (err == nil && strings.TrimSpace(string(dat)) != "0")
 
 		for _, drmFile := range drmFiles {
