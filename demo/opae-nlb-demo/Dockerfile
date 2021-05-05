@@ -27,6 +27,7 @@ RUN mkdir -p /usr/src/opae && \
 RUN cd /usr/src/opae/opae-sdk-${OPAE_RELEASE} && \
     mkdir build && \
     cd build && \
+    CFLAGS="$CFLAGS -Wno-misleading-indentation" \
     cmake -DCMAKE_BUILD_TYPE=Release -DOPAE_BUILD_LIBOPAE_PY=OFF .. && \
     make xfpga nlb0 nlb3
 
