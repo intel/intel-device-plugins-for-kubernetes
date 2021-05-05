@@ -68,11 +68,14 @@ func createTestFiles(root string, devfsdirs, sysfsdirs []string, sysfsfiles map[
 
 func TestScan(t *testing.T) {
 	tcases := []struct {
-		name             string
-		devfsdirs        []string
-		sysfsdirs        []string
-		sysfsfiles       map[string][]byte
-		options          cliOptions
+		name string
+		// test-case environment
+		devfsdirs  []string
+		sysfsdirs  []string
+		sysfsfiles map[string][]byte
+		// how plugin should interpret it
+		options cliOptions
+		// what the result should be
 		expectedDevs     int
 		expectedMonitors int
 	}{
