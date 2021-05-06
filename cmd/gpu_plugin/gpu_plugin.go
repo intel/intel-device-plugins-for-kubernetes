@@ -51,11 +51,16 @@ const (
 	scanPeriod = 5 * time.Second
 )
 
+type cliOptions struct {
+	sharedDevNum     int
+	enableMonitoring bool
+}
+
 type devicePlugin struct {
 	sysfsDir string
 	devfsDir string
 
-	sharedDevNum int
+	options cliOptions
 
 	gpuDeviceReg     *regexp.Regexp
 	controlDeviceReg *regexp.Regexp
@@ -64,11 +69,11 @@ type devicePlugin struct {
 	scanDone   chan bool
 }
 
-func newDevicePlugin(sysfsDir, devfsDir string, sharedDevNum int) *devicePlugin {
+func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugin {
 	return &devicePlugin{
 		sysfsDir:         sysfsDir,
 		devfsDir:         devfsDir,
-		sharedDevNum:     sharedDevNum,
+		options:          options,
 		gpuDeviceReg:     regexp.MustCompile(gpuDeviceRE),
 		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
 		scanTicker:       time.NewTicker(scanPeriod),
@@ -102,6 +107,23 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	}
 }
 
+func (dp *devicePlugin) isCompatibleDevice(name string) bool {
+	if !dp.gpuDeviceReg.MatchString(name) {
+		klog.V(4).Info("Not compatible device: ", name)
+		return false
+	}
+	dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, name, "device/vendor"))
+	if err != nil {
+		klog.Warning("Skipping. Can't read vendor file: ", err)
+		return false
+	}
+	if strings.TrimSpace(string(dat)) != vendorString {
+		klog.V(4).Info("Non-Intel GPU: ", name)
+		return false
+	}
+	return true
+}
+
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	files, err := ioutil.ReadDir(dp.sysfsDir)
 	if err != nil {
@@ -113,19 +135,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	for _, f := range files {
 		var nodes []pluginapi.DeviceSpec
 
-		if !dp.gpuDeviceReg.MatchString(f.Name()) {
-			klog.V(4).Info("Not compatible device: ", f.Name())
-			continue
-		}
-
-		dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/vendor"))
-		if err != nil {
-			klog.Warning("Skipping. Can't read vendor file: ", err)
-			continue
-		}
-
-		if strings.TrimSpace(string(dat)) != vendorString {
-			klog.V(4).Info("Non-Intel GPU: ", f.Name())
+		if !dp.isCompatibleDevice(f.Name()) {
 			continue
 		}
 
@@ -134,7 +144,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			return nil, errors.Wrap(err, "Can't read device folder")
 		}
 
-		dat, err = ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/sriov_numvfs"))
+		dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/sriov_numvfs"))
 		isPFwithVFs := (err == nil && strings.TrimSpace(string(dat)) != "0")
 
 		for _, drmFile := range drmFiles {
@@ -157,13 +167,15 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				klog.V(4).Infof("Adding %s to GPU %s", devPath, f.Name())
 				nodes = append(nodes, devSpec)
 			}
-			klog.V(4).Infof("Adding %s to GPU %s/%s", devPath, monitorType, monitorID)
-			monitor = append(monitor, devSpec)
+			if dp.options.enableMonitoring {
+				klog.V(4).Infof("Adding %s to GPU %s/%s", devPath, monitorType, monitorID)
+				monitor = append(monitor, devSpec)
+			}
 		}
 
 		if len(nodes) > 0 {
 			deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil)
-			for i := 0; i < dp.sharedDevNum; i++ {
+			for i := 0; i < dp.options.sharedDevNum; i++ {
 				devID := fmt.Sprintf("%s-%d", f.Name(), i)
 				// Currently only one device type (i915) is supported.
 				// TODO: check model ID to differentiate device models.
@@ -181,19 +193,20 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 }
 
 func main() {
-	var sharedDevNum int
+	var opts cliOptions
 
-	flag.IntVar(&sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
+	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable 'i915_monitoring' (= all GPUs) resource")
+	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.Parse()
 
-	if sharedDevNum < 1 {
+	if opts.sharedDevNum < 1 {
 		klog.Warning("The number of containers sharing the same GPU must greater than zero")
 		os.Exit(1)
 	}
 
 	klog.V(1).Info("GPU device plugin started")
 
-	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory, sharedDevNum)
+	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory, opts)
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }

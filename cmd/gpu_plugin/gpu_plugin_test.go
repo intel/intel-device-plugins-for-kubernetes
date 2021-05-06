@@ -72,6 +72,7 @@ func TestScan(t *testing.T) {
 		devfsdirs        []string
 		sysfsdirs        []string
 		sysfsfiles       map[string][]byte
+		options          cliOptions
 		expectedDevs     int
 		expectedMonitors int
 	}{
@@ -95,18 +96,18 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
-			devfsdirs:        []string{"card0"},
-			expectedDevs:     1,
-			expectedMonitors: 1,
+			devfsdirs:    []string{"card0"},
+			expectedDevs: 1,
 		},
 		{
-			name:      "sriov-1-pf-no-vfs",
+			name:      "sriov-1-pf-no-vfs + monitoring",
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor":       []byte("0x8086"),
 				"card0/device/sriov_numvfs": []byte("0"),
 			},
 			devfsdirs:        []string{"card0"},
+			options:          cliOptions{enableMonitoring: true},
 			expectedDevs:     1,
 			expectedMonitors: 1,
 		},
@@ -120,9 +121,8 @@ func TestScan(t *testing.T) {
 				"card0/device/vendor": []byte("0x8086"),
 				"card1/device/vendor": []byte("0x8086"),
 			},
-			devfsdirs:        []string{"card0"},
-			expectedDevs:     1,
-			expectedMonitors: 1,
+			devfsdirs:    []string{"card0"},
+			expectedDevs: 1,
 		},
 		{
 			name: "sriov-1-pf-and-2-vfs",
@@ -137,8 +137,22 @@ func TestScan(t *testing.T) {
 				"card1/device/vendor":       []byte("0x8086"),
 				"card2/device/vendor":       []byte("0x8086"),
 			},
-			devfsdirs:        []string{"card0", "card1", "card2"},
-			expectedDevs:     2,
+			devfsdirs:    []string{"card0", "card1", "card2"},
+			expectedDevs: 2,
+		},
+		{
+			name: "two devices with 13 shares + monitoring",
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card1/device/drm/card1",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card1/device/vendor": []byte("0x8086"),
+			},
+			devfsdirs:        []string{"card0", "card1"},
+			options:          cliOptions{sharedDevNum: 13, enableMonitoring: true},
+			expectedDevs:     26,
 			expectedMonitors: 1,
 		},
 		{
@@ -150,12 +164,24 @@ func TestScan(t *testing.T) {
 			devfsdirs: []string{"card0"},
 		},
 		{
+			name:      "wrong vendor with 13 shares + monitoring",
+			sysfsdirs: []string{"card0/device/drm/card0"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0xbeef"),
+			},
+			devfsdirs: []string{"card0"},
+			options:   cliOptions{sharedDevNum: 13, enableMonitoring: true},
+		},
+		{
 			name:      "no sysfs records",
 			sysfsdirs: []string{"non_gpu_card"},
 		},
 	}
 
 	for _, tc := range tcases {
+		if tc.options.sharedDevNum == 0 {
+			tc.options.sharedDevNum = 1
+		}
 		t.Run(tc.name, func(t *testing.T) {
 			root, err := ioutil.TempDir("", "test_new_device_plugin")
 			if err != nil {
@@ -169,7 +195,7 @@ func TestScan(t *testing.T) {
 				t.Errorf("unexpected error: %+v", err)
 			}
 
-			plugin := newDevicePlugin(sysfs, devfs, 1)
+			plugin := newDevicePlugin(sysfs, devfs, tc.options)
 
 			notifier := &mockNotifier{
 				scanDone: plugin.scanDone,
