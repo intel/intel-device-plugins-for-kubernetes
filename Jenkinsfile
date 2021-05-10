@@ -11,7 +11,7 @@ pipeline {
     RUNC_VERSION="v1.0.0-rc93"
     CRIO_VERSION="v1.20.0"
     GOLANGCI_LINT_VERSION="v1.36.0"
-    GO_VERSION="1.15.7"
+    GO_VERSION="1.16.4"
     GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
     GOROOT="/usr/local/go"
     GOPATH="/tmp/go"
