@@ -34,6 +34,11 @@ This card has:
 - 8 MyriadX VPUs
 - PCIe interface to 6th+ Generation Core PC or Xeon E3/E5 server
 
+[Gen 3 Intel® Movidius™ VPU HDDL VE3](https://www.intel.com/content/www/us/en/products/details/processors/movidius-vpu.html)
+This card has:
+- 3 Intel® Movidius Gen 3 Intel® Movidius™ VPU SoCs
+
+
 > **Note:** This device plugin need HDDL daemon service to be running either natively or from a container.
 >      To get VCAC-A or Mustang card running hddl, please refer to:
 > https://github.com/OpenVisualCloud/Dockerfiles/blob/master/VCAC-A/script/setup_hddl.sh
@@ -87,6 +92,12 @@ daemonset.apps/intel-vpu-plugin created
 > **Note**: It is also possible to run the VPU device plugin using a non-root user. To do this,
 the nodes' DAC rules must be configured to device plugin socket creation and kubelet registration.
 Furthermore, the deployments `securityContext` must be configured with appropriate `runAsUser/runAsGroup`.
+
+For xlink device, deploy DaemonSet as
+```bash
+$ kubectl apply -k deployments/vpu_plugin/overlays/xlink
+daemonset.apps/intel-vpu-plugin created
+```
 
 ### Deploy by hand
 
