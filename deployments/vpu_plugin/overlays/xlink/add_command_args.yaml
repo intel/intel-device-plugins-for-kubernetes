@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-vpu-plugin
+spec:
+  template:
+    spec:
+      containers:
+      - name: intel-vpu-plugin
+        args: ["--mode=2"]
