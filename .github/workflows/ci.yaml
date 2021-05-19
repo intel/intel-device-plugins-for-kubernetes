@@ -70,6 +70,7 @@ jobs:
           - intel-gpu-plugin
           - intel-fpga-plugin
           - intel-qat-plugin
+          - intel-qat-plugin-kerneldrv
           - intel-vpu-plugin
           - intel-deviceplugin-operator
           - intel-sgx-admissionwebhook

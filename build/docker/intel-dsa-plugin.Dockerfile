@@ -1,38 +1,38 @@
-# CLEAR_LINUX_BASE and CLEAR_LINUX_VERSION can be used to make the build
-# reproducible by choosing an image by its hash and installing an OS version
-# with --version=:
-# CLEAR_LINUX_BASE=clearlinux@sha256:b8e5d3b2576eb6d868f8d52e401f678c873264d349e469637f98ee2adf7b33d4
-# CLEAR_LINUX_VERSION="--version=29970"
+# Copyright 2021 Intel Corporation. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# GOLANG_BASE can be used to make the build reproducible by choosing an
+# image by its hash:
+# GOLANG_BASE=golang@sha256:9d64369fd3c633df71d7465d67d43f63bb31192193e671742fa1c26ebc3a6210
 #
 # This is used on release branches before tagging a stable version.
-# The master branch defaults to using the latest Clear Linux.
-ARG CLEAR_LINUX_BASE=clearlinux/golang:latest
+# The main branch defaults to using the latest Golang base image.
+ARG GOLANG_BASE=golang:1.15-buster
 
-FROM ${CLEAR_LINUX_BASE} as builder
+FROM ${GOLANG_BASE} as builder
 
-ARG CLEAR_LINUX_VERSION=
-
-RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
-RUN ldconfig
 ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
+ARG BUILDFLAGS="-ldflags=-w -s"
 WORKDIR $DIR
 COPY . .
 
-RUN mkdir /install_root \
-    && swupd os-install \
-    ${CLEAR_LINUX_VERSION} \
-    --path /install_root \
-    --statedir /swupd-state \
-    --no-boot-update \
-    && rm -rf /install_root/var/lib/swupd/*
-
-RUN cd cmd/dsa_plugin; GO111MODULE=${GO111MODULE} go install; cd -
-RUN chmod a+x /go/bin/dsa_plugin \
-    && install -D /go/bin/dsa_plugin /install_root/usr/local/bin/intel_dsa_device_plugin \
+RUN cd cmd/dsa_plugin; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}"; cd -
+RUN install -D /go/bin/dsa_plugin /install_root/usr/local/bin/intel_dsa_device_plugin \
     && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && scripts/copy-modules-licenses.sh ./cmd/dsa_plugin /install_root/usr/local/share/
 
-FROM scratch as final
+FROM gcr.io/distroless/static
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_dsa_device_plugin"]

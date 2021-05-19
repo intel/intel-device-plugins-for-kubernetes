@@ -84,6 +84,7 @@ pipeline {
           steps {
             dir(path: "$REPO_DIR") {
               sh "make pre-pull"
+              sh "make -e vendor"
             }
           }
         }
