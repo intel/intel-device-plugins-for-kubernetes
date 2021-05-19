@@ -1,73 +1,64 @@
-# CLEAR_LINUX_BASE and CLEAR_LINUX_VERSION can be used to make the build
-# reproducible by choosing an image by its hash and installing an OS version
-# with --version=:
-# CLEAR_LINUX_BASE=clearlinux@sha256:b8e5d3b2576eb6d868f8d52e401f678c873264d349e469637f98ee2adf7b33d4
-# CLEAR_LINUX_VERSION="--version=29970"
+# Copyright 2021 Intel Corporation. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# GOLANG_BASE can be used to make the build reproducible by choosing an
+# image by its hash:
+# GOLANG_BASE=golang@sha256:9d64369fd3c633df71d7465d67d43f63bb31192193e671742fa1c26ebc3a6210
 #
 # This is used on release branches before tagging a stable version.
-# The master branch defaults to using the latest Clear Linux.
-ARG CLEAR_LINUX_BASE=clearlinux/golang:latest
+# The main branch defaults to using the latest Golang base image.
+ARG GOLANG_BASE=golang:1.15-buster
 
-FROM ${CLEAR_LINUX_BASE} as builder
+FROM ${GOLANG_BASE} as builder
 
-ARG CLEAR_LINUX_VERSION=
-
-RUN swupd update --no-boot-update ${CLEAR_LINUX_VERSION}
-RUN ldconfig
 ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
+ARG BUILDFLAGS="-ldflags=-w -s"
 WORKDIR $DIR
 COPY . .
 
-RUN mkdir /install_root \
-    && swupd os-install \
-    ${CLEAR_LINUX_VERSION} \
-    --path /install_root \
-    --statedir /swupd-state \
-    --bundles=rsync \
-    --no-boot-update \
-    && rm -rf /install_root/var/lib/swupd/*
+ARG ROOT=/install_root
 
-# Build CRI Hook
-RUN cd $DIR/cmd/fpga_crihook && \
-    GO111MODULE=${GO111MODULE} go install && \
-    chmod a+x /go/bin/fpga_crihook && \
-    cd $DIR/cmd/fpga_tool && \
-    go install && \
-    chmod a+x /go/bin/fpga_tool && \
-    cd $DIR && \
-    install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE && \
-    scripts/copy-modules-licenses.sh ./cmd/fpga_crihook /install_root/usr/local/share/ && \
-    scripts/copy-modules-licenses.sh ./cmd/fpga_tool /install_root/usr/local/share/
-
-# Minimal result image
-FROM scratch as final
-COPY --from=builder /install_root /
+RUN cd cmd/fpga_crihook && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && \
+    cd ../fpga_tool && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && \
+    cd ../.. && \
+    install -D ${DIR}/LICENSE $ROOT/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE && \
+    scripts/copy-modules-licenses.sh ./cmd/fpga_crihook $ROOT/usr/local/share/ && \
+    scripts/copy-modules-licenses.sh ./cmd/fpga_tool $ROOT/usr/local/share/
 
 ARG SRC_DIR=/usr/local/fpga-sw
 ARG DST_DIR=/opt/intel/fpga-sw
-
-# CRI hook
 ARG CRI_HOOK=intel-fpga-crihook
-ARG FPGA_TOOL=fpgatool
-ARG HOOK_CONF=$CRI_HOOK.json
-ARG HOOK_CONF_SRC=$SRC_DIR/$HOOK_CONF
-ARG HOOK_CONF_DST=$DST_DIR/$HOOK_CONF
 
-COPY --from=builder /go/bin/fpga_crihook $SRC_DIR/$CRI_HOOK
-COPY --from=builder /go/bin/fpga_tool $SRC_DIR/$FPGA_TOOL
+RUN install -D /go/bin/fpga_crihook $ROOT/$SRC_DIR/$CRI_HOOK
+RUN install -D /go/bin/fpga_tool $ROOT/$SRC_DIR/
 
-RUN echo -e "{\n\
+RUN echo "{\n\
     \"hook\" : \"$DST_DIR/$CRI_HOOK\",\n\
     \"stage\" : [ \"prestart\" ],\n\
     \"annotation\": [ \"fpga.intel.com/region\" ]\n\
-}\n">>$HOOK_CONF_SRC
+}\n">>$ROOT/$SRC_DIR/$CRI_HOOK.json
 
-RUN echo -e "#!/bin/sh\n\
-rsync -a --delete $SRC_DIR/ $DST_DIR\n\
-mkdir -p /etc/containers/oci/hooks.d\n\
-ln -sf $HOOK_CONF_DST /etc/containers/oci/hooks.d/$HOOK_CONF\n\
-rm $DST_DIR/deploy.sh\n\
-">> $SRC_DIR/deploy.sh && chmod +x $SRC_DIR/deploy.sh
+ARG TOYBOX_VERSION="0.8.4"
+RUN apt update && apt -y install musl musl-tools musl-dev
+RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz | tar xz \
+    && cd toybox-$TOYBOX_VERSION \
+    && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \
+    && install -D LICENSE $ROOT/usr/local/share/package-licenses/toybox \
+    && cp -r /usr/share/doc/musl $ROOT/usr/local/share/package-licenses/
 
-ENTRYPOINT [ "/usr/local/fpga-sw/deploy.sh" ]
+FROM gcr.io/distroless/static
+COPY --from=builder /install_root /
+
+ENTRYPOINT [ "/bin/sh", "-c", "cp -a /usr/local/fpga-sw/* /opt/intel/fpga-sw/ && ln -sf /opt/intel/fpga-sw/intel-fpga-crihook.json /etc/containers/oci/hooks.d/" ]
