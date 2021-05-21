@@ -29,6 +29,7 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
 
@@ -159,8 +160,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			return nil, errors.Wrap(err, "Can't read device folder")
 		}
 
-		dat, err := os.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/sriov_numvfs"))
-		isPFwithVFs := (err == nil && strings.TrimSpace(string(dat)) != "0")
+		isPFwithVFs := pluginutils.IsSriovPFwithVFs(path.Join(dp.sysfsDir, f.Name()))
 
 		for _, drmFile := range drmFiles {
 			if dp.controlDeviceReg.MatchString(drmFile.Name()) {
