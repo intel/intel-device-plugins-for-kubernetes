@@ -35,6 +35,9 @@ type GpuDevicePluginSpec struct {
 	// +kubebuilder:validation:Minimum=1
 	SharedDevNum int `json:"sharedDevNum,omitempty"`
 
+	// ResourceManager handles the fractional resource management for multi-GPU nodes
+	ResourceManager bool `json:"resourceManager,omitempty"`
+
 	// LogLevel sets the plugin's log level.
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`
