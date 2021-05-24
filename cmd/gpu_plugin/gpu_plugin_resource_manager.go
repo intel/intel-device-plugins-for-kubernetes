@@ -16,8 +16,10 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -56,7 +58,12 @@ var (
 	errNoAnnotations    = errors.New("annotations missing from container allocate response")
 	errRetry            = errors.New("things didn't work out, but perhaps a retry will help")
 	errZeroPending      = errors.New("there are no pending pods anymore in this node")
+	errBadPath          = errors.New("bad path, major/minor not resolved")
+	errBadCardName      = errors.New("bad card name, major/minor not resolved")
 )
+
+// map of resources. name -> resource amount.
+type resourceMap map[string]int64
 
 type podCandidate struct {
 	pod                 *v1.Pod
@@ -119,14 +126,18 @@ func (rm *resourceManager) reallocateWithFractionalResources(allocateResponse *p
 	}
 
 	pod := podCandidate.pod
-	cards := containerCards(pod, podCandidate.allocatedContainers)
-	logPodInfo(pod, cards)
+	cards, cardResources := containerCardsAndResources(pod, podCandidate.allocatedContainers)
+	logPodInfo(pod, cards, cardResources)
 
 	cresp := allocateResponse.ContainerResponses[0]
 	// select gpus for the allocation. the cards may differ from kubelet given deviceIDs!
 	for _, cardName := range cards {
 		rm.addDevicesAndMounts(cresp, cardName)
 	}
+
+	// add resource annotations to container response (for cgroups integration)
+	_ = addResourceAnnotations(cresp, cardResources)
+
 	return nil
 }
 
@@ -353,6 +364,35 @@ func numGPUUsingContainers(pod *v1.Pod) int {
 	return num
 }
 
+// containerResources returns a gpu resource map for a single container.
+// gpuUsingContainerIndex 0 == first gpu using container in the pod.
+func containerResources(pod *v1.Pod, gpuUsingContainerIndex int) resourceMap {
+	resources := make(resourceMap)
+
+	i := 0
+	for _, container := range pod.Spec.Containers {
+		for reqName := range container.Resources.Requests {
+			resourceName := reqName.String()
+			if resourceName == resourcePrefix+deviceType {
+				if i == gpuUsingContainerIndex { // container is found
+					for name, quantity := range container.Resources.Requests {
+						resourceName = name.String()
+						if strings.HasPrefix(resourceName, resourcePrefix) {
+							value, _ := quantity.AsInt64()
+							resources[resourceName] = value
+						}
+					}
+					return resources
+				}
+				i++
+				break
+			}
+		}
+	}
+
+	return resources
+}
+
 // containerCards returns the cards to use for a single container.
 // gpuUsingContainerIndex 0 == first gpu-using container in the pod.
 func containerCards(pod *v1.Pod, gpuUsingContainerIndex int) []string {
@@ -375,6 +415,66 @@ func containerCards(pod *v1.Pod, gpuUsingContainerIndex int) []string {
 	return nil
 }
 
+func containerCardsAndResources(pod *v1.Pod, gpuUsingContainerIndex int) ([]string, resourceMap) {
+	cards := containerCards(pod, gpuUsingContainerIndex)
+	resources := containerResources(pod, gpuUsingContainerIndex)
+
+	// calculate per card resourceMap (only homogeneous resource consumption is allowed)
+	cardCount := int64(len(cards))
+	cardResources := resourceMap{}
+
+	if cardCount > 0 {
+		for resourceName, value := range resources {
+			// calculate per card resources
+			cardResources[resourceName] = value / cardCount
+		}
+	}
+
+	return cards, cardResources
+}
+
+// addResourceAnnotations adds resource annotations for cgroup purposes to the container response.
+func addResourceAnnotations(cresp *pluginapi.ContainerAllocateResponse, resources resourceMap) error {
+	for _, device := range cresp.Devices {
+		if strings.Contains(device.HostPath, "card") {
+			majorMinor, err := devicePathToMajorMinorStr(device.HostPath)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			for resourceName, value := range resources {
+				lastSeparatorIndex := strings.LastIndex(resourceName, "/")
+				if lastSeparatorIndex == -1 || lastSeparatorIndex == len(resourceName)-1 {
+					return errors.WithStack(err)
+				}
+				resourceSuffix := resourceName[lastSeparatorIndex+1:]
+				valueString := strconv.FormatInt(value, 10)
+				key := "gpu." + resourceSuffix
+				oldVal, ok := cresp.Annotations[key]
+				if ok {
+					cresp.Annotations[key] = oldVal + "," + majorMinor + "=" + valueString
+				} else {
+					cresp.Annotations[key] = majorMinor + "=" + valueString
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func devicePathToMajorMinorStr(path string) (string, error) {
+	lastPathSeparatorIndex := strings.LastIndex(path, "/")
+	if lastPathSeparatorIndex == -1 || lastPathSeparatorIndex == len(path)-1 {
+		return "", errBadPath
+	}
+	cardName := path[lastPathSeparatorIndex+1:]
+	if len(cardName) < 5 {
+		return "", errBadCardName
+	}
+	bytes, err := ioutil.ReadFile("/sys/class/drm/" + cardName + "/dev")
+	return strings.TrimSpace(string(bytes)), err
+}
+
 func getClientset() *kubernetes.Clientset {
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -395,9 +495,12 @@ func getClientset() *kubernetes.Clientset {
 	return clientset
 }
 
-func logPodInfo(pod *v1.Pod, cards []string) {
+func logPodInfo(pod *v1.Pod, cards []string, resources resourceMap) {
 	if klog.V(2).Enabled() {
 		klog.Info("Pending pod:" + pod.Name + " devices:")
 		klog.Info(cards)
+		for reqName, value := range resources {
+			klog.Info(reqName, " = ", value)
+		}
 	}
 }
