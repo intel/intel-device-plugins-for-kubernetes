@@ -61,7 +61,10 @@ var (
 	// Movidius MyriadX Product IDs.
 	productIDs = []int{0x2485, 0xf63b}
 	// PCI Product IDs.
-	productIDsPCI = []PCIPidDeviceType{{"kmb", []string{"0x6240"}, 1}}
+	productIDsPCI = []PCIPidDeviceType{
+		{"kmb", []string{"0x6240"}, 1},
+		{"tbh", []string{"0x4fc0", "0x4fc1"}, 2},
+	}
 )
 
 type gousbContext interface {
@@ -85,7 +88,7 @@ func getPciDeviceCounts(sysfsPciDevicesPath string, vendorID string, pidSearch [
 		pidRaw, _ := os.ReadFile(filepath.Join(sysfsPciDevicesPath, bus.Name(), "device"))
 		vid := strings.TrimSpace(string(vidRaw))
 		pid := strings.TrimSpace(string(pidRaw))
-		// Loop for supported VPU type: kmb
+		// Loop for supported VPU type: tbh, kmb
 		for i, pciPid := range pidSearch {
 			// Loop for list of pid of supported device type
 			for _, pidVPU := range pciPid.pids {
