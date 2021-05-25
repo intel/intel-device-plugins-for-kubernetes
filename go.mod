@@ -31,7 +31,7 @@ require (
 	k8s.io/component-base v0.21.0
 	k8s.io/klog/v2 v2.8.0
 	k8s.io/kube-openapi v0.0.0-20210323165736-1a6458611d18 // indirect
-	k8s.io/kubelet v0.20.5
+	k8s.io/kubelet v0.21.0
 	k8s.io/kubernetes v1.21.0
 	k8s.io/utils v0.0.0-20210305010621-2afb4311ab10
 	sigs.k8s.io/controller-runtime v0.9.0-alpha.1
