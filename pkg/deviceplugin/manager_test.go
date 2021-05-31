@@ -269,7 +269,7 @@ func TestHandleUpdate(t *testing.T) {
 		mgr := Manager{
 			devicePlugin: &devicePluginStub{},
 			servers:      tt.servers,
-			createServer: func(string, postAllocateFunc, preStartContainerFunc, getPreferredAllocationFunc) devicePluginServer {
+			createServer: func(string, postAllocateFunc, preStartContainerFunc, getPreferredAllocationFunc, allocateFunc) devicePluginServer {
 				return &serverStub{}
 			},
 		}
@@ -283,7 +283,7 @@ func TestHandleUpdate(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	mgr := NewManager("testnamespace", &devicePluginStub{})
-	mgr.createServer = func(string, postAllocateFunc, preStartContainerFunc, getPreferredAllocationFunc) devicePluginServer {
+	mgr.createServer = func(string, postAllocateFunc, preStartContainerFunc, getPreferredAllocationFunc, allocateFunc) devicePluginServer {
 		return &serverStub{}
 	}
 	mgr.Run()

@@ -64,6 +64,13 @@ Optionally, your device plugin may also implement the
 before they are sent to `kubelet`. To see an example, refer to the FPGA
 plugin which implements this interface to annotate its responses.
 
+In case you want to implement the whole allocation functionality in your
+device plugin, you can implement the optional `deviceplugin.Allocator`
+interface. In this case `PostAllocate()` is not called. But if you decide in your
+implementation of `deviceplugin.Allocator` that you need to resort to the default
+implementation of the allocation functionality then return an error of the type
+`deviceplugin.UseDefaultMethodError`.
+
 ### Logging
 
 The framework uses [`klog`](https://github.com/kubernetes/klog) as its logging
