@@ -78,14 +78,14 @@ For more details on the `-dpdk-driver` choice, see
 For more details on the available options to the `-kernel-vf-drivers` option, see the list of
 vf drivers available in the [Linux Kernel](https://github.com/torvalds/linux/tree/master/drivers/crypto/qat).
 
-If the `-mode` parameter is set to `kerneldrv`, no other parameter documented above are valid,
+If the `-mode` parameter is set to `kernel`, no other parameter documented above are valid,
 except the `klog` logging related parameters.
-`kerneldrv` mode implements resource allocation based on system configured [logical instances][7].
+`kernel` mode implements resource allocation based on system configured [logical instances][7].
 
-> **Note**: `kerneldrv` mode is excluded by default from all builds (including those hosted on the Docker hub),
+> **Note**: `kernel` mode is excluded by default from all builds (including those hosted on the Docker hub),
 > by default. See the [Build the plugin image](#build-the-plugin-image) section for more details.
 
-The `kerneldrv` mode does not guarantee full device isolation between containers
+The `kernel` mode does not guarantee full device isolation between containers
 and therefore it's not recommended. This mode will be deprecated and removed once `libqat`
 implements non-UIO based device access.
 
@@ -166,8 +166,8 @@ $ make intel-qat-plugin
 Successfully tagged intel/intel-qat-plugin:devel
 ```
 
-> **Note**: `kerneldrv` mode is excluded from the build by default. Add `EXTRA_BUILD_ARGS="--build-arg TAGS_KERNELDRV=kerneldrv"` and run `make intel-qat-plugin-kerneldrv`
-> to get `kerneldrv` functionality added to the build.
+> **Note**: `kernel` mode is excluded from the build by default. Run `make intel-qat-plugin-kerneldrv`
+> to get a `kernel` mode enabled image.
 
 #### Deploy the DaemonSet
 
