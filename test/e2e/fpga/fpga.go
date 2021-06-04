@@ -18,7 +18,6 @@ package fpga
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -71,7 +70,7 @@ func describe() {
 }
 
 func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsCollectionPath, pluginMode, nodeResource, podResource, cmd1, cmd2 string) {
-	tmpDir, err := ioutil.TempDir("", "fpgaplugine2etest-"+fmw.Namespace.Name)
+	tmpDir, err := os.MkdirTemp("", "fpgaplugine2etest-"+fmw.Namespace.Name)
 	if err != nil {
 		framework.Failf("unable to create temp directory: %v", err)
 	}

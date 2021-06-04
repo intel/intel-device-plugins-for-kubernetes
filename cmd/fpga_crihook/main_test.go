@@ -16,7 +16,6 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -38,7 +37,7 @@ func createTestDirs(sysfs string, sysfsDirs []string, sysfsFiles map[string][]by
 		}
 	}
 	for filename, body := range sysfsFiles {
-		err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0600)
+		err := os.WriteFile(path.Join(sysfs, filename), body, 0600)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake vendor file")
 		}
@@ -216,7 +215,7 @@ func newTestPort(dev string) (fpga.Port, error) {
 }
 
 func TestGetFPGAParams(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "TestGetFPGAParams")
+	tmpdir, err := os.MkdirTemp("", "TestGetFPGAParams")
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}
@@ -333,7 +332,7 @@ func TestGetFPGAParams(t *testing.T) {
 }
 
 func TestProcess(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "testProcess")
+	tmpdir, err := os.MkdirTemp("", "testProcess")
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}

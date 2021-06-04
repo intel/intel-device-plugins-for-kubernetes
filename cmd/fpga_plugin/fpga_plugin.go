@@ -17,7 +17,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
@@ -241,7 +240,7 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	}
 }
 
-func (dp *devicePlugin) getRegions(deviceFiles []os.FileInfo) ([]region, error) {
+func (dp *devicePlugin) getRegions(deviceFiles []os.DirEntry) ([]region, error) {
 	regions := map[string]region{}
 	for _, deviceFile := range deviceFiles {
 		name := deviceFile.Name()
@@ -274,7 +273,7 @@ func (dp *devicePlugin) getRegions(deviceFiles []os.FileInfo) ([]region, error) 
 }
 
 func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
-	files, err := ioutil.ReadDir(dp.sysfsDir)
+	files, err := os.ReadDir(dp.sysfsDir)
 	if err != nil {
 		klog.Warningf("Can't read folder %s. Kernel driver not loaded?", dp.sysfsDir)
 		return dp.getDevTree([]device{}), nil
@@ -288,7 +287,7 @@ func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
 			continue
 		}
 
-		deviceFiles, err := ioutil.ReadDir(path.Join(dp.sysfsDir, devName))
+		deviceFiles, err := os.ReadDir(path.Join(dp.sysfsDir, devName))
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

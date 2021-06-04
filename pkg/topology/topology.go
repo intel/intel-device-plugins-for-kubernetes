@@ -16,7 +16,6 @@ package topology
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -65,7 +64,7 @@ func getDevicesFromVirtual(realDevPath string) (devs []string, err error) {
 	switch dir {
 	case "vfio/":
 		iommuGroup := filepath.Join(mockRoot, "/sys/kernel/iommu_groups", file, "devices")
-		files, err := ioutil.ReadDir(iommuGroup)
+		files, err := os.ReadDir(iommuGroup)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to read IOMMU group %s", iommuGroup)
 		}
@@ -231,7 +230,7 @@ func FindSysFsDevice(dev string) (string, error) {
 // readFilesInDirectory small helper to fill struct with content from sysfs entry.
 func readFilesInDirectory(fileMap map[string]*string, dir string) error {
 	for k, v := range fileMap {
-		b, err := ioutil.ReadFile(filepath.Join(dir, k))
+		b, err := os.ReadFile(filepath.Join(dir, k))
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue

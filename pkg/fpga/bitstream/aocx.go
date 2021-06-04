@@ -19,7 +19,6 @@ import (
 	"compress/gzip"
 	"debug/elf"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -149,7 +148,7 @@ func parseFpgaBin(d []byte) (*FileGBS, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open gzip reader for .acl.gbs.gz")
 	}
-	b, err := ioutil.ReadAll(gzr)
+	b, err := io.ReadAll(gzr)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to uncompress .acl.gbs.gz")
 	}

@@ -16,7 +16,6 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -136,7 +135,7 @@ func TestScan(t *testing.T) {
 
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
-			root, err := ioutil.TempDir("", "test_sgx_device_plugin_")
+			root, err := os.MkdirTemp("", "test_sgx_device_plugin_")
 			if err != nil {
 				t.Fatalf("can't create temporary directory: %+v", err)
 			}
@@ -148,13 +147,13 @@ func TestScan(t *testing.T) {
 				t.Fatalf("Failed to create fake device directory: %+v", err)
 			}
 			if tc.enclaveDevice != "" {
-				err = ioutil.WriteFile(path.Join(devfs, tc.enclaveDevice), []byte{}, 0600)
+				err = os.WriteFile(path.Join(devfs, tc.enclaveDevice), []byte{}, 0600)
 				if err != nil {
 					t.Fatalf("Failed to create fake enclave file: %+v", err)
 				}
 			}
 			if tc.provisionDevice != "" {
-				err = ioutil.WriteFile(path.Join(devfs, tc.provisionDevice), []byte{}, 0600)
+				err = os.WriteFile(path.Join(devfs, tc.provisionDevice), []byte{}, 0600)
 				if err != nil {
 					t.Fatalf("Failed to create fake provision file: %+v", err)
 				}

@@ -15,7 +15,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
@@ -309,7 +308,7 @@ func genNewDFLPort(sysFsPrefix, devDir string, sysFsInfo map[string][]string) ne
 	}
 }
 func TestScanFPGAsDFL(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "TestScanFPGAsDFL")
+	tmpdir, err := os.MkdirTemp("", "TestScanFPGAsDFL")
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}

@@ -18,7 +18,6 @@ package utils
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -124,7 +123,7 @@ func CreateKustomizationOverlay(namespace, base, overlay string) error {
 	relPath = relPath + base[1:]
 
 	content := fmt.Sprintf("namespace: %s\nbases:\n  - %s", namespace, relPath)
-	return ioutil.WriteFile(overlay+"/kustomization.yaml", []byte(content), 0600)
+	return os.WriteFile(overlay+"/kustomization.yaml", []byte(content), 0600)
 }
 
 // DeployFpgaWebhook deploys FPGA admission webhook to a framework-specific namespace.
@@ -134,7 +133,7 @@ func DeployFpgaWebhook(f *framework.Framework, kustomizationPath string) {
 		framework.Failf("unable to detect running cert-manager: %v", err)
 	}
 
-	tmpDir, err := ioutil.TempDir("", "fpgawebhooke2etest-"+f.Namespace.Name)
+	tmpDir, err := os.MkdirTemp("", "fpgawebhooke2etest-"+f.Namespace.Name)
 	if err != nil {
 		framework.Failf("unable to create temp directory: %v", err)
 	}

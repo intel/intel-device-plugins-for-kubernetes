@@ -16,7 +16,6 @@ package dpdkdrv
 
 import (
 	"flag"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -39,7 +38,7 @@ func createTestFiles(prefix string, dirs []string, files map[string][]byte, syml
 	}
 
 	for filename, body := range files {
-		err := ioutil.WriteFile(path.Join(prefix, filename), body, 0600)
+		err := os.WriteFile(path.Join(prefix, filename), body, 0600)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake vendor file")
 		}
@@ -366,7 +365,7 @@ func TestScanPrivate(t *testing.T) {
 	}
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
-			tmpdir, err := ioutil.TempDir("/tmp/", "qatplugin-TestScanPrivate-*")
+			tmpdir, err := os.MkdirTemp("/tmp/", "qatplugin-TestScanPrivate-*")
 			if err != nil {
 				t.Fatal(err)
 			}

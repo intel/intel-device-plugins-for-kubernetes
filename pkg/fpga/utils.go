@@ -15,7 +15,6 @@
 package fpga
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,7 +38,7 @@ func readFilesInDirectory(fileMap map[string]*string, dir string) error {
 			}
 			fname = files[0]
 		}
-		b, err := ioutil.ReadFile(fname)
+		b, err := os.ReadFile(fname)
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue

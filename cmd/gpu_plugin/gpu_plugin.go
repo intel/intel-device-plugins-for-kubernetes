@@ -17,7 +17,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
@@ -112,7 +111,7 @@ func (dp *devicePlugin) isCompatibleDevice(name string) bool {
 		klog.V(4).Info("Not compatible device: ", name)
 		return false
 	}
-	dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, name, "device/vendor"))
+	dat, err := os.ReadFile(path.Join(dp.sysfsDir, name, "device/vendor"))
 	if err != nil {
 		klog.Warning("Skipping. Can't read vendor file: ", err)
 		return false
@@ -125,7 +124,7 @@ func (dp *devicePlugin) isCompatibleDevice(name string) bool {
 }
 
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
-	files, err := ioutil.ReadDir(dp.sysfsDir)
+	files, err := os.ReadDir(dp.sysfsDir)
 	if err != nil {
 		return nil, errors.Wrap(err, "Can't read sysfs folder")
 	}
@@ -139,12 +138,12 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			continue
 		}
 
-		drmFiles, err := ioutil.ReadDir(path.Join(dp.sysfsDir, f.Name(), "device/drm"))
+		drmFiles, err := os.ReadDir(path.Join(dp.sysfsDir, f.Name(), "device/drm"))
 		if err != nil {
 			return nil, errors.Wrap(err, "Can't read device folder")
 		}
 
-		dat, err := ioutil.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/sriov_numvfs"))
+		dat, err := os.ReadFile(path.Join(dp.sysfsDir, f.Name(), "device/sriov_numvfs"))
 		isPFwithVFs := (err == nil && strings.TrimSpace(string(dat)) != "0")
 
 		for _, drmFile := range drmFiles {

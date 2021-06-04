@@ -16,7 +16,6 @@ package idxd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -87,7 +86,7 @@ func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 }
 
 func readFile(fpath string) (string, error) {
-	data, err := ioutil.ReadFile(fpath)
+	data, err := os.ReadFile(fpath)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}

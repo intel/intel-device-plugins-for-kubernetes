@@ -17,7 +17,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -78,12 +77,12 @@ type PCIPidDeviceType struct {
 func getPciDeviceCounts(sysfsPciDevicesPath string, vendorID string, pidSearch []PCIPidDeviceType) ([]int, error) {
 	found := make([]int, len(pidSearch))
 
-	bdf, _ := ioutil.ReadDir(sysfsPciDevicesPath)
+	bdf, _ := os.ReadDir(sysfsPciDevicesPath)
 	// Check for all folder inside sysfs
 	for _, bus := range bdf {
 		// Extract vid and pid
-		vidRaw, _ := ioutil.ReadFile(filepath.Join(sysfsPciDevicesPath, bus.Name(), "vendor"))
-		pidRaw, _ := ioutil.ReadFile(filepath.Join(sysfsPciDevicesPath, bus.Name(), "device"))
+		vidRaw, _ := os.ReadFile(filepath.Join(sysfsPciDevicesPath, bus.Name(), "vendor"))
+		pidRaw, _ := os.ReadFile(filepath.Join(sysfsPciDevicesPath, bus.Name(), "device"))
 		vid := strings.TrimSpace(string(vidRaw))
 		pid := strings.TrimSpace(string(pidRaw))
 		// Loop for supported VPU type: kmb

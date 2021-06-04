@@ -17,7 +17,6 @@ package idxd
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -76,7 +75,7 @@ type testCase struct {
 }
 
 func TestScan(t *testing.T) {
-	root, err := ioutil.TempDir("", "test_idxd_device_plugin")
+	root, err := os.MkdirTemp("", "test_idxd_device_plugin")
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}
@@ -209,7 +208,7 @@ func genTest(sysfs, statePattern string, tc testCase) func(t *testing.T) {
 			}
 		}
 		for filename, body := range tc.sysfsFiles {
-			if err := ioutil.WriteFile(path.Join(sysfs, filename), body, 0600); err != nil {
+			if err := os.WriteFile(path.Join(sysfs, filename), body, 0600); err != nil {
 				t.Fatalf("Failed to create fake sysfs entry: %+v", err)
 			}
 		}
