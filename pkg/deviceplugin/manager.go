@@ -22,6 +22,7 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
+type allocateFunc func(*pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error)
 type postAllocateFunc func(*pluginapi.AllocateResponse) error
 type preStartContainerFunc func(*pluginapi.PreStartContainerRequest) error
 type getPreferredAllocationFunc func(*pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error)
@@ -77,7 +78,7 @@ type Manager struct {
 	devicePlugin Scanner
 	namespace    string
 	servers      map[string]devicePluginServer
-	createServer func(string, postAllocateFunc, preStartContainerFunc, getPreferredAllocationFunc) devicePluginServer
+	createServer func(string, postAllocateFunc, preStartContainerFunc, getPreferredAllocationFunc, allocateFunc) devicePluginServer
 }
 
 // NewManager creates a new instance of Manager.
@@ -111,6 +112,7 @@ func (m *Manager) Run() {
 func (m *Manager) handleUpdate(update updateInfo) {
 	klog.V(4).Info("Received dev updates:", update)
 	for devType, devices := range update.Added {
+		var allocate allocateFunc
 		var postAllocate postAllocateFunc
 		var preStartContainer preStartContainerFunc
 		var getPreferredAllocation getPreferredAllocationFunc
@@ -127,7 +129,11 @@ func (m *Manager) handleUpdate(update updateInfo) {
 			getPreferredAllocation = preferredAllocator.GetPreferredAllocation
 		}
 
-		m.servers[devType] = m.createServer(devType, postAllocate, preStartContainer, getPreferredAllocation)
+		if allocator, ok := m.devicePlugin.(Allocator); ok {
+			allocate = allocator.Allocate
+		}
+
+		m.servers[devType] = m.createServer(devType, postAllocate, preStartContainer, getPreferredAllocation, allocate)
 		go func(dt string) {
 			err := m.servers[dt].Serve(m.namespace)
 			if err != nil {

@@ -55,6 +55,7 @@ type server struct {
 	grpcServer             *grpc.Server
 	updatesCh              chan map[string]DeviceInfo
 	devices                map[string]DeviceInfo
+	allocate               allocateFunc
 	postAllocate           postAllocateFunc
 	preStartContainer      preStartContainerFunc
 	getPreferredAllocation getPreferredAllocationFunc
@@ -66,11 +67,13 @@ type server struct {
 func newServer(devType string,
 	postAllocate postAllocateFunc,
 	preStartContainer preStartContainerFunc,
-	getPreferredAllocation getPreferredAllocationFunc) devicePluginServer {
+	getPreferredAllocation getPreferredAllocationFunc,
+	allocate allocateFunc) devicePluginServer {
 	return &server{
 		devType:                devType,
 		updatesCh:              make(chan map[string]DeviceInfo, 1), // TODO: is 1 needed?
 		devices:                make(map[string]DeviceInfo),
+		allocate:               allocate,
 		postAllocate:           postAllocate,
 		preStartContainer:      preStartContainer,
 		getPreferredAllocation: getPreferredAllocation,
@@ -124,6 +127,14 @@ func (srv *server) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.DeviceP
 }
 
 func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
+	if srv.allocate != nil {
+		response, err := srv.allocate(rqt)
+
+		if _, ok := err.(*UseDefaultMethodError); !ok {
+			return response, err
+		}
+	}
+
 	response := new(pluginapi.AllocateResponse)
 	for _, crqt := range rqt.ContainerRequests {
 		cresp := new(pluginapi.ContainerAllocateResponse)

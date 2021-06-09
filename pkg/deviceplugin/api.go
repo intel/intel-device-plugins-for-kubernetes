@@ -30,6 +30,15 @@ type DeviceInfo struct {
 	topology *pluginapi.TopologyInfo
 }
 
+// UseDefaultMethodError allows the plugin to request running the default
+// logic even while implementing an optional interface. This is currently
+// supported only with the Allocator interface.
+type UseDefaultMethodError struct{}
+
+func (e *UseDefaultMethodError) Error() string {
+	return "use default method"
+}
+
 func init() {
 	klog.InitFlags(nil)
 }
@@ -87,6 +96,14 @@ type Scanner interface {
 	// a Notifier instance. It's called only once for every device plugin by
 	// Manager in a goroutine and operates in an infinite loop.
 	Scan(Notifier) error
+}
+
+// Allocator is an optional interface implemented by device plugins.
+type Allocator interface {
+	// Allocate allows the plugin to replace the server Allocate(). Plugin can return
+	// UseDefaultAllocateMethod if the default server allocation is anyhow preferred
+	// for the particular allocation request.
+	Allocate(*pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error)
 }
 
 // PostAllocator is an optional interface implemented by device plugins.
