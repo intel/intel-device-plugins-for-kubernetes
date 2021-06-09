@@ -54,7 +54,7 @@ const (
 var qatDeviceDriver = map[string]string{
 	"0442": "dh895xccvf",
 	"0443": "dh895xccvf",
-	"18a1": "c4xxvf",
+	"18a1": "c4xxxvf",
 	"19e3": "c3xxxvf",
 	"4941": "4xxxvf",
 	"37c9": "c6xxvf",
