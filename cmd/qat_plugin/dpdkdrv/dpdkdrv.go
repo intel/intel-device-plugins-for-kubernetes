@@ -1,4 +1,4 @@
-// Copyright 2017 Intel Corporation. All Rights Reserved.
+// Copyright 2017-2021 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -201,9 +201,8 @@ func (dp *DevicePlugin) getDeviceID(pciAddr string) (string, error) {
 func (dp *DevicePlugin) bindDevice(vfBdf string) error {
 	unbindDevicePath := filepath.Join(dp.pciDeviceDir, vfBdf, driverUnbindSuffix)
 
-	// Unbind from the kernel driver
-	err := os.WriteFile(unbindDevicePath, []byte(vfBdf), 0600)
-	if err != nil {
+	// Unbind from the kernel driver. IsNotExist means the device is not bound to any driver.
+	if err := os.WriteFile(unbindDevicePath, []byte(vfBdf), 0600); !os.IsNotExist(err) {
 		return errors.Wrapf(err, "Unbinding from kernel driver failed for the device %s", vfBdf)
 	}
 	vfdevID, err := dp.getDeviceID(vfBdf)
@@ -319,7 +318,7 @@ func getCurrentDriver(device string) string {
 	symlink := filepath.Join(device, "driver")
 	driver, err := filepath.EvalSymlinks(symlink)
 	if err != nil {
-		klog.Warningf("unable to evaluate symlink: %s", symlink)
+		klog.Infof("no driver bound to device %q", filepath.Base(device))
 		return ""
 	}
 	return filepath.Base(driver)
