@@ -31,6 +31,11 @@ var _ = Describe("FpgaDevicePlugin Controller", func() {
 	const timeout = time.Second * 30
 	const interval = time.Second * 1
 
+	AfterEach(func() {
+		time.Sleep(time.Second * 2)
+
+	})
+
 	Context("Basic CRUD operations", func() {
 		It("should handle FpgaDevicePlugin objects correctly", func() {
 			spec := devicepluginv1.FpgaDevicePluginSpec{
