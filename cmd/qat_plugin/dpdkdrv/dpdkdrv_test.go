@@ -296,6 +296,28 @@ func TestScanPrivate(t *testing.T) {
 			expectedDevNum: 1,
 		},
 		{
+			name:            "vfio-pci DPDKdriver with no kernel bound driver and where vfdevID is equal to qatDevId (37c9)",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: []string{"c6xxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/c6xx",
+				"sys/bus/pci/drivers/vfio-pci",
+				"sys/bus/pci/devices/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:01.0",
+			},
+			files: map[string][]byte{
+				"sys/bus/pci/devices/0000:02:01.0/device": []byte("0x37c9"),
+				"sys/bus/pci/drivers/vfio-pci/new_id":     []byte("some junk"),
+			},
+			symlinks: map[string]string{
+				"sys/bus/pci/devices/0000:02:01.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/drivers/c6xx/0000:02:00.0":        "sys/bus/pci/devices/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0/virtfn0":     "sys/bus/pci/devices/0000:02:01.0",
+			},
+			maxDevNum:      1,
+			expectedDevNum: 1,
+		},
+		{
 			name:            "vfio-pci DPDKdriver with one kernel bound device (QAT device) where vfdevID is equal to qatDevId not enabbled in kernelVfDrivers",
 			dpdkDriver:      "vfio-pci",
 			kernelVfDrivers: []string{"c6xxvf"},
