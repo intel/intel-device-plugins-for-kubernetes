@@ -31,6 +31,11 @@ var _ = Describe("SgxDevicePlugin Controller", func() {
 	const timeout = time.Second * 30
 	const interval = time.Second * 1
 
+	AfterEach(func() {
+		time.Sleep(time.Second * 2)
+
+	})
+
 	Context("Basic CRUD operations", func() {
 		It("should handle SgxDevicePlugin objects correctly", func() {
 			spec := devicepluginv1.SgxDevicePluginSpec{

@@ -36,7 +36,7 @@ Prerequisites for building and running these device plugins include:
 
 - Appropriate hardware
 - A fully configured [Kubernetes cluster]
-- A working [Go environment], of at least version v1.15.
+- A working [Go environment], of at least version v1.16.
 
 ## Plugins
 
