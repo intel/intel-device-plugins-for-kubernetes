@@ -148,7 +148,6 @@ $(image_tags):
 push: $(image_tags)
 
 lock-images:
-	@scripts/update-clear-linux-base.sh clearlinux/golang:latest $(shell ls build/docker/*.Dockerfile)
 	@scripts/update-clear-linux-base.sh clearlinux:latest $(shell find demo -name Dockerfile)
 
 set-version:
