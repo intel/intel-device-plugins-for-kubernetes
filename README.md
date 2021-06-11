@@ -44,13 +44,10 @@ The below sections detail existing plugins developed using the framework.
 
 ### GPU device plugin
 
-The [GPU device plugin](cmd/gpu_plugin/README.md) supports Intel
-[GVT-d](https://github.com/intel/gvt-linux/wiki/GVTd_Setup_Guide) device passthrough
-and acceleration using GPUs of the following hardware families:
-
+The [GPU device plugin](cmd/gpu_plugin/README.md) supports Intel GPUs of the following hardware families:
+- Intel Xe discrete GPUs, including Xe-LP, Xe-HPG and Xe-HP SDV
 - Integrated GPUs within Intel Core processors
-- Intel Xeon processors
-- Intel Visual Compute Accelerator (Intel VCA)
+- Integrated GPUs Intel Xeon processors
 
 The demo subdirectory contains both a [GPU plugin demo video](demo/readme.md#intel-gpu-device-plugin-demo-video)
 as well as code for an OpenCL [FFT demo](demo/ubuntu-demo-opencl).
