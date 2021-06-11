@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 )
@@ -83,6 +84,11 @@ func (l *labeler) scan() ([]string, error) {
 
 		if strings.TrimSpace(string(dat)) != vendorString {
 			klog.V(4).Info("Non-Intel GPU", f.Name())
+			continue
+		}
+
+		if pluginutils.IsSriovPFwithVFs(path.Join(l.sysfsDRMDir, f.Name())) {
+			klog.V(4).Infof("Skipping PF with VF")
 			continue
 		}
 
@@ -221,10 +227,13 @@ func (l *labeler) createLabels() error {
 		l.labels.addNumericLabel(labelNamespace+"memory.max", int64(memoryAmount))
 	}
 	gpuCount := len(gpuNameList)
-	// add gpu list label (example: "card0.card1.card2")
-	l.labels[labelNamespace+gpuListLabelName] = strings.Join(gpuNameList, ".")
-	// all GPUs get default number of millicores (1000)
-	l.labels.addNumericLabel(labelNamespace+millicoreLabelName, int64(millicoresPerGPU*gpuCount))
+	if gpuCount > 0 {
+		// add gpu list label (example: "card0.card1.card2")
+		l.labels[labelNamespace+gpuListLabelName] = strings.Join(gpuNameList, ".")
+
+		// all GPUs get default number of millicores (1000)
+		l.labels.addNumericLabel(labelNamespace+millicoreLabelName, int64(millicoresPerGPU*gpuCount))
+	}
 
 	return nil
 }

@@ -29,7 +29,7 @@ OLM_MANIFESTS = deployments/operator/manifests
 WEBHOOK_IMAGE_FILE = intel-fpga-admissionwebhook-devel.tgz
 
 pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e | grep -v envtest)
-cmds = $(shell ls cmd)
+cmds = $(shell ls --ignore=internal cmd)
 e2e_tmp_dir := $(shell mktemp -u -t e2e-tests.XXXXXXXXXX)
 
 all: build

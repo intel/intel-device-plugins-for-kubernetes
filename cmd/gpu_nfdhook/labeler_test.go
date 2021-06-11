@@ -66,6 +66,24 @@ func getTestCases() []testcase {
 		{
 			sysfsdirs: []string{
 				"card0/device/drm/card0",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor":       []byte("0x8086"),
+				"card0/device/sriov_numvfs": []byte("1"),
+			},
+			name:           "pf with vfs",
+			memoryOverride: 16000000000,
+			capabilityFile: map[string][]byte{
+				"0/i915_capabilities": []byte(
+					"platform: new\n" +
+						"gen: 9"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{},
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
 				"card0/gt/gt0",
 				"card0/gt/gt1",
 			},
@@ -244,7 +262,7 @@ func TestLabeling(t *testing.T) {
 				t.Errorf("unexpected return value")
 			}
 			if tc.expectedRetval == nil && !reflect.DeepEqual(labeler.labels, tc.expectedLabels) {
-				t.Errorf("label mismatch with expectation:\n%v\n%v\n", labeler.labels, tc.expectedLabels)
+				t.Errorf("test %v label mismatch with expectation:\n%v\n%v\n", tc.name, labeler.labels, tc.expectedLabels)
 			}
 			for filename := range tc.capabilityFile {
 				os.Remove(path.Join(root, filename))
