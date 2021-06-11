@@ -3,6 +3,7 @@
 Table of Contents
 
 * [Introduction](#introduction)
+    * [Configuration options](#configuration-options)
 * [Installation](#installation)
     * [Deploy with pre-built container image](#deploy-with-pre-built-container-image)
     * [Getting the source code](#getting-the-source-code)
@@ -38,6 +39,16 @@ For example, Intel oneAPI Video Processing Linbrary can offload video transcodin
 
 The device plugin can also be used with [GVT-d](https://github.com/intel/gvt-linux/wiki/GVTd_Setup_Guide) device
 passthrough and acceleration.
+
+### Configuration options
+
+| Flag | Argument | Default | Meaning |
+|:---- |:-------- |:------- |:------- |
+| -enable-monitoring | - | disabled | Enable 'i915_monitoring' resource that provides access to all Intel GPU devices on the node |
+| -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
+
+The plugin also accepts a number of other arguments (common to all plugins) related to logging.
+Please use the -h option to see the complete list of logging related options.
 
 ## Installation
 
