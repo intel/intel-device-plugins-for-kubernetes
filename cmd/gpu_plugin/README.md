@@ -146,7 +146,7 @@ daemonset.apps/intel-gpu-plugin created
 
 Usage of fractional GPU resources, such as GPU memory, requires that the cluster has node
 extended resources with the name prefix `gpu.intel.com/`. Those can be created with NFD
-by running the hook installed by the plugin initcontainer. When fractional resources are
+by running the [hook](/cmd/gpu_nfdhook/) installed by the plugin initcontainer. When fractional resources are
 enabled, the plugin lets a [scheduler extender](https://github.com/intel/platform-aware-scheduling/tree/master/gpu-aware-scheduling)
 do card selection decisions based on resource availability and the amount of extended
 resources requested in the [pod spec](https://github.com/intel/platform-aware-scheduling/blob/master/gpu-aware-scheduling/docs/usage.md#pods).
