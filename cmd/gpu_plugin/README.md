@@ -11,6 +11,7 @@ Table of Contents
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
         * [Build the plugin image](#build-the-plugin-image)
         * [Deploy plugin DaemonSet](#deploy-plugin-daemonset)
+        * [Fractional resources](#fractional-resources)
     * [Deploy by hand](#deploy-by-hand)
         * [Build the plugin](#build-the-plugin)
         * [Run the plugin as administrator](#run-the-plugin-as-administrator)
@@ -45,6 +46,7 @@ passthrough and acceleration.
 | Flag | Argument | Default | Meaning |
 |:---- |:-------- |:------- |:------- |
 | -enable-monitoring | - | disabled | Enable 'i915_monitoring' resource that provides access to all Intel GPU devices on the node |
+| -resource-manager | - | disabled | Enable fractional resource management, [see also dependencies](#fractional-resources) |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
 
 The plugin also accepts a number of other arguments (common to all plugins) related to logging.
@@ -134,7 +136,17 @@ $ kubectl apply -k deployments/gpu_plugin/overlays/nfd_labeled_nodes
 daemonset.apps/intel-gpu-plugin created
 ```
 
-The experimental fractional-resource feature can be enabled by running:
+#### Fractional resources
+
+With the experimental fractional resource feature you can use additional kubernetes extended
+resources, such as GPU memory, which can then be consumed by deployments. PODs will then only
+deploy to nodes where there are sufficient amounts of the extended resources for the containers.
+
+Enabling the fractional resource feature isn't quite as simple as just enabling the related
+command line flag. The DaemonSet needs additional RBAC-permissions
+and access to the kubelet podresources gRPC service, plus there are other dependencies to
+take care of, which are explained below. For the RBAC-permissions, gRPC service access and
+the flag enabling, it is recommended to use kustomization by running:
 
 ```bash
 $ kubectl apply -k deployments/gpu_plugin/overlays/fractional_resources
@@ -144,7 +156,7 @@ clusterrolebinding.rbac.authorization.k8s.io/resource-reader-rb created
 daemonset.apps/intel-gpu-plugin created
 ```
 
-Usage of fractional GPU resources, such as GPU memory, requires that the cluster has node
+Usage of these fractional GPU resources requires that the cluster has node
 extended resources with the name prefix `gpu.intel.com/`. Those can be created with NFD
 by running the [hook](/cmd/gpu_nfdhook/) installed by the plugin initcontainer. When fractional resources are
 enabled, the plugin lets a [scheduler extender](https://github.com/intel/platform-aware-scheduling/tree/master/gpu-aware-scheduling)
