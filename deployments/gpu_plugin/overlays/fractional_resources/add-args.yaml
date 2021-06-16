@@ -9,5 +9,4 @@ spec:
       - name: intel-gpu-plugin
         args:
         - "-shared-dev-num=300"
-        - "-enable-monitoring"
         - "-resource-manager"
