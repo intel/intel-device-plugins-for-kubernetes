@@ -13,6 +13,7 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /pods-sgx
+  reinvocationPolicy: IfNeeded
   failurePolicy: Ignore
   name: sgx.mutator.webhooks.intel.com
   rules:
