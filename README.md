@@ -44,10 +44,8 @@ The below sections detail existing plugins developed using the framework.
 
 ### GPU device plugin
 
-The [GPU device plugin](cmd/gpu_plugin/README.md) supports Intel GPUs of the following hardware families:
-- Intel Xe discrete GPUs, including Xe-LP, Xe-HPG and Xe-HP SDV
-- Integrated GPUs within Intel Core processors
-- Integrated GPUs Intel Xeon processors
+The [GPU device plugin](cmd/gpu_plugin/README.md) provides access to Intel discrete (Xe)
+and integrated GPU HW device files.
 
 The demo subdirectory contains both a [GPU plugin demo video](demo/readme.md#intel-gpu-device-plugin-demo-video)
 as well as code for an OpenCL [FFT demo](demo/ubuntu-demo-opencl).
