@@ -9,8 +9,8 @@ on:
       - main
       - 'release-*'
 env:
-  RUNC_VERSION: v1.0.0-rc93
-  GO_VERSION: 1.16.4
+  RUNC_VERSION: v1.0.0
+  GO_VERSION: 1.16.5
 jobs:
 
   golangci:
