@@ -400,7 +400,7 @@ func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
 	}
 
 	if gdp.Spec.ResourceManager {
-		args = append(args, "-resource-manager", "true")
+		args = append(args, "-resource-manager")
 	}
 
 	return args
