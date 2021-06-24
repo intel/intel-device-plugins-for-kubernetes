@@ -235,40 +235,34 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 }
 
 func addVolumeMountIfMissing(spec *v1.PodSpec, name, mountPath string) {
-	missing := true
 	for _, mount := range spec.Containers[0].VolumeMounts {
 		if mount.Name == name {
-			missing = false
-			break
+			return
 		}
 	}
-	if missing {
-		spec.Containers[0].VolumeMounts = append(spec.Containers[0].VolumeMounts, v1.VolumeMount{
-			Name:      name,
-			MountPath: mountPath,
-		})
-	}
+
+	spec.Containers[0].VolumeMounts = append(spec.Containers[0].VolumeMounts, v1.VolumeMount{
+		Name:      name,
+		MountPath: mountPath,
+	})
 }
 
 func addVolumeIfMissing(spec *v1.PodSpec, name, path string, hpType v1.HostPathType) {
-	missing := true
 	for _, vol := range spec.Volumes {
 		if vol.Name == name {
-			missing = false
-			break
+			return
 		}
 	}
-	if missing {
-		spec.Volumes = append(spec.Volumes, v1.Volume{
-			Name: name,
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
-					Path: path,
-					Type: &hpType,
-				},
+
+	spec.Volumes = append(spec.Volumes, v1.Volume{
+		Name: name,
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: path,
+				Type: &hpType,
 			},
-		})
-	}
+		},
+	})
 }
 
 func setInitContainer(spec *v1.PodSpec, imageName string) {
