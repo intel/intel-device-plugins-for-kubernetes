@@ -2,16 +2,16 @@ ARG FINAL_BASE_IMAGE=clearlinux:base
 
 FROM clearlinux:base as builder
 
-ARG QAT_DRIVER_RELEASE="qat1.7.l.4.11.0-00001"
+ARG QAT_DRIVER_RELEASE="qat1.7.l.4.14.0-00031"
 ARG QAT_ENGINE_VERSION="v0.6.1"
 ARG IPSEC_MB_VERSION="v0.55"
 ARG IPP_CRYPTO_VERSION="ippcp_2020u3"
 
-RUN swupd bundle-add --skip-diskspace-check devpkg-systemd devpkg-openssl c-basic wget git && \
+RUN swupd bundle-add --skip-diskspace-check devpkg-systemd devpkg-openssl c-basic wget git yasm && \
     git clone -b $QAT_ENGINE_VERSION https://github.com/intel/QAT_Engine && \
     git clone -b $IPP_CRYPTO_VERSION https://github.com/intel/ipp-crypto && \
     git clone -b $IPSEC_MB_VERSION https://github.com/intel/intel-ipsec-mb && \
-    wget https://01.org/sites/default/files/downloads/$QAT_DRIVER_RELEASE.tar.gz && \
+    wget https://downloadmirror.intel.com/30178/eng/$QAT_DRIVER_RELEASE.tar.gz && \
     tar xf *.tar.gz
 
 RUN sed -i -e 's/cmn_ko$//' -e 's/lac_kernel$//' quickassist/Makefile && \
