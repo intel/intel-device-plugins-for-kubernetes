@@ -31,20 +31,20 @@ type GpuDevicePluginSpec struct {
 	// InitImage is a container image with tools (e.g., GPU NFD source hook) installed on each node.
 	InitImage string `json:"initImage,omitempty"`
 
-	// EnableMonitoring enables the monitoring resource ('i915_monitoring')
-	// which gives access to all GPU devices on given node.
-	EnableMonitoring bool `json:"enableMonitoring,omitempty"`
-
 	// SharedDevNum is a number of containers that can share the same GPU device.
 	// +kubebuilder:validation:Minimum=1
 	SharedDevNum int `json:"sharedDevNum,omitempty"`
 
-	// ResourceManager handles the fractional resource management for multi-GPU nodes
-	ResourceManager bool `json:"resourceManager,omitempty"`
-
 	// LogLevel sets the plugin's log level.
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`
+
+	// ResourceManager handles the fractional resource management for multi-GPU nodes
+	ResourceManager bool `json:"resourceManager,omitempty"`
+
+	// EnableMonitoring enables the monitoring resource ('i915_monitoring')
+	// which gives access to all GPU devices on given node.
+	EnableMonitoring bool `json:"enableMonitoring,omitempty"`
 
 	// NodeSelector provides a simple way to constrain device plugin pods to nodes with particular labels.
 	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
