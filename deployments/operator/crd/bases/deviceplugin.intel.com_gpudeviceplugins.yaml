@@ -68,6 +68,9 @@ spec:
                 description: NodeSelector provides a simple way to constrain device
                   plugin pods to nodes with particular labels.
                 type: object
+              resourceManager:
+                description: ResourceManager handles the fractional resource management for multi-GPU nodes
+                type: boolean
               sharedDevNum:
                 description: SharedDevNum is a number of containers that can share
                   the same GPU device.

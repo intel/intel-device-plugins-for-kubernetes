@@ -57,6 +57,7 @@ func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error
 }
 
 type controller struct {
+	controllers.DefaultServiceAccountFactory
 	scheme *runtime.Scheme
 	ns     string
 }

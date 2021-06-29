@@ -23,6 +23,7 @@ import (
 
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/reference"
@@ -35,8 +36,9 @@ import (
 )
 
 const (
-	ownerKey = ".metadata.controller.gpu"
-	appLabel = "intel-gpu-plugin"
+	ownerKey           = ".metadata.controller.gpu"
+	appLabel           = "intel-gpu-plugin"
+	serviceAccountName = "gpu-manager-sa"
 )
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins,verbs=get;list;watch;create;update;patch;delete
@@ -72,6 +74,46 @@ func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client
 	}
 
 	return len(list.Items), nil
+}
+
+func (c *controller) NewServiceAccount(rawObj client.Object) *v1.ServiceAccount {
+	devicePlugin := rawObj.(*devicepluginv1.GpuDevicePlugin)
+	if devicePlugin.Spec.ResourceManager {
+		sa := v1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "gpu-manager-sa",
+				Namespace: c.ns,
+			},
+		}
+		return &sa
+	}
+	return nil
+}
+
+func (c *controller) NewClusterRoleBinding(rawObj client.Object) *rbacv1.ClusterRoleBinding {
+	devicePlugin := rawObj.(*devicepluginv1.GpuDevicePlugin)
+	if devicePlugin.Spec.ResourceManager {
+		rb := rbacv1.ClusterRoleBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "gpu-manager-rolebinding",
+				Namespace: c.ns,
+			},
+			Subjects: []rbacv1.Subject{
+				{
+					Kind:      "ServiceAccount",
+					Name:      "gpu-manager-sa",
+					Namespace: c.ns,
+				},
+			},
+			RoleRef: rbacv1.RoleRef{
+				Kind:     "ClusterRole",
+				Name:     "inteldeviceplugins-gpu-manager-role",
+				APIGroup: "rbac.authorization.k8s.io",
+			},
+		}
+		return &rb
+	}
+	return nil
 }
 
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
@@ -183,7 +225,44 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	if devicePlugin.Spec.InitImage != "" {
 		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
 	}
+	// add service account if resource manager is enabled
+	if devicePlugin.Spec.ResourceManager {
+		daemonSet.Spec.Template.Spec.ServiceAccountName = serviceAccountName
+		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
+		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources")
+	}
 	return &daemonSet
+}
+
+func addVolumeMountIfMissing(spec *v1.PodSpec, name, mountPath string) {
+	for _, mount := range spec.Containers[0].VolumeMounts {
+		if mount.Name == name {
+			return
+		}
+	}
+
+	spec.Containers[0].VolumeMounts = append(spec.Containers[0].VolumeMounts, v1.VolumeMount{
+		Name:      name,
+		MountPath: mountPath,
+	})
+}
+
+func addVolumeIfMissing(spec *v1.PodSpec, name, path string, hpType v1.HostPathType) {
+	for _, vol := range spec.Volumes {
+		if vol.Name == name {
+			return
+		}
+	}
+
+	spec.Volumes = append(spec.Volumes, v1.Volume{
+		Name: name,
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: path,
+				Type: &hpType,
+			},
+		},
+	})
 }
 
 func setInitContainer(spec *v1.PodSpec, imageName string) {
@@ -203,25 +282,7 @@ func setInitContainer(spec *v1.PodSpec, imageName string) {
 				},
 			},
 		}}
-	directoryOrCreate := v1.HostPathDirectoryOrCreate
-	missing := true
-	for _, vol := range spec.Volumes {
-		if vol.Name == "nfd-source-hooks" {
-			missing = false
-			break
-		}
-	}
-	if missing {
-		spec.Volumes = append(spec.Volumes, v1.Volume{
-			Name: "nfd-source-hooks",
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
-					Path: "/etc/kubernetes/node-feature-discovery/source.d/",
-					Type: &directoryOrCreate,
-				},
-			},
-		})
-	}
+	addVolumeIfMissing(spec, "nfd-source-hooks", "/etc/kubernetes/node-feature-discovery/source.d/", v1.HostPathDirectoryOrCreate)
 }
 
 func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
@@ -232,6 +293,15 @@ func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
 		}
 	}
 	return newVolumes
+}
+func removeVolumeMount(volumeMounts []v1.VolumeMount, name string) []v1.VolumeMount {
+	newVolumeMounts := []v1.VolumeMount{}
+	for _, volume := range volumeMounts {
+		if volume.Name != name {
+			newVolumeMounts = append(newVolumeMounts, volume)
+		}
+	}
+	return newVolumeMounts
 }
 
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
@@ -266,6 +336,22 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 	newargs := getPodArgs(dp)
 	if strings.Join(ds.Spec.Template.Spec.Containers[0].Args, " ") != strings.Join(newargs, " ") {
 		ds.Spec.Template.Spec.Containers[0].Args = newargs
+		updated = true
+	}
+
+	newServiceAccountName := "default"
+	if dp.Spec.ResourceManager {
+		newServiceAccountName = serviceAccountName
+	}
+	if ds.Spec.Template.Spec.ServiceAccountName != newServiceAccountName {
+		ds.Spec.Template.Spec.ServiceAccountName = newServiceAccountName
+		if dp.Spec.ResourceManager {
+			addVolumeIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
+			addVolumeMountIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources")
+		} else {
+			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "podresources")
+			ds.Spec.Template.Spec.Containers[0].VolumeMounts = removeVolumeMount(ds.Spec.Template.Spec.Containers[0].VolumeMounts, "podresources")
+		}
 		updated = true
 	}
 
@@ -311,6 +397,10 @@ func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
 		args = append(args, "-shared-dev-num", strconv.Itoa(gdp.Spec.SharedDevNum))
 	} else {
 		args = append(args, "-shared-dev-num", "1")
+	}
+
+	if gdp.Spec.ResourceManager {
+		args = append(args, "-resource-manager")
 	}
 
 	return args
