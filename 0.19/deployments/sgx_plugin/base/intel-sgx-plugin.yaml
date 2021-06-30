@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-sgx-plugin
+  labels:
+    app: intel-sgx-plugin
+spec:
+  selector:
+    matchLabels:
+      app: intel-sgx-plugin
+  template:
+    metadata:
+      labels:
+        app: intel-sgx-plugin
+    spec:
+      initContainers:
+      - name: intel-sgx-initcontainer
+        image: intel/intel-sgx-initcontainer:0.19.0
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /etc/kubernetes/node-feature-discovery/source.d/
+          name: nfd-source-hooks
+      containers:
+      - name: intel-sgx-plugin
+        image: intel/intel-sgx-plugin:0.19.0
+        securityContext:
+          readOnlyRootFilesystem: true
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: kubeletsockets
+          mountPath: /var/lib/kubelet/device-plugins
+        - name: sgxdevices
+          mountPath: /dev/sgx
+          readOnly: true
+        - name: sgx-enclave
+          mountPath: /dev/sgx_enclave
+          readOnly: true
+        - name: sgx-provision
+          mountPath: /dev/sgx_provision
+          readOnly: true
+      volumes:
+      - name: kubeletsockets
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+      - name: sgxdevices
+        hostPath:
+          path: /dev/sgx
+          type: DirectoryOrCreate
+      - name: sgx-enclave
+        hostPath:
+          path: /dev/sgx_enclave
+          type: CharDevice
+      - name: sgx-provision
+        hostPath:
+          path: /dev/sgx_provision
+          type: CharDevice
+      - name: nfd-source-hooks
+        hostPath:
+          path: /etc/kubernetes/node-feature-discovery/source.d/
+          type: DirectoryOrCreate

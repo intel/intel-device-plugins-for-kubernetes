@@ -1,0 +1,139 @@
+# DCP 1.0
+apiVersion: fpga.intel.com/v2
+kind: FpgaRegion
+metadata:
+  name: arria10.dcp1.0
+spec:
+  interfaceId: ce48969398f05f33946d560708be108a
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: arria10.dcp1.0-nlb0-orchestrated
+spec:
+  afuId: d8424dc4a4a3c413f89e433683f9040b
+  interfaceId: ce48969398f05f33946d560708be108a
+  mode: region
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: arria10.dcp1.0-nlb3-orchestrated
+spec:
+  afuId: f7df405cbd7acf7222f144b0b93acd18
+  interfaceId: ce48969398f05f33946d560708be108a
+  mode: region
+---
+# DCP 1.1
+apiVersion: fpga.intel.com/v2
+kind: FpgaRegion
+metadata:
+  name: arria10.dcp1.1
+spec:
+  interfaceId: 9926ab6d6c925a68aabca7d84c545738
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: arria10.dcp1.1-nlb0-orchestrated
+spec:
+  afuId: d8424dc4a4a3c413f89e433683f9040b
+  interfaceId: 9926ab6d6c925a68aabca7d84c545738
+  mode: region
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: arria10.dcp1.1-nlb3-orchestrated
+spec:
+  afuId: f7df405cbd7acf7222f144b0b93acd18
+  interfaceId: 9926ab6d6c925a68aabca7d84c545738
+  mode: region
+---
+# DCP 1.2
+apiVersion: fpga.intel.com/v2
+kind: FpgaRegion
+metadata:
+  name: arria10.dcp1.2
+spec:
+  interfaceId: 69528db6eb31577a8c3668f9faa081f6
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: arria10.dcp1.2-nlb0-orchestrated
+spec:
+  afuId: d8424dc4a4a3c413f89e433683f9040b
+  interfaceId: 69528db6eb31577a8c3668f9faa081f6
+  mode: region
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: arria10.dcp1.2-nlb0-preprogrammed
+spec:
+  afuId: d8424dc4a4a3c413f89e433683f9040b
+  interfaceId: 69528db6eb31577a8c3668f9faa081f6
+  mode: af
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: arria10.dcp1.2-nlb3-orchestrated
+spec:
+  afuId: f7df405cbd7acf7222f144b0b93acd18
+  interfaceId: 69528db6eb31577a8c3668f9faa081f6
+  mode: region
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: arria10.dcp1.2-nlb3-preprogrammed
+spec:
+  afuId: f7df405cbd7acf7222f144b0b93acd18
+  interfaceId: 69528db6eb31577a8c3668f9faa081f6
+  mode: af
+---
+# D5005
+apiVersion: fpga.intel.com/v2
+kind: FpgaRegion
+metadata:
+  name: d5005
+spec:
+  interfaceId: bfac4d851ee856fe8c95865ce1bbaa2d
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: d5005-nlb0-orchestrated
+spec:
+  afuId: d8424dc4a4a3c413f89e433683f9040b
+  interfaceId: bfac4d851ee856fe8c95865ce1bbaa2d
+  mode: region
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: d5005-nlb3-orchestrated
+spec:
+  afuId: f7df405cbd7acf7222f144b0b93acd18
+  interfaceId: bfac4d851ee856fe8c95865ce1bbaa2d
+  mode: region
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: d5005-nlb3-preprogrammed
+spec:
+  afuId: f7df405cbd7acf7222f144b0b93acd18
+  interfaceId: bfac4d851ee856fe8c95865ce1bbaa2d
+  mode: af
+---
+apiVersion: fpga.intel.com/v2
+kind: AcceleratorFunction
+metadata:
+  name: d5005-matrix-mult-orchestrated
+spec:
+  afuId: 40007c0623210742000ebc58df6f5343e668b03a
+  interfaceId: bfac4d851ee856fe8c95865ce1bbaa2d
+  mode: region

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-vpu-plugin
+  labels:
+    app: intel-vpu-plugin
+spec:
+  selector:
+    matchLabels:
+      app: intel-vpu-plugin
+  template:
+    metadata:
+      labels:
+        app: intel-vpu-plugin
+    spec:
+      containers:
+      - name: intel-vpu-plugin
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+        image: intel/intel-vpu-plugin:0.19.0
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - name: devion
+          mountPath: /dev/ion
+          readOnly: true
+        - name: devfs
+          mountPath: /dev/bus/usb
+          readOnly: true
+        - name: sysfs1
+          mountPath: /sys/bus/usb
+          readOnly: true
+        - name: sysfs2
+          mountPath: /sys/devices
+          readOnly: true
+        - name: tmpfs
+          mountPath: /var/tmp
+        - name: kubeletsockets
+          mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+      - name: devion
+        hostPath:
+           path: /dev/ion
+           type: CharDevice
+      - name: devfs
+        hostPath:
+          path: /dev/bus/usb
+      - name: sysfs1
+        hostPath:
+          path: /sys/bus/usb
+      - name: sysfs2
+        hostPath:
+          path: /sys/devices
+      - name: tmpfs
+        hostPath:
+          path: /var/tmp
+      - name: kubeletsockets
+        hostPath:
+          path: /var/lib/kubelet/device-plugins

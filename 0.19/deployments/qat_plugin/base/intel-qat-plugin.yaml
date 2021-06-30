@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-qat-plugin
+  labels:
+    app: intel-qat-plugin
+spec:
+  selector:
+    matchLabels:
+      app: intel-qat-plugin
+  template:
+    metadata:
+      labels:
+        app: intel-qat-plugin
+    spec:
+      containers:
+      - name: intel-qat-plugin
+        image: intel/intel-qat-plugin:0.19.0
+        securityContext:
+          readOnlyRootFilesystem: true
+        env:
+        - name: DPDK_DRIVER
+          valueFrom:
+            configMapKeyRef:
+              name: intel-qat-plugin-config
+              key: DPDK_DRIVER
+        - name: KERNEL_VF_DRIVERS
+          valueFrom:
+            configMapKeyRef:
+              name: intel-qat-plugin-config
+              key: KERNEL_VF_DRIVERS
+        - name: MAX_NUM_DEVICES
+          valueFrom:
+            configMapKeyRef:
+              name: intel-qat-plugin-config
+              key: MAX_NUM_DEVICES
+        - name: VERBOSITY
+          valueFrom:
+            configMapKeyRef:
+              name: intel-qat-plugin-config
+              key: VERBOSITY
+
+        imagePullPolicy: IfNotPresent
+        args: ["-dpdk-driver", "$(DPDK_DRIVER)", "-kernel-vf-drivers", "$(KERNEL_VF_DRIVERS)", "-max-num-devices", "$(MAX_NUM_DEVICES)", "-v", "$(VERBOSITY)"]
+        volumeMounts:
+        - name: devdir
+          mountPath: /dev/vfio
+          readOnly: true
+        - name: pcidir
+          mountPath: /sys/bus/pci
+        - name: kubeletsockets
+          mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+      - name: devdir
+        hostPath:
+          path: /dev/vfio
+      - name: pcidir
+        hostPath:
+          path: /sys/bus/pci
+      - name: kubeletsockets
+        hostPath:
+          path: /var/lib/kubelet/device-plugins

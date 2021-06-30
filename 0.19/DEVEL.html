@@ -1,0 +1,364 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Development &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Extensions" href="docs/extensions.html" />
+    <link rel="prev" title="Overview" href="README.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Intel® Device Plugins for Kubernetes
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-develop-simple-device-plugins">How to develop simple device plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#logging">Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#error-conventions">Error Conventions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-build-against-a-newer-version-of-kubernetes">How to build against a newer version of Kubernetes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Intel® Device Plugins for Kubernetes</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Development</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/DEVEL.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="development">
+<h1>Development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h1>
+<section id="how-to-develop-simple-device-plugins">
+<h2>How to develop simple device plugins<a class="headerlink" href="#how-to-develop-simple-device-plugins" title="Permalink to this headline">¶</a></h2>
+<p>To create a simple device plugin without the hassle of developing your own gRPC
+server, you can use a package included in this repository called
+<code class="docutils literal notranslate"><span class="pre">github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin</span></code>.</p>
+<p>All you have to do is instantiate a <code class="docutils literal notranslate"><span class="pre">deviceplugin.Manager</span></code> and call
+its <code class="docutils literal notranslate"><span class="pre">Run()</span></code> method:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="o">...</span>
+
+    <span class="nx">manager</span> <span class="o">:=</span> <span class="nx">dpapi</span><span class="p">.</span><span class="nx">NewManager</span><span class="p">(</span><span class="nx">namespace</span><span class="p">,</span> <span class="nx">plugin</span><span class="p">)</span>
+    <span class="nx">manager</span><span class="p">.</span><span class="nx">Run</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The manager’s constructor accepts two parameters:</p>
+<ol class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">namespace</span></code> which is a string like “color.example.com”. All your devices
+will be exposed under this name space, e.g. “color.example.com/yellow”.
+Please note that one device plugin can register many such “colors”.
+The manager will instantiate multiple gRPC servers for every registered “color”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plugin</span></code> which is a reference to an object implementing one mandatory
+interface <code class="docutils literal notranslate"><span class="pre">deviceplugin.Scanner</span></code>.</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">deviceplugin.Scanner</span></code> defines one method <code class="docutils literal notranslate"><span class="pre">Scan()</span></code> which is called only once
+for every device plugin by <code class="docutils literal notranslate"><span class="pre">deviceplugin.Manager</span></code> in a goroutine and operates
+in an infinite loop. A <code class="docutils literal notranslate"><span class="pre">Scan()</span></code> implementation scans the host for devices and
+sends all found devices to a <code class="docutils literal notranslate"><span class="pre">deviceplugin.Notifier</span></code> instance. The
+<code class="docutils literal notranslate"><span class="pre">deviceplugin.Notifier</span></code> is implemented and provided by the <code class="docutils literal notranslate"><span class="pre">deviceplugin</span></code>
+package itself. The found devices are organized in an instance of
+<code class="docutils literal notranslate"><span class="pre">deviceplugin.DeviceTree</span></code> object. The object is filled in with its
+<code class="docutils literal notranslate"><span class="pre">AddDevice()</span></code> method:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="kd">func</span> <span class="p">(</span><span class="nx">dp</span> <span class="o">*</span><span class="nx">devicePlugin</span><span class="p">)</span> <span class="nx">Scan</span><span class="p">(</span><span class="nx">notifier</span> <span class="nx">deviceplugin</span><span class="p">.</span><span class="nx">Notifier</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="k">for</span> <span class="p">{</span>
+        <span class="nx">devTree</span> <span class="o">:=</span> <span class="nx">deviceplugin</span><span class="p">.</span><span class="nx">NewDeviceTree</span><span class="p">()</span>
+        <span class="o">...</span>
+        <span class="nx">devTree</span><span class="p">.</span><span class="nx">AddDevice</span><span class="p">(</span><span class="s">&quot;yellow&quot;</span><span class="p">,</span> <span class="nx">devID</span><span class="p">,</span> <span class="nx">deviceplugin</span><span class="p">.</span><span class="nx">DeviceInfo</span><span class="p">{</span>
+            <span class="nx">State</span><span class="p">:</span> <span class="nx">health</span><span class="p">,</span>
+            <span class="nx">Nodes</span><span class="p">:</span> <span class="p">[]</span><span class="nx">pluginapi</span><span class="p">.</span><span class="nx">DeviceSpec</span><span class="p">{</span>
+                <span class="p">{</span>
+                    <span class="nx">HostPath</span><span class="p">:</span>      <span class="nx">devPath</span><span class="p">,</span>
+                    <span class="nx">ContainerPath</span><span class="p">:</span> <span class="nx">devPath</span><span class="p">,</span>
+                    <span class="nx">Permissions</span><span class="p">:</span>   <span class="s">&quot;rw&quot;</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">},</span>
+        <span class="p">})</span>
+        <span class="o">...</span>
+        <span class="nx">notifier</span><span class="p">.</span><span class="nx">Notify</span><span class="p">(</span><span class="nx">devTree</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Optionally, your device plugin may also implement the
+<code class="docutils literal notranslate"><span class="pre">deviceplugin.PostAllocator</span></code> interface. If implemented, its method
+<code class="docutils literal notranslate"><span class="pre">PostAllocate()</span></code> modifies <code class="docutils literal notranslate"><span class="pre">pluginapi.AllocateResponse</span></code> responses just
+before they are sent to <code class="docutils literal notranslate"><span class="pre">kubelet</span></code>. To see an example, refer to the FPGA
+plugin which implements this interface to annotate its responses.</p>
+<section id="logging">
+<h3>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h3>
+<p>The framework uses <a class="reference external" href="https://github.com/kubernetes/klog"><code class="docutils literal notranslate"><span class="pre">klog</span></code></a> as its logging
+framework. It is encouraged for plugins to also use <code class="docutils literal notranslate"><span class="pre">klog</span></code> to maintain uniformity
+in the logs and command line options.</p>
+<p>The framework initialises <code class="docutils literal notranslate"><span class="pre">klog</span></code>, so further calls to <code class="docutils literal notranslate"><span class="pre">klog.InitFlags()</span></code> by
+plugins should not be necessary. This does add a number of log configuration
+options to your plugin, which can be viewed with the <code class="docutils literal notranslate"><span class="pre">-h</span></code> command line option of your
+plugin.</p>
+<p>The framework tries to adhere to the Kubernetes
+<a class="reference external" href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md">Logging Conventions</a>.
+The advise is to use the <code class="docutils literal notranslate"><span class="pre">V()</span></code> levels for <code class="docutils literal notranslate"><span class="pre">Info()</span></code> calls, as calling <code class="docutils literal notranslate"><span class="pre">Info()</span></code>
+with no set level will make configuration and filtering of logging via the command
+line more difficult.</p>
+<p>The default is to not log <code class="docutils literal notranslate"><span class="pre">Info()</span></code> calls. This can be changed using the plugin command
+line <code class="docutils literal notranslate"><span class="pre">-v</span></code> parameter. The additional annotations prepended to log lines by ‘klog’ can be disabled
+with the <code class="docutils literal notranslate"><span class="pre">-skip_headers</span></code> option.</p>
+</section>
+<section id="error-conventions">
+<h3>Error Conventions<a class="headerlink" href="#error-conventions" title="Permalink to this headline">¶</a></h3>
+<p>The framework has a convention for producing and logging errors. Ideally plugins will also adhere
+to the convention.</p>
+<p>Errors generated within the framework and plugins are instantiated with the <code class="docutils literal notranslate"><span class="pre">New()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">Errorf()</span></code> functions of the <a class="reference external" href="https://golang.org/pkg/errors/">errors package</a>:</p>
+<div class="highlight-golang notranslate"><div class="highlight"><pre><span></span>    <span class="k">return</span> <span class="nx">errors</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="s">&quot;error message&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Errors generated from outside the plugins and framework are augmented with their stack dump with code such as</p>
+<div class="highlight-golang notranslate"><div class="highlight"><pre><span></span>    <span class="k">return</span> <span class="nx">errors</span><span class="p">.</span><span class="nx">WithStack</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-golang notranslate"><div class="highlight"><pre><span></span>    <span class="k">return</span> <span class="nx">errors</span><span class="p">.</span><span class="nx">Wrap</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="s">&quot;some additional error message&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>These errors are then logged using a default struct value format like:</p>
+<div class="highlight-golang notranslate"><div class="highlight"><pre><span></span>    <span class="nx">klog</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;Example of an internal error death: %+v&quot;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>at the line where it’s certain that the error cannot be passed out farther nor handled gracefully.
+Otherwise, they can be logged as simple values:</p>
+<div class="highlight-golang notranslate"><div class="highlight"><pre><span></span>    <span class="nx">klog</span><span class="p">.</span><span class="nx">Warningf</span><span class="p">(</span><span class="s">&quot;Example of a warning due to an external error: %v&quot;</span><span class="p">,</span> <span class="nx">err</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="how-to-build-against-a-newer-version-of-kubernetes">
+<h2>How to build against a newer version of Kubernetes<a class="headerlink" href="#how-to-build-against-a-newer-version-of-kubernetes" title="Permalink to this headline">¶</a></h2>
+<p>First you need to update module dependencies. The easiest way is to use the
+script copied from https://github.com/kubernetes/kubernetes/issues/79384#issuecomment-521493597:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/sh</span>
+<span class="nb">set</span> -euo pipefail
+
+<span class="nv">VERSION</span><span class="o">=</span><span class="si">${</span><span class="nv">1</span><span class="p">#</span><span class="s2">&quot;v&quot;</span><span class="si">}</span>
+<span class="k">if</span> <span class="o">[</span> -z <span class="s2">&quot;</span><span class="nv">$VERSION</span><span class="s2">&quot;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+    <span class="nb">echo</span> <span class="s2">&quot;Must specify version!&quot;</span>
+    <span class="nb">exit</span> <span class="m">1</span>
+<span class="k">fi</span>
+<span class="nv">MODS</span><span class="o">=(</span><span class="k">$(</span>
+    curl -sS https://raw.githubusercontent.com/kubernetes/kubernetes/v<span class="si">${</span><span class="nv">VERSION</span><span class="si">}</span>/go.mod <span class="p">|</span>
+    sed -n <span class="s1">&#39;s|.*k8s.io/\(.*\) =&gt; ./staging/src/k8s.io/.*|k8s.io/\1|p&#39;</span>
+<span class="k">)</span><span class="o">)</span>
+<span class="k">for</span> MOD <span class="k">in</span> <span class="s2">&quot;</span><span class="si">${</span><span class="nv">MODS</span><span class="p">[@]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span> <span class="k">do</span>
+    <span class="nv">V</span><span class="o">=</span><span class="k">$(</span>
+        go mod download -json <span class="s2">&quot;</span><span class="si">${</span><span class="nv">MOD</span><span class="si">}</span><span class="s2">@kubernetes-</span><span class="si">${</span><span class="nv">VERSION</span><span class="si">}</span><span class="s2">&quot;</span> <span class="p">|</span>
+        sed -n <span class="s1">&#39;s|.*&quot;Version&quot;: &quot;\(.*\)&quot;.*|\1|p&#39;</span>
+    <span class="k">)</span>
+    go mod edit <span class="s2">&quot;-replace=</span><span class="si">${</span><span class="nv">MOD</span><span class="si">}</span><span class="s2">=</span><span class="si">${</span><span class="nv">MOD</span><span class="si">}</span><span class="s2">@</span><span class="si">${</span><span class="nv">V</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="k">done</span>
+go get <span class="s2">&quot;k8s.io/kubernetes@v</span><span class="si">${</span><span class="nv">VERSION</span><span class="si">}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>Just run it inside the repo’s root, e.g.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ./k8s_gomod_update.sh 1.18.1
+</pre></div>
+</div>
+<p>Finally run</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ make generate
+$ make test
+</pre></div>
+</div>
+<p>and fix all new compilation issues.</p>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="docs/extensions.html" class="btn btn-neutral float-right" title="Extensions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="README.html" class="btn btn-neutral float-left" title="Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, various.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
