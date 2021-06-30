@@ -20,26 +20,19 @@ Table of Contents
 
 ## Introduction
 
-The GPU device plugin for Kubernetes supports acceleration using the following Intel GPU hardware families:
+Intel GPU plugin facilitates Kubernetes workload offloading by providing access to
+Intel discrete (Xe) and integrated GPU HW device files.
 
-- Intel Xe discrete GPUs, including Xe-LP, Xe-HPG, Xe-HP SDV and XG310 
-- Integrated GPUs within Intel Core processors
-- Integrated GPUs within Intel Xeon processors
-- Intel Visual Compute Accelerator (Intel VCA)
-
-The GPU plugin facilitates offloading the processing of computation intensive workloads to GPU hardware.
-Use cases include:
-
+Use cases include, but are not limited to:
 - Media transcode 
 - Media analytics
 - Cloud gaming
 - High performance computing
 - AI training and inference
 
-For example, Intel oneAPI Video Processing Linbrary can offload video transcoding operations, and OpenCL or oneAPI Level Zero libraries can provide computation acceleration for Intel GPUs.
-
-The device plugin can also be used with [GVT-d](https://github.com/intel/gvt-linux/wiki/GVTd_Setup_Guide) device
-passthrough and acceleration.
+For example containers with Intel media driver (and components using that), can offload
+video transcoding operations, and containers with the Intel OpenCL / oneAPI Level Zero
+backend libraries can offload compute operations to GPU.
 
 ### Configuration options
 
