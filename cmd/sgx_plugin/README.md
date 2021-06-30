@@ -6,7 +6,7 @@ Contents
 * [Installation](#installation)
     * [Prerequisites](#prerequisites)
         * [Backwards compatiblity note](#backwards-compatibility-note)
-    * [Pre-built images](#pre-built-images)
+    * [Deploying with Pre-built images](#deploying-with-pre-built-images)
     * [Getting the source code](#getting-the-source-code)
     * [Verify node kubelet config](#verify-node-kubelet-config)
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
@@ -102,7 +102,7 @@ The backwards compatibility will be removed in the next release (v0.20) and
 from the main development branch once the SGX SDK and DCAP releases default to
 the new devices.
 
-### Pre-built images
+### Deploying with Pre-built images
 
 [Pre-built images](https://hub.docker.com/u/intel/)
 are available on Docker Hub. These images are automatically built and uploaded
@@ -157,8 +157,15 @@ $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL
 
 ### Deploying as a DaemonSet
 
-To deploy the plugin as a DaemonSet, you first need to build a container image for the plugin and
-ensure that is visible to your nodes.
+To deploy the plugin as a DaemonSet, you first need to deploy the cert-manager.
+
+```bash
+$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
+```
+
+You also need to build a container image for the plugin and ensure that is
+visible to your nodes.
+
 
 #### Build the plugin and EPC source images
 
@@ -259,7 +266,7 @@ For documentation to set up Intel® reference PCCS, refer to:
 [Intel® Software Guard Extensions (Intel® SGX) Services](https://api.portal.trustedservices.intel.com/) and
 [Intel® Software Guard Extensions SDK for Linux](https://01.org/intel-software-guard-extensions)
 
-Furthermore, the Kubernetes cluster must be set up according the [instructions above](#pre-built-images).
+Furthermore, the Kubernetes cluster must be set up according the [instructions above](#deploying-with-pre-built-images).
 
 ##### Build the image
 
