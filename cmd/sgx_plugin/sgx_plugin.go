@@ -29,9 +29,11 @@ import (
 
 const (
 	// Device plugin settings.
+	annotationName              = "com.intel.sgx.map"
 	namespace                   = "sgx.intel.com"
 	deviceTypeEnclave           = "enclave"
 	deviceTypeProvision         = "provision"
+	sgxEpcLimitsMap             = "container_sgx_epc_limit"
 	devicePath                  = "/dev"
 	podsPerCoreEnvVariable      = "PODS_PER_CORE"
 	defaultPodCount        uint = 110
@@ -65,6 +67,15 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	return nil
 }
 
+func (dp *devicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error {
+	for _, containerResponse := range response.GetContainerResponses() {
+		containerResponse.Annotations = map[string]string{
+			annotationName: sgxEpcLimitsMap,
+		}
+	}
+
+	return nil
+}
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	devTree := dpapi.NewDeviceTree()
 

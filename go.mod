@@ -3,6 +3,8 @@ module github.com/intel/intel-device-plugins-for-kubernetes
 go 1.16
 
 require (
+	github.com/cilium/ebpf v0.6.1
+	github.com/containers/common v0.39.1-0.20210609123852-f66e84965bf2
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ini/ini v1.62.0
 	github.com/go-logr/logr v0.4.0
@@ -10,16 +12,15 @@ require (
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/gousb v1.1.0
-	github.com/google/uuid v1.2.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.6
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/common v0.28.0 // indirect
-	golang.org/x/sys v0.0.0-20210608053332-aa57babbf139
+	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56 // indirect
 	golang.org/x/time v0.0.0-20210608053304-ed9ce3a009e4 // indirect
-	google.golang.org/grpc v1.31.0
+	google.golang.org/grpc v1.33.2
 	k8s.io/api v0.21.1
 	k8s.io/apimachinery v0.21.1
 	k8s.io/client-go v0.21.1
