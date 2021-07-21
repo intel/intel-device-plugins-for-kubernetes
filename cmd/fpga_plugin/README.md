@@ -61,6 +61,7 @@ Kubernetes:
     > **NOTE:** Installation of the [FPGA admission controller webhook](../fpga_admissionwebhook/README.md) can be skipped if the
     > FPGA device plugin is operated with the Intel Device Plugins Operator
     > since it integrates the controller's functionality.
+    > However, [the mappings](../fpga_admissionwebhook/README.md#mappings-deployment) still must be deployed."
 
 -   [FPGA CRI-O prestart hook](../fpga_crihook/README.md)
 
