@@ -6,8 +6,10 @@ Table of Contents
 * [Dependencies](#dependencies)
 * [Installation](#installation)
     * [Pre-requisites](#pre-requisites)
+    * [Mappings](#mappings)
     * [Deployment](#deployment)
-* [Mappings](#mappings)
+      * [Webhook deployment](#webhook-deployment)
+      * [Mappings deployment](#mappings-deployment)
 * [Next steps](#next-steps)
 
 ## Introduction
@@ -96,25 +98,6 @@ set the cluster service names to `$no_proxy` before `kubeadm init`:
 $ export no_proxy=$no_proxy,.svc,.svc.cluster.local
 ```
 
-### Deployment
-
-To deploy the webhook, run
-
-```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_admissionwebhook/default?ref=main
-namespace/intelfpgawebhook-system created
-customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
-customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
-mutatingwebhookconfiguration.admissionregistration.k8s.io/intelfpgawebhook-mutating-webhook-configuration created
-clusterrole.rbac.authorization.k8s.io/intelfpgawebhook-manager-role created
-clusterrolebinding.rbac.authorization.k8s.io/intelfpgawebhook-manager-rolebinding created
-service/intelfpgawebhook-webhook-service created
-deployment.apps/intelfpgawebhook-webhook created
-certificate.cert-manager.io/intelfpgawebhook-serving-cert created
-issuer.cert-manager.io/intelfpgawebhook-selfsigned-issuer created
-```
-Now you can deploy your mappings.
-
 ## Mappings
 
 Mappings is a an essential part of the setup that gives a flexible instrument to a cluster
@@ -158,17 +141,49 @@ Mappings of resource names are configured with objects of `AcceleratorFunction` 
 [`./deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_af.yaml`](/deployments/fpga_admissionwebhook/crd/bases/fpga.intel.com_acceleratorfunctions.yaml)
 and [`./deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_region.yaml`](/deployments/fpga_admissionwebhook/crd/bases/fpga.intel.com_fpgaregions.yaml).
 
-Mappings between 'names' and 'ID's are controlled by the admission controller
-mappings collection file found in
+Example mappings between 'names' and 'ID's are controlled by the admission controller mappings collection file found in
 [`./deployments/fpga_admissionwebhook/mappings-collection.yaml`](/deployments/fpga_admissionwebhook/mappings-collection.yaml).
-This mappings file can be deployed with
+
+
+### Deployment
+
+#### Webhook deployment
+
+To deploy the webhook, run
 
 ```bash
-$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/deployments/fpga_admissionwebhook/mappings-collection.yaml
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_admissionwebhook/default?ref=main
+namespace/intelfpgawebhook-system created
+customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
+customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/intelfpgawebhook-mutating-webhook-configuration created
+clusterrole.rbac.authorization.k8s.io/intelfpgawebhook-manager-role created
+clusterrolebinding.rbac.authorization.k8s.io/intelfpgawebhook-manager-rolebinding created
+service/intelfpgawebhook-webhook-service created
+deployment.apps/intelfpgawebhook-webhook created
+certificate.cert-manager.io/intelfpgawebhook-serving-cert created
+issuer.cert-manager.io/intelfpgawebhook-selfsigned-issuer created
+```
+
+#### Mappings deployment
+
+Mappings deployment is a mandatory part of the webhook deployment. You should
+prepare and deploy mappings that describe FPGA bitstreams available in your cluster.
+
+Example mappings collection [`./deployments/fpga_admissionwebhook/mappings-collection.yaml`](/deployments/fpga_admissionwebhook/mappings-collection.yaml)
+can be used as an example for cluster mappings. This collection is not intended to be deployed as is,
+it should be used as a reference and example of your own cluster mappings.
+
+To deploy the mappings, run
+
+```bash
+$ kubectl apply -f <path to mappings yaml>
+
 ```
 
 Note that the mappings are scoped to the namespaces they were created in
 and they are applicable to pods created in the corresponding namespaces.
+
 
 ## Next steps
 
