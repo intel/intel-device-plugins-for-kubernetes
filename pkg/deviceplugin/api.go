@@ -66,6 +66,11 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 	return deviceInfo
 }
 
+// SetTopology sets the topology information in DeviceInfo struct
+func (d *DeviceInfo) SetTopology(topologyInfo *pluginapi.TopologyInfo) {
+	d.topology = topologyInfo
+}
+
 // DeviceTree contains a tree-like structure of device type -> device ID -> device info.
 type DeviceTree map[string]map[string]DeviceInfo
 
