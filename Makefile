@@ -13,7 +13,9 @@ BUILDER ?= "docker"
 EXTRA_BUILD_ARGS ?= ""
 
 # Current Operator version
-OPERATOR_VERSION ?= 0.19.0
+OPERATOR_VERSION ?= 0.21.0
+# Previous Operator version
+OPERATOR_PREVIOUS_VERSION ?= 0.20.0
 # Default bundle image tag
 BUNDLE_IMG ?= intel-device-plugins-controller-bundle:$(OPERATOR_VERSION)
 # Options for 'bundle-build'
@@ -110,7 +112,7 @@ bundle:
 .PHONY: packagemanifests
 packagemanifests:
 	$(OPERATOR_SDK) generate kustomize manifests -q --input-dir $(OLM_MANIFESTS) --output-dir $(OLM_MANIFESTS) --apis-dir pkg/apis
-	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(OPERATOR_VERSION)|" | $(OPERATOR_SDK) generate packagemanifests -q --kustomize-dir $(OLM_MANIFESTS) --version $(OPERATOR_VERSION) $(BUNDLE_METADATA_OPTS)
+	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(OPERATOR_VERSION)|" | $(OPERATOR_SDK) generate packagemanifests -q --kustomize-dir $(OLM_MANIFESTS) --version $(OPERATOR_VERSION) --from-version $(OPERATOR_PREVIOUS_VERSION) $(BUNDLE_METADATA_OPTS)
 	# Remove unneeded resources
 	rm packagemanifests/$(OPERATOR_VERSION)/*service.yaml
 	rm packagemanifests/$(OPERATOR_VERSION)/*clusterrole.yaml

@@ -198,6 +198,10 @@ There are few useful steps when working with changes to Device Plugins CRDs and 
 
 ## How to publish a new version of the Intel Device Plugins operator to operatorhub.io
 
+Update metadata.annotations.containerImage and metadata.annotations.createdAT fields in the base CSV manifest file
+deployments/operator/manifests/bases/intel-device-plugins-operator.clusterserviceversion.yaml
+to match current operator version and current date
+
 Generate package manifests with:
 ```
 $ make packagemanifests OPERATOR_VERSION=0.X.Y
@@ -219,14 +223,18 @@ $ operator-sdk olm uninstall
 Review the package manifests by uploading the generated `packagemanifests` folder to
 https://operatorhub.io -> Contribute -> Package Your Operator.
 
-Clone the [Community Operators](https://github.com/operator-framework/community-operators) repo:
+Clone the [Community Operators](https://github.com/k8s-operatorhub/community-operators) repo:
 ```
-$ git clone https://github.com/operator-framework/community-operators
+$ git clone https://github.com/k8s-operatorhub/community-operators
 ```
 
 Copy the generated files to the Community Operators repo:
 ```
-$ cp -r packagemanifests/* community-operators/upstream-community-operators/intel-device-plugins/
+$ cp -r packagemanifests/* community-operators/operators/intel-device-plugins/
 ```
 
-Finally, submit a PR.
+Submit a PR
+
+Check operator page
+https://operatorhub.io/operator/intel-device-plugins-operator
+after PR is merged
