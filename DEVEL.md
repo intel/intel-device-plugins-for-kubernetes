@@ -198,9 +198,9 @@ There are few useful steps when working with changes to Device Plugins CRDs and 
 
 ## How to publish a new version of the Intel Device Plugins operator to operatorhub.io
 
-Update metadata.annotations.containerImage field in the base CSV manifest file
+Update metadata.annotations.containerImage and metadata.annotations.createdAT fields in the base CSV manifest file
 deployments/operator/manifests/bases/intel-device-plugins-operator.clusterserviceversion.yaml
-to match current operator version
+to match current operator version and current date
 
 Generate package manifests with:
 ```
