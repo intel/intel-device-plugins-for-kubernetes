@@ -90,7 +90,7 @@ func getPciDeviceCounts(sysfsPciDevicesPath string, vendorID string, pidSearch [
 			// Loop for list of pid of supported device type
 			for _, pidVPU := range pciPid.pids {
 				if vid == vendorID && pid == pidVPU {
-					found[i] += 1
+					found[i]++
 				}
 			}
 		}

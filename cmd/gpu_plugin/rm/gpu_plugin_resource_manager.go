@@ -65,7 +65,7 @@ type podCandidate struct {
 	allocationTargetNum int
 }
 
-type deviceInfo struct {
+type DeviceInfo struct {
 	nodes  []pluginapi.DeviceSpec
 	mounts []pluginapi.Mount
 	envs   map[string]string
@@ -88,15 +88,15 @@ type resourceManager struct {
 	prGetClientFunc  getClientFunc
 }
 
-func NewDeviceInfo(nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string) *deviceInfo {
-	return &deviceInfo{
+func NewDeviceInfo(nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string) *DeviceInfo {
+	return &DeviceInfo{
 		nodes:  nodes,
 		mounts: mounts,
 		envs:   envs,
 	}
 }
 
-type DeviceInfoMap map[string]*deviceInfo
+type DeviceInfoMap map[string]*DeviceInfo
 
 func NewDeviceInfoMap() DeviceInfoMap {
 	return DeviceInfoMap{}

@@ -98,7 +98,7 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
-	var previouslyFound int = -1
+	var previouslyFound = -1
 
 	for {
 		devTree, err := dp.scan()

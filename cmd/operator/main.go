@@ -93,7 +93,7 @@ func main() {
 	var metricsAddr string
 	var devicePluginNamespace string
 	var enableLeaderElection bool
-	var pm *patcher.PatcherManager
+	var pm *patcher.Manager
 
 	ctrl.SetLogger(klogr.New())
 
@@ -146,7 +146,7 @@ func main() {
 
 	if contains(devices, "sgx") {
 		mgr.GetWebhookServer().Register("/pods-sgx", &webhook.Admission{
-			Handler: &sgxwebhook.SgxMutator{Client: mgr.GetClient()},
+			Handler: &sgxwebhook.Mutator{Client: mgr.GetClient()},
 		})
 	}
 

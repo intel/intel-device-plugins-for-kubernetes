@@ -38,22 +38,22 @@ func init() {
 	_ = corev1.AddToScheme(scheme)
 }
 
-// PatcherManager keeps track of patchers registered for different Kubernetes namespaces.
-type PatcherManager struct {
+// Manager keeps track of patchers registered for different Kubernetes namespaces.
+type Manager struct {
 	log      logr.Logger
 	patchers map[string]*patcher
 }
 
-// NewPatcherManager creates a new PatcherManager.
-func NewPatcherManager(log logr.Logger) *PatcherManager {
-	return &PatcherManager{
+// NewPatcherManager creates a new Manager.
+func NewPatcherManager(log logr.Logger) *Manager {
+	return &Manager{
 		log:      log,
 		patchers: make(map[string]*patcher),
 	}
 }
 
 // GetPatcher returns a patcher specific to given namespace.
-func (pm *PatcherManager) GetPatcher(namespace string) *patcher {
+func (pm *Manager) GetPatcher(namespace string) *patcher {
 	if p, ok := pm.patchers[namespace]; ok {
 		return p
 	}
@@ -67,13 +67,13 @@ func (pm *PatcherManager) GetPatcher(namespace string) *patcher {
 
 // GetPodMutator returns a handler function replacing FPGA resource names with
 // real FPGA resources in pods.
-func (pm *PatcherManager) GetPodMutator() func(ctx context.Context, req webhook.AdmissionRequest) webhook.AdmissionResponse {
+func (pm *Manager) GetPodMutator() func(ctx context.Context, req webhook.AdmissionRequest) webhook.AdmissionResponse {
 	return pm.mutate
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/pods,mutating=true,failurePolicy=Ignore,groups="",resources=pods,versions=v1,name=fpga.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1
 
-func (pm *PatcherManager) mutate(ctx context.Context, req webhook.AdmissionRequest) webhook.AdmissionResponse {
+func (pm *Manager) mutate(ctx context.Context, req webhook.AdmissionRequest) webhook.AdmissionResponse {
 	podResource := metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 	if req.Resource != podResource {
 		err := errors.Errorf("unexpected resource type %q", req.Resource)
