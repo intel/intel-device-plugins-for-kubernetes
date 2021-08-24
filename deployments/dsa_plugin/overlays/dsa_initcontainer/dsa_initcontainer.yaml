@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-dsa-plugin
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: intel-dsa-initcontainer
+        image: intel/intel-dsa-initcontainer:devel
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /sys/devices
+          name: sys-devices
+      volumes:
+      - name: sys-devices
+        hostPath:
+          path: /sys/devices
