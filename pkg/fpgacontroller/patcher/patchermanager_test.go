@@ -40,7 +40,7 @@ func TestGetPatcher(t *testing.T) {
 	namespace := "test"
 	tcases := []struct {
 		name string
-		pm   *PatcherManager
+		pm   *Manager
 	}{
 		{
 			name: "Create new patcher",
@@ -48,7 +48,7 @@ func TestGetPatcher(t *testing.T) {
 		},
 		{
 			name: "Return existing patcher",
-			pm:   &PatcherManager{patchers: map[string]*patcher{namespace: newPatcher(log)}},
+			pm:   &Manager{patchers: map[string]*patcher{namespace: newPatcher(log)}},
 		},
 	}
 	for _, tt := range tcases {

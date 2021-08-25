@@ -29,8 +29,8 @@ import (
 
 // +kubebuilder:webhook:path=/pods-sgx,mutating=true,failurePolicy=ignore,groups="",resources=pods,verbs=create;update,versions=v1,name=sgx.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1
 
-// SgxMutator annotates Pods.
-type SgxMutator struct {
+// Mutator annotates Pods.
+type Mutator struct {
 	Client  client.Client
 	decoder *admission.Decoder
 }
@@ -97,7 +97,7 @@ func warnWrongResources(resources map[string]int64) []string {
 }
 
 // Handle implements controller-runtimes's admission.Handler inteface.
-func (s *SgxMutator) Handle(ctx context.Context, req admission.Request) admission.Response {
+func (s *Mutator) Handle(ctx context.Context, req admission.Request) admission.Response {
 	pod := &corev1.Pod{}
 
 	if err := s.decoder.Decode(req, pod); err != nil {
@@ -214,7 +214,7 @@ func (s *SgxMutator) Handle(ctx context.Context, req admission.Request) admissio
 
 // InjectDecoder implements controller-runtime's admission.DecoderInjector interface.
 // A decoder will be automatically injected.
-func (s *SgxMutator) InjectDecoder(d *admission.Decoder) error {
+func (s *Mutator) InjectDecoder(d *admission.Decoder) error {
 	s.decoder = d
 	return nil
 }

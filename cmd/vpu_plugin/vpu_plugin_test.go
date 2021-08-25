@@ -72,8 +72,8 @@ func createDevice(pciBusRootDir string, bdf string, vid string, pid string) erro
 }
 
 func createTestPCI(folder string, testPCI []PCIPidDeviceType) error {
-	var busNum int = 1
-	var devNum int = 3
+	var busNum = 1
+	var devNum = 3
 	//Loop for all supported device type
 	for _, pciPid := range testPCI {
 		//Loop for pid number
@@ -83,7 +83,7 @@ func createTestPCI(folder string, testPCI []PCIPidDeviceType) error {
 				if err := createDevice(folder, strconv.Itoa(busNum), vendorIDIntel, pidVPU); err != nil {
 					return err
 				}
-				busNum += 1
+				busNum++
 			}
 		}
 	}

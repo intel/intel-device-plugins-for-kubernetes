@@ -60,7 +60,7 @@ func main() {
 	}
 
 	mgr.GetWebhookServer().Register("/pods-sgx", &webhook.Admission{
-		Handler: &sgxwebhook.SgxMutator{Client: mgr.GetClient()},
+		Handler: &sgxwebhook.Mutator{Client: mgr.GetClient()},
 	})
 
 	setupLog.Info("starting manager")

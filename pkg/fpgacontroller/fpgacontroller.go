@@ -36,7 +36,7 @@ import (
 type AcceleratorFunctionReconciler struct {
 	client.Client
 	Scheme         *runtime.Scheme
-	PatcherManager *patcher.PatcherManager
+	PatcherManager *patcher.Manager
 }
 
 // Reconcile reconciles updates for AcceleratorFunction objects.
@@ -71,7 +71,7 @@ func (r *AcceleratorFunctionReconciler) SetupWithManager(mgr ctrl.Manager) error
 type FpgaRegionReconciler struct {
 	client.Client
 	Scheme         *runtime.Scheme
-	PatcherManager *patcher.PatcherManager
+	PatcherManager *patcher.Manager
 }
 
 // Reconcile reconciles updates for FpgaRegion objects.
