@@ -51,6 +51,10 @@ spec:
           spec:
             description: DsaDevicePluginSpec defines the desired state of DsaDevicePlugin.
             properties:
+              InitImage:
+                description: InitImage is an initcontainer image to configure and
+                  enable DSA devices and workqueues with accel-config utility
+                type: string
               image:
                 description: Image is a container image with DSA device plugin executable.
                 type: string

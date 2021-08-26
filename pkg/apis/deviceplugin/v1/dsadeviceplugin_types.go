@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2021 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@ type DsaDevicePluginSpec struct {
 
 	// Image is a container image with DSA device plugin executable.
 	Image string `json:"image,omitempty"`
+
+	// InitImage is an initcontainer image to configure and enable DSA devices and workqueues with accel-config utility
+	InitImage string `json:"InitImage,omitempty"`
 
 	// SharedDevNum is a number of containers that can share the same DSA device.
 	// +kubebuilder:validation:Minimum=1
