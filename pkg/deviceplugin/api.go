@@ -66,6 +66,18 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 	return deviceInfo
 }
 
+// NewDeviceInfoWithTopologyHints makes DeviceInfo struct with topology information provided to it.
+func NewDeviceInfoWithTopologyHints(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string,
+	topology *pluginapi.TopologyInfo) DeviceInfo {
+	return DeviceInfo{
+		state:    state,
+		nodes:    nodes,
+		mounts:   mounts,
+		envs:     envs,
+		topology: topology,
+	}
+}
+
 // DeviceTree contains a tree-like structure of device type -> device ID -> device info.
 type DeviceTree map[string]map[string]DeviceInfo
 
