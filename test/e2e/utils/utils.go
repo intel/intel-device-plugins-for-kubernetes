@@ -173,3 +173,25 @@ func TestContainersRunAsNonRoot(pods []v1.Pod) error {
 	}
 	return nil
 }
+
+func printVolumeMounts(vm []v1.VolumeMount) {
+	for _, v := range vm {
+		if !v.ReadOnly {
+			framework.Logf("Available RW volume mounts: %v", v)
+		}
+	}
+}
+
+// TestPodsFileSystemInfo checks that all containers within the Pods run
+// with ReadOnlyRootFileSystem. It also prints RW volume mounts.
+func TestPodsFileSystemInfo(pods []v1.Pod) error {
+	for _, p := range pods {
+		for _, c := range append(p.Spec.InitContainers, p.Spec.Containers...) {
+			if !*c.SecurityContext.ReadOnlyRootFilesystem {
+				return fmt.Errorf("%s (container: %s): Writable root filesystem", p.Name, c.Name)
+			}
+			printVolumeMounts(c.VolumeMounts)
+		}
+	}
+	return nil
+}
