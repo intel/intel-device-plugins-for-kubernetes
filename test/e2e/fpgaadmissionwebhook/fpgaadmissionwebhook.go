@@ -73,7 +73,7 @@ func checkPodMutation(f *framework.Framework, mappingsNamespace string, source, 
 	}
 
 	ginkgo.By("deploying webhook")
-	utils.DeployFpgaWebhook(f, kustomizationPath)
+	_ = utils.DeployWebhook(f, kustomizationPath)
 
 	ginkgo.By("deploying mappings")
 	framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-n", mappingsNamespace, "-f", filepath.Dir(kustomizationPath)+"/../mappings-collection.yaml")

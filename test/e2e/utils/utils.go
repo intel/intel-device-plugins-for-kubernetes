@@ -126,14 +126,14 @@ func CreateKustomizationOverlay(namespace, base, overlay string) error {
 	return os.WriteFile(overlay+"/kustomization.yaml", []byte(content), 0600)
 }
 
-// DeployFpgaWebhook deploys FPGA admission webhook to a framework-specific namespace.
-func DeployFpgaWebhook(f *framework.Framework, kustomizationPath string) {
+// DeployWebhook deploys an admission webhook to a framework-specific namespace.
+func DeployWebhook(f *framework.Framework, kustomizationPath string) v1.Pod {
 	if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, "cert-manager",
 		labels.Set{"app.kubernetes.io/name": "cert-manager"}.AsSelector(), 1 /* one replica */, 10*time.Second); err != nil {
 		framework.Failf("unable to detect running cert-manager: %v", err)
 	}
 
-	tmpDir, err := os.MkdirTemp("", "fpgawebhooke2etest-"+f.Namespace.Name)
+	tmpDir, err := os.MkdirTemp("", "webhooke2etest-"+f.Namespace.Name)
 	if err != nil {
 		framework.Failf("unable to create temp directory: %v", err)
 	}
@@ -145,10 +145,31 @@ func DeployFpgaWebhook(f *framework.Framework, kustomizationPath string) {
 	}
 
 	framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", tmpDir)
-	if _, err = e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
-		labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1 /* one replica */, 10*time.Second); err != nil {
+	podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
+		labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1 /* one replica */, 10*time.Second)
+	if err != nil {
 		framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
 		kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 		framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 	}
+	return podList.Items[0]
+}
+
+// TestContainersRunAsNonRoot checks that all containers within the Pods run
+// with non-root UID/GID.
+func TestContainersRunAsNonRoot(pods []v1.Pod) error {
+	for _, p := range pods {
+		for _, c := range append(p.Spec.InitContainers, p.Spec.Containers...) {
+			if !*c.SecurityContext.RunAsNonRoot {
+				return fmt.Errorf("%s (container: %s): RunAsNonRoot is not true", p.Name, c.Name)
+			}
+			if *c.SecurityContext.RunAsGroup == 0 {
+				return fmt.Errorf("%s (container: %s): RunAsGroup is root (0)", p.Name, c.Name)
+			}
+			if *c.SecurityContext.RunAsUser == 0 {
+				return fmt.Errorf("%s (container: %s): RunAsUser is root (0)", p.Name, c.Name)
+			}
+		}
+	}
+	return nil
 }
