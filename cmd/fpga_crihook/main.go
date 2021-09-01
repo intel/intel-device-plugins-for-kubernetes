@@ -16,7 +16,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -207,12 +206,12 @@ func getStdin(reader io.Reader) (*Stdin, error) {
 
 	// Check if device plugin annotation is set
 	if stdinJ.Annotations.ComIntelFpgaMode == "" {
-		return nil, fmt.Errorf("annotation %s is not set", annotationName)
+		return nil, errors.Errorf("annotation %s is not set", annotationName)
 	}
 
 	// Check if device plugin annotation is set
 	if stdinJ.Annotations.ComIntelFpgaMode != annotationValue {
-		return nil, fmt.Errorf("annotation %s has incorrect value '%s'", annotationName, stdinJ.Annotations.ComIntelFpgaMode)
+		return nil, errors.Errorf("annotation %s has incorrect value '%s'", annotationName, stdinJ.Annotations.ComIntelFpgaMode)
 	}
 
 	if stdinJ.Bundle == "" {
@@ -220,7 +219,7 @@ func getStdin(reader io.Reader) (*Stdin, error) {
 	}
 
 	if _, err := os.Stat(stdinJ.Bundle); err != nil {
-		return nil, fmt.Errorf("bundle directory %s: stat error: %+v", stdinJ.Bundle, err)
+		return nil, errors.Wrapf(err, "bundle directory: %s", stdinJ.Bundle)
 	}
 
 	return &stdinJ, nil

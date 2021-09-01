@@ -15,6 +15,7 @@
 package idxd
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -23,6 +24,10 @@ import (
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
+)
+
+var (
+	errUnitTest = errors.New("unit test error")
 )
 
 const (
@@ -239,16 +244,16 @@ func checkDeviceTree(deviceTree dpapi.DeviceTree, expectedResult map[string]int,
 		for key := range deviceTree {
 			val, ok := expectedResult[key]
 			if !ok {
-				return fmt.Errorf("unexpected device type: %s", key)
+				return fmt.Errorf("%w: unexpected device type: %s", errUnitTest, key)
 			}
 			numberDev := len(deviceTree[key])
 			if numberDev != val {
-				return fmt.Errorf("%s: unexpected number of devices: %d, expected: %d", key, numberDev, val)
+				return fmt.Errorf("%w: %s: unexpected number of devices: %d, expected: %d", errUnitTest, key, numberDev, val)
 			}
 			delete(expectedResult, key)
 		}
 		if len(expectedResult) > 0 {
-			return fmt.Errorf("missing expected result(s): %+v", expectedResult)
+			return fmt.Errorf("%w: missing expected result(s): %+v", errUnitTest, expectedResult)
 		}
 	}
 	return nil

@@ -190,7 +190,7 @@ func newDevicePlugin(mode string, rootPath string) (*devicePlugin, error) {
 	if _, err = os.Stat(sysfsPathOPAE); os.IsNotExist(err) {
 		sysfsPathDFL := path.Join(rootPath, sysfsDirectoryDFL)
 		if _, err = os.Stat(sysfsPathDFL); os.IsNotExist(err) {
-			return nil, fmt.Errorf("kernel driver is not loaded: neither %s nor %s sysfs entry exists", sysfsPathOPAE, sysfsPathDFL)
+			return nil, errors.Errorf("kernel driver is not loaded: neither %s nor %s sysfs entry exists", sysfsPathOPAE, sysfsPathDFL)
 		}
 		dp, err = newDevicePluginDFL(sysfsPathDFL, devfsPath, mode)
 	} else {

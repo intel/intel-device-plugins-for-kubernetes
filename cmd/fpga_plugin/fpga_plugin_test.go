@@ -16,7 +16,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"path"
 	"testing"
@@ -61,11 +60,11 @@ func createTestDirs(devfs, sysfs string, devfsDirs, sysfsDirs []string, sysfsFil
 func validateDevTree(expectedDevTreeKeys map[string][]string, devTree dpapi.DeviceTree) error {
 	for resource, devices := range expectedDevTreeKeys {
 		if _, ok := devTree[resource]; !ok {
-			return fmt.Errorf("device tree: resource %s missing", resource)
+			return errors.Errorf("device tree: resource %s missing", resource)
 		}
 		for _, device := range devices {
 			if _, ok := devTree[resource][device]; !ok {
-				return fmt.Errorf("device tree resource %s: device %s missing", resource, device)
+				return errors.Errorf("device tree resource %s: device %s missing", resource, device)
 			}
 		}
 	}

@@ -79,7 +79,7 @@ func WaitForPodFailure(f *framework.Framework, name string, timeout time.Duratio
 			case v1.PodFailed:
 				return true, nil
 			case v1.PodSucceeded:
-				return true, fmt.Errorf("pod %q successed with reason: %q, message: %q", name, pod.Status.Reason, pod.Status.Message)
+				return true, errors.Errorf("pod %q successed with reason: %q, message: %q", name, pod.Status.Reason, pod.Status.Message)
 			default:
 				return false, nil
 			}

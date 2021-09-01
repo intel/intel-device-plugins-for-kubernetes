@@ -31,8 +31,9 @@ import (
 )
 
 var (
-	logger = ctrl.Log.WithName("test")
-	scheme = runtime.NewScheme()
+	errClient = errors.New("client error")
+	logger    = ctrl.Log.WithName("test")
+	scheme    = runtime.NewScheme()
 )
 
 func init() {
@@ -51,7 +52,7 @@ func TestAcceleratorFunctionReconcile(t *testing.T) {
 		},
 		{
 			name:        "client error",
-			getError:    errors.New("client error"),
+			getError:    errClient,
 			expectedErr: true,
 		},
 		{
@@ -102,7 +103,7 @@ func TestFpgaRegionReconcile(t *testing.T) {
 		},
 		{
 			name:        "client error",
-			getError:    errors.New("client error"),
+			getError:    errClient,
 			expectedErr: true,
 		},
 		{
