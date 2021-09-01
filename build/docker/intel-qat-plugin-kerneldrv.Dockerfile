@@ -28,11 +28,11 @@ ARG BUILDFLAGS="-ldflags=-w -s"
 WORKDIR $DIR
 COPY . .
 
-ARG QAT_DRIVER_RELEASE="qat1.7.l.4.11.0-00001"
+ARG QAT_DRIVER_RELEASE="qat1.7.l.4.14.0-00031"
 
 RUN mkdir -p /usr/src/qat \
     && cd /usr/src/qat  \
-    && wget https://01.org/sites/default/files/downloads/${QAT_DRIVER_RELEASE}.tar.gz \
+    && wget https://downloadmirror.intel.com/30178/eng/${QAT_DRIVER_RELEASE}.tar.gz \
     && tar xf *.tar.gz \
     && cd /usr/src/qat/quickassist/utilities/adf_ctl \
     && make KERNEL_SOURCE_DIR=/usr/src/qat/quickassist/qat \
