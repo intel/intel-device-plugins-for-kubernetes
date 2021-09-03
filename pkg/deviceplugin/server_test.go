@@ -35,6 +35,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	errFake = errors.New("Fake error")
+)
+
 const (
 	devicePluginPath = "/tmp/"
 	kubeletSocket    = devicePluginPath + "kubelet-test.sock"
@@ -338,7 +342,7 @@ func TestAllocate(t *testing.T) {
 				},
 			},
 			postAllocate: func(resp *pluginapi.AllocateResponse) error {
-				return fmt.Errorf("Fake error for %s", "dev1")
+				return fmt.Errorf("%w for %q", errFake, "dev1")
 			},
 			expectedErr: true,
 		},
@@ -380,7 +384,7 @@ func (s *listAndWatchServerStub) Send(resp *pluginapi.ListAndWatchResponse) erro
 	s.sendCounter = s.sendCounter + 1
 	if s.generateErr == s.sendCounter {
 		klog.V(4).Info("listAndWatchServerStub::Send returns error")
-		return fmt.Errorf("Fake error")
+		return errFake
 	}
 
 	klog.V(4).Info("listAndWatchServerStub::Send", resp.Devices)

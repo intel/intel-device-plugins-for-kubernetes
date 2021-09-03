@@ -140,7 +140,7 @@ func installBitstream(fname string, dryRun, force, quiet bool) (err error) {
 	dst, err := os.OpenFile(installPath, flags, 0644)
 	if err != nil {
 		if os.IsExist(err) {
-			return fmt.Errorf("destination file %q already exist. Use --force to overwrite it", installPath)
+			return errors.Wrapf(err, "destination file %q already exist. Use --force to overwrite it", installPath)
 		}
 		return errors.Wrap(err, "can't create destination file")
 	}

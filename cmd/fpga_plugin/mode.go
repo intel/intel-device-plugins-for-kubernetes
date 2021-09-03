@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -15,7 +15,7 @@ func getModeOverrideFromCluster(nodeName, kubeConfig, master, mode string) (stri
 	var err error
 
 	if len(nodeName) == 0 {
-		return mode, fmt.Errorf("node name is not set")
+		return mode, errors.New("node name is not set")
 	}
 
 	if len(kubeConfig) == 0 {

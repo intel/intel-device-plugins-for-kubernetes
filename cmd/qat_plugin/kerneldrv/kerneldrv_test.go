@@ -34,6 +34,8 @@ import (
 	fakeexec "k8s.io/utils/exec/testing"
 )
 
+var errFake = errors.New("fake error")
+
 const (
 	adfCtlOutput = `Checking status of all devices.
 There is 3 QAT acceleration device(s) in the system:
@@ -92,7 +94,7 @@ func TestGetOnlineDevices(t *testing.T) {
 		},
 		{
 			name:        "adf_ctl fails to run",
-			adfCtlError: errors.New("fake error"),
+			adfCtlError: errFake,
 			expectedErr: true,
 		},
 	}
