@@ -28,7 +28,7 @@ cleanup()
   out 'delete node-feature-discovery deployment:' 20
   command 'kubectl delete -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_nfd?ref=main || true' 20
   out 'delete SGX Device Plugin deployment:' 20
-  command 'kubectl delete sgxdeviceplugin sgxdeviceplugin-sample -n sgx-ecdsa-quote || true' 20
+  command 'kubectl delete sgxdeviceplugin sgxdeviceplugin-sample || true' 20
   out 'delete Intel Device Plugin Operator deployment:' 20
   command 'kubectl delete -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=main || true' 20
   out "delete the demo namespace"
@@ -48,7 +48,7 @@ screen1()
   out "This video demonstrates the Intel(R) Software Guard Extensions ECDSA Quote Generation in Kubernetes*"
   out "The key building blocks are:"
   out "* Intel(R) Software Guard Extensions (SGX) Flexible Launch Control capable system (registered)"
-  out "* Intel(R) SGX driver (RFC v41) for the host kernel"
+  out "* Intel(R) SGX driver (Linux 5.11+) for the host kernel"
   out "* Intel(R) SGX PCKID Certificate Caching Service configured"
   out "Let's get started!"
 }
@@ -61,11 +61,6 @@ screen2()
   command "kubectl get pods --all-namespaces"
   out "Create the demo namespace"
   command "kubectl create ns sgx-ecdsa-quote"
-  out "Pull :devel images and tag them as :0.19.0 (temporary until the release is out)"
-  command "sudo ctr -n k8s.io i pull docker.io/intel/intel-sgx-plugin:devel"
-  command "sudo ctr -n k8s.io i pull docker.io/intel/intel-sgx-initcontainer:devel"
-  command "sudo ctr -n k8s.io i tag docker.io/intel/intel-sgx-plugin:devel docker.io/intel/intel-sgx-plugin:0.19.0"
-  command "sudo ctr -n k8s.io i tag docker.io/intel/intel-sgx-initcontainer:devel docker.io/intel/intel-sgx-initcontainer:0.19.0"
 }
 
 screen3()
@@ -84,9 +79,9 @@ screen4()
   out "3. Deploy Intel Device Plugin Operator"
   command "kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=main"
   out "Create SgxDevicePlugin custom resource managed by the Operator"
-  command "kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml -n sgx-ecdsa-quote"
+  command "kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml"
   out "Check the SGX Device Plugin is running"
-  command "kubectl get pods -n sgx-ecdsa-quote"
+  command "kubectl get pods -n inteldeviceplugins-system"
 }
 
 screen5()
