@@ -161,13 +161,13 @@ func TestContainersRunAsNonRoot(pods []v1.Pod) error {
 	for _, p := range pods {
 		for _, c := range append(p.Spec.InitContainers, p.Spec.Containers...) {
 			if !*c.SecurityContext.RunAsNonRoot {
-				return fmt.Errorf("%s (container: %s): RunAsNonRoot is not true", p.Name, c.Name)
+				return errors.Errorf("%s (container: %s): RunAsNonRoot is not true", p.Name, c.Name)
 			}
 			if *c.SecurityContext.RunAsGroup == 0 {
-				return fmt.Errorf("%s (container: %s): RunAsGroup is root (0)", p.Name, c.Name)
+				return errors.Errorf("%s (container: %s): RunAsGroup is root (0)", p.Name, c.Name)
 			}
 			if *c.SecurityContext.RunAsUser == 0 {
-				return fmt.Errorf("%s (container: %s): RunAsUser is root (0)", p.Name, c.Name)
+				return errors.Errorf("%s (container: %s): RunAsUser is root (0)", p.Name, c.Name)
 			}
 		}
 	}
@@ -188,7 +188,7 @@ func TestPodsFileSystemInfo(pods []v1.Pod) error {
 	for _, p := range pods {
 		for _, c := range append(p.Spec.InitContainers, p.Spec.Containers...) {
 			if !*c.SecurityContext.ReadOnlyRootFilesystem {
-				return fmt.Errorf("%s (container: %s): Writable root filesystem", p.Name, c.Name)
+				return errors.Errorf("%s (container: %s): Writable root filesystem", p.Name, c.Name)
 			}
 			printVolumeMounts(c.VolumeMounts)
 		}
