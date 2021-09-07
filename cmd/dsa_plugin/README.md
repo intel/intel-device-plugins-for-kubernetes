@@ -6,7 +6,6 @@ Table of Contents
 * [Installation](#installation)
     * [Deploy with pre-built container image](#deploy-with-pre-built-container-image)
     * [Getting the source code](#getting-the-source-code)
-    * [Verify node kubelet config](#verify-node-kubelet-config)
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
         * [Build the plugin image](#build-the-plugin-image)
         * [Deploy plugin DaemonSet](#deploy-plugin-daemonset)

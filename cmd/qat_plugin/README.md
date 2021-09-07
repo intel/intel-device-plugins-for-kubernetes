@@ -8,7 +8,6 @@ Table of Contents
     * [Prerequisites](#prerequisites)
     * [Pre-built image](#pre-built-image)
     * [Getting the source code:](#getting-the-source-code)
-    * [Verify node kubelet config](#verify-node-kubelet-config)
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
         * [Build the plugin image](#build-the-plugin-image)
         * [Deploy the DaemonSet](#deploy-the-daemonset)
