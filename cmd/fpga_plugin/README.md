@@ -9,7 +9,6 @@ Table of Contents
     * [Pre-built images](#pre-built-images)
     * [Dependencies](#dependencies)
     * [Getting the source code](#getting-the-source-code)
-    * [Verify node kubelet config](#verify-node-kubelet-config)
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
         * [Verify plugin registration](#verify-plugin-registration)
         * [Building the plugin image](#building-the-plugin-image)

@@ -5,7 +5,6 @@ Table of Contents
 * [Introduction](#introduction)
 * [Installation](#installation)
     * [Getting the source code](#getting-the-source-code)
-    * [Verify node kubelet config](#verify-node-kubelet-config)
     * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
         * [Build the plugin image](#build-the-plugin-image)
         * [Deploy plugin DaemonSet](#deploy-plugin-daemonset)
