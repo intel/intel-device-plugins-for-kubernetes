@@ -73,6 +73,7 @@ type DeviceInfo struct {
 
 type getClientFunc func(string, time.Duration, int) (podresourcesv1.PodResourcesListerClient, *grpc.ClientConn, error)
 
+// ResourceManager interface for the fractional resource handling.
 type ResourceManager interface {
 	ReallocateWithFractionalResources(*pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error)
 	SetDevInfos(DeviceInfoMap)
@@ -88,6 +89,7 @@ type resourceManager struct {
 	prGetClientFunc  getClientFunc
 }
 
+// NewDeviceInfo creates a new DeviceInfo.
 func NewDeviceInfo(nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string) *DeviceInfo {
 	return &DeviceInfo{
 		nodes:  nodes,
@@ -96,8 +98,10 @@ func NewDeviceInfo(nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs 
 	}
 }
 
+// DeviceInfoMap is a map of device infos. deviceId -> *DeviceInfo.
 type DeviceInfoMap map[string]*DeviceInfo
 
+// NewDeviceInfoMap creates a new DeviceInfoMap.
 func NewDeviceInfoMap() DeviceInfoMap {
 	return DeviceInfoMap{}
 }
