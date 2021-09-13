@@ -14,9 +14,9 @@ spec:
       containers:
         -
           name: intelgpu-demo-job-1
-          image: intel/ubuntu-demo-opencl:devel
+          image: intelopencl/intel-opencl:ubuntu-20.10-ppa
           imagePullPolicy: IfNotPresent
-          command: [ "/run-opencl-example.sh", "/root/6-1/fft" ]
+          command: [ "clinfo" ]
           resources:
             limits:
               gpu.intel.com/i915: 1
