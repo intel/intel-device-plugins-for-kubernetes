@@ -33,7 +33,7 @@ var (
 	// dsadevicepluginlog is for logging in this package.
 	dsadevicepluginlog = logf.Log.WithName("dsadeviceplugin-resource")
 
-	dsaMinVersion = version.MustParseSemantic("0.18.0")
+	dsaMinVersion = version.MustParseSemantic(imageMinVersion)
 )
 
 // SetupWebhookWithManager sets up a webhook for DsaDevicePlugin custom resources.
@@ -52,7 +52,7 @@ func (r *DsaDevicePlugin) Default() {
 	dsadevicepluginlog.Info("default", "name", r.Name)
 
 	if len(r.Spec.Image) == 0 {
-		r.Spec.Image = "intel/intel-dsa-plugin:0.18.0"
+		r.Spec.Image = "intel/intel-dsa-plugin:" + dsaMinVersion.String()
 	}
 }
 

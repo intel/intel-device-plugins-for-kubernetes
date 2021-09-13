@@ -33,7 +33,7 @@ var (
 	// gpudevicepluginlog is for logging in this package.
 	gpudevicepluginlog = logf.Log.WithName("gpudeviceplugin-resource")
 
-	gpuMinVersion = version.MustParseSemantic("0.18.0")
+	gpuMinVersion = version.MustParseSemantic(imageMinVersion)
 )
 
 // SetupWebhookWithManager sets up a webhook for GpuDevicePlugin custom resources.
@@ -52,7 +52,7 @@ func (r *GpuDevicePlugin) Default() {
 	gpudevicepluginlog.Info("default", "name", r.Name)
 
 	if len(r.Spec.Image) == 0 {
-		r.Spec.Image = "intel/intel-gpu-plugin:0.18.0"
+		r.Spec.Image = "intel/intel-gpu-plugin:" + gpuMinVersion.String()
 	}
 }
 

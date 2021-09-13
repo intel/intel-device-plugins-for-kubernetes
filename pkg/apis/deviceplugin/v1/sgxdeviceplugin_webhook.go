@@ -33,7 +33,7 @@ var (
 	// sgxdevicepluginlog is for logging in this package.
 	sgxdevicepluginlog = logf.Log.WithName("sgxdeviceplugin-resource")
 
-	sgxMinVersion = version.MustParseSemantic("0.19.0")
+	sgxMinVersion = version.MustParseSemantic(imageMinVersion)
 )
 
 // SetupWebhookWithManager sets up a webhook for SgxDevicePlugin custom resources.
@@ -52,11 +52,11 @@ func (r *SgxDevicePlugin) Default() {
 	sgxdevicepluginlog.Info("default", "name", r.Name)
 
 	if len(r.Spec.Image) == 0 {
-		r.Spec.Image = "intel/intel-sgx-plugin:0.19.0"
+		r.Spec.Image = "intel/intel-sgx-plugin:" + sgxMinVersion.String()
 	}
 
 	if len(r.Spec.InitImage) == 0 {
-		r.Spec.Image = "intel/intel-sgx-initcontainer:0.19.0"
+		r.Spec.Image = "intel/intel-sgx-initcontainer:" + sgxMinVersion.String()
 	}
 }
 
