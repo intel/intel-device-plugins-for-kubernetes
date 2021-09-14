@@ -41,9 +41,14 @@ ARG SRC_DIR=/usr/local/bin/gpu-sw
 
 RUN install -D /go/bin/gpu_nfdhook $ROOT/$SRC_DIR/$NFD_HOOK
 
-ARG TOYBOX_VERSION="0.8.4"
+ARG TOYBOX_VERSION="0.8.5"
+ARG TOYBOX_SHA256="27cc073222f3b726ee10d96c4f32ac2c4c936b07ea195227736755971e6d90c9"
+
 RUN apt update && apt -y install musl musl-tools musl-dev
-RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz | tar xz \
+RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz -o toybox.tar.gz \
+    && echo "$TOYBOX_SHA256 toybox.tar.gz" | sha256sum -c - \
+    && tar -xzf toybox.tar.gz \
+    && rm toybox.tar.gz \
     && cd toybox-$TOYBOX_VERSION \
     && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \
     && install -D LICENSE $ROOT/usr/local/share/package-licenses/toybox \
