@@ -100,7 +100,7 @@ Source for the OpenSSL demo can be found in the [relevant subdirectory](demo/ope
 
 Details for integrating the QAT device plugin into [Kata Containers](https://katacontainers.io/)
 can be found in the
-[Kata Containers documentation repository](https://github.com/kata-containers/documentation/blob/master/use-cases/using-Intel-QAT-and-kata.md).
+[Kata Containers documentation repository](https://github.com/kata-containers/kata-containers/blob/main/docs/use-cases/using-Intel-QAT-and-kata.md).
 
 ### VPU device plugin
 
