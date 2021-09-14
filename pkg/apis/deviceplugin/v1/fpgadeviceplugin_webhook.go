@@ -33,7 +33,7 @@ var (
 	// fpgadevicepluginlog is for logging in this package.
 	fpgadevicepluginlog = logf.Log.WithName("fpgadeviceplugin-resource")
 
-	fpgaMinVersion = version.MustParseSemantic("0.19.0")
+	fpgaMinVersion = version.MustParseSemantic(imageMinVersion)
 )
 
 // SetupWebhookWithManager sets up a webhook for FpgaDevicePlugin custom resources.
@@ -52,11 +52,11 @@ func (r *FpgaDevicePlugin) Default() {
 	fpgadevicepluginlog.Info("default", "name", r.Name)
 
 	if len(r.Spec.Image) == 0 {
-		r.Spec.Image = "intel/intel-fpga-plugin:0.19.0"
+		r.Spec.Image = "intel/intel-fpga-plugin:" + fpgaMinVersion.String()
 	}
 
 	if len(r.Spec.InitImage) == 0 {
-		r.Spec.InitImage = "intel/intel-fpga-initcontainer:0.19.0"
+		r.Spec.InitImage = "intel/intel-fpga-initcontainer:" + fpgaMinVersion.String()
 	}
 }
 

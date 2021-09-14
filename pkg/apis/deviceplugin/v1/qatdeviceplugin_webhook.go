@@ -33,7 +33,7 @@ var (
 	// qatdevicepluginlog is for logging in this package.
 	qatdevicepluginlog = logf.Log.WithName("qatdeviceplugin-resource")
 
-	qatMinVersion = version.MustParseSemantic("0.18.0")
+	qatMinVersion = version.MustParseSemantic(imageMinVersion)
 )
 
 // SetupWebhookWithManager sets up a webhook for QatDevicePlugin custom resources.
@@ -52,7 +52,7 @@ func (r *QatDevicePlugin) Default() {
 	qatdevicepluginlog.Info("default", "name", r.Name)
 
 	if len(r.Spec.Image) == 0 {
-		r.Spec.Image = "intel/intel-qat-plugin:0.18.0"
+		r.Spec.Image = "intel/intel-qat-plugin:" + qatMinVersion.String()
 	}
 }
 
