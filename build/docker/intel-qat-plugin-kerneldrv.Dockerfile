@@ -29,10 +29,12 @@ WORKDIR $DIR
 COPY . .
 
 ARG QAT_DRIVER_RELEASE="qat1.7.l.4.14.0-00031"
+ARG QAT_DRIVER_SHA256="a68dfaea4308e0bb5f350b7528f1a076a0c6ba3ec577d60d99dc42c49307b76e"
 
 RUN mkdir -p /usr/src/qat \
     && cd /usr/src/qat  \
-    && wget https://downloadmirror.intel.com/30178/eng/${QAT_DRIVER_RELEASE}.tar.gz \
+    && wget https://downloadmirror.intel.com/30178/eng/$QAT_DRIVER_RELEASE.tar.gz \
+    && echo "$QAT_DRIVER_SHA256 $QAT_DRIVER_RELEASE.tar.gz" | sha256sum -c - \
     && tar xf *.tar.gz \
     && cd /usr/src/qat/quickassist/utilities/adf_ctl \
     && make KERNEL_SOURCE_DIR=/usr/src/qat/quickassist/qat \

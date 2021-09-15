@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # ToyBox version: KCONFIG_VERSION
-# Sat May 15 08:23:52 2021
+# Tue Sep 14 22:53:41 2021
 #
 CONFIG_TOYBOX_CONTAINER=y
 CONFIG_TOYBOX_FIFREEZE=y
@@ -92,6 +92,7 @@ CONFIG_LS=y
 # CONFIG_TAR is not set
 # CONFIG_TEE is not set
 # CONFIG_TEST is not set
+# CONFIG_TEST_GLUE is not set
 # CONFIG_TIME is not set
 # CONFIG_TOUCH is not set
 # CONFIG_TRUE is not set
@@ -115,6 +116,7 @@ CONFIG_LS=y
 # CONFIG_BC is not set
 # CONFIG_BOOTCHARTD is not set
 # CONFIG_BRCTL is not set
+# CONFIG_CHSH is not set
 # CONFIG_CROND is not set
 # CONFIG_CRONTAB is not set
 # CONFIG_DD is not set
@@ -154,18 +156,20 @@ CONFIG_LS=y
 # CONFIG_MORE is not set
 # CONFIG_OPENVT is not set
 # CONFIG_DEALLOCVT is not set
-# CONFIG_READELF is not set
 # CONFIG_ROUTE is not set
 CONFIG_SH=y
 # CONFIG_CD is not set
 # CONFIG_EXIT is not set
+# CONFIG_SET is not set
 # CONFIG_UNSET is not set
 # CONFIG_EVAL is not set
 # CONFIG_EXEC is not set
 # CONFIG_EXPORT is not set
 # CONFIG_JOBS is not set
+# CONFIG_LOCAL is not set
 # CONFIG_SHIFT is not set
 # CONFIG_SOURCE is not set
+# CONFIG_WAIT is not set
 # CONFIG_STTY is not set
 # CONFIG_SULOGIN is not set
 # CONFIG_SYSLOGD is not set
@@ -187,7 +191,9 @@ CONFIG_SH=y
 #
 # CONFIG_ACPI is not set
 # CONFIG_ASCII is not set
+# CONFIG_UNICODE is not set
 # CONFIG_BASE64 is not set
+# CONFIG_BASE32 is not set
 # CONFIG_BLKDISCARD is not set
 # CONFIG_BLKID is not set
 # CONFIG_FSTYPE is not set
@@ -247,7 +253,9 @@ CONFIG_SH=y
 # CONFIG_PMAP is not set
 # CONFIG_PRINTENV is not set
 # CONFIG_PWDX is not set
+# CONFIG_PWGEN is not set
 # CONFIG_READAHEAD is not set
+# CONFIG_READELF is not set
 # CONFIG_READLINK is not set
 # CONFIG_REALPATH is not set
 # CONFIG_REBOOT is not set
@@ -365,7 +373,6 @@ CONFIG_TOYBOX_LSM_NONE=y
 # CONFIG_TOYBOX_FLOAT is not set
 # CONFIG_TOYBOX_HELP is not set
 # CONFIG_TOYBOX_HELP_DASHDASH is not set
-# CONFIG_TOYBOX_I18N is not set
 # CONFIG_TOYBOX_FREE is not set
 # CONFIG_TOYBOX_NORECURSE is not set
 # CONFIG_TOYBOX_DEBUG is not set
