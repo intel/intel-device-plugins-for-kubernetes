@@ -118,39 +118,37 @@ func fallback() uint64 {
 	return getEnvVarNumber(memoryOverrideEnv)
 }
 
-// getTileMemoryAmount reads the total GPU memory amount from the GPU tiles and returns it and the tile count.
-func (l *labeler) getTileMemoryAmount(gpuName string) (mem, numTiles uint64) {
+func (l *labeler) getMemoryAmount(gpuName string, numTiles uint64) uint64 {
 	reserved := getEnvVarNumber(memoryReservedEnv)
-	filePath := filepath.Join(l.sysfsDRMDir, gpuName, "gt/gt*/addr_range")
 
-	files, err := filepath.Glob(filePath)
+	filePath := filepath.Join(l.sysfsDRMDir, gpuName, "lmem_total_bytes")
+
+	dat, err := os.ReadFile(filePath)
 	if err != nil {
-		klog.V(4).Info("Can't read sysfs folder", err)
-		return fallback(), 1
+		klog.Warning("Can't read file: ", err)
+		return fallback()
 	}
 
-	for _, fileName := range files {
-		dat, err := os.ReadFile(fileName)
-		if err != nil {
-			klog.Warning("Skipping. Can't read file: ", err)
-			continue
-		}
-
-		n, err := strconv.ParseUint(strings.TrimSpace(string(dat)), 0, 64)
-		if err != nil {
-			klog.Warning("Skipping. Can't convert addr_range: ", err)
-			continue
-		}
-
-		numTiles++
-		mem += n
+	totalPerTile, err := strconv.ParseUint(strings.TrimSpace(string(dat)), 0, 64)
+	if err != nil {
+		klog.Warning("Can't convert lmem_total_bytes: ", err)
+		return fallback()
 	}
 
-	if mem == 0 {
-		return fallback(), 1
+	return totalPerTile*numTiles - reserved
+}
+
+// getTileCount reads the tile count.
+func (l *labeler) getTileCount(gpuName string) (numTiles uint64) {
+	filePath := filepath.Join(l.sysfsDRMDir, gpuName, "gt/gt*")
+
+	files, _ := filepath.Glob(filePath)
+
+	if len(files) == 0 {
+		return 1
 	}
 
-	return mem - reserved, numTiles
+	return uint64(len(files))
 }
 
 // addNumericLabel creates a new label if one doesn't exist. Else the new value is added to the previous value.
@@ -218,8 +216,11 @@ func (l *labeler) createLabels() error {
 			return errors.Wrap(err, "gpu name parsing error")
 		}
 
-		// read the memory amount to find a proper max allocation value
-		memoryAmount, numTiles := l.getTileMemoryAmount(gpuName)
+		// read the tile count
+		numTiles := l.getTileCount(gpuName)
+
+		// read memory amount
+		memoryAmount := l.getMemoryAmount(gpuName, numTiles)
 
 		// try to add capability labels
 		l.createCapabilityLabels(gpuNum, numTiles)

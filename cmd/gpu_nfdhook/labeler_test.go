@@ -42,10 +42,10 @@ func getTestCases() []testcase {
 				"card0/gt/gt0",
 			},
 			sysfsfiles: map[string][]byte{
-				"card0/device/vendor":     []byte("0x8086"),
-				"card0/gt/gt0/addr_range": []byte("8086"),
+				"card0/device/vendor":    []byte("0x8086"),
+				"card0/lmem_total_bytes": []byte("8086"),
 			},
-			name:           "successful labeling via gt0/addr_range",
+			name:           "successful labeling via lmem_total_bytes",
 			memoryOverride: 16000000000,
 			capabilityFile: map[string][]byte{
 				"0/i915_capabilities": []byte(
@@ -88,11 +88,10 @@ func getTestCases() []testcase {
 				"card0/gt/gt1",
 			},
 			sysfsfiles: map[string][]byte{
-				"card0/device/vendor":     []byte("0x8086"),
-				"card0/gt/gt0/addr_range": []byte("8086"),
-				"card0/gt/gt1/addr_range": []byte("2"),
+				"card0/device/vendor":    []byte("0x8086"),
+				"card0/lmem_total_bytes": []byte("8000"),
 			},
-			name:           "successful labeling via gt0/addr_range and gt1/addr_range",
+			name:           "successful labeling via card0/lmem_total_bytes and two tiles",
 			memoryOverride: 16000000000,
 			capabilityFile: map[string][]byte{
 				"0/i915_capabilities": []byte(
@@ -102,7 +101,7 @@ func getTestCases() []testcase {
 			expectedRetval: nil,
 			expectedLabels: labelMap{
 				"gpu.intel.com/millicores":           "1000",
-				"gpu.intel.com/memory.max":           "8088",
+				"gpu.intel.com/memory.max":           "16000",
 				"gpu.intel.com/platform_new.count":   "1",
 				"gpu.intel.com/platform_new.present": "true",
 				"gpu.intel.com/platform_new.tiles":   "2",
@@ -116,10 +115,10 @@ func getTestCases() []testcase {
 				"card0/gt/gt0",
 			},
 			sysfsfiles: map[string][]byte{
-				"card0/device/vendor":     []byte("0x8086"),
-				"card0/gt/gt0/addr_range": []byte("8086"),
+				"card0/device/vendor":    []byte("0x8086"),
+				"card0/lmem_total_bytes": []byte("8086"),
 			},
-			name:           "successful labeling via gt0/addr_range and reserved memory",
+			name:           "successful labeling via lmem_total_bytes and reserved memory",
 			memoryOverride: 16000000000,
 			memoryReserved: 86,
 			capabilityFile: map[string][]byte{
@@ -242,20 +241,25 @@ func TestLabeling(t *testing.T) {
 	testcases := getTestCases()
 
 	for _, tc := range testcases {
+		subroot, err := os.MkdirTemp(root, "tc")
+		if err != nil {
+			t.Fatalf("can't create temporary subroot directory: %+v", err)
+		}
+
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			err := os.MkdirAll(path.Join(root, "0"), 0750)
+			err := os.MkdirAll(path.Join(subroot, "0"), 0750)
 			if err != nil {
 				t.Fatalf("couldn't create dir: %s", err.Error())
 			}
-			sysfs := path.Join(root, sysfsDirectory)
+			sysfs := path.Join(subroot, sysfsDirectory)
 
-			tc.createFiles(t, sysfs, root)
+			tc.createFiles(t, sysfs, subroot)
 
 			os.Setenv(memoryOverrideEnv, strconv.FormatUint(tc.memoryOverride, 10))
 			os.Setenv(memoryReservedEnv, strconv.FormatUint(tc.memoryReserved, 10))
 
-			labeler := newLabeler(sysfs, root)
+			labeler := newLabeler(sysfs, subroot)
 			err = labeler.createLabels()
 			if err != nil && tc.expectedRetval == nil ||
 				err == nil && tc.expectedRetval != nil {
@@ -263,12 +267,6 @@ func TestLabeling(t *testing.T) {
 			}
 			if tc.expectedRetval == nil && !reflect.DeepEqual(labeler.labels, tc.expectedLabels) {
 				t.Errorf("test %v label mismatch with expectation:\n%v\n%v\n", tc.name, labeler.labels, tc.expectedLabels)
-			}
-			for filename := range tc.capabilityFile {
-				os.Remove(path.Join(root, filename))
-			}
-			for filename := range tc.sysfsfiles {
-				os.Remove(path.Join(sysfs, filename))
 			}
 		})
 	}
