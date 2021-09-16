@@ -38,6 +38,7 @@ var (
 
 // PCIDevice represents most valuable sysfs information about PCI device.
 type PCIDevice struct {
+	PhysFn    *PCIDevice
 	SysFsPath string
 	BDF       string
 	Vendor    string
@@ -48,7 +49,6 @@ type PCIDevice struct {
 	VFs       string
 	TotalVFs  string
 	Driver    string
-	PhysFn    *PCIDevice
 }
 
 // NewPCIDevice returns sysfs entry for specified PCI device.

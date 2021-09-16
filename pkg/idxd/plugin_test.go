@@ -72,10 +72,10 @@ func (n *fakeNotifier) Notify(deviceTree dpapi.DeviceTree) {
 
 type testCase struct {
 	name           string
-	sysfsDirs      []string
-	sysfsFiles     map[string][]byte
-	sharedDevNum   int
 	expectedResult map[string]int
+	sysfsFiles     map[string][]byte
+	sysfsDirs      []string
+	sharedDevNum   int
 	expectedError  bool
 }
 

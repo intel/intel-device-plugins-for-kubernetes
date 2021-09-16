@@ -43,9 +43,9 @@ func init() {
 
 func TestAcceleratorFunctionReconcile(t *testing.T) {
 	tcases := []struct {
+		getError    error
 		name        string
 		expectedErr bool
-		getError    error
 	}{
 		{
 			name: "empty af",
@@ -94,9 +94,9 @@ func TestAcceleratorFunctionSetupWithManager(t *testing.T) {
 
 func TestFpgaRegionReconcile(t *testing.T) {
 	tcases := []struct {
+		getError    error
 		name        string
 		expectedErr bool
-		getError    error
 	}{
 		{
 			name: "empty region",

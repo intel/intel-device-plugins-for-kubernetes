@@ -51,7 +51,6 @@ type devicePluginServer interface {
 
 // server implements devicePluginServer and pluginapi.PluginInterfaceServer interfaces.
 type server struct {
-	devType                string
 	grpcServer             *grpc.Server
 	updatesCh              chan map[string]DeviceInfo
 	devices                map[string]DeviceInfo
@@ -59,6 +58,7 @@ type server struct {
 	postAllocate           postAllocateFunc
 	preStartContainer      preStartContainerFunc
 	getPreferredAllocation getPreferredAllocationFunc
+	devType                string
 	state                  serverState
 	stateMutex             sync.Mutex
 }

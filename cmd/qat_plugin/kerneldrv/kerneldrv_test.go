@@ -68,8 +68,8 @@ func init() {
 func TestGetOnlineDevices(t *testing.T) {
 	tcases := []struct {
 		name           string
-		adfCtlOutput   string
 		adfCtlError    error
+		adfCtlOutput   string
 		expectedDevNum int
 		expectedErr    bool
 		iommuOn        bool
@@ -136,8 +136,8 @@ func TestGetUIODevices(t *testing.T) {
 		name        string
 		devType     string
 		bsf         string
-		expectedErr bool
 		uiodevs     []string
+		expectedErr bool
 	}{
 		{
 			name:        "can't read sysfs",
@@ -243,9 +243,9 @@ func TestGetDevTree(t *testing.T) {
 	tcases := []struct {
 		name        string
 		sysfs       string
+		config      map[string]section
 		uiodevs     map[string][]string
 		qatdevs     []device
-		config      map[string]section
 		expectedErr bool
 	}{
 		{

@@ -35,6 +35,10 @@ const (
 
 // A FileAOCX represents an open AOCX file.
 type FileAOCX struct {
+	GBS    *FileGBS
+	closer io.Closer
+	// embed common bitstream interfaces
+	File
 	AutoDiscovery          string
 	AutoDiscoveryXML       string
 	Board                  string
@@ -47,10 +51,6 @@ type FileAOCX struct {
 	QuartusReport          string
 	Target                 string
 	Version                string
-	GBS                    *FileGBS
-	closer                 io.Closer
-	// embed common bitstream interfaces
-	File
 }
 
 // OpenAOCX opens the named file using os.Open and prepares it for use as GBS.

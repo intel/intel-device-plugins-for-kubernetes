@@ -27,12 +27,12 @@ func init() {
 
 func TestNotify(t *testing.T) {
 	tcases := []struct {
+		oldmap          map[string]map[string]DeviceInfo
+		newmap          map[string]map[string]DeviceInfo
 		name            string
 		expectedAdded   int
 		expectedUpdated int
 		expectedRemoved int
-		oldmap          map[string]map[string]DeviceInfo
-		newmap          map[string]map[string]DeviceInfo
 	}{
 		{
 			name: "No devices found",
@@ -170,9 +170,9 @@ func (*devicePluginStub) GetPreferredAllocation(*pluginapi.PreferredAllocationRe
 
 func TestHandleUpdate(t *testing.T) {
 	tcases := []struct {
-		name            string
 		servers         map[string]devicePluginServer
 		update          updateInfo
+		name            string
 		expectedServers int
 	}{
 		{

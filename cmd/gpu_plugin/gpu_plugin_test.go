@@ -102,9 +102,9 @@ func TestScan(t *testing.T) {
 	tcases := []struct {
 		name string
 		// test-case environment
-		devfsdirs  []string
 		sysfsdirs  []string
 		sysfsfiles map[string][]byte
+		devfsdirs  []string
 		// how plugin should interpret it
 		options cliOptions
 		// what the result should be

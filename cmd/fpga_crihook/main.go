@@ -60,9 +60,8 @@ type newPortFun func(string) (fpga.Port, error)
 
 // Device defines structure for Config.Linux.Devices entries.
 type Device struct {
-	// these fields are set by the hook
-	name      string
-	processed bool
+	// this field is set by the hook
+	name string
 
 	// these are set by JSON decoder
 	Path  string `json:"path"`
@@ -71,6 +70,9 @@ type Device struct {
 	Minor int    `json:"minor"`
 	UID   int    `json:"uid"`
 	GID   int    `json:"gid"`
+
+	// this field is set by the hook
+	processed bool
 }
 
 func (dev *Device) getName() string {
@@ -87,9 +89,9 @@ func decodeJSONStream(reader io.Reader, dest interface{}) error {
 }
 
 type hookEnv struct {
+	newPort      newPortFun
 	bitstreamDir string
 	config       string
-	newPort      newPortFun
 }
 
 type fpgaParams struct {

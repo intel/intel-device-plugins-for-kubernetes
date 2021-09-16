@@ -31,9 +31,9 @@ func TestGetRequestedResources(t *testing.T) {
 	tcases := []struct {
 		name           string
 		namespace      string
+		expectedResult map[string]int64
 		container      corev1.Container
 		expectedErr    bool
-		expectedResult map[string]int64
 	}{
 		{
 			name:      "Normal case",

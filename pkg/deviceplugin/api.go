@@ -23,11 +23,11 @@ import (
 
 // DeviceInfo contains information about device maintained by Device Plugin.
 type DeviceInfo struct {
-	state    string
-	nodes    []pluginapi.DeviceSpec
 	mounts   []pluginapi.Mount
 	envs     map[string]string
 	topology *pluginapi.TopologyInfo
+	state    string
+	nodes    []pluginapi.DeviceSpec
 }
 
 // UseDefaultMethodError allows the plugin to request running the default
