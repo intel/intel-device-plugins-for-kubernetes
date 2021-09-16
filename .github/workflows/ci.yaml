@@ -2,7 +2,7 @@ name: CI
 on:
   push:
     branches:
-      - govet-fieldalignment
+      - main
       - 'release-*'
   pull_request:
     branches:
