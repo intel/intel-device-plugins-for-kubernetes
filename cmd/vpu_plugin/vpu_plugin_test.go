@@ -31,8 +31,8 @@ func init() {
 }
 
 type testCase struct {
-	vendorID   int
 	productIDs []int
+	vendorID   int
 }
 
 //OpenDevices tries to inject gousb compatible fake device info.

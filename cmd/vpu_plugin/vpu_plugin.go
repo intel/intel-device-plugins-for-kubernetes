@@ -61,7 +61,7 @@ var (
 	// Movidius MyriadX Product IDs.
 	productIDs = []int{0x2485, 0xf63b}
 	// PCI Product IDs.
-	productIDsPCI = []PCIPidDeviceType{{[]string{"0x6240"}, "kmb", 1}}
+	productIDsPCI = []PCIPidDeviceType{{"kmb", []string{"0x6240"}, 1}}
 )
 
 type gousbContext interface {
@@ -69,8 +69,8 @@ type gousbContext interface {
 }
 
 type PCIPidDeviceType struct {
-	pids       []string
 	deviceType string
+	pids       []string
 	ratio      int
 }
 
@@ -100,15 +100,15 @@ func getPciDeviceCounts(sysfsPciDevicesPath string, vendorID string, pidSearch [
 
 type devicePlugin struct {
 	deviceCtx    interface{}
-	sharedDevNum int
-	scanTicker   *time.Ticker
 	scanDone     chan bool
+	scanTicker   *time.Ticker
+	sharedDevNum int
 }
 
 type devicePluginUsb struct {
 	usbContext gousbContext
-	vendorID   int
 	productIDs []int
+	vendorID   int
 }
 
 type devicePluginPci struct {

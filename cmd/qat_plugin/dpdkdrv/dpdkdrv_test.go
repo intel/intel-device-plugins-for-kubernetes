@@ -109,10 +109,10 @@ func TestScanPrivate(t *testing.T) {
 	tcases := []struct {
 		name            string
 		dpdkDriver      string
-		kernelVfDrivers []string
-		dirs            []string
 		files           map[string][]byte
 		symlinks        map[string]string
+		kernelVfDrivers []string
+		dirs            []string
 		expectedErr     bool
 		maxDevNum       int
 		expectedDevNum  int

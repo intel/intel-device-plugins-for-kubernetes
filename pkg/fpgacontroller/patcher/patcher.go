@@ -71,13 +71,13 @@ var (
 )
 
 type patcher struct {
-	sync.Mutex
-
-	log logr.Logger
-
 	afMap           map[string]*fpgav2.AcceleratorFunction
 	resourceMap     map[string]string
 	resourceModeMap map[string]string
+
+	log logr.Logger
+
+	sync.Mutex
 }
 
 func newPatcher(log logr.Logger) *patcher {
@@ -217,8 +217,8 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 			envVars[envvar.Name] = envvar.Value
 		}
 		data := struct {
-			ContainerIdx int
 			EnvVars      map[string]string
+			ContainerIdx int
 		}{
 			ContainerIdx: containerIdx,
 			EnvVars:      envVars,

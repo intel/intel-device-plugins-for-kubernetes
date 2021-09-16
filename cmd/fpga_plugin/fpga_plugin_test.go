@@ -191,12 +191,12 @@ func TestScan(t *testing.T) {
 	dev := path.Join(root, "dev")
 
 	tcases := []struct {
+		sysfsfiles map[string][]byte
 		name       string
 		mode       string
+		newPort    newPortFunc
 		devs       []string
 		sysfsdirs  []string
-		sysfsfiles map[string][]byte
-		newPort    newPortFunc
 	}{
 		{
 			name: "valid OPAE scan in af mode",

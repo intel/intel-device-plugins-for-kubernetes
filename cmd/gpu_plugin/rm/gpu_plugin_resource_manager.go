@@ -66,9 +66,9 @@ type podCandidate struct {
 }
 
 type DeviceInfo struct {
+	envs   map[string]string
 	nodes  []pluginapi.DeviceSpec
 	mounts []pluginapi.Mount
-	envs   map[string]string
 }
 
 type getClientFunc func(string, time.Duration, int) (podresourcesv1.PodResourcesListerClient, *grpc.ClientConn, error)
@@ -80,13 +80,13 @@ type ResourceManager interface {
 }
 
 type resourceManager struct {
-	mutex            sync.RWMutex // for devTree updates during scan
 	deviceInfos      DeviceInfoMap
 	nodeName         string
 	clientset        kubernetes.Interface
+	prGetClientFunc  getClientFunc
 	skipID           string
 	fullResourceName string
-	prGetClientFunc  getClientFunc
+	mutex            sync.RWMutex // for devTree updates during scan
 }
 
 // NewDeviceInfo creates a new DeviceInfo.

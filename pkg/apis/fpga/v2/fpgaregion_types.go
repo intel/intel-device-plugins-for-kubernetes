@@ -34,11 +34,11 @@ type FpgaRegionStatus struct{}
 // FpgaRegion is a specification for a FPGA region resource which can be programmed
 // with a bitstream.
 type FpgaRegion struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
 	Status FpgaRegionStatus `json:"status,omitempty"`
 	Spec   FpgaRegionSpec   `json:"spec"`
+
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 }
 
 // +kubebuilder:object:root=true

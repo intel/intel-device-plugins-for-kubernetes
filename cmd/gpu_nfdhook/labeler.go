@@ -44,12 +44,12 @@ const (
 type labelMap map[string]string
 
 type labeler struct {
-	sysfsDRMDir   string
-	debugfsDRIDir string
-
 	gpuDeviceReg     *regexp.Regexp
 	controlDeviceReg *regexp.Regexp
 	labels           labelMap
+
+	sysfsDRMDir   string
+	debugfsDRIDir string
 }
 
 func newLabeler(sysfsDRMDir, debugfsDRIDir string) *labeler {

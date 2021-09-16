@@ -37,6 +37,9 @@ type QatDevicePluginSpec struct {
 	// +kubebuilder:validation:Enum=igb_uio;vfio-pci
 	DpdkDriver string `json:"dpdkDriver,omitempty"`
 
+	// NodeSelector provides a simple way to constrain device plugin pods to nodes with particular labels.
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
 	// KernelVfDrivers is a list of VF device drivers for the QuickAssist devices in the system.
 	KernelVfDrivers []KernelVfDriver `json:"kernelVfDrivers,omitempty"`
 
@@ -47,9 +50,6 @@ type QatDevicePluginSpec struct {
 	// LogLevel sets the plugin's log level.
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`
-
-	// NodeSelector provides a simple way to constrain device plugin pods to nodes with particular labels.
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 // QatDevicePluginStatus defines the observed state of QatDevicePlugin.
@@ -62,6 +62,10 @@ type QatDevicePluginStatus struct {
 	// +optional
 	ControlledDaemonSet v1.ObjectReference `json:"controlledDaemonSet,omitempty"`
 
+	// The list of Node names where the device plugin pods are running.
+	// +optional
+	NodeNames []string `json:"nodeNames,omitempty"`
+
 	// The total number of nodes that should be running the device plugin
 	// pod (including nodes correctly running the device plugin pod).
 	DesiredNumberScheduled int32 `json:"desiredNumberScheduled"`
@@ -69,10 +73,6 @@ type QatDevicePluginStatus struct {
 	// The number of nodes that should be running the device plugin pod and have one
 	// or more of the device plugin pod running and ready.
 	NumberReady int32 `json:"numberReady"`
-
-	// The list of Node names where the device plugin pods are running.
-	// +optional
-	NodeNames []string `json:"nodeNames,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -91,8 +91,8 @@ type QatDevicePlugin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   QatDevicePluginSpec   `json:"spec,omitempty"`
 	Status QatDevicePluginStatus `json:"status,omitempty"`
+	Spec   QatDevicePluginSpec   `json:"spec,omitempty"`
 }
 
 // +kubebuilder:object:root=true

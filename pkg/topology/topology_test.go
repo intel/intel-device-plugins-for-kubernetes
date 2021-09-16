@@ -218,10 +218,10 @@ func TestGetDevicesFromVirtual(t *testing.T) {
 
 func TestMergeTopologyHints(t *testing.T) {
 	cases := []struct {
-		name           string
 		inputA         Hints
 		inputB         Hints
 		expectedOutput Hints
+		name           string
 		expectedErr    bool
 	}{
 		{
@@ -277,9 +277,9 @@ func TestNewTopologyHints(t *testing.T) {
 	teardown := setupTestEnv(t)
 	defer teardown()
 	cases := []struct {
+		output      Hints
 		name        string
 		input       string
-		output      Hints
 		expectedErr bool
 	}{
 		{
@@ -323,9 +323,9 @@ func TestGetTopologyInfo(t *testing.T) {
 	teardown := setupTestEnv(t)
 	defer teardown()
 	cases := []struct {
+		output      *pluginapi.TopologyInfo
 		name        string
 		input       []string
-		output      *pluginapi.TopologyInfo
 		expectedErr bool
 	}{
 		{

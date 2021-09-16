@@ -174,10 +174,10 @@ type devicePlugin struct {
 	getDevTree getDevTreeFunc
 	newPort    newPortFunc
 
-	annotationValue string
-
 	scanTicker *time.Ticker
 	scanDone   chan bool
+
+	annotationValue string
 }
 
 // newDevicePlugin returns new instance of devicePlugin.

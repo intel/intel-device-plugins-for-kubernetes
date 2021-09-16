@@ -59,11 +59,6 @@ type cliOptions struct {
 }
 
 type devicePlugin struct {
-	sysfsDir string
-	devfsDir string
-
-	options cliOptions
-
 	gpuDeviceReg     *regexp.Regexp
 	controlDeviceReg *regexp.Regexp
 
@@ -71,6 +66,11 @@ type devicePlugin struct {
 	scanDone   chan bool
 
 	resMan rm.ResourceManager
+
+	sysfsDir string
+	devfsDir string
+
+	options cliOptions
 }
 
 func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugin {

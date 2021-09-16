@@ -38,10 +38,10 @@ const (
 )
 
 type devicePlugin struct {
+	scanDone   chan bool
 	devfsDir   string
 	nEnclave   uint
 	nProvision uint
-	scanDone   chan bool
 }
 
 func newDevicePlugin(devfsDir string, nEnclave, nProvision uint) *devicePlugin {

@@ -48,10 +48,10 @@ const (
 )
 
 type kubeletStub struct {
-	sync.Mutex
+	server         *grpc.Server
 	socket         string
 	pluginEndpoint string
-	server         *grpc.Server
+	sync.Mutex
 }
 
 func init() {
@@ -248,9 +248,9 @@ func TestAllocate(t *testing.T) {
 	srv := newTestServer()
 
 	tcases := []struct {
-		name              string
 		devices           map[string]DeviceInfo
 		postAllocate      func(*pluginapi.AllocateResponse) error
+		name              string
 		expectedAllocated int
 		expectedErr       bool
 	}{
@@ -374,10 +374,10 @@ func TestAllocate(t *testing.T) {
 
 // Minimal implementation of pluginapi.DevicePlugin_ListAndWatchServer.
 type listAndWatchServerStub struct {
+	cdata       chan []*pluginapi.Device
 	testServer  *server
 	generateErr int
 	sendCounter int
-	cdata       chan []*pluginapi.Device
 }
 
 func (s *listAndWatchServerStub) Send(resp *pluginapi.ListAndWatchResponse) error {
@@ -501,8 +501,8 @@ func TestGetDevicePluginOptions(t *testing.T) {
 
 func TestPreStartContainer(t *testing.T) {
 	tcases := []struct {
-		name              string
 		preStartContainer preStartContainerFunc
+		name              string
 		expectedError     bool
 	}{
 		{
@@ -533,8 +533,8 @@ func TestPreStartContainer(t *testing.T) {
 
 func TestGetPreferredAllocation(t *testing.T) {
 	tcases := []struct {
-		name                   string
 		getPreferredAllocation getPreferredAllocationFunc
+		name                   string
 		expectedError          bool
 	}{
 		{

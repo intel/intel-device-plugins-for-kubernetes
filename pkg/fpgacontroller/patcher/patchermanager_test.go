@@ -39,8 +39,8 @@ func TestGetPatcher(t *testing.T) {
 	log := ctrl.Log.WithName("test")
 	namespace := "test"
 	tcases := []struct {
-		name string
 		pm   *Manager
+		name string
 	}{
 		{
 			name: "Create new patcher",
@@ -112,10 +112,10 @@ func TestMutate(t *testing.T) {
 	}
 
 	tcases := []struct {
-		name             string
 		ar               admissionv1.AdmissionRequest
-		expectedAllowed  bool
+		name             string
 		expectedPatchOps int
+		expectedAllowed  bool
 	}{
 		{
 			name: "empty admission request",

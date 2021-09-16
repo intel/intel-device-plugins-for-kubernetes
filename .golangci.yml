@@ -48,6 +48,8 @@ linters-settings:
     min-confidence: 0.9
   govet:
     check-shadowing: true
+    enable:
+    - "fieldalignment"
   gocyclo:
     min-complexity: 15
   gocognit:

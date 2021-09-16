@@ -25,6 +25,9 @@ import (
 type SgxDevicePluginSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
+	// NodeSelector provides a simple way to constrain device plugin pods to nodes with particular labels.
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
 	// Image is a container image with SGX device plugin executable.
 	Image string `json:"image,omitempty"`
 
@@ -42,9 +45,6 @@ type SgxDevicePluginSpec struct {
 	// LogLevel sets the plugin's log level.
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`
-
-	// NodeSelector provides a simple way to constrain device plugin pods to nodes with particular labels.
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 // SgxDevicePluginStatus defines the observed state of SgxDevicePlugin.
@@ -56,6 +56,10 @@ type SgxDevicePluginStatus struct {
 	// +optional
 	ControlledDaemonSet v1.ObjectReference `json:"controlledDaemonSet,omitempty"`
 
+	// The list of Node names where the device plugin pods are running.
+	// +optional
+	NodeNames []string `json:"nodeNames,omitempty"`
+
 	// The total number of nodes that should be running the device plugin
 	// pod (including nodes correctly running the device plugin pod).
 	DesiredNumberScheduled int32 `json:"desiredNumberScheduled"`
@@ -63,10 +67,6 @@ type SgxDevicePluginStatus struct {
 	// The number of nodes that should be running the device plugin pod and have one
 	// or more of the device plugin pod running and ready.
 	NumberReady int32 `json:"numberReady"`
-
-	// The list of Node names where the device plugin pods are running.
-	// +optional
-	NodeNames []string `json:"nodeNames,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -85,8 +85,8 @@ type SgxDevicePlugin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   SgxDevicePluginSpec   `json:"spec,omitempty"`
 	Status SgxDevicePluginStatus `json:"status,omitempty"`
+	Spec   SgxDevicePluginSpec   `json:"spec,omitempty"`
 }
 
 // +kubebuilder:object:root=true
