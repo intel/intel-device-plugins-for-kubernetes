@@ -63,11 +63,11 @@ var qatDeviceDriver = map[string]string{
 
 // DevicePlugin represents vfio based QAT plugin.
 type DevicePlugin struct {
-	maxDevices      int
 	pciDriverDir    string
 	pciDeviceDir    string
-	kernelVfDrivers []string
 	dpdkDriver      string
+	kernelVfDrivers []string
+	maxDevices      int
 }
 
 // NewDevicePlugin returns new instance of vfio based QAT plugin.

@@ -267,13 +267,13 @@ func TestScanFPGAsOPAE(t *testing.T) {
 	sysfs := path.Join(tmpdir, "sys")
 	dev := path.Join(tmpdir, "dev")
 	tcases := []struct {
-		name                string
-		mode                string
-		devs                []string
 		sysfsdirs           []string
 		sysfsfiles          map[string][]byte
 		newPort             newPortFunc
 		expectedDevTreeKeys map[string][]string
+		name                string
+		mode                string
+		devs                []string
 	}{
 		{
 			name: "Valid OPAE scan in af mode",

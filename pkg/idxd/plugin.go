@@ -42,14 +42,14 @@ type getDevNodesFunc func(devDir, charDevDir, wqName string) ([]pluginapi.Device
 
 // DevicePlugin defines properties of the idxd device plugin.
 type DevicePlugin struct {
+	scanTicker   *time.Ticker
+	scanDone     chan bool
+	getDevNodes  getDevNodesFunc
 	sysfsDir     string
 	statePattern string
 	devDir       string
 	charDevDir   string
 	sharedDevNum int
-	scanTicker   *time.Ticker
-	scanDone     chan bool
-	getDevNodes  getDevNodesFunc
 }
 
 // NewDevicePlugin creates DevicePlugin.

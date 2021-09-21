@@ -179,9 +179,9 @@ func TestGetConfig(t *testing.T) {
 // testFpgaPort represent Fake FPGA Port device for testing purposes.
 type testFpgaPort struct {
 	fpga.Port
-	callNo          int
 	interfaceUUIDS  []string
 	accelTypeUUIDS  []string
+	callNo          int
 	failProgramming bool
 }
 
@@ -229,12 +229,12 @@ func TestGetFPGAParams(t *testing.T) {
 		stdinJSON          string
 		configJSON         string
 		afuIDPath          string
-		sysfsdirs          []string
-		sysfsfiles         map[string][]byte
-		expectedErr        bool
 		expectedRegion     string
 		expectedAFU        string
 		expectedPortDevice string
+		sysfsfiles         map[string][]byte
+		sysfsdirs          []string
+		expectedErr        bool
 	}{
 		{
 			name:       "valid setup",
@@ -343,9 +343,9 @@ func TestProcess(t *testing.T) {
 		name        string
 		stdinJSON   string
 		configJSON  string
-		sysfsdirs   []string
-		sysfsfiles  map[string][]byte
 		newPort     newPortFun
+		sysfsfiles  map[string][]byte
+		sysfsdirs   []string
 		expectedErr bool
 	}{
 		{

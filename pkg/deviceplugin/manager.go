@@ -76,9 +76,9 @@ func (n *notifier) Notify(newDeviceTree DeviceTree) {
 // received from them.
 type Manager struct {
 	devicePlugin Scanner
-	namespace    string
 	servers      map[string]devicePluginServer
 	createServer func(string, postAllocateFunc, preStartContainerFunc, getPreferredAllocationFunc, allocateFunc) devicePluginServer
+	namespace    string
 }
 
 // NewManager creates a new instance of Manager.

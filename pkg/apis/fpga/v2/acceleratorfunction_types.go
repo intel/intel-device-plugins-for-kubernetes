@@ -40,11 +40,11 @@ type AcceleratorFunctionStatus struct{}
 // AcceleratorFunction is a specification for an Accelerator Function resource
 // provided by a FPGA-based programmable hardware accelerator.
 type AcceleratorFunction struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
 	Status AcceleratorFunctionStatus `json:"status,omitempty"`
 	Spec   AcceleratorFunctionSpec   `json:"spec"`
+
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 }
 
 // +kubebuilder:object:root=true

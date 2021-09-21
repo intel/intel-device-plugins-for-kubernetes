@@ -160,8 +160,8 @@ func TestReallocateWithFractionalResources(t *testing.T) {
 	testCases := []struct {
 		name              string
 		pods              []v1.Pod
-		expectErr         bool
 		containerRequests []*v1beta1.ContainerAllocateRequest
+		expectErr         bool
 	}{
 		{
 			name:              "Wrong number of container requests should fail",

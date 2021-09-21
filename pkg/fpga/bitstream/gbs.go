@@ -42,18 +42,16 @@ type Header struct {
 
 // FileGBS represents an open GBS file.
 type FileGBS struct {
-	Header
-	Metadata  Metadata
 	Bitstream *Bitstream
 	closer    io.Closer
+	Metadata  Metadata
+	Header
 }
 
 // Metadata represents parsed JSON metadata of GBS file.
 type Metadata struct {
-	Version      int    `json:"version"`
 	PlatformName string `json:"platform-name,omitempty"`
 	AfuImage     struct {
-		MagicNo         int    `json:"magic-no,omitempty"`
 		InterfaceUUID   string `json:"interface-uuid,omitempty"`
 		AfuTopInterface struct {
 			Class       string `json:"class"`
@@ -61,11 +59,10 @@ type Metadata struct {
 				Params struct {
 					Clock string `json:"clock,omitempty"`
 				} `json:"params"`
-				Optional bool   `json:"optional,omitempty"`
 				Class    string `json:"class,omitempty"`
+				Optional bool   `json:"optional,omitempty"`
 			} `json:"module-ports,omitempty"`
 		} `json:"afu-top-interface"`
-		Power               int         `json:"power"`
 		ClockFrequencyHigh  interface{} `json:"clock-frequency-high,omitempty"`
 		ClockFrequencyLow   interface{} `json:"clock-frequency-low,omitempty"`
 		AcceleratorClusters []struct {
@@ -73,12 +70,14 @@ type Metadata struct {
 			Name                string `json:"name"`
 			TotalContexts       int    `json:"total-contexts"`
 		} `json:"accelerator-clusters"`
+		MagicNo int `json:"magic-no,omitempty"`
+		Power   int `json:"power"`
 	} `json:"afu-image"`
+	Version int `json:"version"`
 }
 
 // A Bitstream represents a raw bitsream data (RBF) in the GBS binary.
 type Bitstream struct {
-	Size uint64
 	// Embed ReaderAt for ReadAt method.
 	// Do not embed SectionReader directly
 	// to avoid having Read and Seek.
@@ -89,6 +88,8 @@ type Bitstream struct {
 	sr *io.SectionReader
 	// embed common bitstream interfaces
 	File
+
+	Size uint64
 }
 
 // Open returns a new ReadSeeker reading the bitsream body.

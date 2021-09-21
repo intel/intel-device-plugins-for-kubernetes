@@ -70,6 +70,7 @@ var (
 	rfc6901Escaper = strings.NewReplacer("~", "~0", "/", "~1")
 )
 
+//nolint: govet
 type patcher struct {
 	sync.Mutex
 
@@ -217,8 +218,8 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 			envVars[envvar.Name] = envvar.Value
 		}
 		data := struct {
-			ContainerIdx int
 			EnvVars      map[string]string
+			ContainerIdx int
 		}{
 			ContainerIdx: containerIdx,
 			EnvVars:      envVars,

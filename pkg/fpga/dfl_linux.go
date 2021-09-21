@@ -68,14 +68,14 @@ func NewDflFME(dev string) (FME, error) {
 // DflPort represent DFL FPGA Port device.
 type DflPort struct {
 	Port
+	PCIDevice *PCIDevice
+	FME       FME
 	DevPath   string
 	SysFsPath string
 	Name      string
-	PCIDevice *PCIDevice
 	Dev       string
 	AFUID     string
 	ID        string
-	FME       FME
 }
 
 // Close closes open device.

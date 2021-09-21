@@ -25,6 +25,9 @@ import (
 type GpuDevicePluginSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
+	// NodeSelector provides a simple way to constrain device plugin pods to nodes with particular labels.
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
 	// Image is a container image with GPU device plugin executable.
 	Image string `json:"image,omitempty"`
 
@@ -45,9 +48,6 @@ type GpuDevicePluginSpec struct {
 	// EnableMonitoring enables the monitoring resource ('i915_monitoring')
 	// which gives access to all GPU devices on given node.
 	EnableMonitoring bool `json:"enableMonitoring,omitempty"`
-
-	// NodeSelector provides a simple way to constrain device plugin pods to nodes with particular labels.
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 // GpuDevicePluginStatus defines the observed state of GpuDevicePlugin.
@@ -60,6 +60,10 @@ type GpuDevicePluginStatus struct {
 	// +optional
 	ControlledDaemonSet v1.ObjectReference `json:"controlledDaemonSet,omitempty"`
 
+	// The list of Node names where the device plugin pods are running.
+	// +optional
+	NodeNames []string `json:"nodeNames,omitempty"`
+
 	// The total number of nodes that should be running the device plugin
 	// pod (including nodes correctly running the device plugin pod).
 	DesiredNumberScheduled int32 `json:"desiredNumberScheduled"`
@@ -67,10 +71,6 @@ type GpuDevicePluginStatus struct {
 	// The number of nodes that should be running the device plugin pod and have one
 	// or more of the device plugin pod running and ready.
 	NumberReady int32 `json:"numberReady"`
-
-	// The list of Node names where the device plugin pods are running.
-	// +optional
-	NodeNames []string `json:"nodeNames,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -89,8 +89,8 @@ type GpuDevicePlugin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GpuDevicePluginSpec   `json:"spec,omitempty"`
 	Status GpuDevicePluginStatus `json:"status,omitempty"`
+	Spec   GpuDevicePluginSpec   `json:"spec,omitempty"`
 }
 
 // +kubebuilder:object:root=true

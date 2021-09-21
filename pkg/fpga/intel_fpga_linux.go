@@ -65,6 +65,7 @@ func NewIntelFpgaFME(dev string) (FME, error) {
 // IntelFpgaPort represent IntelFpga FPGA Port device.
 type IntelFpgaPort struct {
 	Port
+	FME       FME
 	DevPath   string
 	SysFsPath string
 	Name      string
@@ -72,7 +73,6 @@ type IntelFpgaPort struct {
 	Dev       string
 	AFUID     string
 	ID        string
-	FME       FME
 }
 
 // Close closes open device.

@@ -23,14 +23,14 @@ import (
 )
 
 type testcase struct {
-	sysfsdirs      []string
-	sysfsfiles     map[string][]byte
-	name           string
-	memoryOverride uint64
-	memoryReserved uint64
 	capabilityFile map[string][]byte
 	expectedRetval error
 	expectedLabels labelMap
+	name           string
+	sysfsfiles     map[string][]byte
+	sysfsdirs      []string
+	memoryOverride uint64
+	memoryReserved uint64
 }
 
 //nolint:funlen

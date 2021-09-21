@@ -39,6 +39,7 @@ func init() {
 	bKeeper.pluginCounter = make(map[string]int)
 }
 
+//nolint: govet
 type bookKeeper struct {
 	sync.Mutex
 	pluginCounter map[string]int
@@ -99,11 +100,11 @@ type DevicePluginController interface {
 }
 
 type reconciler struct {
+	controller DevicePluginController
 	client.Client
 	scheme     *runtime.Scheme
 	pluginKind string
 	ownerKey   string
-	controller DevicePluginController
 }
 
 // fetchObjects returns the required objects for Reconcile.

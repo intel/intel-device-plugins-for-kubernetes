@@ -25,6 +25,9 @@ import (
 type FpgaDevicePluginSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
+	// NodeSelector provides a simple way to constrain device plugin pods to nodes with particular labels.
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+
 	// Image is a container image with FPGA device plugin executable.
 	Image string `json:"image,omitempty"`
 
@@ -38,9 +41,6 @@ type FpgaDevicePluginSpec struct {
 	// LogLevel sets the plugin's log level.
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`
-
-	// NodeSelector provides a simple way to constrain device plugin pods to nodes with particular labels.
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 // FpgaDevicePluginStatus defines the observed state of FpgaDevicePlugin.
@@ -52,6 +52,10 @@ type FpgaDevicePluginStatus struct {
 	// +optional
 	ControlledDaemonSet v1.ObjectReference `json:"controlledDaemonSet,omitempty"`
 
+	// The list of Node names where the device plugin pods are running.
+	// +optional
+	NodeNames []string `json:"nodeNames,omitempty"`
+
 	// The total number of nodes that should be running the device plugin
 	// pod (including nodes correctly running the device plugin pod).
 	DesiredNumberScheduled int32 `json:"desiredNumberScheduled"`
@@ -59,10 +63,6 @@ type FpgaDevicePluginStatus struct {
 	// The number of nodes that should be running the device plugin pod and have one
 	// or more of the device plugin pod running and ready.
 	NumberReady int32 `json:"numberReady"`
-
-	// The list of Node names where the device plugin pods are running.
-	// +optional
-	NodeNames []string `json:"nodeNames,omitempty"`
 }
 
 // +kubebuilder:object:root=true
