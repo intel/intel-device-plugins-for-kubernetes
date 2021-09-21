@@ -78,6 +78,7 @@ func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.QatDevicePlugin)
 	yes := true
+	pluginAnnotations := devicePlugin.ObjectMeta.DeepCopy().Annotations
 	return &apps.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:    c.ns,
@@ -85,6 +86,7 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 			Labels: map[string]string{
 				"app": appLabel,
 			},
+			Annotations: pluginAnnotations,
 		},
 		Spec: apps.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
@@ -97,6 +99,7 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 					Labels: map[string]string{
 						"app": appLabel,
 					},
+					Annotations: pluginAnnotations,
 				},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
@@ -160,6 +163,13 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
 	dp := rawObj.(*devicepluginv1.QatDevicePlugin)
+
+	if !reflect.DeepEqual(ds.ObjectMeta.Annotations, dp.ObjectMeta.Annotations) {
+		pluginAnnotations := dp.ObjectMeta.DeepCopy().Annotations
+		ds.ObjectMeta.Annotations = pluginAnnotations
+		ds.Spec.Template.Annotations = pluginAnnotations
+		updated = true
+	}
 
 	if ds.Spec.Template.Spec.Containers[0].Image != dp.Spec.Image {
 		ds.Spec.Template.Spec.Containers[0].Image = dp.Spec.Image
