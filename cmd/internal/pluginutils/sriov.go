@@ -22,11 +22,14 @@ import (
 
 // IsSriovPFwithVFs returns true if the device with given pfpath has virtual functions, false otherwise.
 func IsSriovPFwithVFs(pfpath string) bool {
-	dat, err := os.ReadFile(path.Join(pfpath, "device/sriov_numvfs"))
+	dat := GetSriovNumVFs(pfpath)
+	return dat != "-1" && dat != "0"
+}
 
-	if err == nil && strings.TrimSpace(string(dat)) != "0" {
-		return true
+func GetSriovNumVFs(sysFSPath string) string {
+	dat, err := os.ReadFile(path.Join(sysFSPath, "device/sriov_numvfs"))
+	if err != nil {
+		return "-1"
 	}
-
-	return false
+	return strings.TrimSpace(string(dat))
 }

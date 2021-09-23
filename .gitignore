@@ -8,6 +8,7 @@ coverage.txt
 cmd/dsa_plugin/dsa_plugin
 cmd/fpga_admissionwebhook/fpga_admissionwebhook
 cmd/fpga_crihook/fpga_crihook
+cmd/dlb_plugin/dlb_plugin
 cmd/fpga_plugin/fpga_plugin
 cmd/fpga_tool/fpga_tool
 cmd/gpu_nfdhook/gpu_nfdhook
