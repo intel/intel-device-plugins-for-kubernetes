@@ -65,7 +65,7 @@ table summarises the defaults:
 | Argument | Variable | Default setting | Explanation |
 |:-------- |:-------- |:--------------- |:----------- |
 | -dpdk-driver | `$DPDK_DRIVER` | vfio-pci | A more robust and secure choice than the `igb_uio` alternative |
-| -kernel-vf-drivers | `$KERNEL_VF_DRIVERS` | dh895xccvf,c6xxvf,c3xxxvf | Modify to suit your hardware setup |
+| -kernel-vf-drivers | `$KERNEL_VF_DRIVERS` | c6xxvf,4xxxvf | Modify to suit your hardware setup |
 | -max-num-devices | `$MAX_NUM_DEVICES` | 32 | Modify to suit your hardware setup if necessary |
 
 For more details on the `-dpdk-driver` choice, see

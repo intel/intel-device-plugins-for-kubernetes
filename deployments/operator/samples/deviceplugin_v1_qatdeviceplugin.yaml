@@ -13,6 +13,7 @@ spec:
   dpdkDriver: vfio-pci
   kernelVfDrivers:
     - c6xxvf
+    - 4xxxvf
   maxNumDevices: 1
   logLevel: 4
   nodeSelector:
