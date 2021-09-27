@@ -28,18 +28,18 @@ ARG BUILDFLAGS="-ldflags=-w -s"
 WORKDIR $DIR
 COPY . .
 
-RUN echo "deb-src http://deb.debian.org/debian buster main" | tee -a /etc/apt/sources.list
+RUN echo "deb-src http://deb.debian.org/debian unstable main" | tee -a /etc/apt/sources.list
 RUN apt update && apt -y install dpkg-dev libusb-1.0-0-dev
 RUN mkdir -p /install_root/usr/local/share/package-sources/libusb \
     && cd /install_root/usr/local/share/package-sources/libusb \
-    && apt source libusb-1.0-0 \
+    && apt-get --download-only source libusb-1.0-0 \
     && cd -
 RUN cd cmd/vpu_plugin; GO111MODULE=${GO111MODULE} CGO_ENABLED=1 go install "${BUILDFLAGS}"; cd -
 RUN install -D /go/bin/vpu_plugin /install_root/usr/local/bin/intel_vpu_device_plugin \
     && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && scripts/copy-modules-licenses.sh ./cmd/vpu_plugin /install_root/usr/local/share/
 
-FROM debian:buster-slim
+FROM debian:unstable-slim
 RUN apt update && apt -y install libusb-1.0-0
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_vpu_device_plugin"]
