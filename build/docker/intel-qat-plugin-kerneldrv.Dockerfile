@@ -45,7 +45,7 @@ RUN chmod a+x /go/bin/qat_plugin \
     && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && scripts/copy-modules-licenses.sh ./cmd/qat_plugin /install_root/usr/local/share/
 
-FROM debian:buster-slim
+FROM debian:unstable-slim
 COPY --from=builder /install_root /
 ENV PATH=/usr/local/bin
 ENTRYPOINT ["/usr/local/bin/intel_qat_device_plugin"]
