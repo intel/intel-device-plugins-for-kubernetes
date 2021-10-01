@@ -21,6 +21,8 @@ The DSA device plugin for Kubernetes supports acceleration using the Intel Data 
 
 The DSA plugin discovers DSA work queues and presents them as a node resources.
 
+The DSA plugin and operator optionally support provisioning of DSA devices and workqueues with the help of [accel-config](https://github.com/intel/idxd-config) utility through initcontainer.
+
 ## Installation
 
 The following sections detail how to obtain, build, deploy and test the DSA device plugin.
@@ -45,6 +47,16 @@ daemonset.apps/intel-dsa-plugin created
 Where `<REF>` needs to be substituted with the desired git ref, e.g. `main`.
 
 Nothing else is needed. But if you want to deploy a customized version of the plugin read further.
+
+### Deploy with initcontainer
+
+There's a sample [DSA initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/build/docker/intel-dsa-initcontainer.Dockerfile) included that provisions DSA devices and workqueues (1 engine / 1 group / 1 wq (user/dedicated)), to deploy:
+
+```bash
+$ kubectl apply -k deployments/dsa_plugin/overlays/dsa_initcontainer/
+```
+
+The provisioning [script](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/demo/dsa-init.sh) and [template](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/demo/dsa.conf) are available for customization.
 
 ### Getting the source code
 
