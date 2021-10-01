@@ -7,7 +7,7 @@ spec:
     spec:
       initContainers:
       - name: intel-dsa-initcontainer
-        image: intel/intel-dsa-initcontainer:devel
+        image: intel/intel-dsa-initcontainer:0.22.0
         securityContext:
           privileged: true
         volumeMounts:
