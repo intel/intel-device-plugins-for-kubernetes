@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2021 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -86,5 +86,13 @@ func (r *DsaDevicePlugin) ValidateDelete() error {
 }
 
 func (r *DsaDevicePlugin) validatePlugin() error {
-	return validatePluginImage(r.Spec.Image, "intel-dsa-plugin", dsaMinVersion)
+	if err := validatePluginImage(r.Spec.Image, "intel-dsa-plugin", dsaMinVersion); err != nil {
+		return err
+	}
+
+	if len(r.Spec.InitImage) > 0 {
+		return validatePluginImage(r.Spec.InitImage, "intel-dsa-initcontainer", dsaMinVersion)
+	}
+
+	return nil
 }

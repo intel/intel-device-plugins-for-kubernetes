@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2021 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -73,6 +73,25 @@ func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client
 	}
 
 	return len(list.Items), nil
+}
+
+func setInitContainer(spec *v1.PodSpec, imageName string) {
+	yes := true
+	spec.InitContainers = []v1.Container{
+		{
+			Image:           imageName,
+			ImagePullPolicy: "IfNotPresent",
+			Name:            "intel-dsa-initcontainer",
+			SecurityContext: &v1.SecurityContext{
+				Privileged: &yes,
+			},
+			VolumeMounts: []v1.VolumeMount{
+				{
+					Name:      "sys-devices",
+					MountPath: "/sys/devices",
+				},
+			},
+		}}
 }
 
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
@@ -193,6 +212,21 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 			},
 		},
 	}
+
+	// add the optional InitImage
+	if devicePlugin.Spec.InitImage != "" {
+		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
+
+		daemonSet.Spec.Template.Spec.Volumes = append(daemonSet.Spec.Template.Spec.Volumes, v1.Volume{
+			Name: "sys-devices",
+			VolumeSource: v1.VolumeSource{
+				HostPath: &v1.HostPathVolumeSource{
+					Path: "/sys/devices",
+				},
+			},
+		})
+	}
+
 	return &daemonSet
 }
 
