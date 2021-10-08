@@ -204,18 +204,9 @@ master
 
 ### Testing the plugin
 
-We can test the plugin is working by deploying the provided example OpenCL image with FFT offload enabled.
+We can test the plugin is working by deploying an OpenCL image and running `clinfo`.
 
-1. Build a Docker image with an example program offloading FFT computations to GPU:
-
-    ```bash
-    $ cd ${INTEL_DEVICE_PLUGINS_SRC}/demo
-    $ ./build-image.sh ubuntu-demo-opencl
-    ...
-    Successfully tagged ubuntu-demo-opencl:devel
-    ```
-
-1. Create a job running unit tests off the local Docker image:
+1. Create a job:
 
     ```bash
     $ kubectl apply -f ${INTEL_DEVICE_PLUGINS_SRC}/demo/intelgpu-job.yaml
@@ -228,16 +219,7 @@ We can test the plugin is working by deploying the provided example OpenCL image
     $ kubectl get pods | fgrep intelgpu
     # substitute the 'xxxxx' below for the pod name listed in the above
     $ kubectl logs intelgpu-demo-job-xxxxx
-    + WORK_DIR=/root/6-1/fft
-    + cd /root/6-1/fft
-    + ./fft
-    + uprightdiff --format json output.pgm /expected.pgm diff.pgm
-    + cat diff.json
-    + jq .modifiedArea
-    + MODIFIED_AREA=0
-    + [ 0 -gt 10 ]
-    + echo Success
-    Success
+    <log output>
     ```
 
     If the pod did not successfully launch, possibly because it could not obtain the gpu
