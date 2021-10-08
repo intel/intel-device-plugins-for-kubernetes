@@ -48,7 +48,7 @@ The [GPU device plugin](cmd/gpu_plugin/README.md) provides access to Intel discr
 and integrated GPU HW device files.
 
 The demo subdirectory contains both a [GPU plugin demo video](demo/readme.md#intel-gpu-device-plugin-demo-video)
-as well as code for an OpenCL [FFT demo](demo/ubuntu-demo-opencl).
+and an OpenCL sample deployment (`intelgpu-job.yaml`).
 
 ### FPGA device plugin
 
