@@ -10,7 +10,7 @@ on:
       - 'release-*'
 env:
   RUNC_VERSION: v1.0.2
-  GO_VERSION: 1.16.7
+  GO_VERSION: 1.17.2
 jobs:
 
   golangci:
@@ -36,14 +36,11 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
-      - name: Set up environment
-        shell: bash
-        run: |
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-          echo "MOD_PATH=$(go env GOPATH)/pkg/mod" >> $GITHUB_ENV
-      - uses: actions/cache@v1
+      - uses: actions/cache@v2
         with:
-          path: ${{ env.MOD_PATH }}
+          path: |
+                ~/.cache/go-build
+                ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
@@ -60,7 +57,7 @@ jobs:
 
   image:
     name: Build image
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         image:
@@ -90,17 +87,16 @@ jobs:
         builder: [buildah, docker]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v1
-        id: cache-vendor
+      - uses: actions/cache@v2
         with:
-          path: vendor
-          key: ${{ runner.os }}-vendor-${{ hashFiles('**/go.sum') }}
+          path: |
+                ~/.cache/go-build
+                ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
       - uses: actions/setup-go@v2
-        if: steps.cache-vendor.outputs.cache-hit != 'true'
-        with:
-          go-version: ${{ env.GO_VERSION }}
       - run: make -e vendor
-        if: steps.cache-vendor.outputs.cache-hit != 'true'
       - name: Install Buildah and RunC
         if: matrix.builder == 'buildah'
         run: |
