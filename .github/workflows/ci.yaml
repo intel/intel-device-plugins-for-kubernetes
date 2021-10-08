@@ -10,7 +10,7 @@ on:
       - 'release-*'
 env:
   RUNC_VERSION: v1.0.2
-  GO_VERSION: 1.16.7
+  GO_VERSION: 1.17.2
 jobs:
 
   golangci:
