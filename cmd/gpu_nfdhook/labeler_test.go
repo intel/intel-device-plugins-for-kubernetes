@@ -33,7 +33,6 @@ type testcase struct {
 	memoryReserved uint64
 }
 
-//nolint:funlen
 func getTestCases() []testcase {
 	return []testcase{
 		{
