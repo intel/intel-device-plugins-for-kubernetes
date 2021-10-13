@@ -37,7 +37,7 @@ RUN mkdir -p /install_root/usr/local/share/package-sources/libusb \
 RUN cd cmd/vpu_plugin; GO111MODULE=${GO111MODULE} CGO_ENABLED=1 go install "${BUILDFLAGS}"; cd -
 RUN install -D /go/bin/vpu_plugin /install_root/usr/local/bin/intel_vpu_device_plugin \
     && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
-    && scripts/copy-modules-licenses.sh ./cmd/vpu_plugin /install_root/usr/local/share/
+    && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/vpu_plugin" --save_path /install_root/usr/local/share/go-licenses
 
 FROM debian:unstable-slim
 RUN apt update && apt -y install libusb-1.0-0
