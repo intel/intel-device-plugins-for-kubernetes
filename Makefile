@@ -127,6 +127,9 @@ export TAG
 e2e-fpga:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "FPGA Plugin"
 
+e2e-qat:
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "QAT plugin in DPDK mode"
+
 pre-pull:
 ifeq ($(TAG),devel)
 	@$(BUILDER) pull golang:1.17-bullseye
