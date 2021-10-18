@@ -34,6 +34,9 @@ type DsaDevicePluginSpec struct {
 	// InitImage is an initcontainer image to configure and enable DSA devices and workqueues with accel-config utility
 	InitImage string `json:"InitImage,omitempty"`
 
+	// ProvisioningConfig is a ConfigMap used to pass the configuration into DSA initcontainer.
+	ProvisioningConfig string `json:"provisioningConfig,omitempty"`
+
 	// SharedDevNum is a number of containers that can share the same DSA device.
 	// +kubebuilder:validation:Minimum=1
 	SharedDevNum int `json:"sharedDevNum,omitempty"`

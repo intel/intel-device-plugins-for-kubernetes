@@ -82,6 +82,16 @@ func setInitContainer(spec *v1.PodSpec, imageName string) {
 			Image:           imageName,
 			ImagePullPolicy: "IfNotPresent",
 			Name:            "intel-dsa-initcontainer",
+			Env: []v1.EnvVar{
+				{
+					Name: "NODE_NAME",
+					ValueFrom: &v1.EnvVarSource{
+						FieldRef: &v1.ObjectFieldSelector{
+							FieldPath: "spec.nodeName",
+						},
+					},
+				},
+			},
 			SecurityContext: &v1.SecurityContext{
 				Privileged: &yes,
 			},
@@ -225,6 +235,25 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 				},
 			},
 		})
+
+		if devicePlugin.Spec.ProvisioningConfig != "" {
+			daemonSet.Spec.Template.Spec.Volumes = append(daemonSet.Spec.Template.Spec.Volumes, v1.Volume{
+				Name: "intel-dsa-config-volume",
+				VolumeSource: v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{Name: devicePlugin.Spec.ProvisioningConfig}},
+				},
+			})
+
+			for i, initcontainer := range daemonSet.Spec.Template.Spec.InitContainers {
+				if initcontainer.Name == "intel-dsa-initcontainer" {
+					daemonSet.Spec.Template.Spec.InitContainers[i].VolumeMounts = append(daemonSet.Spec.Template.Spec.InitContainers[i].VolumeMounts, v1.VolumeMount{
+						Name:      "intel-dsa-config-volume",
+						MountPath: "/dsa-init/conf",
+					})
+				}
+			}
+		}
 	}
 
 	return &daemonSet

@@ -2,9 +2,6 @@
 
 set -euo pipefail
 
-ndev=$(accel-config list --idle | jq '.[].dev' | grep -c dsa)
-nwq=4
-
 function cmd() {
 
     echo "$@"
@@ -12,11 +9,26 @@ function cmd() {
     "${@}"
 }
 
+for i in $(accel-config list | jq '.[].dev' | grep dsa | sed 's/\"//g'); do
+
+    cmd accel-config disable-device "$i"
+
+done
+
+ndev=$(accel-config list --idle | jq '.[].dev' | grep -c dsa)
+nwq=4
+
 for (( i = 0; i < ndev; i++ )); do
 
     dev="dsa${i}"
 
-    sed "s/X/${i}/g" < dsa.conf > $dev.conf
+    config="dsa.conf"
+
+    [ -f "conf/dsa.conf" ] && config="conf/dsa.conf"
+
+    [ -f "conf/dsa-$NODE_NAME.conf" ] && config="conf/dsa-$NODE_NAME.conf"
+
+    sed "s/X/${i}/g" < "$config" > $dev.conf
 
     cmd accel-config load-config -c "$dev.conf"
 
