@@ -6,16 +6,6 @@ spec:
   template:
     spec:
       initContainers:
-      - name: vfio-pci
-        image: busybox
-        command: ["/bin/sh", "-c", "modprobe vfio-pci disable_denylist=1"]
-        securityContext:
-          capabilities:
-            add:
-              ["SYS_MODULE"]
-        volumeMounts:
-        - name: moddir
-          mountPath: /lib/modules/
       - name: sriov-numvfs
         image: busybox
         command: ["/bin/sh", "-c"]
@@ -29,14 +19,12 @@ spec:
             fi
           done
         securityContext:
+          readOnlyRootFilesystem: true
           privileged: true
         volumeMounts:
         - name: sysfs
           mountPath: /sys
       volumes:
-      - name: moddir
-        hostPath:
-          path: /lib/modules/
       - name: sysfs
         hostPath:
           path: /sys

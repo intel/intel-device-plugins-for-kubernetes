@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	dpdkKustomizationYaml = "deployments/qat_plugin/overlays/debug/kustomization.yaml"
+	dpdkKustomizationYaml = "deployments/qat_plugin/overlays/sriov_numvfs/kustomization.yaml"
 	compressTestYaml      = "deployments/qat_dpdk_app/test-compress1/kustomization.yaml"
 	cryptoTestYaml        = "deployments/qat_dpdk_app/test-crypto1/kustomization.yaml"
 )
