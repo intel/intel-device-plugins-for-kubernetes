@@ -160,13 +160,13 @@ func DeployWebhook(f *framework.Framework, kustomizationPath string) v1.Pod {
 func TestContainersRunAsNonRoot(pods []v1.Pod) error {
 	for _, p := range pods {
 		for _, c := range append(p.Spec.InitContainers, p.Spec.Containers...) {
-			if !*c.SecurityContext.RunAsNonRoot {
+			if c.SecurityContext.RunAsNonRoot == nil || !*c.SecurityContext.RunAsNonRoot {
 				return errors.Errorf("%s (container: %s): RunAsNonRoot is not true", p.Name, c.Name)
 			}
-			if *c.SecurityContext.RunAsGroup == 0 {
+			if c.SecurityContext.RunAsGroup == nil || *c.SecurityContext.RunAsGroup == 0 {
 				return errors.Errorf("%s (container: %s): RunAsGroup is root (0)", p.Name, c.Name)
 			}
-			if *c.SecurityContext.RunAsUser == 0 {
+			if c.SecurityContext.RunAsUser == nil || *c.SecurityContext.RunAsUser == 0 {
 				return errors.Errorf("%s (container: %s): RunAsUser is root (0)", p.Name, c.Name)
 			}
 		}
@@ -187,7 +187,7 @@ func printVolumeMounts(vm []v1.VolumeMount) {
 func TestPodsFileSystemInfo(pods []v1.Pod) error {
 	for _, p := range pods {
 		for _, c := range append(p.Spec.InitContainers, p.Spec.Containers...) {
-			if !*c.SecurityContext.ReadOnlyRootFilesystem {
+			if c.SecurityContext.ReadOnlyRootFilesystem == nil || !*c.SecurityContext.ReadOnlyRootFilesystem {
 				return errors.Errorf("%s (container: %s): Writable root filesystem", p.Name, c.Name)
 			}
 			printVolumeMounts(c.VolumeMounts)
