@@ -1,5 +1,4 @@
 CONTROLLER_GEN ?= controller-gen
-CRD_VERSIONS := v1
 GO := go
 GOFMT := gofmt
 KIND ?= kind
@@ -81,10 +80,10 @@ checks: lint go-mod-tidy
 
 generate:
 	$(CONTROLLER_GEN) object:headerFile="build/boilerplate/boilerplate.go.txt" paths="./pkg/apis/..."
-	$(CONTROLLER_GEN) crd:crdVersions=$(CRD_VERSIONS),trivialVersions=true \
+	$(CONTROLLER_GEN) crd:crdVersions=v1 \
 		paths="./pkg/apis/..." \
 		output:crd:artifacts:config=deployments/operator/crd/bases
-	$(CONTROLLER_GEN) crd:crdVersions=$(CRD_VERSIONS),trivialVersions=true \
+	$(CONTROLLER_GEN) crd:crdVersions=v1 \
 		paths="./pkg/apis/fpga/..." \
 		output:crd:artifacts:config=deployments/fpga_admissionwebhook/crd/bases
 	$(CONTROLLER_GEN) webhook \
@@ -127,7 +126,8 @@ export TAG
 
 pre-pull:
 ifeq ($(TAG),devel)
-	@$(BUILDER) pull clearlinux/golang:latest
+	@$(BUILDER) pull golang:1.17-bullseye
+	@$(BUILDER) pull debian:unstable-slim
 	@$(BUILDER) pull clearlinux:latest
 endif
 
