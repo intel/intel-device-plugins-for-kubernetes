@@ -35,7 +35,7 @@ RUN cd idxd-config-accel-config-v$ACCEL_CONFIG_VERSION && \
     make && \
     make install
 
-FROM debian:unstable
+FROM debian:unstable-slim
 
 RUN apt-get update && apt-get install -y uuid libjson-c5 kmod udev jq
 

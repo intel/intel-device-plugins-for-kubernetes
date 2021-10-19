@@ -126,7 +126,8 @@ export TAG
 
 pre-pull:
 ifeq ($(TAG),devel)
-	@$(BUILDER) pull clearlinux/golang:latest
+	@$(BUILDER) pull golang:1.17-bullseye
+	@$(BUILDER) pull debian:unstable-slim
 	@$(BUILDER) pull clearlinux:latest
 endif
 
