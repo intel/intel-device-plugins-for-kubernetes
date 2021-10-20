@@ -79,12 +79,12 @@ func describeQatDpdkPlugin() {
 		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
 		ginkgo.By("waiting the crypto pod to finnish successfully")
-		f.PodClient().WaitForSuccess("qat-dpdk-test-crypto-perf-tc1", 30*time.Second)
+		f.PodClient().WaitForSuccess("qat-dpdk-test-crypto-perf-tc1", 60*time.Second)
 
 		ginkgo.By("submitting a compress pod requesting QAT resources")
 		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
 		ginkgo.By("waiting the compress pod to finnish successfully")
-		f.PodClient().WaitForSuccess("qat-dpdk-test-compress-perf-tc1", 30*time.Second)
+		f.PodClient().WaitForSuccess("qat-dpdk-test-compress-perf-tc1", 60*time.Second)
 	})
 }
