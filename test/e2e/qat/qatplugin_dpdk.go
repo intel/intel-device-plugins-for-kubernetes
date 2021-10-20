@@ -58,7 +58,7 @@ func describeQatDpdkPlugin() {
 
 		ginkgo.By("waiting for QAT plugin's availability")
 		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
-			labels.Set{"app": "intel-qat-plugin"}.AsSelector(), 1 /* one replica */, 10*time.Second)
+			labels.Set{"app": "intel-qat-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
 		if err != nil {
 			framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
 			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)

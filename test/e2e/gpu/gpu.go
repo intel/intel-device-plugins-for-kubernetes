@@ -53,7 +53,7 @@ func describe() {
 
 		ginkgo.By("waiting for GPU plugin's availability")
 		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
-			labels.Set{"app": "intel-gpu-plugin"}.AsSelector(), 1 /* one replica */, 10*time.Second); err != nil {
+			labels.Set{"app": "intel-gpu-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second); err != nil {
 			framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
 			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
