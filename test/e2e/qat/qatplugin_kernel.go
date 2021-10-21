@@ -91,6 +91,6 @@ func describeQatKernelPlugin() {
 		framework.ExpectNoError(err, "pod Create API error")
 
 		ginkgo.By("waiting the pod to finnish successfully")
-		f.PodClient().WaitForFinish(pod.ObjectMeta.Name, 30*time.Second)
+		f.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
 	})
 }
