@@ -151,7 +151,7 @@ func createPod(fmw *framework.Framework, name string, resourceName v1.ResourceNa
 func waitForPod(fmw *framework.Framework, name string) {
 	ginkgo.By(fmt.Sprintf("waiting for %s availability", name))
 	if _, err := e2epod.WaitForPodsWithLabelRunningReady(fmw.ClientSet, fmw.Namespace.Name,
-		labels.Set{"app": name}.AsSelector(), 1, 10*time.Second); err != nil {
+		labels.Set{"app": name}.AsSelector(), 1, 100*time.Second); err != nil {
 		framework.DumpAllNamespaceInfo(fmw.ClientSet, fmw.Namespace.Name)
 		kubectl.LogFailedContainers(fmw.ClientSet, fmw.Namespace.Name, framework.Logf)
 		framework.Failf("unable to wait for all pods to be running and ready: %v", err)

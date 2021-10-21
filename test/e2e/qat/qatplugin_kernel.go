@@ -56,7 +56,7 @@ func describeQatKernelPlugin() {
 
 		ginkgo.By("waiting for QAT plugin's availability")
 		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
-			labels.Set{"app": "intel-qat-kernel-plugin"}.AsSelector(), 1 /* one replica */, 10*time.Second); err != nil {
+			labels.Set{"app": "intel-qat-kernel-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second); err != nil {
 			framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
 			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
@@ -91,6 +91,6 @@ func describeQatKernelPlugin() {
 		framework.ExpectNoError(err, "pod Create API error")
 
 		ginkgo.By("waiting the pod to finnish successfully")
-		f.PodClient().WaitForFinish(pod.ObjectMeta.Name, 30*time.Second)
+		f.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
 	})
 }
