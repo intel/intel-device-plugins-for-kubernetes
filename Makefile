@@ -124,6 +124,9 @@ REG?=$(ORG)/
 TAG?=devel
 export TAG
 
+e2e-fpga:
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "FPGA Plugin"
+
 pre-pull:
 ifeq ($(TAG),devel)
 	@$(BUILDER) pull golang:1.17-bullseye
