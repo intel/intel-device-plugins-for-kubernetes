@@ -5,12 +5,15 @@
 coverage.html
 coverage.txt
 
+cmd/dsa_plugin/dsa_plugin
 cmd/fpga_admissionwebhook/fpga_admissionwebhook
 cmd/fpga_crihook/fpga_crihook
 cmd/fpga_plugin/fpga_plugin
 cmd/fpga_tool/fpga_tool
+cmd/gpu_nfdhook/gpu_nfdhook
 cmd/gpu_plugin/gpu_plugin
 cmd/qat_plugin/qat_plugin
+cmd/sgx_admissionwebhook/sgx_admissionwebhook
 cmd/sgx_plugin/sgx_plugin
 cmd/sgx_epchook/sgx_epchook
 cmd/vpu_plugin/vpu_plugin
