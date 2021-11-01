@@ -86,6 +86,7 @@ jobs:
           - sgx-aesmd-demo
           - ubuntu-demo-openvino
           - dlb-dpdk-demo
+          - dlb-libdlb-demo
         builder: [buildah, docker]
     steps:
       - uses: actions/checkout@v2
