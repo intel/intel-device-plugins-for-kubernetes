@@ -163,7 +163,7 @@ comma := ,
 images_json := $(subst $(space),$(comma),[$(addprefix ",$(addsuffix ",$(images) $(demos))]))
 
 check-github-actions:
-	@python3 -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout)' < .github/workflows/ci.yaml | \
+	@python3 -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin, Loader=yaml.SafeLoader), sys.stdout)' < .github/workflows/ci.yaml | \
 	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
 
