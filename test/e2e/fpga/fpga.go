@@ -82,7 +82,6 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 	}
 
 	ginkgo.By(fmt.Sprintf("namespace %s: deploying FPGA plugin in %s mode", fmw.Namespace.Name, pluginMode))
-	_, _ = framework.RunKubectl(fmw.Namespace.Name, "delete", "-k", tmpDir)
 	framework.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-k", tmpDir)
 
 	ginkgo.By("deploying mappings")
@@ -139,6 +138,7 @@ func createPod(fmw *framework.Framework, name string, resourceName v1.ResourceNa
 					},
 				},
 			},
+			RestartPolicy: v1.RestartPolicyNever,
 		},
 	}
 
