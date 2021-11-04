@@ -34,6 +34,11 @@ type GpuDevicePluginSpec struct {
 	// InitImage is a container image with tools (e.g., GPU NFD source hook) installed on each node.
 	InitImage string `json:"initImage,omitempty"`
 
+	// PreferredAllocationPolicy sets the mode of allocating GPU devices on a node.
+	// See documentation for detailed description of the policies. Only valid when SharedDevNum > 1 is set.
+	// +kubebuilder:validation:Enum=balanced;packed;none
+	PreferredAllocationPolicy string `json:"preferredAllocationPolicy,omitempty"`
+
 	// SharedDevNum is a number of containers that can share the same GPU device.
 	// +kubebuilder:validation:Minimum=1
 	SharedDevNum int `json:"sharedDevNum,omitempty"`

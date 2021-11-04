@@ -40,6 +40,7 @@ backend libraries can offload compute operations to GPU.
 | -enable-monitoring | - | disabled | Enable 'i915_monitoring' resource that provides access to all Intel GPU devices on the node |
 | -resource-manager | - | disabled | Enable fractional resource management, [see also dependencies](#fractional-resources) |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
+| -allocation-policy | string | none | 3 possible values: balanced, packed, none. It is meaningful when shared-dev-num > 1, balanced mode is suitable for workload balance among GPU devices, packed mode is suitable for making full use of each GPU device, none mode is the default |
 
 The plugin also accepts a number of other arguments (common to all plugins) related to logging.
 Please use the -h option to see the complete list of logging related options.

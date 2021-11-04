@@ -92,5 +92,9 @@ func (r *GpuDevicePlugin) validatePlugin() error {
 		}
 	}
 
+	if r.Spec.SharedDevNum == 1 && r.Spec.PreferredAllocationPolicy != "none" {
+		return errors.Errorf("PreferredAllocationPolicy is valid only when setting sharedDevNum > 1")
+	}
+
 	return validatePluginImage(r.Spec.Image, "intel-gpu-plugin", gpuMinVersion)
 }

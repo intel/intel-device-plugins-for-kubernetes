@@ -20,6 +20,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -53,9 +54,88 @@ const (
 )
 
 type cliOptions struct {
-	sharedDevNum       int
-	enableMonitoring   bool
-	resourceManagement bool
+	preferredAllocationPolicy string
+	sharedDevNum              int
+	enableMonitoring          bool
+	resourceManagement        bool
+}
+
+type preferredAllocationPolicyFunc func(*pluginapi.ContainerPreferredAllocationRequest) []string
+
+// nonePolicy is used for allocating GPU devices randomly.
+func nonePolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
+	klog.V(2).Info("Select nonePolicy for GPU device allocation")
+
+	deviceIds := req.AvailableDeviceIDs[0:req.AllocationSize]
+
+	klog.V(2).Infof("Allocate deviceIds: %q", deviceIds)
+	return deviceIds
+}
+
+// balancedPolicy is used for allocating GPU devices in balance.
+func balancedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
+	klog.V(2).Info("Select balancedPolicy for GPU device allocation")
+
+	// Save the shared-devices list of each physical GPU.
+	Card := make(map[string][]string)
+	// Save the available shared-nums of each physical GPU.
+	Count := make(map[string]int)
+
+	for _, deviceID := range req.AvailableDeviceIDs {
+		device := strings.Split(deviceID, "-")
+		Card[device[0]] = append(Card[device[0]], deviceID)
+		Count[device[0]]++
+	}
+
+	// Save the physical GPUs in order.
+	Index := make([]string, 0)
+	for key := range Count {
+		Index = append(Index, key)
+		sort.Strings(Card[key])
+	}
+	sort.Strings(Index)
+
+	need := req.AllocationSize
+	var deviceIds []string
+
+	// We choose one device ID from the GPU card that has most shared gpu IDs each time.
+	for {
+		var allocateCard string
+		var max int
+
+		for _, key := range Index {
+			if Count[key] > max {
+				max = Count[key]
+				allocateCard = key
+			}
+		}
+
+		deviceIds = append(deviceIds, Card[allocateCard][0])
+		need--
+
+		if need == 0 {
+			break
+		}
+
+		// Update Maps
+		Card[allocateCard] = Card[allocateCard][1:]
+		Count[allocateCard]--
+	}
+
+	klog.V(2).Infof("Allocate deviceIds: %q", deviceIds)
+	return deviceIds
+}
+
+// packedPolicy is used for allocating GPU devices one by one.
+func packedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
+	klog.V(2).Info("Select packedPolicy for GPU device allocation")
+
+	deviceIds := req.AvailableDeviceIDs
+	sort.Strings(deviceIds)
+	deviceIds = deviceIds[:req.AllocationSize]
+
+	klog.V(2).Infof("Allocate deviceIds: %q", deviceIds)
+	return deviceIds
 }
 
 type devicePlugin struct {
@@ -70,6 +150,8 @@ type devicePlugin struct {
 	sysfsDir string
 	devfsDir string
 
+	// Note: If restarting the plugin with a new policy, the allocations for existing pods remain with old policy.
+	policy  preferredAllocationPolicyFunc
 	options cliOptions
 }
 
@@ -93,7 +175,43 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 		}
 	}
 
+	switch options.preferredAllocationPolicy {
+	case "balanced":
+		dp.policy = balancedPolicy
+	case "packed":
+		dp.policy = packedPolicy
+	default:
+		dp.policy = nonePolicy
+	}
+
 	return dp
+}
+
+// Implement the PreferredAllocator interface.
+func (dp *devicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error) {
+	response := &pluginapi.PreferredAllocationResponse{}
+
+	for _, req := range rqt.ContainerRequests {
+		klog.V(3).Infof("AvailableDeviceIDs: %q", req.AvailableDeviceIDs)
+		klog.V(3).Infof("MustIncludeDeviceIDs: %q", req.MustIncludeDeviceIDs)
+		klog.V(3).Infof("AllocationSize: %d", req.AllocationSize)
+
+		// Add a security check here. This should never happen unless there occurs error in kubelet device plugin manager.
+		if req.AllocationSize > int32(len(req.AvailableDeviceIDs)) {
+			klog.V(3).Info("req.AllocationSize must be not greater than len(req.AvailableDeviceIDs).")
+			var err = errors.Errorf("AllocationSize (%d) is greater then the number of available device IDs (%d)", req.AllocationSize, len(req.AvailableDeviceIDs))
+			return nil, err
+		}
+
+		IDs := dp.policy(req)
+
+		resp := &pluginapi.ContainerPreferredAllocationResponse{
+			DeviceIDs: IDs,
+		}
+
+		response.ContainerResponses = append(response.ContainerResponses, resp)
+	}
+	return response, nil
 }
 
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
@@ -226,6 +344,7 @@ func main() {
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable 'i915_monitoring' (= all GPUs) resource")
 	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
+	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
 	flag.Parse()
 
 	if opts.sharedDevNum < 1 {
@@ -238,7 +357,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	klog.V(1).Info("GPU device plugin started")
+	var str = opts.preferredAllocationPolicy
+	if !(str == "balanced" || str == "packed" || str == "none") {
+		klog.Error("invalid value for preferredAllocationPolicy, the valid values: balanced, packed, none")
+		os.Exit(1)
+	}
+	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
 
 	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory, opts)
 	manager := dpapi.NewManager(namespace, plugin)
