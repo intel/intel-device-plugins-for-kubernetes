@@ -74,7 +74,7 @@ jobs:
           - intel-sgx-plugin
           - intel-sgx-initcontainer
           - intel-dsa-plugin
-          - intel-dsa-initcontainer
+          - intel-idxd-initcontainer
 
           # Demo images
           - crypto-perf

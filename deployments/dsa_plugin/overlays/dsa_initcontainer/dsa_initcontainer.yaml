@@ -7,13 +7,23 @@ spec:
     spec:
       initContainers:
       - name: intel-dsa-initcontainer
-        image: intel/intel-dsa-initcontainer:devel
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+        image: intel/intel-idxd-initcontainer:devel
         securityContext:
           privileged: true
         volumeMounts:
         - mountPath: /sys/devices
           name: sys-devices
+        - mountPath: /idxd-init/conf
+          name: intel-dsa-config-volume
       volumes:
       - name: sys-devices
         hostPath:
           path: /sys/devices
+      - name: intel-dsa-config-volume
+        configMap:
+          name: intel-dsa-config

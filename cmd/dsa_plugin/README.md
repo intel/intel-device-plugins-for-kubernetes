@@ -50,13 +50,25 @@ Nothing else is needed. But if you want to deploy a customized version of the pl
 
 ### Deploy with initcontainer
 
-There's a sample [DSA initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/build/docker/intel-dsa-initcontainer.Dockerfile) included that provisions DSA devices and workqueues (1 engine / 1 group / 1 wq (user/dedicated)), to deploy:
+There's a sample [DSA initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-idxd-initcontainer.Dockerfile) included that provisions DSA devices and workqueues (1 engine / 1 group / 1 wq (user/dedicated)), to deploy:
 
 ```bash
 $ kubectl apply -k deployments/dsa_plugin/overlays/dsa_initcontainer/
 ```
 
-The provisioning [script](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/demo/dsa-init.sh) and [template](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/demo/dsa.conf) are available for customization.
+The provisioning [script](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/dsa-init.sh) and [template](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/demo/dsa.conf) are available for customization.
+
+### Deploy with initcontainer and provisioning config in the ConfigMap
+
+The provisioning config can be optionally stored in the ProvisioningConfig configMap which is then passed to initcontainer through the volume mount.
+
+There's also a possibility for a node specific congfiguration through passing a nodename via NODE_NAME into initcontainer's environment and passing a node specific profile via configMap volume mount.
+
+To create a custom provisioning config:
+
+```bash
+$ kubectl create configmap --namespace=inteldeviceplugins-system intel-dsa-config --from-file=demo/dsa.conf --from-file=demo/dsa-node1.conf --dry-run=client -o yaml > dsa-config.yaml
+```
 
 ### Getting the source code
 

@@ -68,6 +68,10 @@ spec:
                 description: NodeSelector provides a simple way to constrain device
                   plugin pods to nodes with particular labels.
                 type: object
+              provisioningConfig:
+                description: ProvisioningConfig is a ConfigMap used to pass the configuration
+                  into DSA initcontainer.
+                type: string
               sharedDevNum:
                 description: SharedDevNum is a number of containers that can share
                   the same DSA device.

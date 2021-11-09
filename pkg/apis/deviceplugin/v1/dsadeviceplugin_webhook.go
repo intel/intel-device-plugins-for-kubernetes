@@ -90,8 +90,12 @@ func (r *DsaDevicePlugin) validatePlugin() error {
 		return err
 	}
 
+	if len(r.Spec.ProvisioningConfig) > 0 && len(r.Spec.InitImage) == 0 {
+		return errors.Errorf("ProvisioningConfig is set with no InitImage")
+	}
+
 	if len(r.Spec.InitImage) > 0 {
-		return validatePluginImage(r.Spec.InitImage, "intel-dsa-initcontainer", dsaMinVersion)
+		return validatePluginImage(r.Spec.InitImage, "intel-idxd-initcontainer", dsaMinVersion)
 	}
 
 	return nil

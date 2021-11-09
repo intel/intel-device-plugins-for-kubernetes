@@ -44,8 +44,8 @@ RUN ldconfig
 
 COPY --from=builder /usr/bin/accel-config /usr/bin/
 
-ADD demo/dsa-init.sh /dsa-init/
-ADD demo/dsa.conf /dsa-init/
+ADD demo/idxd-init.sh /idxd-init/
+ADD demo/dsa.conf /idxd-init/
 
-WORKDIR /dsa-init
-ENTRYPOINT bash dsa-init.sh
+WORKDIR /idxd-init
+ENTRYPOINT bash idxd-init.sh
