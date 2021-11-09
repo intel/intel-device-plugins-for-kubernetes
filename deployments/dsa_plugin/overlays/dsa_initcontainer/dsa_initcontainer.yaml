@@ -12,13 +12,13 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-dsa-initcontainer:devel
+        image: intel/intel-idxd-initcontainer:devel
         securityContext:
           privileged: true
         volumeMounts:
         - mountPath: /sys/devices
           name: sys-devices
-        - mountPath: /dsa-init/conf
+        - mountPath: /idxd-init/conf
           name: intel-dsa-config-volume
       volumes:
       - name: sys-devices

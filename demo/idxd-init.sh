@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+DEV="${VARIABLE:-dsa}"
+NODE_NAME="${NODE_NAME:-}"
+
 function cmd() {
 
     echo "$@"
@@ -9,24 +12,24 @@ function cmd() {
     "${@}"
 }
 
-for i in $(accel-config list | jq '.[].dev' | grep dsa | sed 's/\"//g'); do
+for i in $(accel-config list | jq '.[].dev' | grep "$DEV" | sed 's/\"//g'); do
 
     cmd accel-config disable-device "$i"
 
 done
 
-ndev=$(accel-config list --idle | jq '.[].dev' | grep -c dsa)
+ndev=$(accel-config list --idle | jq '.[].dev' | grep -c "$DEV")
 nwq=4
 
 for (( i = 0; i < ndev; i++ )); do
 
-    dev="dsa${i}"
+    dev="$DEV${i}"
 
-    config="dsa.conf"
+    config="$DEV.conf"
 
-    [ -f "conf/dsa.conf" ] && config="conf/dsa.conf"
+    [ -f "conf/$DEV.conf" ] && config="conf/$DEV.conf"
 
-    [ -f "conf/dsa-$NODE_NAME.conf" ] && config="conf/dsa-$NODE_NAME.conf"
+    [ -f "conf/$DEV-$NODE_NAME.conf" ] && config="conf/$DEV-$NODE_NAME.conf"
 
     sed "s/X/${i}/g" < "$config" > $dev.conf
 

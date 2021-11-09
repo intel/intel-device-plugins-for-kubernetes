@@ -95,7 +95,7 @@ func (r *DsaDevicePlugin) validatePlugin() error {
 	}
 
 	if len(r.Spec.InitImage) > 0 {
-		return validatePluginImage(r.Spec.InitImage, "intel-dsa-initcontainer", dsaMinVersion)
+		return validatePluginImage(r.Spec.InitImage, "intel-idxd-initcontainer", dsaMinVersion)
 	}
 
 	return nil

@@ -81,7 +81,7 @@ func setInitContainer(spec *v1.PodSpec, imageName string) {
 		{
 			Image:           imageName,
 			ImagePullPolicy: "IfNotPresent",
-			Name:            "intel-dsa-initcontainer",
+			Name:            "intel-idxd-initcontainer",
 			Env: []v1.EnvVar{
 				{
 					Name: "NODE_NAME",
@@ -246,10 +246,10 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 			})
 
 			for i, initcontainer := range daemonSet.Spec.Template.Spec.InitContainers {
-				if initcontainer.Name == "intel-dsa-initcontainer" {
+				if initcontainer.Name == "intel-idxd-initcontainer" {
 					daemonSet.Spec.Template.Spec.InitContainers[i].VolumeMounts = append(daemonSet.Spec.Template.Spec.InitContainers[i].VolumeMounts, v1.VolumeMount{
 						Name:      "intel-dsa-config-volume",
-						MountPath: "/dsa-init/conf",
+						MountPath: "/idxd-init/conf",
 					})
 				}
 			}
