@@ -20,6 +20,7 @@ Table of Contents
     * [VPU device plugin](#vpu-device-plugin)
     * [SGX device plugin](#sgx-device-plugin)
     * [DSA device pugin](#dsa-device-plugin)
+    * [DLB device plugin](#dlb-device-plugin)
 * [Device Plugins Operator](#device-plugins-operator)
 * [Demos](#demos)
 * [Developers](#developers)
@@ -166,6 +167,10 @@ type [memory](https://kubernetes.io/docs/concepts/configuration/manage-resources
 ### DSA device plugin
 
 The [DSA device plugin](cmd/dsa_plugin/README.md) supports acceleration using the Intel Data Streaming accelerator(DSA).
+
+### DLB device plugin
+
+The [DLB device plugin](cmd/dlb_plugin/README.md) supports Intel Dynamic Load Balancer accelerator(DLB).
 
 ## Device Plugins Operator
 
