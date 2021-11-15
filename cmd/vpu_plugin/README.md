@@ -37,6 +37,9 @@ This card has:
 This card has:
 - 3 Intel® Movidius Gen 3 Intel® Movidius™ VPU SoCs
 
+[Intel® Movidius™ S VPU](https://www.intel.com/content/www/us/en/products/details/processors/movidius-vpu.html)
+This card has:
+- 6 Intel® Movidius Gen 3 Intel® Movidius™ VPU SoCs
 
 > **Note:** This device plugin need HDDL daemon service to be running either natively or from a container.
 >      To get VCAC-A or Mustang card running hddl, please refer to:
