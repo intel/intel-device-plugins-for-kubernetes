@@ -61,8 +61,12 @@ var (
 	// Movidius MyriadX Product IDs.
 	productIDs = []int{0x2485, 0xf63b}
 	// PCI Product IDs.
-	productIDsPCI = []PCIPidDeviceType{{[]string{"0x6240"}, "kmb", 1}, {[]string{"0x4fc0", "0x4fc1"}, "tbh", 2}}
+	productIDsPCI = []PCIPidDeviceType{
+		{"kmb", []string{"0x6240"}, 1},
+		{"tbh", []string{"0x4fc0","0x4fc1"}, 2},
+	}
 )
+
 
 type gousbContext interface {
 	OpenDevices(opener func(desc *gousb.DeviceDesc) bool) ([]*gousb.Device, error)
