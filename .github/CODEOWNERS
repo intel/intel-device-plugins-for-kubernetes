@@ -6,7 +6,6 @@
 
 # CI and building
 .github/workflows/  @rojkov @bart0sh @kad @mythi
-.travis.yml         @rojkov @bart0sh @kad @mythi
 Jenkinsfile         @rojkov @bart0sh @kad @mythi
 Makefile            @rojkov @bart0sh @kad @mythi
 /build/             @rojkov @bart0sh @kad @mythi
@@ -17,11 +16,11 @@ Makefile            @rojkov @bart0sh @kad @mythi
 /cmd/fpga_tool/     @bart0sh @kad @rojkov
 /cmd/gpu_plugin/    @rojkov @bart0sh @uniemimu
 /cmd/qat_plugin/    @rojkov @mythi
-/cmd/vpu_plugin/    @rojkov @mythi @alekdu
+/cmd/vpu_plugin/    @rojkov @mythi
+/cmd/dlb_plugin/    @bart0sh @hj-johannes-lee
 
 # Framework
 /pkg/               @rojkov @bart0sh
-/pkg/fpga/          @bart0sh @kad
 /pkg/topology/      @bart0sh @kad
 
 # Deployments
