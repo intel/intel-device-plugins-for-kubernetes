@@ -63,10 +63,9 @@ var (
 	// PCI Product IDs.
 	productIDsPCI = []PCIPidDeviceType{
 		{"kmb", []string{"0x6240"}, 1},
-		{"tbh", []string{"0x4fc0","0x4fc1"}, 2},
+		{"tbh", []string{"0x4fc0", "0x4fc1"}, 2},
 	}
 )
-
 
 type gousbContext interface {
 	OpenDevices(opener func(desc *gousb.DeviceDesc) bool) ([]*gousb.Device, error)
