@@ -12,9 +12,11 @@ spec:
       limits:
         dlb.intel.com/pf: 1
         cpu: 1
+        memory: 200Mi
       requests:
         dlb.intel.com/pf: 1
         cpu: 1
+        memory: 200Mi
   - name: vf
     image: intel/dlb-dpdk-demo:devel
     imagePullPolicy: IfNotPresent
@@ -22,7 +24,8 @@ spec:
       limits:
         dlb.intel.com/vf: 1
         cpu: 1
+        memory: 200Mi
       requests:
         dlb.intel.com/vf: 1
         cpu: 1
-
+        memory: 200Mi
