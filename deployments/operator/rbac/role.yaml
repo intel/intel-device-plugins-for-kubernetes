@@ -54,6 +54,26 @@ rules:
 - apiGroups:
   - deviceplugin.intel.com
   resources:
+  - dlbdeviceplugins
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - dlbdeviceplugins/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
   - dsadeviceplugins
   verbs:
   - create
