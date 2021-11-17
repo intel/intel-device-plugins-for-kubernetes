@@ -30,6 +30,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/deployments"
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 	"github.com/pkg/errors"
@@ -37,8 +38,8 @@ import (
 
 const (
 	ownerKey           = ".metadata.controller.gpu"
-	appLabel           = "intel-gpu-plugin"
 	serviceAccountName = "gpu-manager-sa"
+	amd64              = "amd64"
 )
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins,verbs=get;list;watch;create;update;patch;delete
@@ -126,112 +127,32 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 		for k, v := range devicePlugin.Spec.NodeSelector {
 			nodeSelector[k] = v
 		}
-		nodeSelector["kubernetes.io/arch"] = "amd64"
+		nodeSelector["kubernetes.io/arch"] = amd64
 	} else {
-		nodeSelector = map[string]string{"kubernetes.io/arch": "amd64"}
+		nodeSelector = map[string]string{"kubernetes.io/arch": amd64}
 	}
 
-	yes := true
-	daemonSet := apps.DaemonSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    c.ns,
-			GenerateName: devicePlugin.Name + "-",
-			Labels: map[string]string{
-				"app": appLabel,
-			},
-		},
-		Spec: apps.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": appLabel,
-				},
-			},
-			Template: v1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app": appLabel,
-					},
-				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{
-						{
-							Name: appLabel,
-							Env: []v1.EnvVar{
-								{
-									Name: "NODE_NAME",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											FieldPath: "spec.nodeName",
-										},
-									},
-								},
-							},
-							Args:            getPodArgs(devicePlugin),
-							Image:           devicePlugin.Spec.Image,
-							ImagePullPolicy: "IfNotPresent",
-							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
-							},
-							VolumeMounts: []v1.VolumeMount{
-								{
-									Name:      "devfs",
-									MountPath: "/dev/dri",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "sysfs",
-									MountPath: "/sys/class/drm",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "kubeletsockets",
-									MountPath: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-					},
-					NodeSelector: nodeSelector,
-					Volumes: []v1.Volume{
-						{
-							Name: "devfs",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev/dri",
-								},
-							},
-						},
-						{
-							Name: "sysfs",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/sys/class/drm",
-								},
-							},
-						},
-						{
-							Name: "kubeletsockets",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	// add the optional InitImage
-	if devicePlugin.Spec.InitImage != "" {
+	daemonSet := deployments.GPUPluginDaemonSet()
+	daemonSet.Spec.Template.Spec.NodeSelector = nodeSelector
+	daemonSet.ObjectMeta.Namespace = c.ns
+	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
+	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
+
+	if devicePlugin.Spec.InitImage == "" {
+		daemonSet.Spec.Template.Spec.InitContainers = nil
+		daemonSet.Spec.Template.Spec.Volumes = removeVolume(daemonSet.Spec.Template.Spec.Volumes, "nfd-source-hooks")
+	} else {
 		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
 	}
+
 	// add service account if resource manager is enabled
 	if devicePlugin.Spec.ResourceManager {
 		daemonSet.Spec.Template.Spec.ServiceAccountName = serviceAccountName
 		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
 		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources")
 	}
-	return &daemonSet
+
+	return daemonSet
 }
 
 func addVolumeMountIfMissing(spec *v1.PodSpec, name, mountPath string) {
@@ -324,9 +245,9 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 	}
 
 	if dp.Spec.NodeSelector == nil {
-		dp.Spec.NodeSelector = map[string]string{"kubernetes.io/arch": "amd64"}
+		dp.Spec.NodeSelector = map[string]string{"kubernetes.io/arch": amd64}
 	} else {
-		dp.Spec.NodeSelector["kubernetes.io/arch"] = "amd64"
+		dp.Spec.NodeSelector["kubernetes.io/arch"] = amd64
 	}
 	if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
 		ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector

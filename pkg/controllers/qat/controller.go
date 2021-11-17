@@ -22,13 +22,12 @@ import (
 	"strings"
 
 	apps "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/deployments"
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 	"github.com/pkg/errors"
@@ -36,7 +35,6 @@ import (
 
 const (
 	ownerKey = ".metadata.controller.qat"
-	appLabel = "intel-qat-plugin"
 )
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins,verbs=get;list;watch;create;update;patch;delete
@@ -77,88 +75,17 @@ func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client
 
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.QatDevicePlugin)
-	yes := true
-	pluginAnnotations := devicePlugin.ObjectMeta.DeepCopy().Annotations
-	return &apps.DaemonSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    c.ns,
-			GenerateName: devicePlugin.Name + "-",
-			Labels: map[string]string{
-				"app": appLabel,
-			},
-			Annotations: pluginAnnotations,
-		},
-		Spec: apps.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": appLabel,
-				},
-			},
-			Template: v1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app": appLabel,
-					},
-					Annotations: pluginAnnotations,
-				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{
-						{
-							Name:            appLabel,
-							Args:            getPodArgs(devicePlugin),
-							Image:           devicePlugin.Spec.Image,
-							ImagePullPolicy: "IfNotPresent",
-							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
-							},
-							VolumeMounts: []v1.VolumeMount{
-								{
-									Name:      "devdir",
-									MountPath: "/dev/vfio",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "pcidir",
-									MountPath: "/sys/bus/pci",
-								},
-								{
-									Name:      "kubeletsockets",
-									MountPath: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-					},
-					NodeSelector: devicePlugin.Spec.NodeSelector,
-					Volumes: []v1.Volume{
-						{
-							Name: "devdir",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev/vfio",
-								},
-							},
-						},
-						{
-							Name: "pcidir",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/sys/bus/pci",
-								},
-							},
-						},
-						{
-							Name: "kubeletsockets",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+
+	annotations := devicePlugin.ObjectMeta.DeepCopy().Annotations
+
+	daemonSet := deployments.QATPluginDaemonSet()
+	daemonSet.Annotations = annotations
+	daemonSet.Spec.Template.Annotations = annotations
+	daemonSet.ObjectMeta.Namespace = c.ns
+	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
+	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
+
+	return daemonSet
 }
 
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {

@@ -22,21 +22,21 @@ import (
 	"strings"
 
 	apps "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/deployments"
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 	"github.com/pkg/errors"
+	v1 "k8s.io/api/core/v1"
 )
 
 const (
 	ownerKey = ".metadata.controller.sgx"
-	appLabel = "intel-sgx-plugin"
+	amd64    = "amd64"
 )
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=sgxdeviceplugins,verbs=get;list;watch;create;update;patch;delete
@@ -75,6 +75,44 @@ func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client
 	return len(list.Items), nil
 }
 
+func addVolumeIfMissing(spec *v1.PodSpec, name, path string, hpType v1.HostPathType) {
+	for _, vol := range spec.Volumes {
+		if vol.Name == name {
+			return
+		}
+	}
+
+	spec.Volumes = append(spec.Volumes, v1.Volume{
+		Name: name,
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: path,
+				Type: &hpType,
+			},
+		},
+	})
+}
+
+func setInitContainer(spec *v1.PodSpec, imageName string) {
+	yes := true
+	spec.InitContainers = []v1.Container{
+		{
+			Image:           imageName,
+			ImagePullPolicy: "IfNotPresent",
+			Name:            "intel-sgx-initcontainer",
+			SecurityContext: &v1.SecurityContext{
+				ReadOnlyRootFilesystem: &yes,
+			},
+			VolumeMounts: []v1.VolumeMount{
+				{
+					MountPath: "/etc/kubernetes/node-feature-discovery/source.d/",
+					Name:      "nfd-source-hooks",
+				},
+			},
+		}}
+	addVolumeIfMissing(spec, "nfd-source-hooks", "/etc/kubernetes/node-feature-discovery/source.d/", v1.HostPathDirectoryOrCreate)
+}
+
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.SgxDevicePlugin)
 
@@ -85,134 +123,23 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 		for k, v := range devicePlugin.Spec.NodeSelector {
 			nodeSelector[k] = v
 		}
-		nodeSelector["kubernetes.io/arch"] = "amd64"
+		nodeSelector["kubernetes.io/arch"] = amd64
 	} else {
-		nodeSelector = map[string]string{"kubernetes.io/arch": "amd64"}
+		nodeSelector = map[string]string{"kubernetes.io/arch": amd64}
 	}
 
-	yes := true
-	charDevice := v1.HostPathCharDev
-	directoryOrCreate := v1.HostPathDirectoryOrCreate
-	return &apps.DaemonSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    c.ns,
-			GenerateName: devicePlugin.Name + "-",
-			Labels: map[string]string{
-				"app": appLabel,
-			},
-		},
-		Spec: apps.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": appLabel,
-				},
-			},
-			Template: v1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app": appLabel,
-					},
-				},
-				Spec: v1.PodSpec{
-					InitContainers: []v1.Container{
-						{
-							Image:           devicePlugin.Spec.InitImage,
-							ImagePullPolicy: "IfNotPresent",
-							Name:            "intel-sgx-initcontainer",
-							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
-							},
-							VolumeMounts: []v1.VolumeMount{
-								{
-									MountPath: "/etc/kubernetes/node-feature-discovery/source.d/",
-									Name:      "nfd-source-hooks",
-								},
-							},
-						},
-					},
-					Containers: []v1.Container{
-						{
-							Name:            appLabel,
-							Args:            getPodArgs(devicePlugin),
-							Image:           devicePlugin.Spec.Image,
-							ImagePullPolicy: "IfNotPresent",
-							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
-							},
-							VolumeMounts: []v1.VolumeMount{
-								{
-									Name:      "sgxdevices",
-									MountPath: "/dev/sgx",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "sgx-enclave",
-									MountPath: "/dev/sgx_enclave",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "sgx-provision",
-									MountPath: "/dev/sgx_provision",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "kubeletsockets",
-									MountPath: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-					},
-					NodeSelector: nodeSelector,
-					Volumes: []v1.Volume{
-						{
-							Name: "sgxdevices",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev/sgx",
-									Type: &directoryOrCreate,
-								},
-							},
-						},
-						{
-							Name: "sgx-enclave",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev/sgx_enclave",
-									Type: &charDevice,
-								},
-							},
-						},
-						{
-							Name: "sgx-provision",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev/sgx_provision",
-									Type: &charDevice,
-								},
-							},
-						},
-						{
-							Name: "kubeletsockets",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-						{
-							Name: "nfd-source-hooks",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/etc/kubernetes/node-feature-discovery/source.d/",
-									Type: &directoryOrCreate,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+	daemonSet := deployments.SGXPluginDaemonSet()
+	daemonSet.Spec.Template.Spec.NodeSelector = nodeSelector
+	daemonSet.ObjectMeta.Namespace = c.ns
+	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
+	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
+
+	// add the optional init container
+	if devicePlugin.Spec.InitImage != "" {
+		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
 	}
+
+	return daemonSet
 }
 
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
@@ -224,9 +151,9 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 	}
 
 	if dp.Spec.NodeSelector == nil {
-		dp.Spec.NodeSelector = map[string]string{"kubernetes.io/arch": "amd64"}
+		dp.Spec.NodeSelector = map[string]string{"kubernetes.io/arch": amd64}
 	} else {
-		dp.Spec.NodeSelector["kubernetes.io/arch"] = "amd64"
+		dp.Spec.NodeSelector["kubernetes.io/arch"] = amd64
 	}
 	if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
 		ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector

@@ -22,22 +22,18 @@ import (
 	"strings"
 
 	apps "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/deployments"
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 	"github.com/pkg/errors"
 )
 
-const (
-	ownerKey = ".metadata.controller.dlb"
-	appLabel = "intel-dlb-plugin"
-)
+const ownerKey = ".metadata.controller.dlb"
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dlbdeviceplugins,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dlbdeviceplugins/status,verbs=get;update;patch
@@ -77,101 +73,14 @@ func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client
 
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.DlbDevicePlugin)
-	yes := true
 
-	var nodeSelector map[string]string
+	daemonSet := deployments.DLBPluginDaemonSet()
+	daemonSet.ObjectMeta.Namespace = c.ns
 
-	daemonSet := apps.DaemonSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    c.ns,
-			GenerateName: devicePlugin.Name + "-",
-			Labels: map[string]string{
-				"app": appLabel,
-			},
-		},
-		Spec: apps.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": appLabel,
-				},
-			},
-			Template: v1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app": appLabel,
-					},
-				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{
-						{
-							Name: appLabel,
-							Env: []v1.EnvVar{
-								{
-									Name: "NODE_NAME",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											FieldPath: "spec.nodeName",
-										},
-									},
-								},
-							},
-							TerminationMessagePath: "/tmp/termination-log",
-							Args:                   getPodArgs(devicePlugin),
-							Image:                  devicePlugin.Spec.Image,
-							ImagePullPolicy:        "IfNotPresent",
-							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
-							},
-							VolumeMounts: []v1.VolumeMount{
-								{
-									Name:      "devfs",
-									MountPath: "/dev",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "sysfs",
-									MountPath: "/sys/class/dlb2",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "kubeletsockets",
-									MountPath: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-					},
-					NodeSelector: nodeSelector,
-					Volumes: []v1.Volume{
-						{
-							Name: "devfs",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev",
-								},
-							},
-						},
-						{
-							Name: "sysfs",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/sys/class/dlb2",
-								},
-							},
-						},
-						{
-							Name: "kubeletsockets",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	return &daemonSet
+	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
+	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
+
+	return daemonSet
 }
 
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
