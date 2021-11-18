@@ -44,6 +44,7 @@ const (
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for GpuDevicePlugin objects.
 func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error {

@@ -37,6 +37,7 @@ const ownerKey = ".metadata.controller.dlb"
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dlbdeviceplugins,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dlbdeviceplugins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dlbdeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for DlbDevicePlugin objects.
 func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error {

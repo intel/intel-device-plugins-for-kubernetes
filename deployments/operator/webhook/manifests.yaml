@@ -12,7 +12,7 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
- path: /mutate-deviceplugin-intel-com-v1-dlbdeviceplugin
+      path: /mutate-deviceplugin-intel-com-v1-dlbdeviceplugin
   failurePolicy: Fail
   name: mdlbdeviceplugin.kb.io
   rules:
