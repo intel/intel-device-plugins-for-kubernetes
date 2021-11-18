@@ -2,7 +2,7 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - ci-envtest
       - 'release-*'
   pull_request:
     branches:
@@ -11,22 +11,8 @@ on:
 env:
   RUNC_VERSION: v1.0.2
   GO_VERSION: 1.17.2
+  K8S_VERSION: 1.20.2
 jobs:
-
-  golangci:
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install build dependencies needed for VPU plugin
-        run: |
-          sudo apt-get update
-          sudo apt-get -y install libusb-1.0-0-dev
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: v1.42.0
-          args: --timeout 5m
 
   build:
     name: Build and check device plugins
@@ -44,79 +30,12 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: Install build dependencies needed for VPU plugin
-        run: |
-          sudo apt-get update
-          sudo apt-get -y install libusb-1.0-0-dev
-      - run: make go-mod-tidy
-      - run: make BUILDTAGS=kerneldrv
-      - run: make test BUILDTAGS=kerneldrv
-      - run: make check-github-actions
-      - name: Codecov report
-        run: bash <(curl -s https://codecov.io/bash)
-
-  image:
-    name: Build image
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        image:
-          - intel-fpga-admissionwebhook
-          - intel-fpga-initcontainer
-          - intel-gpu-initcontainer
-          - intel-gpu-plugin
-          - intel-fpga-plugin
-          - intel-qat-plugin
-          - intel-qat-plugin-kerneldrv
-          - intel-vpu-plugin
-          - intel-deviceplugin-operator
-          - intel-sgx-admissionwebhook
-          - intel-sgx-plugin
-          - intel-sgx-initcontainer
-          - intel-dsa-plugin
-          - intel-idxd-initcontainer
-          - intel-dlb-plugin
-
-          # Demo images
-          - crypto-perf
-          - dsa-accel-config-demo
-          - opae-nlb-demo
-          - openssl-qat-engine
-          - sgx-sdk-demo
-          - sgx-aesmd-demo
-          - ubuntu-demo-openvino
-          - dlb-dpdk-demo
-          - dlb-libdlb-demo
-        builder: [buildah, docker]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: |
-                ~/.cache/go-build
-                ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - uses: actions/setup-go@v2
-      - run: make -e vendor
-      - name: Install Buildah and RunC
-        if: matrix.builder == 'buildah'
+      - name: Install envtest tool and run envtest
         run: |
-          sudo apt-get -qq -y purge podman containers-image buildah
-          . /etc/os-release
-          sudo sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x${ID^}_${VERSION_ID}/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list"
-          wget -nv https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/x${ID^}_${VERSION_ID}/Release.key -O Release.key
-          sudo apt-key add - < Release.key
-          sudo apt-get update -qq
-          sudo apt-get -qq -y install buildah
-          echo -e '[registries.search]\nregistries = ["docker.io"]\n\n' | sudo tee /etc/containers/registries.conf
-          # install runc
-          sudo curl -L https://github.com/opencontainers/runc/releases/download/${RUNC_VERSION}/runc.amd64 -o /usr/bin/runc
-          sudo chmod +x /usr/bin/runc
-      - name: Build image
-        env:
-          IMAGE_NAME: ${{ matrix.image }}
-          BUILDER_NAME: ${{ matrix.builder }}
-        run: |
-          make ${IMAGE_NAME} BUILDER=${BUILDER_NAME}
+          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+          find $HOME/go/ -name "*etcd*"
+          find $HOME/go/ -name "*kube-apiserver*"
+          curl -sSLo envtest-bins.tar.gz "https://go.kubebuilder.io/test-tools/${K8S_VERSION}/$(go env GOOS)/$(go env GOARCH)"
+          tar -zxvf envtest-bins.tar.gz -C $HOME 
+          KUBEBUILDER_ASSETS=$HOME/kubebuilder/bin/ make envtest
