@@ -30,6 +30,7 @@ import (
 
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga/v2"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dlb"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dsa"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
@@ -58,7 +59,7 @@ type devicePluginControllerAndWebhook map[string](func(ctrl.Manager, string, boo
 
 type flagList []string
 
-var supportedDevices = flagList{"dsa", "fpga", "gpu", "qat", "sgx"}
+var supportedDevices = flagList{"dsa", "dlb", "fpga", "gpu", "qat", "sgx"}
 var devices flagList
 
 func (flag *flagList) String() string {
@@ -110,6 +111,7 @@ func main() {
 	}
 
 	setupControllerAndWebhook := devicePluginControllerAndWebhook{
+		"dlb":  dlb.SetupReconciler,
 		"dsa":  dsa.SetupReconciler,
 		"gpu":  gpu.SetupReconciler,
 		"fpga": fpga.SetupReconciler,
