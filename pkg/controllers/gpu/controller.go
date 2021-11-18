@@ -390,7 +390,7 @@ func (c *controller) UpdateStatus(rawObj client.Object, ds *apps.DaemonSet, node
 }
 
 func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
-	args := make([]string, 0, 4)
+	args := make([]string, 0, 5)
 	args = append(args, "-v", strconv.Itoa(gdp.Spec.LogLevel))
 
 	if gdp.Spec.EnableMonitoring {
@@ -405,6 +405,12 @@ func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
 
 	if gdp.Spec.ResourceManager {
 		args = append(args, "-resource-manager")
+	}
+
+	if gdp.Spec.PreferredAllocationPolicy != "" {
+		args = append(args, "-allocation-policy", gdp.Spec.PreferredAllocationPolicy)
+	} else {
+		args = append(args, "-allocation-policy", "none")
 	}
 
 	return args

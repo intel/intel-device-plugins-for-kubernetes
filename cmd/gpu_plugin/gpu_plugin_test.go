@@ -18,6 +18,7 @@ import (
 	"flag"
 	"os"
 	"path"
+	"reflect"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -80,6 +81,54 @@ func TestNewDevicePlugin(t *testing.T) {
 	}
 	if newDevicePlugin("", "", cliOptions{sharedDevNum: 2, resourceManagement: true}) != nil {
 		t.Error("Unexpectedly managed to create resource management enabled plugin inside unit tests")
+	}
+}
+
+func TestGetPreferredAllocation(t *testing.T) {
+	rqt := &v1beta1.PreferredAllocationRequest{
+		ContainerRequests: []*v1beta1.ContainerPreferredAllocationRequest{
+			{
+				AvailableDeviceIDs: []string{"card0-4", "card1-1", "card2-3", "card2-4", "card2-1", "card1-0", "card1-4", "card3-4", "card1-2", "card0-1", "card2-0", "card2-2", "card1-3", "card0-2", "card3-0", "card3-3", "card0-3", "card0-0", "card3-1", "card3-2"},
+				AllocationSize:     4,
+			},
+		},
+	}
+
+	rqtErr := &v1beta1.PreferredAllocationRequest{
+		ContainerRequests: []*v1beta1.ContainerPreferredAllocationRequest{
+			{
+				AvailableDeviceIDs: []string{"card0-4", "card1-1", "card2-3", "card2-4", "card2-1"},
+				AllocationSize:     6,
+			},
+		},
+	}
+
+	plugin := newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "none"})
+	response, _ := plugin.GetPreferredAllocation(rqt)
+
+	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-4", "card1-1", "card2-3", "card2-4"}) {
+		t.Error("Unexpected return value for none preferred allocation")
+	}
+
+	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "balanced"})
+	response, _ = plugin.GetPreferredAllocation(rqt)
+
+	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-0", "card1-0", "card2-0", "card3-0"}) {
+		t.Error("Unexpected return value for balanced preferred allocation")
+	}
+
+	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "packed"})
+	response, _ = plugin.GetPreferredAllocation(rqt)
+
+	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-0", "card0-1", "card0-2", "card0-3"}) {
+		t.Error("Unexpected return value for packed preferred allocation")
+	}
+
+	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "none"})
+	response, _ = plugin.GetPreferredAllocation(rqtErr)
+
+	if response != nil {
+		t.Error("Fail to handle the input error that req.AllocationSize is greater than len(req.AvailableDeviceIDs).")
 	}
 }
 
