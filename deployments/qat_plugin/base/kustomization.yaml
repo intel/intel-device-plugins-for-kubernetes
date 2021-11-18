@@ -1,3 +1,2 @@
 resources:
   - intel-qat-plugin.yaml
-  - intel-qat-plugin-config.yaml
