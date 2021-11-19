@@ -10,7 +10,7 @@ Table of Contents
 
 Intel Device Plugins Operator is a Kubernetes custom controller whose goal is to serve the
 installation and lifecycle management of Intel device plugins for Kubernetes.
-It provides a single point of control for GPU, QAT, SGX and FPGA devices to a cluster
+It provides a single point of control for GPU, QAT, SGX, FPGA, DSA and DLB devices to a cluster
 administrators.
 
 ## Installation

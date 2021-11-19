@@ -176,7 +176,7 @@ The [DLB device plugin](cmd/dlb_plugin/README.md) supports Intel Dynamic Load Ba
 
 To simplify the deployment of the device plugins, a unified device plugins operator is implemented.
 
-Currently the operator has support for the QAT, GPU, FPGA, SGX and DSA device plugins. Each
+Currently the operator has support for the QAT, GPU, FPGA, SGX, DSA and DLB device plugins. Each
 device plugin has its own custom resource definition (CRD) and the corresponding controller that
 watches CRUD operations to those custom resources.
 
