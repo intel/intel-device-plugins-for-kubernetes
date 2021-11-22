@@ -35,8 +35,9 @@ import (
 )
 
 const (
-	ownerKey = ".metadata.controller.dsa"
-	amd64    = "amd64"
+	ownerKey         = ".metadata.controller.dsa"
+	amd64            = "amd64"
+	inicontainerName = "intel-idxd-config-initcontainer"
 )
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins,verbs=get;list;watch;create;update;patch;delete
@@ -76,33 +77,83 @@ func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client
 	return len(list.Items), nil
 }
 
-func setInitContainer(spec *v1.PodSpec, imageName string) {
+func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
+	newInitContainers := []v1.Container{}
+	for _, container := range ds.Spec.Template.Spec.InitContainers {
+		if container.Name == inicontainerName {
+			continue
+		}
+		newInitContainers = append(newInitContainers, container)
+	}
+	ds.Spec.Template.Spec.InitContainers = newInitContainers
+
+	newVolumes := []v1.Volume{}
+	for _, volume := range ds.Spec.Template.Spec.Volumes {
+		if volume.Name == "intel-dsa-config-volume" || volume.Name == "sys-devices" {
+			continue
+		}
+		newVolumes = append(newVolumes, volume)
+	}
+	ds.Spec.Template.Spec.Volumes = newVolumes
+}
+
+func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 	yes := true
-	spec.InitContainers = []v1.Container{
-		{
-			Image:           imageName,
-			ImagePullPolicy: "IfNotPresent",
-			Name:            "intel-idxd-config-initcontainer",
-			Env: []v1.EnvVar{
-				{
-					Name: "NODE_NAME",
-					ValueFrom: &v1.EnvVarSource{
-						FieldRef: &v1.ObjectFieldSelector{
-							FieldPath: "spec.nodeName",
-						},
+	ds.Spec.Template.Spec.InitContainers = append(ds.Spec.Template.Spec.InitContainers, v1.Container{
+		Image:           dp.Spec.InitImage,
+		ImagePullPolicy: "IfNotPresent",
+		Name:            inicontainerName,
+		Env: []v1.EnvVar{
+			{
+				Name: "NODE_NAME",
+				ValueFrom: &v1.EnvVarSource{
+					FieldRef: &v1.ObjectFieldSelector{
+						FieldPath: "spec.nodeName",
 					},
 				},
 			},
-			SecurityContext: &v1.SecurityContext{
-				Privileged: &yes,
+			{
+				Name:  "IDXD_DEVICE_TYPE",
+				Value: "dsa",
 			},
-			VolumeMounts: []v1.VolumeMount{
-				{
-					Name:      "sys-devices",
-					MountPath: "/sys/devices",
-				},
+		},
+		SecurityContext: &v1.SecurityContext{
+			Privileged: &yes,
+		},
+		VolumeMounts: []v1.VolumeMount{
+			{
+				Name:      "sys-devices",
+				MountPath: "/sys/devices",
 			},
-		}}
+		},
+	})
+	ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
+		Name: "sys-devices",
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: "/sys/devices",
+			},
+		},
+	})
+
+	if dp.Spec.ProvisioningConfig != "" {
+		ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
+			Name: "intel-dsa-config-volume",
+			VolumeSource: v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{Name: dp.Spec.ProvisioningConfig}},
+			},
+		})
+
+		for i, initcontainer := range ds.Spec.Template.Spec.InitContainers {
+			if initcontainer.Name == inicontainerName {
+				ds.Spec.Template.Spec.InitContainers[i].VolumeMounts = append(ds.Spec.Template.Spec.InitContainers[i].VolumeMounts, v1.VolumeMount{
+					Name:      "intel-dsa-config-volume",
+					MountPath: "/idxd-init/conf",
+				})
+			}
+		}
+	}
 }
 
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
@@ -126,40 +177,37 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
 
-	// add the optional init container
 	if devicePlugin.Spec.InitImage != "" {
-		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
-
-		daemonSet.Spec.Template.Spec.Volumes = append(daemonSet.Spec.Template.Spec.Volumes, v1.Volume{
-			Name: "sys-devices",
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
-					Path: "/sys/devices",
-				},
-			},
-		})
-
-		if devicePlugin.Spec.ProvisioningConfig != "" {
-			daemonSet.Spec.Template.Spec.Volumes = append(daemonSet.Spec.Template.Spec.Volumes, v1.Volume{
-				Name: "intel-dsa-config-volume",
-				VolumeSource: v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{Name: devicePlugin.Spec.ProvisioningConfig}},
-				},
-			})
-
-			for i, initcontainer := range daemonSet.Spec.Template.Spec.InitContainers {
-				if initcontainer.Name == "intel-idxd-config-initcontainer" {
-					daemonSet.Spec.Template.Spec.InitContainers[i].VolumeMounts = append(daemonSet.Spec.Template.Spec.InitContainers[i].VolumeMounts, v1.VolumeMount{
-						Name:      "intel-dsa-config-volume",
-						MountPath: "/idxd-init/conf",
-					})
-				}
-			}
-		}
+		addInitContainer(daemonSet, devicePlugin)
 	}
 
 	return daemonSet
+}
+
+func provisioningUpdate(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) bool {
+	update := false
+	found := false
+
+	for _, container := range ds.Spec.Template.Spec.InitContainers {
+		if container.Name == inicontainerName && container.Image != dp.Spec.InitImage {
+			found = true
+			update = true
+			break
+		}
+	}
+
+	for _, volume := range ds.Spec.Template.Spec.Volumes {
+		if volume.Name == "intel-dsa-config-volume" && volume.ConfigMap.Name != dp.Spec.ProvisioningConfig {
+			update = true
+			break
+		}
+	}
+
+	if !found && dp.Spec.InitImage != "" {
+		update = true
+	}
+
+	return update
 }
 
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
@@ -167,6 +215,14 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 
 	if ds.Spec.Template.Spec.Containers[0].Image != dp.Spec.Image {
 		ds.Spec.Template.Spec.Containers[0].Image = dp.Spec.Image
+		updated = true
+	}
+
+	if provisioningUpdate(ds, dp) {
+		removeInitContainer(ds, dp)
+		if dp.Spec.InitImage != "" {
+			addInitContainer(ds, dp)
+		}
 		updated = true
 	}
 
