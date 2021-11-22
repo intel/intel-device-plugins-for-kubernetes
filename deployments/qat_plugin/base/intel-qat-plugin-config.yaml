@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: intel-qat-plugin-config
-data:
-  DPDK_DRIVER: "vfio-pci"
-  KERNEL_VF_DRIVERS: "c6xxvf,4xxxvf"
-  MAX_NUM_DEVICES: "32"
-  VERBOSITY: "0"
