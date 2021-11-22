@@ -56,7 +56,7 @@ func (r *SgxDevicePlugin) Default() {
 	}
 
 	if len(r.Spec.InitImage) == 0 {
-		r.Spec.Image = "intel/intel-sgx-initcontainer:" + sgxMinVersion.String()
+		r.Spec.InitImage = "intel/intel-sgx-initcontainer:" + sgxMinVersion.String()
 	}
 }
 
