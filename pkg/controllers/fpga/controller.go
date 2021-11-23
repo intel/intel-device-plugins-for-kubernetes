@@ -22,13 +22,12 @@ import (
 	"strings"
 
 	apps "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/deployments"
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 	"github.com/pkg/errors"
@@ -36,7 +35,6 @@ import (
 
 const (
 	ownerKey = ".metadata.controller.fpga"
-	appLabel = "intel-fpga-plugin"
 )
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=fpgadeviceplugins,verbs=get;list;watch;create;update;patch;delete
@@ -77,136 +75,13 @@ func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client
 
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.FpgaDevicePlugin)
-	yes := true
-	directoryOrCreate := v1.HostPathDirectoryOrCreate
-	return &apps.DaemonSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    c.ns,
-			GenerateName: devicePlugin.Name + "-",
-			Labels: map[string]string{
-				"app": appLabel,
-			},
-		},
-		Spec: apps.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": appLabel,
-				},
-			},
-			Template: v1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app": appLabel,
-					},
-				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{
-						{
-							Args: getPodArgs(devicePlugin),
-							Env: []v1.EnvVar{
-								{
-									Name: "NODE_NAME",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											FieldPath: "spec.nodeName",
-										},
-									},
-								},
-							},
-							Image:           devicePlugin.Spec.Image,
-							ImagePullPolicy: "IfNotPresent",
-							Name:            appLabel,
-							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
-							},
-							TerminationMessagePath: "/tmp/termination-log",
-							VolumeMounts: []v1.VolumeMount{
-								{
-									MountPath: "/dev",
-									Name:      "devfs",
-									ReadOnly:  true,
-								},
-								{
-									MountPath: "/sys/class",
-									Name:      "sysfs",
-									ReadOnly:  true,
-								},
-								{
-									MountPath: "/var/lib/kubelet/device-plugins",
-									Name:      "kubeletsockets",
-								},
-							},
-						},
-					},
-					InitContainers: []v1.Container{
-						{
-							Image:           devicePlugin.Spec.InitImage,
-							ImagePullPolicy: "IfNotPresent",
-							Name:            "intel-fpga-initcontainer",
-							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
-							},
-							VolumeMounts: []v1.VolumeMount{
-								{
-									MountPath: "/opt/intel/fpga-sw",
-									Name:      "intel-fpga-sw",
-								},
-								{
-									MountPath: "/etc/containers/oci/hooks.d",
-									Name:      "oci-hooks-config",
-								},
-							},
-						},
-					},
-					NodeSelector: devicePlugin.Spec.NodeSelector,
-					Volumes: []v1.Volume{
-						{
-							Name: "devfs",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev",
-								},
-							},
-						},
-						{
-							Name: "sysfs",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/sys/class",
-								},
-							},
-						},
-						{
-							Name: "kubeletsockets",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-						{
-							Name: "intel-fpga-sw",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/opt/intel/fpga-sw",
-									Type: &directoryOrCreate,
-								},
-							},
-						},
-						{
-							Name: "oci-hooks-config",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/etc/containers/oci/hooks.d",
-									Type: &directoryOrCreate,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+
+	daemonSet := deployments.FPGAPluginDaemonSet()
+	daemonSet.ObjectMeta.Namespace = c.ns
+	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
+	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
+
+	return daemonSet
 }
 
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
