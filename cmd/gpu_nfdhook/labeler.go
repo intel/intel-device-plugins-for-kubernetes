@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2021 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -171,33 +171,70 @@ func (l *labeler) createCapabilityLabels(cardNum string, numTiles uint64) {
 	}
 	defer file.Close()
 
-	// define strings to search from the file, and the actions to take in order to create labels from those strings (as funcs)
+	gen := ""
+	media := ""
+	graphics := ""
+	// define string prefixes to search from the file, and the actions to take in order to create labels from those strings (as funcs)
 	searchStringActionMap := map[string]func(string){
-		"platform: ": func(platformName string) {
+		"platform:": func(platformName string) {
 			l.labels.addNumericLabel(labelNamespace+"platform_"+platformName+".count", 1)
 			l.labels[labelNamespace+"platform_"+platformName+".tiles"] = strconv.FormatInt(int64(numTiles), 10)
 			l.labels[labelNamespace+"platform_"+platformName+".present"] = "true"
 		},
-		"gen: ": func(genName string) {
-			l.labels[labelNamespace+"platform_gen"] = genName
+		// there's also display block version, but that's not relevant
+		"media version:": func(version string) {
+			l.labels[labelNamespace+"media_version"] = version
+			media = version
+		},
+		"graphics version:": func(version string) {
+			l.labels[labelNamespace+"graphics_version"] = version
+			graphics = version
+		},
+		"gen:": func(version string) {
+			l.labels[labelNamespace+"platform_gen"] = version
+			gen = version
 		},
 	}
 
 	// Finally, read the file, and try to find the matches. Perform actions and reduce the search map size as we proceed. Return at 0 size.
 	scanner := bufio.NewScanner(file)
+scanning:
 	for scanner.Scan() {
-		for searchString, action := range searchStringActionMap {
-			var stringValue string
-			n, _ := fmt.Sscanf(scanner.Text(), searchString+"%s", &stringValue)
-			if n > 0 {
-				action(stringValue)
-				delete(searchStringActionMap, searchString)
-				if len(searchStringActionMap) == 0 {
-					return
-				}
-				break
+		line := scanner.Text()
+		for prefix, action := range searchStringActionMap {
+			if !strings.HasPrefix(line, prefix) {
+				continue
 			}
+			fields := strings.Split(line, ": ")
+			if len(fields) == 2 {
+				action(fields[1])
+			} else {
+				klog.Warningf("invalid '%s' line format: '%s'", file.Name(), line)
+			}
+			delete(searchStringActionMap, prefix)
+			if len(searchStringActionMap) == 0 {
+				break scanning
+			}
+			break
 		}
+	}
+	if gen == "" {
+		// TODO: drop gen label before engine types
+		// start to have diverging major gen values
+		if graphics != "" {
+			gen = graphics
+		} else if media != "" {
+			gen = media
+		}
+		if gen != "" {
+			// truncate to major value
+			gen = strings.SplitN(gen, ".", 2)[0]
+			l.labels[labelNamespace+"platform_gen"] = gen
+		}
+	} else if media == "" && graphics == "" {
+		// 5.14 or older kernels need this
+		l.labels[labelNamespace+"media_version"] = gen
+		l.labels[labelNamespace+"graphics_version"] = gen
 	}
 }
 
