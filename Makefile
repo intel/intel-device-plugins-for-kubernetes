@@ -29,6 +29,8 @@ OLM_MANIFESTS = deployments/operator/manifests
 
 WEBHOOK_IMAGE_FILE = intel-fpga-admissionwebhook-devel.tgz
 
+TESTDATA_DIR = pkg/topology/testdata
+
 pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e | grep -v envtest)
 cmds = $(shell ls --ignore=internal cmd)
 e2e_tmp_dir := $(shell mktemp -u -t e2e-tests.XXXXXXXXXX)
@@ -45,7 +47,13 @@ go-mod-tidy:
 	$(GO) mod download
 	@report=`$(GO) mod tidy -v 2>&1` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
 
-test:
+update-fixture:
+	@scripts/ttar -C $(TESTDATA_DIR) -c -f $(TESTDATA_DIR)/sys.ttar sys/
+
+fixture:
+	@scripts/ttar --recursive-unlink -C $(TESTDATA_DIR) -x -f $(TESTDATA_DIR)/sys.ttar
+
+test: fixture
 ifndef WHAT
 	@$(GO) test -tags $(BUILDTAGS) -race -coverprofile=coverage.txt -covermode=atomic $(pkgs)
 else
@@ -57,7 +65,7 @@ else
             exit $$rc
 endif
 
-test-with-kind:
+test-with-kind: fixture
 	@build/docker/build-image.sh intel/intel-fpga-admissionwebhook buildah
 	@$(PODMAN) tag localhost/intel/intel-fpga-admissionwebhook:devel docker.io/intel/intel-fpga-admissionwebhook:devel
 	@mkdir -p $(e2e_tmp_dir)
@@ -173,7 +181,7 @@ check-github-actions:
 	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
 
-.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest
+.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture
 
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
