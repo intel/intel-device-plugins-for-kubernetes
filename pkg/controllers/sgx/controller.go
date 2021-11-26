@@ -41,6 +41,7 @@ const (
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=sgxdeviceplugins,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=sgxdeviceplugins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=sgxdeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for SgxDevicePlugin objects.
 func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error {

@@ -39,6 +39,7 @@ const (
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for QatDevicePlugin objects.
 func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error {

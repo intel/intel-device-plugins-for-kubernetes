@@ -66,6 +66,12 @@ rules:
 - apiGroups:
   - deviceplugin.intel.com
   resources:
+  - dlbdeviceplugins/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
   - dlbdeviceplugins/status
   verbs:
   - get
@@ -83,6 +89,12 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - dsadeviceplugins/finalizers
+  verbs:
+  - update
 - apiGroups:
   - deviceplugin.intel.com
   resources:
@@ -106,6 +118,12 @@ rules:
 - apiGroups:
   - deviceplugin.intel.com
   resources:
+  - fpgadeviceplugins/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
   - fpgadeviceplugins/status
   verbs:
   - get
@@ -123,6 +141,12 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - gpudeviceplugins/finalizers
+  verbs:
+  - update
 - apiGroups:
   - deviceplugin.intel.com
   resources:
@@ -146,6 +170,12 @@ rules:
 - apiGroups:
   - deviceplugin.intel.com
   resources:
+  - qatdeviceplugins/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
   - qatdeviceplugins/status
   verbs:
   - get
@@ -163,6 +193,12 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
+  - sgxdeviceplugins/finalizers
+  verbs:
+  - update
 - apiGroups:
   - deviceplugin.intel.com
   resources:

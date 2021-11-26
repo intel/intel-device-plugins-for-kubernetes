@@ -41,6 +41,7 @@ const (
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for DsaDevicePlugin objects.
 func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error {
