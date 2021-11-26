@@ -125,7 +125,7 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 ```
 
 **Note:** The default `nfd-worker.conf` assumes that the in-tree driver is used and enabled (`CONFIG_X86_SGX=y`). If
-the SGX DCAP out-of-tree driver is used, the `kConfig` match in `nfd-worker.conf` must be removed.
+the SGX DCAP out-of-tree driver is used, the `kernel.config` match expression in `nfd-worker.conf` must be removed.
 
 #### Deploy cert-manager
 

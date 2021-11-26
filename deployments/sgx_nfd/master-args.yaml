@@ -1,0 +1,3 @@
+- op: add
+  path: /spec/template/spec/containers/0/args
+  value: ["--resource-labels=sgx.intel.com/epc", "--extra-label-ns=sgx.intel.com"]
