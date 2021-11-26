@@ -10,7 +10,7 @@ pipeline {
     REG="cloud-native-image-registry.westus.cloudapp.azure.com/"
     RUNC_VERSION="v1.0.2"
     CRIO_VERSION="v1.20.0"
-    K8S_VERSION="1.20.2"
+    K8S_VERSION="1.22.1"
     GOLANGCI_LINT_VERSION="v1.42.0"
     GO_VERSION="1.17.2"
     GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
