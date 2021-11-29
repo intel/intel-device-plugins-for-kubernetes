@@ -12,37 +12,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM debian:unstable AS builder
+FROM debian:unstable-slim AS builder
 
-RUN apt-get update && apt-get install -y \
-            build-essential autoconf automake autotools-dev libtool \
-            pkgconf asciidoc xmlto uuid-dev libjson-c-dev libkmod-dev \
-            libudev-dev libkeyutils-dev curl
+RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
+        /etc/apt/sources.list.d/deb-src.list && \
+    apt update && apt install -y --no-install-recommends \
+        gcc make patch autoconf automake libtool pkg-config \
+        libjson-c-dev uuid-dev curl ca-certificates && \
+    mkdir -p /usr/local/share/package-sources && \
+    cd /usr/local/share/package-sources && \
+    apt --download-only source uuid libjson-c5 && cd /
 
 ARG ACCEL_CONFIG_VERSION="3.4.2"
 ARG ACCEL_CONFIG_DOWNLOAD_URL="https://github.com/intel/idxd-config/archive/accel-config-v$ACCEL_CONFIG_VERSION.tar.gz"
 ARG ACCEL_CONFIG_SHA256="9cb2151e86f83949a28f06a885be3bf3100906f9e3af667fa01b56e7666a3c1c"
 
-RUN curl -fsSL "$ACCEL_CONFIG_DOWNLOAD_URL" -o accel-config.tar.gz \
-    && echo "$ACCEL_CONFIG_SHA256 accel-config.tar.gz" | sha256sum -c - \
-    && tar -xzf accel-config.tar.gz \
-    && rm accel-config.tar.gz
+RUN curl -fsSL "$ACCEL_CONFIG_DOWNLOAD_URL" -o accel-config.tar.gz && \
+    echo "$ACCEL_CONFIG_SHA256 accel-config.tar.gz" | sha256sum -c - && \
+    tar -xzf accel-config.tar.gz
+
+ADD demo/idxd-config-kmod.patch /
 
 RUN cd idxd-config-accel-config-v$ACCEL_CONFIG_VERSION && \
-    mkdir m4 && \
-    ./autogen.sh && \
-    ./configure CFLAGS='-g -O2' --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib64 --disable-test --disable-docs && \
+    patch -p1 < ../idxd-config-kmod.patch && \
+    ./git-version-gen && \
+    autoreconf -i && \
+    ./configure -q --libdir=/usr/lib64 --disable-test --disable-docs && \
     make && \
     make install
 
 FROM debian:unstable-slim
 
-RUN apt-get update && apt-get install -y uuid libjson-c5 kmod udev jq
+RUN apt update && apt install -y uuid libjson-c5 jq
 
 COPY --from=builder /usr/lib64/libaccel-config.so.1.0.0 /lib/x86_64-linux-gnu/
 RUN ldconfig
 
 COPY --from=builder /usr/bin/accel-config /usr/bin/
+
+COPY --from=builder /usr/local/share/package-sources/ \
+    /usr/local/share/package-sources/
+COPY --from=builder /accel-config.tar.gz /usr/local/share/package-sources/
+COPY --from=builder /idxd-config-kmod.patch /usr/local/share/package-sources/
 
 ADD demo/idxd-init.sh /idxd-init/
 ADD demo/dsa.conf /idxd-init/
