@@ -31,6 +31,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
+	dlbctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dlb"
 	dsactr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dsa"
 	fpgactr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	gpuctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
@@ -90,6 +91,8 @@ var _ = BeforeSuite(func() {
 	err = fpgactr.SetupReconciler(k8sManager, metav1.NamespaceSystem, !withWebhook)
 	Expect(err).ToNot(HaveOccurred())
 	err = dsactr.SetupReconciler(k8sManager, metav1.NamespaceSystem, !withWebhook)
+	Expect(err).ToNot(HaveOccurred())
+	err = dlbctr.SetupReconciler(k8sManager, metav1.NamespaceSystem, !withWebhook)
 	Expect(err).ToNot(HaveOccurred())
 
 	go func() {
