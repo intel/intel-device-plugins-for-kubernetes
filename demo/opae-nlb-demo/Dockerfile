@@ -26,13 +26,21 @@ RUN cd /usr/src/opae/opae-sdk-${OPAE_RELEASE} && \
     make -j xfpga nlb0 nlb3
 
 # Copy required nlb* utils and their dependencies to the final image
+
 FROM debian:unstable-slim
+
 COPY --from=builder /usr/src/opae/opae-sdk-*/build/bin/nlb* /usr/local/bin/
 COPY --from=builder /usr/src/opae/opae-sdk-*/build/lib /usr/local/lib/
 RUN rm -rf /usr/local/lib/python3
 RUN ldconfig
 
-RUN apt-get update && apt-get install -y libjson-c4
+RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
+        /etc/apt/sources.list.d/deb-src.list && \
+    apt update && apt install -y libjson-c4 && \
+    mkdir -p /usr/local/share/package-sources && \
+    cd /usr/local/share/package-sources && \
+    apt --download-only source libjson-c4 && cd / && \
+    rm -v /etc/apt/sources.list.d/deb-src.list && apt clean
 
 COPY test_fpga.sh /usr/local/bin/
 ENTRYPOINT ["/usr/local/bin/test_fpga.sh"]
