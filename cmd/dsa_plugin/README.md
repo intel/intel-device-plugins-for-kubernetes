@@ -56,7 +56,7 @@ There's a sample [DSA initcontainer](https://github.com/intel/intel-device-plugi
 $ kubectl apply -k deployments/dsa_plugin/overlays/dsa_initcontainer/
 ```
 
-The provisioning [script](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/dsa-init.sh) and [template](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/demo/dsa.conf) are available for customization.
+The provisioning [script](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/idxd-init.sh) and [template](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/demo/dsa.conf) are available for customization.
 
 ### Deploy with initcontainer and provisioning config in the ConfigMap
 

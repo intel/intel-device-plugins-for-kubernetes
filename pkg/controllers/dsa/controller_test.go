@@ -177,7 +177,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 			})
 
 			for i, initcontainer := range daemonSet.Spec.Template.Spec.InitContainers {
-				if initcontainer.Name == "intel-idxd-initcontainer" {
+				if initcontainer.Name == "intel-idxd-config-initcontainer" {
 					daemonSet.Spec.Template.Spec.InitContainers[i].VolumeMounts = append(daemonSet.Spec.Template.Spec.InitContainers[i].VolumeMounts, v1.VolumeMount{
 						Name:      "intel-dsa-config-volume",
 						MountPath: "/idxd-init/conf",
