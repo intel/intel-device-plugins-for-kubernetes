@@ -85,7 +85,7 @@ jobs:
           - intel-sgx-plugin
           - intel-sgx-initcontainer
           - intel-dsa-plugin
-          - intel-idxd-initcontainer
+          - intel-idxd-config-initcontainer
           - intel-dlb-plugin
 
           # Demo images

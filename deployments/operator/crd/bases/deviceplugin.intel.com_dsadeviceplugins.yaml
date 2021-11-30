@@ -53,7 +53,8 @@ spec:
             properties:
               InitImage:
                 description: InitImage is an initcontainer image to configure and
-                  enable DSA devices and workqueues with accel-config utility
+                  enable DSA devices and workqueues with idxd-config (accel-config)
+                  utility
                 type: string
               image:
                 description: Image is a container image with DSA device plugin executable.
@@ -69,8 +70,8 @@ spec:
                   plugin pods to nodes with particular labels.
                 type: object
               provisioningConfig:
-                description: ProvisioningConfig is a ConfigMap used to pass the configuration
-                  into DSA initcontainer.
+                description: ProvisioningConfig is a ConfigMap used to pass the DSA
+                  devices and workqueues configuration into idxd-config initcontainer.
                 type: string
               sharedDevNum:
                 description: SharedDevNum is a number of containers that can share

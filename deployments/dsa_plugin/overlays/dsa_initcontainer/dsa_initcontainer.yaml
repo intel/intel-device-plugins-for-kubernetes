@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       initContainers:
-      - name: intel-dsa-initcontainer
+      - name: intel-idxd-config-initcontainer
         env:
           - name: NODE_NAME
             valueFrom:
