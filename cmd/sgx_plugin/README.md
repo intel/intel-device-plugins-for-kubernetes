@@ -44,8 +44,8 @@ The SGX plugin can take a number of command line arguments, summarised in the fo
 
 | Flag | Argument | Meaning |
 |:---- |:-------- |:------- |
-| -enclave-limit | int | the number of containers per node allowed to use `/dev/sgx/enclave` (default: `20`) |
-| -provision-limit | int | the number of containers per node allowed to use `/dev/sgx/provision` (default: `20`) |
+| -enclave-limit | int | the number of containers per worker node allowed to use `/dev/sgx_enclave` device node (default: `20`) |
+| -provision-limit | int | the number of containers per worker node allowed to use `/dev/sgx_provision` device node (default: `20`) |
 
 The plugin also accepts a number of other arguments related to logging. Please use the `-h` option to see
 the complete list of logging related options.
