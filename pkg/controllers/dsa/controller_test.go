@@ -156,35 +156,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 
 	// add the optional init container
 	if devicePlugin.Spec.InitImage != "" {
-		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
-
-		daemonSet.Spec.Template.Spec.Volumes = append(daemonSet.Spec.Template.Spec.Volumes, v1.Volume{
-			Name: "sys-devices",
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
-					Path: "/sys/devices",
-				},
-			},
-		})
-
-		if devicePlugin.Spec.ProvisioningConfig != "" {
-			daemonSet.Spec.Template.Spec.Volumes = append(daemonSet.Spec.Template.Spec.Volumes, v1.Volume{
-				Name: "intel-dsa-config-volume",
-				VolumeSource: v1.VolumeSource{
-					ConfigMap: &v1.ConfigMapVolumeSource{
-						LocalObjectReference: v1.LocalObjectReference{Name: devicePlugin.Spec.ProvisioningConfig}},
-				},
-			})
-
-			for i, initcontainer := range daemonSet.Spec.Template.Spec.InitContainers {
-				if initcontainer.Name == "intel-idxd-config-initcontainer" {
-					daemonSet.Spec.Template.Spec.InitContainers[i].VolumeMounts = append(daemonSet.Spec.Template.Spec.InitContainers[i].VolumeMounts, v1.VolumeMount{
-						Name:      "intel-dsa-config-volume",
-						MountPath: "/idxd-init/conf",
-					})
-				}
-			}
-		}
+		addInitContainer(&daemonSet, devicePlugin)
 	}
 
 	return &daemonSet
