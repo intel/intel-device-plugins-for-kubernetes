@@ -39,3 +39,5 @@ spec:
       - name: devfs
         hostPath:
           path: /dev
+      nodeSelector:
+        kubernetes.io/arch: amd64

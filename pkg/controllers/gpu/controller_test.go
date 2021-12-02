@@ -35,18 +35,6 @@ const appLabel = "intel-gpu-plugin"
 func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.GpuDevicePlugin)
 
-	var nodeSelector map[string]string
-	dpNodeSelectorSize := len(devicePlugin.Spec.NodeSelector)
-	if dpNodeSelectorSize > 0 {
-		nodeSelector = make(map[string]string, dpNodeSelectorSize+1)
-		for k, v := range devicePlugin.Spec.NodeSelector {
-			nodeSelector[k] = v
-		}
-		nodeSelector["kubernetes.io/arch"] = "amd64"
-	} else {
-		nodeSelector = map[string]string{"kubernetes.io/arch": "amd64"}
-	}
-
 	yes := true
 	daemonSet := apps.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
@@ -110,7 +98,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							},
 						},
 					},
-					NodeSelector: nodeSelector,
+					NodeSelector: map[string]string{"kubernetes.io/arch": "amd64"},
 					Volumes: []v1.Volume{
 						{
 							Name: "devfs",

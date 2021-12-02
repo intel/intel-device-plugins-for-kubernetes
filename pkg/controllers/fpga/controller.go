@@ -33,9 +33,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	ownerKey = ".metadata.controller.fpga"
-)
+const ownerKey = ".metadata.controller.fpga"
+
+var defaultNodeSelector = deployments.FPGAPluginDaemonSet().Spec.Template.Spec.NodeSelector
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=fpgadeviceplugins,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=fpgadeviceplugins/status,verbs=get;update;patch
@@ -78,6 +78,9 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.FpgaDevicePlugin)
 
 	daemonSet := deployments.FPGAPluginDaemonSet()
+	if len(devicePlugin.Spec.NodeSelector) > 0 {
+		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
+	}
 	daemonSet.ObjectMeta.Namespace = c.ns
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
@@ -98,8 +101,13 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		updated = true
 	}
 
-	if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
-		ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector
+	if len(dp.Spec.NodeSelector) > 0 {
+		if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
+			ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector
+			updated = true
+		}
+	} else if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, defaultNodeSelector) {
+		ds.Spec.Template.Spec.NodeSelector = defaultNodeSelector
 		updated = true
 	}
 

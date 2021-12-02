@@ -36,9 +36,10 @@ import (
 
 const (
 	ownerKey         = ".metadata.controller.dsa"
-	amd64            = "amd64"
 	inicontainerName = "intel-idxd-config-initcontainer"
 )
+
+var defaultNodeSelector = deployments.DSAPluginDaemonSet().Spec.Template.Spec.NodeSelector
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins/status,verbs=get;update;patch
@@ -159,20 +160,10 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.DsaDevicePlugin)
 
-	var nodeSelector map[string]string
-	dpNodeSelectorSize := len(devicePlugin.Spec.NodeSelector)
-	if dpNodeSelectorSize > 0 {
-		nodeSelector = make(map[string]string, dpNodeSelectorSize+1)
-		for k, v := range devicePlugin.Spec.NodeSelector {
-			nodeSelector[k] = v
-		}
-		nodeSelector["kubernetes.io/arch"] = amd64
-	} else {
-		nodeSelector = map[string]string{"kubernetes.io/arch": amd64}
-	}
-
 	daemonSet := deployments.DSAPluginDaemonSet()
-	daemonSet.Spec.Template.Spec.NodeSelector = nodeSelector
+	if len(devicePlugin.Spec.NodeSelector) > 0 {
+		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
+	}
 	daemonSet.ObjectMeta.Namespace = c.ns
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
@@ -226,13 +217,13 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		updated = true
 	}
 
-	if dp.Spec.NodeSelector == nil {
-		dp.Spec.NodeSelector = map[string]string{"kubernetes.io/arch": amd64}
-	} else {
-		dp.Spec.NodeSelector["kubernetes.io/arch"] = "amd64"
-	}
-	if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
-		ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector
+	if len(dp.Spec.NodeSelector) > 0 {
+		if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
+			ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector
+			updated = true
+		}
+	} else if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, defaultNodeSelector) {
+		ds.Spec.Template.Spec.NodeSelector = defaultNodeSelector
 		updated = true
 	}
 

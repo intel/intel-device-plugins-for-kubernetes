@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2021 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ import (
 )
 
 const ownerKey = ".metadata.controller.dlb"
+
+var defaultNodeSelector map[string]string = deployments.DLBPluginDaemonSet().Spec.Template.Spec.NodeSelector
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dlbdeviceplugins,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dlbdeviceplugins/status,verbs=get;update;patch
@@ -76,6 +78,9 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.DlbDevicePlugin)
 
 	daemonSet := deployments.DLBPluginDaemonSet()
+	if len(devicePlugin.Spec.NodeSelector) > 0 {
+		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
+	}
 	daemonSet.ObjectMeta.Namespace = c.ns
 
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
@@ -92,8 +97,13 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		updated = true
 	}
 
-	if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
-		ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector
+	if len(dp.Spec.NodeSelector) > 0 {
+		if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
+			ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector
+			updated = true
+		}
+	} else if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, defaultNodeSelector) {
+		ds.Spec.Template.Spec.NodeSelector = defaultNodeSelector
 		updated = true
 	}
 
