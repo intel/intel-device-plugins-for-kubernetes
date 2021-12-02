@@ -89,7 +89,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							},
 						},
 					},
-					NodeSelector: devicePlugin.Spec.NodeSelector,
+					NodeSelector: map[string]string{"kubernetes.io/arch": "amd64"},
 					Volumes: []v1.Volume{
 						{
 							Name: "devdir",

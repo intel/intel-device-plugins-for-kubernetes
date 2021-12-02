@@ -66,3 +66,5 @@ spec:
         hostPath:
           path: /etc/containers/oci/hooks.d
           type: DirectoryOrCreate
+      nodeSelector:
+        kubernetes.io/arch: amd64

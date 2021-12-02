@@ -47,3 +47,5 @@ spec:
         hostPath:
           path: /dev/sgx_provision
           type: CharDevice
+      nodeSelector:
+        kubernetes.io/arch: amd64
