@@ -33,11 +33,6 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
-        securityContext:
-          runAsNonRoot: true
-          runAsUser: 65532
-          runAsGroup: 65532
-          readOnlyRootFilesystem: true
         env:
           - name: DEVICEPLUGIN_NAMESPACE
             valueFrom:

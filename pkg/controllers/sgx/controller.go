@@ -95,18 +95,14 @@ func addVolumeIfMissing(spec *v1.PodSpec, name, path string, hpType v1.HostPathT
 }
 
 func setInitContainer(spec *v1.PodSpec, imageName string) {
-	yes := true
 	spec.InitContainers = []v1.Container{
 		{
 			Image:           imageName,
 			ImagePullPolicy: "IfNotPresent",
 			Name:            "intel-sgx-initcontainer",
-			SecurityContext: &v1.SecurityContext{
-				ReadOnlyRootFilesystem: &yes,
-			},
 			VolumeMounts: []v1.VolumeMount{
 				{
-					MountPath: "/etc/kubernetes/node-feature-discovery/source.d/",
+					MountPath: "/etc/kubernetes/node-feature-discovery/source.d/:z",
 					Name:      "nfd-source-hooks",
 				},
 			},

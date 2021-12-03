@@ -17,6 +17,7 @@ spec:
       - name: intel-sgx-plugin
         image: intel/intel-sgx-plugin:devel
         securityContext:
+          privileged: true
           readOnlyRootFilesystem: true
         imagePullPolicy: IfNotPresent
         volumeMounts:
