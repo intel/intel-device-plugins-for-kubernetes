@@ -145,14 +145,14 @@ ifeq ($(TAG),devel)
 	@$(BUILDER) pull clearlinux:latest
 endif
 
-images = $(shell ls build/docker/*.Dockerfile | sed 's/.*\/\(.\+\)\.Dockerfile/\1/')
+images = $(shell basename -s .Dockerfile -a build/docker/*.Dockerfile)
 
 $(images):
 	@build/docker/build-image.sh $(REG)$@ $(BUILDER) $(EXTRA_BUILD_ARGS)
 
 images: $(images)
 
-demos = $(shell cd demo/ && ls -d */ | sed 's/\(.\+\)\//\1/g')
+demos = $(shell basename -a demo/*/)
 
 $(demos):
 	@cd demo/ && ./build-image.sh $(REG)$@ $(BUILDER)
