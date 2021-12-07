@@ -21,7 +21,7 @@ RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
         libjson-c-dev uuid-dev curl ca-certificates && \
     mkdir -p /usr/local/share/package-sources && \
     cd /usr/local/share/package-sources && \
-    apt --download-only source uuid libjson-c5 && cd /
+    apt --download-only source uuid libjson-c5 jq && cd /
 
 ARG ACCEL_CONFIG_VERSION="3.4.3"
 ARG ACCEL_CONFIG_DOWNLOAD_URL="https://github.com/intel/idxd-config/archive/accel-config-v$ACCEL_CONFIG_VERSION.tar.gz"
