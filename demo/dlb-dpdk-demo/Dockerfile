@@ -10,7 +10,7 @@ RUN pip install ninja
 ARG DLB_TARBALL="dlblinuxsrcrelease7.4.020211006.txz"
 ARG DLB_TARBALL_SHA256="715c34314d77dce9fe0cd61d5c0f269016971e8d9aa680bc0e4a32d4284aae09"
 
-RUN wget https://01.org/sites/default/files/downloads/$DLB_TARBALL \
+RUN wget https://downloadmirror.intel.com/690271/$DLB_TARBALL \
     && echo "$DLB_TARBALL_SHA256 $DLB_TARBALL" | sha256sum -c - \
     && tar -Jxf $DLB_TARBALL --no-same-owner && rm $DLB_TARBALL
 
