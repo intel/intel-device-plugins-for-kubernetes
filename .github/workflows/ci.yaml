@@ -9,8 +9,8 @@ on:
       - main
       - 'release-*'
 env:
-  RUNC_VERSION: v1.0.2
-  GO_VERSION: 1.17.2
+  RUNC_VERSION: v1.0.3
+  GO_VERSION: 1.17.4
   K8S_VERSION: 1.22.1
 jobs:
 
