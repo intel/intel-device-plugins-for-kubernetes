@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Dependencies listed in go.mod
+  - package-ecosystem: "gomod"
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "daily"
+    ignore:
+      - dependency-name: "k8s.io/*"
+
+  # Check updates to action versions in .github/workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      # Check for updates to GitHub Actions every weekday
+      interval: "daily"
