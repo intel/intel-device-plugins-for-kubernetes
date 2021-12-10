@@ -146,12 +146,16 @@ func DeployWebhook(f *framework.Framework, kustomizationPath string) v1.Pod {
 
 	framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", tmpDir)
 	podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
-		labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1 /* one replica */, 10*time.Second)
+		labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1 /* one replica */, 30*time.Second)
 	if err != nil {
 		framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
 		kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 		framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 	}
+
+	// Wait for the webhook to initialize
+	time.Sleep(2 * time.Second)
+
 	return podList.Items[0]
 }
 
