@@ -40,8 +40,8 @@ func init() {
 
 // Manager keeps track of patchers registered for different Kubernetes namespaces.
 type Manager struct {
-	log      logr.Logger
 	patchers map[string]*patcher
+	log      logr.Logger
 }
 
 // NewPatcherManager creates a new Manager.
