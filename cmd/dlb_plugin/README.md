@@ -19,6 +19,123 @@ Table of Contents
 
 This Intel DLB device plugin provides support for [Intel DLB](https://builders.intel.com/docs/networkbuilders/SKU-343247-001US-queue-management-and-load-balancing-on-intel-architecture.pdf) devices under Kubernetes.
 
+### DLB2 driver configuration for PFs
+You should first build and load the dlb2 driver. Get [DLB software release](https://downloadmirror.intel.com/690271/dlblinuxsrcrelease7.4.020211006.txz), build the kernel module and load the module as follows:
+```bash
+$ wget -q https://downloadmirror.intel.com/690271/dlblinuxsrcrelease7.4.020211006.txz -O- | tar -Jx
+$ cd /dlb/driver/dlb2/ && make
+$ sudo insmod dlb2.ko
+```
+
+Then, available dlb device nodes are visible in devfs.
+```bash
+$ ls -1 /dev/dlb*
+/dev/dlb0  /dev/dlb1  /dev/dlb2 ...
+```
+
+### VF configuration using a DPDK tool (but with dlb2 driver)
+If you configure SR-IOV/VF (virtual functions), continue the following configurations. This instruction uses DPDK tool to check eventdev devices, unbind a VF device, and bind dlb2 driver to a VF device.
+
+Patch dpdk sources to work with DLB:
+```bash
+$ wget -q https://fast.dpdk.org/rel/dpdk-20.11.3.tar.xz -O- | tar -Jx
+$ wget -q https://downloadmirror.intel.com/690271/dlblinuxsrcrelease7.4.020211006.txz -O- | tar -Jx
+$ cd ./dpdk-stable-20.11.3 && patch -p1 < ../dlb/dpdk/dpdk_dlb_v20.11.3_29751a4_diff.patch
+$ sed -i 's/270b,2710,2714/270b,2710,2711,2714/g' ./usertools/dpdk-devbind.py
+```
+
+List eventdev devices:
+```bash
+$ ./usertools/dpdk-devbind.py -s | grep -A10 ^Eventdev
+Eventdev devices using kernel driver
+====================================
+0000:6d:00.0 'Device 2710' drv=dlb2 unused= 
+0000:72:00.0 'Device 2710' drv=dlb2 unused= 
+...
+```
+
+Enable virtual functions:
+```bash
+$ echo 4 | sudo tee -a /sys/bus/pci/devices/0000\:6d\:00.0/sriov_numvfs
+```
+> **Note:**: If it fails saying "No such file or directory," it may be bound to vfio-pci driver. Bind the device to dlb2 driver.
+
+Check if new dlb device nodes appear:
+```bash
+$ ls -1 /dev/dlb*
+/dev/dlb0  /dev/dlb1  /dev/dlb10 /dev/dlb11 ... /dev/dlb8  /dev/dlb9
+```
+
+Check that new eventdev devices appear:
+```bash
+$ ./usertools/dpdk-devbind.py -s | grep -A14 ^Eventdev
+Eventdev devices using kernel driver
+====================================
+0000:6d:00.0 'Device 2710' drv=dlb2 unused= 
+0000:6d:00.1 'Device 2711' drv=dlb2 unused= 
+0000:6d:00.2 'Device 2711' drv=dlb2 unused= 
+0000:6d:00.3 'Device 2711' drv=dlb2 unused= 
+0000:6d:00.4 'Device 2711' drv=dlb2 unused= 
+0000:72:00.0 'Device 2710' drv=dlb2 unused= 
+...
+```
+
+Assign PF resources to VF:
+> **Note:**: The process below is only for the first vf resource among 4 resources. Repeat for other vfN_resources in /sys/bus/pci/devices/0000\:6d\:00.0/, and then bind dlb2 driver to 0000:6d:00.M that corresponds to vfN_resources.
+
+- Unbind driver from the VF device before configuring it.
+```bash
+$ sudo ./usertools/dpdk-devbind.py --unbind 0000:6d:00.1
+```
+
+- Assign PF resources to VF:
+```bash
+$ echo 2048 | sudo tee -a /sys/bus/pci/devices/0000\:6d\:00.0/vf0_resources/num_atomic_inflights &&
+  echo 2048 | sudo tee -a /sys/bus/pci/devices/0000\:6d\:00.0/vf0_resources/num_dir_credits &&
+  echo 64 | sudo tee -a /sys/bus/pci/devices/0000\:6d\:00.0/vf0_resources/num_dir_ports &&
+  echo 2048 | sudo tee -a /sys/bus/pci/devices/0000\:6d\:00.0/vf0_resources/num_hist_list_entries &&
+  echo 8192 | sudo tee -a /sys/bus/pci/devices/0000\:6d\:00.0/vf0_resources/num_ldb_credits &&
+  echo 64 | sudo tee -a /sys/bus/pci/devices/0000\:6d\:00.0/vf0_resources/num_ldb_ports &&
+  echo 32 | sudo tee -a /sys/bus/pci/devices/0000\:6d\:00.0/vf0_resources/num_ldb_queues &&
+  echo 32 | sudo tee -a /sys/bus/pci/devices/0000\:6d\:00.0/vf0_resources/num_sched_domains &&
+  echo 2 | sudo tee -a /sys/bus/pci/devices/0000\:6d\:00.0/vf0_resources/num_sn0_slots &&
+  echo 2 | sudo tee -a /sys/bus/pci/devices/0000\:6d\:00.0/vf0_resources/num_sn1_slots
+```
+
+- Bind driver back to the VF device:
+```bash
+$ sudo ./usertools/dpdk-devbind.py --bind dlb2 0000:6d:00.1
+```
+
+
+### Verification of well-configured devices:
+Run libdlb example app:
+> **Note:**: Alternative way is to use this [Dockerfile](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/dlb-libdlb-demo/Dockerfile) for running tests.
+
+```bash
+$ ls
+dlb dpdk-stable-20.11.3
+$ cd ./dlb/libdlb/ && make && sudo LD_LIBRARY_PATH=$PWD ./examples/dir_traffic -n 128 -d 1
+# For running test for /dev/dlbN, replace 1 with N.
+```
+
+Run dpdk example app:
+> **Note:**: Alternative way is to use this [Dockerfile](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/dlb-dpdk-demo/Dockerfile) for patching and building DPDK and running tests.
+
+- Install build dependencies and build dpdk:
+```bash
+$ sudo apt-get update && sudo apt-get install build-essential meson python3-pyelftools libnuma-dev python3-pip && sudo pip install ninja
+# This configuration is based on Ubuntu/Debian distribution. For other distributions that do not use apt, install the dependencies using another way.
+$ ls
+dlb dpdk-stable-20.11.3
+$ cd ./dpdk-stable-20.11.3 && meson setup --prefix $(pwd)/installdir builddir && ninja -C builddir install
+```
+
+- Run eventdev test
+```bash
+sudo ./builddir/app/dpdk-test-eventdev --no-huge --vdev='dlb2_event,dev_id=1' -- --test=order_queue --nb_flows 64 --nb_pkts 512 --plcores 1 --wlcores 2-7
+# For running test for /dev/dlbN, replace 1 with N.
+```
 
 ## Installation
 
