@@ -141,6 +141,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	if devicePlugin.Spec.InitImage != "" {
 		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
 	}
+
 	return &daemonSet
 }
 

@@ -88,8 +88,10 @@ func (c *controller) NewServiceAccount(rawObj client.Object) *v1.ServiceAccount 
 				Namespace: c.ns,
 			},
 		}
+
 		return &sa
 	}
+
 	return nil
 }
 
@@ -114,8 +116,10 @@ func (c *controller) NewClusterRoleBinding(rawObj client.Object) *rbacv1.Cluster
 				APIGroup: "rbac.authorization.k8s.io",
 			},
 		}
+
 		return &rb
 	}
+
 	return nil
 }
 
@@ -126,6 +130,7 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	if len(devicePlugin.Spec.NodeSelector) > 0 {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
+
 	daemonSet.ObjectMeta.Namespace = c.ns
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
@@ -200,20 +205,25 @@ func setInitContainer(spec *v1.PodSpec, imageName string) {
 
 func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
 	newVolumes := []v1.Volume{}
+
 	for _, volume := range volumes {
 		if volume.Name != name {
 			newVolumes = append(newVolumes, volume)
 		}
 	}
+
 	return newVolumes
 }
+
 func removeVolumeMount(volumeMounts []v1.VolumeMount, name string) []v1.VolumeMount {
 	newVolumeMounts := []v1.VolumeMount{}
+
 	for _, volume := range volumeMounts {
 		if volume.Name != name {
 			newVolumeMounts = append(newVolumeMounts, volume)
 		}
 	}
+
 	return newVolumeMounts
 }
 
@@ -256,6 +266,7 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 	if dp.Spec.ResourceManager {
 		newServiceAccountName = serviceAccountName
 	}
+
 	if ds.Spec.Template.Spec.ServiceAccountName != newServiceAccountName {
 		ds.Spec.Template.Spec.ServiceAccountName = newServiceAccountName
 		if dp.Spec.ResourceManager {
@@ -265,6 +276,7 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "podresources")
 			ds.Spec.Template.Spec.Containers[0].VolumeMounts = removeVolumeMount(ds.Spec.Template.Spec.Containers[0].VolumeMounts, "podresources")
 		}
+
 		updated = true
 	}
 

@@ -82,9 +82,11 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	daemonSet := deployments.QATPluginDaemonSet()
 	daemonSet.Annotations = annotations
 	daemonSet.Spec.Template.Annotations = annotations
+
 	if len(devicePlugin.Spec.NodeSelector) > 0 {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
+
 	daemonSet.ObjectMeta.Namespace = c.ns
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
@@ -172,6 +174,7 @@ func getPodArgs(qdp *devicepluginv1.QatDevicePlugin) []string {
 		for i, v := range qdp.Spec.KernelVfDrivers {
 			drvs[i] = string(v)
 		}
+
 		args = append(args, "-kernel-vf-drivers", strings.Join(drvs, ","))
 	} else {
 		args = append(args, "-kernel-vf-drivers", "dh895xccvf,c6xxvf,c3xxxvf,d15xxvf")

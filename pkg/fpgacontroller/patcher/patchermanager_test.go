@@ -51,6 +51,7 @@ func TestGetPatcher(t *testing.T) {
 			pm:   &Manager{patchers: map[string]*patcher{namespace: newPatcher(log)}},
 		},
 	}
+
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
 			p := tt.pm.GetPatcher(namespace)
@@ -102,10 +103,12 @@ func TestMutate(t *testing.T) {
 			},
 		},
 	}
+
 	podRaw, err := json.Marshal(pod)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	brokenPodRaw, err := json.Marshal(brokenPod)
 	if err != nil {
 		t.Fatal(err)

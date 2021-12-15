@@ -46,13 +46,16 @@ func NewPort(fname string) (Port, error) {
 	if strings.IndexByte(fname, byte('/')) < 0 {
 		fname = filepath.Join("/dev", fname)
 	}
+
 	devName := cleanBasename(fname)
+
 	switch {
 	case strings.HasPrefix(devName, dflFpgaPortPrefix):
 		return NewDflPort(fname)
 	case strings.HasPrefix(devName, intelFpgaPortPrefix):
 		return NewIntelFpgaPort(fname)
 	}
+
 	return nil, errors.Errorf("unknown type of FPGA port %s", fname)
 }
 
@@ -61,13 +64,16 @@ func NewFME(fname string) (FME, error) {
 	if strings.IndexByte(fname, byte('/')) < 0 {
 		fname = filepath.Join("/dev", fname)
 	}
+
 	devName := cleanBasename(fname)
+
 	switch {
 	case strings.HasPrefix(devName, dflFpgaFmePrefix):
 		return NewDflFME(fname)
 	case strings.HasPrefix(devName, intelFpgaFmePrefix):
 		return NewIntelFpgaFME(fname)
 	}
+
 	return nil, errors.Errorf("unknown type of FPGA FME %s", fname)
 }
 
@@ -77,8 +83,10 @@ func ListFpgaDevices() (FMEs, Ports []string) {
 	if err != nil {
 		return
 	}
+
 	for _, file := range files {
 		fname := file.Name()
+
 		switch {
 		case IsFpgaFME(fname):
 			FMEs = append(FMEs, fname)
@@ -86,6 +94,7 @@ func ListFpgaDevices() (FMEs, Ports []string) {
 			Ports = append(Ports, fname)
 		}
 	}
+
 	return
 }
 
@@ -94,21 +103,27 @@ func genericPortPR(f Port, bs bitstream.File, dryRun bool) error {
 	if err != nil {
 		return err
 	}
+
 	ifID := fme.GetInterfaceUUID()
 	bsID := bs.InterfaceUUID()
+
 	if ifID != bsID {
 		return errors.Errorf("FME interface UUID %q is not compatible with bitstream UUID %q ", ifID, bsID)
 	}
+
 	pNum, err := f.GetPortID()
 	if err != nil {
 		return err
 	}
+
 	rawBistream, err := bs.RawBitstreamData()
 	if err != nil {
 		return err
 	}
+
 	if dryRun {
 		return nil
 	}
+
 	return fme.PortPR(pNum, rawBistream)
 }

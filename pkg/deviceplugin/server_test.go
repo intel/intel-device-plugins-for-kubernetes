@@ -88,11 +88,13 @@ func (k *kubeletStub) Register(ctx context.Context, r *pluginapi.RegisterRequest
 	k.Lock()
 	defer k.Unlock()
 	k.pluginEndpoint = r.Endpoint
+
 	return &pluginapi.Empty{}, nil
 }
 
 func (k *kubeletStub) start() error {
 	_ = os.Remove(k.socket)
+
 	s, err := net.Listen("unix", k.socket)
 	if err != nil {
 		return errors.Wrap(err, "Can't listen at the socket")
@@ -101,6 +103,7 @@ func (k *kubeletStub) start() error {
 	k.server = grpc.NewServer()
 
 	pluginapi.RegisterRegistrationServer(k.server, k)
+
 	go maybeLogError(func() error { return k.server.Serve(s) }, "unable to start server")
 
 	// Wait till the grpcServer is ready to serve services.
@@ -118,10 +121,12 @@ func TestRegisterWithKublet(t *testing.T) {
 	}
 
 	kubelet := newKubeletStub(kubeletSocket)
+
 	err = kubelet.start()
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
+
 	defer kubelet.server.Stop()
 
 	err = srv.registerWithKubelet(kubeletSocket, pluginSocket, resourceName)
@@ -131,18 +136,22 @@ func TestRegisterWithKublet(t *testing.T) {
 }
 
 func TestSetupAndServe(t *testing.T) {
-	var pluginSocket string
-	var pEndpoint string
+	var (
+		pluginSocket string
+		pEndpoint    string
+	)
 
 	kubelet := newKubeletStub(kubeletSocket)
 	if err := kubelet.start(); err != nil {
 		t.Fatalf("unable to start kubelet stub: %+v", err)
 	}
+
 	defer kubelet.server.Stop()
 
 	srv := newTestServer()
 
 	defer maybeLogError(srv.Stop, "unable to stop server")
+
 	go maybeLogError(func() error {
 		return srv.setupAndServe(namespace, devicePluginPath, kubeletSocket)
 	}, "unable to start server")
@@ -152,12 +161,14 @@ func TestSetupAndServe(t *testing.T) {
 		kubelet.Lock()
 		pEndpoint = kubelet.pluginEndpoint
 		kubelet.Unlock()
+
 		pluginSocket = path.Join(devicePluginPath, pEndpoint)
 		if pEndpoint != "" {
 			if _, err := os.Stat(pluginSocket); err == nil {
 				break
 			}
 		}
+
 		time.Sleep(1 * time.Second)
 	}
 
@@ -167,6 +178,7 @@ func TestSetupAndServe(t *testing.T) {
 	}
 
 	ctx := context.Background()
+
 	conn, err := grpc.DialContext(ctx, pluginSocket, grpc.WithInsecure(),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
@@ -183,36 +195,45 @@ func TestSetupAndServe(t *testing.T) {
 			},
 		},
 	})
+
 	if err != nil {
 		t.Errorf("Failed to allocate device dev1: %+v", err)
 	}
+
 	_ = conn.Close()
 
 	// Check if plugins re-registers after its socket has been removed
 	kubelet.Lock()
 	pEndpoint = kubelet.pluginEndpoint
 	kubelet.Unlock()
+
 	if pEndpoint == "" {
 		t.Fatal("After successful Allocate() pluginEndpoint is empty")
 	}
+
 	_ = os.Remove(path.Join(devicePluginPath, pEndpoint))
+
 	for {
 		kubelet.Lock()
 		pEndpoint = kubelet.pluginEndpoint
 		kubelet.Unlock()
+
 		pluginSocket = path.Join(devicePluginPath, pEndpoint)
 		if pEndpoint != "" {
 			if _, err = os.Stat(pluginSocket); err == nil {
 				break
 			}
 		}
+
 		klog.V(1).Info("No plugin socket. Waiting...")
 		time.Sleep(1 * time.Second)
 	}
+
 	conn, err = grpc.DialContext(ctx, pluginSocket, grpc.WithInsecure(),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
 		}))
+
 	if err != nil {
 		t.Fatalf("Failed to get connection: %+v", err)
 	}
@@ -225,9 +246,11 @@ func TestSetupAndServe(t *testing.T) {
 			},
 		},
 	})
+
 	if err != nil {
 		t.Errorf("Failed to allocate device dev1: %+v", err)
 	}
+
 	_ = conn.Close()
 }
 
@@ -358,13 +381,16 @@ func TestAllocate(t *testing.T) {
 			t.Errorf("Test case '%s': no error returned", tt.name)
 			continue
 		}
+
 		if !tt.expectedErr && err != nil {
 			t.Errorf("Test case '%s': got unexpected error %+v", tt.name, err)
 			continue
 		}
+
 		if tt.expectedAllocated > 0 && len(resp.ContainerResponses[0].Devices) != tt.expectedAllocated {
 			t.Errorf("Test case '%s': allocated wrong number of devices", tt.name)
 		}
+
 		if tt.expectedAllocated > 1 {
 			if reflect.DeepEqual(resp.ContainerResponses[0].Devices[0], resp.ContainerResponses[0].Devices[1]) {
 				t.Errorf("Test case '%s': got equal dev nodes in the same response", tt.name)
@@ -390,6 +416,7 @@ func (s *listAndWatchServerStub) Send(resp *pluginapi.ListAndWatchResponse) erro
 
 	klog.V(4).Info("listAndWatchServerStub::Send", resp.Devices)
 	s.cdata <- resp.Devices
+
 	return nil
 }
 
@@ -481,12 +508,14 @@ func TestListAndWatch(t *testing.T) {
 		for _, update := range tt.updates {
 			devCh <- update
 		}
+
 		close(devCh)
 
 		err := testServer.ListAndWatch(&pluginapi.Empty{}, server)
 		if err != nil && tt.errorOnCall == 0 {
 			t.Errorf("Test case '%s': got unexpected error %+v", tt.name, err)
 		}
+
 		if err == nil && tt.errorOnCall != 0 {
 			t.Errorf("Test case '%s': expected an error, but got nothing", tt.name)
 		}

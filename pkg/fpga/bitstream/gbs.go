@@ -99,6 +99,7 @@ func (b *Bitstream) Open() io.ReadSeeker { return io.NewSectionReader(b.sr, 0, 1
 func (b *Bitstream) Data() ([]byte, error) {
 	dat := make([]byte, b.Size)
 	n, err := io.ReadFull(b.Open(), dat)
+
 	return dat[0:n], err
 }
 
@@ -108,12 +109,15 @@ func OpenGBS(name string) (*FileGBS, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
 	ff, err := NewFileGBS(f)
 	if err != nil {
 		_ = f.Close()
 		return nil, err
 	}
+
 	ff.closer = f
+
 	return ff, nil
 }
 
@@ -125,6 +129,7 @@ func (f *FileGBS) Close() (err error) {
 		err = f.closer.Close()
 		f.closer = nil
 	}
+
 	return
 }
 
@@ -139,6 +144,7 @@ func (f *FileGBS) AcceleratorTypeUUID() (ret string) {
 	if len(f.Metadata.AfuImage.AcceleratorClusters) == 1 {
 		ret = strings.ToLower(strings.Replace(f.Metadata.AfuImage.AcceleratorClusters[0].AcceleratorTypeUUID, "-", "", -1))
 	}
+
 	return
 }
 
@@ -158,6 +164,7 @@ func NewFileGBS(r bitstreamReader) (*FileGBS, error) {
 	if _, err := sr.Seek(0, io.SeekStart); err != nil {
 		return nil, errors.Wrap(err, "unable to seek")
 	}
+
 	if err := binary.Read(sr, binary.LittleEndian, &f.Header); err != nil {
 		return nil, errors.Wrap(err, "unable to read header")
 	}
@@ -169,25 +176,30 @@ func NewFileGBS(r bitstreamReader) (*FileGBS, error) {
 	if f.MetadataLength == 0 || f.MetadataLength >= 4096 {
 		return nil, errors.Errorf("incorrect length of GBS metadata %d", f.MetadataLength)
 	}
+
 	dec := json.NewDecoder(io.NewSectionReader(r, fileHeaderLength, int64(f.MetadataLength)))
 	if err := dec.Decode(&f.Metadata); err != nil {
 		return nil, errors.Wrap(err, "unable to parse GBS metadata")
 	}
+
 	if afus := len(f.Metadata.AfuImage.AcceleratorClusters); afus != 1 {
 		return nil, errors.Errorf("incorrect length of AcceleratorClusters in GBS metadata: %d", afus)
 	}
 	// 4. Create bitsream struct
 	b := new(Bitstream)
+
 	// 4.1. calculate offest/size
 	last, err := r.Seek(0, io.SeekEnd)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to determine file size")
 	}
+
 	b.Size = uint64(last - fileHeaderLength - int64(f.MetadataLength))
 	// 4.2. assign internal sr
 	b.sr = io.NewSectionReader(r, int64(fileHeaderLength+f.MetadataLength), int64(b.Size))
 	b.ReaderAt = b.sr
 	f.Bitstream = b
+
 	return f, nil
 }
 
@@ -213,9 +225,11 @@ func (f *FileGBS) UniqueUUID() string {
 func (f *FileGBS) InstallPath(root string) (ret string) {
 	interfaceID := f.InterfaceUUID()
 	uniqID := f.UniqueUUID()
+
 	if interfaceID != "" && uniqID != "" {
 		ret = filepath.Join(root, interfaceID, uniqID+fileExtensionGBS)
 	}
+
 	return
 }
 

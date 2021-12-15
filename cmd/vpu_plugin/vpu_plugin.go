@@ -98,6 +98,7 @@ func getPciDeviceCounts(sysfsPciDevicesPath string, vendorID string, pidSearch [
 			}
 		}
 	}
+
 	return found, nil
 }
 
@@ -125,6 +126,7 @@ func newDevicePlugin(deviceCtx interface{}, sharedDevNum int) *devicePlugin {
 		klog.V(1).Info("The number of containers sharing the same VPU must greater than zero")
 		return nil
 	}
+
 	return &devicePlugin{
 		deviceCtx:    deviceCtx,
 		sharedDevNum: sharedDevNum,
@@ -135,6 +137,7 @@ func newDevicePlugin(deviceCtx interface{}, sharedDevNum int) *devicePlugin {
 
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
+
 	for {
 		devTree, err := dp.scan()
 		if err != nil {
@@ -302,8 +305,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 }
 
 func main() {
-	var sharedDevNum int
-	var scanMode int
+	var sharedDevNum, scanMode int
 
 	flag.IntVar(&sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same VPU device")
 	flag.IntVar(&scanMode, "mode", 1, "USB=1 PCI=2")
@@ -312,6 +314,7 @@ func main() {
 	klog.V(1).Info("VPU device plugin started")
 
 	var plugin *devicePlugin
+
 	if scanMode == 1 {
 		// add lsusb here
 		ctx := gousb.NewContext()
@@ -322,15 +325,19 @@ func main() {
 			// gousb (libusb) Debug levels are a 1:1 match to klog levels, just pass through.
 			ctx.Debug(verbosityLevel)
 		}
+
 		deviceCtxUsb := devicePluginUsb{usbContext: ctx, vendorID: vendorID, productIDs: productIDs}
+
 		plugin = newDevicePlugin(deviceCtxUsb, sharedDevNum)
 	} else if scanMode == 2 {
 		deviceCtxPci := devicePluginPci{sysfsPciDevicesPath: sysBusPCIDevice, vendorIDPCI: vendorIDIntel, productIDsPCI: productIDsPCI}
 		plugin = newDevicePlugin(deviceCtxPci, sharedDevNum)
 	}
+
 	if plugin == nil {
 		klog.Fatal("Cannot create device plugin, please check above error messages.")
 	}
+
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }

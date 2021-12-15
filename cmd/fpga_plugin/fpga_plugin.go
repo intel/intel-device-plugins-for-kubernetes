@@ -65,8 +65,10 @@ func getRegionDevelTree(devices []device) dpapi.DeviceTree {
 			if region.interfaceID == unhealthyInterfaceID {
 				health = pluginapi.Unhealthy
 			}
+
 			devType := fmt.Sprintf("%s-%s", regionMode, region.interfaceID)
 			devNodes := make([]pluginapi.DeviceSpec, len(region.afus)+1)
+
 			for num, afu := range region.afus {
 				devNodes[num] = pluginapi.DeviceSpec{
 					HostPath:      afu.devNode,
@@ -74,6 +76,7 @@ func getRegionDevelTree(devices []device) dpapi.DeviceTree {
 					Permissions:   "rw",
 				}
 			}
+
 			devNodes[len(region.afus)] = pluginapi.DeviceSpec{
 				HostPath:      region.devNode,
 				ContainerPath: region.devNode,
@@ -97,8 +100,10 @@ func getRegionTree(devices []device) dpapi.DeviceTree {
 			if region.interfaceID == unhealthyInterfaceID {
 				health = pluginapi.Unhealthy
 			}
+
 			devType := fmt.Sprintf("%s-%s", regionMode, region.interfaceID)
 			devNodes := make([]pluginapi.DeviceSpec, len(region.afus))
+
 			for num, afu := range region.afus {
 				devNodes[num] = pluginapi.DeviceSpec{
 					HostPath:      afu.devNode,
@@ -106,6 +111,7 @@ func getRegionTree(devices []device) dpapi.DeviceTree {
 					Permissions:   "rw",
 				}
 			}
+
 			regionTree.AddDevice(devType, region.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil))
 		}
 	}
@@ -124,11 +130,13 @@ func getAfuTree(devices []device) dpapi.DeviceTree {
 				if afu.afuID == unhealthyAfuID {
 					health = pluginapi.Unhealthy
 				}
+
 				devType, err := fpga.GetAfuDevType(region.interfaceID, afu.afuID)
 				if err != nil {
 					klog.Warningf("failed to get devtype: %+v", err)
 					continue
 				}
+
 				devNodes := []pluginapi.DeviceSpec{
 					{
 						HostPath:      afu.devNode,
@@ -182,16 +190,20 @@ type devicePlugin struct {
 
 // newDevicePlugin returns new instance of devicePlugin.
 func newDevicePlugin(mode string, rootPath string) (*devicePlugin, error) {
-	var dp *devicePlugin
-	var err error
+	var (
+		dp  *devicePlugin
+		err error
+	)
 
 	sysfsPathOPAE := path.Join(rootPath, sysfsDirectoryOPAE)
 	devfsPath := path.Join(rootPath, devfsDirectory)
+
 	if _, err = os.Stat(sysfsPathOPAE); os.IsNotExist(err) {
 		sysfsPathDFL := path.Join(rootPath, sysfsDirectoryDFL)
 		if _, err = os.Stat(sysfsPathDFL); os.IsNotExist(err) {
 			return nil, errors.Errorf("kernel driver is not loaded: neither %s nor %s sysfs entry exists", sysfsPathOPAE, sysfsPathDFL)
 		}
+
 		dp, err = newDevicePluginDFL(sysfsPathDFL, devfsPath, mode)
 	} else {
 		dp, err = newDevicePluginOPAE(sysfsPathOPAE, devfsPath, mode)
@@ -224,6 +236,7 @@ func (dp *devicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error
 // Scan starts scanning FPGA devices on the host.
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
+
 	for {
 		devTree, err := dp.scanFPGAs()
 		if err != nil {
@@ -242,6 +255,7 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 
 func (dp *devicePlugin) getRegions(deviceFiles []os.DirEntry) ([]region, error) {
 	regions := map[string]region{}
+
 	for _, deviceFile := range deviceFiles {
 		name := deviceFile.Name()
 		if dp.portReg.MatchString(name) {
@@ -249,6 +263,7 @@ func (dp *devicePlugin) getRegions(deviceFiles []os.DirEntry) ([]region, error) 
 			if err != nil {
 				return nil, errors.Wrapf(err, "can't get port info for %s", name)
 			}
+
 			fme, err := port.GetFME()
 			if err != nil {
 				return nil, errors.Wrapf(err, "can't get FME info for %s", name)
@@ -256,6 +271,7 @@ func (dp *devicePlugin) getRegions(deviceFiles []os.DirEntry) ([]region, error) 
 
 			afuInfo := afu{id: port.GetName(), afuID: port.GetAcceleratorTypeUUID(), devNode: port.GetDevPath()}
 			regionName := fme.GetName()
+
 			reg, ok := regions[regionName]
 			if ok {
 				reg.afus = append(reg.afus, afuInfo)
@@ -264,11 +280,13 @@ func (dp *devicePlugin) getRegions(deviceFiles []os.DirEntry) ([]region, error) 
 			}
 		}
 	}
+
 	result := make([]region, 0, len(regions))
 	// Get list of regions from the map
 	for _, reg := range regions {
 		result = append(result, reg)
 	}
+
 	return result, nil
 }
 
@@ -280,6 +298,7 @@ func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
 	}
 
 	devices := []device{}
+
 	for _, file := range files {
 		devName := file.Name()
 
@@ -301,6 +320,7 @@ func (dp *devicePlugin) scanFPGAs() (dpapi.DeviceTree, error) {
 			devices = append(devices, device{name: devName, regions: regions})
 		}
 	}
+
 	return dp.getDevTree(devices), nil
 }
 
@@ -327,10 +347,12 @@ func getPluginParams(mode string) (getDevTreeFunc, string, error) {
 }
 
 func main() {
-	var mode string
-	var kubeconfig string
-	var master string
-	var nodename string
+	var (
+		mode       string
+		kubeconfig string
+		master     string
+		nodename   string
+	)
 
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
 	flag.StringVar(&master, "master", "", "master url")

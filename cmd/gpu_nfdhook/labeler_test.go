@@ -279,11 +279,13 @@ func (tc *testcase) createFiles(t *testing.T, sysfs, root string) {
 			t.Fatalf("Failed to create fake capability file: %+v", err)
 		}
 	}
+
 	for _, sysfsdir := range tc.sysfsdirs {
 		if err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0750); err != nil {
 			t.Fatalf("Failed to create fake sysfs directory: %+v", err)
 		}
 	}
+
 	for filename, body := range tc.sysfsfiles {
 		if err := os.WriteFile(path.Join(sysfs, filename), body, 0600); err != nil {
 			t.Fatalf("Failed to create fake vendor file: %+v", err)

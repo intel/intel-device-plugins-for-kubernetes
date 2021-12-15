@@ -75,6 +75,7 @@ func (w *mockPodResources) List(ctx context.Context,
 			Name: pod.ObjectMeta.Name, Containers: []*podresourcesv1.ContainerResources{{}},
 		})
 	}
+
 	return &resp, nil
 }
 func (w *mockPodResources) GetAllocatableResources(ctx context.Context,
@@ -216,6 +217,7 @@ func TestReallocateWithFractionalResources(t *testing.T) {
 		if (err != nil) && !tCase.expectErr {
 			t.Errorf("test %v unexpected failure, err:%v", tCase.name, err)
 		}
+
 		if err == nil {
 			if tCase.expectErr {
 				t.Errorf("test %v unexpected success", tCase.name)

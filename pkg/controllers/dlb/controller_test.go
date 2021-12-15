@@ -128,6 +128,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 			},
 		},
 	}
+
 	return &daemonSet
 }
 

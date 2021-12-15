@@ -55,6 +55,7 @@ func (n *notifier) Notify(newDeviceTree DeviceTree) {
 			if !reflect.DeepEqual(old, new) {
 				updated[devType] = new
 			}
+
 			delete(n.deviceTree, devType)
 		} else {
 			added[devType] = new
@@ -101,6 +102,7 @@ func (m *Manager) Run() {
 			klog.Errorf("Device scan failed: %+v", err)
 			os.Exit(1)
 		}
+
 		close(updatesCh)
 	}()
 
@@ -111,11 +113,14 @@ func (m *Manager) Run() {
 
 func (m *Manager) handleUpdate(update updateInfo) {
 	klog.V(4).Info("Received dev updates:", update)
+
 	for devType, devices := range update.Added {
-		var allocate allocateFunc
-		var postAllocate postAllocateFunc
-		var preStartContainer preStartContainerFunc
-		var getPreferredAllocation getPreferredAllocationFunc
+		var (
+			allocate               allocateFunc
+			postAllocate           postAllocateFunc
+			preStartContainer      preStartContainerFunc
+			getPreferredAllocation getPreferredAllocationFunc
+		)
 
 		if postAllocator, ok := m.devicePlugin.(PostAllocator); ok {
 			postAllocate = postAllocator.PostAllocate
@@ -134,6 +139,7 @@ func (m *Manager) handleUpdate(update updateInfo) {
 		}
 
 		m.servers[devType] = m.createServer(devType, postAllocate, preStartContainer, getPreferredAllocation, allocate)
+
 		go func(dt string) {
 			err := m.servers[dt].Serve(m.namespace)
 			if err != nil {
@@ -143,13 +149,16 @@ func (m *Manager) handleUpdate(update updateInfo) {
 		}(devType)
 		m.servers[devType].Update(devices)
 	}
+
 	for devType, devices := range update.Updated {
 		m.servers[devType].Update(devices)
 	}
+
 	for devType := range update.Removed {
 		if err := m.servers[devType].Stop(); err != nil {
 			klog.Errorf("Unable to stop gRPC server for %q: %+v", devType, err)
 		}
+
 		delete(m.servers, devType)
 	}
 }

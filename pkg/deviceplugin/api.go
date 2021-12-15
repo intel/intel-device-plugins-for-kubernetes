@@ -51,7 +51,9 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 		mounts: mounts,
 		envs:   envs,
 	}
+
 	devPaths := []string{}
+
 	for _, node := range nodes {
 		devPaths = append(devPaths, node.HostPath)
 	}
@@ -91,6 +93,7 @@ func (tree DeviceTree) AddDevice(devType, id string, info DeviceInfo) {
 	if _, present := tree[devType]; !present {
 		tree[devType] = make(map[string]DeviceInfo)
 	}
+
 	tree[devType][id] = info
 }
 

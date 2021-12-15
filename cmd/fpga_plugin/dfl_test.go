@@ -312,6 +312,7 @@ func TestScanFPGAsDFL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}
+
 	sysfs := path.Join(tmpdir, "sys")
 	dev := path.Join(tmpdir, "dev")
 	tcases := []struct {

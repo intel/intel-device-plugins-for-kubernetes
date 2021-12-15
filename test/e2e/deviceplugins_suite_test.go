@@ -63,7 +63,9 @@ func setupFirstNode() []byte {
 	if err != nil {
 		framework.Failf("Error deleting orphaned namespaces: %v", err)
 	}
+
 	framework.Logf("Waiting for deletion of the following namespaces: %v", deleted)
+
 	if err = framework.WaitForNamespacesDeleted(c, deleted, framework.DefaultPodDeletionTimeout); err != nil {
 		framework.Failf("Failed to delete orphaned namespaces %v: %v", deleted, err)
 	}
@@ -84,10 +86,12 @@ func setupFirstNode() []byte {
 
 	// Log the version of the server and this client.
 	framework.Logf("e2e test version: %s", version.Get().GitVersion)
+
 	serverVersion, err := c.DiscoveryClient.ServerVersion()
 	if err != nil {
 		framework.Logf("Unexpected server error retrieving version: %v", err)
 	}
+
 	if serverVersion != nil {
 		framework.Logf("kube-apiserver version: %s", serverVersion.GitVersion)
 	}

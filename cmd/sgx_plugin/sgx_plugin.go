@@ -58,10 +58,12 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	if err != nil {
 		return err
 	}
+
 	notifier.Notify(devTree)
 
 	// Wait forever to prevent manager run loop from exiting.
 	<-dp.scanDone
+
 	return nil
 }
 
@@ -71,10 +73,12 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	// Assume that both /dev/sgx_enclave and /dev/sgx_provision must be present.
 	sgxEnclavePath := path.Join(dp.devfsDir, "sgx_enclave")
 	sgxProvisionPath := path.Join(dp.devfsDir, "sgx_provision")
+
 	if _, err := os.Stat(sgxEnclavePath); err != nil {
 		klog.Error("No SGX enclave file available: ", err)
 		return devTree, nil
 	}
+
 	if _, err := os.Stat(sgxProvisionPath); err != nil {
 		klog.Error("No SGX provision file available: ", err)
 		return devTree, nil
@@ -92,11 +96,13 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		nodes := []pluginapi.DeviceSpec{{HostPath: sgxEnclavePath, ContainerPath: sgxEnclavePath, Permissions: "rw"}}
 		devTree.AddDevice(deviceTypeEnclave, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, deprecatedMounts, nil))
 	}
+
 	for i := uint(0); i < dp.nProvision; i++ {
 		devID := fmt.Sprintf("%s-%d", "sgx-provision", i)
 		nodes := []pluginapi.DeviceSpec{{HostPath: sgxProvisionPath, ContainerPath: sgxProvisionPath, Permissions: "rw"}}
 		devTree.AddDevice(deviceTypeProvision, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, deprecatedMounts, nil))
 	}
+
 	return devTree, nil
 }
 
@@ -106,7 +112,6 @@ func getDefaultPodCount(nCPUs uint) uint {
 	// either via "--pods-per-core" or "--max-pods" kubelet options. We get the
 	// limit by multiplying the number of cores in the system with env variable
 	// "PODS_PER_CORE".
-
 	envPodsPerCore := os.Getenv(podsPerCoreEnvVariable)
 	if envPodsPerCore != "" {
 		tmp, err := strconv.ParseUint(envPodsPerCore, 10, 32)
@@ -121,8 +126,7 @@ func getDefaultPodCount(nCPUs uint) uint {
 }
 
 func main() {
-	var enclaveLimit uint
-	var provisionLimit uint
+	var enclaveLimit, provisionLimit uint
 
 	podCount := getDefaultPodCount(uint(runtime.NumCPU()))
 

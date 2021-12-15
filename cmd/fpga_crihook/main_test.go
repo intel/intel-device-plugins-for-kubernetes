@@ -36,6 +36,7 @@ func createTestDirs(sysfs string, sysfsDirs []string, sysfsFiles map[string][]by
 			return errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
+
 	for filename, body := range sysfsFiles {
 		err := os.WriteFile(path.Join(sysfs, filename), body, 0600)
 		if err != nil {
@@ -189,6 +190,7 @@ type testFpgaPort struct {
 func (p *testFpgaPort) GetInterfaceUUID() (id string) {
 	uuid := p.interfaceUUIDS[p.callNo]
 	p.callNo++
+
 	return uuid
 }
 
@@ -196,6 +198,7 @@ func (p *testFpgaPort) GetInterfaceUUID() (id string) {
 func (p *testFpgaPort) GetAcceleratorTypeUUID() string {
 	uuid := p.accelTypeUUIDS[p.callNo]
 	p.callNo++
+
 	return uuid
 }
 
@@ -204,6 +207,7 @@ func (p *testFpgaPort) PR(bs bitstream.File, dryRun bool) error {
 	if p.failProgramming {
 		return errors.New("fail to program device")
 	}
+
 	return nil
 }
 
@@ -219,6 +223,7 @@ func TestGetFPGAParams(t *testing.T) {
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}
+
 	defer os.RemoveAll(tmpdir)
 
 	sysfsTest := path.Join(tmpdir, "sys", "class", "fpga")
@@ -336,6 +341,7 @@ func TestProcess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}
+
 	defer os.RemoveAll(tmpdir)
 
 	sysfs := path.Join(tmpdir, "sys", "class", "fpga")

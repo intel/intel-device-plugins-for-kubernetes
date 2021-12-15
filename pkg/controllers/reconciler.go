@@ -203,6 +203,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		log.Error(err, "unable to list child Pods of the controlled daemon set")
 		return ctrl.Result{}, err
 	}
+
 	nodeNames := make([]string, len(pods.Items))
 	for i, pod := range pods.Items {
 		nodeNames[i] = pod.Spec.NodeName
@@ -213,6 +214,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+
 	if statusUpdated {
 		if err := r.Status().Update(ctx, devicePlugin); apierrors.IsConflict(err) {
 			return ctrl.Result{Requeue: true}, nil
@@ -357,6 +359,7 @@ func (r *reconciler) updateBookKeeper(ctx context.Context) error {
 	}
 
 	bKeeper.set(r.pluginKind, count)
+
 	return nil
 }
 
@@ -426,10 +429,12 @@ func (r *reconciler) maybeDeleteDaemonSets(ctx context.Context, err error, daemo
 		}
 
 		log.V(1).Info("deleted DaemonSets owned by deleted custom device plugin object")
+
 		return ctrl.Result{}, nil
 	}
 
 	log.Error(err, "unable to fetch custom device plugin object")
+
 	return ctrl.Result{}, err
 }
 
@@ -437,6 +442,7 @@ func (r *reconciler) maybeDeleteRedundantDaemonSets(ctx context.Context, dsets [
 	count := len(dsets)
 	if count > 1 {
 		log.V(0).Info("there are redundant DaemonSets", "redundantDS", count-1)
+
 		redundantSets := dsets[1:]
 		for i := range redundantSets {
 			if err := r.Delete(ctx, &redundantSets[i], client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {

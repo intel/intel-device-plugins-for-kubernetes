@@ -38,6 +38,7 @@ var (
 
 func init() {
 	ctrl.SetLogger(klogr.New())
+
 	_ = fpgav2.AddToScheme(scheme)
 }
 
@@ -83,6 +84,7 @@ func TestAcceleratorFunctionReconcile(t *testing.T) {
 
 func TestAcceleratorFunctionSetupWithManager(t *testing.T) {
 	r := &AcceleratorFunctionReconciler{}
+
 	err := r.SetupWithManager(&mockManager{
 		scheme: scheme,
 		log:    logger,
@@ -134,6 +136,7 @@ func TestFpgaRegionReconcile(t *testing.T) {
 
 func TestFpgaRegionSetupWithManager(t *testing.T) {
 	r := &FpgaRegionReconciler{}
+
 	err := r.SetupWithManager(&mockManager{
 		scheme: scheme,
 		log:    logger,

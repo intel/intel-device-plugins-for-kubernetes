@@ -63,24 +63,29 @@ func TestPatcherStorageFunctions(t *testing.T) {
 	if err := p.AddAf(goodAf); err != nil {
 		t.Error("unexpected error")
 	}
+
 	if len(p.resourceModeMap) != 1 || len(p.afMap) != 1 || len(p.resourceMap) != 1 {
 		t.Error("Failed to add AF to patcher")
 	}
+
 	if err := p.AddAf(brokenAf); err == nil {
 		t.Error("AddAf() must fail")
 	}
 
 	p.RemoveAf(goodAf.Name)
+
 	if len(p.resourceModeMap) != 0 || len(p.afMap) != 0 || len(p.resourceMap) != 0 {
 		t.Error("Failed to remove AF from patcher")
 	}
 
 	p.AddRegion(region)
+
 	if len(p.resourceModeMap) != 1 || len(p.resourceMap) != 1 {
 		t.Error("Failed to add fpga region to patcher")
 	}
 
 	p.RemoveRegion(region.Name)
+
 	if len(p.resourceModeMap) != 0 || len(p.resourceMap) != 0 {
 		t.Error("Failed to remove fpga region from patcher")
 	}

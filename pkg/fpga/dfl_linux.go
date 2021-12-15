@@ -59,9 +59,11 @@ func NewDflFME(dev string) (FME, error) {
 	if err := checkPCIDeviceType(fme); err != nil {
 		return nil, err
 	}
+
 	if err := fme.updateProperties(); err != nil {
 		return nil, err
 	}
+
 	return fme, nil
 }
 
@@ -95,9 +97,11 @@ func NewDflPort(dev string) (Port, error) {
 	if err := checkPCIDeviceType(port); err != nil {
 		return nil, err
 	}
+
 	if err := port.updateProperties(); err != nil {
 		return nil, err
 	}
+
 	return port, nil
 }
 
@@ -146,11 +150,13 @@ func (f *DflPort) CheckExtension() (int, error) {
 //   from the status of FME's fpga manager.
 func (f *DflFME) PortPR(port uint32, bitstream []byte) error {
 	var value DflFpgaFmePortPR
+
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	value.Port_id = port
 	value.Buffer_size = uint32(len(bitstream))
 	value.Buffer_address = uint64(uintptr(unsafe.Pointer(&bitstream[0])))
 	_, err := ioctlDev(f.DevPath, DFL_FPGA_FME_PORT_PR, uintptr(unsafe.Pointer(&value)))
+
 	return err
 }
 
@@ -159,6 +165,7 @@ func (f *DflFME) PortPR(port uint32, bitstream []byte) error {
 func (f *DflFME) PortRelease(port uint32) error {
 	value := port
 	_, err := ioctlDev(f.DevPath, DFL_FPGA_FME_PORT_RELEASE, uintptr(unsafe.Pointer(&value)))
+
 	return err
 }
 
@@ -167,6 +174,7 @@ func (f *DflFME) PortRelease(port uint32) error {
 func (f *DflFME) PortAssign(port uint32) error {
 	value := port
 	_, err := ioctlDev(f.DevPath, DFL_FPGA_FME_PORT_ASSIGN, uintptr(unsafe.Pointer(&value)))
+
 	return err
 }
 
@@ -180,11 +188,14 @@ func (f *DflFME) GetSysFsPath() string {
 	if f.SysFsPath != "" {
 		return f.SysFsPath
 	}
+
 	sysfs, err := FindSysFsDevice(f.DevPath)
 	if err != nil {
 		return ""
 	}
+
 	f.SysFsPath = sysfs
+
 	return f.SysFsPath
 }
 
@@ -193,7 +204,9 @@ func (f *DflFME) GetName() string {
 	if f.Name != "" {
 		return f.Name
 	}
+
 	f.Name = filepath.Base(f.GetSysFsPath())
+
 	return f.Name
 }
 
@@ -202,11 +215,14 @@ func (f *DflFME) GetPCIDevice() (*PCIDevice, error) {
 	if f.PCIDevice != nil {
 		return f.PCIDevice, nil
 	}
+
 	pci, err := NewPCIDevice(f.GetSysFsPath())
 	if err != nil {
 		return nil, err
 	}
+
 	f.PCIDevice = pci
+
 	return f.PCIDevice, nil
 }
 
@@ -218,10 +234,12 @@ func (f *DflFME) GetPortsNum() int {
 			return -1
 		}
 	}
+
 	n, err := strconv.ParseUint(f.PortsNum, 10, 32)
 	if err != nil {
 		return -1
 	}
+
 	return int(n)
 }
 
@@ -233,6 +251,7 @@ func (f *DflFME) GetInterfaceUUID() (id string) {
 			return ""
 		}
 	}
+
 	return f.CompatID
 }
 
@@ -241,7 +260,9 @@ func (f *DflFME) GetSocketID() (uint32, error) {
 	if f.SocketID == "" {
 		return math.MaxUint32, errors.Errorf("n/a")
 	}
+
 	id, err := strconv.ParseUint(f.SocketID, 10, 32)
+
 	return uint32(id), err
 }
 
@@ -261,6 +282,7 @@ func (f *DflFME) updateProperties() error {
 	if err != nil {
 		return err
 	}
+
 	fileMap := map[string]*string{
 		"bitstream_id":       &f.BitstreamID,
 		"bitstream_metadata": &f.BitstreamMetadata,
@@ -269,6 +291,7 @@ func (f *DflFME) updateProperties() error {
 		"socket_id":          &f.SocketID,
 		"dfl-fme-region.*/fpga_region/region*/compat_id": &f.CompatID,
 	}
+
 	return readFilesInDirectory(fileMap, filepath.Join(pci.SysFsPath, dflFpgaFmeGlobPCI))
 }
 
@@ -289,13 +312,16 @@ func (f *DflPort) PortReset() error {
 // * Return: 0 on success, -errno on failure.
 func (f *DflPort) PortGetInfo() (ret PortInfo, err error) {
 	var value DflFpgaPortInfo
+
 	value.Argsz = uint32(unsafe.Sizeof(value))
+
 	_, err = ioctlDev(f.DevPath, DFL_FPGA_PORT_GET_INFO, uintptr(unsafe.Pointer(&value)))
 	if err == nil {
 		ret.Flags = value.Flags
 		ret.Regions = value.Regions
 		ret.Umsgs = value.Umsgs
 	}
+
 	return
 }
 
@@ -306,8 +332,10 @@ func (f *DflPort) PortGetInfo() (ret PortInfo, err error) {
 // * Return: 0 on success, -errno on failure.
 func (f *DflPort) PortGetRegionInfo(index uint32) (ret PortRegionInfo, err error) {
 	var value DflFpgaPortRegionInfo
+
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	value.Index = index
+
 	_, err = ioctlDev(f.DevPath, DFL_FPGA_PORT_GET_REGION_INFO, uintptr(unsafe.Pointer(&value)))
 	if err == nil {
 		ret.Flags = value.Flags
@@ -315,6 +343,7 @@ func (f *DflPort) PortGetRegionInfo(index uint32) (ret PortRegionInfo, err error
 		ret.Offset = value.Offset
 		ret.Size = value.Size
 	}
+
 	return
 }
 
@@ -328,11 +357,14 @@ func (f *DflPort) GetSysFsPath() string {
 	if f.SysFsPath != "" {
 		return f.SysFsPath
 	}
+
 	sysfs, err := FindSysFsDevice(f.DevPath)
 	if err != nil {
 		return ""
 	}
+
 	f.SysFsPath = sysfs
+
 	return f.SysFsPath
 }
 
@@ -341,7 +373,9 @@ func (f *DflPort) GetName() string {
 	if f.Name != "" {
 		return f.Name
 	}
+
 	f.Name = filepath.Base(f.GetSysFsPath())
+
 	return f.Name
 }
 
@@ -350,11 +384,14 @@ func (f *DflPort) GetPCIDevice() (*PCIDevice, error) {
 	if f.PCIDevice != nil {
 		return f.PCIDevice, nil
 	}
+
 	pci, err := NewPCIDevice(f.GetSysFsPath())
 	if err != nil {
 		return nil, err
 	}
+
 	f.PCIDevice = pci
+
 	return f.PCIDevice, nil
 }
 
@@ -363,31 +400,39 @@ func (f *DflPort) GetFME() (fme FME, err error) {
 	if f.FME != nil {
 		return f.FME, nil
 	}
+
 	pci, err := f.GetPCIDevice()
 	if err != nil {
 		return
 	}
+
 	if pci.PhysFn != nil {
 		pci = pci.PhysFn
 	}
 
 	var dev string
+
 	fileMap := map[string]*string{
 		"dev": &dev,
 	}
+
 	if err = readFilesInDirectory(fileMap, filepath.Join(pci.SysFsPath, dflFpgaFmeGlobPCI)); err != nil {
 		return
 	}
+
 	realDev, err := filepath.EvalSymlinks(filepath.Join("/dev/char", dev))
 	if err != nil {
 		return
 	}
+
 	fme, err = NewDflFME(realDev)
 	if err != nil {
 		return
 	}
+
 	f.FME = fme
-	return
+
+	return fme, err
 }
 
 // GetPortID returns ID of the FPGA port within physical device.
@@ -398,7 +443,9 @@ func (f *DflPort) GetPortID() (uint32, error) {
 			return math.MaxUint32, err
 		}
 	}
+
 	id, err := strconv.ParseUint(f.ID, 10, 32)
+
 	return uint32(id), err
 }
 
@@ -408,6 +455,7 @@ func (f *DflPort) GetAcceleratorTypeUUID() (afuID string) {
 	if err != nil || f.AFUID == "" {
 		return ""
 	}
+
 	return f.AFUID
 }
 
@@ -418,6 +466,7 @@ func (f *DflPort) GetInterfaceUUID() (id string) {
 		return ""
 	}
 	defer fme.Close()
+
 	return fme.GetInterfaceUUID()
 }
 
@@ -433,5 +482,6 @@ func (f *DflPort) updateProperties() error {
 		"dev":    &f.Dev,
 		"id":     &f.ID,
 	}
+
 	return readFilesInDirectory(fileMap, f.GetSysFsPath())
 }

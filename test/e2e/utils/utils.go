@@ -43,7 +43,9 @@ const (
 // WaitForNodesWithResource waits for nodes to have positive allocatable resource.
 func WaitForNodesWithResource(c clientset.Interface, res v1.ResourceName, timeout time.Duration) error {
 	framework.Logf("Waiting up to %s for any positive allocatable resource %q", timeout, res)
+
 	start := time.Now()
+
 	err := wait.Poll(poll, timeout,
 		func() (bool, error) {
 			for t := time.Now(); time.Since(t) < nodeListTimeout; time.Sleep(poll) {
@@ -66,6 +68,7 @@ func WaitForNodesWithResource(c clientset.Interface, res v1.ResourceName, timeou
 
 			return false, errors.New("unable to list nodes")
 		})
+
 	return err
 }
 
@@ -106,6 +109,7 @@ func LocateRepoFile(repopath string) (string, error) {
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		return path, nil
 	}
+
 	path = filepath.Join(currentDir, "../../"+repopath)
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		return path, err
@@ -120,9 +124,10 @@ func CreateKustomizationOverlay(namespace, base, overlay string) error {
 	for range strings.Split(overlay[1:], "/") {
 		relPath = relPath + "../"
 	}
-	relPath = relPath + base[1:]
 
+	relPath = relPath + base[1:]
 	content := fmt.Sprintf("namespace: %s\nbases:\n  - %s", namespace, relPath)
+
 	return os.WriteFile(overlay+"/kustomization.yaml", []byte(content), 0600)
 }
 
@@ -137,6 +142,7 @@ func DeployWebhook(f *framework.Framework, kustomizationPath string) v1.Pod {
 	if err != nil {
 		framework.Failf("unable to create temp directory: %v", err)
 	}
+
 	defer os.RemoveAll(tmpDir)
 
 	err = CreateKustomizationOverlay(f.Namespace.Name, filepath.Dir(kustomizationPath), tmpDir)
@@ -145,6 +151,7 @@ func DeployWebhook(f *framework.Framework, kustomizationPath string) v1.Pod {
 	}
 
 	framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", tmpDir)
+
 	podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
 		labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1 /* one replica */, 30*time.Second)
 	if err != nil {
@@ -167,14 +174,17 @@ func TestContainersRunAsNonRoot(pods []v1.Pod) error {
 			if c.SecurityContext.RunAsNonRoot == nil || !*c.SecurityContext.RunAsNonRoot {
 				return errors.Errorf("%s (container: %s): RunAsNonRoot is not true", p.Name, c.Name)
 			}
+
 			if c.SecurityContext.RunAsGroup == nil || *c.SecurityContext.RunAsGroup == 0 {
 				return errors.Errorf("%s (container: %s): RunAsGroup is root (0)", p.Name, c.Name)
 			}
+
 			if c.SecurityContext.RunAsUser == nil || *c.SecurityContext.RunAsUser == 0 {
 				return errors.Errorf("%s (container: %s): RunAsUser is root (0)", p.Name, c.Name)
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -194,8 +204,10 @@ func TestPodsFileSystemInfo(pods []v1.Pod) error {
 			if c.SecurityContext.ReadOnlyRootFilesystem == nil || !*c.SecurityContext.ReadOnlyRootFilesystem {
 				return errors.Errorf("%s (container: %s): Writable root filesystem", p.Name, c.Name)
 			}
+
 			printVolumeMounts(c.VolumeMounts)
 		}
 	}
+
 	return nil
 }

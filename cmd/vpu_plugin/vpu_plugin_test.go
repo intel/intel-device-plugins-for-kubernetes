@@ -38,6 +38,7 @@ type testCase struct {
 //OpenDevices tries to inject gousb compatible fake device info.
 func (t *testCase) OpenDevices(opener func(desc *gousb.DeviceDesc) bool) ([]*gousb.Device, error) {
 	var ret []*gousb.Device
+
 	for _, p := range t.productIDs {
 		desc := &gousb.DeviceDesc{
 			Vendor:  gousb.ID(t.vendorID),
@@ -48,6 +49,7 @@ func (t *testCase) OpenDevices(opener func(desc *gousb.DeviceDesc) bool) ([]*gou
 			ret = append(ret, &gousb.Device{Desc: desc})
 		}
 	}
+
 	return ret, nil
 }
 
@@ -64,16 +66,20 @@ func createDevice(pciBusRootDir string, bdf string, vid string, pid string) erro
 	if err != nil {
 		return err
 	}
+
 	err = os.WriteFile(filepath.Join(pciBusRootDir, bdf, "device"), pidHex, 0444)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func createTestPCI(folder string, testPCI []PCIPidDeviceType) error {
 	var busNum = 1
+
 	var devNum = 3
+
 	//Loop for all supported device type
 	for _, pciPid := range testPCI {
 		//Loop for pid number
@@ -87,6 +93,7 @@ func createTestPCI(folder string, testPCI []PCIPidDeviceType) error {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -115,7 +122,9 @@ func TestScanPci(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	defer os.RemoveAll(tmpPciDir)
+
 	//create supported PCI devices file
 	if err = createTestPCI(tmpPciDir, productIDsPCI); err != nil {
 		t.Fatal(err)
@@ -128,15 +137,18 @@ func TestScanPci(t *testing.T) {
 	}
 
 	fN.scanDone = testPlugin.scanDone
+
 	err = testPlugin.Scan(&fN)
 	if err != nil {
 		t.Error("vpu plugin test failed with testPlugin.Scan()")
 	}
+
 	//Loop for all supported PCI device type
 	for _, pciPid := range productIDsPCI {
 		if len(fN.tree[pciPid.deviceType]) == 0 {
 			t.Error("vpu plugin test failed with testPlugin.Scan(): tree len is 0")
 		}
+
 		klog.V(4).Infof("tree len of pci %s is %d", pciPid.deviceType, len(fN.tree[pciPid.deviceType]))
 	}
 
@@ -150,10 +162,12 @@ func TestScanPci(t *testing.T) {
 	}
 
 	fN.scanDone = testPlugin.scanDone
+
 	err = testPlugin.Scan(&fN)
 	if err != nil {
 		t.Error("vpu plugin test failed with testPlugin.Scan() in no hddl_service.sock case.")
 	}
+
 	if len(fN.tree[deviceType]) != 0 {
 		t.Error("vpu plugin test failed with testPlugin.Scan(): tree len should be 0 in no hddl_service.sock case.")
 	}
@@ -186,13 +200,16 @@ func TestScan(t *testing.T) {
 	}
 
 	fN.scanDone = testPlugin.scanDone
+
 	err = testPlugin.Scan(&fN)
 	if err != nil {
 		t.Error("vpu plugin test failed with testPlugin.Scan()")
 	}
+
 	if len(fN.tree[deviceType]) == 0 {
 		t.Error("vpu plugin test failed with testPlugin.Scan(): tree len is 0")
 	}
+
 	klog.V(4).Infof("tree len of usb is %d", len(fN.tree[deviceType]))
 
 	//remove the hddl_service.sock and test with no hddl socket case
@@ -205,10 +222,12 @@ func TestScan(t *testing.T) {
 	}
 
 	fN.scanDone = testPlugin.scanDone
+
 	err = testPlugin.Scan(&fN)
 	if err != nil {
 		t.Error("vpu plugin test failed with testPlugin.Scan() in no hddl_service.sock case.")
 	}
+
 	if len(fN.tree[deviceType]) != 0 {
 		t.Error("vpu plugin test failed with testPlugin.Scan(): tree len should be 0 in no hddl_service.sock case.")
 	}

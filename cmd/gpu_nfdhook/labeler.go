@@ -111,6 +111,7 @@ func getEnvVarNumber(envVarName string) uint64 {
 			return val
 		}
 	}
+
 	return 0
 }
 
@@ -157,6 +158,7 @@ func (lm labelMap) addNumericLabel(labelName string, valueToAdd int64) {
 	if numstr, ok := lm[labelName]; ok {
 		_, _ = fmt.Sscanf(numstr, "%d", &value)
 	}
+
 	value += valueToAdd
 	lm[labelName] = strconv.FormatInt(value, 10)
 }
@@ -205,19 +207,23 @@ scanning:
 			if !strings.HasPrefix(line, prefix) {
 				continue
 			}
+
 			fields := strings.Split(line, ": ")
 			if len(fields) == 2 {
 				action(fields[1])
 			} else {
 				klog.Warningf("invalid '%s' line format: '%s'", file.Name(), line)
 			}
+
 			delete(searchStringActionMap, prefix)
+
 			if len(searchStringActionMap) == 0 {
 				break scanning
 			}
 			break
 		}
 	}
+
 	if gen == "" {
 		// TODO: drop gen label before engine types
 		// start to have diverging major gen values
@@ -226,6 +232,7 @@ scanning:
 		} else if media != "" {
 			gen = media
 		}
+
 		if gen != "" {
 			// truncate to major value
 			gen = strings.SplitN(gen, ".", 2)[0]
@@ -264,6 +271,7 @@ func (l *labeler) createLabels() error {
 
 		l.labels.addNumericLabel(labelNamespace+"memory.max", int64(memoryAmount))
 	}
+
 	gpuCount := len(gpuNameList)
 	if gpuCount > 0 {
 		// add gpu list label (example: "card0.card1.card2")

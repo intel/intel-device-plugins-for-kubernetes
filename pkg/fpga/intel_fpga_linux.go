@@ -56,9 +56,11 @@ func NewIntelFpgaFME(dev string) (FME, error) {
 	if err := checkPCIDeviceType(fme); err != nil {
 		return nil, err
 	}
+
 	if err := fme.updateProperties(); err != nil {
 		return nil, err
 	}
+
 	return fme, nil
 }
 
@@ -80,6 +82,7 @@ func (f *IntelFpgaPort) Close() error {
 	if f.FME != nil {
 		defer f.FME.Close()
 	}
+
 	return nil
 }
 
@@ -90,10 +93,12 @@ func NewIntelFpgaPort(dev string) (Port, error) {
 		port.Close()
 		return nil, err
 	}
+
 	if err := port.updateProperties(); err != nil {
 		port.Close()
 		return nil, err
 	}
+
 	return port, nil
 }
 
@@ -141,11 +146,14 @@ func (f *IntelFpgaPort) CheckExtension() (int, error) {
 //   from the status of FME's fpga manager.
 func (f *IntelFpgaFME) PortPR(port uint32, bitstream []byte) error {
 	var value IntelFpgaFmePortPR
+
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	value.Port_id = port
 	value.Buffer_size = uint32(len(bitstream))
 	value.Buffer_address = uint64(uintptr(unsafe.Pointer(&bitstream[0])))
+
 	_, err := ioctlDev(f.DevPath, FPGA_FME_PORT_PR, uintptr(unsafe.Pointer(&value)))
+
 	return err
 }
 
@@ -153,9 +161,12 @@ func (f *IntelFpgaFME) PortPR(port uint32, bitstream []byte) error {
 // * Return: 0 on success, -errno on failure.
 func (f *IntelFpgaFME) PortRelease(port uint32) error {
 	var value IntelFpgaFmePortRelease
+
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	value.Id = port
+
 	_, err := ioctlDev(f.DevPath, FPGA_FME_PORT_RELEASE, uintptr(unsafe.Pointer(&value)))
+
 	return err
 }
 
@@ -163,9 +174,12 @@ func (f *IntelFpgaFME) PortRelease(port uint32) error {
 // * Return: 0 on success, -errno on failure.
 func (f *IntelFpgaFME) PortAssign(port uint32) error {
 	var value IntelFpgaFmePortAssign
+
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	value.Id = port
+
 	_, err := ioctlDev(f.DevPath, FPGA_FME_PORT_ASSIGN, uintptr(unsafe.Pointer(&value)))
+
 	return err
 }
 
@@ -179,11 +193,14 @@ func (f *IntelFpgaFME) GetSysFsPath() string {
 	if f.SysFsPath != "" {
 		return f.SysFsPath
 	}
+
 	sysfs, err := FindSysFsDevice(f.DevPath)
 	if err != nil {
 		return ""
 	}
+
 	f.SysFsPath = sysfs
+
 	return f.SysFsPath
 }
 
@@ -192,7 +209,9 @@ func (f *IntelFpgaFME) GetName() string {
 	if f.Name != "" {
 		return f.Name
 	}
+
 	f.Name = filepath.Base(f.GetSysFsPath())
+
 	return f.Name
 }
 
@@ -201,11 +220,14 @@ func (f *IntelFpgaFME) GetPCIDevice() (*PCIDevice, error) {
 	if f.PCIDevice != nil {
 		return f.PCIDevice, nil
 	}
+
 	pci, err := NewPCIDevice(f.GetSysFsPath())
 	if err != nil {
 		return nil, err
 	}
+
 	f.PCIDevice = pci
+
 	return f.PCIDevice, nil
 }
 
@@ -217,10 +239,12 @@ func (f *IntelFpgaFME) GetPortsNum() int {
 			return -1
 		}
 	}
+
 	n, err := strconv.ParseUint(f.PortsNum, 10, 32)
 	if err != nil {
 		return -1
 	}
+
 	return int(n)
 }
 
@@ -232,6 +256,7 @@ func (f *IntelFpgaFME) GetInterfaceUUID() (id string) {
 			return ""
 		}
 	}
+
 	return f.CompatID
 }
 
@@ -240,7 +265,9 @@ func (f *IntelFpgaFME) GetSocketID() (uint32, error) {
 	if f.SocketID == "" {
 		return math.MaxUint32, errors.Errorf("n/a")
 	}
+
 	id, err := strconv.ParseUint(f.SocketID, 10, 32)
+
 	return uint32(id), err
 }
 
@@ -260,6 +287,7 @@ func (f *IntelFpgaFME) updateProperties() error {
 	if err != nil {
 		return err
 	}
+
 	fileMap := map[string]*string{
 		"bitstream_id":       &f.BitstreamID,
 		"bitstream_metadata": &f.BitstreamMetadata,
@@ -268,6 +296,7 @@ func (f *IntelFpgaFME) updateProperties() error {
 		"socket_id":          &f.SocketID,
 		"pr/interface_id":    &f.CompatID,
 	}
+
 	return readFilesInDirectory(fileMap, filepath.Join(pci.SysFsPath, intelFpgaFmeGlobPCI))
 }
 
@@ -288,13 +317,16 @@ func (f *IntelFpgaPort) PortReset() error {
 // * Return: 0 on success, -errno on failure.
 func (f *IntelFpgaPort) PortGetInfo() (ret PortInfo, err error) {
 	var value IntelFpgaPortInfo
+
 	value.Argsz = uint32(unsafe.Sizeof(value))
+
 	_, err = ioctlDev(f.DevPath, FPGA_PORT_GET_INFO, uintptr(unsafe.Pointer(&value)))
 	if err == nil {
 		ret.Flags = value.Flags
 		ret.Regions = value.Regions
 		ret.Umsgs = value.Umsgs
 	}
+
 	return
 }
 
@@ -305,8 +337,10 @@ func (f *IntelFpgaPort) PortGetInfo() (ret PortInfo, err error) {
 // * Return: 0 on success, -errno on failure.
 func (f *IntelFpgaPort) PortGetRegionInfo(index uint32) (ret PortRegionInfo, err error) {
 	var value IntelFpgaPortRegionInfo
+
 	value.Argsz = uint32(unsafe.Sizeof(value))
 	value.Index = index
+
 	_, err = ioctlDev(f.DevPath, FPGA_PORT_GET_REGION_INFO, uintptr(unsafe.Pointer(&value)))
 	if err == nil {
 		ret.Flags = value.Flags
@@ -314,6 +348,7 @@ func (f *IntelFpgaPort) PortGetRegionInfo(index uint32) (ret PortRegionInfo, err
 		ret.Offset = value.Offset
 		ret.Size = value.Size
 	}
+
 	return
 }
 
@@ -327,11 +362,14 @@ func (f *IntelFpgaPort) GetSysFsPath() string {
 	if f.SysFsPath != "" {
 		return f.SysFsPath
 	}
+
 	sysfs, err := FindSysFsDevice(f.DevPath)
 	if err != nil {
 		return ""
 	}
+
 	f.SysFsPath = sysfs
+
 	return f.SysFsPath
 }
 
@@ -340,7 +378,9 @@ func (f *IntelFpgaPort) GetName() string {
 	if f.Name != "" {
 		return f.Name
 	}
+
 	f.Name = filepath.Base(f.GetSysFsPath())
+
 	return f.Name
 }
 
@@ -349,11 +389,14 @@ func (f *IntelFpgaPort) GetPCIDevice() (*PCIDevice, error) {
 	if f.PCIDevice != nil {
 		return f.PCIDevice, nil
 	}
+
 	pci, err := NewPCIDevice(f.GetSysFsPath())
 	if err != nil {
 		return nil, err
 	}
+
 	f.PCIDevice = pci
+
 	return f.PCIDevice, nil
 }
 
@@ -362,31 +405,38 @@ func (f *IntelFpgaPort) GetFME() (fme FME, err error) {
 	if f.FME != nil {
 		return f.FME, nil
 	}
+
 	pci, err := f.GetPCIDevice()
 	if err != nil {
 		return
 	}
+
 	if pci.PhysFn != nil {
 		pci = pci.PhysFn
 	}
 
 	var dev string
+
 	fileMap := map[string]*string{
 		"dev": &dev,
 	}
 	if err = readFilesInDirectory(fileMap, filepath.Join(pci.SysFsPath, intelFpgaFmeGlobPCI)); err != nil {
 		return
 	}
+
 	realDev, err := filepath.EvalSymlinks(filepath.Join("/dev/char", dev))
 	if err != nil {
 		return
 	}
+
 	fme, err = NewIntelFpgaFME(realDev)
 	if err != nil {
 		return
 	}
+
 	f.FME = fme
-	return
+
+	return fme, err
 }
 
 // GetPortID returns ID of the FPGA port within physical device.
@@ -397,7 +447,9 @@ func (f *IntelFpgaPort) GetPortID() (uint32, error) {
 			return math.MaxUint32, err
 		}
 	}
+
 	id, err := strconv.ParseUint(f.ID, 10, 32)
+
 	return uint32(id), err
 }
 
@@ -407,6 +459,7 @@ func (f *IntelFpgaPort) GetAcceleratorTypeUUID() string {
 	if err != nil || f.AFUID == "" {
 		return ""
 	}
+
 	return f.AFUID
 }
 
@@ -417,6 +470,7 @@ func (f *IntelFpgaPort) GetInterfaceUUID() (id string) {
 		return ""
 	}
 	defer fme.Close()
+
 	return fme.GetInterfaceUUID()
 }
 
@@ -432,5 +486,6 @@ func (f *IntelFpgaPort) updateProperties() error {
 		"dev":    &f.Dev,
 		"id":     &f.ID,
 	}
+
 	return readFilesInDirectory(fileMap, f.GetSysFsPath())
 }

@@ -54,22 +54,29 @@ type PCIDevice struct {
 // NewPCIDevice returns sysfs entry for specified PCI device.
 func NewPCIDevice(devPath string) (*PCIDevice, error) {
 	realDevPath, err := filepath.EvalSymlinks(devPath)
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed get realpath for %s", devPath)
 	}
+
 	pci := new(PCIDevice)
+
 	for p := realDevPath; strings.HasPrefix(p, "/sys/devices/pci"); p = filepath.Dir(p) {
 		subs := pciAddressRE.FindStringSubmatch(filepath.Base(p))
 		if subs == nil || len(subs) != 5 {
 			continue
 		}
+
 		pci.SysFsPath = p
 		pci.BDF = subs[0]
+
 		break
 	}
+
 	if pci.SysFsPath == "" || pci.BDF == "" {
 		return nil, errors.Errorf("can't find PCI device address for sysfs entry %s", realDevPath)
 	}
+
 	fileMap := map[string]*string{
 		"vendor":         &pci.Vendor,
 		"device":         &pci.Device,
@@ -79,18 +86,23 @@ func NewPCIDevice(devPath string) (*PCIDevice, error) {
 		"sriov_numvfs":   &pci.VFs,
 		"sriov_totalvfs": &pci.TotalVFs,
 	}
+
 	if err = readFilesInDirectory(fileMap, pci.SysFsPath); err != nil {
 		return nil, err
 	}
+
 	if pci.Vendor == "" || pci.Device == "" {
 		return nil, errors.Errorf("%s vendor or device id can't be empty (%q/%q)", pci.SysFsPath, pci.Vendor, pci.Device)
 	}
+
 	if physFn, err := NewPCIDevice(filepath.Join(pci.SysFsPath, "physfn")); err == nil {
 		pci.PhysFn = physFn
 	}
+
 	if driver, err := filepath.EvalSymlinks(filepath.Join(pci.SysFsPath, "driver")); err == nil {
 		pci.Driver = filepath.Base(driver)
 	}
+
 	return pci, nil
 }
 
@@ -99,6 +111,7 @@ func (pci *PCIDevice) NumVFs() int64 {
 	if numvfs, err := strconv.ParseInt(pci.VFs, 10, 32); err == nil {
 		return numvfs
 	}
+
 	return -1
 }
 
@@ -111,9 +124,11 @@ func (pci *PCIDevice) GetVFs() (ret []*PCIDevice, err error) {
 			if er != nil {
 				return nil, er
 			}
+
 			ret = append(ret, vf)
 		}
 	}
+
 	return
 }
 
@@ -125,13 +140,16 @@ func FindSysFsDevice(dev string) (string, error) {
 		if os.IsNotExist(err) {
 			return "", nil
 		}
+
 		return "", errors.Wrapf(err, "unable to get stat for %s", dev)
 	}
 
 	devType := "block"
 	rdev := fi.Sys().(*syscall.Stat_t).Dev
+
 	if mode := fi.Mode(); mode&os.ModeDevice != 0 {
 		rdev = fi.Sys().(*syscall.Stat_t).Rdev
+
 		if mode&os.ModeCharDevice != 0 {
 			devType = "char"
 		}
@@ -139,13 +157,17 @@ func FindSysFsDevice(dev string) (string, error) {
 
 	major := unix.Major(rdev)
 	minor := unix.Minor(rdev)
+
 	if major == 0 {
 		return "", errors.Errorf("%s is a virtual device node", dev)
 	}
+
 	devPath := fmt.Sprintf("/sys/dev/%s/%d:%d", devType, major, minor)
+
 	realDevPath, err := filepath.EvalSymlinks(devPath)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed get realpath for %s", devPath)
 	}
+
 	return realDevPath, nil
 }

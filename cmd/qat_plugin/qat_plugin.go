@@ -32,8 +32,10 @@ const (
 )
 
 func main() {
-	var plugin deviceplugin.Scanner
-	var err error
+	var (
+		plugin deviceplugin.Scanner
+		err    error
+	)
 
 	mode := flag.String("mode", "dpdk", "plugin mode which can be either dpdk (default) or kernel")
 
@@ -50,12 +52,15 @@ func main() {
 	default:
 		err = errors.Errorf("Unknown mode: %s", *mode)
 	}
+
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
 	klog.V(1).Infof("QAT device plugin started in '%s' mode", *mode)
+
 	manager := deviceplugin.NewManager(namespace, plugin)
+
 	manager.Run()
 }

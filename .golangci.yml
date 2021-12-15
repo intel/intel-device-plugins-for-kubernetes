@@ -42,6 +42,7 @@ linters:
     - unused
     - varcheck
     - whitespace
+    - wsl
 
 linters-settings:
   gofmt:

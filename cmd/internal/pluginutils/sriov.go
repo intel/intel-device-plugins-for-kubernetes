@@ -31,5 +31,6 @@ func GetSriovNumVFs(sysFSPath string) string {
 	if err != nil {
 		return "-1"
 	}
+
 	return strings.TrimSpace(string(dat))
 }

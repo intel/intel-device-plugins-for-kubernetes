@@ -57,6 +57,7 @@ func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
 
 	var prevDevTree dpapi.DeviceTree
+
 	for {
 		devTree := dp.scan()
 
@@ -64,6 +65,7 @@ func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 			klog.V(1).Info("DLB scan update: pf: ", len(devTree[deviceTypePF]), " / vf: ", len(devTree[deviceTypeVF]))
 			prevDevTree = devTree
 		}
+
 		notifier.Notify(devTree)
 
 		select {

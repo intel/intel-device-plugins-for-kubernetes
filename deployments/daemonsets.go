@@ -67,9 +67,11 @@ func SGXPluginDaemonSet() *apps.DaemonSet {
 // getDaemonset unmarshalls yaml content into a DaemonSet object.
 func getDaemonset(content []byte) *apps.DaemonSet {
 	var result apps.DaemonSet
+
 	err := yaml.Unmarshal(content, &result)
 	if err != nil {
 		panic(err)
 	}
+
 	return &result
 }

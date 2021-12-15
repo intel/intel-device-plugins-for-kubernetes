@@ -76,19 +76,23 @@ func getDevTree(sysfs string, qatDevs []device, config map[string]section) (dpap
 		newDeviceSpec("/dev/qat_dev_processes"),
 		newDeviceSpec("/dev/usdm_drv"),
 	}
+
 	for _, qatDev := range qatDevs {
 		uiodevs, err := getUIODevices(sysfs, qatDev.devtype, qatDev.bsf)
 		if err != nil {
 			return nil, err
 		}
+
 		for _, uiodev := range uiodevs {
 			devs = append(devs, newDeviceSpec(filepath.Join("/dev/", uiodev)))
 		}
 	}
 
 	uniqID := 0
+
 	for sname, svalue := range config {
 		devType := fmt.Sprintf("cy%d_dc%d", svalue.cryptoEngines, svalue.compressionEngines)
+
 		for _, ep := range svalue.endpoints {
 			for i := 0; i < ep.processes; i++ {
 				envs := map[string]string{
@@ -137,6 +141,7 @@ func (dp *DevicePlugin) getOnlineDevices(iommuOn bool) ([]device, error) {
 	}
 
 	devices := []device{}
+
 	for _, line := range strings.Split(string(outputBytes[:]), "\n") {
 		matches := adfCtlRegex.FindStringSubmatch(line)
 		if len(matches) == 0 {
@@ -192,6 +197,7 @@ func getUIODevices(sysfs, devtype, bsf string) ([]string, error) {
 func (dp *DevicePlugin) parseConfigs(devices []device) (map[string]section, error) {
 	devNum := 0
 	drvConfig := make(driverConfig)
+
 	for _, dev := range devices {
 		// Parse the configuration.
 		config, err := ini.Load(filepath.Join(dp.configDir, fmt.Sprintf("%s_%s.conf", dev.devtype, dev.id)))
@@ -204,7 +210,9 @@ func (dp *DevicePlugin) parseConfigs(devices []device) (map[string]section, erro
 			if section.Name() == "GENERAL" || section.Name() == "KERNEL" || section.Name() == "KERNEL_QAT" || section.Name() == ini.DefaultSection {
 				continue
 			}
+
 			klog.V(4).Info(section.Name())
+
 			if err := drvConfig.update(dev.id, section); err != nil {
 				return nil, err
 			}
@@ -226,15 +234,19 @@ func (drvConfig driverConfig) update(devID string, iniSection *ini.Section) erro
 	if err != nil {
 		return errors.Wrapf(err, "Can't parse NumProcesses in %s", iniSection.Name())
 	}
+
 	cryptoEngines, err := iniSection.Key("NumberCyInstances").Int()
 	if err != nil {
 		return errors.Wrapf(err, "Can't parse NumberCyInstances in %s", iniSection.Name())
 	}
+
 	compressionEngines, err := iniSection.Key("NumberDcInstances").Int()
 	if err != nil {
 		return errors.Wrapf(err, "Can't parse NumberDcInstances in %s", iniSection.Name())
 	}
+
 	pinned := false
+
 	if limitDevAccessKey, err := iniSection.GetKey("LimitDevAccess"); err == nil {
 		limitDevAccess, err := limitDevAccessKey.Bool()
 		if err != nil {
@@ -251,9 +263,11 @@ func (drvConfig driverConfig) update(devID string, iniSection *ini.Section) erro
 		if old.pinned != pinned {
 			return errors.Errorf("Value of LimitDevAccess must be consistent across all devices in %s", iniSection.Name())
 		}
+
 		if !pinned && old.endpoints[0].processes != numProcesses {
 			return errors.Errorf("For not pinned section \"%s\" NumProcesses must be equal for all devices", iniSection.Name())
 		}
+
 		if old.cryptoEngines != cryptoEngines || old.compressionEngines != compressionEngines {
 			return errors.Errorf("NumberCyInstances and NumberDcInstances must be consistent across all devices in %s", iniSection.Name())
 		}
@@ -329,15 +343,19 @@ func (dp *DevicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error
 		envsToDelete := []string{}
 		envsToAdd := make(map[string]string)
 		counter := 0
+
 		for key, value := range containerResponse.Envs {
 			if !strings.HasPrefix(key, "QAT_SECTION_NAME_") {
 				continue
 			}
+
 			parts := strings.Split(key, "_")
 			if len(parts) != 6 {
 				return errors.Errorf("Wrong format of env variable name %s", key)
 			}
+
 			prefix := strings.Join(parts[0:5], "_")
+
 			envsToDelete = append(envsToDelete, key)
 			envsToAdd[fmt.Sprintf("%s_%d", prefix, counter)] = value
 			counter++

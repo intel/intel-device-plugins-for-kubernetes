@@ -62,16 +62,19 @@ func createTestFiles(root string, devfsdirs, sysfsdirs []string, sysfsfiles map[
 			return "", "", errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
+
 	for _, sysfsdir := range sysfsdirs {
 		if err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0750); err != nil {
 			return "", "", errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
+
 	for filename, body := range sysfsfiles {
 		if err := os.WriteFile(path.Join(sysfs, filename), body, 0600); err != nil {
 			return "", "", errors.Wrap(err, "Failed to create fake vendor file")
 		}
 	}
+
 	return sysfs, devfs, nil
 }
 
@@ -79,6 +82,7 @@ func TestNewDevicePlugin(t *testing.T) {
 	if newDevicePlugin("", "", cliOptions{sharedDevNum: 2, resourceManagement: false}) == nil {
 		t.Error("Failed to create plugin")
 	}
+
 	if newDevicePlugin("", "", cliOptions{sharedDevNum: 2, resourceManagement: true}) != nil {
 		t.Error("Unexpectedly managed to create resource management enabled plugin inside unit tests")
 	}
@@ -134,6 +138,7 @@ func TestGetPreferredAllocation(t *testing.T) {
 
 func TestAllocate(t *testing.T) {
 	plugin := newDevicePlugin("", "", cliOptions{sharedDevNum: 2, resourceManagement: false})
+
 	_, err := plugin.Allocate(&v1beta1.AllocateRequest{})
 	if _, ok := err.(*dpapi.UseDefaultMethodError); !ok {
 		t.Errorf("Unexpected return value: %+v", err)
@@ -141,6 +146,7 @@ func TestAllocate(t *testing.T) {
 
 	// mock the rm
 	plugin.resMan = &mockResourceManager{}
+
 	_, err = plugin.Allocate(&v1beta1.AllocateRequest{})
 	if _, ok := err.(*dpapi.UseDefaultMethodError); !ok {
 		t.Errorf("Unexpected return value: %+v", err)
@@ -266,6 +272,7 @@ func TestScan(t *testing.T) {
 		if tc.options.sharedDevNum == 0 {
 			tc.options.sharedDevNum = 1
 		}
+
 		t.Run(tc.name, func(t *testing.T) {
 			root, err := os.MkdirTemp("", "test_new_device_plugin")
 			if err != nil {

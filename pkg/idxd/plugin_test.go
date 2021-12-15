@@ -36,8 +36,9 @@ const (
 
 func getFakeDevNodes(devDir, charDevDir, wqName string) ([]pluginapi.DeviceSpec, error) {
 	devPath := path.Join(devDir, wqName)
-	var devNum int
-	var queueNum int
+
+	var devNum, queueNum int
+
 	fmt.Sscanf(wqName, "wq%d.%d", &devNum, &queueNum)
 	charDevPath := path.Join(charDevDir, fmt.Sprintf("%d:%d", dsaMajor, devNum*10+queueNum))
 
@@ -212,6 +213,7 @@ func genTest(sysfs, statePattern string, tc testCase) func(t *testing.T) {
 				t.Fatalf("Failed to create fake sysfs directory: %+v", err)
 			}
 		}
+
 		for filename, body := range tc.sysfsFiles {
 			if err := os.WriteFile(path.Join(sysfs, filename), body, 0600); err != nil {
 				t.Fatalf("Failed to create fake sysfs entry: %+v", err)
@@ -229,9 +231,11 @@ func genTest(sysfs, statePattern string, tc testCase) func(t *testing.T) {
 		if !tc.expectedError && err != nil {
 			t.Errorf("unexpected error: %+v", err)
 		}
+
 		if tc.expectedError && err == nil {
 			t.Errorf("unexpected success")
 		}
+
 		if err := checkDeviceTree(notifier.deviceTree, tc.expectedResult, tc.expectedError); err != nil {
 			t.Error(err)
 		}
@@ -246,15 +250,19 @@ func checkDeviceTree(deviceTree dpapi.DeviceTree, expectedResult map[string]int,
 			if !ok {
 				return fmt.Errorf("%w: unexpected device type: %s", errUnitTest, key)
 			}
+
 			numberDev := len(deviceTree[key])
 			if numberDev != val {
 				return fmt.Errorf("%w: %s: unexpected number of devices: %d, expected: %d", errUnitTest, key, numberDev, val)
 			}
+
 			delete(expectedResult, key)
 		}
+
 		if len(expectedResult) > 0 {
 			return fmt.Errorf("%w: missing expected result(s): %+v", errUnitTest, expectedResult)
 		}
 	}
+
 	return nil
 }
