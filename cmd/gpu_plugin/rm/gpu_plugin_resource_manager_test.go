@@ -85,6 +85,7 @@ func (w *mockPodResources) GetAllocatableResources(ctx context.Context,
 }
 
 func newMockResourceManager(pods []v1.Pod) ResourceManager {
+	//nolint: staticcheck
 	client, err := grpc.Dial("", grpc.WithInsecure())
 	if err != nil {
 		os.Exit(1)
