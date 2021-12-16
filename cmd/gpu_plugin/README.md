@@ -16,6 +16,9 @@ Table of Contents
         * [Run the plugin as administrator](#run-the-plugin-as-administrator)
     * [Verify plugin registration](#verify-plugin-registration)
     * [Testing the plugin](#testing-the-plugin)
+* [Issues with media workloads on multi-GPU setups](#issues-with-media-workloads-on-multi-gpu-setups)
+    * [Workaround for QSV and VA-API](#workaround-for-qsv-and-va-api)
+
 
 ## Introduction
 
@@ -242,3 +245,64 @@ We can test the plugin is working by deploying an OpenCL image and running `clin
       ----     ------            ----       ----               -------
       Warning  FailedScheduling  <unknown>  default-scheduler  0/1 nodes are available: 1 Insufficient gpu.intel.com/i915.
     ```
+
+
+## Issues with media workloads on multi-GPU setups
+
+Unlike with 3D & compute, and OneVPL media API, QSV (MediaSDK) & VA-API
+media APIs do not offer device discovery functionality for applications.
+There is nothing (e.g. environment variable) with which the default
+device could be overridden either.
+
+As result, most (all?) media applications using VA-API or QSV, fail to
+locate the correct GPU device file unless it is the first ("renderD128")
+one, or device file name is explictly specified with an application option.
+
+Kubernetes device plugins expose only requested number of device
+files, and their naming matches host device file names (for several
+reasons unrelated to media).  Therefore, on multi-GPU hosts, the only
+GPU device file mapped to the media container can be some other one
+than "renderD128", and media applications using VA-API or QSV need to
+be explicitly told which one to use.
+
+These options differ from application to application.  Relevant FFmpeg
+options are documented here:
+* VA-API: https://trac.ffmpeg.org/wiki/Hardware/VAAPI
+* QSV: https://github.com/Intel-Media-SDK/MediaSDK/wiki/FFmpeg-QSV-Multi-GPU-Selection-on-Linux
+
+
+### Workaround for QSV and VA-API
+
+[Render device](render-device.sh) shell script locates and outputs the
+correct device file name.  It can be added to the container and used
+to give device file name for the application.
+
+Use it either from another script invoking the application, or
+directly from the Pod YAML command line.  In latter case, it can be
+used either to add the device file name to the end of given command
+line, like this:
+
+```bash
+command: ["render-device.sh", "vainfo", "--display", "drm", "--device"]
+
+=> /usr/bin/vainfo --display drm --device /dev/dri/renderDXXX
+```
+
+Or inline, like this:
+
+```bash
+command: ["/bin/sh", "-c",
+          "vainfo --device $(render-device.sh 1) --display drm"
+         ]
+```
+
+If device file name is needed for multiple commands, one can use shell variable:
+
+```bash
+command: ["/bin/sh", "-c",
+          "dev=$(render-device.sh 1) && vainfo --device $dev && <more commands>"
+         ]
+```
+
+With argument N, script outputs name of the Nth suitable GPU device
+file, which can be used when more than one GPU resource was requested.
