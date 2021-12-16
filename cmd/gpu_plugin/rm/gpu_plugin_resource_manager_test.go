@@ -114,9 +114,17 @@ func newMockResourceManager(pods []v1.Pod) ResourceManager {
 		[]v1beta1.Mount{{}},
 		map[string]string{"more": "coverage"})
 	deviceInfoMap["card1-0"] = NewDeviceInfo([]v1beta1.DeviceSpec{{}}, nil, nil)
+	deviceInfoMap["card2-0"] = NewDeviceInfo([]v1beta1.DeviceSpec{{}}, nil, nil)
 	rm.SetDevInfos(deviceInfoMap)
 
 	return &rm
+}
+
+type testCase struct {
+	name              string
+	pods              []v1.Pod
+	containerRequests []*v1beta1.ContainerAllocateRequest
+	expectErr         bool
 }
 
 func TestNewResourceManager(t *testing.T) {
@@ -159,12 +167,7 @@ func TestReallocateWithFractionalResources(t *testing.T) {
 
 	properContainerRequests := []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"card0-0"}}}
 
-	testCases := []struct {
-		name              string
-		pods              []v1.Pod
-		containerRequests []*v1beta1.ContainerAllocateRequest
-		expectErr         bool
-	}{
+	testCases := []testCase{
 		{
 			name:              "Wrong number of container requests should fail",
 			pods:              []v1.Pod{properTestPod},
@@ -233,6 +236,296 @@ func TestReallocateWithFractionalResources(t *testing.T) {
 				expectTruef(resp.ContainerResponses[0].Devices[0].Permissions == "rw", t, tCase.name, "permissions not set for device")
 			}
 		}
+	}
+}
+
+func TestReallocateWithFractionalResourcesWithOneCardTwoTiles(t *testing.T) {
+	properTestPod := v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				gasCardAnnotation: "card0",
+				gasTileAnnotation: "card0:gt0+gt1"},
+			Name: "TestPod",
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{
+							"gpu.intel.com/i915": resource.MustParse("1"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	properContainerRequests := []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"card0-0"}}}
+
+	tCase := testCase{
+		name:              "Single pending pod with two tiles should succeed",
+		pods:              []v1.Pod{properTestPod},
+		containerRequests: properContainerRequests,
+		expectErr:         false,
+	}
+
+	rm := newMockResourceManager(tCase.pods)
+	resp, err := rm.ReallocateWithFractionalResources(&v1beta1.AllocateRequest{
+		ContainerRequests: tCase.containerRequests,
+	})
+
+	if (err != nil) && !tCase.expectErr {
+		t.Errorf("test %v unexpected failure, err:%v", tCase.name, err)
+	}
+	if err == nil {
+		if tCase.expectErr {
+			t.Errorf("test %v unexpected success", tCase.name)
+		} else {
+			// check response
+			expectTruef(len(resp.ContainerResponses) == 1, t, tCase.name, "wrong number of container responses, expected 1")
+			expectTruef(len(resp.ContainerResponses[0].Envs) == 2, t, tCase.name, "wrong number of env variables in container response, expected 2")
+			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] != "", t, tCase.name, "l0 tile mask not set")
+			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] == "0.0,0.1", t, tCase.name, "l0 affinity mask is incorrect")
+			expectTruef(len(resp.ContainerResponses[0].Devices) == 1, t, tCase.name, "wrong number of devices, expected 1")
+		}
+	}
+}
+
+func TestReallocateWithFractionalResourcesWithTwoCardsOneTile(t *testing.T) {
+	properTestPod := v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				gasCardAnnotation: "card1,card2",
+				gasTileAnnotation: "card1:gt3,card2:gt4"},
+			Name: "TestPod",
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{
+							"gpu.intel.com/i915": resource.MustParse("2"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	properContainerRequests := []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"card1-0", "card2-0"}}}
+
+	tCase := testCase{
+		name:              "Single pending pod with two cards and one tile each should succeed",
+		pods:              []v1.Pod{properTestPod},
+		containerRequests: properContainerRequests,
+		expectErr:         false,
+	}
+
+	rm := newMockResourceManager(tCase.pods)
+	resp, err := rm.ReallocateWithFractionalResources(&v1beta1.AllocateRequest{
+		ContainerRequests: tCase.containerRequests,
+	})
+
+	if (err != nil) && !tCase.expectErr {
+		t.Errorf("test %v unexpected failure, err:%v", tCase.name, err)
+	}
+	if err == nil {
+		if tCase.expectErr {
+			t.Errorf("test %v unexpected success", tCase.name)
+		} else {
+			// check response
+			expectTruef(len(resp.ContainerResponses) == 1, t, tCase.name, "wrong number of container responses, expected 1")
+			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] != "", t, tCase.name, "l0 tile mask not set")
+			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] == "0.3,1.4", t, tCase.name, "l0 affinity mask is incorrect: ")
+			expectTruef(len(resp.ContainerResponses[0].Devices) == 2, t, tCase.name, "wrong number of devices, expected 2")
+		}
+	}
+}
+
+func TestReallocateWithFractionalResourcesWithThreeCardsTwoTiles(t *testing.T) {
+	properTestPod := v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				gasCardAnnotation: "card0,card1,card2",
+				gasTileAnnotation: "card0:gt0+gt1,card1:gt2+gt3,card2:gt3+gt4"},
+			Name: "TestPod",
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{
+							"gpu.intel.com/i915": resource.MustParse("3"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	properContainerRequests := []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"card0-0", "card1-0", "card2-0"}}}
+
+	tCase := testCase{
+		name:              "Single pending pod with three cards and two tiles each should succeed",
+		pods:              []v1.Pod{properTestPod},
+		containerRequests: properContainerRequests,
+		expectErr:         false,
+	}
+
+	rm := newMockResourceManager(tCase.pods)
+	resp, err := rm.ReallocateWithFractionalResources(&v1beta1.AllocateRequest{
+		ContainerRequests: tCase.containerRequests,
+	})
+
+	if (err != nil) && !tCase.expectErr {
+		t.Errorf("test %v unexpected failure, err:%v", tCase.name, err)
+	}
+	if err == nil {
+		if tCase.expectErr {
+			t.Errorf("test %v unexpected success", tCase.name)
+		} else {
+			// check response
+			expectTruef(len(resp.ContainerResponses) == 1, t, tCase.name, "wrong number of container responses, expected 1")
+			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] != "", t, tCase.name, "l0 tile mask not set")
+			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] == "0.0,0.1,1.2,1.3,2.3,2.4", t, tCase.name, "l0 affinity mask is incorrect: ")
+			expectTruef(len(resp.ContainerResponses[0].Devices) == 3, t, tCase.name, "wrong number of devices, expected 3")
+		}
+	}
+}
+
+func TestReallocateWithFractionalResourcesWithMultipleContainersTileEach(t *testing.T) {
+	properTestPod := v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				gasCardAnnotation: "card1|card2",
+				gasTileAnnotation: "card1:gt1|card2:gt0"},
+			Name: "TestPod",
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{
+							"gpu.intel.com/i915": resource.MustParse("1"),
+						},
+					},
+				},
+				{
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{
+							"gpu.intel.com/i915": resource.MustParse("1"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	properContainerRequests := []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"card1-0"}}, {DevicesIDs: []string{"card2-0"}}}
+
+	tCase := testCase{
+		name:              "Single pending pod with two containers with one tile each should fail",
+		pods:              []v1.Pod{properTestPod},
+		containerRequests: properContainerRequests,
+		expectErr:         true,
+	}
+
+	rm := newMockResourceManager(tCase.pods)
+	_, err := rm.ReallocateWithFractionalResources(&v1beta1.AllocateRequest{
+		ContainerRequests: tCase.containerRequests,
+	})
+
+	if (err != nil) && !tCase.expectErr {
+		t.Errorf("test %v unexpected failure, err:%v", tCase.name, err)
+	}
+	if err == nil {
+		if tCase.expectErr {
+			t.Errorf("test %v unexpected success", tCase.name)
+		}
+	}
+}
+
+func TestTileAnnotationParsing(t *testing.T) {
+	type parseTest struct {
+		line   string
+		index  int
+		result string
+	}
+
+	parseTests := []parseTest{
+		{
+			line:   "card1:gt1",
+			index:  0,
+			result: "0.1",
+		},
+		{
+			line:   "card1:gt1+gt2",
+			index:  0,
+			result: "0.1,0.2",
+		},
+		{
+			line:   "card1:gt1+gt2,card2:gt0",
+			index:  0,
+			result: "0.1,0.2,1.0",
+		},
+		{
+			line:   "card1:gt1",
+			index:  1,
+			result: "",
+		},
+		{
+			line:   "card1:gt1|card2:gt4",
+			index:  1,
+			result: "0.4",
+		},
+		{
+			line:   "card1:gt1|card2:gt4,card3:gt2",
+			index:  1,
+			result: "0.4,1.2",
+		},
+		{
+			line:   "card1:gt1|card2:gt4,card3:gt2|card5:gt0",
+			index:  2,
+			result: "0.0",
+		},
+		{
+			line:   "card1:gtX",
+			index:  0,
+			result: "",
+		},
+		{
+			line:   "|",
+			index:  0,
+			result: "",
+		},
+		{
+			line:   "card1:gt1||card2:gt4,card3:gt2",
+			index:  1,
+			result: "0.4,1.2",
+		},
+		{
+			line:   "|||card2:gt7",
+			index:  0,
+			result: "0.7",
+		},
+		{
+			line:   "card5",
+			index:  0,
+			result: "",
+		},
+	}
+
+	for _, pt := range parseTests {
+		pod := v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					gasTileAnnotation: pt.line},
+			},
+		}
+
+		ret := containerTileAffinityMask(&pod, pt.index)
+
+		expectTruef(ret == pt.result, t, pt.line, "resulting mask is wrong. correct: %v, got: %v", pt.result, ret)
 	}
 }
 

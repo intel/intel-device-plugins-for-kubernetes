@@ -26,7 +26,7 @@ Intel GPU plugin facilitates Kubernetes workload offloading by providing access 
 Intel discrete (Xe) and integrated GPU HW device files.
 
 Use cases include, but are not limited to:
-- Media transcode 
+- Media transcode
 - Media analytics
 - Cloud gaming
 - High performance computing
@@ -43,7 +43,7 @@ backend libraries can offload compute operations to GPU.
 | -enable-monitoring | - | disabled | Enable 'i915_monitoring' resource that provides access to all Intel GPU devices on the node |
 | -resource-manager | - | disabled | Enable fractional resource management, [see also dependencies](#fractional-resources) |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
-| -allocation-policy | string | none | 3 possible values: balanced, packed, none. It is meaningful when shared-dev-num > 1, balanced mode is suitable for workload balance among GPU devices, packed mode is suitable for making full use of each GPU device, none mode is the default |
+| -allocation-policy | string | none | 3 possible values: balanced, packed, none. It is meaningful when shared-dev-num > 1, balanced mode is suitable for workload balance among GPU devices, packed mode is suitable for making full use of each GPU device, none mode is the default. Allocation policy does not have effect when resource manager is enabled. |
 
 The plugin also accepts a number of other arguments (common to all plugins) related to logging.
 Please use the -h option to see the complete list of logging related options.
@@ -169,6 +169,13 @@ increasing numeric timestamps in the annotation `gas-ts` and container card sele
 `gas-container-cards:card0,card1|card2,card3`. Enabling the fractional-resource support
 in the plugin without running such an annotation adding scheduler extender in the cluster
 will only slow down GPU-deployments, so do not enable this feature unnecessarily.
+
+In multi-tile systems, containers can request individual tiles to improve GPU resource usage.
+Tiles targeted for containers are specified to pod via `gas-container-tiles` annotation where the the annotation
+value describes a set of card and tile combinations. For example in a two container pod, the annotation
+could be `gas-container-tiles:card0:gt0+gt1|card1:gt1,card2:gt0`. Similarly to `gas-container-cards`, the container
+details are split via `|`. In the example above, the first container gets tiles 0 and 1 from card 0,
+and the second container gets tile 1 from card 1 and tile 0 from card 2.
 
 > **Note**: It is also possible to run the GPU device plugin using a non-root user. To do this,
 the nodes' DAC rules must be configured to device plugin socket creation and kubelet registration.

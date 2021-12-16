@@ -18,6 +18,7 @@ import (
 	"context"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -39,6 +40,9 @@ import (
 const (
 	gasTSAnnotation   = "gas-ts"
 	gasCardAnnotation = "gas-container-cards"
+	gasTileAnnotation = "gas-container-tiles"
+
+	levelZeroAffinityMaskEnvVar = "ZE_AFFINITY_MASK"
 
 	grpcAddress    = "unix:///var/lib/kubelet/pod-resources/kubelet.sock"
 	grpcBufferSize = 4 * 1024 * 1024
@@ -154,8 +158,9 @@ func (rm *resourceManager) ReallocateWithFractionalResources(request *pluginapi.
 
 	pod := podCandidate.pod
 	cards := containerCards(pod, podCandidate.allocatedContainers)
+	affinityMask := containerTileAffinityMask(pod, podCandidate.allocatedContainers)
 
-	return rm.createAllocateResponse(cards)
+	return rm.createAllocateResponse(cards, affinityMask)
 }
 
 func isInputOk(rqt *pluginapi.AllocateRequest, skipID string) bool {
@@ -330,7 +335,7 @@ func (rm *resourceManager) SetDevInfos(deviceInfos DeviceInfoMap) {
 	rm.deviceInfos = deviceInfos
 }
 
-func (rm *resourceManager) createAllocateResponse(cards []string) (*pluginapi.AllocateResponse, error) {
+func (rm *resourceManager) createAllocateResponse(cards []string, tileAffinityMask string) (*pluginapi.AllocateResponse, error) {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
 
@@ -365,6 +370,13 @@ func (rm *resourceManager) createAllocateResponse(cards []string) (*pluginapi.Al
 
 			cresp.Envs[key] = value
 		}
+	}
+
+	if tileAffinityMask != "" {
+		if cresp.Envs == nil {
+			cresp.Envs = make(map[string]string)
+		}
+		cresp.Envs[levelZeroAffinityMaskEnvVar] = tileAffinityMask
 	}
 
 	allocateResponse.ContainerResponses = append(allocateResponse.ContainerResponses, &cresp)
@@ -414,6 +426,78 @@ func containerCards(pod *v1.Pod, gpuUsingContainerIndex int) []string {
 	klog.Warningf("couldn't find cards for gpu using container index %v", gpuUsingContainerIndex)
 
 	return nil
+}
+
+func convertTileInfoToEnvMask(tileInfo string) string {
+	cardTileList := strings.Split(tileInfo, ",")
+
+	var tileIndices []string
+
+	for i, cardList := range cardTileList {
+		cards := strings.Split(cardList, ",")
+
+		for _, cardTileCombos := range cards {
+			cardTileSplit := strings.Split(cardTileCombos, ":")
+			if len(cardTileSplit) < 2 {
+				klog.Warningf("invalid card tile combo string (%v)", cardTileCombos)
+				return ""
+			}
+
+			tiles := strings.Split(cardTileSplit[1], "+")
+
+			var combos []string
+
+			for _, tile := range tiles {
+				tileNoStr := strings.TrimPrefix(tile, "gt")
+				tileNo, err := strconv.ParseInt(tileNoStr, 10, 16)
+
+				if err != nil {
+					continue
+				}
+
+				levelZeroCardTileCombo :=
+					strconv.FormatInt(int64(i), 10) + "." +
+						strconv.FormatInt(int64(tileNo), 10)
+				combos = append(combos, levelZeroCardTileCombo)
+			}
+
+			tileIndices = append(tileIndices, strings.Join(combos, ","))
+		}
+	}
+
+	return strings.Join(tileIndices, ",")
+}
+
+// containerTiles returns the tile indices to use for a single container.
+// Indices should be passed to level zero env variable to guide execution
+// gpuUsingContainerIndex 0 == first gpu-using container in the pod.
+// annotation example:
+// gas-container-tiles=card0:gt0+gt1,card1:gt0|card2:gt1+gt2||card0:gt3
+func containerTileAffinityMask(pod *v1.Pod, gpuUsingContainerIndex int) string {
+	fullAnnotation := pod.Annotations[gasTileAnnotation]
+
+	if fullAnnotation == "" {
+		return ""
+	}
+
+	tileLists := strings.Split(fullAnnotation, "|")
+	klog.Infof("%s:%v", fullAnnotation, tileLists)
+
+	i := 0
+	for _, containerTileInfo := range tileLists {
+		if len(containerTileInfo) == 0 {
+			continue
+		}
+
+		if i == gpuUsingContainerIndex {
+			return convertTileInfoToEnvMask(containerTileInfo)
+		}
+
+		i++
+	}
+
+	klog.Warningf("couldn't find tile info for gpu using container index %v", gpuUsingContainerIndex)
+	return ""
 }
 
 func getClientset() (*kubernetes.Clientset, error) {
