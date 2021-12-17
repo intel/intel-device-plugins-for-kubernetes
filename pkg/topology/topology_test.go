@@ -29,13 +29,16 @@ func setupTestEnv(t *testing.T) func() {
 	if err != nil {
 		t.Fatal("unable to get current directory")
 	}
+
 	if path, err := filepath.EvalSymlinks(pwd); err == nil {
 		pwd = path
 	}
+
 	mockRoot = pwd + "/testdata"
 	teardown := func() {
 		mockRoot = ""
 	}
+
 	return teardown
 }
 
@@ -78,8 +81,10 @@ func TestFindSysFsDevice(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
+
 	teardown := setupTestEnv(t)
 	defer teardown()
+
 	cases := []struct {
 		name        string
 		input       string
@@ -124,6 +129,7 @@ func TestFindSysFsDevice(t *testing.T) {
 
 func TestReadFilesInDirectory(t *testing.T) {
 	var file, empty string
+
 	fname := "test-a"
 	content := []byte(" something\n")
 	expectedContent := "something"
@@ -137,7 +143,9 @@ func TestReadFilesInDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to create test directory: %+v", err)
 	}
+
 	defer os.RemoveAll(dir)
+
 	if err = os.WriteFile(filepath.Join(dir, fname), content, 0600); err != nil {
 		t.Fatalf("unexpected failure: %v", err)
 	}
@@ -145,9 +153,11 @@ func TestReadFilesInDirectory(t *testing.T) {
 	if err = readFilesInDirectory(fileMap, dir); err != nil {
 		t.Fatalf("unexpected failure: %v", err)
 	}
+
 	if empty != "" {
 		t.Fatalf("unexpected content: %q", empty)
 	}
+
 	if file != expectedContent {
 		t.Fatalf("unexpected content: %q expected: %q", file, expectedContent)
 	}
@@ -274,8 +284,10 @@ func TestNewTopologyHints(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
+
 	teardown := setupTestEnv(t)
 	defer teardown()
+
 	cases := []struct {
 		output      Hints
 		name        string
@@ -320,8 +332,10 @@ func TestGetTopologyInfo(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping test in short mode.")
 	}
+
 	teardown := setupTestEnv(t)
 	defer teardown()
+
 	cases := []struct {
 		name        string
 		output      *pluginapi.TopologyInfo

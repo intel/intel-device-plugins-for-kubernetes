@@ -40,12 +40,14 @@ func createTestDirs(devfs, sysfs string, devfsDirs, sysfsDirs []string, sysfsFil
 			return errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
+
 	for _, sysfsdir := range sysfsDirs {
 		err = os.MkdirAll(path.Join(sysfs, sysfsdir), 0750)
 		if err != nil {
 			return errors.Wrap(err, "Failed to create fake device directory")
 		}
 	}
+
 	for filename, body := range sysfsFiles {
 		err = os.WriteFile(path.Join(sysfs, filename), body, 0600)
 		if err != nil {
@@ -62,12 +64,14 @@ func validateDevTree(expectedDevTreeKeys map[string][]string, devTree dpapi.Devi
 		if _, ok := devTree[resource]; !ok {
 			return errors.Errorf("device tree: resource %s missing", resource)
 		}
+
 		for _, device := range devices {
 			if _, ok := devTree[resource][device]; !ok {
 				return errors.Errorf("device tree resource %s: device %s missing", resource, device)
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -104,6 +108,7 @@ func TestNewDevicePlugin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}
+
 	defer os.RemoveAll(root)
 
 	tcases := []struct {
@@ -185,6 +190,7 @@ func TestScan(t *testing.T) {
 	if err != nil {
 		t.Fatalf("can't create temporary directory: %+v", err)
 	}
+
 	defer os.RemoveAll(root)
 
 	sysfs := path.Join(root, "sys")

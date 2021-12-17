@@ -69,6 +69,7 @@ func nonePolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
 	deviceIds := req.AvailableDeviceIDs[0:req.AllocationSize]
 
 	klog.V(2).Infof("Allocate deviceIds: %q", deviceIds)
+
 	return deviceIds
 }
 
@@ -93,15 +94,19 @@ func balancedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string
 		Index = append(Index, key)
 		sort.Strings(Card[key])
 	}
+
 	sort.Strings(Index)
 
 	need := req.AllocationSize
+
 	var deviceIds []string
 
 	// We choose one device ID from the GPU card that has most shared gpu IDs each time.
 	for {
-		var allocateCard string
-		var max int
+		var (
+			allocateCard string
+			max          int
+		)
 
 		for _, key := range Index {
 			if Count[key] > max {
@@ -123,6 +128,7 @@ func balancedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string
 	}
 
 	klog.V(2).Infof("Allocate deviceIds: %q", deviceIds)
+
 	return deviceIds
 }
 
@@ -135,6 +141,7 @@ func packedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
 	deviceIds = deviceIds[:req.AllocationSize]
 
 	klog.V(2).Infof("Allocate deviceIds: %q", deviceIds)
+
 	return deviceIds
 }
 
@@ -168,6 +175,7 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 
 	if options.resourceManagement {
 		var err error
+
 		dp.resMan, err = rm.NewResourceManager(monitorID, namespace+"/"+deviceType)
 		if err != nil {
 			klog.Errorf("Failed to create resource manager: %+v", err)
@@ -199,7 +207,9 @@ func (dp *devicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocatio
 		// Add a security check here. This should never happen unless there occurs error in kubelet device plugin manager.
 		if req.AllocationSize > int32(len(req.AvailableDeviceIDs)) {
 			klog.V(3).Info("req.AllocationSize must be not greater than len(req.AvailableDeviceIDs).")
+
 			var err = errors.Errorf("AllocationSize (%d) is greater then the number of available device IDs (%d)", req.AllocationSize, len(req.AvailableDeviceIDs))
+
 			return nil, err
 		}
 
@@ -211,11 +221,13 @@ func (dp *devicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocatio
 
 		response.ContainerResponses = append(response.ContainerResponses, resp)
 	}
+
 	return response, nil
 }
 
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
+
 	var previouslyFound = -1
 
 	for {
@@ -245,15 +257,18 @@ func (dp *devicePlugin) isCompatibleDevice(name string) bool {
 		klog.V(4).Info("Not compatible device: ", name)
 		return false
 	}
+
 	dat, err := os.ReadFile(path.Join(dp.sysfsDir, name, "device/vendor"))
 	if err != nil {
 		klog.Warning("Skipping. Can't read vendor file: ", err)
 		return false
 	}
+
 	if strings.TrimSpace(string(dat)) != vendorString {
 		klog.V(4).Info("Non-Intel GPU: ", name)
 		return false
 	}
+
 	return true
 }
 
@@ -264,8 +279,10 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	}
 
 	var monitor []pluginapi.DeviceSpec
+
 	devTree := dpapi.NewDeviceTree()
 	rmDevInfos := rm.NewDeviceInfoMap()
+
 	for _, f := range files {
 		var nodes []pluginapi.DeviceSpec
 
@@ -285,6 +302,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				//Skipping possible drm control node
 				continue
 			}
+
 			devPath := path.Join(dp.devfsDir, drmFile.Name())
 			if _, err := os.Stat(devPath); err != nil {
 				continue
@@ -296,23 +314,29 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				ContainerPath: devPath,
 				Permissions:   "rw",
 			}
+
 			if !isPFwithVFs {
 				klog.V(4).Infof("Adding %s to GPU %s", devPath, f.Name())
+
 				nodes = append(nodes, devSpec)
 			}
+
 			if dp.options.enableMonitoring {
 				klog.V(4).Infof("Adding %s to GPU %s/%s", devPath, monitorType, monitorID)
+
 				monitor = append(monitor, devSpec)
 			}
 		}
 
 		if len(nodes) > 0 {
 			deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil)
+
 			for i := 0; i < dp.options.sharedDevNum; i++ {
 				devID := fmt.Sprintf("%s-%d", f.Name(), i)
 				// Currently only one device type (i915) is supported.
 				// TODO: check model ID to differentiate device models.
 				devTree.AddDevice(deviceType, devID, deviceInfo)
+
 				rmDevInfos[devID] = rm.NewDeviceInfo(nodes, nil, nil)
 			}
 		}
@@ -362,6 +386,7 @@ func main() {
 		klog.Error("invalid value for preferredAllocationPolicy, the valid values: balanced, packed, none")
 		os.Exit(1)
 	}
+
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
 
 	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory, opts)

@@ -36,6 +36,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	devicePlugin := rawObj.(*devicepluginv1.FpgaDevicePlugin)
 	yes := true
 	directoryOrCreate := v1.HostPathDirectoryOrCreate
+
 	return &apps.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",

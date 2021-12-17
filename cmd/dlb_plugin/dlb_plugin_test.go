@@ -55,6 +55,7 @@ func createTestFiles(devfs string, devfsdirs []string, sysfs string, pfDevs []st
 		if err := os.MkdirAll(path.Join(sysfs, pfDev, "device"), 0750); err != nil {
 			return errors.Wrap(err, "Failed to create fake device directory")
 		}
+
 		if err := os.WriteFile(path.Join(sysfs, pfDev, "device", "sriov_numvfs"), []byte(sriovnumvfs[index]), 0600); err != nil {
 			return errors.Wrap(err, "Failed to create fake device directory")
 		}

@@ -79,12 +79,14 @@ func (dev *Device) getName() string {
 	if len(dev.name) == 0 {
 		dev.name = filepath.Base(dev.Path)
 	}
+
 	return dev.name
 }
 
 func decodeJSONStream(reader io.Reader, dest interface{}) error {
 	decoder := json.NewDecoder(reader)
 	err := decoder.Decode(&dest)
+
 	return errors.WithStack(err)
 }
 
@@ -110,6 +112,7 @@ func newHookEnv(bitstreamDir string, config string, newPort newPortFun) *hookEnv
 
 func (he *hookEnv) getConfig(stdinJ *Stdin) (*Config, error) {
 	configPath := filepath.Join(stdinJ.Bundle, he.config)
+
 	configFile, err := os.Open(configPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -117,6 +120,7 @@ func (he *hookEnv) getConfig(stdinJ *Stdin) (*Config, error) {
 	defer configFile.Close()
 
 	var config Config
+
 	err = decodeJSONStream(configFile, &config)
 	if err != nil {
 		return nil, errors.WithMessage(err, "can't decode "+configPath)
@@ -129,6 +133,7 @@ func (he *hookEnv) getConfig(stdinJ *Stdin) (*Config, error) {
 	if len(config.Linux.Devices) == 0 {
 		return nil, errors.Errorf("%s: linux.devices is empty", configPath)
 	}
+
 	return &config, nil
 }
 
@@ -136,6 +141,7 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 	// parse FPGA_REGION_N and FPGA_AFU_N environment variables
 	regionEnv := make(map[string]string)
 	afuEnv := make(map[string]string)
+
 	for _, env := range config.Process.Env {
 		splitted := strings.SplitN(env, "=", 2)
 		if strings.HasPrefix(splitted[0], fpgaRegionEnvPrefix) {
@@ -156,6 +162,7 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 	}
 
 	params := []fpgaParams{}
+
 	for num, region := range regionEnv {
 		afu, ok := afuEnv[num]
 		if !ok {
@@ -164,6 +171,7 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 
 		// Find a device suitable for the region/interface id
 		found := false
+
 		for _, dev := range config.Linux.Devices {
 			deviceName := dev.getName()
 			// skip non-FPGA devices
@@ -175,10 +183,12 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 			if dev.processed {
 				continue
 			}
+
 			port, err := he.newPort(deviceName)
 			if err != nil {
 				return nil, err
 			}
+
 			if interfaceUUID := port.GetInterfaceUUID(); interfaceUUID == region {
 				params = append(params,
 					fpgaParams{
@@ -189,18 +199,22 @@ func (he *hookEnv) getFPGAParams(config *Config) ([]fpgaParams, error) {
 				)
 				dev.processed = true
 				found = true
+
 				break
 			}
 		}
+
 		if !found {
 			return nil, errors.Errorf("can't find appropriate device for region %s", region)
 		}
 	}
+
 	return params, nil
 }
 
 func getStdin(reader io.Reader) (*Stdin, error) {
 	var stdinJ Stdin
+
 	err := decodeJSONStream(reader, &stdinJ)
 	if err != nil {
 		return nil, err

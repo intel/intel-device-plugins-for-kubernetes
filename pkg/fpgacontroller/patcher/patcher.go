@@ -95,6 +95,7 @@ func (p *patcher) AddAf(accfunc *fpgav2.AcceleratorFunction) error {
 	p.Lock()
 
 	p.afMap[namespace+"/"+accfunc.Name] = accfunc
+
 	if accfunc.Spec.Mode == af {
 		devtype, err := fpga.GetAfuDevType(accfunc.Spec.InterfaceID, accfunc.Spec.AfuID)
 		if err != nil {
@@ -105,6 +106,7 @@ func (p *patcher) AddAf(accfunc *fpgav2.AcceleratorFunction) error {
 	} else {
 		p.resourceMap[namespace+"/"+accfunc.Name] = rfc6901Escaper.Replace(namespace + "/region-" + accfunc.Spec.InterfaceID)
 	}
+
 	p.resourceModeMap[namespace+"/"+accfunc.Name] = accfunc.Spec.Mode
 
 	return nil
@@ -141,6 +143,7 @@ func validateContainer(container corev1.Container) error {
 			return errors.Errorf("environment variable '%s' is not allowed", v.Name)
 		}
 	}
+
 	return nil
 }
 
@@ -162,6 +165,7 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 	envVars := make(map[string]string)
 	counter := 0
 	ops := make([]string, 0, 2*len(requestedResources))
+
 	for rname, quantity := range requestedResources {
 		mode, found := p.resourceModeMap[rname]
 		if !found {
@@ -179,6 +183,7 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 			// The requested resources are exposed by FPGA plugins working in "region" mode.
 			for i := int64(0); i < quantity; i++ {
 				counter++
+
 				envVars[fmt.Sprintf("FPGA_REGION_%d", counter)] = p.afMap[rname].Spec.InterfaceID
 				envVars[fmt.Sprintf("FPGA_AFU_%d", counter)] = p.afMap[rname].Spec.AfuID
 			}
@@ -187,6 +192,7 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 			err := errors.Errorf("%q is registered with unknown mode %q instead of %q or %q",
 				rname, p.resourceModeMap[rname], af, region)
 			p.log.Error(err, "unable to construct patching operations")
+
 			return nil, err
 		}
 
@@ -217,6 +223,7 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 		for _, envvar := range container.Env {
 			envVars[envvar.Name] = envvar.Value
 		}
+
 		data := struct {
 			EnvVars      map[string]string
 			ContainerIdx int
@@ -224,11 +231,14 @@ func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 			ContainerIdx: containerIdx,
 			EnvVars:      envVars,
 		}
+
 		t := template.Must(template.New("add_operation").Parse(envAddOpTpl))
 		buf := new(bytes.Buffer)
+
 		if err := t.Execute(buf, data); err != nil {
 			return nil, errors.Wrap(err, "unable to execute template")
 		}
+
 		ops = append(ops, buf.String())
 	}
 

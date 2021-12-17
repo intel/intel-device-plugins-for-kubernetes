@@ -120,7 +120,9 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	if len(devicePlugin.Spec.NodeSelector) > 0 {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
+
 	daemonSet.ObjectMeta.Namespace = c.ns
+
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
 

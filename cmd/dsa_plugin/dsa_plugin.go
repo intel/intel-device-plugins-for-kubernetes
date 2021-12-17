@@ -50,6 +50,8 @@ func main() {
 	if plugin == nil {
 		klog.Fatal("Cannot create device plugin, please check above error messages.")
 	}
+
 	manager := dpapi.NewManager(namespace, plugin)
+
 	manager.Run()
 }

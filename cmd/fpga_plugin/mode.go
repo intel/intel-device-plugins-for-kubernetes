@@ -11,8 +11,10 @@ import (
 )
 
 func getModeOverrideFromCluster(nodeName, kubeConfig, master, mode string) (string, error) {
-	var config *rest.Config
-	var err error
+	var (
+		config *rest.Config
+		err    error
+	)
 
 	if len(nodeName) == 0 {
 		return mode, errors.New("node name is not set")
@@ -23,6 +25,7 @@ func getModeOverrideFromCluster(nodeName, kubeConfig, master, mode string) (stri
 	} else {
 		config, err = clientcmd.BuildConfigFromFlags(master, kubeConfig)
 	}
+
 	if err != nil {
 		return mode, err
 	}

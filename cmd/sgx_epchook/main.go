@@ -45,6 +45,7 @@ type patchNodeOp struct {
 
 func main() {
 	var register, affirm, label, daemon bool
+
 	flag.BoolVar(&register, "register", false, "register EPC as extended resource")
 	flag.BoolVar(&affirm, "affirm", false, "return error if EPC is not available")
 	flag.BoolVar(&label, "node-label", false, "create node label")
@@ -55,11 +56,13 @@ func main() {
 
 	// get the EPC size
 	var epcSize uint64
+
 	if cpuid.CPU.SGX.Available {
 		for _, s := range cpuid.CPU.SGX.EPCSections {
 			epcSize += s.EPCSize
 		}
 	}
+
 	klog.Infof("epc capacity: %d bytes", epcSize)
 
 	if epcSize == 0 && affirm {
@@ -77,7 +80,9 @@ func main() {
 
 	if daemon {
 		klog.Info("waiting for termination signal")
+
 		term := make(chan os.Signal, 1)
+
 		signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 		<-term
 	}
@@ -93,6 +98,7 @@ func updateNode(epcSize uint64, register, label bool) error {
 			Value: epcSize,
 		})
 	}
+
 	if label && epcSize > 0 {
 		payload = append(payload, patchNodeOp{
 			Op:    "add",
@@ -100,6 +106,7 @@ func updateNode(epcSize uint64, register, label bool) error {
 			Value: "true",
 		})
 	}
+
 	if len(payload) == 0 {
 		return nil
 	}
@@ -129,5 +136,6 @@ func updateNode(epcSize uint64, register, label bool) error {
 
 	// patch the node
 	_, err = clientset.CoreV1().Nodes().Patch(context.TODO(), node.Name, types.JSONPatchType, payloadBytes, metav1.PatchOptions{}, "status")
+
 	return err
 }

@@ -36,6 +36,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	devicePlugin := rawObj.(*devicepluginv1.QatDevicePlugin)
 	yes := true
 	pluginAnnotations := devicePlugin.ObjectMeta.DeepCopy().Annotations
+
 	return &apps.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",

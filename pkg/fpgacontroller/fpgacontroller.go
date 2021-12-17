@@ -44,19 +44,23 @@ func (r *AcceleratorFunctionReconciler) Reconcile(ctx context.Context, req ctrl.
 	log := log.FromContext(ctx).WithValues("af", req.NamespacedName)
 
 	p := r.PatcherManager.GetPatcher(req.NamespacedName.Namespace)
+
 	var af fpgav2.AcceleratorFunction
 	if err := r.Get(ctx, req.NamespacedName, &af); err != nil {
 		if apierrors.IsNotFound(err) {
 			p.RemoveAf(req.NamespacedName.Name)
 			log.V(4).Info("removed from patcher")
+
 			return ctrl.Result{}, nil
 		}
 
 		log.Error(err, "unable to fetch AcceleratorFunction object")
+
 		return ctrl.Result{}, err
 	}
 
 	log.V(4).Info("received", "AcceleratorFunction", af)
+
 	return ctrl.Result{}, p.AddAf(&af)
 }
 
@@ -79,20 +83,24 @@ func (r *FpgaRegionReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	log := log.FromContext(ctx).WithValues("fpgaregion", req.NamespacedName)
 
 	p := r.PatcherManager.GetPatcher(req.NamespacedName.Namespace)
+
 	var region fpgav2.FpgaRegion
 	if err := r.Get(ctx, req.NamespacedName, &region); err != nil {
 		if apierrors.IsNotFound(err) {
 			p.RemoveRegion(req.NamespacedName.Name)
 			log.V(4).Info("removed from patcher")
+
 			return ctrl.Result{}, nil
 		}
 
 		log.Error(err, "unable to fetch FpgaRegion object")
+
 		return ctrl.Result{}, err
 	}
 
 	log.V(4).Info("received", "FpgaRegion", region)
 	p.AddRegion(&region)
+
 	return ctrl.Result{}, nil
 }
 

@@ -115,6 +115,7 @@ func TestNotify(t *testing.T) {
 		n.Notify(tcase.newmap)
 
 		var update updateInfo
+
 		select {
 		case update = <-ch:
 		default:
@@ -123,9 +124,11 @@ func TestNotify(t *testing.T) {
 		if tcase.expectedAdded != len(update.Added) {
 			t.Errorf("Test case '%s': expected %d added device types, but got %d", tcase.name, tcase.expectedAdded, len(update.Added))
 		}
+
 		if tcase.expectedUpdated != len(update.Updated) {
 			t.Errorf("Test case '%s': expected %d updated device types, but got %d", tcase.name, tcase.expectedUpdated, len(update.Updated))
 		}
+
 		if tcase.expectedRemoved != len(update.Removed) {
 			t.Errorf("Test case '%s': expected %d removed device types, but got %d", tcase.name, tcase.expectedUpdated, len(update.Updated))
 		}
@@ -153,6 +156,7 @@ func (*devicePluginStub) Scan(n Notifier) error {
 		nodes: make([]pluginapi.DeviceSpec, 0),
 	})
 	n.Notify(tree)
+
 	return nil
 }
 
@@ -266,6 +270,7 @@ func TestHandleUpdate(t *testing.T) {
 		if tt.servers == nil {
 			tt.servers = make(map[string]devicePluginServer)
 		}
+
 		mgr := Manager{
 			devicePlugin: &devicePluginStub{},
 			servers:      tt.servers,
@@ -273,7 +278,9 @@ func TestHandleUpdate(t *testing.T) {
 				return &serverStub{}
 			},
 		}
+
 		mgr.handleUpdate(tt.update)
+
 		if len(tt.servers) != tt.expectedServers {
 			t.Errorf("Test case '%s': expected %d runnig device managers, but got %d",
 				tt.name, tt.expectedServers, len(tt.servers))

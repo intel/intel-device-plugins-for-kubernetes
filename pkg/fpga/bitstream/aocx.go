@@ -59,12 +59,16 @@ func OpenAOCX(name string) (*FileAOCX, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
 	ff, err := NewFileAOCX(f)
+
 	if err != nil {
 		f.Close()
 		return nil, err
 	}
+
 	ff.closer = f
+
 	return ff, nil
 }
 
@@ -76,6 +80,7 @@ func (f *FileAOCX) Close() (err error) {
 		err = f.closer.Close()
 		f.closer = nil
 	}
+
 	return
 }
 
@@ -86,10 +91,12 @@ func setSection(f *FileAOCX, section *elf.Section) error {
 		if err != nil {
 			return errors.Wrap(err, "unable to read .acl.fpga.bin")
 		}
+
 		f.GBS, err = parseFpgaBin(data)
 		if err != nil {
 			return errors.Wrap(err, "unable to parse gbs")
 		}
+
 		return nil
 	}
 
@@ -113,8 +120,10 @@ func setSection(f *FileAOCX, section *elf.Section) error {
 		if err != nil {
 			return errors.Wrapf(err, "%s: unable to get section data", name)
 		}
+
 		*field = strings.TrimSpace(string(data))
 	}
+
 	return nil
 }
 
@@ -125,6 +134,7 @@ func NewFileAOCX(r io.ReaderAt) (*FileAOCX, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read header")
 	}
+
 	f := new(FileAOCX)
 	for _, section := range el.Sections {
 		err = setSection(f, section)
@@ -132,6 +142,7 @@ func NewFileAOCX(r io.ReaderAt) (*FileAOCX, error) {
 			return nil, err
 		}
 	}
+
 	return f, nil
 }
 
@@ -140,26 +151,32 @@ func parseFpgaBin(d []byte) (*FileGBS, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open file")
 	}
+
 	gz := gb.Section(".acl.gbs.gz")
 	if gz == nil {
 		return nil, errors.New("no .acl.gbs.gz section in .acl.fgpa.bin")
 	}
+
 	gzr, err := gzip.NewReader(gz.Open())
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open gzip reader for .acl.gbs.gz")
 	}
+
 	b, err := io.ReadAll(gzr)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to uncompress .acl.gbs.gz")
 	}
+
 	g, err := NewFileGBS(bytes.NewReader(b))
 	if err != nil {
 		return nil, err
 	}
+
 	if afuUUID := g.AcceleratorTypeUUID(); afuUUID != OpenCLUUID {
 		g.Close()
 		return nil, errors.Errorf("incorrect OpenCL BSP AFU UUID (%s)", afuUUID)
 	}
+
 	return g, nil
 }
 
@@ -168,6 +185,7 @@ func (f *FileAOCX) RawBitstreamReader() io.ReadSeeker {
 	if f.GBS != nil {
 		return f.GBS.Bitstream.Open()
 	}
+
 	return nil
 }
 
@@ -176,6 +194,7 @@ func (f *FileAOCX) RawBitstreamData() ([]byte, error) {
 	if f.GBS != nil {
 		return f.GBS.Bitstream.Data()
 	}
+
 	return nil, errors.Errorf("GBS section not found")
 }
 
@@ -190,6 +209,7 @@ func (f *FileAOCX) InterfaceUUID() (ret string) {
 	if f.GBS != nil {
 		ret = f.GBS.InterfaceUUID()
 	}
+
 	return
 }
 
@@ -198,6 +218,7 @@ func (f *FileAOCX) AcceleratorTypeUUID() (ret string) {
 	if f.GBS != nil {
 		ret = f.GBS.AcceleratorTypeUUID()
 	}
+
 	return
 }
 
@@ -205,9 +226,11 @@ func (f *FileAOCX) AcceleratorTypeUUID() (ret string) {
 func (f *FileAOCX) InstallPath(root string) (ret string) {
 	interfaceID := f.InterfaceUUID()
 	uniqID := f.UniqueUUID()
+
 	if interfaceID != "" && uniqID != "" {
 		ret = filepath.Join(root, interfaceID, uniqID+fileExtensionAOCX)
 	}
+
 	return
 }
 

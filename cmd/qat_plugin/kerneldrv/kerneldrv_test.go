@@ -225,14 +225,17 @@ func TestParseConfigs(t *testing.T) {
 			expectedErr: true,
 		},
 	}
+
 	for _, tt := range tcases {
 		dp := &DevicePlugin{
 			configDir: "./test_data/" + tt.testData,
 		}
+
 		_, err := dp.parseConfigs(qatdevs)
 		if tt.expectedErr && err == nil {
 			t.Errorf("Test case '%s': expected error hasn't been triggered", tt.name)
 		}
+
 		if !tt.expectedErr && err != nil {
 			t.Errorf("Test case '%s': Unexpected error: %+v", tt.name, err)
 		}
@@ -303,6 +306,7 @@ func TestGetDevTree(t *testing.T) {
 			expectedErr: true,
 		},
 	}
+
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
 			var err error
@@ -385,9 +389,11 @@ func TestPostAllocate(t *testing.T) {
 		if tc.expectedErr && err == nil {
 			t.Errorf("Test case '%s': expected error hasn't been triggered", tc.name)
 		}
+
 		if !tc.expectedErr && err != nil {
 			t.Errorf("Test case '%s': Unexpected error: %+v", tc.name, err)
 		}
+
 		klog.V(4).Info(response)
 	}
 }

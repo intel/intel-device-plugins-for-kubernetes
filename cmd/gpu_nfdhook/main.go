@@ -28,6 +28,7 @@ const (
 
 func main() {
 	l := newLabeler(sysfsDRMDirectory, debugfsDRIDirectory)
+
 	err := l.createLabels()
 	if err != nil {
 		klog.Errorf("%+v", err)

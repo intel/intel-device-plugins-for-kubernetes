@@ -73,12 +73,14 @@ func checkPodMutation(f *framework.Framework, mappingsNamespace string, source, 
 	}
 
 	ginkgo.By("deploying webhook")
+
 	_ = utils.DeployWebhook(f, kustomizationPath)
 
 	ginkgo.By("deploying mappings")
 	framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-n", mappingsNamespace, "-f", filepath.Dir(kustomizationPath)+"/../mappings-collection.yaml")
 
 	ginkgo.By("submitting a pod for admission")
+
 	podSpec := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{Name: "webhook-tester"},
 		Spec: v1.PodSpec{
@@ -105,11 +107,13 @@ func checkPodMutation(f *framework.Framework, mappingsNamespace string, source, 
 	framework.ExpectNoError(err, "pod Create API error")
 
 	ginkgo.By("checking the pod has been mutated")
+
 	q, ok := pod.Spec.Containers[0].Resources.Limits[expectedMutation]
 	if !ok {
 		framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
 		kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 		framework.Fail("pod hasn't been mutated")
 	}
+
 	gomega.Expect(q.String()).To(gomega.Equal("1"))
 }

@@ -80,26 +80,32 @@ func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client
 
 func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 	newInitContainers := []v1.Container{}
+
 	for _, container := range ds.Spec.Template.Spec.InitContainers {
 		if container.Name == inicontainerName {
 			continue
 		}
+
 		newInitContainers = append(newInitContainers, container)
 	}
-	ds.Spec.Template.Spec.InitContainers = newInitContainers
 
+	ds.Spec.Template.Spec.InitContainers = newInitContainers
 	newVolumes := []v1.Volume{}
+
 	for _, volume := range ds.Spec.Template.Spec.Volumes {
 		if volume.Name == "intel-dsa-config-volume" || volume.Name == "sys-devices" {
 			continue
 		}
+
 		newVolumes = append(newVolumes, volume)
 	}
+
 	ds.Spec.Template.Spec.Volumes = newVolumes
 }
 
 func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 	yes := true
+
 	ds.Spec.Template.Spec.InitContainers = append(ds.Spec.Template.Spec.InitContainers, v1.Container{
 		Image:           dp.Spec.InitImage,
 		ImagePullPolicy: "IfNotPresent",
@@ -164,6 +170,7 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	if len(devicePlugin.Spec.NodeSelector) > 0 {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
+
 	daemonSet.ObjectMeta.Namespace = c.ns
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
@@ -183,6 +190,7 @@ func provisioningUpdate(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) 
 		if container.Name == inicontainerName && container.Image != dp.Spec.InitImage {
 			found = true
 			update = true
+
 			break
 		}
 	}
@@ -211,9 +219,11 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 
 	if provisioningUpdate(ds, dp) {
 		removeInitContainer(ds, dp)
+
 		if dp.Spec.InitImage != "" {
 			addInitContainer(ds, dp)
 		}
+
 		updated = true
 	}
 

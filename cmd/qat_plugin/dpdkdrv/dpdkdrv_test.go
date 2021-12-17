@@ -427,6 +427,7 @@ func eleInSlice(a string, list []string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 func TestPostAllocate(t *testing.T) {
@@ -452,10 +453,12 @@ func TestPostAllocate(t *testing.T) {
 		"03:04.3": {},
 		"03:04.4": {},
 	}
+
 	dp := &DevicePlugin{}
 	if err := dp.PostAllocate(response); err != nil {
 		t.Errorf("Unexpected error: %+v", err)
 	}
+
 	if len(response.ContainerResponses[0].Envs) != 4 {
 		t.Fatal("Set wrong number of Environment Variables")
 	}

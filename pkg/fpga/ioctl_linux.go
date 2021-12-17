@@ -27,6 +27,7 @@ func ioctl(fd uintptr, req uint, arg uintptr) (uintptr, error) {
 	if err != 0 {
 		return ret, err
 	}
+
 	return ret, nil
 }
 
@@ -37,5 +38,6 @@ func ioctlDev(dev string, req uint, arg uintptr) (ret uintptr, err error) {
 		return
 	}
 	defer f.Close()
+
 	return ioctl(f.Fd(), req, arg)
 }

@@ -69,6 +69,7 @@ func getAesmdVolume(needsAesmd bool, epcUserCount int32, aesmdPresent bool) *cor
 		// deployment detected. aesmd socket path is provided as a hostpath volume and mounted
 		// by all (SGX) containers.
 		dirOrCreate := corev1.HostPathDirectoryOrCreate
+
 		return &corev1.Volume{
 			Name: "aesmd-socket",
 			VolumeSource: corev1.VolumeSource{
@@ -93,6 +94,7 @@ func warnWrongResources(resources map[string]int64) []string {
 	if ok {
 		warnings = append(warnings, provision+" should not be used in Pod spec directly")
 	}
+
 	return warnings
 }
 
@@ -186,9 +188,8 @@ func (s *Mutator) Handle(ctx context.Context, req admission.Request) admission.R
 					Name:  "SGX_AESM_ADDR",
 					Value: "1",
 				})
-			// container mutate logic for non-aesmd quote providers
-			// case:
 		}
+
 		pod.Spec.Containers[idx] = container
 	}
 
@@ -196,6 +197,7 @@ func (s *Mutator) Handle(ctx context.Context, req admission.Request) admission.R
 		if pod.Spec.Volumes == nil {
 			pod.Spec.Volumes = make([]corev1.Volume, 0)
 		}
+
 		pod.Spec.Volumes = append(pod.Spec.Volumes, *vol)
 	}
 

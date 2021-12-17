@@ -46,6 +46,7 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+// nolint:wsl
 func init() {
 	// Add schemes for DaemonSets, Pods etc...
 	_ = clientgoscheme.AddToScheme(scheme)
@@ -78,6 +79,7 @@ func (flag *flagList) Set(value string) error {
 	}
 
 	*flag = append(*flag, value)
+
 	return nil
 }
 
@@ -87,14 +89,17 @@ func contains(arr []string, val string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
 func main() {
-	var metricsAddr string
-	var devicePluginNamespace string
-	var enableLeaderElection bool
-	var pm *patcher.Manager
+	var (
+		metricsAddr           string
+		devicePluginNamespace string
+		enableLeaderElection  bool
+		pm                    *patcher.Manager
+	)
 
 	ctrl.SetLogger(klogr.New())
 
@@ -179,6 +184,7 @@ func main() {
 	}
 
 	setupLog.Info("starting manager")
+
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)

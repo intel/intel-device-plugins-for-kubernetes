@@ -29,7 +29,6 @@ const imageMinVersion string = "0.22.0"
 
 func validatePluginImage(image, expectedImageName string, expectedMinVersion *version.Version) error {
 	// Ignore registry, vendor and extract the image name with the tag
-
 	parts := strings.SplitN(filepath.Base(image), ":", 2)
 	if len(parts) != 2 {
 		return errors.Errorf("incorrect image field %q", image)

@@ -43,10 +43,12 @@ func describeQatDpdkPlugin() {
 	if err != nil {
 		framework.Failf("unable to locate %q: %v", dpdkKustomizationYaml, err)
 	}
+
 	compressTestYamlPath, err := utils.LocateRepoFile(compressTestYaml)
 	if err != nil {
 		framework.Failf("unable to locate %q: %v", compressTestYaml, err)
 	}
+
 	cryptoTestYamlPath, err := utils.LocateRepoFile(cryptoTestYaml)
 	if err != nil {
 		framework.Failf("unable to locate %q: %v", cryptoTestYaml, err)

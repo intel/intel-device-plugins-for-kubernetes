@@ -101,7 +101,9 @@ func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer)
 			Topology: device.topology,
 		})
 	}
+
 	klog.V(4).Info("Sending to kubelet", resp.Devices)
+
 	if err := stream.Send(resp); err != nil {
 		_ = srv.Stop()
 		return errors.Wrapf(err, "Cannot update device list")
@@ -136,29 +138,37 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 	}
 
 	response := new(pluginapi.AllocateResponse)
+
 	for _, crqt := range rqt.ContainerRequests {
 		cresp := new(pluginapi.ContainerAllocateResponse)
+
 		for _, id := range crqt.DevicesIDs {
 			dev, ok := srv.devices[id]
 			if !ok {
 				return nil, errors.Errorf("Invalid allocation request with non-existing device %s", id)
 			}
+
 			if dev.state != pluginapi.Healthy {
 				return nil, errors.Errorf("Invalid allocation request with unhealthy device %s", id)
 			}
+
 			for i := range dev.nodes {
 				cresp.Devices = append(cresp.Devices, &dev.nodes[i])
 			}
+
 			for i := range dev.mounts {
 				cresp.Mounts = append(cresp.Mounts, &dev.mounts[i])
 			}
+
 			for key, value := range dev.envs {
 				if cresp.Envs == nil {
 					cresp.Envs = make(map[string]string)
 				}
+
 				cresp.Envs[key] = value
 			}
 		}
+
 		response.ContainerResponses = append(response.ContainerResponses, cresp)
 	}
 
@@ -168,6 +178,7 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 			return nil, err
 		}
 	}
+
 	return response, nil
 }
 
@@ -183,6 +194,7 @@ func (srv *server) GetPreferredAllocation(ctx context.Context, rqt *pluginapi.Pr
 	if srv.getPreferredAllocation != nil {
 		return srv.getPreferredAllocation(rqt)
 	}
+
 	return nil, errors.New("GetPreferredAllocation should not be called as this device plugin doesn't implement it")
 }
 
@@ -196,9 +208,11 @@ func (srv *server) Stop() error {
 	if srv.grpcServer == nil {
 		return errors.New("Can't stop non-existing gRPC server. Calling Stop() before Serve()?")
 	}
+
 	srv.setState(terminating)
 	srv.grpcServer.Stop()
 	close(srv.updatesCh)
+
 	return nil
 }
 
@@ -216,6 +230,7 @@ func (srv *server) setState(state serverState) {
 func (srv *server) getState() serverState {
 	srv.stateMutex.Lock()
 	defer srv.stateMutex.Unlock()
+
 	return srv.state
 }
 
@@ -246,6 +261,7 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 		// Starts device plugin service.
 		go func() {
 			klog.V(1).Infof("Start server for %s at: %s", srv.devType, pluginSocket)
+
 			if serveErr := srv.grpcServer.Serve(lis); serveErr != nil {
 				klog.Errorf("unable to start gRPC server: %+v", serveErr)
 			}
@@ -261,6 +277,7 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 		if err != nil {
 			return err
 		}
+
 		klog.V(1).Infof("Device plugin for %s registered", srv.devType)
 
 		// Kubelet removes plugin socket when it (re)starts
@@ -306,6 +323,7 @@ func watchFile(file string) error {
 
 func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string) error {
 	ctx := context.Background()
+
 	conn, err := grpc.DialContext(ctx, kubeletSocket, grpc.WithInsecure(),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
@@ -313,7 +331,9 @@ func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceNa
 	if err != nil {
 		return errors.Wrap(err, "Cannot connect to kubelet service")
 	}
+
 	defer conn.Close()
+
 	client := pluginapi.NewRegistrationClient(conn)
 	reqt := &pluginapi.RegisterRequest{
 		Version:      pluginapi.Version,
@@ -334,7 +354,9 @@ func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceNa
 // by making grpc blocking connection to the server socket.
 func waitForServer(socket string, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+
 	defer cancel()
+
 	conn, err := grpc.DialContext(ctx, socket, grpc.WithInsecure(), grpc.WithBlock(),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
@@ -343,5 +365,6 @@ func waitForServer(socket string, timeout time.Duration) error {
 	if conn != nil {
 		_ = conn.Close()
 	}
+
 	return errors.Wrapf(err, "Failed dial context at %s", socket)
 }

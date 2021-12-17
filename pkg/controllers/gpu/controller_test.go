@@ -182,6 +182,7 @@ func TestNewDamonSetGPU(t *testing.T) {
 		if tc.resourceManager {
 			plugin.Spec.ResourceManager = true
 		}
+
 		if tc.isInitImage {
 			plugin.Spec.InitImage = "intel/intel-gpu-initcontainer:devel"
 		}

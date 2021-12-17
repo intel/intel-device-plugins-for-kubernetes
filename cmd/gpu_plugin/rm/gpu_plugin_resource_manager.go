@@ -140,6 +140,7 @@ func (rm *resourceManager) ReallocateWithFractionalResources(request *pluginapi.
 	if _, ok := err.(*retryErr); ok {
 		klog.Warning("retrying POD resolving after sleeping")
 		time.Sleep(retryTimeout)
+
 		podCandidate, err = rm.findAllocationPodCandidate()
 	}
 
@@ -204,29 +205,37 @@ func (rm *resourceManager) findAllocationPodCandidate() (*podCandidate, error) {
 	case 1:
 		// perfect, only one option
 		klog.V(4).Info("only one pending pod")
+
 		if _, ok := candidates[0].pod.Annotations[gasCardAnnotation]; !ok {
 			klog.Warningf("Pending POD annotations from scheduler not yet visible for pod %q", candidates[0].pod.Name)
 			return nil, &retryErr{}
 		}
+
 		return &candidates[0], nil
+
 	default: // > 1 candidates, not good, need to pick the best
 		// look for scheduler timestamps and sort by them
 		klog.V(4).Infof("%v pods pending, picking oldest", numCandidates)
+
 		timestampedCandidates := []podCandidate{}
+
 		for _, candidate := range candidates {
 			if _, ok := pendingPods[candidate.name].Annotations[gasTSAnnotation]; ok {
 				timestampedCandidates = append(timestampedCandidates, candidate)
 			}
 		}
+
 		sort.Slice(timestampedCandidates,
 			func(i, j int) bool {
 				return pendingPods[timestampedCandidates[i].name].Annotations[gasTSAnnotation] <
 					pendingPods[timestampedCandidates[j].name].Annotations[gasTSAnnotation]
 			})
+
 		if len(timestampedCandidates) == 0 {
 			klog.Warning("Pending POD annotations from scheduler not yet visible")
 			return nil, &retryErr{}
 		}
+
 		return &timestampedCandidates[0], nil
 	}
 }
@@ -252,6 +261,7 @@ func (rm *resourceManager) getNodePendingGPUPods() (map[string]*v1.Pod, error) {
 
 	// make a map ouf of the list, accept only GPU-using pods
 	pendingPods := make(map[string]*v1.Pod)
+
 	for i := range pendingPodList.Items {
 		pod := &pendingPodList.Items[i]
 
@@ -273,6 +283,7 @@ func (rm *resourceManager) findAllocationPodCandidates(pendingPods map[string]*v
 	}
 
 	defer clientConn.Close()
+
 	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 	defer cancel()
 
@@ -282,9 +293,11 @@ func (rm *resourceManager) findAllocationPodCandidates(pendingPods map[string]*v
 	}
 
 	candidates := []podCandidate{}
+
 	for _, podRes := range resp.PodResources {
 		// count allocated gpu-using containers
 		numContainersAllocated := 0
+
 		for _, cont := range podRes.Containers {
 			for _, dev := range cont.Devices {
 				if dev.ResourceName == rm.fullResourceName {
@@ -349,6 +362,7 @@ func (rm *resourceManager) createAllocateResponse(cards []string) (*pluginapi.Al
 			if cresp.Envs == nil {
 				cresp.Envs = make(map[string]string)
 			}
+
 			cresp.Envs[key] = value
 		}
 	}
@@ -360,6 +374,7 @@ func (rm *resourceManager) createAllocateResponse(cards []string) (*pluginapi.Al
 
 func numGPUUsingContainers(pod *v1.Pod, fullResourceName string) int {
 	num := 0
+
 	for _, container := range pod.Spec.Containers {
 		for reqName, quantity := range container.Resources.Requests {
 			resourceName := reqName.String()
@@ -372,6 +387,7 @@ func numGPUUsingContainers(pod *v1.Pod, fullResourceName string) int {
 			}
 		}
 	}
+
 	return num
 }
 
@@ -383,6 +399,7 @@ func containerCards(pod *v1.Pod, gpuUsingContainerIndex int) []string {
 	klog.V(3).Infof("%s:%v", fullAnnotation, cardLists)
 
 	i := 0
+
 	for _, cardList := range cardLists {
 		cards := strings.Split(cardList, ",")
 		if len(cards) > 0 && len(cardList) > 0 {
@@ -393,7 +410,9 @@ func containerCards(pod *v1.Pod, gpuUsingContainerIndex int) []string {
 			i++
 		}
 	}
+
 	klog.Warningf("couldn't find cards for gpu using container index %v", gpuUsingContainerIndex)
+
 	return nil
 }
 

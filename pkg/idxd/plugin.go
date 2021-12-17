@@ -69,6 +69,7 @@ func NewDevicePlugin(sysfsDir, statePattern, devDir string, sharedDevNum int) *D
 // Scan discovers devices and reports them to the upper level API.
 func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
+
 	for {
 		devTree, err := dp.scan()
 		if err != nil {
@@ -90,6 +91,7 @@ func readFile(fpath string) (string, error) {
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
+
 	return strings.TrimSpace(string(data)), nil
 }
 
@@ -97,6 +99,7 @@ func readFile(fpath string) (string, error) {
 func getDevNodes(devDir, charDevDir, wqName string) ([]pluginapi.DeviceSpec, error) {
 	// check if /dev/dsa/<work queue> device node exists
 	devPath := path.Join(devDir, wqName)
+
 	stat, err := os.Stat(devPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -110,10 +113,12 @@ func getDevNodes(devDir, charDevDir, wqName string) ([]pluginapi.DeviceSpec, err
 	// as libaccel-config requires it
 	rdev := stat.Sys().(*syscall.Stat_t).Rdev
 	charDevPath := path.Join(charDevDir, fmt.Sprintf("%d:%d", unix.Major(rdev), unix.Minor(rdev)))
+
 	stat, err = os.Lstat(charDevPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
 	if stat.Mode()&os.ModeSymlink == 0 {
 		return nil, errors.Errorf("%s is not a symlink", charDevPath)
 	}
@@ -122,6 +127,7 @@ func getDevNodes(devDir, charDevDir, wqName string) ([]pluginapi.DeviceSpec, err
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
 	if destPath != devPath {
 		return nil, errors.Errorf("%s points to %s instead of device node %s", charDevPath, destPath, devPath)
 	}
@@ -164,6 +170,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		// Read queue mode
 		queueDir := filepath.Dir(fpath)
+
 		wqMode, err := readFile(path.Join(queueDir, "mode"))
 		if err != nil {
 			return nil, err
@@ -189,7 +196,9 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 		if wqMode != "shared" {
 			amount = 1
 		}
+
 		klog.V(4).Infof("%s: amount: %d, type: %s, mode: %s, nodes: %+v", wqName, amount, wqType, wqMode, devNodes)
+
 		for i := 0; i < amount; i++ {
 			deviceType := fmt.Sprintf("wq-%s-%s", wqType, wqMode)
 			deviceID := fmt.Sprintf("%s-%s-%d", deviceType, wqName, i)

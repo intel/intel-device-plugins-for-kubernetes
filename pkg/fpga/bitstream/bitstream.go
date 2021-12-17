@@ -33,12 +33,14 @@ func GetFPGABitstream(bitstreamDir, region, afu string) (File, error) {
 		if os.IsNotExist(err) {
 			continue
 		}
+
 		if err != nil {
 			return nil, errors.Errorf("%s: stat error: %v", bitstreamPath, err)
 		}
 
 		return Open(bitstreamPath)
 	}
+
 	return nil, errors.Errorf("%s/%s: bitstream not found", region, afu)
 }
 
@@ -50,5 +52,6 @@ func Open(fname string) (File, error) {
 	case ".aocx":
 		return OpenAOCX(fname)
 	}
+
 	return nil, errors.Errorf("unsupported file format %s", fname)
 }

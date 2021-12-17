@@ -40,6 +40,7 @@ func GetRequestedResources(container corev1.Container, ns string) (map[string]in
 	}
 
 	resources := make(map[string]int64)
+
 	for resourceName, resourceQuantity := range container.Resources.Limits {
 		rname := strings.ToLower(string(resourceName))
 		if !strings.HasPrefix(rname, ns) {

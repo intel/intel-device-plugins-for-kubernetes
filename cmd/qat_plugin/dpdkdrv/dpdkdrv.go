@@ -114,22 +114,28 @@ func (dp *DevicePlugin) getDpdkDevice(vfBdf string) (string, error) {
 	switch dp.dpdkDriver {
 	case igbUio:
 		uioDirPath := filepath.Join(dp.pciDeviceDir, vfBdf, uioSuffix)
+
 		files, err := os.ReadDir(uioDirPath)
 		if err != nil {
 			return "", err
 		}
+
 		if len(files) == 0 {
 			return "", errors.New("No devices found")
 		}
+
 		return files[0].Name(), nil
 
 	case vfioPci:
 		vfioDirPath := filepath.Join(dp.pciDeviceDir, vfBdf, iommuGroupSuffix)
 		group, err := filepath.EvalSymlinks(vfioDirPath)
+
 		if err != nil {
 			return "", errors.WithStack(err)
 		}
+
 		s := filepath.Base(group)
+
 		return s, nil
 
 	default:
@@ -142,6 +148,7 @@ func (dp *DevicePlugin) getDpdkDeviceSpecs(dpdkDeviceName string) []pluginapi.De
 	case igbUio:
 		//Setting up with uio
 		uioDev := filepath.Join(uioDevicePath, dpdkDeviceName)
+
 		return []pluginapi.DeviceSpec{
 			{
 				HostPath:      uioDev,
@@ -152,6 +159,7 @@ func (dp *DevicePlugin) getDpdkDeviceSpecs(dpdkDeviceName string) []pluginapi.De
 	case vfioPci:
 		//Setting up with vfio
 		vfioDev := filepath.Join(vfioDevicePath, dpdkDeviceName)
+
 		return []pluginapi.DeviceSpec{
 			{
 				HostPath:      vfioDev,
@@ -174,6 +182,7 @@ func (dp *DevicePlugin) getDpdkMounts(dpdkDeviceName string) []pluginapi.Mount {
 	case igbUio:
 		//Setting up with uio mountpoints
 		uioMountPoint := filepath.Join(uioMountPath, dpdkDeviceName, "/device")
+
 		return []pluginapi.Mount{
 			{
 				HostPath:      uioMountPoint,
@@ -205,16 +214,19 @@ func (dp *DevicePlugin) bindDevice(vfBdf string) error {
 	if err := os.WriteFile(unbindDevicePath, []byte(vfBdf), 0600); !os.IsNotExist(err) {
 		return errors.Wrapf(err, "Unbinding from kernel driver failed for the device %s", vfBdf)
 	}
+
 	vfdevID, err := dp.getDeviceID(vfBdf)
 	if err != nil {
 		return err
 	}
+
 	bindDevicePath := filepath.Join(dp.pciDriverDir, dp.dpdkDriver, newIDSuffix)
 	//Bind to the the dpdk driver
 	err = os.WriteFile(bindDevicePath, []byte(vendorPrefix+vfdevID), 0600)
 	if err != nil {
 		return errors.Wrapf(err, "Binding to the DPDK driver failed for the device %s", vfBdf)
 	}
+
 	return nil
 }
 
@@ -224,6 +236,7 @@ func isValidKernelDriver(kernelvfDriver string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -232,6 +245,7 @@ func isValidDpdkDeviceDriver(dpdkDriver string) bool {
 	case igbUio, vfioPci:
 		return true
 	}
+
 	return false
 }
 
@@ -252,14 +266,18 @@ func (dp *DevicePlugin) isValidVfDeviceID(vfDevID string) bool {
 // PostAllocate implements PostAllocator interface for vfio based QAT plugin.
 func (dp *DevicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error {
 	tempMap := make(map[string]string)
+
 	for _, cresp := range response.ContainerResponses {
 		counter := 0
+
 		for k := range cresp.Envs {
 			tempMap[strings.Join([]string{envVarPrefix, strconv.Itoa(counter)}, "")] = cresp.Envs[k]
 			counter++
 		}
+
 		cresp.Envs = tempMap
 	}
+
 	return nil
 }
 
@@ -278,6 +296,7 @@ func getPciDevicesWithPattern(pattern string) (pciDevices []string) {
 			klog.Warningf("unable to evaluate symlink: %s", devBdf)
 			continue
 		}
+
 		pciDevices = append(pciDevices, targetDev)
 	}
 
@@ -316,11 +335,13 @@ func (dp *DevicePlugin) getVfDevices() []string {
 
 func getCurrentDriver(device string) string {
 	symlink := filepath.Join(device, "driver")
+
 	driver, err := filepath.EvalSymlinks(symlink)
 	if err != nil {
 		klog.Infof("no driver bound to device %q", filepath.Base(device))
 		return ""
 	}
+
 	return filepath.Base(driver)
 }
 
@@ -339,8 +360,8 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 		if !dp.isValidVfDeviceID(vfdevID) {
 			continue
 		}
-		n = n + 1
 
+		n = n + 1
 		if n > dp.maxDevices {
 			break
 		}

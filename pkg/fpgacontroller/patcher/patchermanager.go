@@ -78,11 +78,13 @@ func (pm *Manager) mutate(ctx context.Context, req webhook.AdmissionRequest) web
 	if req.Resource != podResource {
 		err := errors.Errorf("unexpected resource type %q", req.Resource)
 		pm.log.Error(err, "unable to mutate")
+
 		return toAdmissionResponse(err)
 	}
 
 	raw := req.Object.Raw
 	pod := corev1.Pod{}
+
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(raw, nil, &pod); err != nil {
 		pm.log.Error(err, "unable to decode")
@@ -93,10 +95,12 @@ func (pm *Manager) mutate(ctx context.Context, req webhook.AdmissionRequest) web
 	if namespace == "" && req.Namespace != "" {
 		namespace = req.Namespace
 	}
+
 	name := pod.Name
 	if name == "" && pod.ObjectMeta.GenerateName != "" {
 		name = pod.ObjectMeta.GenerateName
 	}
+
 	pm.log.V(1).Info("Received pod", "Pod", name, "Namespace", namespace)
 	patcher := pm.GetPatcher(namespace)
 
@@ -105,11 +109,13 @@ func (pm *Manager) mutate(ctx context.Context, req webhook.AdmissionRequest) web
 	}
 
 	ops := []string{}
+
 	for containerIdx, container := range pod.Spec.Containers {
 		patchOps, err := patcher.getPatchOps(containerIdx, container)
 		if err != nil {
 			return toAdmissionResponse(err)
 		}
+
 		ops = append(ops, patchOps...)
 	}
 
@@ -118,6 +124,7 @@ func (pm *Manager) mutate(ctx context.Context, req webhook.AdmissionRequest) web
 		pt := admissionv1.PatchTypeJSONPatch
 		reviewResponse.PatchType = &pt
 	}
+
 	return webhook.AdmissionResponse{
 		AdmissionResponse: reviewResponse,
 	}

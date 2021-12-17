@@ -29,6 +29,7 @@ func readFilesInDirectory(fileMap map[string]*string, dir string) error {
 		if strings.ContainsAny(fname, "?*[") {
 			// path contains wildcards, let's find by Glob needed file.
 			files, err := filepath.Glob(fname)
+
 			switch {
 			case err != nil:
 				continue
@@ -36,17 +37,22 @@ func readFilesInDirectory(fileMap map[string]*string, dir string) error {
 				// doesn't match unique file, skip it
 				continue
 			}
+
 			fname = files[0]
 		}
+
 		b, err := os.ReadFile(fname)
 		if err != nil {
 			if os.IsNotExist(err) {
 				continue
 			}
+
 			return errors.Wrapf(err, "%s: unable to read file %q", dir, k)
 		}
+
 		*v = strings.TrimSpace(string(b))
 	}
+
 	return nil
 }
 
@@ -56,6 +62,7 @@ func cleanBasename(name string) string {
 	if err != nil {
 		realPath = name
 	}
+
 	return filepath.Base(realPath)
 }
 
@@ -69,5 +76,6 @@ func checkPCIDeviceType(dev commonFpgaAPI) error {
 	if pci.Class != fpgaClass {
 		return errors.Errorf("unsupported PCI class device %s  VID=%s PID=%s Class=%s", pci.BDF, pci.Vendor, pci.Device, pci.Class)
 	}
+
 	return nil
 }

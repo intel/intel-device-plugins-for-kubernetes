@@ -40,6 +40,7 @@ func init() {
 
 func describe() {
 	f := framework.NewDefaultFramework("sgxwebhook")
+
 	var webhook v1.Pod
 
 	ginkgo.BeforeEach(func() {
@@ -145,8 +146,10 @@ func checkMutatedResources(f *framework.Framework, r v1.ResourceRequirements, ex
 			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Fail("the pod has missing resources")
 		}
+
 		gomega.Expect(q.String()).To(gomega.Equal("1"))
 	}
+
 	for _, res := range forbiddenResources {
 		_, ok := r.Limits[res]
 		if ok {

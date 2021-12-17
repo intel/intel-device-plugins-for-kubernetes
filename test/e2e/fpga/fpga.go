@@ -74,6 +74,7 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 	if err != nil {
 		framework.Failf("unable to create temp directory: %v", err)
 	}
+
 	defer os.RemoveAll(tmpDir)
 
 	err = utils.CreateKustomizationOverlay(fmw.Namespace.Name, filepath.Dir(pluginKustomizationPath)+"/../overlays/"+pluginMode, tmpDir)
@@ -90,7 +91,9 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 	waitForPod(fmw, "intel-fpga-plugin")
 
 	resource := v1.ResourceName(nodeResource)
+
 	ginkgo.By("checking if the resource is allocatable")
+
 	if err := utils.WaitForNodesWithResource(fmw.ClientSet, resource, 30*time.Second); err != nil {
 		framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 	}
@@ -99,6 +102,7 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 	image := "intel/opae-nlb-demo:devel"
 
 	ginkgo.By("submitting a pod requesting correct FPGA resources")
+
 	pod := createPod(fmw, fmt.Sprintf("fpgaplugin-%s-%s-%s-correct", pluginMode, cmd1, cmd2), resource, image, []string{cmd1, "-S0"})
 
 	ginkgo.By("waiting the pod to finish successfully")
@@ -109,6 +113,7 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 	//framework.RunKubectlOrDie(fmw.Namespace.Name, "--namespace", fmw.Namespace.Name, "logs", pod.ObjectMeta.Name)
 
 	ginkgo.By("submitting a pod requesting incorrect FPGA resources")
+
 	pod = createPod(fmw, fmt.Sprintf("fpgaplugin-%s-%s-%s-incorrect", pluginMode, cmd1, cmd2), resource, image, []string{cmd2, "-S0"})
 
 	ginkgo.By("waiting the pod failure")
@@ -145,11 +150,13 @@ func createPod(fmw *framework.Framework, name string, resourceName v1.ResourceNa
 	pod, err := fmw.ClientSet.CoreV1().Pods(fmw.Namespace.Name).Create(context.TODO(),
 		podSpec, metav1.CreateOptions{})
 	framework.ExpectNoError(err, "pod Create API error")
+
 	return pod
 }
 
 func waitForPod(fmw *framework.Framework, name string) {
 	ginkgo.By(fmt.Sprintf("waiting for %s availability", name))
+
 	if _, err := e2epod.WaitForPodsWithLabelRunningReady(fmw.ClientSet, fmw.Namespace.Name,
 		labels.Set{"app": name}.AsSelector(), 1, 100*time.Second); err != nil {
 		framework.DumpAllNamespaceInfo(fmw.ClientSet, fmw.Namespace.Name)
