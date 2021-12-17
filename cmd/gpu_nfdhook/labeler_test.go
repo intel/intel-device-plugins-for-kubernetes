@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2021 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,6 +58,8 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_new.count":   "1",
 				"gpu.intel.com/platform_new.present": "true",
 				"gpu.intel.com/platform_new.tiles":   "1",
+				"gpu.intel.com/graphics_version":     "9",
+				"gpu.intel.com/media_version":        "9",
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
 			},
@@ -104,6 +106,8 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_new.count":   "1",
 				"gpu.intel.com/platform_new.present": "true",
 				"gpu.intel.com/platform_new.tiles":   "2",
+				"gpu.intel.com/graphics_version":     "9",
+				"gpu.intel.com/media_version":        "9",
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
 			},
@@ -132,6 +136,8 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_new.count":   "1",
 				"gpu.intel.com/platform_new.present": "true",
 				"gpu.intel.com/platform_new.tiles":   "1",
+				"gpu.intel.com/graphics_version":     "9",
+				"gpu.intel.com/media_version":        "9",
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
 			},
@@ -157,6 +163,8 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_new.count":   "1",
 				"gpu.intel.com/platform_new.present": "true",
 				"gpu.intel.com/platform_new.tiles":   "1",
+				"gpu.intel.com/graphics_version":     "9",
+				"gpu.intel.com/media_version":        "9",
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
 			},
@@ -181,6 +189,60 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_new.count":   "1",
 				"gpu.intel.com/platform_new.present": "true",
 				"gpu.intel.com/platform_new.tiles":   "1",
+				"gpu.intel.com/cards":                "card0",
+			},
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+			},
+			name:           "gen version missing, but media & graphics versions present",
+			memoryOverride: 16000000000,
+			capabilityFile: map[string][]byte{
+				"0/i915_capabilities": []byte(
+					"platform: new\n" +
+						"media version: 12.5\n" +
+						"graphics version: 12.2"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/millicores":           "1000",
+				"gpu.intel.com/memory.max":           "16000000000",
+				"gpu.intel.com/platform_new.count":   "1",
+				"gpu.intel.com/platform_new.present": "true",
+				"gpu.intel.com/platform_new.tiles":   "1",
+				"gpu.intel.com/graphics_version":     "12.2",
+				"gpu.intel.com/media_version":        "12.5",
+				"gpu.intel.com/platform_gen":         "12",
+				"gpu.intel.com/cards":                "card0",
+			},
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+			},
+			name:           "only media version present",
+			memoryOverride: 16000000000,
+			capabilityFile: map[string][]byte{
+				"0/i915_capabilities": []byte(
+					"platform: new\n" +
+						"media version: 12.5"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/millicores":           "1000",
+				"gpu.intel.com/memory.max":           "16000000000",
+				"gpu.intel.com/platform_new.count":   "1",
+				"gpu.intel.com/platform_new.present": "true",
+				"gpu.intel.com/platform_new.tiles":   "1",
+				"gpu.intel.com/media_version":        "12.5",
+				"gpu.intel.com/platform_gen":         "12",
 				"gpu.intel.com/cards":                "card0",
 			},
 		},
