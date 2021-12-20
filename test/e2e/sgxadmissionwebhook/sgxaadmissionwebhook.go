@@ -121,6 +121,29 @@ func describe() {
 		ginkgo.By("checking the pod total EPC size annotation is correctly set")
 		gomega.Expect(pod.Annotations["sgx.intel.com/epc"]).To(gomega.Equal("3Mi"))
 	})
+	ginkgo.It("checks that Volumes and VolumeMounts are created only once", func() {
+		ginkgo.By("submitting the pod")
+		podSpec := createPodSpec([]string{"test"}, "aesmd")
+		podSpec.Spec.Volumes = make([]v1.Volume, 0)
+		podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, v1.Volume{
+			Name: "/var/run/aesmd",
+			VolumeSource: v1.VolumeSource{
+				EmptyDir: &v1.EmptyDirVolumeSource{
+					Medium: v1.StorageMediumMemory,
+				},
+			},
+		})
+		podSpec.Spec.Containers[0].VolumeMounts = make([]v1.VolumeMount, 0)
+		podSpec.Spec.Containers[0].VolumeMounts = append(podSpec.Spec.Containers[0].VolumeMounts, v1.VolumeMount{
+			Name:      "aesmd-socket",
+			MountPath: "/var/run/aesmd",
+		})
+		pod := submitCustomPod(f, podSpec)
+		ginkgo.By("checking Volumes in the pod")
+		gomega.Expect(len(pod.Spec.Volumes)).To(gomega.Equal(1))
+		ginkgo.By("checking VolumeMounts in the container")
+		gomega.Expect(len(pod.Spec.Containers[0].VolumeMounts)).To(gomega.Equal(1))
+	})
 }
 
 func checkMutatedVolumes(f *framework.Framework, pod *v1.Pod, volumeName string, volumeType interface{}) {
@@ -160,7 +183,16 @@ func checkMutatedResources(f *framework.Framework, r v1.ResourceRequirements, ex
 	}
 }
 
-func submitPod(f *framework.Framework, containerNames []string, quoteProvider string) *v1.Pod {
+func submitCustomPod(f *framework.Framework, podSpec *v1.Pod) *v1.Pod {
+	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(),
+		podSpec, metav1.CreateOptions{})
+
+	framework.ExpectNoError(err, "pod Create API error")
+
+	return pod
+}
+
+func createPodSpec(containerNames []string, quoteProvider string) *v1.Pod {
 	containers := make([]v1.Container, 0)
 
 	for _, c := range containerNames {
@@ -189,10 +221,9 @@ func submitPod(f *framework.Framework, containerNames []string, quoteProvider st
 		},
 	}
 
-	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(),
-		podSpec, metav1.CreateOptions{})
+	return podSpec
+}
 
-	framework.ExpectNoError(err, "pod Create API error")
-
-	return pod
+func submitPod(f *framework.Framework, containerNames []string, quoteProvider string) *v1.Pod {
+	return submitCustomPod(f, createPodSpec(containerNames, quoteProvider))
 }

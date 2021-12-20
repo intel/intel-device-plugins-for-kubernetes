@@ -36,15 +36,19 @@ type Mutator struct {
 }
 
 const (
-	namespace           = "sgx.intel.com"
-	encl                = namespace + "/enclave"
-	epc                 = namespace + "/epc"
-	provision           = namespace + "/provision"
-	quoteProvAnnotation = namespace + "/quote-provider"
-	aesmdQuoteProvKey   = "aesmd"
+	namespace                = "sgx.intel.com"
+	encl                     = namespace + "/enclave"
+	epc                      = namespace + "/epc"
+	provision                = namespace + "/provision"
+	quoteProvAnnotation      = namespace + "/quote-provider"
+	aesmdQuoteProvKey        = "aesmd"
+	aesmdSocketDirectoryPath = "/var/run/aesmd"
+	aesmdSocketName          = "aesmd-socket"
 )
 
-func getAesmdVolume(needsAesmd bool, epcUserCount int32, aesmdPresent bool) *corev1.Volume {
+func createAesmdVolumeIfNotExists(needsAesmd bool, epcUserCount int32, aesmdPresent bool, pod *corev1.Pod) *corev1.Volume {
+	var vol *corev1.Volume
+
 	switch {
 	case epcUserCount == 0:
 		// none of the containers in this pod request SGX resourced.
@@ -56,8 +60,8 @@ func getAesmdVolume(needsAesmd bool, epcUserCount int32, aesmdPresent bool) *cor
 		// aesmd sidecar: the pod has a container named aesmd and >=1 _other_ containers requesting
 		// SGX resources. aesmd socket path is provided as an emptydir volume within the pod and
 		// mounted by all (SGX) containers.
-		return &corev1.Volume{
-			Name: "aesmd-socket",
+		vol = &corev1.Volume{
+			Name: aesmdSocketName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{
 					Medium: corev1.StorageMediumMemory,
@@ -69,17 +73,27 @@ func getAesmdVolume(needsAesmd bool, epcUserCount int32, aesmdPresent bool) *cor
 		// deployment detected. aesmd socket path is provided as a hostpath volume and mounted
 		// by all (SGX) containers.
 		dirOrCreate := corev1.HostPathDirectoryOrCreate
-
-		return &corev1.Volume{
-			Name: "aesmd-socket",
+		vol = &corev1.Volume{
+			Name: aesmdSocketName,
 			VolumeSource: corev1.VolumeSource{
 				HostPath: &corev1.HostPathVolumeSource{
-					Path: "/var/run/aesmd",
+					Path: aesmdSocketDirectoryPath,
 					Type: &dirOrCreate,
 				},
 			},
 		}
 	}
+
+	// Do not return a new Volume if it already exists in the Pod spec
+	if pod.Spec.Volumes != nil {
+		for _, existingVolume := range pod.Spec.Volumes {
+			if existingVolume.Name == vol.Name {
+				return nil
+			}
+		}
+	}
+
+	return vol
 }
 
 func warnWrongResources(resources map[string]int64) []string {
@@ -96,6 +110,26 @@ func warnWrongResources(resources map[string]int64) []string {
 	}
 
 	return warnings
+}
+
+func volumeMountExists(path string, container *corev1.Container) bool {
+	if container.VolumeMounts != nil {
+		for _, vm := range container.VolumeMounts {
+			if vm.MountPath == path {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func addVolumeMount(container *corev1.Container, volumeMount *corev1.VolumeMount) {
+	if container.VolumeMounts == nil {
+		container.VolumeMounts = make([]corev1.VolumeMount, 0)
+	}
+
+	container.VolumeMounts = append(container.VolumeMounts, *volumeMount)
 }
 
 // Handle implements controller-runtimes's admission.Handler inteface.
@@ -164,15 +198,14 @@ func (s *Mutator) Handle(ctx context.Context, req admission.Request) admission.R
 		switch quoteProvider {
 		// container mutate logic for Intel aesmd users
 		case aesmdQuoteProvKey:
-			if container.VolumeMounts == nil {
-				container.VolumeMounts = make([]corev1.VolumeMount, 0)
+			// check if we already have a VolumeMount for this path -- let's not add it if it's there
+			if !volumeMountExists(aesmdSocketDirectoryPath, &pod.Spec.Containers[idx]) {
+				addVolumeMount(&pod.Spec.Containers[idx],
+					&corev1.VolumeMount{
+						Name:      aesmdSocketName,
+						MountPath: aesmdSocketDirectoryPath,
+					})
 			}
-
-			container.VolumeMounts = append(container.VolumeMounts,
-				corev1.VolumeMount{
-					Name:      "aesmd-socket",
-					MountPath: "/var/run/aesmd",
-				})
 
 			if container.Name == aesmdQuoteProvKey {
 				aesmdPresent = true
@@ -193,7 +226,7 @@ func (s *Mutator) Handle(ctx context.Context, req admission.Request) admission.R
 		pod.Spec.Containers[idx] = container
 	}
 
-	if vol := getAesmdVolume(quoteProvider == aesmdQuoteProvKey, epcUserCount, aesmdPresent); vol != nil {
+	if vol := createAesmdVolumeIfNotExists(quoteProvider == aesmdQuoteProvKey, epcUserCount, aesmdPresent, pod); vol != nil {
 		if pod.Spec.Volumes == nil {
 			pod.Spec.Volumes = make([]corev1.Volume, 0)
 		}
