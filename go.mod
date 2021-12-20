@@ -12,7 +12,7 @@ require (
 	github.com/onsi/gomega v1.17.0
 	github.com/pkg/errors v0.9.1
 	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d
-	google.golang.org/grpc v1.42.0
+	google.golang.org/grpc v1.43.0
 	k8s.io/api v0.23.0
 	k8s.io/apimachinery v0.23.0
 	k8s.io/client-go v1.5.2

@@ -324,6 +324,7 @@ func watchFile(file string) error {
 func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string) error {
 	ctx := context.Background()
 
+	//nolint: staticcheck
 	conn, err := grpc.DialContext(ctx, kubeletSocket, grpc.WithInsecure(),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
@@ -357,6 +358,7 @@ func waitForServer(socket string, timeout time.Duration) error {
 
 	defer cancel()
 
+	//nolint: staticcheck
 	conn, err := grpc.DialContext(ctx, socket, grpc.WithInsecure(), grpc.WithBlock(),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)

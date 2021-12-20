@@ -179,6 +179,7 @@ func TestSetupAndServe(t *testing.T) {
 
 	ctx := context.Background()
 
+	//nolint: staticcheck
 	conn, err := grpc.DialContext(ctx, pluginSocket, grpc.WithInsecure(),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
@@ -229,6 +230,7 @@ func TestSetupAndServe(t *testing.T) {
 		time.Sleep(1 * time.Second)
 	}
 
+	//nolint: staticcheck
 	conn, err = grpc.DialContext(ctx, pluginSocket, grpc.WithInsecure(),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
