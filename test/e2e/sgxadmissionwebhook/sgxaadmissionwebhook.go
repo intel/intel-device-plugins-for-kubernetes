@@ -126,7 +126,7 @@ func describe() {
 		podSpec := createPodSpec([]string{"test"}, "aesmd")
 		podSpec.Spec.Volumes = make([]v1.Volume, 0)
 		podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, v1.Volume{
-			Name: "/var/run/aesmd",
+			Name: "aesmd-socket",
 			VolumeSource: v1.VolumeSource{
 				EmptyDir: &v1.EmptyDirVolumeSource{
 					Medium: v1.StorageMediumMemory,
@@ -139,14 +139,14 @@ func describe() {
 			MountPath: "/var/run/aesmd",
 		})
 		pod := submitCustomPod(f, podSpec)
-		ginkgo.By("checking Volumes in the pod")
-		gomega.Expect(len(pod.Spec.Volumes)).To(gomega.Equal(1))
-		ginkgo.By("checking VolumeMounts in the container")
-		gomega.Expect(len(pod.Spec.Containers[0].VolumeMounts)).To(gomega.Equal(1))
+		ginkgo.By("checking the container volumes have been not mutated")
+		checkMutatedVolumes(f, pod, "aesmd-socket", v1.EmptyDirVolumeSource{})
 	})
 }
 
 func checkMutatedVolumes(f *framework.Framework, pod *v1.Pod, volumeName string, volumeType interface{}) {
+	gomega.Expect(len(pod.Spec.Volumes)).To(gomega.Equal(1))
+
 	switch reflect.TypeOf(volumeType).String() {
 	case "v1.HostPathVolumeSource":
 		gomega.Expect(pod.Spec.Volumes[0].HostPath).NotTo(gomega.BeNil())
@@ -157,6 +157,7 @@ func checkMutatedVolumes(f *framework.Framework, pod *v1.Pod, volumeName string,
 	}
 
 	for _, c := range pod.Spec.Containers {
+		gomega.Expect(len(c.VolumeMounts)).To(gomega.Equal(1))
 		gomega.Expect(c.VolumeMounts[0].Name).To(gomega.Equal(volumeName))
 	}
 }

@@ -124,12 +124,12 @@ func volumeMountExists(path string, container *corev1.Container) bool {
 	return false
 }
 
-func addVolumeMount(container *corev1.Container, volumeMount *corev1.VolumeMount) {
+func createNewVolumeMounts(container *corev1.Container, volumeMount *corev1.VolumeMount) []corev1.VolumeMount {
 	if container.VolumeMounts == nil {
-		container.VolumeMounts = make([]corev1.VolumeMount, 0)
+		return []corev1.VolumeMount{*volumeMount}
 	}
 
-	container.VolumeMounts = append(container.VolumeMounts, *volumeMount)
+	return append(container.VolumeMounts, *volumeMount)
 }
 
 // Handle implements controller-runtimes's admission.Handler inteface.
@@ -198,13 +198,16 @@ func (s *Mutator) Handle(ctx context.Context, req admission.Request) admission.R
 		switch quoteProvider {
 		// container mutate logic for Intel aesmd users
 		case aesmdQuoteProvKey:
-			// check if we already have a VolumeMount for this path -- let's not add it if it's there
+			// Check if we already have a VolumeMount for this path -- let's not add it if it's there.
+			// This needs to be an external function because of the linting complexity check. We lose
+			// one "if" this way.
 			if !volumeMountExists(aesmdSocketDirectoryPath, &pod.Spec.Containers[idx]) {
-				addVolumeMount(&pod.Spec.Containers[idx],
+				vms := createNewVolumeMounts(&pod.Spec.Containers[idx],
 					&corev1.VolumeMount{
 						Name:      aesmdSocketName,
 						MountPath: aesmdSocketDirectoryPath,
 					})
+				container.VolumeMounts = vms
 			}
 
 			if container.Name == aesmdQuoteProvKey {
