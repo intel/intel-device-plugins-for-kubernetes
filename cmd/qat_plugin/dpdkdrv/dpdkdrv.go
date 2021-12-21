@@ -41,13 +41,14 @@ const (
 	pciDriverDirectory = "/sys/bus/pci/drivers"
 	uioSuffix          = "uio"
 	iommuGroupSuffix   = "iommu_group"
-	newIDSuffix        = "new_id"
-	driverUnbindSuffix = "driver/unbind"
 	vendorPrefix       = "8086 "
 	envVarPrefix       = "QAT"
 
 	igbUio  = "igb_uio"
 	vfioPci = "vfio-pci"
+
+	// Period of device scans.
+	scanPeriod = 5 * time.Second
 )
 
 // QAT PCI VF Device ID -> kernel QAT VF device driver mappings.
@@ -63,6 +64,9 @@ var qatDeviceDriver = map[string]string{
 
 // DevicePlugin represents vfio based QAT plugin.
 type DevicePlugin struct {
+	scanTicker *time.Ticker
+	scanDone   chan bool
+
 	pciDriverDir    string
 	pciDeviceDir    string
 	dpdkDriver      string
@@ -93,11 +97,36 @@ func newDevicePlugin(pciDriverDir, pciDeviceDir string, maxDevices int, kernelVf
 		pciDeviceDir:    pciDeviceDir,
 		kernelVfDrivers: kernelVfDrivers,
 		dpdkDriver:      dpdkDriver,
+		scanTicker:      time.NewTicker(scanPeriod),
+		scanDone:        make(chan bool, 1),
 	}
+}
+
+func (dp *DevicePlugin) setupDeviceIDs() error {
+	for devID, driver := range qatDeviceDriver {
+		for _, enabledDriver := range dp.kernelVfDrivers {
+			if driver != enabledDriver {
+				continue
+			}
+
+			err := writeToDriver(filepath.Join(dp.pciDriverDir, dp.dpdkDriver, "new_id"), vendorPrefix+devID)
+			if err != nil && !errors.Is(err, os.ErrExist) {
+				return errors.WithMessagef(err, "failed to set device ID %s for %s. Driver module not loaded?", devID, dp.dpdkDriver)
+			}
+		}
+	}
+
+	return nil
 }
 
 // Scan implements Scanner interface for vfio based QAT plugin.
 func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
+	defer dp.scanTicker.Stop()
+
+	if err := dp.setupDeviceIDs(); err != nil {
+		return err
+	}
+
 	for {
 		devTree, err := dp.scan()
 		if err != nil {
@@ -106,7 +135,11 @@ func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 
 		notifier.Notify(devTree)
 
-		time.Sleep(5 * time.Second)
+		select {
+		case <-dp.scanDone:
+			return nil
+		case <-dp.scanTicker.C:
+		}
 	}
 }
 
@@ -197,34 +230,18 @@ func (dp *DevicePlugin) getDpdkMounts(dpdkDeviceName string) []pluginapi.Mount {
 	}
 }
 
-func (dp *DevicePlugin) getDeviceID(pciAddr string) (string, error) {
-	devID, err := os.ReadFile(filepath.Join(dp.pciDeviceDir, filepath.Clean(pciAddr), "device"))
+func getDeviceID(device string) (string, error) {
+	devID, err := os.ReadFile(filepath.Join(device, "device"))
 	if err != nil {
-		return "", errors.Wrapf(err, "Cannot obtain ID for the device %s", pciAddr)
+		return "", errors.Wrapf(err, "failed to read device ID")
 	}
 
 	return strings.TrimPrefix(string(bytes.TrimSpace(devID)), "0x"), nil
 }
 
-// bindDevice unbinds given device from kernel driver and binds to DPDK driver.
-func (dp *DevicePlugin) bindDevice(vfBdf string) error {
-	unbindDevicePath := filepath.Join(dp.pciDeviceDir, vfBdf, driverUnbindSuffix)
-
-	// Unbind from the kernel driver. IsNotExist means the device is not bound to any driver.
-	if err := os.WriteFile(unbindDevicePath, []byte(vfBdf), 0600); !os.IsNotExist(err) {
-		return errors.Wrapf(err, "Unbinding from kernel driver failed for the device %s", vfBdf)
-	}
-
-	vfdevID, err := dp.getDeviceID(vfBdf)
-	if err != nil {
-		return err
-	}
-
-	bindDevicePath := filepath.Join(dp.pciDriverDir, dp.dpdkDriver, newIDSuffix)
-	//Bind to the the dpdk driver
-	err = os.WriteFile(bindDevicePath, []byte(vendorPrefix+vfdevID), 0600)
-	if err != nil {
-		return errors.Wrapf(err, "Binding to the DPDK driver failed for the device %s", vfBdf)
+func writeToDriver(path, value string) error {
+	if err := os.WriteFile(path, []byte(value), 0600); err != nil {
+		return errors.Wrapf(err, "write to driver failed: %s", value)
 	}
 
 	return nil
@@ -307,27 +324,43 @@ func (dp *DevicePlugin) getVfDevices() []string {
 	qatPfDevices := make([]string, 0)
 	qatVfDevices := make([]string, 0)
 
-	// Get PF BDFs bound to a PF driver
+	// Get PF BDFs bound to a known QAT PF driver
 	for _, vfDriver := range dp.kernelVfDrivers {
 		pfDriver := strings.TrimSuffix(vfDriver, "vf")
 		pattern := filepath.Join(dp.pciDriverDir, pfDriver, "????:??:??.?")
 		qatPfDevices = append(qatPfDevices, getPciDevicesWithPattern(pattern)...)
 	}
 
-	// Get VF devices belonging to a PF device
+	// Get VF devices belonging to a valid QAT PF device
 	for _, qatPfDevice := range qatPfDevices {
 		pattern := filepath.Join(qatPfDevice, "virtfn*")
 		qatVfDevices = append(qatVfDevices, getPciDevicesWithPattern(pattern)...)
 	}
 
-	if len(qatVfDevices) > 0 {
+	if len(qatPfDevices) > 0 {
+		if len(qatVfDevices) >= dp.maxDevices {
+			return qatVfDevices[:dp.maxDevices]
+		}
+
 		return qatVfDevices
 	}
 
-	// No PF devices found, running in a VM?
-	for _, vfDriver := range append([]string{dp.dpdkDriver}, dp.kernelVfDrivers...) {
-		pattern := filepath.Join(dp.pciDriverDir, vfDriver, "????:??:??.?")
-		qatVfDevices = append(qatVfDevices, getPciDevicesWithPattern(pattern)...)
+	// No PF devices with a QAT driver found, running in a VM?
+	pattern := filepath.Join(dp.pciDeviceDir, "????:??:??.?")
+	for _, pciDev := range getPciDevicesWithPattern(pattern) {
+		devID, err := getDeviceID(pciDev)
+		if err != nil {
+			klog.Warningf("unable to read device id for device %s: %q", filepath.Base(pciDev), err)
+			continue
+		}
+
+		if dp.isValidVfDeviceID(devID) {
+			qatVfDevices = append(qatVfDevices, pciDev)
+		}
+	}
+
+	if len(qatVfDevices) >= dp.maxDevices {
+		return qatVfDevices[:dp.maxDevices]
 	}
 
 	return qatVfDevices
@@ -352,22 +385,15 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 	for _, vfDevice := range dp.getVfDevices() {
 		vfBdf := filepath.Base(vfDevice)
 
-		vfdevID, err := dp.getDeviceID(vfBdf)
-		if err != nil {
-			return nil, err
-		}
+		if drv := getCurrentDriver(vfDevice); drv != dp.dpdkDriver {
+			if drv != "" {
+				err := writeToDriver(filepath.Join(dp.pciDriverDir, drv, "unbind"), vfBdf)
+				if err != nil {
+					return nil, err
+				}
+			}
 
-		if !dp.isValidVfDeviceID(vfdevID) {
-			continue
-		}
-
-		n = n + 1
-		if n > dp.maxDevices {
-			break
-		}
-
-		if getCurrentDriver(vfDevice) != dp.dpdkDriver {
-			err = dp.bindDevice(vfBdf)
+			err := writeToDriver(filepath.Join(dp.pciDriverDir, dp.dpdkDriver, "bind"), vfBdf)
 			if err != nil {
 				return nil, err
 			}
@@ -380,6 +406,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		klog.V(1).Infof("Device %s found", vfBdf)
 
+		n = n + 1
 		envs := map[string]string{
 			fmt.Sprintf("%s%d", envVarPrefix, n): vfBdf,
 		}
