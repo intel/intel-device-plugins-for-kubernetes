@@ -12,7 +12,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-idxd-initcontainer:devel
+        image: intel/intel-idxd-config-initcontainer:devel
         securityContext:
           privileged: true
         volumeMounts:

@@ -50,7 +50,7 @@ Nothing else is needed. But if you want to deploy a customized version of the pl
 
 ### Deploy with initcontainer
 
-There's a sample [DSA initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-idxd-initcontainer.Dockerfile) included that provisions DSA devices and workqueues (1 engine / 1 group / 1 wq (user/dedicated)), to deploy:
+There's a sample [DSA initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-idxd-config-initcontainer.Dockerfile) included that provisions DSA devices and workqueues (1 engine / 1 group / 1 wq (user/dedicated)), to deploy:
 
 ```bash
 $ kubectl apply -k deployments/dsa_plugin/overlays/dsa_initcontainer/
