@@ -15,6 +15,7 @@
 package main
 
 import (
+	"flag"
 	"path/filepath"
 	"reflect"
 	"time"
@@ -106,6 +107,7 @@ func (dp *DevicePlugin) scan() dpapi.DeviceTree {
 }
 
 func main() {
+	flag.Parse()
 	klog.V(1).Infof("DLB device plugin started")
 
 	plugin := NewDevicePlugin(dlbDeviceFilePathRE, sysfsDir)
