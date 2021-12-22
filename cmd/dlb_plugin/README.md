@@ -144,7 +144,6 @@ The following sections detail how to obtain, build, deploy and test the DLB devi
 Examples are provided showing how to deploy the plugin either using a DaemonSet or by hand on a per-node basis.
 
 ### Deploy with pre-built container image
-*This part will be updated later if necessary, since the links below do not contain the images at the point when README is written.
 
 [Pre-built images](https://hub.docker.com/r/intel/intel-dlb-plugin)
 of this component are available on the Docker hub. These images are automatically built and uploaded
