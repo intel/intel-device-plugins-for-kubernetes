@@ -50,8 +50,8 @@ RUN echo "{\n\
     \"annotation\": [ \"fpga.intel.com/region\" ]\n\
 }\n">>$ROOT/$SRC_DIR/$CRI_HOOK.json
 
-ARG TOYBOX_VERSION="0.8.5"
-ARG TOYBOX_SHA256="27cc073222f3b726ee10d96c4f32ac2c4c936b07ea195227736755971e6d90c9"
+ARG TOYBOX_VERSION="0.8.6"
+ARG TOYBOX_SHA256="e2c4f72a158581a12f4303d0d1aeec196b01f293e495e535bcdaf75eb9ae0987"
 RUN apt update && apt -y install musl musl-tools musl-dev
 RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz -o toybox.tar.gz \
     && echo "$TOYBOX_SHA256 toybox.tar.gz" | sha256sum -c - \
