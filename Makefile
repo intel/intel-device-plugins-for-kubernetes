@@ -67,9 +67,9 @@ endif
 
 test-with-kind: fixture
 	@build/docker/build-image.sh intel/intel-fpga-admissionwebhook buildah
-	@$(PODMAN) tag localhost/intel/intel-fpga-admissionwebhook:devel docker.io/intel/intel-fpga-admissionwebhook:devel
+	@$(PODMAN) tag localhost/intel/intel-fpga-admissionwebhook:0.23.0 docker.io/intel/intel-fpga-admissionwebhook:0.23.0
 	@mkdir -p $(e2e_tmp_dir)
-	@$(PODMAN) save "docker.io/intel/intel-fpga-admissionwebhook:devel" -o $(e2e_tmp_dir)/$(WEBHOOK_IMAGE_FILE)
+	@$(PODMAN) save "docker.io/intel/intel-fpga-admissionwebhook:0.23.0" -o $(e2e_tmp_dir)/$(WEBHOOK_IMAGE_FILE)
 	@$(KIND) create cluster --name "intel-device-plugins" --kubeconfig $(e2e_tmp_dir)/kubeconfig --image "kindest/node:v1.19.0"
 	@$(KIND) load image-archive --name "intel-device-plugins" $(e2e_tmp_dir)/$(WEBHOOK_IMAGE_FILE)
 	$(KUBECTL) --kubeconfig=$(e2e_tmp_dir)/kubeconfig apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
@@ -129,7 +129,7 @@ clean:
 
 ORG?=intel
 REG?=$(ORG)/
-TAG?=devel
+TAG?=0.23.0
 export TAG
 
 e2e-fpga:
