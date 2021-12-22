@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-qat-plugin
+spec:
+  template:
+    spec:
+      containers:
+      - name: intel-qat-plugin
+        args:
+        - "-v=4"
