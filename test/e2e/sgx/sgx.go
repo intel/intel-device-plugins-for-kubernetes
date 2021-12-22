@@ -91,13 +91,13 @@ func describe() {
 
 		ginkgo.By("checking the resource is allocatable")
 		if err = utils.WaitForNodesWithResource(f.ClientSet, "sgx.intel.com/epc", 30*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+			framework.Failf("unable to wait for nodes to have positive allocatable epc resource: %v", err)
 		}
 		if err = utils.WaitForNodesWithResource(f.ClientSet, "sgx.intel.com/enclave", 30*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+			framework.Failf("unable to wait for nodes to have positive allocatable enclave resource: %v", err)
 		}
 		if err = utils.WaitForNodesWithResource(f.ClientSet, "sgx.intel.com/provision", 30*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+			framework.Failf("unable to wait for nodes to have positive allocatable provision resource: %v", err)
 		}
 
 		ginkgo.By("submitting a pod requesting SGX enclave resources")
