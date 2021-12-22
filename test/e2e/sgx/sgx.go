@@ -16,7 +16,6 @@ package sgx
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -33,7 +32,9 @@ import (
 )
 
 const (
-	kustomizationYaml = "deployments/sgx_plugin/overlays/epc-nfd/kustomization.yaml"
+	kustomizationWebhook = "deployments/sgx_admissionwebhook/overlays/default-with-certmanager/kustomization.yaml"
+	kustomizationPlugin  = "deployments/sgx_plugin/overlays/epc-hook-initcontainer/kustomization.yaml"
+	kustomizationNFD     = "deployments/sgx_nfd/kustomization.yaml"
 )
 
 func init() {
@@ -43,25 +44,42 @@ func init() {
 func describe() {
 	f := framework.NewDefaultFramework("sgxplugin")
 
-	kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
+	deploymentWebhookPath, err := utils.LocateRepoFile(kustomizationWebhook)
 	if err != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
+		framework.Failf("unable to locate %q: %v", kustomizationWebhook, err)
 	}
 
+	deploymentNFDPath, err := utils.LocateRepoFile(kustomizationNFD)
+	if err != nil {
+		framework.Failf("unable to locate %q: %v", kustomizationNFD, err)
+	}
+
+	ginkgo.BeforeEach(func() {
+		_ = utils.DeployWebhook(f, deploymentWebhookPath)
+
+		msg := framework.RunKubectlOrDie("node-feature-discovery", "apply", "-k", filepath.Dir(deploymentNFDPath))
+		framework.Logf("Deploy node-feature-discovery:\n%s", msg)
+
+		if _, err = e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, "node-feature-discovery",
+			labels.Set{"app": "nfd-master"}.AsSelector(), 1 /* one replica */, 100*time.Second); err != nil {
+			framework.Failf("unable to wait for NFD pods to be running and ready: %v", err)
+		}
+	})
+
+	ginkgo.AfterEach(func() {
+		msg := framework.RunKubectlOrDie("node-feature-discovery", "delete", "-k", filepath.Dir(deploymentNFDPath))
+		framework.Logf("Delete node-feature-discovery:\n%s", msg)
+	})
+
 	ginkgo.It("checks availability of SGX resources", func() {
-		tmpDir, err := os.MkdirTemp("", "sgxplugine2etest-"+f.Namespace.Name)
-		if err != nil {
-			framework.Failf("unable to create temp directory: %v", err)
-		}
-		defer os.RemoveAll(tmpDir)
-
-		err = utils.CreateKustomizationOverlay(f.Namespace.Name, filepath.Dir(kustomizationPath), tmpDir)
-		if err != nil {
-			framework.Failf("unable to create kustomization overlay: %v", err)
-		}
-
 		ginkgo.By("deploying SGX plugin")
-		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", tmpDir)
+
+		deploymentPluginPath, err := utils.LocateRepoFile(kustomizationPlugin)
+		if err != nil {
+			framework.Failf("unable to locate %q: %v", kustomizationPlugin, err)
+		}
+
+		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(deploymentPluginPath))
 
 		ginkgo.By("waiting for SGX plugin's availability")
 		if _, err = e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
