@@ -31,16 +31,10 @@ FROM debian:unstable-slim
 
 COPY --from=builder /usr/src/opae/opae-sdk-*/build/bin/nlb* /usr/local/bin/
 COPY --from=builder /usr/src/opae/opae-sdk-*/build/lib /usr/local/lib/
+COPY --from=builder /usr/lib64/libjson-c.so.4.0.0 /usr/local/lib/
+COPY --from=builder /usr/share/licenses/json-c /usr/local/share/package-licenses/json-c
 RUN rm -rf /usr/local/lib/python3
 RUN ldconfig
-
-RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
-        /etc/apt/sources.list.d/deb-src.list && \
-    apt update && apt install -y libjson-c4 && \
-    mkdir -p /usr/local/share/package-sources && \
-    cd /usr/local/share/package-sources && \
-    apt --download-only source libjson-c4 && cd / && \
-    rm -v /etc/apt/sources.list.d/deb-src.list && apt clean
 
 COPY test_fpga.sh /usr/local/bin/
 ENTRYPOINT ["/usr/local/bin/test_fpga.sh"]
