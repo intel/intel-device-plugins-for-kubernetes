@@ -15,7 +15,6 @@ jobs:
     name: e2e-qat
     #if: contains('["bart0sh"]', github.actor)
     runs-on: [self-hosted, linux, x64, qat]
-    concurrency: one_at_a_time_qat
     steps:
       - uses: actions/checkout@v2
         with:
