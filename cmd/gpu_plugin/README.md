@@ -138,6 +138,9 @@ With the experimental fractional resource feature you can use additional kuberne
 resources, such as GPU memory, which can then be consumed by deployments. PODs will then only
 deploy to nodes where there are sufficient amounts of the extended resources for the containers.
 
+(For this to work properly, all GPUs in a given node should provide equal amount of resources
+i.e. heteregenous GPU nodes are not supported.)
+
 Enabling the fractional resource feature isn't quite as simple as just enabling the related
 command line flag. The DaemonSet needs additional RBAC-permissions
 and access to the kubelet podresources gRPC service, plus there are other dependencies to
