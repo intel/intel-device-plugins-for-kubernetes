@@ -14,7 +14,6 @@ jobs:
   e2e-sgx:
     name: e2e-sgx
     runs-on: [self-hosted, linux, x64, sgx]
-    concurrency: one_at_a_time_sgx
     steps:
       - uses: actions/checkout@v2
         with:
