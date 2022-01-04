@@ -50,4 +50,6 @@ name | type | description|
 |`gpu.intel.com/platform_<PLATFORM_NAME>.tiles`| number | GPU tile count in the GPUs of the named platform.
 |`gpu.intel.com/platform_<PLATFORM_NAME>.present`| string | "true" for indicating the presense of the GPU platform.
 
+## Limitations
+
 For the above to work as intended, GPUs on the same node must be identical in their capabilities.
