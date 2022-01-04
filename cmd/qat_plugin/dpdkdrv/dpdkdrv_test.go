@@ -348,7 +348,7 @@ func TestScan(t *testing.T) {
 			expectedErr: true,
 		},
 		{
-			name:            "vfio-pci DPDKdriver with one kernel bound device (QAT device) where vfdevID is equal to qatDevId (37c9), running in a VM",
+			name:            "vfio-pci DPDKdriver with one kernel bound device (QAT device) where vfdevID is equal to qatDevId (37c9), running in a VM with vIOMMU",
 			dpdkDriver:      "vfio-pci",
 			kernelVfDrivers: []string{"c6xxvf"},
 			dirs: []string{
@@ -358,6 +358,27 @@ func TestScan(t *testing.T) {
 			},
 			files: map[string][]byte{
 				"sys/bus/pci/devices/0000:02:01.0/device": []byte("0x37c9"),
+			},
+			symlinks: map[string]string{
+				"sys/bus/pci/devices/0000:02:01.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:02:01.0/driver":      "sys/bus/pci/drivers/c6xxvf",
+			},
+			maxDevNum:      1,
+			expectedDevNum: 1,
+		},
+		{
+			name:            "vfio-pci DPDKdriver in unsafe NOIOMMU mode with one kernel bound device (QAT device) where vfdevID is equal to qatDevId (37c9), running in a VM without IOMMU",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: []string{"c6xxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/c6xxvf",
+				"sys/bus/pci/drivers/vfio-pci",
+				"sys/bus/pci/devices/0000:02:01.0",
+				"sys/kernel/iommu_groups/vfiotestfile",
+			},
+			files: map[string][]byte{
+				"sys/bus/pci/devices/0000:02:01.0/device":   []byte("0x37c9"),
+				"sys/kernel/iommu_groups/vfiotestfile/name": []byte("vfio-noiommu"),
 			},
 			symlinks: map[string]string{
 				"sys/bus/pci/devices/0000:02:01.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
