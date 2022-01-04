@@ -12,9 +12,9 @@ BUILDER ?= "docker"
 EXTRA_BUILD_ARGS ?= ""
 
 # Current Operator version
-OPERATOR_VERSION ?= 0.21.0
+OPERATOR_VERSION ?= 0.23.0
 # Previous Operator version
-OPERATOR_PREVIOUS_VERSION ?= 0.20.0
+OPERATOR_PREVIOUS_VERSION ?= 0.21.0
 # Default bundle image tag
 BUNDLE_IMG ?= intel-device-plugins-controller-bundle:$(OPERATOR_VERSION)
 # Options for 'bundle-build'
