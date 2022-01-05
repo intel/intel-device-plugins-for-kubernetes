@@ -23,7 +23,7 @@ import (
 )
 
 // common constants for webhooks.
-const imageMinVersion string = "0.22.0"
+const imageMinVersion string = "0.23.0"
 
 // common functions for webhooks
 
