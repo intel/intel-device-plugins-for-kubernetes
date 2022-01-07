@@ -6,6 +6,8 @@ on:
         description: 'Images to build before provisioning pull on worker'
         required: true
         default: 'intel-qat-plugin:devel crypto-perf:devel'
+  schedule:
+    - cron: '20 3 * * *'
 
 env:
   IMAGES: ${{ github.event.inputs.images }}
