@@ -1,16 +1,15 @@
 name: e2e-qat
 on:
   workflow_dispatch:
-    inputs:
-      images:
-        description: 'Images to build before provisioning pull on worker'
-        required: true
-        default: 'intel-qat-plugin:devel crypto-perf:devel'
   schedule:
     - cron: '20 3 * * *'
+  pull_request:
+    branches:
+      - main
+      - 'release-*'
 
 env:
-  IMAGES: ${{ github.event.inputs.images }}
+  IMAGES: 'intel-qat-plugin crypto-perf'
 
 jobs:
   e2e-qat:
@@ -27,7 +26,7 @@ jobs:
           echo "Actor: ${{ github.actor }}"
           echo "Ref: ${{ github.ref }}"
           echo "SHA: ${{ github.sha }}"
-          echo "Images: ${{ github.event.inputs.images }}"
+          echo "Images: $IMAGES"
       - name: Wait for ready state
         run: ../../../../bmetal/actions-bmetal-runstage.sh waitready
       - name: Prepare test environment
