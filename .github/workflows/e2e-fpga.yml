@@ -6,6 +6,8 @@ on:
         description: 'Images to build before provisioning pull on worker'
         required: true
         default: 'intel-fpga-plugin:devel intel-fpga-initcontainer:devel intel-fpga-admissionwebhook:devel opae-nlb-demo:devel'
+  schedule:
+    - cron: '0 3 * * *'
 
 env:
   IMAGES: ${{ github.event.inputs.images }}
