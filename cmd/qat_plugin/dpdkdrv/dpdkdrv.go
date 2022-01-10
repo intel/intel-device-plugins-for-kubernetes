@@ -169,11 +169,30 @@ func (dp *DevicePlugin) getDpdkDevice(vfBdf string) (string, error) {
 
 		s := filepath.Base(group)
 
+		// If the kernel has CONFIG_VFIO_NOIOMMU enabled and the node admin
+		// has explicitly set enable_unsafe_noiommu_mode VFIO parameter,
+		// VFIO taints the kernel and writes "vfio-noiommu" to the IOMMU
+		// group name. If these conditions are true, the /dev/vfio/ devices
+		// are prefixed with "noiommu-".
+		if isVfioNoIOMMU(vfioDirPath) {
+			s = fmt.Sprintf("noiommu-%s", s)
+		}
+
 		return s, nil
 
 	default:
 		return "", errors.New("Unknown DPDK driver")
 	}
+}
+
+func isVfioNoIOMMU(iommuGroupPath string) bool {
+	if fileData, err := os.ReadFile(filepath.Join(iommuGroupPath, "name")); err == nil {
+		if strings.TrimSpace(string(fileData)) == "vfio-noiommu" {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (dp *DevicePlugin) getDpdkDeviceSpecs(dpdkDeviceName string) []pluginapi.DeviceSpec {
