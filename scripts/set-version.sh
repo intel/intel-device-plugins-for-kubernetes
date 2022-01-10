@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2019 Intel Corporation.
+# Copyright 2019-2021 Intel Corporation.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -15,4 +15,6 @@ if [ $# != 1 ] || [ "$1" = "?" ] || [ "$1" = "--help" ]; then
     exit 1
 fi
 
-sed -i -e "s;\(^TAG?*=\|intel/crypto-perf:\|intel/opae-nlb-demo:\|intel/intel-[^ ]*:\)[^ \"]*;\1$1;g" $(git grep -l '^TAG?*=\|intel/crypto-perf:\|intel/opae-nlb-demo:\|intel/intel-[^ ]*:' Makefile deployments demo/*fpga*.yaml)
+for file in $(git grep -l '^TAG?*=\|intel/crypto-perf:\|intel/opae-nlb-demo:\|intel/intel-[^ ]*:' Makefile deployments demo/*fpga*.yaml pkg/controllers/*/*_test.go); do
+    sed -i -e "s;\(^TAG?*=\|intel/crypto-perf:\|intel/opae-nlb-demo:\|intel/intel-[^ ]*:\)[^ \"]*;\1$1;g" "$file";
+done
