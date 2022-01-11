@@ -32,7 +32,7 @@ type DsaDevicePluginSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// InitImage is an initcontainer image to configure and enable DSA devices and workqueues with idxd-config (accel-config) utility
-	InitImage string `json:"InitImage,omitempty"`
+	InitImage string `json:"initImage,omitempty"`
 
 	// ProvisioningConfig is a ConfigMap used to pass the DSA devices and workqueues configuration into idxd-config initcontainer.
 	ProvisioningConfig string `json:"provisioningConfig,omitempty"`
