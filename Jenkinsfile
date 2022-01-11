@@ -146,38 +146,5 @@ pipeline {
         }
       }
     }
-    stage('Intel Device plugins') {
-      when {
-	beforeAgent true
-	allOf { changeRequest(); environment name: 'BMAAS', value: 'yes' }
-      }
-      agent {
-        label "clr-bmaas-intel-device-plugins"
-      }
-      environment {
-        WORKDIR="${env.WORKSPACE}/scripts/jenkins"
-      }
-      stages {
-        stage('Set tag') {
-          steps {
-            sh 'make set-version'
-          }
-        }
-        stage('Tests') {
-          steps {
-            dir(path: "$WORKDIR") {
-              sh 'make tests'
-            }
-          }
-        }
-      }
-      post {
-        always {
-          dir(path: "$WORKDIR") {
-            sh 'make logs'
-          }
-        }
-      }
-    }
   }
 }
