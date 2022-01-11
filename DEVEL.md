@@ -202,14 +202,14 @@ Update metadata.annotations.containerImage and metadata.annotations.createdAT fi
 deployments/operator/manifests/bases/intel-device-plugins-operator.clusterserviceversion.yaml
 to match current operator version and current date
 
+Fork the [Community Operators](https://github.com/k8s-operatorhub/community-operators) repo and clone it:
+```
+$ git clone https://github.com/<GitHub Username>/community-operators
+```
+
 Generate package manifests with:
 ```
 $ make packagemanifests OPERATOR_VERSION=0.X.Y
-```
-
-Copy the generated files to the Community Operators repo:
-```
-$ cp -r packagemanifests/* community-operators/operators/intel-device-plugins-operator/
 ```
 
 Verify the operator deployment works OK via OLM in your development cluster:
@@ -228,9 +228,11 @@ $ operator-sdk olm uninstall
 Review the package manifests by uploading the generated `packagemanifests` folder to
 https://operatorhub.io -> Contribute -> Package Your Operator.
 
-Clone the [Community Operators](https://github.com/k8s-operatorhub/community-operators) repo:
+Commit files
 ```
-$ git clone https://github.com/k8s-operatorhub/community-operators
+$ cd community-operators
+$ git add operators/intel-device-plugins-operator/0.X.Y
+$ git commit -am 'operators intel-device-plugins-operator (0.X.Y)' -S
 ```
 
 Submit a PR
