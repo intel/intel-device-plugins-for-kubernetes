@@ -1,10 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.7.0
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: dsadeviceplugins.deviceplugin.intel.com
 spec:
@@ -51,13 +50,13 @@ spec:
           spec:
             description: DsaDevicePluginSpec defines the desired state of DsaDevicePlugin.
             properties:
-              InitImage:
+              image:
+                description: Image is a container image with DSA device plugin executable.
+                type: string
+              initImage:
                 description: InitImage is an initcontainer image to configure and
                   enable DSA devices and workqueues with idxd-config (accel-config)
                   utility
-                type: string
-              image:
-                description: Image is a container image with DSA device plugin executable.
                 type: string
               logLevel:
                 description: LogLevel sets the plugin's log level.
