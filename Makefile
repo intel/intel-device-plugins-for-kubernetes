@@ -26,6 +26,7 @@ BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 OLM_MANIFESTS = deployments/operator/manifests
+PACKAGEMANIFESTS_DIR = community-operators/operators/intel-device-plugins-operator
 
 WEBHOOK_IMAGE_FILE = intel-fpga-admissionwebhook-devel.tgz
 
@@ -119,10 +120,10 @@ bundle:
 .PHONY: packagemanifests
 packagemanifests:
 	$(OPERATOR_SDK) generate kustomize manifests -q --input-dir $(OLM_MANIFESTS) --output-dir $(OLM_MANIFESTS) --apis-dir pkg/apis
-	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(OPERATOR_VERSION)|" | $(OPERATOR_SDK) generate packagemanifests -q --kustomize-dir $(OLM_MANIFESTS) --version $(OPERATOR_VERSION) --from-version $(OPERATOR_PREVIOUS_VERSION) $(BUNDLE_METADATA_OPTS)
+	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(OPERATOR_VERSION)|" | $(OPERATOR_SDK) generate packagemanifests -q --kustomize-dir $(OLM_MANIFESTS) --version $(OPERATOR_VERSION) --from-version $(OPERATOR_PREVIOUS_VERSION) $(BUNDLE_METADATA_OPTS) --output-dir $(PACKAGEMANIFESTS_DIR)
 	# Remove unneeded resources
-	rm packagemanifests/$(OPERATOR_VERSION)/*service.yaml
-	rm packagemanifests/$(OPERATOR_VERSION)/*clusterrole.yaml
+	rm $(PACKAGEMANIFESTS_DIR)/$(OPERATOR_VERSION)/*service.yaml
+	rm $(PACKAGEMANIFESTS_DIR)/$(OPERATOR_VERSION)/*clusterrole.yaml
 
 clean:
 	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; $(GO) clean ; cd $$pwd ; done
