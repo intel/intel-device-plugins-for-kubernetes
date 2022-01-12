@@ -141,6 +141,9 @@ e2e-qat:
 e2e-sgx:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "SGX" -delete-namespace-on-failure=false
 
+e2e-gpu:
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "GPU" -delete-namespace-on-failure=false
+
 pre-pull:
 ifeq ($(TAG),devel)
 	@$(BUILDER) pull golang:1.17-bullseye

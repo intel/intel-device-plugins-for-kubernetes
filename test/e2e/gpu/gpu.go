@@ -17,6 +17,7 @@ package gpu
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
@@ -33,6 +34,7 @@ import (
 
 const (
 	kustomizationYaml = "deployments/gpu_plugin/kustomization.yaml"
+	containerName     = "testcontainer"
 )
 
 func init() {
@@ -70,8 +72,8 @@ func describe() {
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{
-						Args:    []string{"-c", "echo hello world"},
-						Name:    "testcontainer",
+						Args:    []string{"-c", "ls /dev/dri"},
+						Name:    containerName,
 						Image:   imageutils.GetE2EImage(imageutils.BusyBox),
 						Command: []string{"/bin/sh"},
 						Resources: v1.ResourceRequirements{
@@ -88,5 +90,18 @@ func describe() {
 
 		ginkgo.By("waiting the pod to finnish successfully")
 		f.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
+
+		ginkgo.By("checking log output")
+		log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, pod.Name, containerName)
+
+		if err != nil {
+			framework.Failf("unable to get log from pod: %v", err)
+		}
+
+		if !strings.Contains(log, "card") || !strings.Contains(log, "renderD") {
+			framework.Failf("device mounts not found from log")
+		}
+
+		framework.Logf("found card and renderD from the log")
 	})
 }
