@@ -1,15 +1,16 @@
 name: e2e-fpga
 on:
   workflow_dispatch:
+    inputs:
+      images:
+        description: 'Images to build before provisioning pull on worker'
+        required: true
+        default: 'intel-fpga-plugin:devel intel-fpga-initcontainer:devel intel-fpga-admissionwebhook:devel opae-nlb-demo:devel'
   schedule:
     - cron: '0 3 * * *'
-  pull_request:
-    branches:
-      - main
-      - 'release-*'
 
 env:
-  IMAGES: 'intel-fpga-plugin intel-fpga-initcontainer intel-fpga-admissionwebhook opae-nlb-demo'
+  IMAGES: ${{ github.event.inputs.images }}
 
 jobs:
   e2e-fpga:
@@ -25,7 +26,7 @@ jobs:
           echo "Actor: ${{ github.actor }}"
           echo "Ref: ${{ github.ref }}"
           echo "SHA: ${{ github.sha }}"
-          echo "Images: $IMAGES"
+          echo "Images: ${{ github.event.inputs.images }}"
       - name: Wait for ready state
         run: ../../../../bmetal/actions-bmetal-runstage.sh waitready
       - name: Prepare test environment
