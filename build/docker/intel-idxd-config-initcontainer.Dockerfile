@@ -18,10 +18,7 @@ RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
         /etc/apt/sources.list.d/deb-src.list && \
     apt update && apt install -y --no-install-recommends \
         gcc make patch autoconf automake libtool pkg-config \
-        libjson-c-dev uuid-dev curl ca-certificates && \
-    mkdir -p /usr/local/share/package-sources && \
-    cd /usr/local/share/package-sources && \
-    apt --download-only source uuid libjson-c5 && cd /
+        libjson-c-dev uuid-dev curl ca-certificates
 
 ARG ACCEL_CONFIG_VERSION="3.4.3"
 ARG ACCEL_CONFIG_DOWNLOAD_URL="https://github.com/intel/idxd-config/archive/accel-config-v$ACCEL_CONFIG_VERSION.tar.gz"
@@ -40,15 +37,12 @@ RUN cd idxd-config-accel-config-v$ACCEL_CONFIG_VERSION && \
 
 FROM debian:unstable-slim
 
-RUN apt update && apt install -y uuid libjson-c5 jq
+RUN apt update && apt install -y libjson-c5 jq
 
 COPY --from=builder /usr/lib64/libaccel-config.so.1.0.0 /lib/x86_64-linux-gnu/
-RUN ldconfig
+RUN ldconfig && mkdir -p /usr/local/share/package-sources/
 
 COPY --from=builder /usr/bin/accel-config /usr/bin/
-
-COPY --from=builder /usr/local/share/package-sources/ \
-    /usr/local/share/package-sources/
 COPY --from=builder /accel-config.tar.gz /usr/local/share/package-sources/
 
 ADD demo/idxd-init.sh /idxd-init/

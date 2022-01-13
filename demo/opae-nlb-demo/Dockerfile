@@ -31,6 +31,7 @@ FROM debian:unstable-slim
 
 COPY --from=builder /usr/src/opae/opae-sdk-*/build/bin/nlb* /usr/local/bin/
 COPY --from=builder /usr/src/opae/opae-sdk-*/build/lib /usr/local/lib/
+COPY --from=builder /usr/src/opae/opae-sdk-*/COPYING /usr/local/share/package-licenses/opae.COPYING
 COPY --from=builder /usr/lib64/libjson-c.so.4.0.0 /usr/local/lib/
 COPY --from=builder /usr/share/licenses/json-c /usr/local/share/package-licenses/json-c
 RUN rm -rf /usr/local/lib/python3
