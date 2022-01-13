@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright 2019-2020 Intel Corporation.
+# Copyright 2019-2021 Intel Corporation.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -18,8 +18,8 @@ fi
 
 IMAGE_PULL_POLICY=$1
 
-echo IMAGE_PULL_POLICY=$IMAGE_PULL_POLICY
+echo IMAGE_PULL_POLICY="$IMAGE_PULL_POLICY"
 
-sed -i -e "s;\(imagePullPolicy\:\ \).*;\1$IMAGE_PULL_POLICY;" $(git grep -l 'imagePullPolicy' deployments/*.yaml demo/*.yaml)
-
-sed -i -e "s;\(ImagePullPolicy\:\ \).*;\1\"$IMAGE_PULL_POLICY\",;" $(git grep -l 'ImagePullPolicy' pkg/controllers/*/*.go)
+for file in $(git grep -l 'imagePullPolicy' deployments/*.yaml demo/*.yaml); do
+	sed -i -e "s;\(imagePullPolicy\:\ \).*;\1$IMAGE_PULL_POLICY;" "$file";
+done
