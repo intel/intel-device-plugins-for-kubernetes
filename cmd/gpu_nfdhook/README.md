@@ -31,7 +31,28 @@ name | type | description|
 -----|------|------|
 |`gpu.intel.com/millicores`| number | node GPU count * 1000. Can be used as a finer grained shared execution fraction.
 |`gpu.intel.com/memory.max`| number | sum of detected [GPU memory amounts](#GPU-memory) in bytes OR environment variable value * GPU count
-|`gpu.intel.com/cards`| string | list of card names separated by '`.`'. The names match host `card*`-folders under `/sys/class/drm/`.
+|`gpu.intel.com/cards`| string | list of card names separated by '`.`'. The names match host `card*`-folders under `/sys/class/drm/`. Deprecated, use `gpu-numbers`.
+|`gpu.intel.com/gpu-numbers`| string | list of numbers separated by '`.`'. The numbers correspond to device file numbers for the primary nodes of given GPUs in kernel DRI subsystem, listed as `/dev/dri/card<num>` in devfs, and `/sys/class/drm/card<num>` in sysfs.
+
+If the value of the `gpu-numbers` label would not fit into the 63 character length limit, you will also get labels `gpu-numbers2`,
+`gpu-numbers3`... until all the gpu numbers have been labeled.
+
+## PCI-groups (optional)
+
+GPUs which share the same pci paths under `/sys/devices/pci*` can be grouped into a label. GPU nums are separated by '`.`' and
+groups are separated by '`_`'. The label is created only if environment variable named `GPU_PCI_GROUPING_LEVEL` has a value greater
+than zero. GPUs are considered to belong to the same group, if as many identical folder names are found for the GPUs, as is the value
+of the environment variable. Counting starts from the folder name which starts with `pci`.
+
+For example, the SG1 card has 4 GPUs, which end up sharing pci-folder names under `/sys/devices`. With a `GPU_PCI_GROUPING_LEVEL`
+of 3, a node with two such SG1 cards could produce a `pci-groups` label with a value of `0.1.2.3_4.5.6.7`.
+
+name | type | description|
+-----|------|------|
+|`gpu.intel.com/pci-groups`| string | list of pci-groups separated by '`_`'. GPU numbers in the groups are separated by '`.`'. The numbers correspond to device file numbers for the primary nodes of given GPUs in kernel DRI subsystem, listed as `/dev/dri/card<num>` in devfs, and `/sys/class/drm/card<num>` in sysfs.
+
+If the value of the `pci-groups` label would not fit into the 63 character length limit, you will also get labels `pci-groups2`,
+`pci-groups3`... until all the pci groups have been labeled.
 
 ## Capability labels (optional)
 

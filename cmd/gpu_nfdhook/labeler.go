@@ -21,6 +21,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -30,15 +31,19 @@ import (
 )
 
 const (
-	labelNamespace     = "gpu.intel.com/"
-	gpuListLabelName   = "cards"
-	millicoreLabelName = "millicores"
-	millicoresPerGPU   = 1000
-	memoryOverrideEnv  = "GPU_MEMORY_OVERRIDE"
-	memoryReservedEnv  = "GPU_MEMORY_RESERVED"
-	gpuDeviceRE        = `^card[0-9]+$`
-	controlDeviceRE    = `^controlD[0-9]+$`
-	vendorString       = "0x8086"
+	labelNamespace      = "gpu.intel.com/"
+	gpuListLabelName    = "cards"
+	gpuNumListLabelName = "gpu-numbers"
+	millicoreLabelName  = "millicores"
+	pciGroupLabelName   = "pci-groups"
+	millicoresPerGPU    = 1000
+	memoryOverrideEnv   = "GPU_MEMORY_OVERRIDE"
+	memoryReservedEnv   = "GPU_MEMORY_RESERVED"
+	pciGroupingEnv      = "GPU_PCI_GROUPING_LEVEL"
+	gpuDeviceRE         = `^card[0-9]+$`
+	controlDeviceRE     = `^controlD[0-9]+$`
+	vendorString        = "0x8086"
+	labelMaxLength      = 63
 )
 
 type labelMap map[string]string
@@ -60,6 +65,38 @@ func newLabeler(sysfsDRMDir, debugfsDRIDir string) *labeler {
 		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
 		labels:           labelMap{},
 	}
+}
+
+// getPCIPathParts returns a subPath from the given full path starting from folder with prefix "pci".
+// returns "" in case not enough folders are found after the one starting with "pci".
+func getPCIPathParts(numFolders uint64, fullPath string) string {
+	parts := strings.Split(fullPath, "/")
+
+	if len(parts) == 1 {
+		return ""
+	}
+
+	foundPci := false
+	subPath := ""
+	separator := ""
+
+	for _, part := range parts {
+		if !foundPci && strings.HasPrefix(part, "pci") {
+			foundPci = true
+		}
+
+		if foundPci && numFolders > 0 {
+			subPath = subPath + separator + part
+			separator = "/"
+			numFolders--
+		}
+
+		if numFolders == 0 {
+			return subPath
+		}
+	}
+
+	return ""
 }
 
 func (l *labeler) scan() ([]string, error) {
@@ -164,9 +201,9 @@ func (lm labelMap) addNumericLabel(labelName string, valueToAdd int64) {
 }
 
 // createCapabilityLabels creates labels from the gpu capability file under debugfs.
-func (l *labeler) createCapabilityLabels(cardNum string, numTiles uint64) {
+func (l *labeler) createCapabilityLabels(gpuNum string, numTiles uint64) {
 	// try to read the capabilities from the i915_capabilities file
-	file, err := os.Open(filepath.Join(l.debugfsDRIDir, cardNum, "i915_capabilities"))
+	file, err := os.Open(filepath.Join(l.debugfsDRIDir, gpuNum, "i915_capabilities"))
 	if err != nil {
 		klog.V(3).Infof("Couldn't open file:%s", err.Error()) // debugfs is not stable, there is no need to spam with error level prints
 		return
@@ -245,6 +282,66 @@ scanning:
 	}
 }
 
+// this returns pci groups label value, groups separated by "_", gpus separated by ".".
+// Example for two groups with 4 gpus: "0.1.2.3_4.5.6.7".
+func (l *labeler) createPCIGroupLabel(gpuNumList []string) string {
+	pciGroups := map[string][]string{}
+
+	pciGroupLevel := getEnvVarNumber(pciGroupingEnv)
+	if pciGroupLevel == 0 {
+		return ""
+	}
+
+	for _, gpuNum := range gpuNumList {
+		symLinkTarget, err := filepath.EvalSymlinks(path.Join(l.sysfsDRMDir, "card"+gpuNum))
+
+		if err == nil {
+			if pathPart := getPCIPathParts(pciGroupLevel, symLinkTarget); pathPart != "" {
+				pciGroups[pathPart] = append(pciGroups[pathPart], gpuNum)
+			}
+		}
+	}
+
+	labelValue := ""
+	separator := ""
+
+	// process in stable order by sorting
+	keys := []string{}
+	for key := range pciGroups {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		labelValue = labelValue + separator + strings.Join(pciGroups[key], ".")
+		separator = "_"
+	}
+
+	return labelValue
+}
+
+// split returns the given string cut to chunks of size up to maxLength size.
+// maxLength refers to the max length of the strings in the returned slice.
+// If the whole input string fits under maxLength, it is not split.
+// split("foo_bar", 4) returns []string{"foo_", "bar"}.
+func split(str string, maxLength uint) []string {
+	remainingString := str
+	results := []string{}
+
+	for len(remainingString) >= 0 {
+		if uint(len(remainingString)) <= maxLength {
+			results = append(results, remainingString)
+			return results
+		}
+
+		results = append(results, remainingString[:maxLength])
+		remainingString = remainingString[maxLength:]
+	}
+
+	return results
+}
+
 // createLabels is the main function of plugin labeler, it creates label-value pairs for the gpus.
 func (l *labeler) createLabels() error {
 	gpuNameList, err := l.scan()
@@ -252,19 +349,19 @@ func (l *labeler) createLabels() error {
 		return err
 	}
 
+	gpuNumList := []string{}
+
 	for _, gpuName := range gpuNameList {
 		gpuNum := ""
-		// extract card number as a string. scan() has already checked name syntax
+		// extract gpu number as a string. scan() has already checked name syntax
 		_, err = fmt.Sscanf(gpuName, "card%s", &gpuNum)
 		if err != nil {
 			return errors.Wrap(err, "gpu name parsing error")
 		}
 
-		// read the tile count
 		numTiles := l.getTileCount(gpuName)
-
-		// read memory amount
 		memoryAmount := l.getMemoryAmount(gpuName, numTiles)
+		gpuNumList = append(gpuNumList, gpuName[4:])
 
 		// try to add capability labels
 		l.createCapabilityLabels(gpuNum, numTiles)
@@ -272,13 +369,33 @@ func (l *labeler) createLabels() error {
 		l.labels.addNumericLabel(labelNamespace+"memory.max", int64(memoryAmount))
 	}
 
-	gpuCount := len(gpuNameList)
+	gpuCount := len(gpuNumList)
 	if gpuCount > 0 {
-		// add gpu list label (example: "card0.card1.card2")
-		l.labels[labelNamespace+gpuListLabelName] = strings.Join(gpuNameList, ".")
+		// add gpu list label (example: "card0.card1.card2") - deprecated
+		l.labels[labelNamespace+gpuListLabelName] = split(strings.Join(gpuNameList, "."), labelMaxLength)[0]
+
+		// add gpu num list label(s) (example: "0.1.2", which is short form of "card0.card1.card2")
+		allGPUs := strings.Join(gpuNumList, ".")
+		gpuNumLists := split(allGPUs, labelMaxLength)
+
+		l.labels[labelNamespace+gpuNumListLabelName] = gpuNumLists[0]
+		for i := 1; i < len(gpuNumLists); i++ {
+			l.labels[labelNamespace+gpuNumListLabelName+strconv.FormatInt(int64(i+1), 10)] = gpuNumLists[i]
+		}
 
 		// all GPUs get default number of millicores (1000)
 		l.labels.addNumericLabel(labelNamespace+millicoreLabelName, int64(millicoresPerGPU*gpuCount))
+
+		// aa pci-group label(s), (two group example: "1.2.3.4_5.6.7.8")
+		allPCIGroups := l.createPCIGroupLabel(gpuNumList)
+		if allPCIGroups != "" {
+			pciGroups := split(allPCIGroups, labelMaxLength)
+
+			l.labels[labelNamespace+pciGroupLabelName] = pciGroups[0]
+			for i := 1; i < len(gpuNumLists); i++ {
+				l.labels[labelNamespace+pciGroupLabelName+strconv.FormatInt(int64(i+1), 10)] = pciGroups[i]
+			}
+		}
 	}
 
 	return nil

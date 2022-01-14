@@ -31,6 +31,7 @@ type testcase struct {
 	sysfsdirs      []string
 	memoryOverride uint64
 	memoryReserved uint64
+	pciGroupLevel  uint64
 }
 
 func getTestCases() []testcase {
@@ -62,6 +63,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/media_version":        "9",
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
+				"gpu.intel.com/gpu-numbers":          "0",
 			},
 		},
 		{
@@ -110,6 +112,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/media_version":        "9",
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
+				"gpu.intel.com/gpu-numbers":          "0",
 			},
 		},
 		{
@@ -140,6 +143,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/media_version":        "9",
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
+				"gpu.intel.com/gpu-numbers":          "0",
 			},
 		},
 		{
@@ -167,6 +171,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/media_version":        "9",
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
+				"gpu.intel.com/gpu-numbers":          "0",
 			},
 		},
 		{
@@ -190,6 +195,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_new.present": "true",
 				"gpu.intel.com/platform_new.tiles":   "1",
 				"gpu.intel.com/cards":                "card0",
+				"gpu.intel.com/gpu-numbers":          "0",
 			},
 		},
 		{
@@ -218,6 +224,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/media_version":        "12.5",
 				"gpu.intel.com/platform_gen":         "12",
 				"gpu.intel.com/cards":                "card0",
+				"gpu.intel.com/gpu-numbers":          "0",
 			},
 		},
 		{
@@ -244,6 +251,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/media_version":        "12.5",
 				"gpu.intel.com/platform_gen":         "12",
 				"gpu.intel.com/cards":                "card0",
+				"gpu.intel.com/gpu-numbers":          "0",
 			},
 		},
 		{
@@ -264,9 +272,137 @@ func getTestCases() []testcase {
 			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/millicores": "2000",
-				"gpu.intel.com/memory.max": "32000000000",
-				"gpu.intel.com/cards":      "card0.card1",
+				"gpu.intel.com/millicores":  "2000",
+				"gpu.intel.com/memory.max":  "32000000000",
+				"gpu.intel.com/cards":       "card0.card1",
+				"gpu.intel.com/gpu-numbers": "0.1",
+			},
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card1/device/drm/card1",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card1/device/vendor": []byte("0x8086"),
+			},
+			name:           "when all the gpus are in the same pci-group",
+			memoryOverride: 16000000000,
+			capabilityFile: map[string][]byte{
+				"foobar": []byte(
+					"platform: new\n" +
+						"gen: 9"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/millicores":  "2000",
+				"gpu.intel.com/memory.max":  "32000000000",
+				"gpu.intel.com/cards":       "card0.card1",
+				"gpu.intel.com/gpu-numbers": "0.1",
+				"gpu.intel.com/pci-groups":  "0.1",
+			},
+			pciGroupLevel: 2,
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card1/device/drm/card1",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card1/device/vendor": []byte("0x8086"),
+			},
+			name:           "when all the gpus belong to different pci-groups",
+			memoryOverride: 16000000000,
+			capabilityFile: map[string][]byte{
+				"foobar": []byte(
+					"platform: new\n" +
+						"gen: 9"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/millicores":  "2000",
+				"gpu.intel.com/memory.max":  "32000000000",
+				"gpu.intel.com/cards":       "card0.card1",
+				"gpu.intel.com/gpu-numbers": "0.1",
+				"gpu.intel.com/pci-groups":  "0_1",
+			},
+			pciGroupLevel: 4,
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card1/device/drm/card1",
+				"card2/device/drm/card2",
+				"card3/device/drm/card3",
+				"card4/device/drm/card4",
+				"card5/device/drm/card5",
+				"card6/device/drm/card6",
+				"card7/device/drm/card7",
+				"card8/device/drm/card8",
+				"card9/device/drm/card9",
+				"card10/device/drm/card10",
+				"card11/device/drm/card11",
+				"card12/device/drm/card12",
+				"card13/device/drm/card13",
+				"card14/device/drm/card14",
+				"card15/device/drm/card15",
+				"card16/device/drm/card16",
+				"card17/device/drm/card17",
+				"card18/device/drm/card18",
+				"card19/device/drm/card19",
+				"card20/device/drm/card20",
+				"card21/device/drm/card21",
+				"card22/device/drm/card22",
+				"card23/device/drm/card23",
+				"card24/device/drm/card24",
+				"card25/device/drm/card25",
+				"card26/device/drm/card26",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor":  []byte("0x8086"),
+				"card1/device/vendor":  []byte("0x8086"),
+				"card2/device/vendor":  []byte("0x8086"),
+				"card3/device/vendor":  []byte("0x8086"),
+				"card4/device/vendor":  []byte("0x8086"),
+				"card5/device/vendor":  []byte("0x8086"),
+				"card6/device/vendor":  []byte("0x8086"),
+				"card7/device/vendor":  []byte("0x8086"),
+				"card8/device/vendor":  []byte("0x8086"),
+				"card9/device/vendor":  []byte("0x8086"),
+				"card10/device/vendor": []byte("0x8086"),
+				"card11/device/vendor": []byte("0x8086"),
+				"card12/device/vendor": []byte("0x8086"),
+				"card13/device/vendor": []byte("0x8086"),
+				"card14/device/vendor": []byte("0x8086"),
+				"card15/device/vendor": []byte("0x8086"),
+				"card16/device/vendor": []byte("0x8086"),
+				"card17/device/vendor": []byte("0x8086"),
+				"card18/device/vendor": []byte("0x8086"),
+				"card19/device/vendor": []byte("0x8086"),
+				"card20/device/vendor": []byte("0x8086"),
+				"card21/device/vendor": []byte("0x8086"),
+				"card22/device/vendor": []byte("0x8086"),
+				"card23/device/vendor": []byte("0x8086"),
+				"card24/device/vendor": []byte("0x8086"),
+				"card25/device/vendor": []byte("0x8086"),
+				"card26/device/vendor": []byte("0x8086"),
+			},
+			name:           "when there are way too many gpus, cards label gets truncated",
+			memoryOverride: 16000000000,
+			capabilityFile: map[string][]byte{
+				"foobar": []byte(
+					"platform: new\n" +
+						"gen: 9"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/millicores":   "27000",
+				"gpu.intel.com/memory.max":   "432000000000",
+				"gpu.intel.com/cards":        "card0.card1.card10.card11.card12.card13.card14.card15.card16.ca",
+				"gpu.intel.com/gpu-numbers":  "0.1.10.11.12.13.14.15.16.17.18.19.2.20.21.22.23.24.25.26.3.4.5.",
+				"gpu.intel.com/gpu-numbers2": "6.7.8.9",
 			},
 		},
 	}
@@ -293,6 +429,35 @@ func (tc *testcase) createFiles(t *testing.T, sysfs, root string) {
 	}
 }
 
+func TestSplit(t *testing.T) {
+	tests := []struct {
+		name           string
+		str            string
+		expectedResult []string
+		maxLength      uint
+	}{
+		{
+			name:           "single small enough input string passes through unsplit",
+			str:            "1.2.3.4",
+			maxLength:      10,
+			expectedResult: []string{"1.2.3.4"},
+		},
+		{
+			name:           "foo_bar with maxLength 4 gets split to foo_ and bar",
+			str:            "foo_bar",
+			maxLength:      4,
+			expectedResult: []string{"foo_", "bar"},
+		},
+	}
+
+	for _, test := range tests {
+		result := split(test.str, test.maxLength)
+		if !reflect.DeepEqual(test.expectedResult, result) {
+			t.Errorf("\n%q ended up with unexpected result %v vs expected %v", test.name, result, test.expectedResult)
+		}
+	}
+}
+
 func TestLabeling(t *testing.T) {
 	root, err := os.MkdirTemp("", "test_new_device_plugin")
 	if err != nil {
@@ -315,12 +480,13 @@ func TestLabeling(t *testing.T) {
 			if err != nil {
 				t.Fatalf("couldn't create dir: %s", err.Error())
 			}
-			sysfs := path.Join(subroot, sysfsDirectory)
+			sysfs := path.Join(subroot, "pci0000:00/0000:00:1b.4", sysfsDirectory)
 
 			tc.createFiles(t, sysfs, subroot)
 
 			os.Setenv(memoryOverrideEnv, strconv.FormatUint(tc.memoryOverride, 10))
 			os.Setenv(memoryReservedEnv, strconv.FormatUint(tc.memoryReserved, 10))
+			os.Setenv(pciGroupingEnv, strconv.FormatUint(tc.pciGroupLevel, 10))
 
 			labeler := newLabeler(sysfs, subroot)
 			err = labeler.createLabels()
