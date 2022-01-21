@@ -4,6 +4,7 @@ Table of Contents
 
 * [Introduction](#introduction)
 * [Installation](#installation)
+* [Upgrade](#upgrade)
 * [Known issues](#known-issues)
 
 ## Introduction
@@ -143,6 +144,19 @@ Operator also supports deployments with multiple selected device types.
 In this case, create a new kustomization with the necessary resources
 that passes the desired device types to the operator using `--device`
 command line argument multiple times.
+
+## Upgrade
+
+The upgrade of the deployed plugins can be done by simply installing a new release of the operator.
+
+The operator auto-upgrades operator-managed plugins (CR images and thus corresponding deployed daemonsets) to the current release of the operator.
+
+The [registry-url]/[namespace]/[image] are kept intact on the upgrade.
+
+No upgrade is done for:
+
+- Non-operator managed deployments
+- Operator deployments without numeric tags
 
 ## Known issues
 
