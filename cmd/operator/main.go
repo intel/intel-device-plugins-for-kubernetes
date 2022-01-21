@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ func main() {
 		pm                    *patcher.Manager
 	)
 
-	ctrl.SetLogger(klogr.New())
+	ctrl.SetLogger(klogr.NewWithOptions(klogr.WithFormat(klogr.FormatKlog)))
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&devicePluginNamespace, "deviceplugin-namespace", metav1.NamespaceSystem, "The namespace where deviceplugin daemonsets are created")
