@@ -11,6 +11,9 @@ BUILDTAGS ?= ""
 BUILDER ?= "docker"
 EXTRA_BUILD_ARGS ?= ""
 
+CONTROLLER_GEN_VERSION ?= v0.8.0
+GOLANGCI_LINT_VERSION ?= v1.43.0
+KIND_VERSION ?= v0.11.1
 # Current Operator version
 OPERATOR_VERSION ?= 0.23.0
 # Previous Operator version
@@ -44,6 +47,11 @@ format:
 vendor:
 	@$(GO) mod vendor -v
 
+install-tools:
+	GO111MODULE=on $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
+	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	$(GO) install sigs.k8s.io/kind@${KIND_VERSION}
+	
 go-mod-tidy:
 	$(GO) mod download
 	@report=`$(GO) mod tidy -v 2>&1` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
@@ -188,7 +196,7 @@ check-github-actions:
 	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
 
-.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture
+.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture install-tools
 
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
