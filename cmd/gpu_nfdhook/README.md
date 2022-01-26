@@ -33,9 +33,12 @@ name | type | description|
 |`gpu.intel.com/memory.max`| number | sum of detected [GPU memory amounts](#GPU-memory) in bytes OR environment variable value * GPU count
 |`gpu.intel.com/cards`| string | list of card names separated by '`.`'. The names match host `card*`-folders under `/sys/class/drm/`. Deprecated, use `gpu-numbers`.
 |`gpu.intel.com/gpu-numbers`| string | list of numbers separated by '`.`'. The numbers correspond to device file numbers for the primary nodes of given GPUs in kernel DRI subsystem, listed as `/dev/dri/card<num>` in devfs, and `/sys/class/drm/card<num>` in sysfs.
+|`gpu.intel.com/tiles`| number | sum of all detected GPU tiles in the system.
 
 If the value of the `gpu-numbers` label would not fit into the 63 character length limit, you will also get labels `gpu-numbers2`,
 `gpu-numbers3`... until all the gpu numbers have been labeled.
+
+The tile count `gpu.intel.com/tiles` describes the total amount of tiles on the system. System is expected to be homogeneous, and thus the number of tiles per GPU can be calculated by dividing the tile count with GPU count.
 
 ## PCI-groups (optional)
 

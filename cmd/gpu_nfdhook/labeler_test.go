@@ -64,6 +64,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
 				"gpu.intel.com/gpu-numbers":          "0",
+				"gpu.intel.com/tiles":                "1",
 			},
 		},
 		{
@@ -82,7 +83,9 @@ func getTestCases() []testcase {
 						"gen: 9"),
 			},
 			expectedRetval: nil,
-			expectedLabels: labelMap{},
+			expectedLabels: labelMap{
+				"gpu.intel.com/tiles": "0",
+			},
 		},
 		{
 			sysfsdirs: []string{
@@ -113,6 +116,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
 				"gpu.intel.com/gpu-numbers":          "0",
+				"gpu.intel.com/tiles":                "2",
 			},
 		},
 		{
@@ -144,6 +148,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
 				"gpu.intel.com/gpu-numbers":          "0",
+				"gpu.intel.com/tiles":                "1",
 			},
 		},
 		{
@@ -172,6 +177,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_gen":         "9",
 				"gpu.intel.com/cards":                "card0",
 				"gpu.intel.com/gpu-numbers":          "0",
+				"gpu.intel.com/tiles":                "1",
 			},
 		},
 		{
@@ -196,6 +202,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_new.tiles":   "1",
 				"gpu.intel.com/cards":                "card0",
 				"gpu.intel.com/gpu-numbers":          "0",
+				"gpu.intel.com/tiles":                "1",
 			},
 		},
 		{
@@ -225,6 +232,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_gen":         "12",
 				"gpu.intel.com/cards":                "card0",
 				"gpu.intel.com/gpu-numbers":          "0",
+				"gpu.intel.com/tiles":                "1",
 			},
 		},
 		{
@@ -252,6 +260,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/platform_gen":         "12",
 				"gpu.intel.com/cards":                "card0",
 				"gpu.intel.com/gpu-numbers":          "0",
+				"gpu.intel.com/tiles":                "1",
 			},
 		},
 		{
@@ -276,6 +285,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/memory.max":  "32000000000",
 				"gpu.intel.com/cards":       "card0.card1",
 				"gpu.intel.com/gpu-numbers": "0.1",
+				"gpu.intel.com/tiles":       "2",
 			},
 		},
 		{
@@ -301,6 +311,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/cards":       "card0.card1",
 				"gpu.intel.com/gpu-numbers": "0.1",
 				"gpu.intel.com/pci-groups":  "0.1",
+				"gpu.intel.com/tiles":       "2",
 			},
 			pciGroupLevel: 2,
 		},
@@ -327,6 +338,7 @@ func getTestCases() []testcase {
 				"gpu.intel.com/cards":       "card0.card1",
 				"gpu.intel.com/gpu-numbers": "0.1",
 				"gpu.intel.com/pci-groups":  "0_1",
+				"gpu.intel.com/tiles":       "2",
 			},
 			pciGroupLevel: 4,
 		},
@@ -403,6 +415,82 @@ func getTestCases() []testcase {
 				"gpu.intel.com/cards":        "card0.card1.card10.card11.card12.card13.card14.card15.card16.ca",
 				"gpu.intel.com/gpu-numbers":  "0.1.10.11.12.13.14.15.16.17.18.19.2.20.21.22.23.24.25.26.3.4.5.",
 				"gpu.intel.com/gpu-numbers2": "6.7.8.9",
+				"gpu.intel.com/tiles":        "27",
+			},
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card0/gt/gt0",
+				"card0/gt/gt1",
+				"card0/gt/gt3",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor":    []byte("0x8086"),
+				"card0/lmem_total_bytes": []byte("8000"),
+			},
+			name:           "successful labeling via card0/lmem_total_bytes and three tiles",
+			memoryOverride: 16000000000,
+			capabilityFile: map[string][]byte{
+				"0/i915_capabilities": []byte(
+					"platform: new\n" +
+						"gen: 9"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/graphics_version":     "9",
+				"gpu.intel.com/media_version":        "9",
+				"gpu.intel.com/millicores":           "1000",
+				"gpu.intel.com/memory.max":           "24000",
+				"gpu.intel.com/platform_new.count":   "1",
+				"gpu.intel.com/platform_new.present": "true",
+				"gpu.intel.com/platform_new.tiles":   "3",
+				"gpu.intel.com/platform_gen":         "9",
+				"gpu.intel.com/cards":                "card0",
+				"gpu.intel.com/gpu-numbers":          "0",
+				"gpu.intel.com/tiles":                "3",
+			},
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card0/gt/gt0",
+				"card0/gt/gt1",
+				"card1/device/drm/card1",
+				"card1/gt/gt0",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor":    []byte("0x8086"),
+				"card0/lmem_total_bytes": []byte("8000"),
+				"card1/device/vendor":    []byte("0x8086"),
+				"card1/lmem_total_bytes": []byte("8000"),
+			},
+			name:           "successful labeling with two cards and total three tiles",
+			memoryOverride: 16000000000,
+			capabilityFile: map[string][]byte{
+				"0/i915_capabilities": []byte(
+					"platform: new\n" +
+						"gen: 9"),
+				"1/i915_capabilities": []byte(
+					"platform: newnew\n" +
+						"gen: 9"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/graphics_version":        "9",
+				"gpu.intel.com/media_version":           "9",
+				"gpu.intel.com/millicores":              "2000",
+				"gpu.intel.com/memory.max":              "24000",
+				"gpu.intel.com/platform_new.count":      "1",
+				"gpu.intel.com/platform_new.present":    "true",
+				"gpu.intel.com/platform_new.tiles":      "2",
+				"gpu.intel.com/platform_newnew.count":   "1",
+				"gpu.intel.com/platform_newnew.present": "true",
+				"gpu.intel.com/platform_newnew.tiles":   "1",
+				"gpu.intel.com/platform_gen":            "9",
+				"gpu.intel.com/gpu-numbers":             "0.1",
+				"gpu.intel.com/cards":                   "card0.card1",
+				"gpu.intel.com/tiles":                   "3",
 			},
 		},
 	}
@@ -410,8 +498,17 @@ func getTestCases() []testcase {
 
 func (tc *testcase) createFiles(t *testing.T, sysfs, root string) {
 	var err error
+
 	for filename, body := range tc.capabilityFile {
-		if err = os.WriteFile(path.Join(root, filename), body, 0600); err != nil {
+		filePath := path.Join(root, filename)
+		dirOnly := path.Dir(filePath)
+
+		err = os.MkdirAll(dirOnly, 0750)
+		if err != nil {
+			t.Fatalf("Failed to create base directories: %+v", err)
+		}
+
+		if err = os.WriteFile(filePath, body, 0600); err != nil {
 			t.Fatalf("Failed to create fake capability file: %+v", err)
 		}
 	}

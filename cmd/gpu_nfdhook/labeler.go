@@ -36,6 +36,7 @@ const (
 	gpuNumListLabelName = "gpu-numbers"
 	millicoreLabelName  = "millicores"
 	pciGroupLabelName   = "pci-groups"
+	tilesLabelName      = "tiles"
 	millicoresPerGPU    = 1000
 	memoryOverrideEnv   = "GPU_MEMORY_OVERRIDE"
 	memoryReservedEnv   = "GPU_MEMORY_RESERVED"
@@ -350,6 +351,7 @@ func (l *labeler) createLabels() error {
 	}
 
 	gpuNumList := []string{}
+	tileCount := 0
 
 	for _, gpuName := range gpuNameList {
 		gpuNum := ""
@@ -360,6 +362,8 @@ func (l *labeler) createLabels() error {
 		}
 
 		numTiles := l.getTileCount(gpuName)
+		tileCount += int(numTiles)
+
 		memoryAmount := l.getMemoryAmount(gpuName, numTiles)
 		gpuNumList = append(gpuNumList, gpuName[4:])
 
@@ -370,6 +374,9 @@ func (l *labeler) createLabels() error {
 	}
 
 	gpuCount := len(gpuNumList)
+
+	l.labels.addNumericLabel(labelNamespace+tilesLabelName, int64(tileCount))
+
 	if gpuCount > 0 {
 		// add gpu list label (example: "card0.card1.card2") - deprecated
 		l.labels[labelNamespace+gpuListLabelName] = split(strings.Join(gpuNameList, "."), labelMaxLength)[0]
