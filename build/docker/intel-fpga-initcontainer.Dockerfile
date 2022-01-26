@@ -34,8 +34,8 @@ RUN cd cmd/fpga_crihook && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "
     cd ../fpga_tool && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && \
     cd ../.. && \
     install -D ${DIR}/LICENSE $ROOT/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE && \
-    scripts/copy-modules-licenses.sh ./cmd/fpga_crihook $ROOT/usr/local/share/ && \
-    scripts/copy-modules-licenses.sh ./cmd/fpga_tool $ROOT/usr/local/share/
+    GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/fpga_crihook" --save_path $ROOT/usr/local/share/go-licenses/fpga_crihook && \
+    go-licenses save "./cmd/fpga_tool" --save_path $ROOT/usr/local/share/go-licenses/fpga_tool
 
 ARG SRC_DIR=/usr/local/fpga-sw
 ARG DST_DIR=/opt/intel/fpga-sw

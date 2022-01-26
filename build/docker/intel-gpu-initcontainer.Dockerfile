@@ -34,7 +34,7 @@ ARG ROOT=/install_root
 RUN cd cmd/gpu_nfdhook && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && cd -\
     install -D ${DIR}/LICENSE $ROOT/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE && \
     mkdir -p  $ROOT/usr/local/share/ && \
-    scripts/copy-modules-licenses.sh ./cmd/gpu_nfdhook $ROOT/usr/local/share/
+    GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/gpu_nfdhook" --save_path $ROOT/usr/local/share/go-licenses
 
 ARG NFD_HOOK=intel-gpu-nfdhook
 ARG SRC_DIR=/usr/local/bin/gpu-sw
