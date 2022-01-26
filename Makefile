@@ -1,16 +1,17 @@
 CONTROLLER_GEN ?= controller-gen
 GO := go
 GOFMT := gofmt
-KIND ?= kind
-KUBECTL ?= kubectl
 KUSTOMIZE ?= kustomize
 OPERATOR_SDK ?= operator-sdk
-PODMAN ?= podman
 
 BUILDTAGS ?= ""
 BUILDER ?= "docker"
 EXTRA_BUILD_ARGS ?= ""
 
+CERT_MANAGER_VERSION ?= v1.6.1
+CONTROLLER_GEN_VERSION ?= v0.8.0
+GOLANGCI_LINT_VERSION ?= v1.43.0
+KIND_VERSION ?= v0.11.1
 # Current Operator version
 OPERATOR_VERSION ?= 0.23.0
 # Previous Operator version
@@ -28,13 +29,10 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 OLM_MANIFESTS = deployments/operator/manifests
 PACKAGEMANIFESTS_DIR = community-operators/operators/intel-device-plugins-operator
 
-WEBHOOK_IMAGE_FILE = intel-fpga-admissionwebhook-devel.tgz
-
 TESTDATA_DIR = pkg/topology/testdata
 
 pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e | grep -v envtest)
 cmds = $(shell ls --ignore=internal cmd)
-e2e_tmp_dir := $(shell mktemp -u -t e2e-tests.XXXXXXXXXX)
 
 all: build
 
@@ -44,6 +42,11 @@ format:
 vendor:
 	@$(GO) mod vendor -v
 
+install-tools:
+	GO111MODULE=on $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
+	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	$(GO) install sigs.k8s.io/kind@${KIND_VERSION}
+	
 go-mod-tidy:
 	$(GO) mod download
 	@report=`$(GO) mod tidy -v 2>&1` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
@@ -66,18 +69,16 @@ else
             exit $$rc
 endif
 
-test-with-kind: fixture
-	@build/docker/build-image.sh intel/intel-fpga-admissionwebhook buildah
-	@$(PODMAN) tag localhost/intel/intel-fpga-admissionwebhook:devel docker.io/intel/intel-fpga-admissionwebhook:devel
-	@mkdir -p $(e2e_tmp_dir)
-	@$(PODMAN) save "docker.io/intel/intel-fpga-admissionwebhook:devel" -o $(e2e_tmp_dir)/$(WEBHOOK_IMAGE_FILE)
-	@$(KIND) create cluster --name "intel-device-plugins" --kubeconfig $(e2e_tmp_dir)/kubeconfig --image "kindest/node:v1.19.0"
-	@$(KIND) load image-archive --name "intel-device-plugins" $(e2e_tmp_dir)/$(WEBHOOK_IMAGE_FILE)
-	$(KUBECTL) --kubeconfig=$(e2e_tmp_dir)/kubeconfig apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
-	@$(GO) test -v ./test/e2e -args -kubeconfig $(e2e_tmp_dir)/kubeconfig -kubectl-path $(KUBECTL) -ginkgo.focus "FPGA Admission" || rc=1; \
-	$(KIND) delete cluster --name "intel-device-plugins"; \
-	rm -rf $(e2e_tmp_dir); \
-	exit $$rc
+test-with-kind: fixture intel-sgx-admissionwebhook intel-fpga-admissionwebhook intel-deviceplugin-operator install-tools
+	# Build a Cluster with KinD & Install Cert-Manager 
+	kind create cluster
+	kind load docker-image intel/intel-sgx-admissionwebhook:devel intel/intel-fpga-admissionwebhook:devel intel/intel-deviceplugin-operator:devel
+	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
+	# Test SGX Admission Webhook & FPGA Admission Webhook
+	go test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "SGX Admission"
+	go test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "FPGA Admission"
+	# Deploy Operator
+	kubectl apply -k deployments/operator/default/
 
 envtest:
 	@$(GO) test ./test/envtest
@@ -188,7 +189,7 @@ check-github-actions:
 	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
 
-.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture
+.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture install-tools
 
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
