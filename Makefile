@@ -70,13 +70,15 @@ else
 endif
 
 test-with-kind: fixture intel-sgx-admissionwebhook intel-fpga-admissionwebhook intel-deviceplugin-operator install-tools
-	# Build a Cluster with KinD & Install Cert-Manager 
+	# Build a Cluster with KinD & Load Images & Install Cert-Manager
 	kind create cluster
-	kind load docker-image intel/intel-sgx-admissionwebhook:devel intel/intel-fpga-admissionwebhook:devel intel/intel-deviceplugin-operator:devel
+	kind load docker-image $(REG)intel-sgx-admissionwebhook:$(TAG)
+	kind load docker-image $(REG)intel-fpga-admissionwebhook:$(TAG)
+	kind load docker-image $(REG)intel-deviceplugin-operator:$(TAG)
 	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
 	# Test SGX Admission Webhook & FPGA Admission Webhook
-	go test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "SGX Admission"
-	go test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "FPGA Admission"
+	$(GO) test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "SGX Admission"
+	$(GO) test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "FPGA Admission"
 	# Deploy Operator
 	kubectl apply -k deployments/operator/default/
 
