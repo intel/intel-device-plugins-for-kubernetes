@@ -54,6 +54,8 @@ pipeline {
 		sh "sudo sed -i -e 's/quay/docker/' /etc/containers/registries.conf"
 		sh "sudo curl -L https://github.com/opencontainers/runc/releases/download/$RUNC_VERSION/runc.amd64 -o /usr/bin/runc"
 		sh "sudo chmod +x /usr/bin/runc"
+		sh "sudo curl -L https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl -o /usr/bin/kubectl"
+		sh "sudo chmod +x /usr/bin/kubectl"   
               }
         }
         stage("make go-mod-tidy") {
@@ -140,7 +142,7 @@ pipeline {
         stage('make test-with-kind') {
           steps {
             dir(path: "$REPO_DIR") {
-              sh "make test-with-kind"
+              sh "make test-with-kind REG=intel/ TAG=devel"
             }
           }
         }
