@@ -17,4 +17,4 @@ spec:
   maxNumDevices: 1
   logLevel: 4
   nodeSelector:
-    feature.node.kubernetes.io/qat-c6xx: 'true'
+    intel.feature.node.kubernetes.io/qat: 'true'

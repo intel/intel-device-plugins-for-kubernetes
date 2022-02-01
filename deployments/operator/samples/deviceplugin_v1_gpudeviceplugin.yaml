@@ -8,4 +8,4 @@ spec:
   sharedDevNum: 10
   logLevel: 4
   nodeSelector:
-    feature.node.kubernetes.io/gpu-i915: 'true'
+    intel.feature.node.kubernetes.io/gpu: "true"

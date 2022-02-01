@@ -8,4 +8,4 @@ spec:
   mode: region
   logLevel: 4
   nodeSelector:
-    feature.node.kubernetes.io/fpga-arria10: 'true'
+    intel.feature.node.kubernetes.io/fpga-arria10: 'true'

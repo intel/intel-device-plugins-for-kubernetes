@@ -15,6 +15,38 @@ administrators.
 
 ## Installation
 
+Install NFD and node labelling rules:
+
+```
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd
+```
+Make sure both NFD master and worker pods are running:
+
+$ kubectl get pods -n node-feature-discovery
+NAME                          READY   STATUS    RESTARTS   AGE
+nfd-master-599c58dffc-9wql4   1/1     Running   0          25h
+nfd-worker-qqq4h              1/1     Running   0          25h
+
+Note that labelling is not performed immediately. Give NFD 1 minute to pick up the rules and label nodes.
+
+As a result all found devices should have correspondent labels, e.g. for Intel DLB devices the label is
+intel.feature.node.kubernetes.io/dlb:
+```
+$ kubectl get no -o json | jq .items[].metadata.labels |grep intel.feature.node.kubernetes.io/dlb
+  "intel.feature.node.kubernetes.io/dlb": "true",
+```
+
+Full list of labels can be found in the deployments/operator/samples directory:
+```
+$ grep -r feature.node.kubernetes.io/ deployments/operator/samples/
+deployments/operator/samples/deviceplugin_v1_dlbdeviceplugin.yaml:    intel.feature.node.kubernetes.io/dlb: 'true'
+deployments/operator/samples/deviceplugin_v1_qatdeviceplugin.yaml:    intel.feature.node.kubernetes.io/qat: 'true'
+deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml:    intel.feature.node.kubernetes.io/sgx: 'true'
+deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml:    intel.feature.node.kubernetes.io/gpu: "true"
+deployments/operator/samples/deviceplugin_v1_fpgadeviceplugin.yaml:    intel.feature.node.kubernetes.io/fpga-arria10: 'true'
+deployments/operator/samples/deviceplugin_v1_dsadeviceplugin.yaml:    intel.feature.node.kubernetes.io/dsa: 'true'
+```
+
 The operator depends on [cert-manager](https://cert-manager.io/) running in the cluster.
 To install it run:
 
