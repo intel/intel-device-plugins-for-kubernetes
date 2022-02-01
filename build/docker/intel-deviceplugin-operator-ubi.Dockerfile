@@ -19,6 +19,7 @@
 # This is used on release branches before tagging a stable version.
 # The main branch defaults to using the latest Golang base image.
 ARG GOLANG_BASE=golang:1.17-bullseye
+ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro
 
 FROM ${GOLANG_BASE} as builder
 
@@ -28,17 +29,18 @@ ARG BUILDFLAGS="-ldflags=-w -s"
 WORKDIR $DIR
 COPY . .
 
+
+
 RUN cd cmd/operator; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}"; cd -
 RUN install -D /go/bin/operator /install_root/usr/local/bin/intel_deviceplugin_operator \
-    && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
-    && scripts/copy-modules-licenses.sh ./cmd/operator /install_root/usr/local/share/
+#    && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE --save_path /install_root/licenses/ \
+    && install -D ${DIR}/LICENSE /install_root/licenses/LICENSE \
+    && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/operator" --save_path /install_root/usr/local/share/go-licenses
 
 # FROM gcr.io/distroless/static
-FROM registry.access.redhat.com/ubi8-micro
+FROM ${FINAL_BASE}
 
-MAINTAINER NAME chaitanya.kulkarni@intel.com
-
-### Required OpenShift Labels
+## Required OpenShift Labels
 LABEL name='intel-deviceplugin-operator-ubi' \
       maintainer='chaitanya.kulkarni@intel.com' \
       vendor='Intel® Corp' \
@@ -49,7 +51,4 @@ LABEL name='intel-deviceplugin-operator-ubi' \
 
 
 COPY --from=builder /install_root /
-COPY --from=builder /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE  /licenses/LICENSE
-
-
 ENTRYPOINT ["/usr/local/bin/intel_deviceplugin_operator"]
