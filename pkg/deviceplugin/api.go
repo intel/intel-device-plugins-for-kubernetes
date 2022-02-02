@@ -23,11 +23,12 @@ import (
 
 // DeviceInfo contains information about device maintained by Device Plugin.
 type DeviceInfo struct {
-	mounts   []pluginapi.Mount
-	envs     map[string]string
-	topology *pluginapi.TopologyInfo
-	state    string
-	nodes    []pluginapi.DeviceSpec
+	mounts      []pluginapi.Mount
+	envs        map[string]string
+	annotations map[string]string
+	topology    *pluginapi.TopologyInfo
+	state       string
+	nodes       []pluginapi.DeviceSpec
 }
 
 // UseDefaultMethodError allows the plugin to request running the default
@@ -44,12 +45,13 @@ func init() {
 }
 
 // NewDeviceInfo makes DeviceInfo struct and adds topology information to it.
-func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string) DeviceInfo {
+func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string, annotations map[string]string) DeviceInfo {
 	deviceInfo := DeviceInfo{
-		state:  state,
-		nodes:  nodes,
-		mounts: mounts,
-		envs:   envs,
+		state:       state,
+		nodes:       nodes,
+		mounts:      mounts,
+		envs:        envs,
+		annotations: annotations,
 	}
 
 	devPaths := []string{}
@@ -70,13 +72,14 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 
 // NewDeviceInfoWithTopologyHints makes DeviceInfo struct with topology information provided to it.
 func NewDeviceInfoWithTopologyHints(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string,
-	topology *pluginapi.TopologyInfo) DeviceInfo {
+	annotations map[string]string, topology *pluginapi.TopologyInfo) DeviceInfo {
 	return DeviceInfo{
-		state:    state,
-		nodes:    nodes,
-		mounts:   mounts,
-		envs:     envs,
-		topology: topology,
+		state:       state,
+		nodes:       nodes,
+		mounts:      mounts,
+		envs:        envs,
+		annotations: annotations,
+		topology:    topology,
 	}
 }
 
