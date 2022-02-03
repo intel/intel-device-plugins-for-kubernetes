@@ -19,6 +19,7 @@
 # This is used on release branches before tagging a stable version.
 # The main branch defaults to using the latest Golang base image.
 ARG GOLANG_BASE=golang:1.17-bullseye
+ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro
 
 FROM ${GOLANG_BASE} as builder
 
@@ -30,9 +31,20 @@ COPY . .
 
 RUN cd cmd/operator; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}"; cd -
 RUN install -D /go/bin/operator /install_root/usr/local/bin/intel_deviceplugin_operator \
-    && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
+    && install -D ${DIR}/LICENSE /install_root/licenses/LICENSE \
     && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/operator" --save_path /install_root/usr/local/share/go-licenses
 
-FROM gcr.io/distroless/static
+# FROM gcr.io/distroless/static
+FROM ${FINAL_BASE}
+
+## Required OpenShift Labels
+LABEL name='intel-deviceplugin-operator-ubi' \
+      maintainer='chaitanya.kulkarni@intel.com' \
+      vendor='Intel® Corp' \
+      version='0.23.0' \
+      release='1' \
+      summary='Intel® device plugin operator container image for Intel® Device Plugins Operator' \
+      description='To simplify the deployment of the device plugins, a unified device plugins operator is implemented. Currently the operator has support for the SGX device plugins. Each device plugin has its own custom resource definition (CRD) and the corresponding controller that watches CRUD operations to those custom resources.'
+
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_deviceplugin_operator"]
