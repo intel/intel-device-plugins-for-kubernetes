@@ -224,7 +224,7 @@ func (dp *devicePlugin) scanUsb(devTree *dpapi.DeviceTree) {
 					ContainerPath: hddlServicePath2,
 				},
 			}
-			devTree.AddDevice(deviceType, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, mounts, nil))
+			devTree.AddDevice(deviceType, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, mounts, nil, nil))
 		}
 	}
 }
@@ -284,7 +284,7 @@ func (dp *devicePlugin) scanPci(devTree *dpapi.DeviceTree) {
 				devID := fmt.Sprintf("%s-device-%d", deviceTypePci, i)
 				// VPU pci device found and added to node
 				klog.V(1).Info(devID)
-				devTree.AddDevice(deviceTypePci, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, mounts, nil))
+				devTree.AddDevice(deviceTypePci, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, mounts, nil, nil))
 			}
 		}
 	}

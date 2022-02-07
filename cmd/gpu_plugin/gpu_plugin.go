@@ -329,7 +329,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		}
 
 		if len(nodes) > 0 {
-			deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil)
+			deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil)
 
 			for i := 0; i < dp.options.sharedDevNum; i++ {
 				devID := fmt.Sprintf("%s-%d", f.Name(), i)
@@ -343,7 +343,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	}
 	// all Intel GPUs are under single monitoring resource
 	if len(monitor) > 0 {
-		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, monitor, nil, nil)
+		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, monitor, nil, nil, nil)
 		devTree.AddDevice(monitorType, monitorID, deviceInfo)
 	}
 
