@@ -7,7 +7,7 @@ require (
 	github.com/go-ini/ini v1.66.3
 	github.com/go-logr/logr v1.2.2
 	github.com/google/gousb v1.1.1
-	github.com/klauspost/cpuid/v2 v2.0.10
+	github.com/klauspost/cpuid/v2 v2.0.11
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.18.1
 	github.com/pkg/errors v0.9.1
