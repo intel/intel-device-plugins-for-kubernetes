@@ -102,7 +102,7 @@ func getDevTree(sysfs string, qatDevs []device, config map[string]section) (dpap
 					// The rest should use QAT_SECTION_NAME_XXX variables.
 					"QAT_SECTION_NAME": sname,
 				}
-				deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devs, nil, envs)
+				deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devs, nil, envs, nil)
 				devTree.AddDevice(devType, fmt.Sprintf("%s_%s_%d", sname, ep.id, i), deviceInfo)
 				uniqID++
 			}

@@ -160,12 +160,16 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 				cresp.Mounts = append(cresp.Mounts, &dev.mounts[i])
 			}
 
-			for key, value := range dev.envs {
-				if cresp.Envs == nil {
-					cresp.Envs = make(map[string]string)
-				}
+			cresp.Envs = map[string]string{}
 
+			for key, value := range dev.envs {
 				cresp.Envs[key] = value
+			}
+
+			cresp.Annotations = map[string]string{}
+
+			for key, value := range dev.annotations {
+				cresp.Annotations[key] = value
 			}
 		}
 

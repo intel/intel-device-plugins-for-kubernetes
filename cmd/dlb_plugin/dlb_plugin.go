@@ -88,7 +88,7 @@ func (dp *DevicePlugin) scan() dpapi.DeviceTree {
 			ContainerPath: file,
 			Permissions:   "rw",
 		}}
-		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devs, nil, nil)
+		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devs, nil, nil, nil)
 
 		sysfsDev := filepath.Join(dp.sysfsDir, filepath.Base(file))
 		sriovNumVFs := pluginutils.GetSriovNumVFs(sysfsDev)
