@@ -142,3 +142,12 @@ jobs:
       - name: Test SGX & FPGA Admission Webhook, Deploy Operator
         run: |
           make test-with-kind
+
+  checkov:
+    name: Checkov Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run checkov checks
+        run: |
+          make checkov
