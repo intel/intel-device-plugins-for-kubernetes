@@ -26,7 +26,8 @@ cleanup()
   clear
   out 'Cleanup demo artifacts' 20
   out 'delete node-feature-discovery deployment:' 20
-  command 'kubectl delete -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_nfd?ref=main || true' 20
+  command 'kubectl delete -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=main || true' 20
+  command 'kubectl delete -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx?ref=main || true' 20
   out 'delete SGX Device Plugin deployment:' 20
   command 'kubectl delete sgxdeviceplugin sgxdeviceplugin-sample || true' 20
   out 'delete Intel Device Plugin Operator deployment:' 20
@@ -68,9 +69,11 @@ screen3()
   clear
   out "2. Deploy node-feature-discovery for Kubernetes"
   out "It's used to label SGX capable nodes and register SGX EPC as an extended resource"
-  command "kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_nfd?ref=main"
+  command "kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx?ref=main"
   out "Check its pod is running"
   command "kubectl wait --for=condition=Ready pod/$(kubectl get --no-headers -l app=nfd-worker -o=jsonpath='{.items[0].metadata.name}' pods -n node-feature-discovery) -n node-feature-discovery"
+  out "Create NodeFeatureRules for SGX specific labels"
+  command 'kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=main || true' 20
 }
 
 screen4()
