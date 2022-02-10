@@ -165,11 +165,10 @@ $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL
 
 ### Deploying as a DaemonSet
 
-As a pre-requisite you need to have [cert-manager](https://cert-manager.io)
-up and running:
+The FPGA webhook deployment depends on having [cert-manager](https://cert-manager.io/)
+installed. See its installation instructions [here](https://cert-manager.io/docs/installation/kubectl/).
 
 ```bash
-$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
 $ kubectl get pods -n cert-manager
 NAME                                      READY   STATUS    RESTARTS   AGE
 cert-manager-7747db9d88-bd2nl             1/1     Running   0          1m

@@ -127,19 +127,13 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 **Note:** The default `nfd-worker.conf` assumes that the in-tree driver is used and enabled (`CONFIG_X86_SGX=y`). If
 the SGX DCAP out-of-tree driver is used, the `kernel.config` match expression in `nfd-worker.conf` must be removed.
 
-#### Deploy cert-manager
-
-```bash
-$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
-```
-
 #### Deploy Intel Device plugin operator
 
 ```bash
 $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=<RELEASE_VERSION>
 ```
 
-**Note:** See the operator [deployment details](/cmd/operator/README.md) for setting it up on systems behind proxies.
+**Note:** See the operator [deployment details](/cmd/operator/README.md) for its dependencies and for setting it up on systems behind proxies.
 
 #### Deploy SGX device plugin with the operator
 
@@ -156,11 +150,8 @@ $ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL
 
 ### Deploying as a DaemonSet
 
-To deploy the plugin as a DaemonSet, you first need to deploy the cert-manager.
-
-```bash
-$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
-```
+The SGX deployment documented here depends on having [cert-manager](https://cert-manager.io/)
+installed. See its installation instructions [here](https://cert-manager.io/docs/installation/kubectl/).
 
 You also need to build a container image for the plugin and ensure that is
 visible to your nodes.
