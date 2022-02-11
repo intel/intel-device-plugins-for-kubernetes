@@ -215,5 +215,5 @@ clean-html:
 _work/venv/.stamp: docs/requirements.txt
 	rm -rf ${@D}
 	python3 -m venv ${@D}
-	. ${@D}/bin/activate && pip install -r $<
+	. ${@D}/bin/activate && pip install wheel && pip install -r $<
 	touch $@
