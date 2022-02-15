@@ -33,9 +33,9 @@ ARG ROOT=/install_root
 RUN cd cmd/fpga_crihook && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && \
     cd ../fpga_tool && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && \
     cd ../.. && \
-    install -D ${DIR}/LICENSE $ROOT/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE && \
-    GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/fpga_crihook" --save_path $ROOT/usr/local/share/go-licenses/fpga_crihook && \
-    go-licenses save "./cmd/fpga_tool" --save_path $ROOT/usr/local/share/go-licenses/fpga_tool
+    install -D ${DIR}/LICENSE $ROOT/licenses/intel-device-plugins-for-kubernetes/LICENSE && \
+    GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/fpga_crihook" --save_path $ROOT/licenses/fpga_crihook && \
+    go-licenses save "./cmd/fpga_tool" --save_path $ROOT/licenses/go-licenses/fpga_tool
 
 ARG SRC_DIR=/usr/local/fpga-sw
 ARG DST_DIR=/opt/intel/fpga-sw
@@ -59,8 +59,8 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && rm toybox.tar.gz \
     && cd toybox-$TOYBOX_VERSION \
     && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \
-    && install -D LICENSE $ROOT/usr/local/share/package-licenses/toybox \
-    && cp -r /usr/share/doc/musl $ROOT/usr/local/share/package-licenses/
+    && install -D LICENSE $ROOT/licenses/toybox \
+    && cp -r /usr/share/doc/musl $ROOT/licenses/
 
 FROM gcr.io/distroless/static
 COPY --from=builder /install_root /

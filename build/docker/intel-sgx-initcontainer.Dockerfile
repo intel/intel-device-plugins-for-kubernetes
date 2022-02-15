@@ -32,9 +32,9 @@ ARG ROOT=/install_root
 
 # Build NFD Feature Detector Hook
 RUN cd cmd/sgx_epchook && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && cd -\
-    install -D ${DIR}/LICENSE $ROOT/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE && \
+    install -D ${DIR}/LICENSE $ROOT/licenses/intel-device-plugins-for-kubernetes/LICENSE && \
     mkdir -p  $ROOT/usr/local/share/ && \
-    GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/sgx_epchook" --save_path $ROOT/usr/local/share/go-licenses
+    GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/sgx_epchook" --save_path $ROOT/licenses/go-licenses
 
 ARG NFD_HOOK=intel-sgx-epchook
 ARG SRC_DIR=/usr/local/bin/sgx-sw
@@ -51,8 +51,8 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && rm toybox.tar.gz \
     && cd toybox-$TOYBOX_VERSION \
     && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \
-    && install -D LICENSE $ROOT/usr/local/share/package-licenses/toybox \
-    && cp -r /usr/share/doc/musl $ROOT/usr/local/share/package-licenses/
+    && install -D LICENSE $ROOT/licenses/toybox \
+    && cp -r /usr/share/doc/musl $ROOT/licenses/
 
 FROM gcr.io/distroless/static
 COPY --from=builder /install_root /

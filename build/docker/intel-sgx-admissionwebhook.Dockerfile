@@ -30,8 +30,8 @@ COPY . .
 
 RUN cd cmd/sgx_admissionwebhook; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}"; cd -
 RUN install -D /go/bin/sgx_admissionwebhook /install_root/usr/local/bin/intel_sgx_admissionwebhook \
-    && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
-    && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/sgx_admissionwebhook" --save_path /install_root/usr/local/share/go-licenses
+    && install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
+    && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/sgx_admissionwebhook" --save_path /install_root/licenses/go-licenses
 
 FROM gcr.io/distroless/static
 COPY --from=builder /install_root /

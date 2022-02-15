@@ -282,9 +282,7 @@ Release tagged images of the components are also available on the Docker hub, ta
 All of the source code required to build intel-device-plugins-for-kubernetes
 is available under Open Source licenses. The source code files identify external Go
 modules used. Binaries are distributed as container images on
-DockerHub. Those images contain license texts under
-`/usr/local/share/package-licenses` and source code under
-`/usr/local/share/package-sources`.
+DockerHub. Those images contain license texts and source code under `/licenses`.
 
 ## Security
 
