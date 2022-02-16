@@ -29,7 +29,7 @@ spec:
       readOnlyRootFilesystem: true
       capabilities:
         add:
-          ["IPC_LOCK", "SYS_ADMIN"]
+          ["IPC_LOCK"]
   restartPolicy: Never
   volumes:
   - name: dpdk-runtime

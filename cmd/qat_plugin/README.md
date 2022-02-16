@@ -284,8 +284,8 @@ $ kubectl get pods
 
 ```
 
-> **Note**: The deployment example above uses [kustomize](https://github.com/kubernetes-sigs/kustomize)
-> that is available in kubectl since Kubernetes v1.14 release.
+> **Note**: If the `igb_uio` VF driver is used with the QAT device plugin,
+> the workload be deployed with `SYS_ADMIN` capabilities added.
 
 ##### Manual test run
 

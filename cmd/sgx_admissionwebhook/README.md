@@ -29,12 +29,8 @@ controller webhook plugin.
 
 ### Pre-requisites
 
-The simplest webhook deployment depends on having [cert-manager](https://cert-manager.io/)
-installed:
-
-```bash
-$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
-```
+The default webhook deployment depends on having [cert-manager](https://cert-manager.io/)
+installed. See its installation instructions [here](https://cert-manager.io/docs/installation/kubectl/).
 
 Also if your cluster operates behind a corporate proxy make sure that the API
 server is configured not to send requests to cluster services through the

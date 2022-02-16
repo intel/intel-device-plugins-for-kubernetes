@@ -47,12 +47,8 @@ deployments/operator/samples/deviceplugin_v1_fpgadeviceplugin.yaml:    intel.fea
 deployments/operator/samples/deviceplugin_v1_dsadeviceplugin.yaml:    intel.feature.node.kubernetes.io/dsa: 'true'
 ```
 
-The operator depends on [cert-manager](https://cert-manager.io/) running in the cluster.
-To install it run:
-
-```
-$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
-```
+The default operator deployment depends on [cert-manager](https://cert-manager.io/) running in the cluster.
+See installation instructions [here](https://cert-manager.io/docs/installation/kubectl/).
 
 Make sure all the pods in the `cert-manager` namespace are up and running:
 
