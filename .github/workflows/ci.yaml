@@ -14,6 +14,29 @@ env:
   K8S_VERSION: 1.22.1
 jobs:
 
+  docs:
+    name: Check docs are buildable
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-venv
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Set up doc directory
+      run: |
+        mkdir $HOME/output
+        touch $HOME/output/.nojekyll
+    - name: Build latest
+      run: |
+        GITHUB_SHA=$(git rev-parse HEAD)
+        export GITHUB_SHA
+        rm -rf _work/venv
+        make vhtml
+        mv _build/html/* $HOME/output/
+
   golangci:
     name: lint
     runs-on: ubuntu-latest
