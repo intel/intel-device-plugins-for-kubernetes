@@ -30,8 +30,8 @@ COPY . .
 
 RUN cd cmd/dsa_plugin; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}"; cd -
 RUN install -D /go/bin/dsa_plugin /install_root/usr/local/bin/intel_dsa_device_plugin \
-    && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
-    && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/dsa_plugin" --save_path /install_root/usr/local/share/go-licenses
+    && install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
+    && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/dsa_plugin" --save_path /install_root/licenses/go-licenses
 
 FROM gcr.io/distroless/static
 COPY --from=builder /install_root /
