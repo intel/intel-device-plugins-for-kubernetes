@@ -16,6 +16,7 @@ package patcher
 
 import (
 	"flag"
+	"reflect"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -91,31 +92,20 @@ func TestPatcherStorageFunctions(t *testing.T) {
 	}
 }
 
-func TestValidateContainerEnv(t *testing.T) {
+func TestSanitizeContainerEnv(t *testing.T) {
 	tcases := []struct {
-		name        string
-		container   corev1.Container
-		expectedErr bool
+		name              string
+		container         corev1.Container
+		expectedContainer corev1.Container
 	}{
 		{
-			name: "Container OK",
-			container: corev1.Container{
-				Resources: corev1.ResourceRequirements{
-					Limits: corev1.ResourceList{
-						"cpu": resource.MustParse("1"),
-					},
-				},
-			},
-			expectedErr: false,
+			name:              "Container OK",
+			container:         corev1.Container{},
+			expectedContainer: corev1.Container{},
 		},
 		{
 			name: "Wrong ENV FPGA_AFU",
 			container: corev1.Container{
-				Resources: corev1.ResourceRequirements{
-					Limits: corev1.ResourceList{
-						"cpu": resource.MustParse("1"),
-					},
-				},
 				Env: []corev1.EnvVar{
 					{
 						Name:  "FPGA_AFU",
@@ -123,16 +113,11 @@ func TestValidateContainerEnv(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: true,
+			expectedContainer: corev1.Container{},
 		},
 		{
 			name: "Wrong ENV FPGA_REGION",
 			container: corev1.Container{
-				Resources: corev1.ResourceRequirements{
-					Limits: corev1.ResourceList{
-						"cpu": resource.MustParse("1"),
-					},
-				},
 				Env: []corev1.EnvVar{
 					{
 						Name:  "FPGA_REGION",
@@ -140,17 +125,40 @@ func TestValidateContainerEnv(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: true,
+			expectedContainer: corev1.Container{},
+		},
+		{
+			name: "Wrong ENV FPGA_REGION and unrelated env var",
+			container: corev1.Container{
+				Env: []corev1.EnvVar{
+					{
+						Name:  "FPGA_REGION",
+						Value: "fake value",
+					},
+					{
+						Name:  "FAKE_VAR",
+						Value: "fake value",
+					},
+				},
+			},
+			expectedContainer: corev1.Container{
+				Env: []corev1.EnvVar{
+					{
+						Name:  "FAKE_VAR",
+						Value: "fake value",
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateContainer(tt.container)
-			if tt.expectedErr && err == nil {
-				t.Errorf("Test case '%s': no error returned", tt.name)
+			c := sanitizeContainer(tt.container)
+			if tt.expectedContainer.Env != nil && !reflect.DeepEqual(c.Env, tt.expectedContainer.Env) {
+				t.Errorf("Got wrong container Env %+v instead of expected %+v", c.Env, tt.expectedContainer.Env)
 			}
-			if !tt.expectedErr && err != nil {
-				t.Errorf("Test case '%s': unexpected error: %+v", tt.name, err)
+			if tt.expectedContainer.Env == nil && c.Env != nil {
+				t.Errorf("Got wrong container Env %+v instead of expected 'nil'", c.Env)
 			}
 		})
 	}
