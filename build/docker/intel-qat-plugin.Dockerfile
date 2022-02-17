@@ -34,5 +34,13 @@ RUN install -D /go/bin/qat_plugin /install_root/usr/local/bin/intel_qat_device_p
     && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/qat_plugin" --save_path /install_root/licenses/go-licenses
 
 FROM gcr.io/distroless/static
+
+LABEL name='intel-qat-plugin' 
+LABEL vendor='Intel®' 
+LABEL version='devel' 
+LABEL release='1' 
+LABEL summary='Intel® QAT device plugin for Kubernetes' 
+LABEL description='The QAT plugin supports device plugin for Intel QAT adapters, and includes code showing deployment via DPDK'
+
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_qat_device_plugin"]

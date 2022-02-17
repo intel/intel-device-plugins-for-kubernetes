@@ -34,5 +34,13 @@ RUN install -D /go/bin/fpga_admissionwebhook /install_root/usr/local/bin/intel_f
     && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/fpga_admissionwebhook" --save_path /install_root/licenses/go-licenses
 
 FROM gcr.io/distroless/static
+
+LABEL name='intel-fpga-admissionwebhook' 
+LABEL vendor='Intel®' 
+LABEL version='devel' 
+LABEL release='1' 
+LABEL summary='Intel® FPGA admission controller webhook for Kubernetes' 
+LABEL description='The FPGA admission controller webhook is responsible for performing mapping from user-friendly function IDs to the Interface ID and Bitstream ID that are required for FPGA programming. It also implements access control by namespacing FPGA configuration information'
+
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_fpga_admissionwebhook"]

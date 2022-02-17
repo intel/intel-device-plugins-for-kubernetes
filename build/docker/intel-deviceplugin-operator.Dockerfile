@@ -34,5 +34,13 @@ RUN install -D /go/bin/operator /install_root/usr/local/bin/intel_deviceplugin_o
     && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/operator" --save_path /install_root/licenses/go-licenses
 
 FROM gcr.io/distroless/static
+
+LABEL name='intel-deviceplugin-operator' 
+LABEL vendor='Intel®' 
+LABEL version='devel' 
+LABEL release='1' 
+LABEL summary='Intel® device plugin operator for Kubernetes' 
+LABEL description='To simplify the deployment of the device plugins, a unified device plugins operator is implemented. Currently the operator has support for the QAT, GPU, FPGA, SGX, DSA and DLB device plugins. Each device plugin has its own custom resource definition (CRD) and the corresponding controller that watches CRUD operations to those custom resources.'
+
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_deviceplugin_operator"]

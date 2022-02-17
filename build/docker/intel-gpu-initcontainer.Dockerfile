@@ -55,6 +55,14 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 
 FROM gcr.io/distroless/static
+
+LABEL name='intel-gpu-initcontainer' 
+LABEL vendor='Intel®' 
+LABEL version='devel' 
+LABEL release='1' 
+LABEL summary='Intel® GPU NFD hook for Kubernetes' 
+LABEL description='The GPU fractional resources, such as GPU memory is registered as a kubernetes extended resource using node-feature-discovery (NFD). A custom NFD source hook is installed as part of GPU device plugin operator deployment and NFD is configured to register the GPU memory extended resource reported by the hook'
+
 COPY --from=builder /install_root /
 
 ENTRYPOINT [ "/bin/sh", "-c", "cp -a /usr/local/bin/gpu-sw/intel-gpu-nfdhook /etc/kubernetes/node-feature-discovery/source.d/" ]

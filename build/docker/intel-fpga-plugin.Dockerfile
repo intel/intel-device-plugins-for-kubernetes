@@ -34,5 +34,13 @@ RUN install -D /go/bin/fpga_plugin /install_root/usr/local/bin/intel_fpga_device
     && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/fpga_plugin" --save_path /install_root/licenses/go-licenses
 
 FROM gcr.io/distroless/static
+
+LABEL name='intel-fpga-plugin' 
+LABEL vendor='Intel®' 
+LABEL version='devel' 
+LABEL release='1' 
+LABEL summary='Intel® FPGA device plugin for Kubernetes' 
+LABEL description='The FPGA device plugin is responsible for discovering and reporting FPGA devices to kubelet'
+
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_fpga_device_plugin"]
