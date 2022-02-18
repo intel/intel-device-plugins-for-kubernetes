@@ -20,6 +20,18 @@
 # The main branch defaults to using the latest Golang base image.
 ARG GOLANG_BASE=golang:1.17-bullseye
 
+# FINAL_BASE can be used to configure the base image of the final image.
+#
+# This is used in two ways:
+# 1) make <image-name> BUILDER=<docker|buildah>
+# 2) docker build ... -f <image-name>.Dockerfile
+#
+# The project default is 1) which sets FINAL_BASE=gcr.io/distroless/static
+# (see build-image.sh).
+# 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based. 
+# The RedHat build tool does not allow additional image build parameters.
+ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro
+
 FROM ${GOLANG_BASE} as builder
 
 ARG DIR=/intel-device-plugins-for-kubernetes
@@ -54,7 +66,7 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && install -D LICENSE $ROOT/licenses/toybox \
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 
-FROM gcr.io/distroless/static
+FROM ${FINAL_BASE}
 
 LABEL name='intel-sgx-initcontainer' 
 LABEL vendor='Intel®' 

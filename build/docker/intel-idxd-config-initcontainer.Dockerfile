@@ -12,6 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# FINAL_BASE can be used to configure the base image of the final image.
+#
+# This is used in two ways:
+# 1) make <image-name> BUILDER=<docker|buildah>
+# 2) docker build ... -f <image-name>.Dockerfile
+#
+# The project default is 1) which sets FINAL_BASE=gcr.io/distroless/static
+# (see build-image.sh).
+# Declaring FINAL_BASE ARG but not setting the value to resolve build warning:
+# "[Warning] one or more build args were not consumed: [FINAL_BASE]"
+ARG FINAL_BASE
+
 FROM debian:unstable-slim AS builder
 
 RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
