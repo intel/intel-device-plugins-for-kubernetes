@@ -134,11 +134,34 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	return daemonSet
 }
 
+func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
+	newVolumes := []v1.Volume{}
+
+	for _, volume := range volumes {
+		if volume.Name != name {
+			newVolumes = append(newVolumes, volume)
+		}
+	}
+
+	return newVolumes
+}
+
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
 	dp := rawObj.(*devicepluginv1.SgxDevicePlugin)
 
 	if ds.Spec.Template.Spec.Containers[0].Image != dp.Spec.Image {
 		ds.Spec.Template.Spec.Containers[0].Image = dp.Spec.Image
+		updated = true
+	}
+
+	if dp.Spec.InitImage == "" {
+		if ds.Spec.Template.Spec.InitContainers != nil {
+			ds.Spec.Template.Spec.InitContainers = nil
+			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "nfd-source-hooks")
+			updated = true
+		}
+	} else {
+		setInitContainer(&ds.Spec.Template.Spec, dp.Spec.InitImage)
 		updated = true
 	}
 
