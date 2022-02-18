@@ -20,7 +20,7 @@ Table of Contents
 This Intel DLB device plugin provides support for [Intel DLB](https://builders.intel.com/docs/networkbuilders/SKU-343247-001US-queue-management-and-load-balancing-on-intel-architecture.pdf) devices under Kubernetes.
 
 ### DLB2 driver configuration for PFs
-The DLB device plugin requires a Linux Kernel DLB driver to be installed and enabled to operate. Get [DLB software release](https://downloadmirror.intel.com/690271/dlblinuxsrcrelease7.4.020211006.txz), build and load the dlb2 driver module following the instruction of 'DLB_Driver_User_Guide.pdf' in the directory 'dlb/docs'.
+The DLB device plugin requires a Linux Kernel DLB driver to be installed and enabled to operate. Get [DLB software release](https://www.intel.com/content/www/us/en/download/686372/intel-dynamic-load-balancer.html), build and load the dlb2 driver module following the instruction of 'DLB_Driver_User_Guide.pdf' in the directory 'dlb/docs'.
 
 After successfully loading the module, available dlb device nodes are visible in devfs.
 ```bash
