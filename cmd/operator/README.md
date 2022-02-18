@@ -15,10 +15,15 @@ administrators.
 
 ## Installation
 
-Install NFD and node labelling rules:
+Install NFD (if it's not already installed) and node labelling rules (requires NFD v0.10+):
 
 ```
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd
+# either with default NFD installation
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=<RELEASE_VERSION>
+# or when setting up with SGX
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx?ref=<RELEASE_VERSION>
+# and finally, NodeFeatureRules
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=<RELEASE_VERSION>
 ```
 Make sure both NFD master and worker pods are running:
 

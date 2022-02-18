@@ -32,9 +32,10 @@ import (
 )
 
 const (
-	kustomizationWebhook = "deployments/sgx_admissionwebhook/overlays/default-with-certmanager/kustomization.yaml"
-	kustomizationPlugin  = "deployments/sgx_plugin/overlays/epc-hook-initcontainer/kustomization.yaml"
-	kustomizationNFD     = "deployments/sgx_nfd/kustomization.yaml"
+	kustomizationWebhook  = "deployments/sgx_admissionwebhook/overlays/default-with-certmanager/kustomization.yaml"
+	kustomizationPlugin   = "deployments/sgx_plugin/overlays/epc-hook-initcontainer/kustomization.yaml"
+	kustomizationNFD      = "deployments/nfd/overlays/sgx/kustomization.yaml"
+	kustomizationNFDRules = "deployments/nfd/overlays/node-feature-rules/kustomization.yaml"
 )
 
 func init() {
@@ -54,11 +55,19 @@ func describe() {
 		framework.Failf("unable to locate %q: %v", kustomizationNFD, err)
 	}
 
+	nodeFeatureRulesPath, err := utils.LocateRepoFile(kustomizationNFDRules)
+	if err != nil {
+		framework.Failf("unable to locate %q: %v", kustomizationNFDRules, err)
+	}
+
 	ginkgo.BeforeEach(func() {
 		_ = utils.DeployWebhook(f, deploymentWebhookPath)
 
 		msg := framework.RunKubectlOrDie("node-feature-discovery", "apply", "-k", filepath.Dir(deploymentNFDPath))
 		framework.Logf("Deploy node-feature-discovery:\n%s", msg)
+
+		msg = framework.RunKubectlOrDie("node-feature-discovery", "apply", "-k", filepath.Dir(nodeFeatureRulesPath))
+		framework.Logf("Create NodeFeatureRules:\n%s", msg)
 
 		if _, err = e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, "node-feature-discovery",
 			labels.Set{"app": "nfd-master"}.AsSelector(), 1 /* one replica */, 100*time.Second); err != nil {

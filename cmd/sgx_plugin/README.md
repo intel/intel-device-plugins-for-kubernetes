@@ -121,11 +121,12 @@ the devel images from Docker Hub by default.
 #### Deploy node-feature-discovery
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_nfd?ref=<RELEASE_VERSION>
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx?ref=<RELEASE_VERSION>
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=<RELEASE_VERSION>
 ```
 
-**Note:** The default `nfd-worker.conf` assumes that the in-tree driver is used and enabled (`CONFIG_X86_SGX=y`). If
-the SGX DCAP out-of-tree driver is used, the `kernel.config` match expression in `nfd-worker.conf` must be removed.
+**Note:** The [default configuration](/deployments/nfd/overlays/node-feature-rules/node-feature-rules.yaml) assumes that the in-tree driver is used and enabled (`CONFIG_X86_SGX=y`). If
+the SGX DCAP out-of-tree driver is used, the `kernel.config` match expression in must be removed.
 
 #### Deploy Intel Device plugin operator
 
@@ -178,7 +179,7 @@ Successfully tagged intel/intel-sgx-initcontainer:devel
 There are two alternative ways to deploy SGX device plugin.
 
 The first approach involves deployment of the [SGX DaemonSet YAML](/deployments/sgx_plugin/base/intel-sgx-plugin.yaml)
-and [node-feature-discovery](/deployments/sgx_nfd/kustomization.yaml)
+and [node-feature-discovery](/deployments/nfd/overlays/sgx/kustomization.yaml)
 with the necessary configuration.
 
 There is a kustomization for deploying everything:
