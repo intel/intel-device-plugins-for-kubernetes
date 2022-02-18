@@ -137,20 +137,30 @@ func (p *patcher) RemoveRegion(name string) {
 	delete(p.resourceModeMap, namespace+"/"+name)
 }
 
-func validateContainer(container corev1.Container) error {
+// sanitizeContainer filters out env variables reserved for CRI hook.
+func sanitizeContainer(container corev1.Container) corev1.Container {
+	i := 0
+
+	// Rewrite container.Env slice in-place to avoid memory allocations.
 	for _, v := range container.Env {
-		if strings.HasPrefix(v.Name, "FPGA_REGION") || strings.HasPrefix(v.Name, "FPGA_AFU") {
-			return errors.Errorf("environment variable '%s' is not allowed", v.Name)
+		if !(strings.HasPrefix(v.Name, "FPGA_REGION") || strings.HasPrefix(v.Name, "FPGA_AFU")) {
+			container.Env[i] = v
+			i++
 		}
 	}
 
-	return nil
+	// Erase truncated elements.
+	if i == 0 {
+		container.Env = nil
+	} else {
+		container.Env = container.Env[:i]
+	}
+
+	return container
 }
 
 func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]string, error) {
-	if err := validateContainer(container); err != nil {
-		return nil, err
-	}
+	container = sanitizeContainer(container)
 
 	requestedResources, err := containers.GetRequestedResources(container, namespace)
 	if err != nil {
