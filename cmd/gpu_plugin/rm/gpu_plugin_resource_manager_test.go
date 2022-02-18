@@ -72,7 +72,7 @@ func (w *mockPodResources) List(ctx context.Context,
 	resp := podresourcesv1.ListPodResourcesResponse{}
 	for _, pod := range w.pods {
 		resp.PodResources = append(resp.PodResources, &podresourcesv1.PodResources{
-			Name: pod.ObjectMeta.Name, Containers: []*podresourcesv1.ContainerResources{{}},
+			Name: pod.ObjectMeta.Name, Namespace: pod.ObjectMeta.Namespace, Containers: []*podresourcesv1.ContainerResources{{}},
 		})
 	}
 
@@ -101,6 +101,8 @@ func newMockResourceManager(pods []v1.Pod) ResourceManager {
 		},
 		skipID:           "all",
 		fullResourceName: "gpu.intel.com/i915",
+		assignments:      make(map[string]PodAssignmentDetails),
+		retryTimeout:     1 * time.Millisecond,
 	}
 
 	deviceInfoMap := NewDeviceInfoMap()
@@ -120,11 +122,21 @@ func newMockResourceManager(pods []v1.Pod) ResourceManager {
 	return &rm
 }
 
+type preferredTestCase struct {
+	name                 string
+	pods                 []v1.Pod
+	containerRequests    []*v1beta1.ContainerPreferredAllocationRequest
+	expectDevices        []string
+	expectedContainerLen int
+}
+
 type testCase struct {
-	name              string
-	pods              []v1.Pod
-	containerRequests []*v1beta1.ContainerAllocateRequest
-	expectErr         bool
+	name                  string
+	pods                  []v1.Pod
+	prefContainerRequests []*v1beta1.ContainerPreferredAllocationRequest
+	containerRequests     []*v1beta1.ContainerAllocateRequest
+	prefExpectErr         bool
+	expectErr             bool
 }
 
 func TestNewResourceManager(t *testing.T) {
@@ -136,7 +148,166 @@ func TestNewResourceManager(t *testing.T) {
 	}
 }
 
-func TestReallocateWithFractionalResources(t *testing.T) {
+func TestGetPreferredFractionalAllocation(t *testing.T) {
+	properTestPod := v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{gasCardAnnotation: "card0"},
+			Name:        "TestPod",
+			Namespace:   "neimspeis",
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{
+							"gpu.intel.com/i915": resource.MustParse("1"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	gpuLessTestPod := v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "TestPodLessGpu",
+			Namespace: "neimspeis",
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{
+							"gpu.less.com/i915": resource.MustParse("1"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	properTestPodMultiGpu := *properTestPod.DeepCopy()
+	properTestPodMultiGpu.ObjectMeta.Annotations[gasCardAnnotation] = "card0,card1"
+
+	properTestPodMultiGpu2 := *properTestPod.DeepCopy()
+	properTestPodMultiGpu2.ObjectMeta.Annotations[gasCardAnnotation] = "card0,card1,card0"
+
+	monitoringPod := *properTestPod.DeepCopy()
+	delete(monitoringPod.Spec.Containers[0].Resources.Requests, "gpu.intel.com/i915")
+	monitoringPod.Spec.Containers[0].Resources.Requests["gpu.intel.com/i915_monitoring"] = resource.MustParse("1")
+
+	allContainerRequests := []*v1beta1.ContainerPreferredAllocationRequest{
+		{AvailableDeviceIDs: []string{"all"},
+			AllocationSize: 1},
+	}
+
+	properPrefContainerRequests := []*v1beta1.ContainerPreferredAllocationRequest{
+		{AvailableDeviceIDs: []string{"card0-0", "card0-1", "card1-0", "card1-1"},
+			AllocationSize: 1},
+	}
+
+	outofRangePrefContainerRequests := []*v1beta1.ContainerPreferredAllocationRequest{
+		{AvailableDeviceIDs: []string{"card6-0", "card5-1"},
+			AllocationSize: 1},
+	}
+
+	mustHaveContainerRequests := []*v1beta1.ContainerPreferredAllocationRequest{
+		{AvailableDeviceIDs: []string{"card0-0", "card0-1", "card1-0", "card1-1"},
+			MustIncludeDeviceIDs: []string{"card0-2"},
+			AllocationSize:       2},
+	}
+
+	properPrefContainerRequests3 := []*v1beta1.ContainerPreferredAllocationRequest{
+		{AvailableDeviceIDs: []string{"card0-0", "card0-1", "card1-0", "card1-1"},
+			AllocationSize: 3},
+	}
+
+	testCases := []preferredTestCase{
+		{
+			name:                 "Wrong number of container requests should result in empty response",
+			pods:                 []v1.Pod{properTestPod},
+			containerRequests:    nil,
+			expectedContainerLen: 0,
+		},
+		{
+			name:                 "Proper number of containers with good devices",
+			pods:                 []v1.Pod{properTestPod},
+			containerRequests:    properPrefContainerRequests,
+			expectDevices:        []string{"card0-0"},
+			expectedContainerLen: 1,
+		},
+		{
+			name:                 "Inconsistent devices vs. gas' annotated ones",
+			pods:                 []v1.Pod{properTestPod},
+			containerRequests:    outofRangePrefContainerRequests,
+			expectDevices:        []string{},
+			expectedContainerLen: 1,
+		},
+		{
+			name:                 "Preferred allocation is with must have device ids",
+			pods:                 []v1.Pod{properTestPodMultiGpu},
+			containerRequests:    mustHaveContainerRequests,
+			expectDevices:        []string{"card0-2", "card1-0"},
+			expectedContainerLen: 1,
+		},
+		{
+			name:                 "Duplicate card requesting pod",
+			pods:                 []v1.Pod{properTestPodMultiGpu2},
+			containerRequests:    properPrefContainerRequests3,
+			expectDevices:        []string{"card0-0", "card1-0", "card0-1"},
+			expectedContainerLen: 1,
+		},
+		{
+			name:                 "Allocation size is larger than cards assigned",
+			pods:                 []v1.Pod{properTestPodMultiGpu},
+			containerRequests:    properPrefContainerRequests3,
+			expectDevices:        []string{"card0-0", "card1-0"},
+			expectedContainerLen: 1,
+		},
+		{
+			name:                 "Monitoring pod is being allocated",
+			pods:                 []v1.Pod{monitoringPod},
+			containerRequests:    allContainerRequests,
+			expectDevices:        []string{},
+			expectedContainerLen: 0,
+		},
+		{
+			name:                 "Two pods with one without GPU",
+			pods:                 []v1.Pod{properTestPod, gpuLessTestPod},
+			containerRequests:    properPrefContainerRequests,
+			expectDevices:        []string{"card0-0"},
+			expectedContainerLen: 1,
+		},
+	}
+
+	for _, tCase := range testCases {
+		rm := newMockResourceManager(tCase.pods)
+		resp, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
+			ContainerRequests: tCase.containerRequests,
+		})
+
+		if perr != nil {
+			t.Errorf("test %v unexpected failure, err:%v", tCase.name, perr)
+		}
+
+		if perr == nil {
+			// check response
+			expectTruef(len(resp.ContainerResponses) == tCase.expectedContainerLen, t, tCase.name, "wrong number of container responses, expected 1")
+
+			if len(tCase.expectDevices) > 0 {
+				expectTruef(len(resp.ContainerResponses[0].DeviceIDs) == len(tCase.expectDevices), t, tCase.name,
+					"wrong number of device ids: %d (%v)", len(resp.ContainerResponses[0].DeviceIDs), resp.ContainerResponses[0].DeviceIDs)
+
+				for i, expecteDevice := range tCase.expectDevices {
+					expectTruef(resp.ContainerResponses[0].DeviceIDs[i] == expecteDevice, t, tCase.name,
+						"wrong device id selected: %s", resp.ContainerResponses[0].DeviceIDs[i])
+				}
+			}
+		}
+	}
+}
+
+func TestCreateFractionalResourceResponse(t *testing.T) {
 	properTestPod := v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{gasCardAnnotation: "card0"},
@@ -167,54 +338,81 @@ func TestReallocateWithFractionalResources(t *testing.T) {
 
 	properContainerRequests := []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"card0-0"}}}
 
+	properPrefContainerRequests := []*v1beta1.ContainerPreferredAllocationRequest{
+		{AvailableDeviceIDs: []string{"card0-0", "card0-1", "card1-0", "card1-1"},
+			AllocationSize: 1},
+	}
+
 	testCases := []testCase{
 		{
-			name:              "Wrong number of container requests should fail",
-			pods:              []v1.Pod{properTestPod},
-			containerRequests: []*v1beta1.ContainerAllocateRequest{},
-			expectErr:         true,
+			name:                  "Wrong number of container requests should fail",
+			pods:                  []v1.Pod{properTestPod},
+			prefContainerRequests: properPrefContainerRequests,
+			prefExpectErr:         false,
+			containerRequests:     []*v1beta1.ContainerAllocateRequest{},
+			expectErr:             true,
 		},
 		{
-			name:              "Request for monitor resource should fail",
-			pods:              []v1.Pod{properTestPod},
-			containerRequests: []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"all"}}},
-			expectErr:         true,
+			name:                  "Request for monitor resource should fail",
+			pods:                  []v1.Pod{properTestPod},
+			prefContainerRequests: properPrefContainerRequests,
+			prefExpectErr:         true,
+			containerRequests:     []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"all"}}},
+			expectErr:             true,
 		},
 		{
-			name:              "Zero pending pods should fail",
-			pods:              []v1.Pod{},
-			containerRequests: properContainerRequests,
-			expectErr:         true,
+			name:                  "Zero pending pods should fail",
+			pods:                  []v1.Pod{},
+			prefContainerRequests: properPrefContainerRequests,
+			prefExpectErr:         true,
+			containerRequests:     properContainerRequests,
+			expectErr:             true,
 		},
 		{
-			name:              "Single pending pod without annotations should fail",
-			pods:              []v1.Pod{unAnnotatedTestPod},
-			containerRequests: properContainerRequests,
-			expectErr:         true,
+			name:                  "Single pending pod without annotations should fail",
+			pods:                  []v1.Pod{unAnnotatedTestPod},
+			prefContainerRequests: properPrefContainerRequests,
+			prefExpectErr:         true,
+			containerRequests:     properContainerRequests,
+			expectErr:             true,
 		},
 		{
-			name:              "Single pending pod should succeed",
-			pods:              []v1.Pod{properTestPod},
-			containerRequests: properContainerRequests,
-			expectErr:         false,
+			name:                  "Single pending pod should succeed",
+			pods:                  []v1.Pod{properTestPod},
+			prefContainerRequests: properPrefContainerRequests,
+			prefExpectErr:         true,
+			containerRequests:     properContainerRequests,
+			expectErr:             false,
 		},
 		{
-			name:              "Two pending pods without timestamps should fail",
-			pods:              []v1.Pod{properTestPod, properTestPod2},
-			containerRequests: properContainerRequests,
-			expectErr:         true,
+			name:                  "Two pending pods without timestamps should fail",
+			pods:                  []v1.Pod{properTestPod, properTestPod2},
+			prefContainerRequests: properPrefContainerRequests,
+			prefExpectErr:         true,
+			containerRequests:     properContainerRequests,
+			expectErr:             true,
 		},
 		{
-			name:              "Two pending pods with timestamps should reduce to one candidate and succeed",
-			pods:              []v1.Pod{timeStampedProperTestPod, timeStampedProperTestPod2},
-			containerRequests: properContainerRequests,
-			expectErr:         false,
+			name:                  "Two pending pods with timestamps should reduce to one candidate and succeed",
+			pods:                  []v1.Pod{timeStampedProperTestPod, timeStampedProperTestPod2},
+			prefContainerRequests: properPrefContainerRequests,
+			prefExpectErr:         true,
+			containerRequests:     properContainerRequests,
+			expectErr:             false,
 		},
 	}
 
 	for _, tCase := range testCases {
 		rm := newMockResourceManager(tCase.pods)
-		resp, err := rm.ReallocateWithFractionalResources(&v1beta1.AllocateRequest{
+		_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
+			ContainerRequests: tCase.prefContainerRequests,
+		})
+
+		if (perr != nil) && !tCase.prefExpectErr {
+			t.Errorf("test %v unexpected failure, err:%v", tCase.name, perr)
+		}
+
+		resp, err := rm.CreateFractionalResourceResponse(&v1beta1.AllocateRequest{
 			ContainerRequests: tCase.containerRequests,
 		})
 
@@ -239,7 +437,7 @@ func TestReallocateWithFractionalResources(t *testing.T) {
 	}
 }
 
-func TestReallocateWithFractionalResourcesWithOneCardTwoTiles(t *testing.T) {
+func TestCreateFractionalResourceResponseWithOneCardTwoTiles(t *testing.T) {
 	properTestPod := v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
@@ -260,38 +458,49 @@ func TestReallocateWithFractionalResourcesWithOneCardTwoTiles(t *testing.T) {
 		},
 	}
 
+	properPrefContainerRequests := []*v1beta1.ContainerPreferredAllocationRequest{
+		{AvailableDeviceIDs: []string{"card0-0", "card0-1", "card1-0", "card1-1"},
+			AllocationSize: 1},
+	}
+
 	properContainerRequests := []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"card0-0"}}}
 
 	tCase := testCase{
-		name:              "Single pending pod with two tiles should succeed",
-		pods:              []v1.Pod{properTestPod},
-		containerRequests: properContainerRequests,
-		expectErr:         false,
+		name:                  "Single pending pod with two tiles should succeed",
+		pods:                  []v1.Pod{properTestPod},
+		prefContainerRequests: properPrefContainerRequests,
+		prefExpectErr:         false,
+		containerRequests:     properContainerRequests,
+		expectErr:             false,
 	}
 
 	rm := newMockResourceManager(tCase.pods)
-	resp, err := rm.ReallocateWithFractionalResources(&v1beta1.AllocateRequest{
+
+	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
+		ContainerRequests: tCase.prefContainerRequests,
+	})
+
+	if (perr != nil) && !tCase.prefExpectErr {
+		t.Errorf("test %v unexpected failure, err:%v", tCase.name, perr)
+	}
+
+	resp, err := rm.CreateFractionalResourceResponse(&v1beta1.AllocateRequest{
 		ContainerRequests: tCase.containerRequests,
 	})
 
 	if (err != nil) && !tCase.expectErr {
 		t.Errorf("test %v unexpected failure, err:%v", tCase.name, err)
 	}
-	if err == nil {
-		if tCase.expectErr {
-			t.Errorf("test %v unexpected success", tCase.name)
-		} else {
-			// check response
-			expectTruef(len(resp.ContainerResponses) == 1, t, tCase.name, "wrong number of container responses, expected 1")
-			expectTruef(len(resp.ContainerResponses[0].Envs) == 2, t, tCase.name, "wrong number of env variables in container response, expected 2")
-			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] != "", t, tCase.name, "l0 tile mask not set")
-			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] == "0.0,0.1", t, tCase.name, "l0 affinity mask is incorrect")
-			expectTruef(len(resp.ContainerResponses[0].Devices) == 1, t, tCase.name, "wrong number of devices, expected 1")
-		}
-	}
+
+	// check response
+	expectTruef(len(resp.ContainerResponses) == 1, t, tCase.name, "wrong number of container responses, expected 1")
+	expectTruef(len(resp.ContainerResponses[0].Envs) == 2, t, tCase.name, "wrong number of env variables in container response, expected 2")
+	expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] != "", t, tCase.name, "l0 tile mask not set")
+	expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] == "0.0,0.1", t, tCase.name, "l0 affinity mask is incorrect")
+	expectTruef(len(resp.ContainerResponses[0].Devices) == 1, t, tCase.name, "wrong number of devices, expected 1")
 }
 
-func TestReallocateWithFractionalResourcesWithTwoCardsOneTile(t *testing.T) {
+func TestCreateFractionalResourceResponseWithTwoCardsOneTile(t *testing.T) {
 	properTestPod := v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
@@ -312,23 +521,40 @@ func TestReallocateWithFractionalResourcesWithTwoCardsOneTile(t *testing.T) {
 		},
 	}
 
+	properPrefContainerRequests := []*v1beta1.ContainerPreferredAllocationRequest{
+		{AvailableDeviceIDs: []string{"card0-0", "card0-1", "card1-0", "card1-1"},
+			AllocationSize: 1},
+	}
+
 	properContainerRequests := []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"card1-0", "card2-0"}}}
 
 	tCase := testCase{
-		name:              "Single pending pod with two cards and one tile each should succeed",
-		pods:              []v1.Pod{properTestPod},
-		containerRequests: properContainerRequests,
-		expectErr:         false,
+		name:                  "Single pending pod with two cards and one tile each should succeed",
+		pods:                  []v1.Pod{properTestPod},
+		prefContainerRequests: properPrefContainerRequests,
+		prefExpectErr:         false,
+		containerRequests:     properContainerRequests,
+		expectErr:             false,
 	}
 
 	rm := newMockResourceManager(tCase.pods)
-	resp, err := rm.ReallocateWithFractionalResources(&v1beta1.AllocateRequest{
+
+	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
+		ContainerRequests: tCase.prefContainerRequests,
+	})
+
+	if (perr != nil) && !tCase.prefExpectErr {
+		t.Errorf("test %v unexpected failure, err:%v", tCase.name, perr)
+	}
+
+	resp, err := rm.CreateFractionalResourceResponse(&v1beta1.AllocateRequest{
 		ContainerRequests: tCase.containerRequests,
 	})
 
 	if (err != nil) && !tCase.expectErr {
 		t.Errorf("test %v unexpected failure, err:%v", tCase.name, err)
 	}
+
 	if err == nil {
 		if tCase.expectErr {
 			t.Errorf("test %v unexpected success", tCase.name)
@@ -342,7 +568,7 @@ func TestReallocateWithFractionalResourcesWithTwoCardsOneTile(t *testing.T) {
 	}
 }
 
-func TestReallocateWithFractionalResourcesWithThreeCardsTwoTiles(t *testing.T) {
+func TestCreateFractionalResourceResponseWithThreeCardsTwoTiles(t *testing.T) {
 	properTestPod := v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
@@ -363,23 +589,40 @@ func TestReallocateWithFractionalResourcesWithThreeCardsTwoTiles(t *testing.T) {
 		},
 	}
 
+	properPrefContainerRequests := []*v1beta1.ContainerPreferredAllocationRequest{
+		{AvailableDeviceIDs: []string{"card0-0", "card0-1", "card1-0", "card1-1", "card2-0", "card2-1"},
+			AllocationSize: 1},
+	}
+
 	properContainerRequests := []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"card0-0", "card1-0", "card2-0"}}}
 
 	tCase := testCase{
-		name:              "Single pending pod with three cards and two tiles each should succeed",
-		pods:              []v1.Pod{properTestPod},
-		containerRequests: properContainerRequests,
-		expectErr:         false,
+		name:                  "Single pending pod with three cards and two tiles each should succeed",
+		pods:                  []v1.Pod{properTestPod},
+		prefContainerRequests: properPrefContainerRequests,
+		prefExpectErr:         false,
+		containerRequests:     properContainerRequests,
+		expectErr:             false,
 	}
 
 	rm := newMockResourceManager(tCase.pods)
-	resp, err := rm.ReallocateWithFractionalResources(&v1beta1.AllocateRequest{
+
+	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
+		ContainerRequests: tCase.prefContainerRequests,
+	})
+
+	if (perr != nil) && !tCase.prefExpectErr {
+		t.Errorf("test %v unexpected failure, err:%v", tCase.name, perr)
+	}
+
+	resp, err := rm.CreateFractionalResourceResponse(&v1beta1.AllocateRequest{
 		ContainerRequests: tCase.containerRequests,
 	})
 
 	if (err != nil) && !tCase.expectErr {
 		t.Errorf("test %v unexpected failure, err:%v", tCase.name, err)
 	}
+
 	if err == nil {
 		if tCase.expectErr {
 			t.Errorf("test %v unexpected success", tCase.name)
@@ -393,7 +636,7 @@ func TestReallocateWithFractionalResourcesWithThreeCardsTwoTiles(t *testing.T) {
 	}
 }
 
-func TestReallocateWithFractionalResourcesWithMultipleContainersTileEach(t *testing.T) {
+func TestCreateFractionalResourceResponseWithMultipleContainersTileEach(t *testing.T) {
 	properTestPod := v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Annotations: map[string]string{
@@ -421,23 +664,44 @@ func TestReallocateWithFractionalResourcesWithMultipleContainersTileEach(t *test
 		},
 	}
 
-	properContainerRequests := []*v1beta1.ContainerAllocateRequest{{DevicesIDs: []string{"card1-0"}}, {DevicesIDs: []string{"card2-0"}}}
+	properPrefContainerRequests := []*v1beta1.ContainerPreferredAllocationRequest{
+		{AvailableDeviceIDs: []string{"card0-0", "card0-1", "card1-0", "card1-1", "card2-0", "card2-1"},
+			AllocationSize: 1},
+	}
+	_ = properPrefContainerRequests
+
+	properContainerRequests := []*v1beta1.ContainerAllocateRequest{
+		{DevicesIDs: []string{"card1-0"}},
+		{DevicesIDs: []string{"card2-0"}},
+	}
 
 	tCase := testCase{
-		name:              "Single pending pod with two containers with one tile each should fail",
-		pods:              []v1.Pod{properTestPod},
-		containerRequests: properContainerRequests,
-		expectErr:         true,
+		name:                  "Single pending pod with two containers with one tile each should FAIL",
+		pods:                  []v1.Pod{properTestPod},
+		prefContainerRequests: properPrefContainerRequests,
+		prefExpectErr:         false,
+		containerRequests:     properContainerRequests,
+		expectErr:             true,
 	}
 
 	rm := newMockResourceManager(tCase.pods)
-	_, err := rm.ReallocateWithFractionalResources(&v1beta1.AllocateRequest{
+
+	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
+		ContainerRequests: properPrefContainerRequests,
+	})
+
+	if (perr != nil) && !tCase.prefExpectErr {
+		t.Errorf("test %v unexpected failure, err:%v", tCase.name, perr)
+	}
+
+	_, err := rm.CreateFractionalResourceResponse(&v1beta1.AllocateRequest{
 		ContainerRequests: tCase.containerRequests,
 	})
 
 	if (err != nil) && !tCase.expectErr {
 		t.Errorf("test %v unexpected failure, err:%v", tCase.name, err)
 	}
+
 	if err == nil {
 		if tCase.expectErr {
 			t.Errorf("test %v unexpected success", tCase.name)
@@ -448,8 +712,8 @@ func TestReallocateWithFractionalResourcesWithMultipleContainersTileEach(t *test
 func TestTileAnnotationParsing(t *testing.T) {
 	type parseTest struct {
 		line   string
-		index  int
 		result string
+		index  int
 	}
 
 	parseTests := []parseTest{
@@ -489,7 +753,32 @@ func TestTileAnnotationParsing(t *testing.T) {
 			result: "0.0",
 		},
 		{
+			line:   "||card5:gt0,card6:gt4||",
+			index:  0,
+			result: "0.0,1.4",
+		},
+		{
+			line:   "||card5:gt0,card6:gt4||",
+			index:  1,
+			result: "",
+		},
+		{
+			line:   "||card5:gt0,card:6:gt4||",
+			index:  0,
+			result: "",
+		},
+		{
+			line:   "||card5:gt0,card6:gt+gt+gt||",
+			index:  0,
+			result: "",
+		},
+		{
 			line:   "card1:gtX",
+			index:  0,
+			result: "",
+		},
+		{
+			line:   "card1:64X",
 			index:  0,
 			result: "",
 		},
@@ -526,6 +815,65 @@ func TestTileAnnotationParsing(t *testing.T) {
 		ret := containerTileAffinityMask(&pod, pt.index)
 
 		expectTruef(ret == pt.result, t, pt.line, "resulting mask is wrong. correct: %v, got: %v", pt.result, ret)
+	}
+}
+
+func TestSelectDeviceIDsForContainerDoubleCards(t *testing.T) {
+	cards := []string{
+		"card0",
+		"card1",
+	}
+
+	deviceIds := []string{
+		"card0-0",
+		"card0-1",
+		"card0-2",
+		"card1-0",
+		"card1-1",
+		"card1-2",
+	}
+
+	selected := selectDeviceIDsForContainer(2, cards, deviceIds, []string{})
+	if len(selected) != 2 {
+		t.Errorf("Not the correct amount of devices were selected")
+	}
+
+	correctDevices := map[string]bool{
+		"card0-0": false,
+		"card1-0": false,
+	}
+
+	for _, selected := range selected {
+		correctDevices[selected] = true
+	}
+
+	for dev, used := range correctDevices {
+		if !used {
+			t.Errorf("correct device was not used: %s", dev)
+		}
+	}
+}
+
+func TestSelectDeviceIDsForContainerSingleCard(t *testing.T) {
+	cards := []string{
+		"card2",
+	}
+
+	deviceIds := []string{
+		"card0-0",
+		"card0-1",
+		"card1-0",
+		"card2-0",
+		"card2-1",
+	}
+
+	selected := selectDeviceIDsForContainer(1, cards, deviceIds, []string{})
+	if len(selected) != 1 {
+		t.Errorf("Not the correct amount of devices were selected")
+	}
+
+	if selected[0] != "card2-0" {
+		t.Errorf("First selection is wrong: %s vs %s", selected[0], "card2-0")
 	}
 }
 
