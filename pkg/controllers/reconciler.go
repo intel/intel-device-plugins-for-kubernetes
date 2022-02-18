@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,22 +17,27 @@ package controllers
 
 import (
 	"context"
+	"strings"
 	"sync"
 
 	"github.com/go-logr/logr"
+	"github.com/google/go-cmp/cmp"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/diff"
+	versionutil "k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var (
-	bKeeper = &bookKeeper{}
+	bKeeper         = &bookKeeper{}
+	ImageMinVersion = versionutil.MustParseSemantic("0.23.0")
 )
 
 func init() {
@@ -97,6 +102,7 @@ type DevicePluginController interface {
 	NewDaemonSet(devicePlugin client.Object) *apps.DaemonSet
 	UpdateDaemonSet(client.Object, *apps.DaemonSet) (updated bool)
 	UpdateStatus(client.Object, *apps.DaemonSet, []string) (updated bool, err error)
+	Upgrade(ctx context.Context, obj client.Object) (upgrade bool)
 }
 
 type reconciler struct {
@@ -159,6 +165,33 @@ func (r *reconciler) createObjects(ctx context.Context,
 	return result, nil
 }
 
+func UpgradeImages(image *string, initimage *string) (upgrade bool) {
+	for _, s := range []*string{image, initimage} {
+		if s == nil {
+			continue
+		}
+
+		if parts := strings.SplitN(*s, ":", 2); len(parts) == 2 && len(parts[0]) > 0 {
+			name, version := parts[0], parts[1]
+			if ver, err := versionutil.ParseSemantic(version); err == nil && ver.LessThan(ImageMinVersion) {
+				*s = name + ":" + ImageMinVersion.String()
+				upgrade = true
+			}
+		}
+	}
+
+	return upgrade
+}
+
+func upgrade(ctx context.Context, r *reconciler, devicePlugin client.Object) {
+	if r.controller.Upgrade(ctx, devicePlugin) {
+		if err := r.Update(ctx, devicePlugin); err != nil {
+			log := log.FromContext(ctx)
+			log.Error(err, "unable to update devicePlugin")
+		}
+	}
+}
+
 // Reconcile reconciles a device plugin object.
 func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
@@ -182,6 +215,8 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return result, err
 	}
 
+	upgrade(ctx, r, devicePlugin)
+
 	// Create a daemon set for the plugin if it doesn't exist.
 	if len(childDaemonSets.Items) == 0 {
 		return r.createDaemonSet(ctx, devicePlugin, log)
@@ -189,8 +224,12 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	ds := &childDaemonSets.Items[0]
 
+	ds0 := ds.DeepCopy()
+
 	// Synchronize the DaemonSet with its owner.
 	if r.controller.UpdateDaemonSet(devicePlugin, ds) {
+		log.Info("", cmp.Diff(ds0.Spec.Template.Spec, ds.Spec.Template.Spec, diff.IgnoreUnset()))
+
 		if err := r.Update(ctx, ds); err != nil {
 			log.Error(err, "unable to update DaemonSet", "DaemonSet", ds)
 			return ctrl.Result{}, err

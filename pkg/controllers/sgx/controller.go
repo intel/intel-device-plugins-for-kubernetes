@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,6 +60,11 @@ type controller struct {
 	controllers.DefaultServiceAccountFactory
 	scheme *runtime.Scheme
 	ns     string
+}
+
+func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
+	dp := obj.(*devicepluginv1.SgxDevicePlugin)
+	return controllers.UpgradeImages(&dp.Spec.Image, &dp.Spec.InitImage)
 }
 
 func (c *controller) CreateEmptyObject() client.Object {
@@ -134,11 +139,34 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	return daemonSet
 }
 
+func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
+	newVolumes := []v1.Volume{}
+
+	for _, volume := range volumes {
+		if volume.Name != name {
+			newVolumes = append(newVolumes, volume)
+		}
+	}
+
+	return newVolumes
+}
+
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
 	dp := rawObj.(*devicepluginv1.SgxDevicePlugin)
 
 	if ds.Spec.Template.Spec.Containers[0].Image != dp.Spec.Image {
 		ds.Spec.Template.Spec.Containers[0].Image = dp.Spec.Image
+		updated = true
+	}
+
+	if dp.Spec.InitImage == "" {
+		if ds.Spec.Template.Spec.InitContainers != nil {
+			ds.Spec.Template.Spec.InitContainers = nil
+			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "nfd-source-hooks")
+			updated = true
+		}
+	} else {
+		setInitContainer(&ds.Spec.Template.Spec, dp.Spec.InitImage)
 		updated = true
 	}
 

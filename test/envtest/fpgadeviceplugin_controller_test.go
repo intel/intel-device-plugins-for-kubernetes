@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,11 +30,6 @@ var _ = Describe("FpgaDevicePlugin Controller", func() {
 
 	const timeout = time.Second * 30
 	const interval = time.Second * 1
-
-	AfterEach(func() {
-		time.Sleep(time.Second * 2)
-
-	})
 
 	Context("Basic CRUD operations", func() {
 		It("should handle FpgaDevicePlugin objects correctly", func() {
@@ -87,5 +82,16 @@ var _ = Describe("FpgaDevicePlugin Controller", func() {
 				return k8sClient.Get(context.Background(), key, f)
 			}, timeout, interval).ShouldNot(Succeed())
 		})
+	})
+
+	It("upgrades", func() {
+		dp := &devicepluginv1.FpgaDevicePlugin{}
+
+		var image, initimage string
+
+		testUpgrade("fpga", dp, &image, &initimage)
+
+		Expect(dp.Spec.Image == image).To(BeTrue())
+		Expect(dp.Spec.InitImage == initimage).To(BeTrue())
 	})
 })

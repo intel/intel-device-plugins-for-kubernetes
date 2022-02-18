@@ -17,7 +17,6 @@ package v1
 import (
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -33,7 +32,7 @@ var (
 	// dsadevicepluginlog is for logging in this package.
 	dsadevicepluginlog = logf.Log.WithName("dsadeviceplugin-resource")
 
-	dsaMinVersion = version.MustParseSemantic(imageMinVersion)
+	dsaMinVersion = controllers.ImageMinVersion
 )
 
 // SetupWebhookWithManager sets up a webhook for DsaDevicePlugin custom resources.

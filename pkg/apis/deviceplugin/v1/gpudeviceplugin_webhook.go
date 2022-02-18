@@ -17,7 +17,6 @@ package v1
 import (
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/version"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -33,7 +32,7 @@ var (
 	// gpudevicepluginlog is for logging in this package.
 	gpudevicepluginlog = logf.Log.WithName("gpudeviceplugin-resource")
 
-	gpuMinVersion = version.MustParseSemantic(imageMinVersion)
+	gpuMinVersion = controllers.ImageMinVersion
 )
 
 // SetupWebhookWithManager sets up a webhook for GpuDevicePlugin custom resources.
