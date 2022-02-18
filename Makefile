@@ -153,6 +153,7 @@ ifeq ($(TAG),devel)
 	@$(BUILDER) pull golang:1.17-bullseye
 	@$(BUILDER) pull debian:unstable-slim
 	@$(BUILDER) pull clearlinux:latest
+	@$(BUILDER) pull ubuntu:20.04
 endif
 
 images = $(shell basename -s .Dockerfile -a build/docker/*.Dockerfile)
