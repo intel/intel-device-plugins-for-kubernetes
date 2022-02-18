@@ -34,5 +34,13 @@ RUN install -D /go/bin/dsa_plugin /install_root/usr/local/bin/intel_dsa_device_p
     && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/dsa_plugin" --save_path /install_root/licenses/go-licenses
 
 FROM gcr.io/distroless/static
+
+LABEL name='intel-dsa-plugin' 
+LABEL vendor='Intel®' 
+LABEL version='devel' 
+LABEL release='1' 
+LABEL summary='Intel® DSA device plugin for Kubernetes' 
+LABEL description='The DSA device plugin supports acceleration using the Intel Data Streaming accelerator(DSA)'
+
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_dsa_device_plugin"]

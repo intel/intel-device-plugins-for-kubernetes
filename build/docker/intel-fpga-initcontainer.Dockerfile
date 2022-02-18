@@ -63,6 +63,14 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 
 FROM gcr.io/distroless/static
+
+LABEL name='intel-fpga-initcontainer' 
+LABEL vendor='Intel®' 
+LABEL version='devel' 
+LABEL release='1' 
+LABEL summary='Intel® FPGA programming CRI hook for Kubernetes' 
+LABEL description='The FPGA prestart CRI-O hook performs discovery of the requested FPGA function bitstream and programs FPGA devices based on the environment variables in the workload description'
+
 COPY --from=builder /install_root /
 
 ENTRYPOINT [ "/bin/sh", "-c", "cp -a /usr/local/fpga-sw/* /opt/intel/fpga-sw/ && ln -sf /opt/intel/fpga-sw/intel-fpga-crihook.json /etc/containers/oci/hooks.d/" ]
