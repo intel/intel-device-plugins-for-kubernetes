@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,6 +60,11 @@ type controller struct {
 	controllers.DefaultServiceAccountFactory
 	scheme *runtime.Scheme
 	ns     string
+}
+
+func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
+	dp := obj.(*devicepluginv1.SgxDevicePlugin)
+	return controllers.UpgradeImages(&dp.Spec.Image, &dp.Spec.InitImage)
 }
 
 func (c *controller) CreateEmptyObject() client.Object {

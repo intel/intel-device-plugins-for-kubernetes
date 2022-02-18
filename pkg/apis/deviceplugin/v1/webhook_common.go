@@ -22,9 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/version"
 )
 
-// common constants for webhooks.
-const imageMinVersion string = "0.23.0"
-
 // common functions for webhooks
 
 func validatePluginImage(image, expectedImageName string, expectedMinVersion *version.Version) error {
