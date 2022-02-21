@@ -1,9 +1,9 @@
-FROM ubuntu:bionic AS builder
+FROM ubuntu:20.04 AS builder
 
 WORKDIR /root
 
 RUN apt-get update && \
-    apt-get install -y \
+    env DEBIAN_FRONTEND=noninteractive apt-get install -y \
     wget \
     unzip \
     protobuf-compiler \
@@ -26,10 +26,10 @@ WORKDIR /opt/intel
 ARG SGX_SDK_INSTALLER=sgx_linux_x64_sdk_2.15.100.3.bin
 ARG DCAP_VERSION=DCAP_1.12
 
-RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu bionic main" >> /etc/apt/sources.list.d/intel-sgx.list \
+RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" >> /etc/apt/sources.list.d/intel-sgx.list \
  && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add - \
  && apt-get update \
- && apt-get install -y \
+ && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libsgx-dcap-ql-dev \
     libsgx-dcap-default-qpl-dev \
     libsgx-quote-ex-dev
@@ -52,7 +52,7 @@ RUN cd SGXDataCenterAttestationPrimitives/SampleCode/QuoteGenerationSample \
     && make \
     && cd -
 
-FROM ubuntu:bionic
+FROM ubuntu:20.04
 
 RUN apt-get update && \
     apt-get install -y \
@@ -60,10 +60,10 @@ RUN apt-get update && \
     gnupg
 
 # Add 01.org to apt for SGX packages and install SGX runtime components
-RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu bionic main" >> /etc/apt/sources.list.d/intel-sgx.list \
+RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" >> /etc/apt/sources.list.d/intel-sgx.list \
  && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add - \
  && apt-get update \
- && apt-get install -y --no-install-recommends \
+ && env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     libsgx-enclave-common \
     libsgx-urts \
     libsgx-quote-ex \

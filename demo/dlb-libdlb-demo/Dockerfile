@@ -1,4 +1,4 @@
-FROM ubuntu:18.04 AS builder
+FROM ubuntu:20.04 AS builder
 
 WORKDIR /dlb-build
 
@@ -16,7 +16,7 @@ RUN wget https://downloadmirror.intel.com/713567/$DLB_DRIVER_RELEASE \
 # Build libdlb
 RUN cd dlb/libdlb && make
 
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 COPY --from=builder /dlb-build/dlb/libdlb/libdlb.so /usr/local/lib
 RUN ldconfig
 
