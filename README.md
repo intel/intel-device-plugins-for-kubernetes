@@ -23,6 +23,7 @@ Table of Contents
     * [DLB device plugin](#dlb-device-plugin)
 * [Device Plugins Operator](#device-plugins-operator)
 * [Demos](#demos)
+* [Workload Authors](#workload-authors)
 * [Developers](#developers)
 * [Running e2e Tests](#running-e2e-tests)
 * [Supported Kubernetes versions](#supported-kubernetes-versions)
@@ -187,6 +188,33 @@ details. The operator is also available via [operatorhub.io](https://operatorhub
 
 The [demo subdirectory](demo/readme.md) contains a number of demonstrations for a variety of the
 available plugins.
+
+## Workload Authors
+
+For workloads to get accesss to devices managed by the plugins, the
+`Pod` spec must specify the hardware resources needed:
+
+```
+spec:
+  containers:
+    - name: demo-container
+      image: <registry>/<image>:<version>
+      resources:
+        limits:
+          <device namespace>/<resource>: X
+```
+
+The summary of resources available via plugins in this repository is given in a table below.
+
+| Device Namespace | Registered Resource(s)          | Example(s)                                  |
+|:-----------------|:-----------------------------|:--------------------------------------------|
+| `dlb.intel.com`  |  `pf` or `vf`                | [dlb-libdlb-demo-pod.yaml](demo/dlb-libdlb-demo-pod.yaml) |
+| `dsa.intel.com`  | `wq-user-[shared or dedicated]` | [dsa-accel-config-demo-pod.yaml](demo/dsa-accel-config-demo-pod.yaml) |
+| `fpga.intel.com` | custom, see [mappings](cmd/fpga_admissionwebhook/README.md#mappings)| [intelfpga-job.yaml](demo/intelfpga-job.yaml) |
+| `gpu.intel.com`  | `i915`                       | [intelgpu-job.yaml](demo/intelgpu-job.yaml) |
+| `qat.intel.com`  | `generic`                    | [crypto-perf-dpdk-pod-requesting-qat.yaml](deployments/qat_dpdk_app/base/crypto-perf-dpdk-pod-requesting-qat.yaml) |
+| `sgx.intel.com`  | `epc`                        | [intelsgx-job.yaml](deployments/sgx_enclave_apps/base/intelsgx-job.yaml) |
+| `vpu.intel.com`  | `hddl`                       | [intelvpu-job.yaml](demo/intelvpu-job.yaml) |
 
 ## Developers
 
