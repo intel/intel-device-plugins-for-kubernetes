@@ -42,8 +42,8 @@ RUN mkdir -p /usr/src/qat \
 RUN cd cmd/qat_plugin; GO111MODULE=${GO111MODULE} CGO_ENABLED=1 go install -tags kerneldrv; cd -
 RUN chmod a+x /go/bin/qat_plugin \
     && install -D /go/bin/qat_plugin /install_root/usr/local/bin/intel_qat_device_plugin \
-    && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
-    && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/qat_plugin" --save_path /install_root/usr/local/share/go-licenses
+    && install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
+    && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/qat_plugin" --save_path /install_root/licenses/go-licenses
 
 FROM debian:unstable-slim
 COPY --from=builder /install_root /

@@ -33,7 +33,6 @@ ARG ROOT=/install_root
 # Build NFD Feature Detector Hook
 RUN cd cmd/sgx_epchook && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && cd -\
     install -D ${DIR}/LICENSE $ROOT/licenses/intel-device-plugins-for-kubernetes/LICENSE && \
-    mkdir -p  $ROOT/usr/local/share/ && \
     GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/sgx_epchook" --save_path $ROOT/licenses/go-licenses
 
 ARG NFD_HOOK=intel-sgx-epchook

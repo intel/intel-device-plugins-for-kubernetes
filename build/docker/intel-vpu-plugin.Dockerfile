@@ -30,14 +30,14 @@ COPY . .
 
 RUN echo "deb-src http://deb.debian.org/debian unstable main" | tee -a /etc/apt/sources.list
 RUN apt update && apt -y install dpkg-dev libusb-1.0-0-dev
-RUN mkdir -p /install_root/usr/local/share/package-sources/libusb \
-    && cd /install_root/usr/local/share/package-sources/libusb \
+RUN mkdir -p /install_root/licenses/libusb \
+    && cd /install_root/licenses/libusb \
     && apt-get --download-only source libusb-1.0-0 \
     && cd -
 RUN cd cmd/vpu_plugin; GO111MODULE=${GO111MODULE} CGO_ENABLED=1 go install "${BUILDFLAGS}"; cd -
 RUN install -D /go/bin/vpu_plugin /install_root/usr/local/bin/intel_vpu_device_plugin \
-    && install -D ${DIR}/LICENSE /install_root/usr/local/share/package-licenses/intel-device-plugins-for-kubernetes/LICENSE \
-    && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/vpu_plugin" --save_path /install_root/usr/local/share/go-licenses
+    && install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
+    && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/vpu_plugin" --save_path /install_root/licenses/go-licenses
 
 FROM debian:unstable-slim
 RUN apt update && apt -y install libusb-1.0-0

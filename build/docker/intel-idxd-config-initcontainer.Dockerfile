@@ -40,10 +40,10 @@ FROM debian:unstable-slim
 RUN apt update && apt install -y libjson-c5 jq
 
 COPY --from=builder /usr/lib64/libaccel-config.so.1.0.0 /lib/x86_64-linux-gnu/
-RUN ldconfig && mkdir -p /usr/local/share/package-sources/
+RUN ldconfig && mkdir -p /licenses/accel-config
 
 COPY --from=builder /usr/bin/accel-config /usr/bin/
-COPY --from=builder /accel-config.tar.gz /usr/local/share/package-sources/
+COPY --from=builder /accel-config.tar.gz /licenses/accel-config/
 
 ADD demo/idxd-init.sh /idxd-init/
 ADD demo/dsa.conf /idxd-init/
