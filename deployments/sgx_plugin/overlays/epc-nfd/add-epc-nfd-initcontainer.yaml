@@ -11,6 +11,7 @@ spec:
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         volumeMounts:
         - mountPath: /etc/kubernetes/node-feature-discovery/source.d/
           name: nfd-source-hooks

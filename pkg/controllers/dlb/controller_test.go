@@ -33,6 +33,7 @@ const appLabel = "intel-dlb-plugin"
 func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.DlbDevicePlugin)
 	yes := true
+	no := false
 
 	daemonSet := apps.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
@@ -77,7 +78,8 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							Image:                  devicePlugin.Spec.Image,
 							ImagePullPolicy:        "IfNotPresent",
 							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
+								ReadOnlyRootFilesystem:   &yes,
+								AllowPrivilegeEscalation: &no,
 							},
 							VolumeMounts: []v1.VolumeMount{
 								{

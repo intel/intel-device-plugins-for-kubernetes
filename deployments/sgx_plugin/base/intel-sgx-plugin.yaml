@@ -18,6 +18,7 @@ spec:
         image: intel/intel-sgx-plugin:devel
         securityContext:
           readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: kubeletsockets

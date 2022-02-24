@@ -21,6 +21,7 @@ spec:
         image: intel/sgx-aesmd-demo:devel
         securityContext:
           readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         resources:
           limits:
             sgx.intel.com/epc: "1Mi"

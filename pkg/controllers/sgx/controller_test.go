@@ -36,6 +36,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	devicePlugin := rawObj.(*devicepluginv1.SgxDevicePlugin)
 
 	yes := true
+	no := false
 	charDevice := v1.HostPathCharDev
 	directoryOrCreate := v1.HostPathDirectoryOrCreate
 	daemonSet := apps.DaemonSet{
@@ -70,7 +71,8 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							Image:           devicePlugin.Spec.Image,
 							ImagePullPolicy: "IfNotPresent",
 							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
+								ReadOnlyRootFilesystem:   &yes,
+								AllowPrivilegeEscalation: &no,
 							},
 							VolumeMounts: []v1.VolumeMount{
 								{

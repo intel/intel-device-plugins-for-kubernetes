@@ -166,3 +166,17 @@ jobs:
       - name: Test SGX & FPGA Admission Webhook, Deploy Operator
         run: |
           make test-with-kind
+
+  terrascan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Install terrascan
+      run: |
+        curl -L "$(curl -s https://api.github.com/repos/accurics/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
+        tar -xf terrascan.tar.gz terrascan && rm terrascan.tar.gz
+        install terrascan /usr/local/bin && rm terrascan
+    - name: Run Terrascan
+      run: make terrascan
+

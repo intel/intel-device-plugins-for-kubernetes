@@ -24,6 +24,7 @@ spec:
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         terminationMessagePath: /tmp/termination-log          
         volumeMounts:
         - name: devfs

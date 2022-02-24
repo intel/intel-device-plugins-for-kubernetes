@@ -17,6 +17,7 @@ spec:
       - name: intel-qat-kernel-plugin
         securityContext:
           readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
           privileged: true
         image: intel/intel-qat-plugin:devel
         imagePullPolicy: IfNotPresent
