@@ -29,6 +29,7 @@ if [ -d $(dirname $0)/../../vendor ] ; then
     BUILD_ARGS="${BUILD_ARGS} --build-arg DIR=/go/src/github.com/intel/intel-device-plugins-for-kubernetes --build-arg GO111MODULE=off"
 fi
 
+BUILD_ARGS="${BUILD_ARGS} --build-arg FINAL_BASE=gcr.io/distroless/static"
 if [ -z "${BUILDER}" -o "${BUILDER}" = 'docker' ] ; then
     docker build --pull -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .
 elif [ "${BUILDER}" = 'buildah' ] ; then
