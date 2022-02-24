@@ -212,6 +212,8 @@ master
 ### Testing the plugin
 
 We can test the plugin is working by deploying an OpenCL image and running `clinfo`.
+The sample OpenCL image can be built using `make intel-opencl-icd` and must be made
+available in the cluster.
 
 1. Create a job:
 
@@ -220,7 +222,7 @@ We can test the plugin is working by deploying an OpenCL image and running `clin
     job.batch/intelgpu-demo-job created
     ```
 
-1. Review the job's logs:
+2. Review the job's logs:
 
     ```bash
     $ kubectl get pods | fgrep intelgpu
