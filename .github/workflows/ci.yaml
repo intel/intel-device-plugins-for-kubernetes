@@ -50,7 +50,7 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install libusb-1.0-0-dev
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
           version: v1.43.0
           args: -v --timeout 5m
