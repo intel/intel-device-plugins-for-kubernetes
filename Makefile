@@ -158,6 +158,11 @@ endif
 
 images = $(shell basename -s .Dockerfile -a build/docker/*.Dockerfile)
 
+skipbaselayercheck = intel-vpu-plugin intel-qat-plugin-kerneldrv intel-idxd-config-initcontainer
+distroless_images = $(patsubst %,$(REG)%\:$(TAG),$(filter-out $(skipbaselayercheck),$(images)))
+test-image-base-layer:
+	@for img in $(distroless_images); do scripts/test-image-base-layer.sh $$img $(BUILDER) || exit 1; done
+
 $(images):
 	@build/docker/build-image.sh $(REG)$@ $(BUILDER) $(EXTRA_BUILD_ARGS)
 
@@ -174,7 +179,7 @@ image_tags = $(patsubst %,$(REG)%\:$(TAG),$(images) $(demos))
 $(image_tags):
 	@docker push $@
 
-push: $(image_tags)
+push: test-image-base-layer $(image_tags)
 
 lock-images:
 	@scripts/update-clear-linux-base.sh clearlinux:latest $(shell find demo -name Dockerfile)
@@ -192,7 +197,7 @@ check-github-actions:
 	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
 
-.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture install-tools
+.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture install-tools test-image-base-layer
 
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
