@@ -320,7 +320,7 @@ func (c *controller) UpdateStatus(rawObj client.Object, ds *apps.DaemonSet, node
 }
 
 func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
-	args := make([]string, 0, 5)
+	args := make([]string, 0, 8)
 	args = append(args, "-v", strconv.Itoa(gdp.Spec.LogLevel))
 
 	if gdp.Spec.EnableMonitoring {
