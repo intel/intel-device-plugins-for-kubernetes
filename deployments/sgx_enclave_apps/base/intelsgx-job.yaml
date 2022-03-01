@@ -20,6 +20,7 @@ spec:
           command: ["/opt/intel/sgx-sample-app/sgx-sample-app"]
           securityContext:
             readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
             capabilities:
               add: ["IPC_LOCK"]
           resources:

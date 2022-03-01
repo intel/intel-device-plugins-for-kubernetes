@@ -20,6 +20,7 @@ spec:
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         volumeMounts:
         - mountPath: /opt/intel/fpga-sw
           name: intel-fpga-sw
@@ -39,6 +40,7 @@ spec:
         terminationMessagePath: /tmp/termination-log
         securityContext:
           readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
         volumeMounts:
         - name: devfs
           mountPath: /dev

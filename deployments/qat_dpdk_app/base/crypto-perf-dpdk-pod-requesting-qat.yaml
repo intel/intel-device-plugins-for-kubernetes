@@ -27,6 +27,7 @@ spec:
         hugepages-2Mi: "128Mi"
     securityContext:
       readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
       capabilities:
         add:
           ["IPC_LOCK"]

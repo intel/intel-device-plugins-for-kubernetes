@@ -1,0 +1,4 @@
+bases:
+  - default
+  - manager
+  - webhook

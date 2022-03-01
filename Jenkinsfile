@@ -67,6 +67,15 @@ pipeline {
         }
         stage("make lint"){
           parallel {
+            stage("make terrascan") {
+              steps {
+                dir(path: "$REPO_DIR") {
+                  sh "curl -sL `curl -s https://api.github.com/repos/accurics/terrascan/releases/latest | grep -o -E https://.+?_Linux_x86_64.tar.gz` | tar -zx terrascan"
+                  sh "sudo mv terrascan /usr/local/bin/"
+                  sh "make terrascan"
+                }
+              }
+            }
             stage("make lint") {
               steps {
                 dir(path: "$REPO_DIR") {

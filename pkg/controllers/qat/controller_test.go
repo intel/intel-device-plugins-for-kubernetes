@@ -35,6 +35,7 @@ const appLabel = "intel-qat-plugin"
 func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.QatDevicePlugin)
 	yes := true
+	no := false
 	pluginAnnotations := devicePlugin.ObjectMeta.DeepCopy().Annotations
 
 	return &apps.DaemonSet{
@@ -71,7 +72,8 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							Image:           devicePlugin.Spec.Image,
 							ImagePullPolicy: "IfNotPresent",
 							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
+								ReadOnlyRootFilesystem:   &yes,
+								AllowPrivilegeEscalation: &no,
 							},
 							VolumeMounts: []v1.VolumeMount{
 								{

@@ -35,6 +35,7 @@ const appLabel = "intel-fpga-plugin"
 func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.FpgaDevicePlugin)
 	yes := true
+	no := false
 	directoryOrCreate := v1.HostPathDirectoryOrCreate
 
 	return &apps.DaemonSet{
@@ -79,7 +80,8 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							ImagePullPolicy: "IfNotPresent",
 							Name:            appLabel,
 							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
+								ReadOnlyRootFilesystem:   &yes,
+								AllowPrivilegeEscalation: &no,
 							},
 							TerminationMessagePath: "/tmp/termination-log",
 							VolumeMounts: []v1.VolumeMount{
@@ -106,7 +108,8 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							ImagePullPolicy: "IfNotPresent",
 							Name:            "intel-fpga-initcontainer",
 							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
+								ReadOnlyRootFilesystem:   &yes,
+								AllowPrivilegeEscalation: &no,
 							},
 							VolumeMounts: []v1.VolumeMount{
 								{
