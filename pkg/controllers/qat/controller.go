@@ -182,7 +182,7 @@ func getPodArgs(qdp *devicepluginv1.QatDevicePlugin) []string {
 
 		args = append(args, "-kernel-vf-drivers", strings.Join(drvs, ","))
 	} else {
-		args = append(args, "-kernel-vf-drivers", "dh895xccvf,c6xxvf,c3xxxvf,d15xxvf")
+		args = append(args, "-kernel-vf-drivers", "c6xxvf,4xxxvf")
 	}
 
 	if qdp.Spec.MaxNumDevices > 0 {
