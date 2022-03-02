@@ -18,7 +18,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y python3-venv git
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
         ref: main
@@ -39,7 +39,7 @@ jobs:
         rm -rf _work/venv
         make vhtml
         mv _build/html/* $HOME/output/
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
         ref: release-0.21
@@ -50,7 +50,7 @@ jobs:
         rm -rf _work/venv
         make vhtml
         mv _build/html $HOME/output/0.21
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
         ref: release-0.22
@@ -61,7 +61,7 @@ jobs:
         rm -rf _work/venv
         make vhtml
         mv _build/html $HOME/output/0.22
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
         ref: release-0.23
