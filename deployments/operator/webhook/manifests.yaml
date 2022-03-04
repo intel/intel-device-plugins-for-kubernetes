@@ -91,6 +91,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-deviceplugin-intel-com-v1-iaadeviceplugin
+  failurePolicy: Fail
+  name: miaadeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - iaadeviceplugins
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-deviceplugin-intel-com-v1-qatdeviceplugin
   failurePolicy: Fail
   name: mqatdeviceplugin.kb.io
@@ -252,6 +272,26 @@ webhooks:
     - UPDATE
     resources:
     - gpudeviceplugins
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-deviceplugin-intel-com-v1-iaadeviceplugin
+  failurePolicy: Fail
+  name: viaadeviceplugin.kb.io
+  rules:
+  - apiGroups:
+    - deviceplugin.intel.com
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - iaadeviceplugins
   sideEffects: None
 - admissionReviewVersions:
   - v1

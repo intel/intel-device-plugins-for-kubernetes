@@ -1,0 +1,182 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: intel-iaa-config
+  namespace: inteldeviceplugins-system
+data:
+  iaa.conf: |
+    [
+      {
+        "dev": "iaxX",
+        "groups": [
+          {
+            "dev": "groupX.0",
+            "grouped_workqueues": [
+              {
+                "dev": "wqX.0",
+                "type": "user",
+                "mode": "dedicated",
+                "size": 16,
+                "group_id": 0,
+                "priority": 10,
+                "name": "iaxX0"
+              }
+            ],
+            "grouped_engines": [
+              {
+                "dev": "engineX.0",
+                "group_id": 0
+              }
+            ]
+          },
+          {
+            "dev": "groupX.1",
+            "grouped_workqueues": [
+              {
+                "dev": "wqX.1",
+                "type": "user",
+                "mode": "dedicated",
+                "size": 16,
+                "group_id": 1,
+                "priority": 10,
+                "name": "iaxX1"
+              }
+            ],
+            "grouped_engines": [
+              {
+                "dev": "engineX.1",
+                "group_id": 1
+              }
+            ]
+          },
+          {
+            "dev": "groupX.2",
+            "grouped_workqueues": [
+              {
+                "dev": "wqX.2",
+                "type": "user",
+                "mode": "dedicated",
+                "size": 16,
+                "group_id": 2,
+                "priority": 10,
+                "name": "iaxX2"
+              }
+            ],
+            "grouped_engines": [
+              {
+                "dev": "engineX.2",
+                "group_id": 2
+              }
+            ]
+          },
+          {
+            "dev": "groupX.3",
+            "grouped_workqueues": [
+              {
+                "dev": "wqX.3",
+                "type": "user",
+                "mode": "dedicated",
+                "size": 16,
+                "group_id": 3,
+                "priority": 10,
+                "name": "iaxX3"
+              }
+            ],
+            "grouped_engines": [
+              {
+                "dev": "engineX.3",
+                "group_id": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  iaa-node1.conf: |
+    [
+      {
+        "dev": "iaxX",
+        "groups": [
+          {
+            "dev": "groupX.0",
+            "grouped_workqueues": [
+              {
+                "dev": "wqX.0",
+                "type": "user",
+                "mode": "dedicated",
+                "size": 16,
+                "group_id": 0,
+                "priority": 10,
+                "name": "iaxX0"
+              }
+            ],
+            "grouped_engines": [
+              {
+                "dev": "engineX.0",
+                "group_id": 0
+              }
+            ]
+          },
+          {
+            "dev": "groupX.1",
+            "grouped_workqueues": [
+              {
+                "dev": "wqX.1",
+                "type": "user",
+                "mode": "dedicated",
+                "size": 16,
+                "group_id": 1,
+                "priority": 10,
+                "name": "iaxX1"
+              }
+            ],
+            "grouped_engines": [
+              {
+                "dev": "engineX.1",
+                "group_id": 1
+              }
+            ]
+          },
+          {
+            "dev": "groupX.2",
+            "grouped_workqueues": [
+              {
+                "dev": "wqX.2",
+                "type": "user",
+                "mode": "dedicated",
+                "size": 16,
+                "group_id": 2,
+                "priority": 10,
+                "name": "iaxX2"
+              }
+            ],
+            "grouped_engines": [
+              {
+                "dev": "engineX.2",
+                "group_id": 2
+              }
+            ]
+          },
+          {
+            "dev": "groupX.3",
+            "grouped_workqueues": [
+              {
+                "dev": "wqX.3",
+                "type": "user",
+                "mode": "dedicated",
+                "size": 16,
+                "group_id": 3,
+                "priority": 10,
+                "name": "iaxX3"
+              }
+            ],
+            "grouped_engines": [
+              {
+                "dev": "engineX.3",
+                "group_id": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]

@@ -50,6 +50,13 @@ func GPUPluginDaemonSet() *apps.DaemonSet {
 	return getDaemonset(contentGPU).DeepCopy()
 }
 
+//go:embed iaa_plugin/base/*plugin.yaml
+var contentIAA []byte
+
+func IAAPluginDaemonSet() *apps.DaemonSet {
+	return getDaemonset(contentIAA).DeepCopy()
+}
+
 //go:embed qat_plugin/base/*qat-plugin.yaml
 var contentQAT []byte
 

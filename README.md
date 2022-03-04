@@ -21,6 +21,7 @@ Table of Contents
     * [SGX device plugin](#sgx-device-plugin)
     * [DSA device plugin](#dsa-device-plugin)
     * [DLB device plugin](#dlb-device-plugin)
+    * [IAA device plugin](#iaa-device-plugin)
 * [Device Plugins Operator](#device-plugins-operator)
 * [Demos](#demos)
 * [Workload Authors](#workload-authors)
@@ -173,11 +174,15 @@ The [DSA device plugin](cmd/dsa_plugin/README.md) supports acceleration using th
 
 The [DLB device plugin](cmd/dlb_plugin/README.md) supports Intel Dynamic Load Balancer accelerator(DLB).
 
+### IAA device plugin
+
+The [IAA device plugin](cmd/iaa_plugin/README.md) supports acceleration using the Intel Analytics accelerator(IAA).
+
 ## Device Plugins Operator
 
 To simplify the deployment of the device plugins, a unified device plugins operator is implemented.
 
-Currently the operator has support for the QAT, GPU, FPGA, SGX, DSA and DLB device plugins. Each
+Currently the operator has support for the DSA, DLB, FPGA, GPU, IAA, QAT, SGX device plugins. Each
 device plugin has its own custom resource definition (CRD) and the corresponding controller that
 watches CRUD operations to those custom resources.
 
@@ -212,6 +217,7 @@ The summary of resources available via plugins in this repository is given in a 
 | `dsa.intel.com`  | `wq-user-[shared or dedicated]` | [dsa-accel-config-demo-pod.yaml](demo/dsa-accel-config-demo-pod.yaml) |
 | `fpga.intel.com` | custom, see [mappings](cmd/fpga_admissionwebhook/README.md#mappings)| [intelfpga-job.yaml](demo/intelfpga-job.yaml) |
 | `gpu.intel.com`  | `i915`                       | [intelgpu-job.yaml](demo/intelgpu-job.yaml) |
+| `iaa.intel.com`  | `wq-user-[shared or dedicated]` | [iaa-qpl-demo-pod.yaml](demo/iaa-qpl-demo-pod.yaml) |
 | `qat.intel.com`  | `generic`                    | [crypto-perf-dpdk-pod-requesting-qat.yaml](deployments/qat_dpdk_app/base/crypto-perf-dpdk-pod-requesting-qat.yaml) |
 | `sgx.intel.com`  | `epc`                        | [intelsgx-job.yaml](deployments/sgx_enclave_apps/base/intelsgx-job.yaml) |
 | `vpu.intel.com`  | `hddl`                       | [intelvpu-job.yaml](demo/intelvpu-job.yaml) |
