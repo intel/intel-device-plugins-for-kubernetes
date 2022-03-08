@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation. All Rights Reserved.
+// Copyright 2021-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@ import (
 
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/deployments"
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 	"github.com/pkg/errors"
@@ -36,7 +36,6 @@ import (
 
 const (
 	ownerKey         = ".metadata.controller.iaa"
-	appLabel         = "intel-iaa-plugin"
 	inicontainerName = "intel-iaa-initcontainer"
 )
 
@@ -170,131 +169,22 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.IaaDevicePlugin)
 
-	var nodeSelector map[string]string
+	daemonSet := deployments.IAAPluginDaemonSet()
 
-	dpNodeSelectorSize := len(devicePlugin.Spec.NodeSelector)
-
-	if dpNodeSelectorSize > 0 {
-		nodeSelector = make(map[string]string, dpNodeSelectorSize+1)
-		for k, v := range devicePlugin.Spec.NodeSelector {
-			nodeSelector[k] = v
-		}
-
-		nodeSelector["kubernetes.io/arch"] = "amd64"
-	} else {
-		nodeSelector = map[string]string{"kubernetes.io/arch": "amd64"}
+	if len(devicePlugin.Spec.NodeSelector) > 0 {
+		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
 
-	yes := true
-	daemonSet := apps.DaemonSet{
-		ObjectMeta: metav1.ObjectMeta{
-			//Namespace:    devicePlugin.Namespace,
-			Namespace:    metav1.NamespaceSystem,
-			GenerateName: devicePlugin.Name + "-",
-			Labels: map[string]string{
-				"app": appLabel,
-			},
-		},
-		Spec: apps.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": appLabel,
-				},
-			},
-			Template: v1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app": appLabel,
-					},
-				},
-				Spec: v1.PodSpec{
-					Containers: []v1.Container{
-						{
-							Name: appLabel,
-							Env: []v1.EnvVar{
-								{
-									Name: "NODE_NAME",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											FieldPath: "spec.nodeName",
-										},
-									},
-								},
-							},
-							Args:            getPodArgs(devicePlugin),
-							Image:           devicePlugin.Spec.Image,
-							ImagePullPolicy: "IfNotPresent",
-							SecurityContext: &v1.SecurityContext{
-								ReadOnlyRootFilesystem: &yes,
-							},
-							VolumeMounts: []v1.VolumeMount{
-								{
-									Name:      "devfs",
-									MountPath: "/dev/iax",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "chardevs",
-									MountPath: "/dev/char",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "sysfs",
-									MountPath: "/sys/bus",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "kubeletsockets",
-									MountPath: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-					},
-					NodeSelector: nodeSelector,
-					Volumes: []v1.Volume{
-						{
-							Name: "devfs",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev/iax",
-								},
-							},
-						},
-						{
-							Name: "chardevs",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev/char",
-								},
-							},
-						},
-						{
-							Name: "sysfs",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/sys/bus",
-								},
-							},
-						},
-						{
-							Name: "kubeletsockets",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+	daemonSet.ObjectMeta.Namespace = c.ns
+
+	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
+	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
 
 	if devicePlugin.Spec.InitImage != "" {
-		addInitContainer(&daemonSet, devicePlugin)
+		addInitContainer(daemonSet, devicePlugin)
 	}
 
-	return &daemonSet
+	return daemonSet
 }
 
 func provisioningUpdate(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) bool {
