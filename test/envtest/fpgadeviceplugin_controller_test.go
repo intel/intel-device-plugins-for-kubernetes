@@ -16,10 +16,12 @@ package envtest
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	apps "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -34,8 +36,9 @@ var _ = Describe("FpgaDevicePlugin Controller", func() {
 	Context("Basic CRUD operations", func() {
 		It("should handle FpgaDevicePlugin objects correctly", func() {
 			spec := devicepluginv1.FpgaDevicePluginSpec{
-				Image:     "testimage",
-				InitImage: "testinitimage",
+				Image:        "fpga-testimage",
+				InitImage:    "fpga-testinitimage",
+				NodeSelector: map[string]string{"fpga-nodeselector": "true"},
 			}
 
 			key := types.NamespacedName{
@@ -59,16 +62,62 @@ var _ = Describe("FpgaDevicePlugin Controller", func() {
 				return len(fetched.Status.ControlledDaemonSet.UID) > 0
 			}, timeout, interval).Should(BeTrue())
 
-			By("updating image name successfully")
+			By("checking DaemonSet is created successfully")
+			ds := &apps.DaemonSet{}
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-fpga-plugin"}, ds)
+			Expect(ds.Spec.Template.Spec.Containers[0].Image).To(Equal(spec.Image))
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(spec.InitImage))
+			Expect(ds.Spec.Template.Spec.NodeSelector).To(Equal(spec.NodeSelector))
+
+			By("updating FpgaDevicePlugin successfully")
 			updatedImage := "updated-fpga-testimage"
+			updatedInitImage := "updated-fpga-testinitimage"
+			updatedLogLevel := 2
+			updatedMode := "region"
+			updatedNodeSelector := map[string]string{"updated-fpga-nodeselector": "true"}
+
 			fetched.Spec.Image = updatedImage
+			fetched.Spec.InitImage = updatedInitImage
+			fetched.Spec.LogLevel = updatedLogLevel
+			fetched.Spec.Mode = updatedMode
+			fetched.Spec.NodeSelector = updatedNodeSelector
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
 			fetchedUpdated := &devicepluginv1.FpgaDevicePlugin{}
-			Eventually(func() string {
+			Eventually(func() devicepluginv1.FpgaDevicePluginSpec {
 				_ = k8sClient.Get(context.Background(), key, fetchedUpdated)
-				return fetchedUpdated.Spec.Image
-			}, timeout, interval).Should(Equal(updatedImage))
+				return fetchedUpdated.Spec
+			}, timeout, interval).Should(Equal(fetched.Spec))
+			time.Sleep(interval)
+
+			By("checking DaemonSet is updated successfully")
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-fpga-plugin"}, ds)
+
+			expectArgs := []string{
+				"-v",
+				strconv.Itoa(updatedLogLevel),
+				"-mode",
+				updatedMode,
+			}
+
+			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(ConsistOf(expectArgs))
+			Expect(ds.Spec.Template.Spec.Containers[0].Image).Should(Equal(updatedImage))
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(updatedInitImage))
+			Expect(ds.Spec.Template.Spec.NodeSelector).Should(Equal(updatedNodeSelector))
+
+			By("updating FpgaDevicePlugin with different values successfully")
+			updatedNodeSelector = map[string]string{}
+			fetched.Spec.NodeSelector = updatedNodeSelector
+			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
+			time.Sleep(interval)
+
+			By("checking DaemonSet is updated with different values successfully")
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-fpga-plugin"}, ds)
+			time.Sleep(interval)
+
+			Expect(ds.Spec.Template.Spec.NodeSelector).Should(And(HaveLen(1), HaveKeyWithValue("kubernetes.io/arch", "amd64")))
 
 			By("deleting FpgaDevicePlugin successfully")
 			Eventually(func() error {

@@ -16,10 +16,12 @@ package envtest
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	apps "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -34,9 +36,8 @@ var _ = Describe("DlbDevicePlugin Controller", func() {
 	Context("Basic CRUD operations", func() {
 		It("should handle DlbDevicePlugin objects correctly", func() {
 			spec := devicepluginv1.DlbDevicePluginSpec{
-				Image:        "testimage",
+				Image:        "dlb-testimage",
 				NodeSelector: map[string]string{"feature.node.kubernetes.io/dlb": "true"},
-				LogLevel:     4,
 			}
 
 			key := types.NamespacedName{
@@ -60,14 +61,15 @@ var _ = Describe("DlbDevicePlugin Controller", func() {
 				return len(fetched.Status.ControlledDaemonSet.UID) > 0
 			}, timeout, interval).Should(BeTrue())
 
-			Eventually(func() devicepluginv1.DlbDevicePluginSpec {
-				_ = k8sClient.Get(context.Background(), key, fetched)
-				return fetched.Spec
-			}, timeout, interval).Should(Equal(spec))
+			By("checking DaemonSet is created successfully")
+			ds := &apps.DaemonSet{}
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-dlb-plugin"}, ds)
+			Expect(ds.Spec.Template.Spec.Containers[0].Image).To(Equal(spec.Image))
+			Expect(ds.Spec.Template.Spec.NodeSelector).To(Equal(spec.NodeSelector))
 
-			By("updating image name successfully")
+			By("updating DlbDevicePlugin successfully")
 			updatedImage := "updated-dlb-testimage"
-			updatedNodeSelector := map[string]string{"updated-dlb-nodeSelector": "true"}
+			updatedNodeSelector := map[string]string{"updated-dlb-nodeselector": "true"}
 			updatedLogLevel := 3
 			fetched.Spec.Image = updatedImage
 			fetched.Spec.NodeSelector = updatedNodeSelector
@@ -78,11 +80,30 @@ var _ = Describe("DlbDevicePlugin Controller", func() {
 			Eventually(func() devicepluginv1.DlbDevicePluginSpec {
 				_ = k8sClient.Get(context.Background(), key, fetchedUpdated)
 				return fetchedUpdated.Spec
-			}, timeout, interval).Should(Equal(
-				devicepluginv1.DlbDevicePluginSpec{
-					Image:        updatedImage,
-					NodeSelector: updatedNodeSelector,
-					LogLevel:     updatedLogLevel}))
+			}, timeout, interval).Should(Equal(fetched.Spec))
+			time.Sleep(interval)
+
+			By("checking DaemonSet is updated successfully")
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-dlb-plugin"}, ds)
+
+			expectArgs := []string{
+				"-v",
+				strconv.Itoa(updatedLogLevel),
+			}
+			Expect(ds.Spec.Template.Spec.Containers[0].Image).Should(Equal(updatedImage))
+			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(ConsistOf(expectArgs))
+			Expect(ds.Spec.Template.Spec.NodeSelector).Should(Equal(updatedNodeSelector))
+
+			By("updating DlbDevicePlugin with different values successfully")
+			updatedNodeSelector = map[string]string{}
+			fetched.Spec.NodeSelector = updatedNodeSelector
+
+			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
+			time.Sleep(interval)
+
+			By("checking DaemonSet is updated with different values successfully")
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-dlb-plugin"}, ds)
+			Expect(ds.Spec.Template.Spec.NodeSelector).Should(And(HaveLen(1), HaveKeyWithValue("kubernetes.io/arch", "amd64")))
 
 			By("deleting DlbDevicePlugin successfully")
 			Eventually(func() error {
