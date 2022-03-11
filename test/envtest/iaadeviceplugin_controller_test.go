@@ -16,10 +16,13 @@ package envtest
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	apps "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -34,7 +37,10 @@ var _ = Describe("IaaDevicePlugin Controller", func() {
 	Context("Basic CRUD operations", func() {
 		It("should handle IaaDevicePlugin objects correctly", func() {
 			spec := devicepluginv1.IaaDevicePluginSpec{
-				Image: "testimage",
+				Image:     "testimage",
+				InitImage: "testinitimage",
+				NodeSelector: map[string]string{"iaa-nodeselector": "true",
+					"kubernetes.io/arch": "amd64"},
 			}
 
 			key := types.NamespacedName{
@@ -60,16 +66,82 @@ var _ = Describe("IaaDevicePlugin Controller", func() {
 				return len(fetched.Status.ControlledDaemonSet.UID) > 0
 			}, timeout, interval).Should(BeTrue())
 
-			By("updating image name successfully")
+			By("checking DaemonSet is created successfully")
+			ds := &apps.DaemonSet{}
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-iaa-plugin"}, ds)
+			Expect(ds.Spec.Template.Spec.Containers[0].Image).To(Equal(spec.Image))
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(spec.InitImage))
+			Expect(ds.Spec.Template.Spec.NodeSelector).To(Equal(spec.NodeSelector))
+
+			By("updating IaaDevicePlugin successfully")
 			updatedImage := "updated-iaa-testimage"
+			updatedInitImage := "updated-iaa-testinitimage"
+			updatedProvisioningConfig := "updated-iaa-provisioningconfig"
 			fetched.Spec.Image = updatedImage
+			updatedLogLevel := 2
+			updatedSharedDevNum := 42
+			updatedNodeSelector := map[string]string{"updated-iaa-nodeselector": "true",
+				"kubernetes.io/arch": "amd64"}
+
+			fetched.Spec.Image = updatedImage
+			fetched.Spec.InitImage = updatedInitImage
+			fetched.Spec.ProvisioningConfig = updatedProvisioningConfig
+			fetched.Spec.LogLevel = updatedLogLevel
+			fetched.Spec.SharedDevNum = updatedSharedDevNum
+			fetched.Spec.NodeSelector = updatedNodeSelector
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
 			fetchedUpdated := &devicepluginv1.IaaDevicePlugin{}
-			Eventually(func() string {
+			Eventually(func() devicepluginv1.IaaDevicePluginSpec {
 				_ = k8sClient.Get(context.Background(), key, fetchedUpdated)
-				return fetchedUpdated.Spec.Image
-			}, timeout, interval).Should(Equal(updatedImage))
+				return fetchedUpdated.Spec
+			}, timeout, interval).Should(Equal(fetched.Spec))
+			time.Sleep(interval)
+
+			By("checking DaemonSet is updated successfully")
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-iaa-plugin"}, ds)
+
+			expectArgs := []string{
+				"-v",
+				strconv.Itoa(updatedLogLevel),
+				"-shared-dev-num",
+				strconv.Itoa(updatedSharedDevNum),
+			}
+			mode := int32(420)
+			expectedVolume := v1.Volume{
+				Name: "intel-iaa-config-volume",
+				VolumeSource: v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{Name: updatedProvisioningConfig},
+						DefaultMode:          &mode,
+					},
+				},
+			}
+
+			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(ConsistOf(expectArgs))
+			Expect(ds.Spec.Template.Spec.Containers[0].Image).Should(Equal(updatedImage))
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(updatedInitImage))
+
+			Expect(ds.Spec.Template.Spec.Volumes).To(ContainElement(expectedVolume))
+
+			Expect(ds.Spec.Template.Spec.NodeSelector).Should(Equal(updatedNodeSelector))
+
+			By("updating IaaDevicePlugin with different values successfully")
+			updatedInitImage = ""
+			updatedNodeSelector = map[string]string{}
+			fetched.Spec.InitImage = updatedInitImage
+			fetched.Spec.NodeSelector = updatedNodeSelector
+
+			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
+			time.Sleep(interval)
+
+			By("checking DaemonSet is updated with different values successfully")
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-iaa-plugin"}, ds)
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(0))
+			Expect(ds.Spec.Template.Spec.Volumes).ShouldNot(ContainElement(expectedVolume))
+			Expect(ds.Spec.Template.Spec.NodeSelector).Should(And(HaveLen(1), HaveKeyWithValue("kubernetes.io/arch", "amd64")))
 
 			By("deleting IaaDevicePlugin successfully")
 			Eventually(func() error {

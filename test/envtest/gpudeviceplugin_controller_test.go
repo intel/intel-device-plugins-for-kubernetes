@@ -16,10 +16,12 @@ package envtest
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	apps "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -34,7 +36,9 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 	Context("Basic CRUD operations", func() {
 		It("should handle GpuDevicePlugin objects correctly", func() {
 			spec := devicepluginv1.GpuDevicePluginSpec{
-				Image: "testimage",
+				Image:        "gpu-testimage",
+				InitImage:    "gpu-testinitimage",
+				NodeSelector: map[string]string{"gpu-nodeselector": "true"},
 			}
 
 			key := types.NamespacedName{
@@ -58,16 +62,66 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 				return len(fetched.Status.ControlledDaemonSet.UID) > 0
 			}, timeout, interval).Should(BeTrue())
 
-			By("updating image name successfully")
-			updatedImage := "updated-testimage"
+			By("checking DaemonSet is created successfully")
+			ds := &apps.DaemonSet{}
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-gpu-plugin"}, ds)
+			Expect(ds.Spec.Template.Spec.Containers[0].Image).To(Equal(spec.Image))
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(spec.InitImage))
+			Expect(ds.Spec.Template.Spec.NodeSelector).To(Equal(spec.NodeSelector))
+
+			By("updating GpuDevicePlugin successfully")
+			updatedImage := "updated-gpu-testimage"
+			updatedInitImage := "updated-gpu-testinitimage"
+			updatedLogLevel := 2
+			updatedSharedDevNum := 42
+			updatedNodeSelector := map[string]string{"updated-gpu-nodeselector": "true"}
+
 			fetched.Spec.Image = updatedImage
+			fetched.Spec.InitImage = updatedInitImage
+			fetched.Spec.LogLevel = updatedLogLevel
+			fetched.Spec.SharedDevNum = updatedSharedDevNum
+			fetched.Spec.NodeSelector = updatedNodeSelector
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
 			fetchedUpdated := &devicepluginv1.GpuDevicePlugin{}
-			Eventually(func() string {
+			Eventually(func() devicepluginv1.GpuDevicePluginSpec {
 				_ = k8sClient.Get(context.Background(), key, fetchedUpdated)
-				return fetchedUpdated.Spec.Image
-			}, timeout, interval).Should(Equal(updatedImage))
+				return fetchedUpdated.Spec
+			}, timeout, interval).Should(Equal(fetched.Spec))
+			time.Sleep(interval)
+
+			By("checking DaemonSet is updated successfully")
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-gpu-plugin"}, ds)
+
+			expectArgs := []string{
+				"-v",
+				strconv.Itoa(updatedLogLevel),
+				"-shared-dev-num",
+				strconv.Itoa(updatedSharedDevNum),
+				"-allocation-policy",
+				"none",
+			}
+
+			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(ConsistOf(expectArgs))
+			Expect(ds.Spec.Template.Spec.Containers[0].Image).Should(Equal(updatedImage))
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(updatedInitImage))
+			Expect(ds.Spec.Template.Spec.NodeSelector).Should(Equal(updatedNodeSelector))
+
+			By("updating GpuDevicePlugin with different values successfully")
+			updatedInitImage = ""
+			updatedNodeSelector = map[string]string{}
+			fetched.Spec.InitImage = updatedInitImage
+			fetched.Spec.NodeSelector = updatedNodeSelector
+
+			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
+			time.Sleep(interval)
+
+			By("checking DaemonSet is updated with different values successfully")
+			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-gpu-plugin"}, ds)
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(0))
+			Expect(ds.Spec.Template.Spec.NodeSelector).Should(And(HaveLen(1), HaveKeyWithValue("kubernetes.io/arch", "amd64")))
 
 			By("deleting GpuDevicePlugin successfully")
 			Eventually(func() error {
