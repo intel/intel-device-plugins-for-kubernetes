@@ -31,13 +31,27 @@ func init() {
 	_ = flag.Set("v", "4")
 }
 
+func checkExpectedError(t *testing.T, expectedErr bool, err error, testName string) {
+	t.Helper()
+
+	if expectedErr && err == nil {
+		t.Errorf("Test case '%s': no error returned", testName)
+	}
+
+	if !expectedErr && err != nil {
+		t.Errorf("Test case '%s': unexpected error: %+v", testName, err)
+	}
+}
+
 func TestPatcherStorageFunctions(t *testing.T) {
 	goodAf := &fpgav2.AcceleratorFunction{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "arria10-nlb0",
 		},
 		Spec: fpgav2.AcceleratorFunctionSpec{
-			AfuID: "d8424dc4a4a3c413f89e433683f9040b",
+			AfuID:       "d8424dc4a4a3c413f89e433683f9040b",
+			InterfaceID: "ce48969398f05f33946d560708be108a",
+			Mode:        af,
 		},
 	}
 	brokenAf := &fpgav2.AcceleratorFunction{
@@ -58,37 +72,103 @@ func TestPatcherStorageFunctions(t *testing.T) {
 			InterfaceID: "ce48969398f05f33946d560708be108a",
 		},
 	}
-
-	p := newPatcher(ctrl.Log.WithName("test"))
-
-	if err := p.AddAf(goodAf); err != nil {
-		t.Error("unexpected error")
+	regionAlias := &fpgav2.FpgaRegion{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "arria10-alias",
+		},
+		Spec: fpgav2.FpgaRegionSpec{
+			InterfaceID: "ce48969398f05f33946d560708be108a",
+		},
 	}
 
-	if len(p.resourceModeMap) != 1 || len(p.afMap) != 1 || len(p.resourceMap) != 1 {
-		t.Error("Failed to add AF to patcher")
+	tcases := []struct {
+		name                        string
+		afsToAdd                    []*fpgav2.AcceleratorFunction
+		afsToRemove                 []*fpgav2.AcceleratorFunction
+		regionsToAdd                []*fpgav2.FpgaRegion
+		regionsToRemove             []*fpgav2.FpgaRegion
+		expectedResourceModeMapSize int
+		expectedResourceMapSize     int
+		expectedIdentitySetSize     int
+		expectedErr                 bool
+	}{
+		{
+			name:                        "Add one good af",
+			afsToAdd:                    []*fpgav2.AcceleratorFunction{goodAf},
+			expectedResourceModeMapSize: 1,
+			expectedResourceMapSize:     1,
+			expectedIdentitySetSize:     1,
+		},
+		{
+			name:        "Add one broken af",
+			afsToAdd:    []*fpgav2.AcceleratorFunction{brokenAf},
+			expectedErr: true,
+		},
+		{
+			name:        "Add one and remove one good af",
+			afsToAdd:    []*fpgav2.AcceleratorFunction{goodAf},
+			afsToRemove: []*fpgav2.AcceleratorFunction{goodAf},
+		},
+		{
+			name:                        "Add one good region",
+			regionsToAdd:                []*fpgav2.FpgaRegion{region},
+			expectedResourceModeMapSize: 1,
+			expectedResourceMapSize:     1,
+			expectedIdentitySetSize:     1,
+		},
+		{
+			name:            "Add one and remove one good region",
+			regionsToAdd:    []*fpgav2.FpgaRegion{region},
+			regionsToRemove: []*fpgav2.FpgaRegion{region},
+		},
+		{
+			name:                        "Add one region and one alias then remove one alias",
+			regionsToAdd:                []*fpgav2.FpgaRegion{region, regionAlias},
+			regionsToRemove:             []*fpgav2.FpgaRegion{region},
+			expectedResourceModeMapSize: 1,
+			expectedResourceMapSize:     1,
+			expectedIdentitySetSize:     1,
+		},
+		{
+			name:                        "Add one region and one alias",
+			regionsToAdd:                []*fpgav2.FpgaRegion{region, regionAlias},
+			expectedResourceModeMapSize: 2,
+			expectedResourceMapSize:     2,
+			expectedIdentitySetSize:     1,
+		},
+		{
+			name:            "Add one region and one alias then remove all",
+			regionsToAdd:    []*fpgav2.FpgaRegion{region, regionAlias},
+			regionsToRemove: []*fpgav2.FpgaRegion{region, regionAlias},
+		},
 	}
 
-	if err := p.AddAf(brokenAf); err == nil {
-		t.Error("AddAf() must fail")
-	}
-
-	p.RemoveAf(goodAf.Name)
-
-	if len(p.resourceModeMap) != 0 || len(p.afMap) != 0 || len(p.resourceMap) != 0 {
-		t.Error("Failed to remove AF from patcher")
-	}
-
-	p.AddRegion(region)
-
-	if len(p.resourceModeMap) != 1 || len(p.resourceMap) != 1 {
-		t.Error("Failed to add fpga region to patcher")
-	}
-
-	p.RemoveRegion(region.Name)
-
-	if len(p.resourceModeMap) != 0 || len(p.resourceMap) != 0 {
-		t.Error("Failed to remove fpga region from patcher")
+	for _, tt := range tcases {
+		t.Run(tt.name, func(t *testing.T) {
+			p := newPatcher(ctrl.Log.WithName("test"))
+			for _, af := range tt.afsToAdd {
+				err := p.AddAf(af)
+				checkExpectedError(t, tt.expectedErr, err, tt.name)
+			}
+			for _, reg := range tt.regionsToAdd {
+				p.AddRegion(reg)
+			}
+			for _, af := range tt.afsToRemove {
+				p.RemoveAf(af.Name)
+			}
+			for _, reg := range tt.regionsToRemove {
+				p.RemoveRegion(reg.Name)
+			}
+			if tt.expectedResourceModeMapSize != len(p.resourceModeMap) {
+				t.Errorf("wrong size of resourceModeMap. Expected %d, but got %d", tt.expectedResourceModeMapSize, len(p.resourceModeMap))
+			}
+			if tt.expectedResourceMapSize != len(p.resourceMap) {
+				t.Errorf("wrong size of resourceMap. Expected %d, but got %d", tt.expectedResourceMapSize, len(p.resourceMap))
+			}
+			if tt.expectedIdentitySetSize != len(p.identitySet) {
+				t.Errorf("wrong size of identitySet. Expected %d, but got %d", tt.expectedIdentitySetSize, len(p.identitySet))
+			}
+		})
 	}
 }
 
@@ -246,6 +326,41 @@ func TestGetPatchOps(t *testing.T) {
 			expectedOps: 4,
 		},
 		{
+			name: "Skip handling for an identity mapping",
+			container: corev1.Container{
+				Resources: corev1.ResourceRequirements{
+					Limits: corev1.ResourceList{
+						"fpga.intel.com/af-ce4.d84.zkiWk5jwXzOUbVYHCL4QithCTcSko8QT-J5DNoP5BAs": resource.MustParse("1"),
+					},
+					Requests: corev1.ResourceList{
+						"fpga.intel.com/af-ce4.d84.zkiWk5jwXzOUbVYHCL4QithCTcSko8QT-J5DNoP5BAs": resource.MustParse("1"),
+					},
+				},
+			},
+			afs: []*fpgav2.AcceleratorFunction{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "arria10-nlb0",
+					},
+					Spec: fpgav2.AcceleratorFunctionSpec{
+						AfuID:       "d8424dc4a4a3c413f89e433683f9040b",
+						InterfaceID: "ce48969398f05f33946d560708be108a",
+						Mode:        af,
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "arria10-nlb0-alias",
+					},
+					Spec: fpgav2.AcceleratorFunctionSpec{
+						AfuID:       "d8424dc4a4a3c413f89e433683f9040b",
+						InterfaceID: "ce48969398f05f33946d560708be108a",
+						Mode:        af,
+					},
+				},
+			},
+		},
+		{
 			name: "Successful handling for regiondevel mode",
 			container: corev1.Container{
 				Resources: corev1.ResourceRequirements{
@@ -399,12 +514,7 @@ func TestGetPatchOps(t *testing.T) {
 				p.AddRegion(region)
 			}
 			ops, err := p.getPatchOps(0, tt.container)
-			if tt.expectedErr && err == nil {
-				t.Errorf("Test case '%s': no error returned", tt.name)
-			}
-			if !tt.expectedErr && err != nil {
-				t.Errorf("Test case '%s': unexpected error: %+v", tt.name, err)
-			}
+			checkExpectedError(t, tt.expectedErr, err, tt.name)
 			if len(ops) != tt.expectedOps {
 				t.Errorf("test case '%s': expected %d ops, but got %d\n%v", tt.name, tt.expectedOps, len(ops), ops)
 			}

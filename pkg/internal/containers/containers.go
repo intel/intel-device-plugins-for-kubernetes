@@ -27,7 +27,7 @@ func GetRequestedResources(container corev1.Container, ns string) (map[string]in
 	// Container may happen to have Requests, but not Limits. Check Requests first,
 	// then in the next loop iterate over Limits.
 	for resourceName, resourceQuantity := range container.Resources.Requests {
-		rname := strings.ToLower(string(resourceName))
+		rname := string(resourceName)
 		if !strings.HasPrefix(rname, ns) {
 			continue
 		}
@@ -42,7 +42,7 @@ func GetRequestedResources(container corev1.Container, ns string) (map[string]in
 	resources := make(map[string]int64)
 
 	for resourceName, resourceQuantity := range container.Resources.Limits {
-		rname := strings.ToLower(string(resourceName))
+		rname := string(resourceName)
 		if !strings.HasPrefix(rname, ns) {
 			continue
 		}
