@@ -116,6 +116,7 @@ spec:
   - email: mikko.ylinen@intel.com
     name: Mikko Ylinen
   maturity: alpha
+  minKubeVersion: 1.21.0
   provider:
     name: Intel® Corporation
     url: https://intel.com
