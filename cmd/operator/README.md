@@ -121,7 +121,7 @@ Deploy your device plugin by applying its custom resource, e.g.
 `GpuDevicePlugin` with
 
 ```bash
-$ kubectl apply -f https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml
 ```
 
 Observe it is up and running:
