@@ -10,7 +10,7 @@ on:
       - 'release-*'
 env:
   RUNC_VERSION: v1.0.3
-  GO_VERSION: 1.17.4
+  GO_VERSION: 1.18
   K8S_VERSION: 1.22.1
 jobs:
 

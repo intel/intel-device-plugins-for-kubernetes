@@ -18,7 +18,7 @@
 #
 # This is used on release branches before tagging a stable version.
 # The main branch defaults to using the latest Golang base image.
-ARG GOLANG_BASE=golang:1.17-bullseye
+ARG GOLANG_BASE=golang:1.18-bullseye
 
 # FINAL_BASE can be used to configure the base image of the final image.
 #

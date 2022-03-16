@@ -48,7 +48,7 @@ install-tools:
 	$(GO) install sigs.k8s.io/kind@${KIND_VERSION}
 
 go-mod-tidy:
-	$(GO) mod download
+	$(GO) mod download all
 	@report=`$(GO) mod tidy -v 2>&1` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
 
 update-fixture:
@@ -159,7 +159,7 @@ terrascan:
 
 pre-pull:
 ifeq ($(TAG),devel)
-	@$(BUILDER) pull golang:1.17-bullseye
+	@$(BUILDER) pull golang:1.18-bullseye
 	@$(BUILDER) pull debian:unstable-slim
 	@$(BUILDER) pull clearlinux:latest
 	@$(BUILDER) pull ubuntu:20.04
