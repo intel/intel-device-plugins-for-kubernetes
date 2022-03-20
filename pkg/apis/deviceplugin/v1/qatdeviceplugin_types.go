@@ -35,6 +35,10 @@ type QatDevicePluginSpec struct {
 
 	// InitImage is a container image with a script that initialize devices.
 	InitImage string `json:"initImage,omitempty"`
+	// PreferredAllocationPolicy sets the mode of allocating QAT devices on a node.
+	// See documentation for detailed description of the policies.
+	// +kubebuilder:validation:Enum=balanced;packed
+	PreferredAllocationPolicy string `json:"preferredAllocationPolicy,omitempty"`
 
 	// DpdkDriver is a DPDK device driver for configuring the QAT device.
 	// +kubebuilder:validation:Enum=igb_uio;vfio-pci

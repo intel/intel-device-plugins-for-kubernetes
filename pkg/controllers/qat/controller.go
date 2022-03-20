@@ -280,5 +280,9 @@ func getPodArgs(qdp *devicepluginv1.QatDevicePlugin) []string {
 		args = append(args, "-max-num-devices", "32")
 	}
 
+	if qdp.Spec.PreferredAllocationPolicy != "" {
+		args = append(args, "-allocation-policy", qdp.Spec.PreferredAllocationPolicy)
+	}
+
 	return args
 }

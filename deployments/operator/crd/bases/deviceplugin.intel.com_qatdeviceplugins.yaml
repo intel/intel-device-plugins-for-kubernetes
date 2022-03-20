@@ -94,6 +94,14 @@ spec:
                 description: NodeSelector provides a simple way to constrain device
                   plugin pods to nodes with particular labels.
                 type: object
+              preferredAllocationPolicy:
+                description: PreferredAllocationPolicy sets the mode of allocating
+                  QAT devices on a node. See documentation for detailed description
+                  of the policies.
+                enum:
+                - balanced
+                - packed
+                type: string
             type: object
           status:
             description: 'QatDevicePluginStatus defines the observed state of QatDevicePlugin.

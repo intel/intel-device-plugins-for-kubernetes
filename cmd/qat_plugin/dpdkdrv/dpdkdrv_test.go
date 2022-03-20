@@ -18,6 +18,7 @@ import (
 	"flag"
 	"os"
 	"path"
+	"reflect"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -95,7 +96,7 @@ func TestNewDevicePlugin(t *testing.T) {
 	}
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewDevicePlugin(1, tt.kernelVfDrivers, tt.dpdkDriver)
+			_, err := NewDevicePlugin(1, tt.kernelVfDrivers, tt.dpdkDriver, "")
 
 			if tt.expectedErr && err == nil {
 				t.Errorf("Test case '%s': expected error", tt.name)
@@ -117,6 +118,46 @@ type fakeNotifier struct {
 func (n *fakeNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.tree = newDeviceTree
 	n.scanDone <- true
+}
+
+func TestGetPreferredAllocation(t *testing.T) {
+	rqt := &pluginapi.PreferredAllocationRequest{
+		ContainerRequests: []*pluginapi.ContainerPreferredAllocationRequest{
+			{
+				AvailableDeviceIDs: []string{"0000:03:00.4", "0000:04:00.1", "0000:05:00.3", "0000:05:00.4", "0000:05:00.1", "0000:04:00.0", "0000:04:00.4", "0000:06:00.4", "0000:04:00.2", "0000:03:00.1", "0000:05:00.0", "0000:05:00.2", "0000:04:00.3", "0000:03:00.2", "0000:06:00.0", "0000:06:00.3", "0000:03:00.3", "0000:03:00.0", "0000:06:00.1", "0000:06:00.2"},
+				AllocationSize:     4,
+			},
+		},
+	}
+
+	plugin := newDevicePlugin("", "", 4, []string{""}, "", nonePolicy)
+	response, _ := plugin.GetPreferredAllocation(rqt)
+
+	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"0000:03:00.4", "0000:04:00.1", "0000:05:00.3", "0000:05:00.4"}) {
+		t.Error("Unexpected return value for balanced preferred allocation")
+	}
+
+	plugin = newDevicePlugin("", "", 4, []string{""}, "", packedPolicy)
+	response, _ = plugin.GetPreferredAllocation(rqt)
+
+	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"0000:03:00.0", "0000:03:00.1", "0000:03:00.2", "0000:03:00.3"}) {
+		t.Error("Unexpected return value for balanced preferred allocation")
+	}
+
+	plugin = newDevicePlugin("", "", 4, []string{""}, "", balancedPolicy)
+	response, _ = plugin.GetPreferredAllocation(rqt)
+
+	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"0000:03:00.0", "0000:04:00.0", "0000:05:00.0", "0000:06:00.0"}) {
+		t.Error("Unexpected return value for balanced preferred allocation")
+	}
+
+	rqt.ContainerRequests[0].AllocationSize = 32
+	plugin = newDevicePlugin("", "", 4, []string{""}, "", nil)
+	_, err := plugin.GetPreferredAllocation(rqt)
+
+	if err == nil {
+		t.Error("Unexpected nil value return for err when AllocationSize is greater than the number of available device IDs")
+	}
 }
 
 func TestScan(t *testing.T) {
@@ -405,6 +446,7 @@ func TestScan(t *testing.T) {
 				tt.maxDevNum,
 				tt.kernelVfDrivers,
 				tt.dpdkDriver,
+				nil,
 			)
 
 			fN := fakeNotifier{
