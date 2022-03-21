@@ -38,7 +38,6 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	yes := true
 	no := false
 	charDevice := v1.HostPathCharDev
-	directoryOrCreate := v1.HostPathDirectoryOrCreate
 	daemonSet := apps.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
@@ -83,11 +82,6 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 									MountPath: "/var/lib/kubelet/device-plugins",
 								},
 								{
-									Name:      "sgxdevices",
-									MountPath: "/dev/sgx",
-									ReadOnly:  true,
-								},
-								{
 									Name:      "sgx-enclave",
 									MountPath: "/dev/sgx_enclave",
 									ReadOnly:  true,
@@ -107,15 +101,6 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
 									Path: "/var/lib/kubelet/device-plugins",
-								},
-							},
-						},
-						{
-							Name: "sgxdevices",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev/sgx",
-									Type: &directoryOrCreate,
 								},
 							},
 						},

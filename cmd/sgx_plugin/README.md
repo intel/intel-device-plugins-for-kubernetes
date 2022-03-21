@@ -68,39 +68,6 @@ is also known to work.
 
 The hardware platform must support SGX Flexible Launch Control.
 
-#### Backwards compatibility note
-
-The SGX device nodes have changed from `/dev/sgx/[enclave|provision]`
-to `/dev/sgx_[enclave|provision]` in v4x RFC patches according to the
-LKML feedback.
-
-Backwards compatibility is provided by adding `/dev/sgx` directory volume
-mount to containers. This assumes the cluster admin has installed the
-udev rules provided below to make the old device nodes as symlinks to the
-new device nodes.
-
-**Note:** the symlinks become visible in all containers requesting SGX
-resources but are potentially dangling links if the device the corresponding
-device resource is not requested.
-
-```bash
-$ cat /etc/udev/rules/9*.rules
-SUBSYSTEM=="misc",KERNEL=="enclave",MODE="0666"
-SUBSYSTEM=="misc",KERNEL=="sgx_enclave",MODE="0666",SYMLINK+="sgx/enclave"
-SUBSYSTEM=="sgx",KERNEL=="sgx/enclave",MODE="0666"
-SUBSYSTEM=="misc",KERNEL=="provision",MODE="0660"
-SUBSYSTEM=="misc",KERNEL=="sgx_provision",SYMLINK+="sgx/provision",MODE="0660"
-SUBSYSTEM=="sgx",KERNEL=="sgx/provision",MODE="0660"
-$ sudo udevadm trigger
-$ ls -la /dev/sgx/*
-lrwxrwxrwx 1 root root 14 Nov 18 01:01 /dev/sgx/enclave -> ../sgx_enclave
-lrwxrwxrwx 1 root root 16 Nov 18 01:01 /dev/sgx/provision -> ../sgx_provision
-```
-
-The backwards compatibility will be removed in the next release (v0.20) and
-from the main development branch once the SGX SDK and DCAP releases default to
-the new devices.
-
 ### Deploying with Pre-built images
 
 [Pre-built images](https://hub.docker.com/u/intel/)
