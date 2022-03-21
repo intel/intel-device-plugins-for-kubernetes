@@ -48,7 +48,7 @@ func TestGetPatcher(t *testing.T) {
 		},
 		{
 			name: "Return existing patcher",
-			pm:   &Manager{patchers: map[string]*patcher{namespace: newPatcher(log)}},
+			pm:   &Manager{patchers: map[string]*Patcher{namespace: newPatcher(log)}},
 		},
 	}
 
