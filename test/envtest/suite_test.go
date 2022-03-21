@@ -17,9 +17,11 @@ package envtest
 import (
 	"context"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -273,10 +275,11 @@ func makeDaemonSet(name, image, initimage string) *apps.DaemonSet {
 		}}
 	}
 
+	title := cases.Title(language.English, cases.NoLower)
 	yes := true
 	ds.OwnerReferences = []metav1.OwnerReference{{
 		APIVersion: "deviceplugin.intel.com/v1",
-		Kind:       strings.Title(name) + "DevicePlugin",
+		Kind:       title.String(name) + "DevicePlugin",
 		Name:       name,
 		Controller: &yes,
 		UID:        uuid.NewUUID(),
