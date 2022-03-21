@@ -46,7 +46,7 @@ install-tools:
 	GO111MODULE=on $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
 	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	$(GO) install sigs.k8s.io/kind@${KIND_VERSION}
-	
+
 go-mod-tidy:
 	$(GO) mod download
 	@report=`$(GO) mod tidy -v 2>&1` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
@@ -62,11 +62,11 @@ ifndef WHAT
 	@$(GO) test -tags $(BUILDTAGS) -race -coverprofile=coverage.txt -covermode=atomic $(pkgs)
 else
 	@cd $(WHAT) && \
-            $(GO) test -tags $(BUILDTAGS) -v -race -cover -coverprofile cover.out || rc=1; \
-            $(GO) tool cover -html=cover.out -o coverage.html; \
-            rm cover.out; \
-            echo "Coverage report: file://$$(realpath coverage.html)"; \
-            exit $$rc
+	    $(GO) test -tags $(BUILDTAGS) -v -race -cover -coverprofile cover.out || rc=1; \
+	    $(GO) tool cover -html=cover.out -o coverage.html; \
+	    rm cover.out; \
+	    echo "Coverage report: file://$$(realpath coverage.html)"; \
+	    exit $$rc
 endif
 
 test-with-kind: fixture intel-sgx-admissionwebhook intel-fpga-admissionwebhook intel-deviceplugin-operator install-tools
