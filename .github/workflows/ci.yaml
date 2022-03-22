@@ -64,7 +64,7 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: ${{ env.GO_VERSION }}
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
                 ~/.cache/go-build
@@ -127,7 +127,7 @@ jobs:
         builder: [buildah, docker]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
                 ~/.cache/go-build
