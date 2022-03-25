@@ -60,6 +60,10 @@ spec:
               image:
                 description: Image is a container image with QAT device plugin executable.
                 type: string
+              initImage:
+                description: InitImage is a container image with a script that initialize
+                  devices.
+                type: string
               kernelVfDrivers:
                 description: KernelVfDrivers is a list of VF device drivers for the
                   QuickAssist devices in the system.

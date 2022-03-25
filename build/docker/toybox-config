@@ -1,10 +1,10 @@
 #
 # Automatically generated make config: don't edit
 # ToyBox version: KCONFIG_VERSION
-# Wed Dec 22 10:34:08 2021
+# Fri Mar 25 12:05:23 2022
 #
-CONFIG_TOYBOX_CONTAINER=y
-CONFIG_TOYBOX_FIFREEZE=y
+# CONFIG_TOYBOX_CONTAINER is not set
+# CONFIG_TOYBOX_FIFREEZE is not set
 CONFIG_TOYBOX_ICONV=y
 CONFIG_TOYBOX_UTMPX=y
 CONFIG_TOYBOX_SHADOW=y
@@ -14,14 +14,14 @@ CONFIG_TOYBOX_FORK=y
 CONFIG_TOYBOX_PRLIMIT=y
 CONFIG_TOYBOX_GETRANDOM=y
 # CONFIG_TOYBOX_COPYFILERANGE is not set
-# CONFIG_TOYBOX_HASTIMERS is not set
+CONFIG_TOYBOX_HASTIMERS=y
 
 #
 # Posix commands
 #
 # CONFIG_BASENAME is not set
 # CONFIG_CAL is not set
-# CONFIG_CAT is not set
+CONFIG_CAT=y
 # CONFIG_CAT_V is not set
 # CONFIG_CATV is not set
 # CONFIG_CHGRP is not set
@@ -47,9 +47,9 @@ CONFIG_CP=y
 # CONFIG_FILE is not set
 # CONFIG_FIND is not set
 # CONFIG_GETCONF is not set
-# CONFIG_GREP is not set
-# CONFIG_EGREP is not set
-# CONFIG_FGREP is not set
+CONFIG_GREP=y
+CONFIG_EGREP=y
+CONFIG_FGREP=y
 # CONFIG_HEAD is not set
 # CONFIG_ICONV is not set
 # CONFIG_ID is not set
@@ -91,9 +91,9 @@ CONFIG_LS=y
 # CONFIG_STRINGS is not set
 # CONFIG_TAIL is not set
 # CONFIG_TAR is not set
-# CONFIG_TEE is not set
-# CONFIG_TEST is not set
-# CONFIG_TEST_GLUE is not set
+CONFIG_TEE=y
+CONFIG_TEST=y
+CONFIG_TEST_GLUE=y
 # CONFIG_TIME is not set
 # CONFIG_TOUCH is not set
 # CONFIG_TRUE is not set
@@ -242,7 +242,7 @@ CONFIG_SH=y
 # CONFIG_LSATTR is not set
 # CONFIG_CHATTR is not set
 # CONFIG_LSMOD is not set
-# CONFIG_LSPCI is not set
+CONFIG_LSPCI=y
 # CONFIG_LSPCI_TEXT is not set
 # CONFIG_LSUSB is not set
 # CONFIG_MAKEDEVS is not set

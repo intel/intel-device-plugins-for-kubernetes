@@ -85,5 +85,11 @@ func (r *QatDevicePlugin) ValidateDelete() error {
 }
 
 func (r *QatDevicePlugin) validatePlugin() error {
+	if r.Spec.InitImage != "" {
+		if err := validatePluginImage(r.Spec.InitImage, "intel-qat-initcontainer", qatMinVersion); err != nil {
+			return err
+		}
+	}
+
 	return validatePluginImage(r.Spec.Image, "intel-qat-plugin", qatMinVersion)
 }

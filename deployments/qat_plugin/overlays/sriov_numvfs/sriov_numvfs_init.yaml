@@ -7,17 +7,7 @@ spec:
     spec:
       initContainers:
       - name: sriov-numvfs
-        image: busybox
-        command: ["/bin/sh", "-c"]
-        args:
-        - >
-          for dev in `for pf in 0434 0435 19a3 37c8 6f54 4940 18a0; do lspci | awk -v dev="8086:$pf" '$0 ~ dev {print "0000:" $1}'; done`; do
-            DEVPATH="/sys/bus/pci/devices/$dev"
-            NUMVFS="$DEVPATH/sriov_numvfs"
-            if [ -w "$NUMVFS" -a $(cat "$NUMVFS") -eq 0 ]; then
-              cat "$DEVPATH/sriov_totalvfs" | tee "$NUMVFS"
-            fi
-          done
+        image: intel/intel-qat-initcontainer:devel
         securityContext:
           readOnlyRootFilesystem: true
           privileged: true
