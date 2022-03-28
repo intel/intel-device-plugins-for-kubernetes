@@ -2,7 +2,7 @@
 
 IMG=$1
 BUILDER=$2
-DIR=$(basename $IMG)
+DIR=$3$(basename $IMG)
 
 if [ -z "$DIR" ]; then
     (>&2 echo "Usage: $0 <image directory>")
@@ -14,13 +14,12 @@ if [ ! -d "$DIR" ]; then
     exit 1
 fi
 
-CWD=`dirname $0`
 TAG=${TAG:-devel}
 
 if [ -z "$BUILDER" -o "$BUILDER" = 'docker' ] ; then
-    docker build --pull -t ${IMG}:${TAG} "$CWD/$DIR/"
+    docker build --pull -t ${IMG}:${TAG} "$DIR/"
 elif [ "$BUILDER" = 'buildah' ] ; then
-    buildah bud  --pull-always -t ${IMG}:${TAG} "$CWD/$DIR/"
+    buildah bud  --pull-always -t ${IMG}:${TAG} "$DIR/"
 else
     (>&2 echo "Unknown builder $BUILDER")
     exit 1

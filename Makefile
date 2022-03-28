@@ -177,10 +177,21 @@ $(images):
 
 images: $(images)
 
-demos = $(shell basename -a demo/*/)
+demo-images = $(patsubst demo/%/Dockerfile,%,$(shell find demo -name "Dockerfile"))
 
-$(demos):
-	@cd demo/ && ./build-image.sh $(REG)$@ $(BUILDER)
+define add-demo-build-target =
+target := $(notdir $(1))
+demos  := $(demos) $$(target)
+
+ifneq ("$(dir $(1))","./")
+$$(target): $(1)
+endif
+
+$(1):
+	@cd demo/ && ./build-image.sh $(REG)$$(notdir $$@) $(BUILDER) $$(dir $$@)
+endef
+
+$(foreach s,$(demo-images),$(eval $(call add-demo-build-target,$s)))
 
 demos: $(demos)
 
