@@ -208,7 +208,7 @@ func (dp *devicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocatio
 		if req.AllocationSize > int32(len(req.AvailableDeviceIDs)) {
 			klog.V(3).Info("req.AllocationSize must be not greater than len(req.AvailableDeviceIDs).")
 
-			var err = errors.Errorf("AllocationSize (%d) is greater then the number of available device IDs (%d)", req.AllocationSize, len(req.AvailableDeviceIDs))
+			var err = errors.Errorf("AllocationSize (%d) is greater than the number of available device IDs (%d)", req.AllocationSize, len(req.AvailableDeviceIDs))
 
 			return nil, err
 		}
