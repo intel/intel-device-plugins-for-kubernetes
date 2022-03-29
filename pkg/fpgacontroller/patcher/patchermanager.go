@@ -40,7 +40,7 @@ func init() {
 
 // Manager keeps track of patchers registered for different Kubernetes namespaces.
 type Manager struct {
-	patchers map[string]*patcher
+	patchers map[string]*Patcher
 	log      logr.Logger
 }
 
@@ -48,12 +48,12 @@ type Manager struct {
 func NewPatcherManager(log logr.Logger) *Manager {
 	return &Manager{
 		log:      log,
-		patchers: make(map[string]*patcher),
+		patchers: make(map[string]*Patcher),
 	}
 }
 
 // GetPatcher returns a patcher specific to given namespace.
-func (pm *Manager) GetPatcher(namespace string) *patcher {
+func (pm *Manager) GetPatcher(namespace string) *Patcher {
 	if p, ok := pm.patchers[namespace]; ok {
 		return p
 	}

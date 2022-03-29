@@ -70,8 +70,9 @@ var (
 	rfc6901Escaper = strings.NewReplacer("~", "~0", "/", "~1")
 )
 
+// Patcher stores FPGA controller's state.
 //nolint: govet
-type patcher struct {
+type Patcher struct {
 	sync.Mutex
 
 	log logr.Logger
@@ -81,8 +82,8 @@ type patcher struct {
 	resourceModeMap map[string]string
 }
 
-func newPatcher(log logr.Logger) *patcher {
-	return &patcher{
+func newPatcher(log logr.Logger) *Patcher {
+	return &Patcher{
 		log:             log,
 		afMap:           make(map[string]*fpgav2.AcceleratorFunction),
 		resourceMap:     make(map[string]string),
@@ -90,7 +91,7 @@ func newPatcher(log logr.Logger) *patcher {
 	}
 }
 
-func (p *patcher) AddAf(accfunc *fpgav2.AcceleratorFunction) error {
+func (p *Patcher) AddAf(accfunc *fpgav2.AcceleratorFunction) error {
 	defer p.Unlock()
 	p.Lock()
 
@@ -112,7 +113,7 @@ func (p *patcher) AddAf(accfunc *fpgav2.AcceleratorFunction) error {
 	return nil
 }
 
-func (p *patcher) AddRegion(region *fpgav2.FpgaRegion) {
+func (p *Patcher) AddRegion(region *fpgav2.FpgaRegion) {
 	defer p.Unlock()
 	p.Lock()
 
@@ -120,7 +121,7 @@ func (p *patcher) AddRegion(region *fpgav2.FpgaRegion) {
 	p.resourceMap[namespace+"/"+region.Name] = rfc6901Escaper.Replace(namespace + "/region-" + region.Spec.InterfaceID)
 }
 
-func (p *patcher) RemoveAf(name string) {
+func (p *Patcher) RemoveAf(name string) {
 	defer p.Unlock()
 	p.Lock()
 
@@ -129,7 +130,7 @@ func (p *patcher) RemoveAf(name string) {
 	delete(p.resourceModeMap, namespace+"/"+name)
 }
 
-func (p *patcher) RemoveRegion(name string) {
+func (p *Patcher) RemoveRegion(name string) {
 	defer p.Unlock()
 	p.Lock()
 
@@ -159,7 +160,7 @@ func sanitizeContainer(container corev1.Container) corev1.Container {
 	return container
 }
 
-func (p *patcher) getPatchOps(containerIdx int, container corev1.Container) ([]string, error) {
+func (p *Patcher) getPatchOps(containerIdx int, container corev1.Container) ([]string, error) {
 	container = sanitizeContainer(container)
 
 	requestedResources, err := containers.GetRequestedResources(container, namespace)
