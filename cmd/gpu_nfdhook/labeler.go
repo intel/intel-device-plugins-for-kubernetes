@@ -37,6 +37,7 @@ const (
 	millicoreLabelName  = "millicores"
 	pciGroupLabelName   = "pci-groups"
 	tilesLabelName      = "tiles"
+	numaMappingName     = "numa-gpu-map"
 	millicoresPerGPU    = 1000
 	memoryOverrideEnv   = "GPU_MEMORY_OVERRIDE"
 	memoryReservedEnv   = "GPU_MEMORY_RESERVED"
@@ -188,6 +189,25 @@ func (l *labeler) getTileCount(gpuName string) (numTiles uint64) {
 	}
 
 	return uint64(len(files))
+}
+
+// getNumaNode reads the cards numa node.
+func (l *labeler) getNumaNode(gpuName string) int {
+	filePath := filepath.Join(l.sysfsDRMDir, gpuName, "device/numa_node")
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		klog.Warning("Can't read file: ", err)
+		return -1
+	}
+
+	numa, err := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64)
+	if err != nil {
+		klog.Warning("Can't convert numa_node: ", err)
+		return -1
+	}
+
+	return int(numa)
 }
 
 // addNumericLabel creates a new label if one doesn't exist. Else the new value is added to the previous value.
@@ -353,6 +373,8 @@ func (l *labeler) createLabels() error {
 	gpuNumList := []string{}
 	tileCount := 0
 
+	numaMapping := make(map[int][]string)
+
 	for _, gpuName := range gpuNameList {
 		gpuNum := ""
 		// extract gpu number as a string. scan() has already checked name syntax
@@ -366,6 +388,17 @@ func (l *labeler) createLabels() error {
 
 		memoryAmount := l.getMemoryAmount(gpuName, numTiles)
 		gpuNumList = append(gpuNumList, gpuName[4:])
+
+		// get numa node of the GPU
+		numaNode := l.getNumaNode(gpuName)
+
+		if numaNode >= 0 {
+			// and store the gpu under that node id
+			numaList := numaMapping[numaNode]
+			numaList = append(numaList, gpuNum)
+
+			numaMapping[numaNode] = numaList
+		}
 
 		// try to add capability labels
 		l.createCapabilityLabels(gpuNum, numTiles)
@@ -390,6 +423,18 @@ func (l *labeler) createLabels() error {
 			l.labels[labelNamespace+gpuNumListLabelName+strconv.FormatInt(int64(i+1), 10)] = gpuNumLists[i]
 		}
 
+		if len(numaMapping) > 0 {
+			// add numa node mapping to labels: gpu.intel.com/numa-gpu-map="0-0.1.2.3_1-4.5.6.7"
+			numaMappingLabel := createNumaNodeMappingLabel(numaMapping)
+
+			numaMappingLabelList := split(numaMappingLabel, labelMaxLength)
+
+			l.labels[labelNamespace+numaMappingName] = numaMappingLabelList[0]
+			for i := 1; i < len(numaMappingLabelList); i++ {
+				l.labels[labelNamespace+numaMappingName+strconv.FormatInt(int64(i+1), 10)] = numaMappingLabelList[i]
+			}
+		}
+
 		// all GPUs get default number of millicores (1000)
 		l.labels.addNumericLabel(labelNamespace+millicoreLabelName, int64(millicoresPerGPU*gpuCount))
 
@@ -406,6 +451,27 @@ func (l *labeler) createLabels() error {
 	}
 
 	return nil
+}
+
+func createNumaNodeMappingLabel(mapping map[int][]string) string {
+	parts := []string{}
+
+	numas := []int{}
+	for numaNode := range mapping {
+		numas = append(numas, numaNode)
+	}
+
+	sort.Ints(numas)
+
+	for numaNode := range numas {
+		gpus := mapping[numaNode]
+		numaString := strconv.FormatInt(int64(numaNode), 10)
+		gpusString := strings.Join(gpus, ".")
+
+		parts = append(parts, numaString+"-"+gpusString)
+	}
+
+	return strings.Join(parts, "_")
 }
 
 func (l *labeler) printLabels() {
