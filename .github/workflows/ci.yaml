@@ -52,9 +52,8 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.43.0
+          version: v1.45.0
           args: -v --timeout 5m
-          skip-go-installation: true
 
   build:
     name: Build and check device plugins
