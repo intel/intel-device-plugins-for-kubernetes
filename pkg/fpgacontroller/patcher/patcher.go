@@ -80,6 +80,11 @@ type Patcher struct {
 	afMap           map[string]*fpgav2.AcceleratorFunction
 	resourceMap     map[string]string
 	resourceModeMap map[string]string
+
+	// This set is needed to maintain the webhook's idempotence: it must be possible to
+	// resolve actual resources (AFs and regions) to themselves. For this we build
+	// a set of identities which must be accepted by the webhook without any transformation.
+	identitySet map[string]int
 }
 
 func newPatcher(log logr.Logger) *Patcher {
@@ -88,6 +93,21 @@ func newPatcher(log logr.Logger) *Patcher {
 		afMap:           make(map[string]*fpgav2.AcceleratorFunction),
 		resourceMap:     make(map[string]string),
 		resourceModeMap: make(map[string]string),
+		identitySet:     make(map[string]int),
+	}
+}
+
+func (p *Patcher) incIdentity(id string) {
+	// Initialize to 1 or increment by 1.
+	p.identitySet[id] = p.identitySet[id] + 1
+}
+
+func (p *Patcher) decIdentity(id string) {
+	counter := p.identitySet[id]
+	if counter > 1 {
+		p.identitySet[id] = counter - 1
+	} else {
+		delete(p.identitySet, id)
 	}
 }
 
@@ -103,9 +123,13 @@ func (p *Patcher) AddAf(accfunc *fpgav2.AcceleratorFunction) error {
 			return err
 		}
 
-		p.resourceMap[namespace+"/"+accfunc.Name] = rfc6901Escaper.Replace(namespace + "/" + devtype)
+		mapping := rfc6901Escaper.Replace(namespace + "/" + devtype)
+		p.resourceMap[namespace+"/"+accfunc.Name] = mapping
+		p.incIdentity(mapping)
 	} else {
-		p.resourceMap[namespace+"/"+accfunc.Name] = rfc6901Escaper.Replace(namespace + "/region-" + accfunc.Spec.InterfaceID)
+		mapping := rfc6901Escaper.Replace(namespace + "/region-" + accfunc.Spec.InterfaceID)
+		p.resourceMap[namespace+"/"+accfunc.Name] = mapping
+		p.incIdentity(mapping)
 	}
 
 	p.resourceModeMap[namespace+"/"+accfunc.Name] = accfunc.Spec.Mode
@@ -118,24 +142,32 @@ func (p *Patcher) AddRegion(region *fpgav2.FpgaRegion) {
 	p.Lock()
 
 	p.resourceModeMap[namespace+"/"+region.Name] = regiondevel
-	p.resourceMap[namespace+"/"+region.Name] = rfc6901Escaper.Replace(namespace + "/region-" + region.Spec.InterfaceID)
+	mapping := rfc6901Escaper.Replace(namespace + "/region-" + region.Spec.InterfaceID)
+	p.resourceMap[namespace+"/"+region.Name] = mapping
+	p.incIdentity(mapping)
 }
 
 func (p *Patcher) RemoveAf(name string) {
 	defer p.Unlock()
 	p.Lock()
 
-	delete(p.afMap, namespace+"/"+name)
-	delete(p.resourceMap, namespace+"/"+name)
-	delete(p.resourceModeMap, namespace+"/"+name)
+	nname := namespace + "/" + name
+
+	p.decIdentity(p.resourceMap[nname])
+	delete(p.afMap, nname)
+	delete(p.resourceMap, nname)
+	delete(p.resourceModeMap, nname)
 }
 
 func (p *Patcher) RemoveRegion(name string) {
 	defer p.Unlock()
 	p.Lock()
 
-	delete(p.resourceMap, namespace+"/"+name)
-	delete(p.resourceModeMap, namespace+"/"+name)
+	nname := namespace + "/" + name
+
+	p.decIdentity(p.resourceMap[nname])
+	delete(p.resourceMap, nname)
+	delete(p.resourceModeMap, nname)
 }
 
 // sanitizeContainer filters out env variables reserved for CRI hook.
@@ -160,6 +192,16 @@ func sanitizeContainer(container corev1.Container) corev1.Container {
 	return container
 }
 
+func (p *Patcher) getNoopsOrError(name string) ([]string, error) {
+	if _, isVirtual := p.identitySet[rfc6901Escaper.Replace(name)]; isVirtual {
+		// `name` is not a real mapping, but a virtual one for an actual resource which
+		// needs to be resolved to itself with no transformations.
+		return []string{}, nil
+	}
+
+	return nil, errors.Errorf("no such resource: %q", name)
+}
+
 func (p *Patcher) getPatchOps(containerIdx int, container corev1.Container) ([]string, error) {
 	container = sanitizeContainer(container)
 
@@ -180,7 +222,7 @@ func (p *Patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 	for rname, quantity := range requestedResources {
 		mode, found := p.resourceModeMap[rname]
 		if !found {
-			return nil, errors.Errorf("no such resource: %q", rname)
+			return p.getNoopsOrError(rname)
 		}
 
 		switch mode {
