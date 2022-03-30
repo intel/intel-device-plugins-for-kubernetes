@@ -197,6 +197,10 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 
 // Implement the PreferredAllocator interface.
 func (dp *devicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error) {
+	if dp.resMan != nil {
+		return dp.resMan.GetPreferredFractionalAllocation(rqt)
+	}
+
 	response := &pluginapi.PreferredAllocationResponse{}
 
 	for _, req := range rqt.ContainerRequests {
@@ -356,7 +360,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
 	if dp.resMan != nil {
-		return dp.resMan.ReallocateWithFractionalResources(request)
+		return dp.resMan.CreateFractionalResourceResponse(request)
 	}
 
 	return nil, &dpapi.UseDefaultMethodError{}

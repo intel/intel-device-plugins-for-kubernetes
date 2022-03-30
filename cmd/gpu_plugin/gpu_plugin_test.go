@@ -48,10 +48,14 @@ func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 
 type mockResourceManager struct{}
 
-func (m *mockResourceManager) ReallocateWithFractionalResources(*v1beta1.AllocateRequest) (*v1beta1.AllocateResponse, error) {
+func (m *mockResourceManager) CreateFractionalResourceResponse(*v1beta1.AllocateRequest) (*v1beta1.AllocateResponse, error) {
 	return &v1beta1.AllocateResponse{}, &dpapi.UseDefaultMethodError{}
 }
 func (m *mockResourceManager) SetDevInfos(rm.DeviceInfoMap) {}
+
+func (m *mockResourceManager) GetPreferredFractionalAllocation(*v1beta1.PreferredAllocationRequest) (*v1beta1.PreferredAllocationResponse, error) {
+	return &v1beta1.PreferredAllocationResponse{}, &dpapi.UseDefaultMethodError{}
+}
 
 func createTestFiles(root string, devfsdirs, sysfsdirs []string, sysfsfiles map[string][]byte) (string, string, error) {
 	sysfs := path.Join(root, "sys")
