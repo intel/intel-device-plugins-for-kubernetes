@@ -33,6 +33,9 @@ type QatDevicePluginSpec struct {
 	// Image is a container image with QAT device plugin executable.
 	Image string `json:"image,omitempty"`
 
+	// InitImage is a container image with a script that initialize devices.
+	InitImage string `json:"initImage,omitempty"`
+
 	// DpdkDriver is a DPDK device driver for configuring the QAT device.
 	// +kubebuilder:validation:Enum=igb_uio;vfio-pci
 	DpdkDriver string `json:"dpdkDriver,omitempty"`

@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	apps "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -67,7 +68,7 @@ func (c *controller) CreateEmptyObject() client.Object {
 
 func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
 	dp := obj.(*devicepluginv1.QatDevicePlugin)
-	return controllers.UpgradeImages(&dp.Spec.Image, nil)
+	return controllers.UpgradeImages(&dp.Spec.Image, &dp.Spec.InitImage)
 }
 
 func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client) (int, error) {
@@ -92,6 +93,13 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
 
+	if devicePlugin.Spec.InitImage == "" {
+		daemonSet.Spec.Template.Spec.InitContainers = nil
+		daemonSet.Spec.Template.Spec.Volumes = removeVolume(daemonSet.Spec.Template.Spec.Volumes, "sysfs")
+	} else {
+		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec)
+	}
+
 	daemonSet.ObjectMeta.Namespace = c.ns
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
@@ -111,6 +119,17 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 
 	if ds.Spec.Template.Spec.Containers[0].Image != dp.Spec.Image {
 		ds.Spec.Template.Spec.Containers[0].Image = dp.Spec.Image
+		updated = true
+	}
+
+	if dp.Spec.InitImage == "" {
+		if ds.Spec.Template.Spec.InitContainers != nil {
+			ds.Spec.Template.Spec.InitContainers = nil
+			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "sysfs")
+			updated = true
+		}
+	} else {
+		setInitContainer(&ds.Spec.Template.Spec, dp.Spec)
 		updated = true
 	}
 
@@ -162,6 +181,76 @@ func (c *controller) UpdateStatus(rawObj client.Object, ds *apps.DaemonSet, node
 	}
 
 	return updated, nil
+}
+
+func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
+	newVolumes := []v1.Volume{}
+
+	for _, volume := range volumes {
+		if volume.Name != name {
+			newVolumes = append(newVolumes, volume)
+		}
+	}
+
+	return newVolumes
+}
+
+func setInitContainer(dsSpec *v1.PodSpec, dpSpec devicepluginv1.QatDevicePluginSpec) {
+	yes := true
+
+	qatDeviceDriver := map[string]string{
+		"dh895xccvf": "0434 0435",
+		"c3xxxvf":    "19e2",
+		"c6xxvf":     "37c8",
+		"d15xxvf":    "6f54",
+		"4xxxvf":     "4940",
+		"c4xxxvf":    "18a0",
+	}
+
+	enablingPfPciIDs := make([]string, 0, len(qatDeviceDriver))
+	for _, v := range dpSpec.KernelVfDrivers {
+		enablingPfPciIDs = append(enablingPfPciIDs, qatDeviceDriver[string(v)])
+	}
+
+	dsSpec.InitContainers = []v1.Container{
+		{
+			Image:           dpSpec.InitImage,
+			ImagePullPolicy: "IfNotPresent",
+			Name:            "init-sriov-numvfs",
+			Env: []v1.EnvVar{{
+				Name:  "ENABLED_QAT_PF_PCIIDS",
+				Value: strings.Join(enablingPfPciIDs, " "),
+			}},
+			SecurityContext: &v1.SecurityContext{
+				Privileged:             &yes,
+				ReadOnlyRootFilesystem: &yes,
+			},
+			VolumeMounts: []v1.VolumeMount{
+				{
+					Name:      "sysfs",
+					MountPath: "/sys",
+				},
+			},
+		}}
+	addVolumeIfMissing(dsSpec, "sysfs", "/sys", v1.HostPathDirectoryOrCreate)
+}
+
+func addVolumeIfMissing(spec *v1.PodSpec, name, path string, hpType v1.HostPathType) {
+	for _, vol := range spec.Volumes {
+		if vol.Name == name {
+			return
+		}
+	}
+
+	spec.Volumes = append(spec.Volumes, v1.Volume{
+		Name: name,
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: path,
+				Type: &hpType,
+			},
+		},
+	})
 }
 
 func getPodArgs(qdp *devicepluginv1.QatDevicePlugin) []string {

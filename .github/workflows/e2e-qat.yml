@@ -9,7 +9,7 @@ on:
       - 'release-*'
 
 env:
-  IMAGES: 'intel-qat-plugin crypto-perf'
+  IMAGES: 'intel-qat-plugin intel-qat-initcontainer crypto-perf'
 
 jobs:
   e2e-qat:

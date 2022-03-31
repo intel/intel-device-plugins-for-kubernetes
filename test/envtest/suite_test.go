@@ -224,7 +224,8 @@ func makeDevicePlugin(name, image, initimage string) client.Object {
 	case "qat":
 		obj = &devicepluginv1.QatDevicePlugin{
 			Spec: devicepluginv1.QatDevicePluginSpec{
-				Image: image,
+				Image:     image,
+				InitImage: initimage,
 			},
 		}
 	case "sgx":

@@ -37,6 +37,7 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 		It("should handle QatDevicePlugin objects correctly", func() {
 			spec := devicepluginv1.QatDevicePluginSpec{
 				Image:        "qat-testimage",
+				InitImage:    "qat-testinitimage",
 				NodeSelector: map[string]string{"qat-nodeselector": "true"},
 			}
 
@@ -70,6 +71,8 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			ds := &apps.DaemonSet{}
 			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-qat-plugin"}, ds)
 			Expect(ds.Spec.Template.Spec.Containers[0].Image).To(Equal(spec.Image))
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(spec.InitImage))
 			Expect(ds.Spec.Template.Spec.NodeSelector).To(Equal(spec.NodeSelector))
 
 			By("copy annotations successfully")
@@ -88,6 +91,7 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 
 			By("updating QatDevicePlugin successfully")
 			updatedImage := "updated-qat-testimage"
+			updatedInitImage := "updated-qat-testinitimage"
 			updatedLogLevel := 2
 			updatedDpdkDriver := "igb_uio"
 			updatedKernelVfDrivers := "c3xxxvf"
@@ -95,6 +99,7 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			updatedNodeSelector := map[string]string{"updated-qat-nodeselector": "true"}
 
 			fetched.Spec.Image = updatedImage
+			fetched.Spec.InitImage = updatedInitImage
 			fetched.Spec.LogLevel = updatedLogLevel
 			fetched.Spec.DpdkDriver = updatedDpdkDriver
 			fetched.Spec.KernelVfDrivers = []devicepluginv1.KernelVfDriver{devicepluginv1.KernelVfDriver(updatedKernelVfDrivers)}
@@ -125,10 +130,15 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 
 			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(ConsistOf(expectArgs))
 			Expect(ds.Spec.Template.Spec.Containers[0].Image).Should(Equal(updatedImage))
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(updatedInitImage))
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(Equal(updatedNodeSelector))
 
 			By("updating QatDevicePlugin with different values successfully")
+			updatedInitImage = ""
 			updatedNodeSelector = map[string]string{}
+
+			fetched.Spec.InitImage = updatedInitImage
 			fetched.Spec.NodeSelector = updatedNodeSelector
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
@@ -156,10 +166,11 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 	It("upgrades", func() {
 		dp := &devicepluginv1.QatDevicePlugin{}
 
-		var image string
+		var image, initimage string
 
-		testUpgrade("qat", dp, &image, nil)
+		testUpgrade("qat", dp, &image, &initimage)
 
 		Expect(dp.Spec.Image == image).To(BeTrue())
+		Expect(dp.Spec.InitImage == initimage).To(BeTrue())
 	})
 })
