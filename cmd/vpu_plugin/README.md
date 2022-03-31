@@ -144,10 +144,10 @@ We can test the plugin is working by deploying the provided example OpenVINO ima
 #### Build a Docker image with an classification example
 
 ```bash
-$ cd demo
-$ ./build-image.sh ubuntu-demo-openvino
+$ cd $(go env GOPATH)/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ make ubuntu-demo-openvino
 ...
-Successfully tagged ubuntu-demo-openvino:devel
+Successfully tagged intel/ubuntu-demo-openvino:devel
 ```
 
 #### Create a job running unit tests off the local Docker image

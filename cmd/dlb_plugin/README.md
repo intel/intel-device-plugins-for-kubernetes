@@ -232,14 +232,22 @@ master
 
 We can test the plugin is working by deploying the provided example test images (dlb-libdlb-demo and dlb-dpdk-demo).
 
-1. Create a pod running unit tests off the local Docker image:
+1. Build a Docker image and create a pod running unit tests off the local Docker image:
 
     ```bash
+    $ make dlb-libdlb-demo
+    ...
+    Successfully tagged intel/dlb-libdlb-demo:devel
+
     $ kubectl apply -f ${INTEL_DEVICE_PLUGINS_SRC}/demo/dlb-libdlb-demo-pod.yaml
     pod/dlb-libdlb-demo-pod created
     ```
 
     ```bash
+    $ make dlb-dpdk-demo
+    ...
+    Successfully tagged intel/dlb-dpdk-demo:devel
+
     $ kubectl apply -f ${INTEL_DEVICE_PLUGINS_SRC}/demo/dlb-dpdk-demo-pod.yaml
     pod/dlb-dpdk-demo-pod created
     ```

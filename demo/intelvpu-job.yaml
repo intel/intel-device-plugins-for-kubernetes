@@ -14,7 +14,7 @@ spec:
       containers:
         -
           name: intelvpu-demo-job-1
-          image: ubuntu-demo-openvino:devel
+          image: intel/ubuntu-demo-openvino:devel
           imagePullPolicy: IfNotPresent
           command: [ "/do_classification.sh" ]
           resources:
