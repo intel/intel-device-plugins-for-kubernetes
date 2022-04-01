@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-ARG GOLANG_BASE=golang:1.17-bullseye
+ARG GOLANG_BASE=golang:1.18-bullseye
 
 # FINAL_BASE can be used to configure the base image of the final image.
 #
