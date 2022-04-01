@@ -23,6 +23,7 @@ import (
 	"github.com/onsi/gomega"
 
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/dlb"
+	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/dsa"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/fpga"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/fpgaadmissionwebhook"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/gpu"
