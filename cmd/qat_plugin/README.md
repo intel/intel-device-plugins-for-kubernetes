@@ -263,9 +263,9 @@ To build the DPDK demo image:
 
 ```bash
 $ cd ${INTEL_DEVICE_PLUGINS_SRC}
-$ ./build-image.sh crypto-perf
+$ make crypto-perf
 ...
-Successfully tagged crypto-perf:devel
+Successfully tagged intel/crypto-perf:devel
 ```
 
 ##### Deploy the pod
