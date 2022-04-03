@@ -42,38 +42,47 @@ COPY . .
 
 ARG ROOT=/install_root
 
-# Build NFD Feature Detector Hook
-RUN cd cmd/gpu_nfdhook && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && cd -\
+RUN cd cmd/fpga_crihook && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && \
+    cd ../fpga_tool && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && \
+    cd ../.. && \
     install -D ${DIR}/LICENSE $ROOT/licenses/intel-device-plugins-for-kubernetes/LICENSE && \
-    GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/gpu_nfdhook" --save_path $ROOT/licenses/go-licenses
+    GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/fpga_crihook" --save_path $ROOT/licenses/fpga_crihook && \
+    go-licenses save "./cmd/fpga_tool" --save_path $ROOT/licenses/go-licenses/fpga_tool
 
-ARG NFD_HOOK=intel-gpu-nfdhook
-ARG SRC_DIR=/usr/local/bin/gpu-sw
+ARG SRC_DIR=/usr/local/fpga-sw
+ARG DST_DIR=/opt/intel/fpga-sw
+ARG CRI_HOOK=intel-fpga-crihook
 
-RUN install -D /go/bin/gpu_nfdhook $ROOT/$SRC_DIR/$NFD_HOOK
+RUN install -D /go/bin/fpga_crihook $ROOT/$SRC_DIR/$CRI_HOOK
+RUN install -D /go/bin/fpga_tool $ROOT/$SRC_DIR/
+
+RUN echo "{\n\
+    \"hook\" : \"$DST_DIR/$CRI_HOOK\",\n\
+    \"stage\" : [ \"prestart\" ],\n\
+    \"annotation\": [ \"fpga.intel.com/region\" ]\n\
+}\n">>$ROOT/$SRC_DIR/$CRI_HOOK.json
 
 ARG TOYBOX_VERSION="0.8.6"
 ARG TOYBOX_SHA256="e2c4f72a158581a12f4303d0d1aeec196b01f293e495e535bcdaf75eb9ae0987"
-
 RUN apt update && apt -y install musl musl-tools musl-dev
 RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz -o toybox.tar.gz \
     && echo "$TOYBOX_SHA256 toybox.tar.gz" | sha256sum -c - \
     && tar -xzf toybox.tar.gz \
     && rm toybox.tar.gz \
     && cd toybox-$TOYBOX_VERSION \
-    && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \
+    && KCONFIG_CONFIG=${DIR}/build/plugin-images/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \
     && install -D LICENSE $ROOT/licenses/toybox \
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 
 FROM ${FINAL_BASE}
 
-LABEL name='intel-gpu-initcontainer' 
+LABEL name='intel-fpga-initcontainer' 
 LABEL vendor='Intel®' 
 LABEL version='devel' 
 LABEL release='1' 
-LABEL summary='Intel® GPU NFD hook for Kubernetes' 
-LABEL description='The GPU fractional resources, such as GPU memory is registered as a kubernetes extended resource using node-feature-discovery (NFD). A custom NFD source hook is installed as part of GPU device plugin operator deployment and NFD is configured to register the GPU memory extended resource reported by the hook'
+LABEL summary='Intel® FPGA programming CRI hook for Kubernetes' 
+LABEL description='The FPGA prestart CRI-O hook performs discovery of the requested FPGA function bitstream and programs FPGA devices based on the environment variables in the workload description'
 
 COPY --from=builder /install_root /
 
-ENTRYPOINT [ "/bin/sh", "-c", "cp -a /usr/local/bin/gpu-sw/intel-gpu-nfdhook /etc/kubernetes/node-feature-discovery/source.d/" ]
+ENTRYPOINT [ "/bin/sh", "-c", "cp -a /usr/local/fpga-sw/* /opt/intel/fpga-sw/ && ln -sf /opt/intel/fpga-sw/intel-fpga-crihook.json /etc/containers/oci/hooks.d/" ]

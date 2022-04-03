@@ -165,7 +165,7 @@ ifeq ($(TAG),devel)
 	@$(BUILDER) pull ubuntu:20.04
 endif
 
-images = $(shell basename -s .Dockerfile -a build/docker/*.Dockerfile)
+images = $(shell basename -s .Dockerfile -a build/plugin-images/*.Dockerfile)
 
 skipbaselayercheck = intel-vpu-plugin intel-qat-plugin-kerneldrv intel-idxd-config-initcontainer
 distroless_images = $(patsubst %,$(REG)%\:$(TAG),$(filter-out $(skipbaselayercheck),$(images)))
@@ -173,14 +173,14 @@ test-image-base-layer:
 	@for img in $(distroless_images); do scripts/test-image-base-layer.sh $$img $(BUILDER) || exit 1; done
 
 $(images):
-	@build/docker/build-image.sh $(REG)$@ $(BUILDER) $(EXTRA_BUILD_ARGS)
+	@cd build/plugin-images && ../build-image.sh $(REG)$@ $(BUILDER) $(EXTRA_BUILD_ARGS)
 
 images: $(images)
 
-demos = $(shell basename -a demo/*/)
+demos = $(shell basename -s .Dockerfile -a build/app-images/*.Dockerfile)
 
 $(demos):
-	@cd demo/ && ./build-image.sh $(REG)$@ $(BUILDER)
+	@cd build/app-images && ../build-image.sh $(REG)$@ $(BUILDER)
 
 demos: $(demos)
 

@@ -38,7 +38,7 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && tar -xzf toybox.tar.gz \
     && rm toybox.tar.gz \
     && cd toybox-$TOYBOX_VERSION \
-    && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \
+    && KCONFIG_CONFIG=${DIR}/build/plugin-images/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \
     && install -D LICENSE $ROOT/licenses/toybox \
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 
