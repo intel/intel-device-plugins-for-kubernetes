@@ -17,9 +17,11 @@ package dpdkdrv
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -62,10 +64,53 @@ var qatDeviceDriver = map[string]string{
 	"6f55": "d15xxvf",
 }
 
+// swapBDF returns ["C1:B1:A1", "C2:B2:A2"], when the given parameter is ["A1:B1:C1", "A2:B2:C2"``].
+func swapBDF(devstrings []string) []string {
+	result := make([]string, len(devstrings))
+
+	for n, dev := range devstrings {
+		tmp := strings.Split(dev, ":")
+		result[n] = fmt.Sprintf("%v:%v:%v", tmp[2], tmp[1], tmp[0])
+	}
+
+	return result
+}
+
+type preferredAllocationPolicyFunc func(*pluginapi.ContainerPreferredAllocationRequest) []string
+
+// nonePolicy is used when no policy is specified.
+func nonePolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
+	deviceIds := req.AvailableDeviceIDs
+
+	return deviceIds[:req.AllocationSize]
+}
+
+// balancedPolicy is used for allocating QAT devices in balance.
+func balancedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
+	// make it "FDB" and string sort and change back to "BDF"
+	deviceIds := swapBDF(req.AvailableDeviceIDs)
+	sort.Strings(deviceIds)
+	deviceIds = swapBDF(deviceIds)
+
+	return deviceIds[:req.AllocationSize]
+}
+
+// packedPolicy is used for allocating QAT PF devices one by one.
+func packedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
+	deviceIds := req.AvailableDeviceIDs
+	sort.Strings(deviceIds)
+	deviceIds = deviceIds[:req.AllocationSize]
+
+	return deviceIds
+}
+
 // DevicePlugin represents vfio based QAT plugin.
 type DevicePlugin struct {
 	scanTicker *time.Ticker
 	scanDone   chan bool
+
+	// Note: If restarting the plugin with a new policy, the allocations for existing pods remain with old policy.
+	policy preferredAllocationPolicyFunc
 
 	pciDriverDir    string
 	pciDeviceDir    string
@@ -75,7 +120,7 @@ type DevicePlugin struct {
 }
 
 // NewDevicePlugin returns new instance of vfio based QAT plugin.
-func NewDevicePlugin(maxDevices int, kernelVfDrivers string, dpdkDriver string) (*DevicePlugin, error) {
+func NewDevicePlugin(maxDevices int, kernelVfDrivers string, dpdkDriver string, preferredAllocationPolicy string) (*DevicePlugin, error) {
 	if !isValidDpdkDeviceDriver(dpdkDriver) {
 		return nil, errors.Errorf("wrong DPDK device driver: %s", dpdkDriver)
 	}
@@ -87,10 +132,42 @@ func NewDevicePlugin(maxDevices int, kernelVfDrivers string, dpdkDriver string) 
 		}
 	}
 
-	return newDevicePlugin(pciDriverDirectory, pciDeviceDirectory, maxDevices, kernelDrivers, dpdkDriver), nil
+	allocationPolicyFunc := getAllocationPolicy(preferredAllocationPolicy)
+	if allocationPolicyFunc == nil {
+		return nil, errors.Errorf("wrong allocation policy: %s", preferredAllocationPolicy)
+	}
+
+	return newDevicePlugin(pciDriverDirectory, pciDeviceDirectory, maxDevices, kernelDrivers, dpdkDriver, allocationPolicyFunc), nil
 }
 
-func newDevicePlugin(pciDriverDir, pciDeviceDir string, maxDevices int, kernelVfDrivers []string, dpdkDriver string) *DevicePlugin {
+//getAllocationPolicy returns a func that fits the policy given as a parameter. It returns nonePolicy when the flag is not set, and it returns nil when the policy is not valid value.
+func getAllocationPolicy(preferredAllocationPolicy string) preferredAllocationPolicyFunc {
+	switch {
+	case !isFlagSet("allocation-policy"):
+		return nonePolicy
+	case preferredAllocationPolicy == "packed":
+		return packedPolicy
+	case preferredAllocationPolicy == "balanced":
+		return balancedPolicy
+	default:
+		return nil
+	}
+}
+
+// isFlagSet returns true when the flag that has the same name as the parameter is set.
+func isFlagSet(name string) bool {
+	set := false
+
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			set = true
+		}
+	})
+
+	return set
+}
+
+func newDevicePlugin(pciDriverDir, pciDeviceDir string, maxDevices int, kernelVfDrivers []string, dpdkDriver string, preferredAllocationPolicyFunc preferredAllocationPolicyFunc) *DevicePlugin {
 	return &DevicePlugin{
 		maxDevices:      maxDevices,
 		pciDriverDir:    pciDriverDir,
@@ -99,6 +176,7 @@ func newDevicePlugin(pciDriverDir, pciDeviceDir string, maxDevices int, kernelVf
 		dpdkDriver:      dpdkDriver,
 		scanTicker:      time.NewTicker(scanPeriod),
 		scanDone:        make(chan bool, 1),
+		policy:          preferredAllocationPolicyFunc,
 	}
 }
 
@@ -141,6 +219,31 @@ func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 		case <-dp.scanTicker.C:
 		}
 	}
+}
+
+// Implement the PreferredAllocator interface.
+func (dp *DevicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error) {
+	response := &pluginapi.PreferredAllocationResponse{}
+
+	for _, req := range rqt.ContainerRequests {
+		// Add a security check here. This should never happen unless there occurs error in kubelet device plugin manager.
+		if req.AllocationSize > int32(len(req.AvailableDeviceIDs)) {
+			var err = errors.Errorf("AllocationSize (%d) is greater than the number of available device IDs (%d)", req.AllocationSize, len(req.AvailableDeviceIDs))
+			return nil, err
+		}
+
+		IDs := dp.policy(req)
+		klog.V(3).Infof("AvailableDeviceIDs: %q", req.AvailableDeviceIDs)
+		klog.V(3).Infof("AllocatedDeviceIDs: %q", IDs)
+
+		resp := &pluginapi.ContainerPreferredAllocationResponse{
+			DeviceIDs: IDs,
+		}
+
+		response.ContainerResponses = append(response.ContainerResponses, resp)
+	}
+
+	return response, nil
 }
 
 func (dp *DevicePlugin) getDpdkDevice(vfBdf string) (string, error) {

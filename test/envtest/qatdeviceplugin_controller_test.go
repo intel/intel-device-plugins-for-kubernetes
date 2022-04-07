@@ -96,6 +96,7 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			updatedDpdkDriver := "igb_uio"
 			updatedKernelVfDrivers := "c3xxxvf"
 			updatedMaxNumDevices := 16
+			updatedPreferredAllocationPolicy := "balanced"
 			updatedNodeSelector := map[string]string{"updated-qat-nodeselector": "true"}
 
 			fetched.Spec.Image = updatedImage
@@ -104,6 +105,7 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			fetched.Spec.DpdkDriver = updatedDpdkDriver
 			fetched.Spec.KernelVfDrivers = []devicepluginv1.KernelVfDriver{devicepluginv1.KernelVfDriver(updatedKernelVfDrivers)}
 			fetched.Spec.MaxNumDevices = updatedMaxNumDevices
+			fetched.Spec.PreferredAllocationPolicy = updatedPreferredAllocationPolicy
 			fetched.Spec.NodeSelector = updatedNodeSelector
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
@@ -126,6 +128,8 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 				updatedKernelVfDrivers,
 				"-max-num-devices",
 				strconv.Itoa(updatedMaxNumDevices),
+				"-allocation-policy",
+				updatedPreferredAllocationPolicy,
 			}
 
 			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(ConsistOf(expectArgs))
