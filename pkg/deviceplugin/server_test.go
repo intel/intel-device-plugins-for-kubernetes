@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
 	"k8s.io/klog/v2"
@@ -179,8 +180,8 @@ func TestSetupAndServe(t *testing.T) {
 
 	ctx := context.Background()
 
-	//nolint: staticcheck
-	conn, err := grpc.DialContext(ctx, pluginSocket, grpc.WithInsecure(),
+	conn, err := grpc.DialContext(ctx, pluginSocket,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
 		}))
@@ -230,8 +231,8 @@ func TestSetupAndServe(t *testing.T) {
 		time.Sleep(1 * time.Second)
 	}
 
-	//nolint: staticcheck
-	conn, err = grpc.DialContext(ctx, pluginSocket, grpc.WithInsecure(),
+	conn, err = grpc.DialContext(ctx, pluginSocket,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
 		}))

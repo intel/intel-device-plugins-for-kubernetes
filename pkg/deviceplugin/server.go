@@ -26,6 +26,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
@@ -328,8 +329,8 @@ func watchFile(file string) error {
 func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string) error {
 	ctx := context.Background()
 
-	//nolint: staticcheck
-	conn, err := grpc.DialContext(ctx, kubeletSocket, grpc.WithInsecure(),
+	conn, err := grpc.DialContext(ctx, kubeletSocket,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
 		}))
