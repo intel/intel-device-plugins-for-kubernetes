@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -85,8 +86,7 @@ func (w *mockPodResources) GetAllocatableResources(ctx context.Context,
 }
 
 func newMockResourceManager(pods []v1.Pod) ResourceManager {
-	//nolint: staticcheck
-	client, err := grpc.Dial("", grpc.WithInsecure())
+	client, err := grpc.Dial("", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		os.Exit(1)
 	}
