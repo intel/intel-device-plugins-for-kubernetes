@@ -82,6 +82,11 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 									ReadOnly:  true,
 								},
 								{
+									Name:      "debugfsdir",
+									MountPath: "/sys/kernel/debug",
+									ReadOnly:  true,
+								},
+								{
 									Name:      "pcidir",
 									MountPath: "/sys/bus/pci",
 								},
@@ -99,6 +104,14 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
 									Path: "/dev/vfio",
+								},
+							},
+						},
+						{
+							Name: "debugfsdir",
+							VolumeSource: v1.VolumeSource{
+								HostPath: &v1.HostPathVolumeSource{
+									Path: "/sys/kernel/debug",
 								},
 							},
 						},

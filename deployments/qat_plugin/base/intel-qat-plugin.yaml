@@ -24,6 +24,9 @@ spec:
         - name: devdir
           mountPath: /dev/vfio
           readOnly: true
+        - name: debugfsdir
+          mountPath: /sys/kernel/debug
+          readOnly: true
         - name: pcidir
           mountPath: /sys/bus/pci
         - name: kubeletsockets
@@ -32,6 +35,9 @@ spec:
       - name: devdir
         hostPath:
           path: /dev/vfio
+      - name: debugfsdir
+        hostPath:
+          path: /sys/kernel/debug
       - name: pcidir
         hostPath:
           path: /sys/bus/pci

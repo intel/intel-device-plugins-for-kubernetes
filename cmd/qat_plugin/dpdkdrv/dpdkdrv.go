@@ -1,4 +1,4 @@
-// Copyright 2017-2021 Intel Corporation. All Rights Reserved.
+// Copyright 2017-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-ini/ini"
 	"github.com/pkg/errors"
 
 	"k8s.io/klog/v2"
@@ -51,6 +52,9 @@ const (
 
 	// Period of device scans.
 	scanPeriod = 5 * time.Second
+
+	// Resource name to use when device capabilities are not available.
+	defaultCapabilities = "generic"
 )
 
 // QAT PCI VF Device ID -> kernel QAT VF device driver mappings.
@@ -352,6 +356,57 @@ func (dp *DevicePlugin) getDpdkMounts(dpdkDeviceName string) []pluginapi.Mount {
 	}
 }
 
+func getDeviceCapabilities(device string) (string, error) {
+	devID, err := getDeviceID(device)
+	if err != nil {
+		return "", errors.Wrapf(err, "cannot determine device capabilities")
+	}
+
+	devicesWithCapabilities := map[string]struct{}{
+		"4941": {}, // Check QAT Gen4 (4xxx) VF PCI ID only
+	}
+
+	if _, ok := devicesWithCapabilities[devID]; !ok {
+		return defaultCapabilities, nil
+	}
+
+	pfDev, err := filepath.EvalSymlinks(filepath.Join(device, "physfn"))
+	if err != nil {
+		klog.Warningf("failed to get PF device ID for %s: %q", filepath.Base(device), err)
+		return defaultCapabilities, nil
+	}
+
+	// TODO: check the sysfs state entry first when it lands.
+
+	lOpts := ini.LoadOptions{
+		IgnoreInlineComment: true,
+	}
+
+	devCfgPath := filepath.Join(filepath.Dir(filepath.Join(pfDev, "../../")), "kernel/debug",
+		fmt.Sprintf("qat_4xxx_%s/dev_cfg", filepath.Base(pfDev)))
+
+	devCfg, err := ini.LoadSources(lOpts, devCfgPath)
+	if err != nil {
+		klog.Warningf("failed to read dev_cfg for %s: %q", filepath.Base(pfDev), err)
+		return defaultCapabilities, nil
+	}
+
+	switch devCfg.Section("GENERAL").Key("ServicesEnabled").String() {
+	case "sym;asym":
+		return "cy", nil
+	case "asym;sym":
+		return "cy", nil
+	case "dc":
+		return "dc", nil
+	case "sym":
+		return "sym", nil
+	case "asym":
+		return "asym", nil
+	default:
+		return defaultCapabilities, nil
+	}
+}
+
 func getDeviceID(device string) (string, error) {
 	devID, err := os.ReadFile(filepath.Join(device, "device"))
 	if err != nil {
@@ -526,7 +581,12 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 			return nil, err
 		}
 
-		klog.V(1).Infof("Device %s found", vfBdf)
+		cap, err := getDeviceCapabilities(vfDevice)
+		if err != nil {
+			return nil, err
+		}
+
+		klog.V(1).Infof("Device %s with %s capabilities found", vfBdf, cap)
 
 		n = n + 1
 		envs := map[string]string{
@@ -535,7 +595,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		devinfo := dpapi.NewDeviceInfo(pluginapi.Healthy, dp.getDpdkDeviceSpecs(dpdkDeviceName), dp.getDpdkMounts(dpdkDeviceName), envs, nil)
 
-		devTree.AddDevice("generic", vfBdf, devinfo)
+		devTree.AddDevice(cap, vfBdf, devinfo)
 	}
 
 	return devTree, nil

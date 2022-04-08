@@ -1,4 +1,4 @@
-// Copyright 2018 Intel Corporation. All Rights Reserved.
+// Copyright 2018-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -428,6 +428,69 @@ func TestScan(t *testing.T) {
 			maxDevNum:      1,
 			expectedDevNum: 1,
 		},
+		{
+			name:            "vfio-pci DPDKdriver with no kernel bound driver and where vfdevID is equal to qatDevId (4941), PF with dc capabilities",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: []string{"4xxxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/4xxx",
+				"sys/bus/pci/drivers/vfio-pci",
+				"sys/devices/pci0000:02/0000:02:00.0",
+				"sys/kernel/debug/qat_4xxx_0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:01.0",
+			},
+			files: map[string][]byte{
+				"sys/devices/pci0000:02/0000:02:00.0/device":     []byte("0x4940"),
+				"sys/kernel/debug/qat_4xxx_0000:02:00.0/dev_cfg": []byte("[GENERAL]\nServicesEnabled = dc"),
+				"sys/bus/pci/devices/0000:02:01.0/device":        []byte("0x4941"),
+			},
+			symlinks: map[string]string{
+				"sys/bus/pci/devices/0000:02:01.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:02:01.0/physfn":      "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/bus/pci/drivers/4xxx/0000:02:00.0":        "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0":             "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/devices/pci0000:02/0000:02:00.0/virtfn0":  "sys/bus/pci/devices/0000:02:01.0",
+			},
+			maxDevNum:      1,
+			expectedDevNum: 1,
+		},
+		{
+			name:            "vfio-pci DPDKdriver with no kernel bound driver and where vfdevID is equal to qatDevId (4941), two PFs with dc and cy capabilities",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: []string{"4xxxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/4xxx",
+				"sys/bus/pci/drivers/vfio-pci",
+				"sys/devices/pci0000:02/0000:02:00.0",
+				"sys/devices/pci0000:03/0000:03:00.0",
+				"sys/kernel/debug/qat_4xxx_0000:02:00.0",
+				"sys/kernel/debug/qat_4xxx_0000:03:00.0",
+				"sys/bus/pci/devices/0000:02:01.0",
+				"sys/bus/pci/devices/0000:03:01.0",
+			},
+			files: map[string][]byte{
+				"sys/devices/pci0000:02/0000:02:00.0/device":     []byte("0x4940"),
+				"sys/devices/pci0000:03/0000:03:00.0/device":     []byte("0x4940"),
+				"sys/kernel/debug/qat_4xxx_0000:02:00.0/dev_cfg": []byte("[GENERAL]\nServicesEnabled = dc"),
+				"sys/kernel/debug/qat_4xxx_0000:03:00.0/dev_cfg": []byte("[GENERAL]\nServicesEnabled = sym;asym"),
+				"sys/bus/pci/devices/0000:02:01.0/device":        []byte("0x4941"),
+				"sys/bus/pci/devices/0000:03:01.0/device":        []byte("0x4941"),
+			},
+			symlinks: map[string]string{
+				"sys/bus/pci/devices/0000:02:01.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:03:01.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile2",
+				"sys/bus/pci/devices/0000:02:01.0/physfn":      "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/bus/pci/devices/0000:03:01.0/physfn":      "sys/devices/pci0000:03/0000:03:00.0",
+				"sys/bus/pci/drivers/4xxx/0000:02:00.0":        "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/bus/pci/drivers/4xxx/0000:03:00.0":        "sys/devices/pci0000:03/0000:03:00.0",
+				"sys/bus/pci/devices/0000:02:00.0":             "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/bus/pci/devices/0000:03:00.0":             "sys/devices/pci0000:03/0000:03:00.0",
+				"sys/devices/pci0000:02/0000:02:00.0/virtfn0":  "sys/bus/pci/devices/0000:02:01.0",
+				"sys/devices/pci0000:03/0000:03:00.0/virtfn0":  "sys/bus/pci/devices/0000:03:01.0",
+			},
+			maxDevNum:      2,
+			expectedDevNum: 2,
+		},
 	}
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
@@ -461,8 +524,12 @@ func TestScan(t *testing.T) {
 			if !tt.expectedErr && err != nil {
 				t.Errorf("got unexpected error: %+v", err)
 			}
-			if len(fN.tree["generic"]) != tt.expectedDevNum {
-				t.Errorf("expected %d, but got %d devices", tt.expectedDevNum, len(fN.tree["generic"]))
+			devNum := 0
+			for _, resource := range fN.tree {
+				devNum = devNum + len(resource)
+			}
+			if devNum != tt.expectedDevNum {
+				t.Errorf("expected %d, but got %d devices", tt.expectedDevNum, devNum)
 			}
 
 			if err = os.RemoveAll(tmpdir); err != nil {
