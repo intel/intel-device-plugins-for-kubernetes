@@ -13,6 +13,7 @@ cmd/fpga_plugin/fpga_plugin
 cmd/fpga_tool/fpga_tool
 cmd/gpu_nfdhook/gpu_nfdhook
 cmd/gpu_plugin/gpu_plugin
+cmd/iaa_plugin/iaa_plugin
 cmd/qat_plugin/qat_plugin
 cmd/sgx_admissionwebhook/sgx_admissionwebhook
 cmd/sgx_plugin/sgx_plugin
