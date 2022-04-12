@@ -232,3 +232,9 @@ _work/venv/.stamp: docs/requirements.txt
 	python3 -m venv ${@D}
 	. ${@D}/bin/activate && pip install wheel && pip install -r $<
 	touch $@
+
+helm:
+	$(CONTROLLER_GEN) crd:crdVersions=v1 \
+		paths="./pkg/apis/..." \
+		output:crd:artifacts:config=charts/operator/crds
+	helm package charts/operator

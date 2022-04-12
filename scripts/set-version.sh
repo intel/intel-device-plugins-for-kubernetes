@@ -15,6 +15,6 @@ if [ $# != 1 ] || [ "$1" = "?" ] || [ "$1" = "--help" ]; then
     exit 1
 fi
 
-for file in $(git grep -l '^TAG?*=\|intel/crypto-perf:\|intel/opae-nlb-demo:\|intel/intel-[^ ]*:\|version=' Makefile deployments demo/*fpga*.yaml pkg/controllers/*/*_test.go build/docker/*.Dockerfile); do
-    sed -i -e "s;\(^TAG?*=\|intel/crypto-perf:\|intel/opae-nlb-demo:\|intel/intel-[^ ]*:\|version=\)[^ \"]*;\1$1;g" "$file";
+for file in $(git grep -l '^TAG?*=\|intel/crypto-perf:\|intel/opae-nlb-demo:\|intel/intel-[^ ]*:\|version=\|appVersion:\|tag:' Makefile deployments demo/*fpga*.yaml pkg/controllers/*/*_test.go build/docker/*.Dockerfile charts); do
+    sed -i -e "s;\(^TAG?*=\|intel/crypto-perf:\|intel/opae-nlb-demo:\|intel/intel-[^ ]*:\|version=\|appVersion: [^ ]\|tag: [^ ]\)[^ \"]*;\1$1;g" "$file";
 done

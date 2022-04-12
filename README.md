@@ -32,6 +32,7 @@ Table of Contents
 * [License](#license)
 * [Security](#security)
 * [Related code](#related-code)
+* [Helm charts](#helm-charts)
 
 ## Prerequisites
 
@@ -336,3 +337,7 @@ how Intel works to resolve security issues, see [Vulnerability Handling Guidelin
 ## Related code
 
 A related Intel SRIOV network device plugin can be found in [this repository](https://github.com/intel/sriov-network-device-plugin)
+
+### Helm charts
+
+The [helm charts](charts/README.md) is one way of distributing Kubernetes resources of the device plugins framework.
