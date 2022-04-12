@@ -363,8 +363,9 @@ func waitForServer(socket string, timeout time.Duration) error {
 
 	defer cancel()
 
-	//nolint: staticcheck
-	conn, err := grpc.DialContext(ctx, socket, grpc.WithInsecure(), grpc.WithBlock(),
+	conn, err := grpc.DialContext(ctx, socket,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
 		}),
