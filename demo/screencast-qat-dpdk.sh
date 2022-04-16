@@ -26,7 +26,7 @@
 {
   clear
   out 'Record this screencast'
-  command 'asciinema rec -t "Intel QAT Device Plugin for Kubernetes - Test Demo"  Intel-QAT-Device-Plugin-for-Kubernetes-Test-Demo.cast -c "sh ./qat-dp-demo.sh play"'
+  command "asciinema rec -t 'Intel QAT Device Plugin for Kubernetes - Test Demo'  Intel-QAT-Device-Plugin-for-Kubernetes-Test-Demo.cast -c 'sh $0 play'"
 }
  screen1()
 {
@@ -108,5 +108,5 @@ elif [ "$1" == 'cleanup' ] ; then
 elif [ "$1" == 'record' ] ; then
   record
 else
-   echo 'Usage: screencast.sh [--help|help|-h] | [play [<screen number>]] | [cleanup] | [record]'
+   echo "Usage: $0 [--help|help|-h] | [play [<screen number>]] | [cleanup] | [record]"
 fi

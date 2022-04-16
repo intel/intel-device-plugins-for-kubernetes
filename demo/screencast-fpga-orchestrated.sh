@@ -48,7 +48,7 @@ record()
 {
   clear
   out 'Record this screencast'
-  command "asciinema rec -t 'Intel FPGA Device Plugin for Kubernetes in orchestrated mode with $DRIVER kernel driver.'  Intel-FPGA-Device-Plugin-for-Kubernetes-orchestrated-$DRIVER-Demo.cast -c 'sh ./screencast-fpga-orchestrated.sh play'" 300
+  command "asciinema rec -t 'Intel FPGA Device Plugin for Kubernetes in orchestrated mode with $DRIVER kernel driver.'  Intel-FPGA-Device-Plugin-for-Kubernetes-orchestrated-$DRIVER-Demo.cast -c 'sh $0 play'" 300
 }
 
 screen1()
@@ -147,5 +147,5 @@ elif [ "$1" == 'cleanup' ] ; then
 elif [ "$1" == 'record' ] ; then
   record
 else
-   echo 'Usage: screencast-fpga-orchestrated.sh [--help|help|-h] | [play [<screen number>]] | [cleanup] | [record]'
+   echo "Usage: $0 [--help|help|-h] | [play [<screen number>]] | [cleanup] | [record]"
 fi
