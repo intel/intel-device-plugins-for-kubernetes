@@ -12,7 +12,7 @@ pipeline {
     CRIO_VERSION="v1.21.4"
     K8S_VERSION="1.22.1"
     GOLANGCI_LINT_VERSION="v1.45.0"
-    GO_VERSION="1.18"
+    GO_VERSION="1.18.1"
     GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
     GOROOT="/usr/local/go"
     GOPATH="/tmp/go"
