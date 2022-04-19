@@ -1,10 +1,7 @@
-# Fedora is a recommended distro for OPAE
-# https://opae.github.io/latest
-ARG FEDORA_RELEASE="34"
-FROM fedora:${FEDORA_RELEASE} as builder
+FROM debian:unstable-slim AS builder
 
 # Install build dependencies
-RUN dnf install -y git-core curl cmake gcc gcc-c++ make kernel-headers libedit-devel libuuid-devel json-c-devel python-devel
+RUN apt-get update && apt-get install -y curl python3-dev git gcc g++ make cmake uuid-dev libjson-c-dev libedit-dev libudev-dev
 
 # Download and unpack OPAE tarball
 ARG OPAE_RELEASE=2.1.0-1
@@ -25,15 +22,15 @@ RUN cd /usr/src/opae/opae-sdk-${OPAE_RELEASE} && \
     cmake .. && \
     make -j nlb0 nlb3
 
-# Copy required nlb* utils and their dependencies to the final image
 
 FROM debian:unstable-slim
 
+RUN apt-get update && apt-get install -y libjson-c5
+
+# Copy required nlb* utils and their dependencies to the final image
 COPY --from=builder /usr/src/opae/opae-sdk-*/build/bin/nlb* /usr/local/bin/
 COPY --from=builder /usr/src/opae/opae-sdk-*/build/lib /usr/local/lib/
 COPY --from=builder /usr/src/opae/opae-sdk-*/COPYING /usr/local/share/package-licenses/opae.COPYING
-COPY --from=builder /usr/lib64/libjson-c.so.5.0.0 /usr/local/lib/
-COPY --from=builder /usr/share/licenses/json-c /usr/local/share/package-licenses/json-c
 RUN rm -rf /usr/local/lib/python3
 RUN ldconfig
 
