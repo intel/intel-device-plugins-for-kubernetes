@@ -39,7 +39,7 @@ record()
 {
   clear
   out 'Record this screencast'
-  command "asciinema rec -t 'Intel DSA Device Plugin for Kubernetes.'  Intel-DSA-Device-Plugin-for-Kubernetes-Demo.cast -c 'sh ./screencast-dsa-accel-config.sh play'" 300
+  command "asciinema rec -t 'Intel DSA Device Plugin for Kubernetes.'  Intel-DSA-Device-Plugin-for-Kubernetes-Demo.cast -c 'sh $0 play'" 300
 }
 
 screen1()
@@ -104,5 +104,5 @@ elif [ "$1" == 'cleanup' ] ; then
 elif [ "$1" == 'record' ] ; then
   record
 else
-   echo 'Usage: screencast-dsa-accel-config.sh [--help|help|-h] | [play [<screen number>]] | [cleanup] | [record]'
+   echo "Usage: $0 [--help|help|-h] | [play [<screen number>]] | [cleanup] | [record]"
 fi

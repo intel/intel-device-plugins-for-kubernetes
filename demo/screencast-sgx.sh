@@ -40,7 +40,7 @@ record()
 {
   clear
   out 'Record this screencast'
-  command 'asciinema rec -t "Intel SGX Device Plugin for Kubernetes - Intel(R) SGX DCAP ECDSA Quote Generation Demo"  Intel-SGX-Device-Plugin-for-Kubernetes-SGX-DCAP-ECDSA-Quote-Generation-Demo.cast -c "./screencast-sgx.sh play"'
+  command "asciinema rec -t 'Intel SGX Device Plugin for Kubernetes - Intel(R) SGX DCAP ECDSA Quote Generation Demo'  Intel-SGX-Device-Plugin-for-Kubernetes-SGX-DCAP-ECDSA-Quote-Generation-Demo.cast -c '$0 play'"
 }
 
 screen1()
@@ -147,5 +147,5 @@ elif [ "$1" == 'cleanup' ] ; then
 elif [ "$1" == 'record' ] ; then
   record
 else
-   echo 'Usage: screencast-sgx.sh [--help|help|-h] | [play [<screen number>]] | [cleanup] | [record]'
+   echo "Usage: $0 [--help|help|-h] | [play [<screen number>]] | [cleanup] | [record]"
 fi
