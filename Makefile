@@ -177,7 +177,7 @@ $(images):
 
 images: $(images)
 
-demos = $(shell basename -a demo/*/)
+demos = $(filter-out archives,$(shell basename -a demo/*/))
 
 $(demos):
 	@cd demo/ && ./build-image.sh $(REG)$@ $(BUILDER)

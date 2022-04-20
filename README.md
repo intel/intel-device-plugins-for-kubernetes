@@ -217,7 +217,7 @@ The summary of resources available via plugins in this repository is given in a 
 | `dlb.intel.com`  |  `pf` or `vf`                | [dlb-libdlb-demo-pod.yaml](demo/dlb-libdlb-demo-pod.yaml) |
 | `dsa.intel.com`  | `wq-user-[shared or dedicated]` | [dsa-accel-config-demo-pod.yaml](demo/dsa-accel-config-demo-pod.yaml) |
 | `fpga.intel.com` | custom, see [mappings](cmd/fpga_admissionwebhook/README.md#mappings)| [intelfpga-job.yaml](demo/intelfpga-job.yaml) |
-| `gpu.intel.com`  | `i915`                       | [intelgpu-job.yaml](demo/intelgpu-job.yaml) |
+| `gpu.intel.com`  | `i915`                       | [intelgpu-job.yaml](demo/archives/gpu/intelgpu-job.yaml) |
 | `iaa.intel.com`  | `wq-user-[shared or dedicated]` | [iaa-qpl-demo-pod.yaml](demo/iaa-qpl-demo-pod.yaml) |
 | `qat.intel.com`  | `generic` or `cy`/`dc`/`sym`/`asym` | [crypto-perf-dpdk-pod-requesting-qat.yaml](deployments/qat_dpdk_app/base/crypto-perf-dpdk-pod-requesting-qat.yaml) |
 | `sgx.intel.com`  | `epc`                        | [intelsgx-job.yaml](deployments/sgx_enclave_apps/base/intelsgx-job.yaml) |

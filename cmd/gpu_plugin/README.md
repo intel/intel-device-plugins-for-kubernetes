@@ -225,7 +225,7 @@ available in the cluster.
 1. Create a job:
 
     ```bash
-    $ kubectl apply -f ${INTEL_DEVICE_PLUGINS_SRC}/demo/intelgpu-job.yaml
+    $ kubectl apply -f ${INTEL_DEVICE_PLUGINS_SRC}/demo/archives/gpu/intelgpu-job.yaml
     job.batch/intelgpu-demo-job created
     ```
 
