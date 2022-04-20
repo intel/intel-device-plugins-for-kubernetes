@@ -33,6 +33,13 @@ spec:
       kind: DlbDevicePlugin
       name: dlbdeviceplugins.deviceplugin.intel.com
       version: v1
+    - description: IaaDevicePlugin is the Schema for the iaadeviceplugins API. It
+        represents the IAA device plugin responsible for advertising Intel IAA hardware
+        resources to the kubelet.
+      displayName: Intel IAA Device Plugin
+      kind: IaaDevicePlugin
+      name: iaadeviceplugins.deviceplugin.intel.com
+      version: v1
     - description: AcceleratorFunction is a specification for an Accelerator Function
         resource provided by a FPGA-based programmable hardware accelerator.
       displayName: Accelerator Function
@@ -72,11 +79,6 @@ spec:
       displayName: Intel Software Guard Extensions Device Plugin
       kind: SgxDevicePlugin
       name: sgxdeviceplugins.deviceplugin.intel.com
-      version: v1
-      description: IaaDevicePlugin is the Schema for the iaadeviceplugins API. It represents the IAA device plugin responsible for advertising Intel IAA hardware resources to the kubelet.
-      displayName: Intel IAA Device Plugin
-      kind: IaaDevicePlugin
-      name: iaadeviceplugins.deviceplugin.intel.com
       version: v1
   description: |
     [Intel Device Plugins for Kubernetes](https://github.com/intel/intel-device-plugins-for-kubernetes) is a collection of
