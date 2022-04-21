@@ -1,21 +1,24 @@
 
- 1830  kind -v 4 create cluster --config kind0.yaml
- 1831  kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
- 1832  gstat
- 1833  em Makefile 
- 1834  go version
- 1835  gidp
- 1836  make t8
- 1837  cd test/e2e/
- 1838  ./e2e.test -v -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
- 1839  gidp
- 1840  cd test/e2e/
- 1841  em
- 1842  ./e2e.test -v -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
- 1843  ./e2e.test -v -args -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
- 1844  ./e2e.test -args -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
- 1845  ./e2e.test -ginkgo.focus "DSA*"
- 1846  ./e2e.test -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
+kind -v 4 create cluster --config kind0.yaml
+kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
+
+cd test/e2e/
+
+
+gstat
+em Makefile 
+go version
+gidp
+make t8
+cd test/e2e/
+./e2e.test -v -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
+gidp
+em
+./e2e.test -v -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
+./e2e.test -v -args -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
+./e2e.test -args -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
+./e2e.test -ginkgo.focus "DSA*"
+./e2e.test -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
 
 
 kubectl get nodes -o go-template='{{range .items}}{{.metadata.name}}{{"\n"}}{{range $k,$v:=.status.allocatable}}{{"  "}}{{$k}}{{": "}}{{$v}}{{"\n"}}{{end}}{{end}}' | grep '^\([^ ]\)\|\(  dsa\)'
