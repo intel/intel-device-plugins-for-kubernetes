@@ -1,4 +1,6 @@
 
+git reset --hard bart0sh/ozhuraki-e2e-dsa-kind
+
 kind -v 4 create cluster --config kind0.yaml
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
 
