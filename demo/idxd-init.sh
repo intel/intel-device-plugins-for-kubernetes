@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -uo pipefail
 
 DEV="${IDXD_DEVICE_TYPE:-dsa}"
 NODE_NAME="${NODE_NAME:-}"
@@ -46,3 +46,6 @@ for (( i = 0; i < ndev; i++ )); do
     done
 
 done
+
+exit 0
+
