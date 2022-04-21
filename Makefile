@@ -32,7 +32,7 @@ BUNDLE_DIR = community-operators/operators/intel-device-plugins-operator/${OPERA
 TESTDATA_DIR = pkg/topology/testdata
 
 pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e | grep -v envtest)
-cmds = $(shell ls --ignore=internal cmd)
+cmds = $(shell ls --ignore=internal cmd | egrep -v vpu_plugin)
 
 all: build
 
@@ -43,9 +43,9 @@ vendor:
 	@$(GO) mod vendor -v
 
 install-tools:
-	GO111MODULE=on $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
-	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
-	$(GO) install sigs.k8s.io/kind@${KIND_VERSION}
+        GO111MODULE=on $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
+        #$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+        #$(GO) install sigs.k8s.io/kind@${KIND_VERSION}
 
 go-mod-tidy:
 	$(GO) mod download all
@@ -85,6 +85,26 @@ test-with-kind: fixture intel-sgx-admissionwebhook intel-fpga-admissionwebhook i
 envtest:
 	@$(GO) test ./test/envtest
 
+t3:
+	CGO_ENABLED=0 $(GO) test -c -gcflags=all="-N -l" ./test/envtest -o test/envtest/envtest.test
+	if [ "$$?" -eq "0" ]; then golangci-lint run --timeout 1h; fi
+
+t4:
+	CGO_ENABLED=0 $(GO) test -c -gcflags=all="-N -l" ./pkg/controllers/dsa -o pkg/controllers/dsa/dsa.test
+
+t5:
+	CGO_ENABLED=0 $(GO) test -c -gcflags=all="-N -l" ./pkg/controllers -o pkg/controllers/controller.test
+
+t7:
+	go test -c ./test/envtest -o test/envtest/envtest.test
+
+t8:
+	CGO_ENABLED=0 $(GO) test -c -gcflags=all="-N -l" ./test/e2e -o test/e2e/e2e.test
+#	if [ "$$?" -eq "0" ]; then golangci-lint run --timeout 1h; fi
+
+t9:
+	go test -c ./test/e2e -o test/e2e/e2e.test
+
 lint:
 	@golangci-lint run --timeout 15m
 
@@ -110,7 +130,7 @@ generate:
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./pkg/fpgacontroller/..." output:dir=deployments/fpga_admissionwebhook/rbac
 
 $(cmds):
-	cd cmd/$@; $(GO) build -tags $(BUILDTAGS)
+	CGO_ENABLED=0 $(GO) build -gcflags=all="-N -l" -tags $(BUILDTAGS) -o cmd/$@ ./cmd/$@
 
 build: $(cmds)
 

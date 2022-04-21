@@ -23,10 +23,22 @@ cmd/operator/operator
 
 deployments/fpga_admissionwebhook/base/intel-fpga-webhook-certs-secret
 
+.ackrc
+.dlvinit*
+aaa
+envsetup.sh
+repl.sh
+repl2.sh
+
+.go/
+.venv/
+k8s-webhook-server/
+
 *.h
 *.gbs.*
 *.aocx
 *.aocx.*
+*.tgz
 
 _build
 _work

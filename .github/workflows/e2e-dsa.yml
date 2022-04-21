@@ -9,7 +9,7 @@ on:
       - 'release-*'
 
 env:
-  IMAGES: 'intel-dsa-plugin'
+  IMAGES: 'intel-dsa-plugin intel-idxd-config-initcontainer'
 
 jobs:
   e2e-dsa:

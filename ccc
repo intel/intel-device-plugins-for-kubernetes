@@ -1,0 +1,44 @@
+
+ 1830  kind -v 4 create cluster --config kind0.yaml
+ 1831  kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
+ 1832  gstat
+ 1833  em Makefile 
+ 1834  go version
+ 1835  gidp
+ 1836  make t8
+ 1837  cd test/e2e/
+ 1838  ./e2e.test -v -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
+ 1839  gidp
+ 1840  cd test/e2e/
+ 1841  em
+ 1842  ./e2e.test -v -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
+ 1843  ./e2e.test -v -args -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
+ 1844  ./e2e.test -args -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
+ 1845  ./e2e.test -ginkgo.focus "DSA*"
+ 1846  ./e2e.test -kubeconfig ~/.kube/config -ginkgo.focus "DSA*"
+
+
+kubectl get nodes -o go-template='{{range .items}}{{.metadata.name}}{{"\n"}}{{range $k,$v:=.status.allocatable}}{{"  "}}{{$k}}{{": "}}{{$v}}{{"\n"}}{{end}}{{end}}' | grep '^\([^ ]\)\|\(  dsa\)'
+
+kubectl apply -k deployments/dsa_plugin/
+
+docker run --rm -it --privileged --entrypoint=/bin/bash intel/intel-idxd-config-initcontainer:devel
+
+  273  kind -v 4 --config kind0.yaml create cluster
+  274  kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
+  275  hgr prive
+  276  docker run --rm -it --privileged --entrypoint=/bin/bash intel/intel-idxd-config-initcontainer:devel
+  277  hgr kube
+  278  cd idp.git/
+  279  kubectl apply -k deployments/dsa_plugin/
+  280  k log -f intel-dsa-plugin-dnvmj
+  281  k logs -f intel-dsa-plugin-dnvmj
+  282  ls -al /dev/dsa/
+  283  ls -al /dev/dsa/wq0.0
+  284  kind delete cluster
+  285  hgr kind
+  286  cd ..
+  287  kind -v 4 --config kind.yaml create cluster
+ 1820  ./e2e.test --help 2>&1 | egrep -i dry
+ 1821  ./e2e.test -kubeconfig ~/.kube/config -ginkgo.dryRun
+ 1822  ./e2e.test -kubeconfig ~/.kube/config
