@@ -26,7 +26,7 @@ Intel GPU plugin facilitates Kubernetes workload offloading by providing access 
 Intel discrete (Xe) and integrated GPU HW device files.
 
 Use cases include, but are not limited to:
-- Media transcode
+- [Media transcode](../../demo/archives/gpu/appnotes/video-transcoding/)
 - Media analytics
 - Cloud gaming
 - High performance computing

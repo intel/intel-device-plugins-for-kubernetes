@@ -1,0 +1,85 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-conf
+  namespace: demo
+data:
+  nginx.conf: |
+    worker_processes auto;
+    daemon off;
+    error_log /var/www/log/error.log info;
+
+    pid /var/run/nginx.pid;
+
+    events {
+        worker_connections  1024;
+    }
+
+    rtmp {
+        server {
+            listen 1935;
+            chunk_size 4000;
+
+            application live {
+                live on;
+                interleave on;
+ 
+                hls on;
+                hls_path /var/www/hls;
+                hls_nested on;
+                hls_fragment 3;
+                hls_playlist_length 60;
+                hls_variant _hi BANDWIDTH=6000k;
+                hls_variant _lo BANDWIDTH=3000k;
+
+                dash on;
+                dash_path /var/www/dash;
+                dash_fragment 3;
+                dash_playlist_length 60;
+                dash_nested on;
+            }
+        }
+    }
+
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+        sendfile on;
+        tcp_nopush on;
+        keepalive_timeout 65;
+        gzip on;
+
+        server {
+            listen 80;
+
+            location / {
+                root /var/www/html;
+                index index.html index.htm;
+                add_header 'Access-Control-Allow-Origin' '*' always;
+                add_header 'Access-Control-Expose-Headers' 'Content-Length';
+            }
+
+
+            location /hls {
+                alias /var/www/hls;
+                add_header Cache-Control no-cache;
+                add_header 'Access-Control-Allow-Origin' '*' always;
+                add_header 'Access-Control-Expose-Headers' 'Content-Length';
+                types {
+                    application/vnd.apple.mpegurl m3u8;
+                    video/mp2t ts;
+                }
+            }
+
+            location /dash {
+                alias /var/www/dash;
+                add_header Cache-Control no-cache;
+                add_header 'Access-Control-Allow-Origin' '*' always;
+                add_header 'Access-Control-Expose-Headers' 'Content-Length';
+                types {
+                    application/dash+xml mpd;
+                }
+            }
+        }
+    }

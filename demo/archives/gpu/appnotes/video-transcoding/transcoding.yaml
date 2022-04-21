@@ -1,0 +1,38 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvc-cdn-bundle
+  namespace: demo
+spec:
+  storageClassName: sc-cdn
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: transcode
+  namespace: demo
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: cdn
+          persistentVolumeClaim:
+            claimName: pvc-cdn-bundle
+      containers:
+        - name: ffmpeg
+          image: sysstacks/mers-ubuntu
+          volumeMounts:
+            - mountPath: /var/www/cdn
+              name: cdn
+          resources:
+            limits:
+              gpu.intel.com/i915: 1
+          command: [ "/var/www/cdn/bin/start.sh" ]

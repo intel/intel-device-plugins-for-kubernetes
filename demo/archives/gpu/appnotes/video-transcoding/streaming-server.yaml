@@ -1,0 +1,53 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: streaming-server
+  namespace: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-rtmp
+  template:
+    metadata:
+      labels:
+        app: nginx-rtmp
+    spec:
+      containers:
+      - name: nginx-rtmp
+        image: openvisualcloud/xeone3-ubuntu1804-media-nginx
+        volumeMounts:
+        - name: nginx-conf
+          mountPath: "/usr/local/etc/nginx"
+          readOnly: true
+        ports:
+        - name: http
+          containerPort: 80
+        - name: rtmp
+          containerPort: 1935
+        command: [ "/usr/local/sbin/nginx", "-c", "/usr/local/etc/nginx/nginx.conf" ]
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: svc-nginx-rtmp
+  namespace: demo
+spec:
+  selector:
+    app: nginx-rtmp
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: rtmp
+      protocol: TCP
+      port: 1935
+      targetPort: 1935
+  externalIPs:
+    - 10.54.34.56

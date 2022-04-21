@@ -1,0 +1,22 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: sc-cdn
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: pv-nfs
+spec:
+  storageClassName: sc-cdn
+  capacity:
+    storage: 10Gi
+  accessModes:
+  - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: 10.54.34.56
+    path: /mnt/nfs
