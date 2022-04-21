@@ -27,7 +27,8 @@ import (
 )
 
 const (
-	kustomizationYaml = "deployments/dsa_plugin/kustomization.yaml"
+	kustomizationYaml = "deployments/dsa_plugin/overlays/dsa_initcontainer/dsa_initcontainer.yaml"
+	configmapYaml = "demo/dsa.conf"
 )
 
 func init() {
@@ -42,8 +43,15 @@ func describe() {
 		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
 	}
 
+	configmap, err := utils.LocateRepoFile(configmapYaml)
+	if err != nil {
+		framework.Failf("unable to locate %q: %v", configmapYaml, err)
+	}
+
 	ginkgo.It("checks availability of DSA resources", func() {
 		ginkgo.By("deploying DSA plugin")
+		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "create", "configmap", "intel-dsa-config", "--from-file=" + configmap)
+
 		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for DSA plugin's availability")
