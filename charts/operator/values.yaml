@@ -1,5 +1,4 @@
 image:
   hub: intel
-  name: intel-device-plugins-operator
   tag: "devel"
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
