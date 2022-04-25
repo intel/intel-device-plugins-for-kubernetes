@@ -207,16 +207,19 @@ Fork the [Community Operators](https://github.com/k8s-operatorhub/community-oper
 $ git clone https://github.com/<GitHub Username>/community-operators
 ```
 
-Generate package manifests with:
+Generate bundle and build bundle image:
 ```
-$ make packagemanifests OPERATOR_VERSION=0.X.Y
+$ make bundle OPERATOR_VERSION=0.X.Y
+$ make bundle-build
 ```
+
+> **Note**: You need to push the image to a registry if you want to follow the verification process below.
 
 Verify the operator deployment works OK via OLM in your development cluster:
 ```
 $ operator-sdk olm install
 $ kubectl create namespace testoperator
-$ operator-sdk run packagemanifests community-operators/operators/intel-device-plugins-operator/ --namespace testoperator --version 0.X.Y
+$ operator-sdk run bundle <Registry>/<Tag> -n testoperator --use-http
 # do verification checks
 ...
 # do clean up

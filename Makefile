@@ -27,7 +27,7 @@ BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 OLM_MANIFESTS = deployments/operator/manifests
-PACKAGEMANIFESTS_DIR = community-operators/operators/intel-device-plugins-operator
+BUNDLE_DIR = community-operators/operators/intel-device-plugins-operator/${OPERATOR_VERSION}
 
 TESTDATA_DIR = pkg/topology/testdata
 
@@ -116,17 +116,18 @@ build: $(cmds)
 
 .PHONY: bundle
 bundle:
+	mkdir -p ${BUNDLE_DIR}/${OPERATOR_VERSION}
 	$(OPERATOR_SDK) generate kustomize manifests -q --input-dir $(OLM_MANIFESTS) --output-dir $(OLM_MANIFESTS) --apis-dir pkg/apis
-	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(OPERATOR_VERSION)|" | $(OPERATOR_SDK) generate bundle -q --overwrite --kustomize-dir $(OLM_MANIFESTS) --version $(OPERATOR_VERSION) $(BUNDLE_METADATA_OPTS)
-	$(OPERATOR_SDK) bundle validate ./bundle
-
-.PHONY: packagemanifests
-packagemanifests:
-	$(OPERATOR_SDK) generate kustomize manifests -q --input-dir $(OLM_MANIFESTS) --output-dir $(OLM_MANIFESTS) --apis-dir pkg/apis
-	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(OPERATOR_VERSION)|" | $(OPERATOR_SDK) generate packagemanifests -q --kustomize-dir $(OLM_MANIFESTS) --version $(OPERATOR_VERSION) --from-version $(OPERATOR_PREVIOUS_VERSION) $(BUNDLE_METADATA_OPTS) --output-dir $(PACKAGEMANIFESTS_DIR)
+	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(OPERATOR_VERSION)|" | $(OPERATOR_SDK) generate bundle -q --overwrite --kustomize-dir $(OLM_MANIFESTS) --version $(OPERATOR_VERSION) $(BUNDLE_METADATA_OPTS) --output-dir .
 	# Remove unneeded resources
-	rm $(PACKAGEMANIFESTS_DIR)/$(OPERATOR_VERSION)/*service.yaml
-	rm $(PACKAGEMANIFESTS_DIR)/$(OPERATOR_VERSION)/*clusterrole.yaml
+	rm manifests/*service.yaml
+	rm manifests/*clusterrole.yaml
+	# Put generated files in a directory
+	mv manifests metadata tests bundle.Dockerfile ${BUNDLE_DIR}
+	$(OPERATOR_SDK) bundle validate ${BUNDLE_DIR}/
+
+bundle-build:
+	docker build -f $(BUNDLE_DIR)/bundle.Dockerfile -t $(BUNDLE_IMG) $(BUNDLE_DIR)
 
 clean:
 	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; $(GO) clean ; cd $$pwd ; done
