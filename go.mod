@@ -3,7 +3,7 @@ module github.com/intel/intel-device-plugins-for-kubernetes
 go 1.17
 
 require (
-	github.com/fsnotify/fsnotify v1.5.1
+	github.com/fsnotify/fsnotify v1.5.3
 	github.com/go-ini/ini v1.66.4
 	github.com/go-logr/logr v1.2.3
 	github.com/google/go-cmp v0.5.7
