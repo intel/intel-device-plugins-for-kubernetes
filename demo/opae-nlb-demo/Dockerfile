@@ -20,7 +20,7 @@ RUN cd /usr/src/opae/opae-sdk-${OPAE_RELEASE} && \
     cd build && \
     CFLAGS="$CFLAGS -Wno-misleading-indentation" \
     cmake .. && \
-    make -j nlb0 nlb3
+    make -j xfpga nlb0 nlb3
 
 
 FROM debian:unstable-slim
