@@ -67,7 +67,7 @@ There's also a possibility for a node specific congfiguration through passing a 
 To create a custom provisioning config:
 
 ```bash
-$ kubectl create configmap --namespace=inteldeviceplugins-system intel-dsa-config --from-file=demo/dsa.conf --from-file=demo/dsa-node1.conf --dry-run=client -o yaml > dsa-config.yaml
+$ kubectl create configmap --namespace=inteldeviceplugins-system intel-dsa-config --from-file=demo/dsa.conf
 ```
 
 ### Getting the source code

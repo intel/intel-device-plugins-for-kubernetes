@@ -80,7 +80,7 @@ There's also a possibility for a node specific congfiguration through passing a 
 To create a custom provisioning config:
 
 ```bash
-$ kubectl create configmap --namespace=inteldeviceplugins-system intel-iaa-config --from-file=demo/iaa.conf --from-file=demo/iaa-node1.conf --dry-run=client -o yaml > iaa-config.yaml
+$ kubectl create configmap --namespace=inteldeviceplugins-system intel-iaa-config --from-file=demo/iaa.conf
 ```
 
 ### Deploy by hand
