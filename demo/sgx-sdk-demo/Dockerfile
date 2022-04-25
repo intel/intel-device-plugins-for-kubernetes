@@ -23,8 +23,8 @@ RUN apt-get update && \
 # SGX SDK is installed in /opt/intel directory.
 WORKDIR /opt/intel
 
-ARG SGX_SDK_INSTALLER=sgx_linux_x64_sdk_2.15.100.3.bin
-ARG DCAP_VERSION=DCAP_1.12
+ARG SGX_SDK_INSTALLER=sgx_linux_x64_sdk_2.16.100.4.bin
+ARG DCAP_VERSION=DCAP_1.13
 
 RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" >> /etc/apt/sources.list.d/intel-sgx.list \
  && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add - \
@@ -35,7 +35,7 @@ RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu foc
     libsgx-quote-ex-dev
 
 # Install SGX SDK
-RUN wget https://download.01.org/intel-sgx/sgx-linux/2.15/distro/ubuntu18.04-server/$SGX_SDK_INSTALLER \
+RUN wget https://download.01.org/intel-sgx/sgx-linux/2.16/distro/ubuntu20.04-server/$SGX_SDK_INSTALLER \
  && chmod +x  $SGX_SDK_INSTALLER \
  && echo "yes" | ./$SGX_SDK_INSTALLER \
  && rm $SGX_SDK_INSTALLER
@@ -57,11 +57,13 @@ FROM ubuntu:20.04
 RUN apt-get update && \
     apt-get install -y \
     wget \
-    gnupg
+    gnupg-agent
 
 # Add 01.org to apt for SGX packages and install SGX runtime components
-RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" >> /etc/apt/sources.list.d/intel-sgx.list \
- && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add - \
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" | \
+    tee -a /etc/apt/sources.list.d/intel-sgx.list \
+ && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | \
+    gpg --dearmor --output /usr/share/keyrings/intel-sgx.gpg \
  && apt-get update \
  && env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     libsgx-enclave-common \

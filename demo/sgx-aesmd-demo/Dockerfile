@@ -2,9 +2,11 @@
 # but is not published along with the device plugin container images.
 FROM ubuntu:20.04
 
-RUN apt update && apt install -y curl gnupg \
-    && echo 'deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main' | tee /etc/apt/sources.list.d/intel-sgx.list \
-    && curl -s https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add - \
+RUN apt update && apt install -y curl gnupg-agent \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" | \
+    tee -a /etc/apt/sources.list.d/intel-sgx.list \
+    && curl -s https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | \
+    gpg --dearmor --output /usr/share/keyrings/intel-sgx.gpg \
     && apt update \
     && apt install -y --no-install-recommends \
        sgx-aesm-service \
