@@ -36,8 +36,7 @@ import (
 )
 
 const (
-	nodeListTimeout = 10 * time.Second
-	poll            = time.Second
+	poll = time.Second
 )
 
 // WaitForNodesWithResource waits for nodes to have positive allocatable resource.
@@ -48,7 +47,7 @@ func WaitForNodesWithResource(c clientset.Interface, res v1.ResourceName, timeou
 
 	err := wait.Poll(poll, timeout,
 		func() (bool, error) {
-			for t := time.Now(); time.Since(t) < nodeListTimeout; time.Sleep(poll) {
+			for t := time.Now(); time.Since(t) < timeout; time.Sleep(poll) {
 				nodelist, err := c.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 				if err != nil {
 					return false, err
