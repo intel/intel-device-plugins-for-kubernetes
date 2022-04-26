@@ -32,9 +32,9 @@ RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
         gcc make patch autoconf automake libtool pkg-config \
         libjson-c-dev uuid-dev curl ca-certificates
 
-ARG ACCEL_CONFIG_VERSION="3.4.3"
+ARG ACCEL_CONFIG_VERSION="3.4.6.3"
 ARG ACCEL_CONFIG_DOWNLOAD_URL="https://github.com/intel/idxd-config/archive/accel-config-v$ACCEL_CONFIG_VERSION.tar.gz"
-ARG ACCEL_CONFIG_SHA256="d74727fad0e6757b4746e1ea8413f845df2642197ac9596d4bac1bc3e94ca7ab"
+ARG ACCEL_CONFIG_SHA256="a28f531dd69bdc83ca2ad23cacd079530510e98b726421c6d07e24c8426d086e"
 
 RUN curl -fsSL "$ACCEL_CONFIG_DOWNLOAD_URL" -o accel-config.tar.gz && \
     echo "$ACCEL_CONFIG_SHA256 accel-config.tar.gz" | sha256sum -c - && \
