@@ -60,6 +60,16 @@ There is 7 QAT acceleration device(s) in the system:
  qat_dev5 - type: c6xxvf,  inst_id: 2,  node_id: 0,  bsf: 0000:3b:01.2,  #accel: 1 #engines: 1 state: up
  qat_dev6 - type: c6xxvf,  inst_id: 3,  node_id: 0,  bsf: 0000:3b:01.3,  #accel: 1 #engines: 1 state: up
 `
+	adfCtlOutputDenyListDevices = `Checking status of all devices.
+There is 7 QAT acceleration device(s) in the system:
+ qat_dev0 - type: 4xxx,  inst_id: 0,  node_id: 0,  bsf: 0000:3b:00.0,  #accel: 5 #engines: 10 state: up
+ qat_dev1 - type: 4xxx,  inst_id: 1,  node_id: 0,  bsf: 0000:3c:00.0,  #accel: 5 #engines: 10 state: up
+ qat_dev2 - type: 4xxx,  inst_id: 2,  node_id: 3,  bsf: 0000:3d:00.0,  #accel: 5 #engines: 10 state: up
+ qat_dev3 - type: 4xxxvf,  inst_id: 0,  node_id: 0,  bsf: 0000:3b:01.0,  #accel: 1 #engines: 1 state: up
+ qat_dev4 - type: 4xxxvf,  inst_id: 1,  node_id: 0,  bsf: 0000:3b:01.1,  #accel: 1 #engines: 1 state: up
+ qat_dev5 - type: 4xxxvf,  inst_id: 2,  node_id: 0,  bsf: 0000:3b:01.2,  #accel: 1 #engines: 1 state: up
+ qat_dev6 - type: 4xxxvf,  inst_id: 3,  node_id: 0,  bsf: 0000:3b:01.3,  #accel: 1 #engines: 1 state: up
+`
 )
 
 func init() {
@@ -91,6 +101,12 @@ func TestGetOnlineDevices(t *testing.T) {
 			name:           "virtual functions enabled",
 			adfCtlOutput:   adfCtlOutputVf,
 			expectedDevNum: 4,
+			iommuOn:        true,
+		},
+		{
+			name:           "denylisted devices",
+			adfCtlOutput:   adfCtlOutputDenyListDevices,
+			expectedDevNum: 0,
 			iommuOn:        true,
 		},
 		{

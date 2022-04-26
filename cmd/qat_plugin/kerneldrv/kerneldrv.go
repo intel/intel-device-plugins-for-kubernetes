@@ -142,14 +142,26 @@ func (dp *DevicePlugin) getOnlineDevices(iommuOn bool) ([]device, error) {
 
 	devices := []device{}
 
+	// QAT Gen4 devices should not be used with "-mode kernel"
+	devicesDenyList := map[string]struct{}{
+		"4xxx":   {},
+		"4xxxvf": {},
+	}
+
 	for _, line := range strings.Split(string(outputBytes[:]), "\n") {
 		matches := adfCtlRegex.FindStringSubmatch(line)
-		if len(matches) == 0 {
+		if len(matches) != 6 {
 			continue
 		}
 
 		// Ignore devices which are down.
 		if matches[5] != "up" {
+			continue
+		}
+
+		// Ignore devices which are on the denylist.
+		if _, ok := devicesDenyList[matches[1]]; ok {
+			klog.Warning("skip denylisted device ", matches[1])
 			continue
 		}
 
