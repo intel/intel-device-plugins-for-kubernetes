@@ -28,6 +28,7 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	imageutils "k8s.io/kubernetes/test/utils/image"
+	admissionapi "k8s.io/pod-security-admission/api"
 )
 
 const (
@@ -40,6 +41,7 @@ func init() {
 
 func describeQatKernelPlugin() {
 	f := framework.NewDefaultFramework("qatpluginkernel")
+	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
 	yamlPath, err := utils.LocateRepoFile(qatPluginKernelYaml)
 	if err != nil {

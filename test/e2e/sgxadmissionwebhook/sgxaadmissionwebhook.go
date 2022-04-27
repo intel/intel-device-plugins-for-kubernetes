@@ -28,6 +28,7 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework"
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	imageutils "k8s.io/kubernetes/test/utils/image"
+	admissionapi "k8s.io/pod-security-admission/api"
 )
 
 const (
@@ -40,6 +41,7 @@ func init() {
 
 func describe() {
 	f := framework.NewDefaultFramework("sgxwebhook")
+	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
 	var webhook v1.Pod
 

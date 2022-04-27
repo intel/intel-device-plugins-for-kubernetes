@@ -24,6 +24,7 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework"
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
+	admissionapi "k8s.io/pod-security-admission/api"
 )
 
 const (
@@ -38,6 +39,7 @@ func init() {
 
 func describeQatDpdkPlugin() {
 	f := framework.NewDefaultFramework("qatplugindpdk")
+	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
 	kustomizationPath, err := utils.LocateRepoFile(dpdkKustomizationYaml)
 	if err != nil {

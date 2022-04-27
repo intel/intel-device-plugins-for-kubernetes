@@ -29,6 +29,7 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	imageutils "k8s.io/kubernetes/test/utils/image"
+	admissionapi "k8s.io/pod-security-admission/api"
 )
 
 const (
@@ -44,6 +45,7 @@ func init() {
 
 func describe() {
 	f := framework.NewDefaultFramework("sgxplugin")
+	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
 	deploymentWebhookPath, err := utils.LocateRepoFile(kustomizationWebhook)
 	if err != nil {

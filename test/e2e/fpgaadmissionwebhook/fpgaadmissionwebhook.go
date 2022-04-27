@@ -81,6 +81,8 @@ func checkPodMutation(f *framework.Framework, mappingsNamespace string, source, 
 
 	ginkgo.By("submitting a pod for admission")
 
+	yes := true
+	no := false
 	podSpec := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{Name: "webhook-tester"},
 		Spec: v1.PodSpec{
@@ -91,6 +93,16 @@ func checkPodMutation(f *framework.Framework, mappingsNamespace string, source, 
 					Resources: v1.ResourceRequirements{
 						Requests: v1.ResourceList{source: resource.MustParse("1")},
 						Limits:   v1.ResourceList{source: resource.MustParse("1")},
+					},
+					SecurityContext: &v1.SecurityContext{
+						Capabilities: &v1.Capabilities{
+							Drop: []v1.Capability{"ALL"},
+						},
+						SeccompProfile: &v1.SeccompProfile{
+							Type: "RuntimeDefault",
+						},
+						AllowPrivilegeEscalation: &no,
+						RunAsNonRoot:             &yes,
 					},
 				},
 			},
