@@ -18,10 +18,9 @@ for i in $(accel-config list | jq '.[].dev' | grep "$DEV" | sed 's/\"//g'); do
 
 done
 
-ndev=$(accel-config list --idle | jq '.[].dev' | grep -c "$DEV")
 nwq=4
 
-for (( i = 0; i < ndev; i++ )); do
+for i in $(accel-config list --idle | jq '.[].dev' | sed -ne "s/\"$DEV\([0-9]\+\)\"/\1/p"); do
 
     dev="$DEV${i}"
 
@@ -31,7 +30,7 @@ for (( i = 0; i < ndev; i++ )); do
 
     [ -f "conf/$DEV-$NODE_NAME.conf" ] && config="conf/$DEV-$NODE_NAME.conf"
 
-    sed "s/X/${i}/g" < "$config" > $dev.conf
+    sed "s/X/${i}/g" < "$config" > "$dev.conf"
 
     cmd accel-config load-config -c "$dev.conf"
 
