@@ -25,6 +25,11 @@ spec:
           runAsGroup: 65532
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              ["ALL"]
+          seccompProfile:
+            type: RuntimeDefault
         resources:
           limits:
             cpu: 100m

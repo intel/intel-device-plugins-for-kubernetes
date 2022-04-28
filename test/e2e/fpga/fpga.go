@@ -31,6 +31,7 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework"
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
+	admissionapi "k8s.io/pod-security-admission/api"
 )
 
 const (
@@ -59,6 +60,7 @@ func describe() {
 	}
 
 	fmw := framework.NewDefaultFramework("fpgaplugin-e2e")
+	fmw.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
 	ginkgo.It("Run FPGA plugin tests", func() {
 		// Run region test case twice to ensure that device is reprogrammed at least once

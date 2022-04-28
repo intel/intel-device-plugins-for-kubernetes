@@ -28,6 +28,7 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework"
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
+	admissionapi "k8s.io/pod-security-admission/api"
 )
 
 const (
@@ -40,6 +41,7 @@ func init() {
 
 func describe() {
 	f := framework.NewDefaultFramework("dlbplugin")
+	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
 	kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
 	if err != nil {

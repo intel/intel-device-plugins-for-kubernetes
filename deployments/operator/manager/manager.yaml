@@ -39,6 +39,11 @@ spec:
           runAsGroup: 65532
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              ["ALL"]
+          seccompProfile:
+            type: RuntimeDefault
         env:
           - name: DEVICEPLUGIN_NAMESPACE
             valueFrom:
