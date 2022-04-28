@@ -188,7 +188,7 @@ device plugin has its own custom resource definition (CRD) and the corresponding
 watches CRUD operations to those custom resources.
 
 The [Device plugins operator README](cmd/operator/README.md) gives the installation and usage
-details. The operator is also available via [operatorhub.io](https://operatorhub.io/operator/intel-device-plugins-operator).
+details. The operator is also available via [operatorhub.io](https://operatorhub.io/operator/intel-device-plugins-operator) and on Red Hat OpenShift Container Platform.
 
 ## Demos
 
