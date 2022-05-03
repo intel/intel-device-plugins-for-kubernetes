@@ -1,7 +1,6 @@
 FROM ubuntu:20.04 as builder
 
-ARG QAT_DRIVER_RELEASE="QAT.L.4.15.0-00011"
-ARG QAT_DRIVER_SHA256="036a87f8c337a3d7a8f6e44e39d9767bb88b3b7866ee00886237d454a628aa56"
+ARG QATLIB_VERSION="21.11.0"
 ARG QAT_ENGINE_VERSION="v0.6.11"
 ARG IPSEC_MB_VERSION="v1.1"
 ARG IPP_CRYPTO_VERSION="ippcp_2021.5"
@@ -15,6 +14,7 @@ RUN apt update && \
     nasm \
     pkg-config \
     libssl-dev \
+    zlib1g-dev \
     wget \
     git \
     yasm \
@@ -24,16 +24,14 @@ RUN apt update && \
     git clone -b $QAT_ENGINE_VERSION https://github.com/intel/QAT_Engine && \
     git clone -b $IPP_CRYPTO_VERSION https://github.com/intel/ipp-crypto && \
     git clone -b $IPSEC_MB_VERSION https://github.com/intel/intel-ipsec-mb && \
-    wget https://downloadmirror.intel.com/649693/$QAT_DRIVER_RELEASE.tar.gz && \
-    echo "$QAT_DRIVER_SHA256 $QAT_DRIVER_RELEASE.tar.gz" | sha256sum -c - && \
-    tar xf *.tar.gz
+    git clone -b $QATLIB_VERSION https://github.com/intel/qatlib
 
-RUN sed -i -e 's/cmn_ko$//' -e 's/lac_kernel$//' quickassist/Makefile && \
-    KERNEL_SOURCE_ROOT=/tmp ./configure && \
-    make quickassist-all adf-ctl-all && \
-    install -m 755 build/libqat_s.so /usr/lib/ && \
-    install -m 755 build/libusdm_drv_s.so /usr/lib/ && \
-    install -m 755 build/adf_ctl /usr/bin/ && \
+RUN cd /qatlib && \
+    sed -i -e '79,87d' configure.ac && \
+    ./autogen.sh && \
+    ./configure --prefix=/usr && \
+    make -j && \
+    make install samples-install && \
     cd /ipp-crypto/sources/ippcp/crypto_mb && \
     cmake . -B"../build" \
     -DOPENSSL_INCLUDE_DIR=/usr/include/openssl \
@@ -62,23 +60,21 @@ RUN cd /QAT_Engine && \
     make clean && \
     mv /usr/lib/x86_64-linux-gnu/engines-1.1/qat-sw.so.tmp /usr/lib/x86_64-linux-gnu/engines-1.1/qat-sw.so && \
     ./configure \
-    --with-qat_hw_dir=/ \
-    --with-qat_hw_install_dir=/usr/lib \
     --with-qat_engine_id=qat-hw && \
     make && make install && \
     mv /usr/lib/x86_64-linux-gnu/engines-1.1/qatengine.so /usr/lib/x86_64-linux-gnu/engines-1.1/qat-hw.so
 
 FROM ubuntu:20.04
 
-COPY --from=builder /usr/lib/libqat_s.so /usr/lib/
-COPY --from=builder /usr/lib/libusdm_drv_s.so /usr/lib/
+COPY --from=builder /usr/bin/*_sample* /usr/bin/
+COPY --from=builder /usr/lib/libqat.so.2.0.0 /usr/lib/
+COPY --from=builder /usr/lib/libusdm.so.0.0.1 /usr/lib/
 COPY --from=builder /usr/lib64/libIPSec_MB.so.1 /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /usr/local/lib/libcrypto_mb.so.11.3 /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/bin/adf_ctl /usr/bin
 COPY --from=builder /usr/lib/x86_64-linux-gnu/engines-1.1/qat-sw.so /usr/lib/x86_64-linux-gnu/engines-1.1/qat-sw.so
 COPY --from=builder /usr/lib/x86_64-linux-gnu/engines-1.1/qat-hw.so /usr/lib/x86_64-linux-gnu/engines-1.1/qat-hw.so
-COPY --from=builder /LICENSE.GPL /usr/share/package-licenses/libqat/LICENSE.GPL
+COPY --from=builder /qatlib/LICENSE /usr/share/package-licenses/qatlib/LICENSE
 COPY --from=builder /QAT_Engine/LICENSE /usr/share/package-licenses/QAT_Engine/LICENSE
 COPY --from=builder /ipp-crypto/LICENSE /usr/share/package-licenses/ipp-crypto/LICENSE
 COPY --from=builder /intel-ipsec-mb/LICENSE /usr/share/package-licenses/intel-ipsec-mb/LICENSE
-RUN ldconfig && apt update && env DEBIAN_FRONTEND=noninteractive apt install -y openssl
+RUN ldconfig && apt update && env DEBIAN_FRONTEND=noninteractive apt install -y openssl haproxy
