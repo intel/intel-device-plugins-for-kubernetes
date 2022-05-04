@@ -18,8 +18,6 @@ for i in $(accel-config list | jq '.[].dev' | grep "$DEV" | sed 's/\"//g'); do
 
 done
 
-nwq=4
-
 for i in $(accel-config list --idle | jq '.[].dev' | sed -ne "s/\"$DEV\([0-9]\+\)\"/\1/p"); do
 
     dev="$DEV${i}"
@@ -32,16 +30,6 @@ for i in $(accel-config list --idle | jq '.[].dev' | sed -ne "s/\"$DEV\([0-9]\+\
 
     sed "s/X/${i}/g" < "$config" > "$dev.conf"
 
-    cmd accel-config load-config -c "$dev.conf"
-
-    cmd accel-config enable-device "$dev"
-
-    for (( j = 0; j < nwq; j++ )); do
-
-        wq="$dev/wq${i}.${j}"
-
-        cmd accel-config enable-wq "$wq"
-
-    done
+    cmd accel-config load-config -e -c "$dev.conf"
 
 done
