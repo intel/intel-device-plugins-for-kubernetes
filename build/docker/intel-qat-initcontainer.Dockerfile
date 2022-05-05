@@ -53,6 +53,6 @@ LABEL description='Intel QAT initcontainer initializes devices'
 
 COPY --from=builder /install_root /
 
-ADD demo/qat-init.sh /qat-init/
+ADD demo/qat-init.sh /usr/local/bin/
 
-ENTRYPOINT /qat-init/qat-init.sh
+ENTRYPOINT /usr/local/bin/qat-init.sh
