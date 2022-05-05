@@ -16,12 +16,15 @@ spec:
             value: "iaa"
         image: intel/intel-idxd-config-initcontainer:devel
         securityContext:
+          readOnlyRootFilesystem: true
           privileged: true
         volumeMounts:
         - mountPath: /sys/devices
           name: sys-devices
         - mountPath: /idxd-init/conf
           name: intel-iaa-config-volume
+        - mountPath: /idxd-init/scratch
+          name: scratch
       volumes:
       - name: sys-devices
         hostPath:
@@ -29,3 +32,5 @@ spec:
       - name: intel-iaa-config-volume
         configMap:
           name: intel-iaa-config
+      - name: scratch
+        emptyDir: {}

@@ -14,12 +14,15 @@ spec:
                 fieldPath: spec.nodeName
         image: intel/intel-idxd-config-initcontainer:devel
         securityContext:
+          readOnlyRootFilesystem: true
           privileged: true
         volumeMounts:
         - mountPath: /sys/devices
           name: sys-devices
         - mountPath: /idxd-init/conf
           name: intel-dsa-config-volume
+        - mountPath: /idxd-init/scratch
+          name: scratch
       volumes:
       - name: sys-devices
         hostPath:
@@ -27,3 +30,5 @@ spec:
       - name: intel-dsa-config-volume
         configMap:
           name: intel-dsa-config
+      - name: scratch
+        emptyDir: {}
