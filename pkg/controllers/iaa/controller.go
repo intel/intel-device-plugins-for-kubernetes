@@ -96,7 +96,7 @@ func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin)
 	newVolumes := []v1.Volume{}
 
 	for _, volume := range ds.Spec.Template.Spec.Volumes {
-		if volume.Name == "intel-iaa-config-volume" || volume.Name == "sys-devices" {
+		if volume.Name == "intel-iaa-config-volume" || volume.Name == "sys-devices" || volume.Name == "scratch" {
 			continue
 		}
 
@@ -128,12 +128,17 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 			},
 		},
 		SecurityContext: &v1.SecurityContext{
-			Privileged: &yes,
+			ReadOnlyRootFilesystem: &yes,
+			Privileged:             &yes,
 		},
 		VolumeMounts: []v1.VolumeMount{
 			{
 				Name:      "sys-devices",
 				MountPath: "/sys/devices",
+			},
+			{
+				Name:      "scratch",
+				MountPath: "/idxd-init/scratch",
 			},
 		},
 	})
@@ -143,6 +148,12 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 			HostPath: &v1.HostPathVolumeSource{
 				Path: "/sys/devices",
 			},
+		},
+	})
+	ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
+		Name: "scratch",
+		VolumeSource: v1.VolumeSource{
+			EmptyDir: &v1.EmptyDirVolumeSource{},
 		},
 	})
 

@@ -28,8 +28,8 @@ for i in $(accel-config list --idle | jq '.[].dev' | sed -ne "s/\"$DEV\([0-9]\+\
 
     [ -f "conf/$DEV-$NODE_NAME.conf" ] && config="conf/$DEV-$NODE_NAME.conf"
 
-    sed "s/X/${i}/g" < "$config" > "$dev.conf"
+    sed "s/X/${i}/g" < "$config" > scratch/"$dev.conf"
 
-    cmd accel-config load-config -e -c "$dev.conf"
+    cmd accel-config load-config -e -c scratch/"$dev.conf"
 
 done

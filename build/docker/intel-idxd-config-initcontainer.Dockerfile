@@ -1,4 +1,4 @@
-# Copyright 2021 Intel Corporation. All Rights Reserved.
+# Copyright 2021-2022 Intel Corporation. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,8 +57,11 @@ RUN ldconfig && mkdir -p /licenses/accel-config
 COPY --from=builder /usr/bin/accel-config /usr/bin/
 COPY --from=builder /accel-config.tar.gz /licenses/accel-config/
 
-ADD demo/idxd-init.sh /idxd-init/
+ADD demo/idxd-init.sh /usr/local/bin/
 ADD demo/dsa.conf /idxd-init/
+ADD demo/iaa.conf /idxd-init/
+
+RUN mkdir /idxd-init/scratch
 
 WORKDIR /idxd-init
-ENTRYPOINT bash idxd-init.sh
+ENTRYPOINT bash /usr/local/bin/idxd-init.sh
