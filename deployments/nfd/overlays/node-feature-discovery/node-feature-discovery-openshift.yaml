@@ -1,0 +1,17 @@
+# This is a sample for NodeFeatureDiscovery for Openshift
+apiVersion: nfd.openshift.io/v1
+kind: NodeFeatureDiscovery
+metadata:
+  name: nfd-instance
+  namespace: openshift-nfd
+spec:
+  extraLabelNs:
+    - sgx.intel.com
+  resourceLabels:
+    - sgx.intel.com/epc
+  operand:
+    image: quay.io/openshift/origin-node-feature-discovery:4.10
+    imagePullPolicy: Always
+    servicePort: 12000
+  workerConfig:
+    configData: |
