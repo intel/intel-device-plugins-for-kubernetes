@@ -16,7 +16,7 @@ spec:
         control-plane: controller-manager
     spec:
       containers:
-      - image: intel/intel-sgx-admissionwebhook:devel
+      - image: intel/intel-sgx-admissionwebhook:0.24.0
         imagePullPolicy: IfNotPresent
         name: manager
         securityContext:

@@ -7,7 +7,7 @@ spec:
     spec:
       initContainers:
       - name: intel-sgx-initcontainer
-        image: intel/intel-sgx-initcontainer:devel
+        image: intel/intel-sgx-initcontainer:0.24.0
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true

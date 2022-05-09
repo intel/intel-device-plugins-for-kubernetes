@@ -46,7 +46,7 @@ FROM ${FINAL_BASE}
 
 LABEL name='intel-qat-initcontainer'
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version=0.24.0
 LABEL release='1'
 LABEL summary='Intel® QAT initcontainer for Kubernetes'
 LABEL description='Intel QAT initcontainer initializes devices'

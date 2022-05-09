@@ -69,7 +69,7 @@ FROM ${FINAL_BASE}
 
 LABEL name='intel-sgx-initcontainer'
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version=0.24.0
 LABEL release='1'
 LABEL summary='Intel® SGX NFD hook for Kubernetes'
 LABEL description='The SGX EPC memory available on each node is registered as a Kubernetes extended resource using node-feature-discovery (NFD). A custom NFD source hook is installed as part of SGX device plugin operator deployment and NFD is configured to register the SGX EPC memory extended resource reported by the hook'

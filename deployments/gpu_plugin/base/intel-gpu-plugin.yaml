@@ -15,7 +15,7 @@ spec:
     spec:
       initContainers:
       - name: intel-gpu-initcontainer
-        image: intel/intel-gpu-initcontainer:devel
+        image: intel/intel-gpu-initcontainer:0.24.0
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true
@@ -30,7 +30,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-gpu-plugin:devel
+        image: intel/intel-gpu-plugin:0.24.0
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true

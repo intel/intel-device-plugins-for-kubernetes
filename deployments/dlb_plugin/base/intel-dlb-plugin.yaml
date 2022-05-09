@@ -20,7 +20,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-dlb-plugin:devel
+        image: intel/intel-dlb-plugin:0.24.0
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true

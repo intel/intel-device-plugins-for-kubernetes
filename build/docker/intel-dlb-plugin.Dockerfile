@@ -49,7 +49,7 @@ FROM ${FINAL_BASE}
 
 LABEL name='intel-dlb-plugin'
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version=0.24.0
 LABEL release='1'
 LABEL summary='Intel® DLB device plugin for Kubernetes'
 LABEL description='The DLB device plugin supports Intel Dynamic Load Balancer accelerator(DLB)'

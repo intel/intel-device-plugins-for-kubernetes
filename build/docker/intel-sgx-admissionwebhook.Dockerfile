@@ -49,7 +49,7 @@ FROM ${FINAL_BASE}
 
 LABEL name='intel-sgx-admissionwebhook'
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version=0.24.0
 LABEL release='1'
 LABEL summary='Intel® SGX admission controller webhook for Kubernetes'
 LABEL description='The SGX admission webhook is responsible for performing Pod mutations based on the sgx.intel.com/quote-provider pod annotation set by the user. The purpose of the webhook is to hide the details of setting the necessary device resources and volume mounts for using SGX remote attestation in the cluster'

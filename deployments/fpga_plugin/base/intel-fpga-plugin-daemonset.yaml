@@ -16,7 +16,7 @@ spec:
     spec:
       initContainers:
       - name: intel-fpga-initcontainer
-        image: intel/intel-fpga-initcontainer:devel
+        image: intel/intel-fpga-initcontainer:0.24.0
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true
@@ -33,7 +33,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-fpga-plugin:devel
+        image: intel/intel-fpga-plugin:0.24.0
         imagePullPolicy: IfNotPresent
         args:
           - -mode=af

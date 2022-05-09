@@ -7,7 +7,7 @@ spec:
     spec:
       initContainers:
       - name: sriov-numvfs
-        image: intel/intel-qat-initcontainer:devel
+        image: intel/intel-qat-initcontainer:0.24.0
         securityContext:
           readOnlyRootFilesystem: true
           privileged: true
