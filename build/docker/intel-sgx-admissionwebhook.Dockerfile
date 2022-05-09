@@ -28,7 +28,7 @@ ARG GOLANG_BASE=golang:1.18-bullseye
 #
 # The project default is 1) which sets FINAL_BASE=gcr.io/distroless/static
 # (see build-image.sh).
-# 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based. 
+# 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based.
 # The RedHat build tool does not allow additional image build parameters.
 ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro
 
@@ -47,11 +47,11 @@ RUN install -D /go/bin/sgx_admissionwebhook /install_root/usr/local/bin/intel_sg
 
 FROM ${FINAL_BASE}
 
-LABEL name='intel-sgx-admissionwebhook' 
-LABEL vendor='Intel®' 
-LABEL version='devel' 
-LABEL release='1' 
-LABEL summary='Intel® SGX admission controller webhook for Kubernetes' 
+LABEL name='intel-sgx-admissionwebhook'
+LABEL vendor='Intel®'
+LABEL version='devel'
+LABEL release='1'
+LABEL summary='Intel® SGX admission controller webhook for Kubernetes'
 LABEL description='The SGX admission webhook is responsible for performing Pod mutations based on the sgx.intel.com/quote-provider pod annotation set by the user. The purpose of the webhook is to hide the details of setting the necessary device resources and volume mounts for using SGX remote attestation in the cluster'
 
 COPY --from=builder /install_root /

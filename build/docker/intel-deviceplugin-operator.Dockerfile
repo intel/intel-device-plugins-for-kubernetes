@@ -28,7 +28,7 @@ ARG GOLANG_BASE=golang:1.18-bullseye
 #
 # The project default is 1) which sets FINAL_BASE=gcr.io/distroless/static
 # (see build-image.sh).
-# 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based. 
+# 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based.
 # The RedHat build tool does not allow additional image build parameters.
 ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro
 
@@ -47,11 +47,11 @@ RUN install -D /go/bin/operator /install_root/usr/local/bin/intel_deviceplugin_o
 
 FROM ${FINAL_BASE}
 
-LABEL name='intel-deviceplugin-operator' 
-LABEL vendor='Intel®' 
-LABEL version='devel' 
-LABEL release='1' 
-LABEL summary='Intel® device plugin operator for Kubernetes' 
+LABEL name='intel-deviceplugin-operator'
+LABEL vendor='Intel®'
+LABEL version='devel'
+LABEL release='1'
+LABEL summary='Intel® device plugin operator for Kubernetes'
 LABEL description='To simplify the deployment of the device plugins, a unified device plugins operator is implemented. Currently the operator has support for the QAT, GPU, FPGA, SGX, DSA and DLB device plugins. Each device plugin has its own custom resource definition (CRD) and the corresponding controller that watches CRUD operations to those custom resources.'
 
 COPY --from=builder /install_root /

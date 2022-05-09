@@ -28,7 +28,7 @@ ARG GOLANG_BASE=golang:1.18-bullseye
 #
 # The project default is 1) which sets FINAL_BASE=gcr.io/distroless/static
 # (see build-image.sh).
-# 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based. 
+# 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based.
 # The RedHat build tool does not allow additional image build parameters.
 ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro
 
@@ -67,11 +67,11 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
 
 FROM ${FINAL_BASE}
 
-LABEL name='intel-sgx-initcontainer' 
-LABEL vendor='Intel®' 
-LABEL version='devel' 
-LABEL release='1' 
-LABEL summary='Intel® SGX NFD hook for Kubernetes' 
+LABEL name='intel-sgx-initcontainer'
+LABEL vendor='Intel®'
+LABEL version='devel'
+LABEL release='1'
+LABEL summary='Intel® SGX NFD hook for Kubernetes'
 LABEL description='The SGX EPC memory available on each node is registered as a Kubernetes extended resource using node-feature-discovery (NFD). A custom NFD source hook is installed as part of SGX device plugin operator deployment and NFD is configured to register the SGX EPC memory extended resource reported by the hook'
 
 COPY --from=builder /install_root /
