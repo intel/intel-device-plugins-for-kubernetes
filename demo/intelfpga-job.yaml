@@ -13,7 +13,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: intelfpga-demo-job-1
-          image: intel/opae-nlb-demo:devel
+          image: intel/opae-nlb-demo:0.24.0
           imagePullPolicy: IfNotPresent
           securityContext:
             capabilities:

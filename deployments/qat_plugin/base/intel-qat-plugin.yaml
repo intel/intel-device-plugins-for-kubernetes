@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: intel-qat-plugin
-        image: intel/intel-qat-plugin:devel
+        image: intel/intel-qat-plugin:0.24.0
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false

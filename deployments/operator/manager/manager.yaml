@@ -23,7 +23,7 @@ spec:
         control-plane: controller-manager
     spec:
       containers:
-      - image: intel/intel-deviceplugin-operator:devel
+      - image: intel/intel-deviceplugin-operator:0.24.0
         imagePullPolicy: IfNotPresent
         name: manager
         resources:

@@ -76,7 +76,7 @@ func describe() {
 				Containers: []v1.Container{
 					{
 						Name:  "testcontainer-pf",
-						Image: "intel/dlb-libdlb-demo:devel",
+						Image: "intel/dlb-libdlb-demo:0.24.0",
 						Resources: v1.ResourceRequirements{
 							Requests: v1.ResourceList{"dlb.intel.com/pf": resource.MustParse("1")},
 							Limits:   v1.ResourceList{"dlb.intel.com/pf": resource.MustParse("1")},

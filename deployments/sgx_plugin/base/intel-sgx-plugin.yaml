@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: intel-sgx-plugin
-        image: intel/intel-sgx-plugin:devel
+        image: intel/intel-sgx-plugin:0.24.0
         securityContext:
           seLinuxOptions:
             type: "container_device_plugin_t"

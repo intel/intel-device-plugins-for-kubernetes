@@ -12,7 +12,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-idxd-config-initcontainer:devel
+        image: intel/intel-idxd-config-initcontainer:0.24.0
         securityContext:
           readOnlyRootFilesystem: true
           privileged: true

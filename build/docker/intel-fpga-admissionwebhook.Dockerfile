@@ -49,7 +49,7 @@ FROM ${FINAL_BASE}
 
 LABEL name='intel-fpga-admissionwebhook'
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version=0.24.0
 LABEL release='1'
 LABEL summary='Intel® FPGA admission controller webhook for Kubernetes'
 LABEL description='The FPGA admission controller webhook is responsible for performing mapping from user-friendly function IDs to the Interface ID and Bitstream ID that are required for FPGA programming. It also implements access control by namespacing FPGA configuration information'

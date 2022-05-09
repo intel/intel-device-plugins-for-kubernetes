@@ -16,7 +16,7 @@ spec:
       serviceAccountName: sgx-plugin
       containers:
       - name: sgx-node-init
-        image: intel/intel-sgx-initcontainer:devel
+        image: intel/intel-sgx-initcontainer:0.24.0
         imagePullPolicy: IfNotPresent
         command:
           - /usr/local/bin/sgx-sw/intel-sgx-epchook
