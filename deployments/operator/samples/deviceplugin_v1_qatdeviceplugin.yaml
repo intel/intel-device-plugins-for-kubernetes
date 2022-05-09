@@ -9,8 +9,8 @@ metadata:
   # annotations:
   #   container.apparmor.security.beta.kubernetes.io/intel-qat-plugin: unconfined
 spec:
-  image: intel/intel-qat-plugin:0.23.0
-  initImage: intel/intel-qat-initcontainer:0.23.0
+  image: intel/intel-qat-plugin:0.24.0
+  initImage: intel/intel-qat-initcontainer:0.24.0
   dpdkDriver: vfio-pci
   kernelVfDrivers:
     - c6xxvf
