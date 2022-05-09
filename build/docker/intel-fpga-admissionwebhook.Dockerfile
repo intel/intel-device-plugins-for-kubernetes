@@ -28,7 +28,7 @@ ARG GOLANG_BASE=golang:1.18-bullseye
 #
 # The project default is 1) which sets FINAL_BASE=gcr.io/distroless/static
 # (see build-image.sh).
-# 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based. 
+# 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based.
 # The RedHat build tool does not allow additional image build parameters.
 ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro
 
@@ -47,11 +47,11 @@ RUN install -D /go/bin/fpga_admissionwebhook /install_root/usr/local/bin/intel_f
 
 FROM ${FINAL_BASE}
 
-LABEL name='intel-fpga-admissionwebhook' 
-LABEL vendor='Intel®' 
-LABEL version='devel' 
-LABEL release='1' 
-LABEL summary='Intel® FPGA admission controller webhook for Kubernetes' 
+LABEL name='intel-fpga-admissionwebhook'
+LABEL vendor='Intel®'
+LABEL version='devel'
+LABEL release='1'
+LABEL summary='Intel® FPGA admission controller webhook for Kubernetes'
 LABEL description='The FPGA admission controller webhook is responsible for performing mapping from user-friendly function IDs to the Interface ID and Bitstream ID that are required for FPGA programming. It also implements access control by namespacing FPGA configuration information'
 
 COPY --from=builder /install_root /

@@ -28,7 +28,7 @@ ARG GOLANG_BASE=golang:1.18-bullseye
 #
 # The project default is 1) which sets FINAL_BASE=gcr.io/distroless/static
 # (see build-image.sh).
-# 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based. 
+# 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based.
 # The RedHat build tool does not allow additional image build parameters.
 ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro
 
@@ -47,11 +47,11 @@ RUN install -D /go/bin/dsa_plugin /install_root/usr/local/bin/intel_dsa_device_p
 
 FROM ${FINAL_BASE}
 
-LABEL name='intel-dsa-plugin' 
-LABEL vendor='Intel®' 
-LABEL version='devel' 
-LABEL release='1' 
-LABEL summary='Intel® DSA device plugin for Kubernetes' 
+LABEL name='intel-dsa-plugin'
+LABEL vendor='Intel®'
+LABEL version='devel'
+LABEL release='1'
+LABEL summary='Intel® DSA device plugin for Kubernetes'
 LABEL description='The DSA device plugin supports acceleration using the Intel Data Streaming accelerator(DSA)'
 
 COPY --from=builder /install_root /
