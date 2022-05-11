@@ -151,7 +151,7 @@ pipeline {
         stage('make test-with-kind') {
           steps {
             dir(path: "$REPO_DIR") {
-              sh "make test-with-kind REG=intel/ TAG=devel"
+              sh "make test-with-kind REG=intel/ TAG=0.24.0"
             }
           }
         }
