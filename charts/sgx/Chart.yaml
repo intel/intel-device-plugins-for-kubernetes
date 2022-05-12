@@ -1,0 +1,6 @@
+apiVersion: v2
+name: intel-device-plugins-sgx
+description: A Helm chart for Intel Device Plugins SGX
+type: application
+version: 0.1.0
+appVersion: "0.24.0"
