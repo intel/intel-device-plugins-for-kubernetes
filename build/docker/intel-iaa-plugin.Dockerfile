@@ -37,13 +37,19 @@ FROM ${GOLANG_BASE} as builder
 ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
 ARG BUILDFLAGS="-ldflags=-w -s"
+ARG LOCAL_LICENSES
+ARG GOLICENSES_VERSION
+ARG CMD=iaa_plugin
 WORKDIR $DIR
 COPY . .
 
-RUN cd cmd/iaa_plugin; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}"; cd -
-RUN install -D /go/bin/iaa_plugin /install_root/usr/local/bin/intel_iaa_device_plugin \
+RUN cd cmd/$CMD; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}"; cd -
+RUN install -D /go/bin/$CMD /install_root/usr/local/bin/intel_iaa_device_plugin \
     && install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
-    && GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/iaa_plugin" --save_path /install_root/licenses/go-licenses
+    && if [ -z "$LOCAL_LICENSES" ] ; then \
+    GO111MODULE=on go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
+    --save_path /install_root/licenses/go-licenses ; \
+    else mkdir -p /install_root/licenses/go-licenses && cp -r licenses/$CMD/* /install_root/licenses/go-licenses ; fi
 
 FROM ${FINAL_BASE}
 

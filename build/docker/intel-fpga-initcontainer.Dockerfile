@@ -37,24 +37,33 @@ FROM ${GOLANG_BASE} as builder
 ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
 ARG BUILDFLAGS="-ldflags=-w -s"
+ARG LOCAL_LICENSES
+ARG GOLICENSES_VERSION
 WORKDIR $DIR
 COPY . .
 
 ARG ROOT=/install_root
+ARG CMD=fpga_crihook
+ARG CMD2=fpga_tool
 
-RUN cd cmd/fpga_crihook && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && \
-    cd ../fpga_tool && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && \
+RUN cd cmd/$CMD && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && \
+    cd ../$CMD2 && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && \
     cd ../.. && \
     install -D ${DIR}/LICENSE $ROOT/licenses/intel-device-plugins-for-kubernetes/LICENSE && \
-    GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/fpga_crihook" --save_path $ROOT/licenses/fpga_crihook && \
-    go-licenses save "./cmd/fpga_tool" --save_path $ROOT/licenses/go-licenses/fpga_tool
+    if [ -z "$LOCAL_LICENSES" ] ; then \
+    GO111MODULE=on go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
+    --save_path "/install_root/licenses/go-licenses/$CMD" && \
+    GO111MODULE=on go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD2" \
+    --save_path "/install_root/licenses/go-licenses/$CMD2" ; \
+    else mkdir -p /install_root/licenses/go-licenses/$CMD && cp -r licenses/$CMD/* /install_root/licenses/go-licenses/$CMD && \
+    mkdir -p /install_root/licenses/go-licenses/$CMD2 && cp -r licenses/$CMD2/* /install_root/licenses/go-licenses/$CMD2 ; fi
 
 ARG SRC_DIR=/usr/local/fpga-sw
 ARG DST_DIR=/opt/intel/fpga-sw
 ARG CRI_HOOK=intel-fpga-crihook
 
-RUN install -D /go/bin/fpga_crihook $ROOT/$SRC_DIR/$CRI_HOOK
-RUN install -D /go/bin/fpga_tool $ROOT/$SRC_DIR/
+RUN install -D /go/bin/$CMD $ROOT/$SRC_DIR/$CRI_HOOK
+RUN install -D /go/bin/$CMD2 $ROOT/$SRC_DIR/
 
 RUN echo "{\n\
     \"hook\" : \"$DST_DIR/$CRI_HOOK\",\n\

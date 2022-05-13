@@ -37,20 +37,26 @@ FROM ${GOLANG_BASE} as builder
 ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
 ARG BUILDFLAGS="-ldflags=-w -s"
+ARG LOCAL_LICENSES
+ARG GOLICENSES_VERSION
+ARG CMD=sgx_epchook
 WORKDIR $DIR
 COPY . .
 
 ARG ROOT=/install_root
 
 # Build NFD Feature Detector Hook
-RUN cd cmd/sgx_epchook && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && cd -\
+RUN cd cmd/$CMD && GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}" && cd -\
     install -D ${DIR}/LICENSE $ROOT/licenses/intel-device-plugins-for-kubernetes/LICENSE && \
-    GO111MODULE=on go install github.com/google/go-licenses@v1.0.0 && go-licenses save "./cmd/sgx_epchook" --save_path $ROOT/licenses/go-licenses
+    if [ -z "$LOCAL_LICENSES" ] ; then \
+    GO111MODULE=on go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
+    --save_path /install_root/licenses/go-licenses ; \
+    else mkdir -p /install_root/licenses/go-licenses && cp -r licenses/$CMD/* /install_root/licenses/go-licenses ; fi
 
 ARG NFD_HOOK=intel-sgx-epchook
 ARG SRC_DIR=/usr/local/bin/sgx-sw
 
-RUN install -D /go/bin/sgx_epchook $ROOT/$SRC_DIR/$NFD_HOOK
+RUN install -D /go/bin/$CMD $ROOT/$SRC_DIR/$NFD_HOOK
 
 ARG TOYBOX_VERSION="0.8.6"
 ARG TOYBOX_SHA256="e2c4f72a158581a12f4303d0d1aeec196b01f293e495e535bcdaf75eb9ae0987"

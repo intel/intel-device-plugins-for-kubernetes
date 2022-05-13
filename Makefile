@@ -12,6 +12,7 @@ CERT_MANAGER_VERSION ?= v1.6.1
 CONTROLLER_GEN_VERSION ?= v0.8.0
 GOLANGCI_LINT_VERSION ?= v1.45.0
 KIND_VERSION ?= v0.11.1
+GOLICENSES_VERSION ?= v1.2.0
 # Current Operator version
 OPERATOR_VERSION ?= 0.23.0
 # Previous Operator version
@@ -30,6 +31,11 @@ OLM_MANIFESTS = deployments/operator/manifests
 BUNDLE_DIR = community-operators/operators/intel-device-plugins-operator/$(OPERATOR_VERSION)
 
 TESTDATA_DIR = pkg/topology/testdata
+
+ifneq ("$(wildcard licenses/)","")
+EXTRA_BUILD_ARGS += --build-arg LOCAL_LICENSES=TRUE
+endif
+EXTRA_BUILD_ARGS += --build-arg GOLICENSES_VERSION=$(GOLICENSES_VERSION)
 
 pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e | grep -v envtest)
 cmds = $(shell ls --ignore=internal cmd)
@@ -241,3 +247,14 @@ helm:
 		output:crd:artifacts:config=charts/operator/crds
 	helm package charts/operator
 	helm package charts/sgx
+
+.PHONY: clean-licenses licenses
+clean-licenses:
+	rm -rf licenses
+
+licenses:
+	@rm -rf licenses
+	@for cmd in $(cmds) ; do \
+		echo fetching licenses for $$cmd ; \
+		GO111MODULE=on go run github.com/google/go-licenses@$(GOLICENSES_VERSION) save "./cmd/$$cmd" --save_path licenses/$$cmd ; \
+	done
