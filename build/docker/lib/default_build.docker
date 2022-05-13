@@ -1,0 +1,9 @@
+WORKDIR ${DIR}
+COPY . .
+
+RUN cd cmd/${CMD}; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}"; cd - \N
+    && install -D /go/bin/${CMD} /install_root${EP}
+
+#include "default_licenses.docker"
+
+###

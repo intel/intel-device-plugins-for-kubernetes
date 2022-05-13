@@ -1,0 +1,6 @@
+#define xstring(s) xxstring(s)
+#define xxstring(SRC) string(cp -a SRC /etc/kubernetes/node-feature-discovery/source.d/)
+#define string(s) #s
+
+COPY --from=builder /install_root /
+ENTRYPOINT [ "/bin/sh", "-c", xstring(_ENTRYPOINT_) ]

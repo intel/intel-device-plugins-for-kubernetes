@@ -186,6 +186,53 @@ $ make test
 
 and fix all new compilation issues.
 
+## How to build docker images
+
+The dockerfiles are generated on the fly from `.in` suffixed files and `.docker` include-snippets which are stitched together with
+cpp preprocessor. You need to install cpp for that, e.g. in ubuntu it is found from build-essential (sudo apt install build-essential).
+Don't edit the generated dockerfiles. Edit the inputs.
+
+The simplest way to build all the docker images, is:
+```
+$ make images
+```
+
+But it is very slow. You can drastically speed it up by first running once:
+```
+$ make vendor
+```
+
+Which brings the libraries into the builder container without downloading them again and again for each plugin.
+
+But it is still slow. You can further speed it up by first running once:
+```
+$ make licenses
+```
+
+Which pre-creates the go-licenses for all plugins, instead of re-creating them for each built plugin, every time.
+
+But it is still rather slow to build all the images, and unnecessary, if you iterate on just one. Instead, build just the one you are iterating on, example:
+
+```
+$ make intel-gpu-plugin
+```
+
+If you iterate on only one plugin and if you know what its target cmd is (see folder `cmd/`), you can opt to pre-create just its licenses, example:
+```
+$ make licenses/gpu_plugin
+```
+
+The docker image target names in the Makefile are derived from the `.Dockerfile.in` suffixed filenames under folder `build/docker/templates/`.
+
+Recap:
+```
+$ make vendor
+$ make licenses (or just make licenses/gpu_plugin)
+$ make intel-gpu-plugin
+```
+
+Repeat the last step only, unless you change library dependencies. If you pull in new sources, start again from `make vendor`.
+
 ## How to work with Intel Device Plugins operator modifications
 
 There are few useful steps when working with changes to Device Plugins CRDs and controllers:

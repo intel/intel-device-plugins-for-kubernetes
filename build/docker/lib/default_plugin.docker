@@ -1,0 +1,17 @@
+#include "final_base.docker"
+#include "golang_base.docker"
+
+FROM ${GOLANG_BASE} as builder
+
+#include "default_args.docker"
+
+ARG EP=_ENTRYPOINT_
+ARG CMD
+
+#include "default_build.docker"
+
+FROM ${FINAL_BASE}
+
+#include "default_end.docker"
+
+#include "default_labels.docker"

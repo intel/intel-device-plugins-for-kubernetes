@@ -1,0 +1,41 @@
+FROM debian:unstable-slim AS builder
+
+RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
+        /etc/apt/sources.list.d/deb-src.list && \
+    apt update && apt install -y --no-install-recommends \
+        gcc make patch autoconf automake libtool pkg-config \
+        libjson-c-dev uuid-dev curl ca-certificates
+
+ARG ACCEL_CONFIG_VERSION="3.4.6.3"
+ARG ACCEL_CONFIG_DOWNLOAD_URL="https://github.com/intel/idxd-config/archive/accel-config-v$ACCEL_CONFIG_VERSION.tar.gz"
+ARG ACCEL_CONFIG_SHA256="a28f531dd69bdc83ca2ad23cacd079530510e98b726421c6d07e24c8426d086e"
+
+RUN curl -fsSL "$ACCEL_CONFIG_DOWNLOAD_URL" -o accel-config.tar.gz && \
+    echo "$ACCEL_CONFIG_SHA256 accel-config.tar.gz" | sha256sum -c - && \
+    tar -xzf accel-config.tar.gz
+
+RUN cd idxd-config-accel-config-v$ACCEL_CONFIG_VERSION && \
+    ./git-version-gen && \
+    autoreconf -i && \
+    ./configure -q --libdir=/usr/lib64 --disable-test --disable-docs && \
+    make && \
+    make install
+###
+FROM debian:unstable-slim
+
+RUN apt update && apt install -y libjson-c5 jq
+
+COPY --from=builder /usr/lib64/libaccel-config.so.1.0.0 "/lib/x86_64-linux-gnu/"
+RUN ldconfig && mkdir -p /licenses/accel-config
+
+COPY --from=builder /usr/bin/accel-config /usr/bin/
+COPY --from=builder /accel-config.tar.gz /licenses/accel-config/
+
+ADD demo/idxd-init.sh /usr/local/bin/
+ADD demo/dsa.conf /idxd-init/
+ADD demo/iaa.conf /idxd-init/
+
+RUN mkdir /idxd-init/scratch
+
+WORKDIR /idxd-init
+ENTRYPOINT bash /usr/local/bin/idxd-init.sh
