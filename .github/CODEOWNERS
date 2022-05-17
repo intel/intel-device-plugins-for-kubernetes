@@ -2,36 +2,40 @@
 # Syntax and details are here: https://help.github.com/articles/about-codeowners/
 #
 # Global code ownership, fallback
-*                   @kad @mythi @bart0sh @rojkov
+*                   @kad @mythi @bart0sh
 
 # CI and building
-.github/workflows/  @rojkov @bart0sh @kad @mythi
-Jenkinsfile         @rojkov @bart0sh @kad @mythi
-Makefile            @rojkov @bart0sh @kad @mythi
-/build/             @rojkov @bart0sh @kad @mythi
-/scripts/           @rojkov @bart0sh @kad @mythi
+.github/workflows/  @bart0sh @kad @mythi
+Jenkinsfile         @bart0sh @kad @mythi
+Makefile            @bart0sh @kad @mythi
+/build/             @bart0sh @kad @mythi
+/scripts/           @bart0sh @kad @mythi
 
 # Binaries
-/cmd/               @rojkov @bart0sh
-/cmd/fpga_tool/     @bart0sh @kad @rojkov
-/cmd/gpu_plugin/    @rojkov @bart0sh @uniemimu
-/cmd/qat_plugin/    @rojkov @mythi
-/cmd/vpu_plugin/    @rojkov @mythi
+/cmd/               @mythi @bart0sh
+/cmd/fpga_tool/     @bart0sh @kad @mythi
+/cmd/gpu_plugin/    @tkatila @bart0sh @uniemimu
+/cmd/gpu_nfdhook/   @tkatila @bart0sh @uniemimu
+/cmd/qat_plugin/    @hj-johannes-lee @mythi
+/cmd/sgx_plugin/    @hj-johannes-lee @mythi
+/cmd/dsa_plugin/    @hj-johannes-lee @ozhuraki @mythi
+/cmd/iaa_plugin/    @hj-johannes-lee @ozhuraki @mythi
+/cmd/vpu_plugin/    @bart0sh @mythi
 /cmd/dlb_plugin/    @bart0sh @hj-johannes-lee
 
 # Framework
-/pkg/               @rojkov @bart0sh
+/pkg/               @mythi @bart0sh
 /pkg/topology/      @bart0sh @kad
 
 # Deployments
-/deployments/       @rojkov @bart0sh @mythi
+/deployments/       @hj-johannes-lee @bart0sh @mythi @tkatila
 
 # Demos
-/demo/              @rojkov @bart0sh @mythi @kad
+/demo/              @tkatila @bart0sh @mythi @kad
 
-# e2e testing
-/tests/e2e/         @rojkov
+# Testing
+/test/              @mythi @bart0sh @ozhuraki @hj-johannes-lee
 
 # New dependencies review
-/go.sum              @kad @mythi @bart0sh @rojkov
-/go.mod              @kad @mythi @bart0sh @rojkov
+/go.sum             @kad @mythi @bart0sh
+/go.mod             @kad @mythi @bart0sh
