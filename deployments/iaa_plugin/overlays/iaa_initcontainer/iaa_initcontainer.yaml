@@ -19,6 +19,8 @@ spec:
           readOnlyRootFilesystem: true
           privileged: true
         volumeMounts:
+        - mountPath: /sys/bus/dsa
+          name: sys-bus-dsa
         - mountPath: /sys/devices
           name: sys-devices
         - mountPath: /idxd-init/conf
@@ -26,6 +28,9 @@ spec:
         - mountPath: /idxd-init/scratch
           name: scratch
       volumes:
+      - name: sys-bus-dsa
+        hostPath:
+          path: /sys/bus/dsa
       - name: sys-devices
         hostPath:
           path: /sys/devices
