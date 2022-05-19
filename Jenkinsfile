@@ -155,11 +155,12 @@ pipeline {
             }
           }
         }
-      }
-      post {
-        success {
-          withDockerRegistry([ credentialsId: "e16bd38a-76cb-4900-a5cb-7f6aa3aeb22d", url: "https://${REG}" ]) {
-            sh "make push"
+        stage('push images') {
+          when { not { changeRequest() } }
+          steps {
+            withDockerRegistry([ credentialsId: "e16bd38a-76cb-4900-a5cb-7f6aa3aeb22d", url: "https://${REG}" ]) {
+              sh "make push"
+            }
           }
         }
       }
