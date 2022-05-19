@@ -98,7 +98,7 @@ func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin)
 	newVolumes := []v1.Volume{}
 
 	for _, volume := range ds.Spec.Template.Spec.Volumes {
-		if volume.Name == "intel-dsa-config-volume" || volume.Name == "sys-devices" || volume.Name == "scratch" {
+		if volume.Name == "intel-dsa-config-volume" || volume.Name == "sys-bus-dsa" || volume.Name == "sys-devices" || volume.Name == "scratch" {
 			continue
 		}
 
@@ -135,12 +135,24 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 		},
 		VolumeMounts: []v1.VolumeMount{
 			{
+				Name:      "sys-bus-dsa",
+				MountPath: "/sys/bus/dsa",
+			},
+			{
 				Name:      "sys-devices",
 				MountPath: "/sys/devices",
 			},
 			{
 				Name:      "scratch",
 				MountPath: "/idxd-init/scratch",
+			},
+		},
+	})
+	ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
+		Name: "sys-bus-dsa",
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: "/sys/bus/dsa",
 			},
 		},
 	})
