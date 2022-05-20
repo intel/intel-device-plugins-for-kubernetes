@@ -13,9 +13,7 @@ CONTROLLER_GEN_VERSION ?= v0.8.0
 GOLANGCI_LINT_VERSION ?= v1.45.0
 KIND_VERSION ?= v0.11.1
 # Current Operator version
-OPERATOR_VERSION ?= 0.23.0
-# Previous Operator version
-OPERATOR_PREVIOUS_VERSION ?= 0.21.0
+OPERATOR_VERSION ?= 0.24.0
 # Default bundle image tag
 BUNDLE_IMG ?= intel-device-plugins-controller-bundle:$(OPERATOR_VERSION)
 # Options for 'bundle-build'
