@@ -8,8 +8,6 @@ pipeline {
   environment {
     GO111MODULE="on"
     REG="cloud-native-image-registry.westus.cloudapp.azure.com/"
-    RUNC_VERSION="v1.0.3"
-    CRIO_VERSION="v1.21.4"
     K8S_VERSION="1.22.1"
     GOLANGCI_LINT_VERSION="v1.45.0"
     GO_VERSION="1.18.1"
@@ -31,7 +29,7 @@ pipeline {
     }
     stage("Build && Publish") {
       agent {
-        label "bionic-intel-device-plugins"
+        label "jammy-intel-device-plugins"
       }
       stages {
         stage("Get requirements") {
@@ -42,18 +40,11 @@ pipeline {
                 sh "mkdir -p $GOPATH/src/github.com/intel $GOPATH/bin"
                 sh "cp -rf ${env.WORKSPACE} $REPO_DIR"
                 sh "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin ${GOLANGCI_LINT_VERSION}"
-		sh '''#!/usr/bin/env bash
-		   . /etc/os-release
-		   REPOURL=http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x${ID^}_${VERSION_ID}
-		   echo "deb ${REPOURL} /" | sudo tee /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
-		   wget -nv ${REPOURL}/Release.key -O - | sudo apt-key add -
-                '''
 		sh "sudo apt-get update -qq"
 		sh "sudo apt-get -qq -y install libusb-1.0-0-dev buildah make gcc pkg-config"
-		sh "sudo curl https://raw.githubusercontent.com/cri-o/cri-o/${CRIO_VERSION}/test/registries.conf -o /etc/containers/registries.conf"
-		sh "sudo sed -i -e 's/quay/docker/' /etc/containers/registries.conf"
-		sh "sudo curl -L https://github.com/opencontainers/runc/releases/download/$RUNC_VERSION/runc.amd64 -o /usr/bin/runc"
-		sh "sudo chmod +x /usr/bin/runc"
+		sh '''#!/usr/bin/env bash
+		      echo -e 'unqualified-search-registries = ["docker.io"]' | sudo tee -a /etc/containers/registries.conf
+		'''
 		sh "sudo curl -L https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl -o /usr/bin/kubectl"
 		sh "sudo chmod +x /usr/bin/kubectl"   
               }
