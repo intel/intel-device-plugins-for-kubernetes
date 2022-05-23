@@ -91,7 +91,7 @@ func describe() {
 		framework.ExpectNoError(err, "pod Create API error")
 
 		ginkgo.By("waiting the pod to finnish successfully")
-		f.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
+		f.PodClient().WaitForSuccess(pod.ObjectMeta.Name, 60*time.Second)
 
 		ginkgo.By("checking log output")
 		log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, pod.Name, containerName)
