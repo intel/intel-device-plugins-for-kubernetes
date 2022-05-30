@@ -1,0 +1,26 @@
+From 07e1137a71021dc02df98b942a260b70ff852ca5 Mon Sep 17 00:00:00 2001
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Date: Tue, 3 May 2022 15:28:05 +0300
+Subject: [PATCH] idxd: Ignore reset device error
+
+Signed-off-by: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+---
+ accfg/lib/libaccfg.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/accfg/lib/libaccfg.c b/accfg/lib/libaccfg.c
+index be3be69..32eb71f 100644
+--- a/accfg/lib/libaccfg.c
++++ b/accfg/lib/libaccfg.c
+@@ -636,7 +636,7 @@ static void *add_device(void *parent, int id, const char *ctl_base,
+ 
+ 	rc = accfg_set_param(ctx, dfd, "cmd_status", "1", 1);
+ 	/* older drivers don't support writing to cmd_status */
+-	if (rc && rc != -EACCES) {
++	if (rc && rc != -EACCES && rc != -EROFS) {
+ 		err(ctx, "Failed resetting cmd status %d\n", rc);
+ 		close(dfd);
+ 		goto err_device;
+-- 
+2.36.1
+

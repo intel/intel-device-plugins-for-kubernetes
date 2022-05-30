@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import (
 	"github.com/onsi/gomega"
 
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/dlb"
+	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/dsa"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/fpga"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/fpgaadmissionwebhook"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/gpu"
