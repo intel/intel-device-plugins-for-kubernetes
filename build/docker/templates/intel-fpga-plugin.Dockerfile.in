@@ -1,0 +1,8 @@
+#define _ENTRYPOINT_ /usr/local/bin/intel_fpga_device_plugin
+ARG CMD=fpga_plugin
+
+#include "default_plugin.docker"
+
+LABEL name='intel-fpga-plugin'
+LABEL summary='Intel® FPGA device plugin for Kubernetes'
+LABEL description='The FPGA device plugin is responsible for discovering and reporting FPGA devices to kubelet'

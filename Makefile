@@ -12,6 +12,7 @@ CERT_MANAGER_VERSION ?= v1.6.1
 CONTROLLER_GEN_VERSION ?= v0.8.0
 GOLANGCI_LINT_VERSION ?= v1.45.0
 KIND_VERSION ?= v0.11.1
+GOLICENSES_VERSION ?= v1.2.0
 # Current Operator version
 OPERATOR_VERSION ?= 0.24.0
 # Default bundle image tag
@@ -28,6 +29,8 @@ OLM_MANIFESTS = deployments/operator/manifests
 BUNDLE_DIR = community-operators/operators/intel-device-plugins-operator/$(OPERATOR_VERSION)
 
 TESTDATA_DIR = pkg/topology/testdata
+
+EXTRA_BUILD_ARGS += --build-arg GOLICENSES_VERSION=$(GOLICENSES_VERSION)
 
 pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e | grep -v envtest)
 cmds = $(shell ls --ignore=internal cmd)
@@ -165,14 +168,37 @@ ifeq ($(TAG),devel)
 	@$(BUILDER) pull ubuntu:20.04
 endif
 
-images = $(shell basename -s .Dockerfile -a build/docker/*.Dockerfile)
+dockerlib = build/docker/lib
+dockertemplates = build/docker/templates
+images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in)
+dockerfiles = $(shell basename -s .in -a $(dockertemplates)/*.Dockerfile.in | xargs -I"{}" echo build/docker/{})
+
 
 skipbaselayercheck = intel-vpu-plugin intel-qat-plugin-kerneldrv intel-idxd-config-initcontainer
 distroless_images = $(patsubst %,$(REG)%\:$(TAG),$(filter-out $(skipbaselayercheck),$(images)))
 test-image-base-layer:
 	@for img in $(distroless_images); do scripts/test-image-base-layer.sh $$img $(BUILDER) || exit 1; done
 
-$(images):
+$(dockerfiles): $(dockertemplates)/*.Dockerfile.in $(dockerlib)/*.docker
+	@cat $(dockerlib)/default_header.docker $(dockertemplates)/$(shell basename $@.in) \
+	| cpp -w -nostdinc -I./$(dockerlib) -DINPUT_FILENAME=$(dockertemplates)/$(shell basename $@.in) -C -P \
+	| sed 's/\\N/\\/' > $@
+
+clean-dockerfiles:
+	@rm -f build/docker/*.Dockerfile
+
+dockerfiles: clean-dockerfiles $(dockerfiles)
+
+check-dockerfiles: dockerfiles
+	@GITDIFF=`git diff build/docker` ; \
+	if [ -n "$$GITDIFF" ]; then \
+		echo "Changes detected in Dockerfiles:" && \
+		echo "$$GITDIFF" && \
+		echo "Please commit result of \"make dockerfiles\" to make them in synch with the .in -files." ; \
+		exit 1; \
+	fi
+
+$(images): $(dockerfiles)
 	@build/docker/build-image.sh $(REG)$@ $(BUILDER) $(EXTRA_BUILD_ARGS)
 
 images: $(images)
@@ -239,3 +265,17 @@ helm:
 		output:crd:artifacts:config=charts/operator/crds
 	helm package charts/operator
 	helm package charts/sgx
+
+clean-licenses:
+	rm -rf licenses
+
+licenses = $(shell ls --ignore=internal cmd | xargs -I"{}" echo licenses/{})
+
+$(licenses):
+	@rm -rf $@
+	@license_cmd=`basename $@` && echo fetching licenses for $$license_cmd && \
+	GO111MODULE=on go run github.com/google/go-licenses@$(GOLICENSES_VERSION) save "./cmd/$$license_cmd" --save_path licenses/$$license_cmd
+
+.PHONY: clean-licenses licenses $(licenses)
+
+licenses: $(licenses)

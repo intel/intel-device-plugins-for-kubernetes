@@ -1,0 +1,4 @@
+ARG DIR=/intel-device-plugins-for-kubernetes
+ARG GO111MODULE=on
+ARG BUILDFLAGS="-ldflags=-w -s"
+ARG GOLICENSES_VERSION

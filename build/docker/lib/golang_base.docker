@@ -1,0 +1,9 @@
+##
+## GOLANG_BASE can be used to make the build reproducible by choosing an
+## image by its hash:
+## GOLANG_BASE=golang@sha256:9d64369fd3c633df71d7465d67d43f63bb31192193e671742fa1c26ebc3a6210
+##
+## This is used on release branches before tagging a stable version.
+## The main branch defaults to using the latest Golang base image.
+ARG GOLANG_BASE=golang:1.18-bullseye
+###

@@ -70,6 +70,8 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+      - name: Check Dockerfiles
+        run: make check-dockerfiles
       - name: Install build dependencies needed for VPU plugin
         run: |
           sudo apt-get update

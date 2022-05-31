@@ -1,0 +1,5 @@
+#define expandedString(s) string(s)
+#define string(s) #s
+
+COPY --from=builder /install_root /
+ENTRYPOINT [expandedString(_ENTRYPOINT_)]

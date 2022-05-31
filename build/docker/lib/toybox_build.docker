@@ -1,0 +1,15 @@
+ARG TOYBOX_VERSION="0.8.6"
+ARG TOYBOX_SHA256="e2c4f72a158581a12f4303d0d1aeec196b01f293e495e535bcdaf75eb9ae0987"
+
+ARG ROOT=/install_root
+
+RUN apt update && apt -y install musl musl-tools musl-dev
+RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz -o toybox.tar.gz \N
+    && echo "$TOYBOX_SHA256 toybox.tar.gz" | sha256sum -c - \N
+    && tar -xzf toybox.tar.gz \N
+    && rm toybox.tar.gz \N
+    && cd toybox-$TOYBOX_VERSION \N
+    && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \N
+    && install -D LICENSE $ROOT/licenses/toybox \N
+    && cp -r /usr/share/doc/musl $ROOT/licenses/
+###

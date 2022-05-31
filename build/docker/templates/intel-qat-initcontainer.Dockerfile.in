@@ -1,0 +1,24 @@
+#include "final_base.docker"
+#include "golang_base.docker"
+
+FROM ${GOLANG_BASE} as builder
+
+ARG DIR=/intel-device-plugins-for-kubernetes
+WORKDIR $DIR
+COPY . .
+
+#include "toybox_build.docker"
+
+FROM ${FINAL_BASE}
+
+#include "default_labels.docker"
+
+LABEL name='intel-qat-initcontainer'
+LABEL summary='Intel® QAT initcontainer for Kubernetes'
+LABEL description='Intel QAT initcontainer initializes devices'
+
+COPY --from=builder /install_root /
+
+ADD demo/qat-init.sh /usr/local/bin/
+
+ENTRYPOINT /usr/local/bin/qat-init.sh
