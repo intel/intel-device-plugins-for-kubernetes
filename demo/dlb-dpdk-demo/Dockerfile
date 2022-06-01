@@ -7,16 +7,16 @@ RUN apt-get update && apt-get install -y wget build-essential meson python3-pyel
 RUN pip install ninja
 
 # Download & unpack DLB tarball
-ARG DLB_TARBALL="dlb_linux_src_release_7.5.0_2022_01_13.txz"
-ARG DLB_TARBALL_SHA256="ae6895ce961c331ead44982dca11e931012da8efb6ed1e8309f3af860262bf62"
+ARG DLB_TARBALL="dlb_linux_src_release7.6.0_2022_03_30.txz"
+ARG DLB_TARBALL_SHA256="b74c1bb2863fb6374bf80b9268b5978ab7b9d4eabb2d47ea427a5460aa3ae5fe"
 
-RUN wget https://downloadmirror.intel.com/713567/$DLB_TARBALL \
+RUN wget https://downloadmirror.intel.com/727424/$DLB_TARBALL \
     && echo "$DLB_TARBALL_SHA256 $DLB_TARBALL" | sha256sum -c - \
     && tar -Jxf $DLB_TARBALL --no-same-owner && rm $DLB_TARBALL
 
 # Download & unpack DPDK tarball
-ARG DPDK_TARBALL=dpdk-20.11.3.tar.xz
-ARG DPDK_TARBALL_SHA256="898680458a4010f421fab760aef47369b74d2954e3560841df3cd7b98076b841"
+ARG DPDK_TARBALL=dpdk-20.11.4.tar.xz
+ARG DPDK_TARBALL_SHA256="78028c6a9f4d247b5215ca156b6dbeb03f68a99ca00109c347615a46c1856d6a"
 
 RUN wget -q https://fast.dpdk.org/rel/$DPDK_TARBALL \
     && echo "$DPDK_TARBALL_SHA256 $DPDK_TARBALL" | sha256sum -c - \
