@@ -222,6 +222,9 @@ func setInitContainer(dsSpec *v1.PodSpec, dpSpec devicepluginv1.QatDevicePluginS
 				Value: strings.Join(enablingPfPciIDs, " "),
 			}},
 			SecurityContext: &v1.SecurityContext{
+				SELinuxOptions: &v1.SELinuxOptions{
+					Type: "container_device_plugin_init_t",
+				},
 				Privileged:             &yes,
 				ReadOnlyRootFilesystem: &yes,
 			},
