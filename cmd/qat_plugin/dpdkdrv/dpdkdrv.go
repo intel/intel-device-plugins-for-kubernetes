@@ -64,6 +64,7 @@ var qatDeviceDriver = map[string]string{
 	"18a1": "c4xxxvf",
 	"19e3": "c3xxxvf",
 	"4941": "4xxxvf",
+	"4943": "4xxxvf",
 	"37c9": "c6xxvf",
 	"6f55": "d15xxvf",
 }

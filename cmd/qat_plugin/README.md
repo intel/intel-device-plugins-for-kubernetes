@@ -34,6 +34,7 @@ Kernel. See the [Prerequisites](#prerequisites) section for more details.
 Supported Devices include, but may not be limited to, the following:
 
 - [Intel&reg; Xeon&reg; with Intel&reg; C62X Series Chipset][1]
+- Intel&reg; Xeon&reg; with Intel&reg; QAT Gen4 devices
 - [Intel&reg; Atom&trade; Processor C3000][2]
 - [Intel&reg; Communications Chipset 8925 to 8955 Series][3]
 
@@ -50,7 +51,7 @@ The QAT plugin can take a number of command line arguments, summarised in the fo
 | Flag | Argument | Meaning |
 |:---- |:-------- |:------- |
 | -dpdk-driver | string | DPDK Device driver for configuring the QAT device (default: `vfio-pci`) |
-| -kernel-vf-drivers | string | Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC, C62x, C3xxx, 4xxx, C4xxx and D15xx (default: `c6xxvf,4xxxvf`) |
+| -kernel-vf-drivers | string | Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC, C62x, C3xxx, 4xxx/401xx, C4xxx and D15xx (default: `c6xxvf,4xxxvf`) |
 | -max-num-devices | int | maximum number of QAT devices to be provided to the QuickAssist device plugin (default: `32`) |
 | -mode | string | plugin mode which can be either `dpdk` or `kernel` (default: `dpdk`) |
 | -allocation-policy | string | 2 possible values: balanced and packed. Balanced mode spreads allocated QAT VF resources balanced among QAT PF devices, and packed mode packs one QAT PF device full of QAT VF resources before allocating resources from the next QAT PF. (There is no default.) |
@@ -331,7 +332,7 @@ In order to utilise the QAT device plugin, QuickAssist SR-IOV virtual functions 
 You can verify this on your nodes by checking for the relevant PCI identifiers:
 
 ```bash
-for i in 0442 0443 37c9 19e3; do lspci -d 8086:$i; done
+for i in 0442 0443 18a1 37c9 6f55 19e3 4941 4943; do lspci -d 8086:$i; done
 ```
 
 [1]:https://www-ssl.intel.com/content/www/us/en/design/products-and-solutions/processors-and-chipsets/purley/intel-xeon-scalable-processors.html
