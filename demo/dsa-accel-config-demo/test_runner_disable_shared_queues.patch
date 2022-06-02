@@ -1,0 +1,45 @@
+--- idxd-config-accel-config-v3.4.6.3/test/dsa_user_test_runner.sh.orig	2022-05-25 20:31:33.185073217 +0300
++++ idxd-config-accel-config-v3.4.6.3/test/dsa_user_test_runner.sh	2022-05-27 22:12:33.447091343 +0300
+@@ -6,7 +6,8 @@
+ 
+ rc="$EXIT_SKIP"
+ 
+-DSA=dsa0
++DEV=`ls /dev/dsa/ | sed -ne 's|wq\([^.]\+\)\(.*\)|dsa\1/wq\1\2|p'`
++DSA=`echo $DEV | cut -f1 -d/`
+ WQ0=wq0.0
+ WQ1=wq0.1
+ 
+@@ -70,7 +71,7 @@
+ 		for xfer_size in $SIZE_1 $SIZE_4K $SIZE_64K $SIZE_1M $SIZE_2M; do
+ 			echo "Testing $xfer_size bytes"
+ 			"$DSATEST" -w "$wq_mode_code" -l "$xfer_size" -o "$opcode" \
+-				-f "$flag" t200 -v
++				-f "$flag" t200 -d "$DEV"
+ 		done
+ 	done
+ }
+@@ -95,14 +96,11 @@
+ 		for xfer_size in $SIZE_1 $SIZE_4K $SIZE_64K $SIZE_1M $SIZE_2M; do
+ 			echo "Testing $xfer_size bytes"
+ 			"$DSATEST" -w "$wq_mode_code" -l "$xfer_size" -o 0x1 -b "$opcode" \
+-				-c 16 -f "$flag" t2000 -v
++				-c 16 -f "$flag" t2000 -d "$DEV"
+ 		done
+ 	done
+ }
+ 
+-_cleanup
+-start_dsa
+-enable_wqs
+ # shellcheck disable=SC2034
+ rc="$EXIT_FAILURE"
+ 
+@@ -120,7 +118,3 @@
+ 	test_op_batch $opcode $flag
+ done
+ 
+-disable_wqs
+-stop_dsa
+-_cleanup
+-exit 0
