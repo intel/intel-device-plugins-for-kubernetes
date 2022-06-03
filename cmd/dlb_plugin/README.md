@@ -33,9 +33,9 @@ If you configure SR-IOV/VF (virtual functions), continue the following configura
 
 Patch dpdk sources to work with DLB:
 ```bash
-$ wget -q https://fast.dpdk.org/rel/dpdk-20.11.3.tar.xz -O- | tar -Jx
-$ wget -q https://downloadmirror.intel.com/690271/dlblinuxsrcrelease7.4.020211006.txz -O- | tar -Jx
-$ cd ./dpdk-stable-20.11.3 && patch -p1 < ../dlb/dpdk/dpdk_dlb_v20.11.3_29751a4_diff.patch
+$ wget -q https://fast.dpdk.org/rel/dpdk-20.11.4.tar.xz -O- | tar -Jx
+$ wget -q https://downloadmirror.intel.com/727424/dlb_linux_src_release7.6.0_2022_03_30.txz -O- | tar -Jx
+$ cd ./dpdk-stable-20.11.4/ && patch -p1 < ../dlb/dpdk/dpdk_dlb_v20.11.4_75c6f0a_diff.patch
 $ sed -i 's/270b,2710,2714/270b,2710,2711,2714/g' ./usertools/dpdk-devbind.py
 ```
 
@@ -109,7 +109,7 @@ Run libdlb example app:
 
 ```bash
 $ ls
-dlb dpdk-stable-20.11.3
+dlb dpdk-stable-20.11.4
 $ cd ./dlb/libdlb/ && make && sudo LD_LIBRARY_PATH=$PWD ./examples/dir_traffic -n 128 -d 1
 # For running test for /dev/dlbN, replace 1 with N.
 ```
@@ -122,8 +122,8 @@ Run dpdk example app:
 $ sudo apt-get update && sudo apt-get install build-essential meson python3-pyelftools libnuma-dev python3-pip && sudo pip install ninja
 # This configuration is based on Ubuntu/Debian distribution. For other distributions that do not use apt, install the dependencies using another way.
 $ ls
-dlb dpdk-stable-20.11.3
-$ cd ./dpdk-stable-20.11.3 && meson setup --prefix $(pwd)/installdir builddir && ninja -C builddir install
+dlb dpdk-stable-20.11.4
+$ cd ./dpdk-stable-20.11.4 && meson setup --prefix $(pwd)/installdir builddir && ninja -C builddir install
 ```
 
 - Run eventdev test
