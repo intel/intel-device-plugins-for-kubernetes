@@ -30,7 +30,7 @@ const (
 	// Device directories.
 	devDir = "/dev/iax"
 	// Glob pattern for the state sysfs entry.
-	statePattern = "/sys/bus/iax/devices/iax*/wq*/state"
+	statePattern = "/sys/bus/dsa/devices/iax*/wq*/state"
 )
 
 func main() {

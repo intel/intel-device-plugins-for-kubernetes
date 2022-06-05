@@ -43,3 +43,44 @@
 -stop_dsa
 -_cleanup
 -exit 0
+--- idxd-config-accel-config-v3.4.6.4/test/iaa_user_test_runner.sh.orig	2022-06-07 20:52:39.582379032 +0300
++++ idxd-config-accel-config-v3.4.6.4/test/iaa_user_test_runner.sh	2022-06-07 20:57:14.972589001 +0300
+@@ -6,7 +6,8 @@
+ 
+ rc="$EXIT_SKIP"
+ 
+-IAX=iax1
++DEV=`ls /dev/iax/ | sed -ne 's|wq\([^.]\+\)\(.*\)|iax\1/wq\1\2|p'`
++IAX=`echo $DEV | cut -f1 -d/`
+ WQ0=wq1.4
+ WQ1=wq1.1
+ 
+@@ -72,18 +73,15 @@
+ 			if [ "$extra_flag" != "" ]
+ 			then
+ 				"$IAXTEST" -w "$wq_mode_code" -l "$xfer_size" -o "$opcode" \
+-					-f "$flag" -e "$extra_flag" -t 5000 -v
++					-f "$flag" -e "$extra_flag" -t 5000 -d "$DEV"
+ 			else
+ 				"$IAXTEST" -w "$wq_mode_code" -l "$xfer_size" -o "$opcode" \
+-					-f "$flag" -t 5000 -v
++					-f "$flag" -t 5000 -d "$DEV"
+ 			fi
+ 		done
+ 	done
+ }
+ 
+-_cleanup
+-start_iax
+-enable_wqs
+ # shellcheck disable=SC2034
+ rc="$EXIT_FAILURE"
+ 
+@@ -99,7 +97,3 @@
+ 	test_op $opcode $flag
+ done
+ 
+-disable_wqs
+-stop_iax
+-_cleanup
+-exit 0

@@ -33,7 +33,7 @@ spec:
           mountPath: /dev/char
           readOnly: true
         - name: sysfs
-          mountPath: /sys/bus/iax
+          mountPath: /sys/bus/dsa/devices
           readOnly: true
         - name: kubeletsockets
           mountPath: /var/lib/kubelet/device-plugins
@@ -46,7 +46,7 @@ spec:
           path: /dev/char
       - name: sysfs
         hostPath:
-          path: /sys/bus/iax
+          path: /sys/bus/dsa/devices
       - name: kubeletsockets
         hostPath:
           path: /var/lib/kubelet/device-plugins

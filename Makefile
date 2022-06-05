@@ -154,6 +154,9 @@ e2e-gpu:
 e2e-dsa:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "DSA" -delete-namespace-on-failure=false
 
+e2e-iaa:
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "IAA" -delete-namespace-on-failure=false
+
 terrascan:
 	@ls deployments/*/kustomization.yaml | while read f ; \
 	do \
