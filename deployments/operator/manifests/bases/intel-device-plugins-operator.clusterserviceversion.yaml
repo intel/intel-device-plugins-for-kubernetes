@@ -113,8 +113,8 @@ spec:
   - name: Intel Device Plugins Operator
     url: https://github.com/intel/intel-device-plugins-for-kubernetes
   maintainers:
-  - email: dmitry.rozhkov@intel.com
-    name: Dmitry Rozhkov
+  - email: hyeongju.lee@intel.com
+    name: Hyeongju Lee
   - email: mikko.ylinen@intel.com
     name: Mikko Ylinen
   maturity: alpha
@@ -122,4 +122,5 @@ spec:
   provider:
     name: Intel® Corporation
     url: https://intel.com
+  replaces: intel-device-plugins-operator.v0.23.0
   version: 0.24.0
