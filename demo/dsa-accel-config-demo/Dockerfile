@@ -4,7 +4,7 @@ RUN dnf install -y \
     wget autoconf automake libtool m4 diffutils file make dnf-utils patch \
     libuuid-devel json-c-devel
 
-ARG ACCEL_CONFIG_VERSION=v3.4.6.3
+ARG ACCEL_CONFIG_VERSION=v3.4.6.4
 
 RUN wget -O- https://github.com/intel/idxd-config/archive/accel-config-$ACCEL_CONFIG_VERSION.tar.gz | tar -zx
 
