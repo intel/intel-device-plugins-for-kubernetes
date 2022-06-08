@@ -152,9 +152,9 @@ We can test the plugin is working by deploying the provided example accel-config
 1. Build a Docker image with an accel-config tests:
 
     ```bash
-    $ make dsa-accel-config-demo
+    $ make accel-config-demo
     ...
-    Successfully tagged dsa-accel-config-demo:devel
+    Successfully tagged accel-config-demo:devel
     ```
 
 1. Create a pod running unit tests off the local Docker image:

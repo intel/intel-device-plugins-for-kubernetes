@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: dsa-accel-config-demo
-    image: intel/dsa-accel-config-demo:devel
+    image: intel/accel-config-demo:devel
     imagePullPolicy: IfNotPresent
     resources:
       limits:
