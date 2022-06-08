@@ -220,7 +220,7 @@ func genTest(sysfs, statePattern string, tc testCase) func(t *testing.T) {
 			}
 		}
 
-		plugin := NewDevicePlugin(sysfs, statePattern, "", tc.sharedDevNum)
+		plugin := NewDevicePlugin(statePattern, "", tc.sharedDevNum)
 		plugin.getDevNodes = getFakeDevNodes
 
 		notifier := &fakeNotifier{

@@ -27,8 +27,6 @@ import (
 const (
 	// Device plugin settings.
 	namespace = "dsa.intel.com"
-	// SysFS directory.
-	sysfsDir = "/sys/bus/dsa/devices"
 	// Device directories.
 	devDir = "/dev/dsa"
 	// Glob pattern for the state sysfs entry.
@@ -46,7 +44,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	plugin := idxd.NewDevicePlugin(sysfsDir, statePattern, devDir, sharedDevNum)
+	plugin := idxd.NewDevicePlugin(statePattern, devDir, sharedDevNum)
 	if plugin == nil {
 		klog.Fatal("Cannot create device plugin, please check above error messages.")
 	}
