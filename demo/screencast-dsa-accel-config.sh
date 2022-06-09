@@ -76,7 +76,7 @@ screen3()
   clear
   out 'Run test workload that uses DSA'
   command 'curl https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/demo/dsa-accel-config-demo-pod.yaml' 100
-  command 'curl https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/demo/dsa-accel-config-demo/Dockerfile' 100
+  command 'curl https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/demo/accel-config-demo/Dockerfile' 100
   command 'kubectl create -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/demo/dsa-accel-config-demo-pod.yaml' 100
   sleep 5
   out 'Look at the workload output'
