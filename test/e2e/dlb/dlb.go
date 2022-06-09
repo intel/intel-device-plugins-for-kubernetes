@@ -36,7 +36,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("dlb plugin", describe)
+	ginkgo.Describe("DLB plugin", describe)
 }
 
 func describe() {

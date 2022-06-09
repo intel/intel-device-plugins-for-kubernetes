@@ -157,6 +157,9 @@ e2e-dsa:
 e2e-iaa:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "IAA" -delete-namespace-on-failure=false
 
+e2e-dlb:
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "DLB" -delete-namespace-on-failure=false
+
 terrascan:
 	@ls deployments/*/kustomization.yaml | while read f ; \
 	do \
