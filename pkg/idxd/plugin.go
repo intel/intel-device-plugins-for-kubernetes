@@ -45,7 +45,6 @@ type DevicePlugin struct {
 	scanTicker   *time.Ticker
 	scanDone     chan bool
 	getDevNodes  getDevNodesFunc
-	sysfsDir     string
 	statePattern string
 	devDir       string
 	charDevDir   string
@@ -53,9 +52,8 @@ type DevicePlugin struct {
 }
 
 // NewDevicePlugin creates DevicePlugin.
-func NewDevicePlugin(sysfsDir, statePattern, devDir string, sharedDevNum int) *DevicePlugin {
+func NewDevicePlugin(statePattern, devDir string, sharedDevNum int) *DevicePlugin {
 	return &DevicePlugin{
-		sysfsDir:     sysfsDir,
 		statePattern: statePattern,
 		devDir:       devDir,
 		charDevDir:   charDevDir,
