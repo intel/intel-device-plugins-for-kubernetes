@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dlb-libdlb-demo-vf-pod
+spec:
+  restartPolicy: Never
+  containers:
+  - name: dlb-libdlb-demo-vf-pod
+    image: intel/dlb-libdlb-demo:devel
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        dlb.intel.com/vf: 1
+        cpu: "500m"
+        memory: 200Mi
