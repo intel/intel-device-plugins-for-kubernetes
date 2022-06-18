@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation. All Rights Reserved.
+// Copyright 2021-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,11 +49,16 @@ func main() {
 
 	ctrl.SetLogger(klogr.New())
 
+	webHook := &webhook.Server{
+		Port:          9443,
+		TLSMinVersion: "1.3",
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
-		Port:               9443,
 		Logger:             ctrl.Log.WithName("SgxAdmissionWebhook"),
+		WebhookServer:      webHook,
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "a9b71ad3.intel.com",
 	})

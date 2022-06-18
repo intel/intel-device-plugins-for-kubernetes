@@ -77,11 +77,10 @@ test-with-kind: fixture intel-sgx-admissionwebhook intel-fpga-admissionwebhook i
 	kind load docker-image $(REG)intel-fpga-admissionwebhook:$(TAG)
 	kind load docker-image $(REG)intel-deviceplugin-operator:$(TAG)
 	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
-	# Test SGX Admission Webhook & FPGA Admission Webhook
+	# Test SGX Admission Webhook, FPGA Admission Webhook and Device Plugin Operator Manager's Webhook
 	$(GO) test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "SGX Admission"
 	$(GO) test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "FPGA Admission"
-	# Deploy Operator
-	kubectl apply -k deployments/operator/default/
+	$(GO) test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "Operator"
 
 envtest:
 	@$(GO) test ./test/envtest

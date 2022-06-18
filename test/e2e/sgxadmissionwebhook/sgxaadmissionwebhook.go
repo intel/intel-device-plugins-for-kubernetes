@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation. All Rights Reserved.
+// Copyright 2021-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ func describe() {
 
 	ginkgo.It("checks the webhook pod is safely configured", func() {
 		err := utils.TestContainersRunAsNonRoot([]v1.Pod{webhook})
+		gomega.Expect(err).To(gomega.BeNil())
+		err = utils.TestWebhookServerTLS(f, "https://intelsgxwebhook-webhook-service")
 		gomega.Expect(err).To(gomega.BeNil())
 	})
 	ginkgo.It("mutates created pods when no quote generation is needed", func() {
