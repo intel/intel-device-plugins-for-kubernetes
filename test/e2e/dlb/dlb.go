@@ -15,15 +15,13 @@
 package dlb
 
 import (
-	"context"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
 	"k8s.io/kubernetes/test/e2e/framework/kubectl"
@@ -33,10 +31,12 @@ import (
 
 const (
 	kustomizationYaml = "deployments/dlb_plugin/kustomization.yaml"
+	demoPFYaml        = "demo/dlb-libdlb-demo-pf-pod.yaml"
+	demoVFYaml        = "demo/dlb-libdlb-demo-vf-pod.yaml"
 )
 
 func init() {
-	ginkgo.Describe("dlb plugin", describe)
+	ginkgo.Describe("DLB plugin", describe)
 }
 
 func describe() {
@@ -48,7 +48,7 @@ func describe() {
 		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
 	}
 
-	ginkgo.It("checks availability of DLB resources", func() {
+	ginkgo.It("runs DLB plugin and a demo workload", func() {
 		ginkgo.By("deploying DLB plugin")
 		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
@@ -60,44 +60,35 @@ func describe() {
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 
-		ginkgo.By("checking the pf resource is allocatable")
-		if err := utils.WaitForNodesWithResource(f.ClientSet, "dlb.intel.com/pf", 30*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-		}
-		ginkgo.By("checking the vf resource is allocatable")
-		if err := utils.WaitForNodesWithResource(f.ClientSet, "dlb.intel.com/vf", 30*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+		for _, resource := range []v1.ResourceName{"dlb.intel.com/pf", "dlb.intel.com/vf"} {
+			ginkgo.By("checking the " + resource.String() + " resource is allocatable")
+			if err := utils.WaitForNodesWithResource(f.ClientSet, resource, 30*time.Second); err != nil {
+				framework.Failf("unable to wait for nodes to have positive allocatable resource %s: %v", resource, err)
+			}
 		}
 
-		ginkgo.By("submitting a pod requesting DLB resources")
-		podSpec := &v1.Pod{
-			ObjectMeta: metav1.ObjectMeta{Name: "dlbplugin-tester"},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					{
-						Name:  "testcontainer-pf",
-						Image: "intel/dlb-libdlb-demo:devel",
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{"dlb.intel.com/pf": resource.MustParse("1")},
-							Limits:   v1.ResourceList{"dlb.intel.com/pf": resource.MustParse("1")},
-						},
-					},
-					{
-						Name:  "testcontainer-vf",
-						Image: "intel/dlb-dpdk-demo:devel",
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{"dlb.intel.com/vf": resource.MustParse("1")},
-							Limits:   v1.ResourceList{"dlb.intel.com/vf": resource.MustParse("1")},
-						},
-					},
-				},
-				RestartPolicy: v1.RestartPolicyNever,
-			},
-		}
-		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), podSpec, metav1.CreateOptions{})
-		framework.ExpectNoError(err, "pod Create API error")
+		for function, yaml := range map[string]string{"PF": demoPFYaml, "VF": demoVFYaml} {
+			demoPath, err := utils.LocateRepoFile(yaml)
+			if err != nil {
+				framework.Failf("unable to locate %q: %v", yaml, err)
+			}
 
-		ginkgo.By("waiting the pod to finnish successfully")
-		f.PodClient().WaitForSuccess(pod.ObjectMeta.Name, 60*time.Second)
+			podName := strings.TrimSuffix(filepath.Base(yaml), filepath.Ext(yaml))
+
+			ginkgo.By("submitting a pod requesting DLB " + function + " resources")
+			framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-f", demoPath)
+
+			ginkgo.By("waiting for the DLB demo to succeed")
+			f.PodClient().WaitForSuccess(podName, 200*time.Second)
+
+			ginkgo.By("getting workload log")
+			log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, podName, podName)
+
+			if err != nil {
+				framework.Failf("unable to get log from pod: %v", err)
+			}
+
+			framework.Logf("log output: %s", log)
+		}
 	})
 }

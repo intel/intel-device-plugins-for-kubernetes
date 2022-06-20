@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dlb-libdlb-demo-vf-pod
+spec:
+  restartPolicy: Never
+  containers:
+  - name: dlb-libdlb-demo-vf-pod
+    image: intel/dlb-libdlb-demo:devel
+    command: [ "sh", "-c", "/usr/local/bin/dir_traffic -n 8 -w epoll -d $(ls /dev/dlb* | sed 's/\\/dev\\/dlb//')" ]
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        dlb.intel.com/vf: 1
+        cpu: "500m"
+        memory: 200Mi
