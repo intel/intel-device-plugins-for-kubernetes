@@ -9,7 +9,7 @@ on:
       - main
       - 'release-*'
 env:
-  GO_VERSION: 1.18.1
+  GO_VERSION: 1.18.3
   K8S_VERSION: 1.22.1
 jobs:
 
@@ -51,7 +51,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.45.0
+          version: v1.46.2
           args: -v --timeout 5m
 
   build:

@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ func DeployWebhook(f *framework.Framework, kustomizationPath string) v1.Pod {
 	framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", tmpDir)
 
 	podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
-		labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1 /* one replica */, 30*time.Second)
+		labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1 /* one replica */, 60*time.Second)
 	if err != nil {
 		framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
 		kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
@@ -207,6 +207,49 @@ func TestPodsFileSystemInfo(pods []v1.Pod) error {
 			printVolumeMounts(c.VolumeMounts)
 		}
 	}
+
+	return nil
+}
+
+func TestWebhookServerTLS(f *framework.Framework, serviceName string) error {
+	podSpec := &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "testssl-tester",
+			Namespace: f.Namespace.Name,
+		},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Args: []string{
+						"--openssl=/usr/bin/openssl",
+						"-p",
+						"-f",
+						"-W",
+						serviceName},
+					Name:            "testssl-container",
+					Image:           "drwetter/testssl.sh",
+					ImagePullPolicy: "IfNotPresent",
+				},
+			},
+			RestartPolicy: v1.RestartPolicyNever,
+		},
+	}
+
+	_, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), podSpec, metav1.CreateOptions{})
+	framework.ExpectNoError(err, "pod Create API error")
+
+	// TODO: check testssl.sh exit codes
+	err = e2epod.WaitForPodSuccessInNamespaceTimeout(f.ClientSet, "testssl-tester", f.Namespace.Name, 180*time.Second)
+	if err != nil {
+		return errors.Wrap(err, "testssl.sh run did not succeed")
+	}
+
+	output, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, "testssl-tester", "testssl-container")
+	if err != nil {
+		return errors.Wrap(err, "failed to get output for testssl.sh run")
+	}
+
+	framework.Logf("testssl.sh output:\n %s", output)
 
 	return nil
 }

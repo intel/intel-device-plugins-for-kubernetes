@@ -126,11 +126,16 @@ func main() {
 		"sgx":  sgx.SetupReconciler,
 	}
 
+	webHook := &webhook.Server{
+		Port:          9443,
+		TLSMinVersion: "1.3",
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
-		Port:               9443,
 		Logger:             ctrl.Log.WithName("intel-device-plugins-manager"),
+		WebhookServer:      webHook,
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "d1c7b6d5.intel.com",
 	})
