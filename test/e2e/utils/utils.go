@@ -224,6 +224,7 @@ func TestWebhookServerTLS(f *framework.Framework, serviceName string) error {
 						"--openssl=/usr/bin/openssl",
 						"-p",
 						"-f",
+						"-W",
 						serviceName},
 					Name:            "testssl-container",
 					Image:           "drwetter/testssl.sh",
