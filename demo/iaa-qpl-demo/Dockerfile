@@ -12,26 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM fedora:32 AS builder
+FROM ubuntu:20.04 AS builder
 
-RUN dnf install -y accel-config accel-config-devel \
-    git cmake make g++ nasm clang libuuid-devel
+RUN apt update && DEBIAN_FRONTEND=noninteractive TZ="Etc/UTC" \
+    apt install -y --no-install-recommends \
+    g++ clang nasm cmake make git ca-certificates uuid-dev \
+    gcc autoconf automake libtool pkg-config libjson-c-dev curl
 
 RUN git clone --recursive --depth 1 --branch v0.1.20 \
-    https://github.com/intel/qpl.git qpl.git
-
-RUN cd qpl.git && \
-    mkdir build && \
-    cd build && \
+    https://github.com/intel/qpl.git && \
+    mkdir qpl/build && cd qpl/build && \
     cmake .. && \
-    cmake --build . --target install
+    make install
 
-FROM fedora:32
+ARG ACCEL_CONFIG_VERSION=v3.4.6.4
 
-RUN dnf install -y accel-config accel-config-devel python
+RUN curl -sSL https://github.com/intel/idxd-config/archive/accel-config-$ACCEL_CONFIG_VERSION.tar.gz | tar -zx && \
+    cd idxd-config-accel-config-$ACCEL_CONFIG_VERSION && \
+    ./git-version-gen && \
+    autoreconf -i && \
+    ./configure -q --libdir=/usr/lib64 --disable-test --disable-docs && \
+    make install
 
-COPY --from=builder /usr/local/bin/tests /usr/bin/iaa-tests
-COPY --from=builder /usr/local/bin/test_frontend /usr/bin/iaa-test_frontend
-COPY --from=builder /usr/local/bin/init_tests /usr/local/bin/iaa-init_tests
+FROM ubuntu:20.04
 
-ENTRYPOINT /usr/bin/iaa-test_frontend && python init_tests.py --test_path=/usr/local/bin/iaa-init_tests
+RUN apt update && DEBIAN_FRONTEND=noninteractive TZ="Etc/UTC" \
+    apt install -y libjson-c4 python
+
+COPY --from=builder /usr/bin/accel-config /usr/bin/
+COPY --from=builder /usr/lib64/libaccel-config.so.1.0.0 "/lib/x86_64-linux-gnu/"
+RUN ldconfig
+
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
+
+ENTRYPOINT cd /usr/local/bin/test_frontend && python init_tests.py --test_path=/usr/local/bin/init_tests
