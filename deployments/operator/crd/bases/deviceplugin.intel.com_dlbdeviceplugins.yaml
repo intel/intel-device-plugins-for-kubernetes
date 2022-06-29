@@ -53,6 +53,10 @@ spec:
               image:
                 description: Image is a container image with DLB device plugin executable.
                 type: string
+              initImage:
+                description: InitImage is a container image with a script that initializes
+                  devices.
+                type: string
               logLevel:
                 description: LogLevel sets the plugin's log level.
                 minimum: 0

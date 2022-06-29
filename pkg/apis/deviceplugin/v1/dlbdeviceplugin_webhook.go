@@ -85,5 +85,11 @@ func (r *DlbDevicePlugin) ValidateDelete() error {
 }
 
 func (r *DlbDevicePlugin) validatePlugin() error {
+	if r.Spec.InitImage != "" {
+		if err := validatePluginImage(r.Spec.InitImage, "intel-dlb-initcontainer", dlbMinVersion); err != nil {
+			return err
+		}
+	}
+
 	return validatePluginImage(r.Spec.Image, "intel-dlb-plugin", dlbMinVersion)
 }

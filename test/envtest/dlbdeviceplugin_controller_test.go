@@ -37,6 +37,7 @@ var _ = Describe("DlbDevicePlugin Controller", func() {
 		It("should handle DlbDevicePlugin objects correctly", func() {
 			spec := devicepluginv1.DlbDevicePluginSpec{
 				Image:        "dlb-testimage",
+				InitImage:    "dlb-testinitimage",
 				NodeSelector: map[string]string{"feature.node.kubernetes.io/dlb": "true"},
 			}
 
@@ -65,13 +66,18 @@ var _ = Describe("DlbDevicePlugin Controller", func() {
 			ds := &apps.DaemonSet{}
 			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-dlb-plugin"}, ds)
 			Expect(ds.Spec.Template.Spec.Containers[0].Image).To(Equal(spec.Image))
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(spec.InitImage))
 			Expect(ds.Spec.Template.Spec.NodeSelector).To(Equal(spec.NodeSelector))
 
 			By("updating DlbDevicePlugin successfully")
 			updatedImage := "updated-dlb-testimage"
+			updatedInitImage := "updated-dlb-testinitimage"
 			updatedNodeSelector := map[string]string{"updated-dlb-nodeselector": "true"}
 			updatedLogLevel := 3
+
 			fetched.Spec.Image = updatedImage
+			fetched.Spec.InitImage = updatedInitImage
 			fetched.Spec.NodeSelector = updatedNodeSelector
 			fetched.Spec.LogLevel = updatedLogLevel
 
@@ -92,10 +98,15 @@ var _ = Describe("DlbDevicePlugin Controller", func() {
 			}
 			Expect(ds.Spec.Template.Spec.Containers[0].Image).Should(Equal(updatedImage))
 			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(ConsistOf(expectArgs))
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(updatedInitImage))
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(Equal(updatedNodeSelector))
 
 			By("updating DlbDevicePlugin with different values successfully")
+			updatedInitImage = ""
 			updatedNodeSelector = map[string]string{}
+
+			fetched.Spec.InitImage = updatedInitImage
 			fetched.Spec.NodeSelector = updatedNodeSelector
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
@@ -122,11 +133,12 @@ var _ = Describe("DlbDevicePlugin Controller", func() {
 	It("upgrades", func() {
 		dp := &devicepluginv1.DlbDevicePlugin{}
 
-		var image string
+		var image, initimage string
 
-		testUpgrade("dlb", dp, &image, nil)
+		testUpgrade("dlb", dp, &image, &initimage)
 
 		Expect(dp.Spec.Image == image).To(BeTrue())
+		Expect(dp.Spec.InitImage == initimage).To(BeTrue())
 	})
 
 	var _ = AfterEach(func() {

@@ -120,6 +120,7 @@ jobs:
           - intel-iaa-plugin
           - intel-idxd-config-initcontainer
           - intel-dlb-plugin
+          - intel-dlb-initcontainer
 
           # Demo images
           - crypto-perf

@@ -13,7 +13,7 @@ on:
       - 'release-*'
 
 env:
-  IMAGES: 'intel-dlb-plugin dlb-libdlb-demo'
+  IMAGES: 'intel-dlb-plugin intel-dlb-initcontainer dlb-libdlb-demo'
 
 permissions:
   contents: read
