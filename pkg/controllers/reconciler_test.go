@@ -19,6 +19,10 @@ import (
 )
 
 func TestUpgrade(test *testing.T) {
+	image := "intel/intel-dsa-plugin"
+	initimage := "intel/intel-idxd-config-initcontainer"
+	version := ":" + ImageMinVersion.String()
+	prevVersion := ":" + ImageMinVersion.WithMinor(ImageMinVersion.Minor()-1).String()
 	tests := []struct {
 		image             string
 		initimage         string
@@ -27,31 +31,31 @@ func TestUpgrade(test *testing.T) {
 		upgrade           bool
 	}{
 		{
-			image:             "intel/intel-dsa-plugin:0.22.0",
-			expectedImage:     "intel/intel-dsa-plugin:0.24.0",
-			initimage:         "intel/intel-idxd-config-initcontainer:0.22.0",
-			expectedInitimage: "intel/intel-idxd-config-initcontainer:0.24.0",
+			image:             image + prevVersion,
+			expectedImage:     image + version,
+			initimage:         initimage + prevVersion,
+			expectedInitimage: initimage + version,
 			upgrade:           true,
 		},
 		{
-			image:             "intel/intel-dsa-plugin:0.24.0",
-			expectedImage:     "intel/intel-dsa-plugin:0.24.0",
-			initimage:         "intel/intel-idxd-config-initcontainer:0.24.0",
-			expectedInitimage: "intel/intel-idxd-config-initcontainer:0.24.0",
+			image:             image + version,
+			expectedImage:     image + version,
+			initimage:         initimage + version,
+			expectedInitimage: initimage + version,
 			upgrade:           false,
 		},
 		{
-			image:             "intel/intel-dsa-plugin:latest",
-			expectedImage:     "intel/intel-dsa-plugin:latest",
-			initimage:         "intel/intel-idxd-config-initcontainer:latest",
-			expectedInitimage: "intel/intel-idxd-config-initcontainer:latest",
+			image:             image + ":devel",
+			expectedImage:     image + ":devel",
+			initimage:         initimage + ":devel",
+			expectedInitimage: initimage + ":devel",
 			upgrade:           false,
 		},
 		{
-			image:             "intel/intel-dsa-plugin",
-			expectedImage:     "intel/intel-dsa-plugin",
-			initimage:         "intel/intel-idxd-config-initcontainer",
-			expectedInitimage: "intel/intel-idxd-config-initcontainer",
+			image:             image,
+			expectedImage:     image,
+			initimage:         initimage,
+			expectedInitimage: initimage,
 			upgrade:           false,
 		},
 	}
