@@ -8,11 +8,11 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/google/go-cmp v0.5.8
 	github.com/google/gousb v1.1.2
-	github.com/klauspost/cpuid/v2 v2.0.14
+	github.com/klauspost/cpuid/v2 v2.1.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
 	github.com/pkg/errors v0.9.1
-	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
+	golang.org/x/sys v0.0.0-20220704084225-05e143d24a9e
 	golang.org/x/text v0.3.7
 	google.golang.org/grpc v1.47.0
 	k8s.io/api v0.24.2
