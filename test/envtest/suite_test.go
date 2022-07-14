@@ -135,6 +135,14 @@ func up() {
 	time.Sleep(time.Second)
 }
 
+func CleanupAfter(name string, cr client.Object) {
+	namespacedName := types.NamespacedName{Namespace: ns, Name: name + "deviceplugin-test"}
+
+	if err := k8sClient.Get(ctx, namespacedName, cr); err == nil {
+		Expect(k8sClient.Delete(ctx, cr)).Should(Succeed())
+	}
+}
+
 func down() {
 	time.Sleep(time.Second)
 

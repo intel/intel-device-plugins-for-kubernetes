@@ -143,4 +143,8 @@ var _ = Describe("FpgaDevicePlugin Controller", func() {
 		Expect(dp.Spec.Image == image).To(BeTrue())
 		Expect(dp.Spec.InitImage == initimage).To(BeTrue())
 	})
+
+	var _ = AfterEach(func() {
+		CleanupAfter("fpga", &devicepluginv1.FpgaDevicePlugin{})
+	})
 })
