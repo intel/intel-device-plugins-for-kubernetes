@@ -7,3 +7,4 @@ spec:
     spec:
       nodeSelector:
         feature.node.kubernetes.io/pci-0300_8086.present: "true"
+        feature.node.kubernetes.io/pci-0380_8086.present: "true"
