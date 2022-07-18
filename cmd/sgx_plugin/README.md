@@ -106,7 +106,7 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 #### Deploy SGX device plugin with the operator
 
 ```bash
-$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/<RELEASE_VERSION>/deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml
 ```
 
 ### Getting the source code
