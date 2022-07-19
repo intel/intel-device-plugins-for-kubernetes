@@ -8,7 +8,7 @@ pipeline {
   environment {
     GO111MODULE="on"
     REG="cloud-native-image-registry.westus.cloudapp.azure.com/"
-    K8S_VERSION="1.22.1"
+    K8S_VERSION="1.24.2"
     GOLANGCI_LINT_VERSION="v1.46.2"
     GO_VERSION="1.18.3"
     GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
