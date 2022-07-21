@@ -1,7 +1,7 @@
 FROM ubuntu:20.04 as builder
 
-ARG QATLIB_VERSION="21.11.0"
-ARG QAT_ENGINE_VERSION="v0.6.12"
+ARG QATLIB_VERSION="22.07.0"
+ARG QAT_ENGINE_VERSION="v0.6.13"
 ARG ASYNC_NGINX_VERSION="v0.4.7"
 ARG IPSEC_MB_VERSION="v1.2"
 ARG IPP_CRYPTO_VERSION="ippcp_2021.5"
@@ -29,9 +29,10 @@ RUN apt update && \
     git clone --depth 1 -b $QATLIB_VERSION https://github.com/intel/qatlib
 
 RUN cd /qatlib && \
-    sed -i -e '79,87d' configure.ac && \
     ./autogen.sh && \
-    ./configure --prefix=/usr && \
+    ./configure \
+    --prefix=/usr \
+    --enable-systemd=no && \
     make -j && \
     make install samples-install
 
@@ -47,7 +48,6 @@ RUN cd /intel-ipsec-mb && \
     make && make install LIB_INSTALL_DIR=/usr/lib64
 
 RUN cd /QAT_Engine && \
-    sed -i -e '258,258 {s/ -a.*//}' configure.ac && \
     ./autogen.sh && \
     ./configure \
     --enable-qat_sw \
@@ -72,7 +72,7 @@ RUN cd /asynch_mode_nginx && \
 FROM ubuntu:20.04
 
 COPY --from=builder /usr/bin/*_sample* /usr/bin/
-COPY --from=builder /usr/lib/libqat.so.2.0.0 /usr/lib/
+COPY --from=builder /usr/lib/libqat.so.3.0.0 /usr/lib/
 COPY --from=builder /usr/lib/libusdm.so.0.0.1 /usr/lib/
 COPY --from=builder /usr/lib64/libIPSec_MB.so.1 /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /usr/local/lib/libcrypto_mb.so.11.3 /usr/lib/x86_64-linux-gnu/
