@@ -1,0 +1,24 @@
+{{- /*
+based on
+deployments/operator/samples/deviceplugin_v1_qatdeviceplugin.yaml
+*/}}
+
+apiVersion: deviceplugin.intel.com/v1
+kind: QatDevicePlugin
+metadata:
+  name: {{ .Values.qat.metadata.name }}
+  annotations:
+    {{ toYaml .Values.qat.metadata.annotations | indent 4 }}
+spec:
+  image: {{ .Values.qat.spec.image }}
+  {{- if .Values.qat.spec.initImage }}
+    initImage: {{ .Values.qat.spec.initImage }}
+  {{- end }}  
+  dpdkDriver: {{ .Values.qat.spec.dpdkDriver }}
+  kernelVfDrivers:
+    {{- range .Values.qat.spec.kernelVfDrivers }}
+    - {{ . }}
+    {{- end  }}
+  maxNumDevices: {{ .Values.qat.spec.maxNumDevices }}
+  logLevel:  {{ .Values.qat.spec.logLevel }}
+  nodeSelector: {{ .Values.qat.spec.nodeSelector | toYaml | nindent 4 }}
