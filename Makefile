@@ -9,7 +9,7 @@ BUILDER ?= "docker"
 EXTRA_BUILD_ARGS ?= ""
 
 CERT_MANAGER_VERSION ?= v1.8.1
-CONTROLLER_GEN_VERSION ?= v0.8.0
+CONTROLLER_GEN_VERSION ?= v0.9.2
 GOLANGCI_LINT_VERSION ?= v1.45.0
 KIND_VERSION ?= v0.14.0
 GOLICENSES_VERSION ?= v1.2.0
@@ -104,6 +104,9 @@ generate:
 	$(CONTROLLER_GEN) webhook \
 		paths="./pkg/fpgacontroller/..." \
 		output:webhook:artifacts:config=deployments/fpga_admissionwebhook/webhook
+	$(CONTROLLER_GEN) webhook \
+		paths="./pkg/webhooks/sgx/..." \
+		output:webhook:artifacts:config=deployments/sgx_admissionwebhook/webhook
 	$(CONTROLLER_GEN) rbac:roleName=gpu-manager-role paths="./cmd/gpu_plugin/..." output:dir=deployments/operator/rbac
 	cp deployments/operator/rbac/role.yaml deployments/operator/rbac/gpu_manager_role.yaml
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./pkg/..." output:dir=deployments/operator/rbac
