@@ -11,6 +11,9 @@ on:
 env:
   IMAGES: 'intel-sgx-plugin intel-sgx-initcontainer intel-sgx-admissionwebhook'
 
+permissions:
+  contents: read
+
 jobs:
   e2e-sgx:
     name: e2e-sgx
