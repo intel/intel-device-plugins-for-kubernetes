@@ -28,10 +28,12 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 ```
 Make sure both NFD master and worker pods are running:
 
+```
 $ kubectl get pods -n node-feature-discovery
 NAME                          READY   STATUS    RESTARTS   AGE
 nfd-master-599c58dffc-9wql4   1/1     Running   0          25h
 nfd-worker-qqq4h              1/1     Running   0          25h
+```
 
 Note that labelling is not performed immediately. Give NFD 1 minute to pick up the rules and label nodes.
 
