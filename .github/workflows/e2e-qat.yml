@@ -11,6 +11,9 @@ on:
 env:
   IMAGES: 'intel-qat-plugin intel-qat-initcontainer crypto-perf'
 
+permissions:
+  contents: read
+
 jobs:
   e2e-qat:
     name: e2e-qat

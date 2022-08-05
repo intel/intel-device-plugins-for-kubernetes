@@ -11,6 +11,9 @@ on:
 env:
   IMAGES: 'intel-dlb-plugin dlb-libdlb-demo'
 
+permissions:
+  contents: read
+
 jobs:
   e2e-dlb:
     name: e2e-dlb

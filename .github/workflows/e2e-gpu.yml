@@ -11,6 +11,9 @@ on:
 env:
   IMAGES: 'intel-gpu-plugin intel-gpu-initcontainer'
 
+permissions:
+  contents: read
+
 jobs:
   e2e-gpu:
     name: e2e-gpu

@@ -11,6 +11,9 @@ on:
 env:
   IMAGES: 'intel-dsa-plugin intel-idxd-config-initcontainer accel-config-demo'
 
+permissions:
+  contents: read
+
 jobs:
   e2e-dsa:
     name: e2e-dsa

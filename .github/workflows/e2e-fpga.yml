@@ -11,6 +11,9 @@ on:
 env:
   IMAGES: 'intel-fpga-plugin intel-fpga-initcontainer intel-fpga-admissionwebhook opae-nlb-demo'
 
+permissions:
+  contents: read
+
 jobs:
   e2e-fpga:
     name: e2e-fpga

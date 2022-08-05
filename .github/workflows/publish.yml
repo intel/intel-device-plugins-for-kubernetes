@@ -8,9 +8,14 @@ on:
         - release-0.23
         - release-0.24
 
+permissions:
+  contents: read
+
 jobs:
   build:
 
+    permissions:
+      contents: write  # for Git to git push
     runs-on: ubuntu-latest
 
     steps:

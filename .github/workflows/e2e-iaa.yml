@@ -11,6 +11,9 @@ on:
 env:
   IMAGES: 'intel-iaa-plugin intel-idxd-config-initcontainer accel-config-demo'
 
+permissions:
+  contents: read
+
 jobs:
   e2e-iaa:
     name: e2e-iaa
