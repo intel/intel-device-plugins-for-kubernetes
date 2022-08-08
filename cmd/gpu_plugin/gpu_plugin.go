@@ -367,8 +367,12 @@ func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi
 }
 
 func main() {
-	var opts cliOptions
+	var (
+		prefix string
+		opts   cliOptions
+	)
 
+	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable 'i915_monitoring' (= all GPUs) resource")
 	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
@@ -393,7 +397,7 @@ func main() {
 
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
 
-	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory, opts)
+	plugin := newDevicePlugin(prefix+sysfsDrmDirectory, prefix+devfsDriDirectory, opts)
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }
