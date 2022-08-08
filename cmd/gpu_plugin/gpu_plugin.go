@@ -1,4 +1,4 @@
-// Copyright 2017-2021 Intel Corporation. All Rights Reserved.
+// Copyright 2017-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -367,8 +367,10 @@ func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi
 }
 
 func main() {
+	var prefix string
 	var opts cliOptions
 
+	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable 'i915_monitoring' (= all GPUs) resource")
 	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
@@ -393,7 +395,15 @@ func main() {
 
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
 
-	plugin := newDevicePlugin(sysfsDrmDirectory, devfsDriDirectory, opts)
+	var sysfs, devfs string
+	if prefix != "" {
+		sysfs = prefix + sysfsDrmDirectory
+		devfs = prefix + devfsDriDirectory
+	} else {
+		sysfs = sysfsDrmDirectory
+		devfs = devfsDriDirectory
+	}
+	plugin := newDevicePlugin(sysfs, devfs, opts)
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }
