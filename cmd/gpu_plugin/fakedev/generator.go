@@ -38,6 +38,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 )
@@ -178,30 +179,37 @@ func addDebugfsDriTree(root string, opts *genOptions, i int) error {
 
 // generateDriFiles generarates the fake sysfs + debugfs + devfs dirs & files according to given options
 func generateDriFiles(opts genOptions) {
-	entries, _ := os.ReadDir(sysfsPath)
-	if len(entries) > 0 {
-		log.Printf("WARN: '%s' has already %d entries", sysfsPath, len(entries))
+	if opts.Info != "" {
+		log.Printf("Config: '%s'", opts.Info)
 	}
 	// real devfs entries are needed, so check just dri subdir
-	entries, _ = os.ReadDir(devfsPath + "/dri")
+	path := devfsPath + "/dri"
+	entries, _ := os.ReadDir(path)
 	if len(entries) > 0 {
-		log.Printf("WARN: '%s/dri' has already %d entries", devfsPath, len(entries))
+		if entries[0].Type()&fs.ModeDevice != 0 {
+			log.Fatalf("ERROR: real device(s) in '%s' - trying to overwrite real devfs?", path)
+		}
+		log.Printf("WARN: removing already existing %d entries from '%s'", len(entries), path)
+		os.RemoveAll(path)
+	}
+	entries, _ = os.ReadDir(sysfsPath)
+	if len(entries) > 0 {
+		log.Printf("WARN: removing already existing %d entries from '%s'", len(entries), sysfsPath)
+		os.RemoveAll(sysfsPath)
 	}
 	log.Printf("Generating fake DRI device(s) sysfs, debugfs and devfs content under '%s' & '%s'",
 		sysfsPath, devfsPath)
-	if opts.Info != "" {
-		log.Println(opts.Info)
-	}
+
 	opts.dirs, opts.files = 0, 0
 	for i := 0; i < opts.DevCount; i++ {
 		if err := addSysfsDriTree(sysfsPath, &opts, i); err != nil {
-			log.Fatalf("ERROR: sysfs tree generation failed: %v", err)
+			log.Fatalf("ERROR: dev-%d sysfs tree generation failed: %v", i, err)
 		}
 		if err := addDebugfsDriTree(sysfsPath, &opts, i); err != nil {
-			log.Fatalf("ERROR: debugfs tree generation failed: %v", err)
+			log.Fatalf("ERROR: dev-%d debugfs tree generation failed: %v", i, err)
 		}
 		if err := addDevfsDriTree(devfsPath, &opts, i); err != nil {
-			log.Fatalf("ERROR: devfs tree generation failed: %v", err)
+			log.Fatalf("ERROR: dev-%d devfs tree generation failed: %v", i, err)
 		}
 	}
 	log.Printf("Done, created %d dirs and %d file entries.", opts.dirs, opts.files)
