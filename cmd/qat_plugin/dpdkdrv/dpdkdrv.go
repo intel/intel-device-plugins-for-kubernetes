@@ -69,7 +69,7 @@ var qatDeviceDriver = map[string]string{
 	"6f55": "d15xxvf",
 }
 
-// swapBDF returns ["C1:B1:A1", "C2:B2:A2"], when the given parameter is ["A1:B1:C1", "A2:B2:C2"``].
+// swapBDF returns ["C1:B1:A1", "C2:B2:A2"], when the given parameter is ["A1:B1:C1", "A2:B2:C2"].
 func swapBDF(devstrings []string) []string {
 	result := make([]string, len(devstrings))
 
@@ -145,7 +145,7 @@ func NewDevicePlugin(maxDevices int, kernelVfDrivers string, dpdkDriver string, 
 	return newDevicePlugin(pciDriverDirectory, pciDeviceDirectory, maxDevices, kernelDrivers, dpdkDriver, allocationPolicyFunc), nil
 }
 
-//getAllocationPolicy returns a func that fits the policy given as a parameter. It returns nonePolicy when the flag is not set, and it returns nil when the policy is not valid value.
+// getAllocationPolicy returns a func that fits the policy given as a parameter. It returns nonePolicy when the flag is not set, and it returns nil when the policy is not valid value.
 func getAllocationPolicy(preferredAllocationPolicy string) preferredAllocationPolicyFunc {
 	switch {
 	case !isFlagSet("allocation-policy"):

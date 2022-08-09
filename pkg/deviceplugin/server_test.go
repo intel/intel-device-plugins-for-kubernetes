@@ -48,7 +48,7 @@ const (
 	resourceName     = namespace + "/testdevicetype"
 )
 
-//nolint: govet
+//nolint:govet
 type kubeletStub struct {
 	sync.Mutex
 	server         *grpc.Server

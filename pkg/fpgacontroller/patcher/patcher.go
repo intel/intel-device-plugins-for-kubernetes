@@ -71,7 +71,8 @@ var (
 )
 
 // Patcher stores FPGA controller's state.
-//nolint: govet
+//
+//nolint:govet
 type Patcher struct {
 	sync.Mutex
 
