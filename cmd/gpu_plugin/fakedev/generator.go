@@ -38,9 +38,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/fs"
 	"log"
 	"os"
+
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -52,6 +53,10 @@ const (
 	sysfsPath  = "sys"
 	devfsPath  = "dev"
 	mib        = 1024.0 * 1024.0
+	// null device major, minor on linux
+	devNullMajor = 1
+	devNullMinor = 3
+	devNullType  = unix.S_IFCHR
 )
 
 var verbose bool
@@ -67,6 +72,7 @@ type genOptions struct {
 	// fields for counting what was generated
 	files int
 	dirs  int
+	devs  int
 }
 
 func addSysfsDriTree(root string, opts *genOptions, i int) error {
@@ -139,18 +145,20 @@ func addDevfsDriTree(root string, opts *genOptions, i int) error {
 	}
 	opts.dirs++
 
-	data := []byte("fakegpu")
+	mode := uint32(fileMode | devNullType)
+	devid := int(unix.Mkdev(uint32(devNullMajor), uint32(devNullMinor)))
+
 	file := fmt.Sprintf("%s/card%d", base, cardBase+i)
-	if err := os.WriteFile(file, data, fileMode); err != nil {
+	if err := unix.Mknod(file, mode, devid); err != nil {
 		return err
 	}
-	opts.files++
+	opts.devs++
 
 	file = fmt.Sprintf("%s/renderD%d", base, renderBase+i)
-	if err := os.WriteFile(file, data, fileMode); err != nil {
+	if err := unix.Mknod(file, mode, devid); err != nil {
 		return err
 	}
-	opts.files++
+	opts.devs++
 	return nil
 }
 
@@ -182,19 +190,17 @@ func generateDriFiles(opts genOptions) {
 	if opts.Info != "" {
 		log.Printf("Config: '%s'", opts.Info)
 	}
-	// real devfs entries are needed, so check just dri subdir
-	path := devfsPath + "/dri"
-	entries, _ := os.ReadDir(path)
+	entries, _ := os.ReadDir(devfsPath)
 	if len(entries) > 0 {
-		if entries[0].Type()&fs.ModeDevice != 0 {
-			log.Fatalf("ERROR: real device(s) in '%s' - trying to overwrite real devfs?", path)
+		if len(entries) > 1 || entries[0].Name() != "dri" {
+			log.Fatalf("ERROR: >1 entries in '%s', or '%s' != 'dri' - real devfs?", devfsPath, entries[0].Name())
 		}
-		log.Printf("WARN: removing already existing %d entries from '%s'", len(entries), path)
-		os.RemoveAll(path)
+		log.Printf("WARN: removing already existing %s'", devfsPath)
+		os.RemoveAll(devfsPath)
 	}
 	entries, _ = os.ReadDir(sysfsPath)
 	if len(entries) > 0 {
-		log.Printf("WARN: removing already existing %d entries from '%s'", len(entries), sysfsPath)
+		log.Printf("WARN: removing already existing '%s'", sysfsPath)
 		os.RemoveAll(sysfsPath)
 	}
 	log.Printf("Generating fake DRI device(s) sysfs, debugfs and devfs content under '%s' & '%s'",
@@ -212,7 +218,7 @@ func generateDriFiles(opts genOptions) {
 			log.Fatalf("ERROR: dev-%d devfs tree generation failed: %v", i, err)
 		}
 	}
-	log.Printf("Done, created %d dirs and %d file entries.", opts.dirs, opts.files)
+	log.Printf("Done, created %d dirs, %d devices and %d files.", opts.dirs, opts.devs, opts.files)
 }
 
 // getOptions parses options from given JSON file, validates and returns them
