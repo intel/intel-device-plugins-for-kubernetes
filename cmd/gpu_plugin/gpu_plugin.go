@@ -240,9 +240,13 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 			klog.Warning("Failed to scan: ", err)
 		}
 
-		found := len(devTree)
+		found := 0
+		for key := range devTree {
+			found += len(devTree[key])
+		}
 		if found != previouslyFound {
-			klog.V(1).Info("GPU scan update: devices found: ", found)
+			klog.V(1).Infof("GPU scan update: %d device resources (with %dx sharing) of %d types found",
+				found, dp.options.sharedDevNum, len(devTree))
 			previouslyFound = found
 		}
 
