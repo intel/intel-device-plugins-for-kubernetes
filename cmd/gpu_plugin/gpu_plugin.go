@@ -1,4 +1,4 @@
-// Copyright 2017-2021 Intel Corporation. All Rights Reserved.
+// Copyright 2017-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -240,9 +240,15 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 			klog.Warning("Failed to scan: ", err)
 		}
 
-		found := len(devTree)
+		found := 0
+		for _, resource := range devTree {
+			found += len(resource)
+		}
+
 		if found != previouslyFound {
-			klog.V(1).Info("GPU scan update: devices found: ", found)
+			klog.V(1).Infof("GPU scan update: %d device resources (with %dx sharing) of %d types found",
+				found, dp.options.sharedDevNum, len(devTree))
+
 			previouslyFound = found
 		}
 
