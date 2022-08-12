@@ -255,6 +255,22 @@ $ kubectl get pods
   intel-sgx-aesmd-mrnm8                1/1     Running   0          3h47m
   sgxdeviceplugin-sample-z5dcq-llwlw   1/1     Running   0          28m
 ```
+> **Note**: For quick experiments, [kind](https://kind.sigs.k8s.io/docs/user/configuration/) can be used to deploy the cluster. With `kind`, host path `/var/run/aesmd/` must be mounted to the nodes manually using [Extra Mounts](https://kind.sigs.k8s.io/docs/user/configuration/#extra-mounts`). \
+> Example:
+>```
+>$ cat kind_config.yaml
+>kind: Cluster
+>apiVersion: kind.x-k8s.io/v1alpha4
+>name: <your_node_name>
+>nodes:
+>- role: control-plane
+>   extraMounts:
+>   - hostPath: /var/run/aesmd
+>     containerPath: /var/run/aesmd
+>     propagation: Bidirectional 
+>```
+> And bootstrap kind with it \
+> `$ kind create cluster --config kind_config.yaml`
 
 The sample application runs SGX DCAP Quote Generation sample:
 
