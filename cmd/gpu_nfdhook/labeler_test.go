@@ -20,6 +20,8 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 )
 
 type testcase struct {
@@ -729,7 +731,7 @@ func TestSplit(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := split(test.str, test.maxLength)
+		result := pluginutils.Split(test.str, test.maxLength)
 		if !reflect.DeepEqual(test.expectedResult, result) {
 			t.Errorf("\n%q ended up with unexpected result %v vs expected %v", test.name, result, test.expectedResult)
 		}

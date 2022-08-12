@@ -342,27 +342,6 @@ func (l *labeler) createPCIGroupLabel(gpuNumList []string) string {
 	return labelValue
 }
 
-// split returns the given string cut to chunks of size up to maxLength size.
-// maxLength refers to the max length of the strings in the returned slice.
-// If the whole input string fits under maxLength, it is not split.
-// split("foo_bar", 4) returns []string{"foo_", "bar"}.
-func split(str string, maxLength uint) []string {
-	remainingString := str
-	results := []string{}
-
-	for len(remainingString) >= 0 {
-		if uint(len(remainingString)) <= maxLength {
-			results = append(results, remainingString)
-			return results
-		}
-
-		results = append(results, remainingString[:maxLength])
-		remainingString = remainingString[maxLength:]
-	}
-
-	return results
-}
-
 // createLabels is the main function of plugin labeler, it creates label-value pairs for the gpus.
 func (l *labeler) createLabels() error {
 	gpuNameList, err := l.scan()
@@ -412,11 +391,11 @@ func (l *labeler) createLabels() error {
 
 	if gpuCount > 0 {
 		// add gpu list label (example: "card0.card1.card2") - deprecated
-		l.labels[labelNamespace+gpuListLabelName] = split(strings.Join(gpuNameList, "."), labelMaxLength)[0]
+		l.labels[labelNamespace+gpuListLabelName] = pluginutils.Split(strings.Join(gpuNameList, "."), labelMaxLength)[0]
 
 		// add gpu num list label(s) (example: "0.1.2", which is short form of "card0.card1.card2")
 		allGPUs := strings.Join(gpuNumList, ".")
-		gpuNumLists := split(allGPUs, labelMaxLength)
+		gpuNumLists := pluginutils.Split(allGPUs, labelMaxLength)
 
 		l.labels[labelNamespace+gpuNumListLabelName] = gpuNumLists[0]
 		for i := 1; i < len(gpuNumLists); i++ {
@@ -427,7 +406,7 @@ func (l *labeler) createLabels() error {
 			// add numa node mapping to labels: gpu.intel.com/numa-gpu-map="0-0.1.2.3_1-4.5.6.7"
 			numaMappingLabel := createNumaNodeMappingLabel(numaMapping)
 
-			numaMappingLabelList := split(numaMappingLabel, labelMaxLength)
+			numaMappingLabelList := pluginutils.Split(numaMappingLabel, labelMaxLength)
 
 			l.labels[labelNamespace+numaMappingName] = numaMappingLabelList[0]
 			for i := 1; i < len(numaMappingLabelList); i++ {
@@ -441,7 +420,7 @@ func (l *labeler) createLabels() error {
 		// aa pci-group label(s), (two group example: "1.2.3.4_5.6.7.8")
 		allPCIGroups := l.createPCIGroupLabel(gpuNumList)
 		if allPCIGroups != "" {
-			pciGroups := split(allPCIGroups, labelMaxLength)
+			pciGroups := pluginutils.Split(allPCIGroups, labelMaxLength)
 
 			l.labels[labelNamespace+pciGroupLabelName] = pciGroups[0]
 			for i := 1; i < len(gpuNumLists); i++ {
