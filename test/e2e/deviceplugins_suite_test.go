@@ -19,7 +19,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/dlb"

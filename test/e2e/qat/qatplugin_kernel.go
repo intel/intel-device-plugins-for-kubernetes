@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,10 +49,6 @@ func describeQatKernelPlugin() {
 	}
 
 	ginkgo.It("checks availability of QAT resources", func() {
-		if !framework.TestContext.FeatureGates["enable-experimental"] {
-			ginkgo.Skip("running experimental tests is disabled")
-		}
-
 		ginkgo.By("deploying QAT plugin in kernel mode")
 		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "create", "-f", yamlPath)
 

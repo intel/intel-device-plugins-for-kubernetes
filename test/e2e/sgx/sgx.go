@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -72,7 +72,7 @@ func describe() {
 		framework.Logf("Create NodeFeatureRules:\n%s", msg)
 
 		if _, err = e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, "node-feature-discovery",
-			labels.Set{"app": "nfd-master"}.AsSelector(), 1 /* one replica */, 100*time.Second); err != nil {
+			labels.Set{"app": "nfd-master"}.AsSelector(), 1 /* one replica */, 180*time.Second); err != nil {
 			framework.Failf("unable to wait for NFD pods to be running and ready: %v", err)
 		}
 	})
