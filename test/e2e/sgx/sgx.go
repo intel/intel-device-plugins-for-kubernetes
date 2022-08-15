@@ -72,7 +72,7 @@ func describe() {
 		framework.Logf("Create NodeFeatureRules:\n%s", msg)
 
 		if _, err = e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, "node-feature-discovery",
-			labels.Set{"app": "nfd-master"}.AsSelector(), 1 /* one replica */, 100*time.Second); err != nil {
+			labels.Set{"app": "nfd-master"}.AsSelector(), 1 /* one replica */, 180*time.Second); err != nil {
 			framework.Failf("unable to wait for NFD pods to be running and ready: %v", err)
 		}
 	})
