@@ -2,3 +2,8 @@ image:
   hub: intel
   tag: "devel"
   pullPolicy: IfNotPresent
+
+# Arguments for the controller
+controllerExtraArgs: |-
+  - --metrics-bind-address=:8080
+  - --leader-elect=false
