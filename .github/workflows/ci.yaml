@@ -9,7 +9,7 @@ on:
       - main
       - 'release-*'
 env:
-  GO_VERSION: 1.18.3
+  GO_VERSION: 1.19
   K8S_VERSION: 1.24.2
 permissions:
   contents: read
@@ -50,6 +50,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+          check-latest: true
       - name: Install build dependencies needed for VPU plugin
         run: |
           sudo apt-get update
@@ -57,7 +58,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.46.2
+          version: v1.48.0
           args: -v --timeout 5m
 
   build:
@@ -68,6 +69,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+          check-latest: true
       - uses: actions/cache@v3
         with:
           path: |
@@ -158,6 +160,7 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+          check-latest: true
       - name: Test SGX & FPGA Admission Webhook, Deploy Operator
         run: |
           make test-with-kind

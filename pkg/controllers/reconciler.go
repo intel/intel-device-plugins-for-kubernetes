@@ -44,7 +44,7 @@ func init() {
 	bKeeper.pluginCounter = make(map[string]int)
 }
 
-//nolint: govet
+//nolint:govet
 type bookKeeper struct {
 	sync.Mutex
 	pluginCounter map[string]int

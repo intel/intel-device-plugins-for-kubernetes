@@ -47,7 +47,7 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
-// nolint:wsl
+//nolint:wsl
 func init() {
 	// Add schemes for DaemonSets, Pods etc...
 	_ = clientgoscheme.AddToScheme(scheme)

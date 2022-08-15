@@ -140,10 +140,10 @@ func (f *IntelFpgaPort) CheckExtension() (int, error) {
 
 // PortPR does Partial Reconfiguration based on Port ID and Buffer (Image)
 // provided by caller.
-// * Return: 0 on success, -errno on failure.
-// * If IntelFpga_FPGA_FME_PORT_PR returns -EIO, that indicates the HW has detected
-//   some errors during PR, under this case, the user can fetch HW error info
-//   from the status of FME's fpga manager.
+//   - Return: 0 on success, -errno on failure.
+//   - If IntelFpga_FPGA_FME_PORT_PR returns -EIO, that indicates the HW has detected
+//     some errors during PR, under this case, the user can fetch HW error info
+//     from the status of FME's fpga manager.
 func (f *IntelFpgaFME) PortPR(port uint32, bitstream []byte) error {
 	var value IntelFpgaFmePortPR
 

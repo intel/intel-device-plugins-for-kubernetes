@@ -442,14 +442,17 @@ func isPreferredAllocationRequestOk(rqt *pluginapi.PreferredAllocationRequest, s
 }
 
 // findAllocationPodCandidate tries to find the best allocation candidate pod, which must be:
-//  -pending for this node
-//  -using GPU resources in its spec
-//  -is found via grpc service with unallocated GPU devices
+//
+//	-pending for this node
+//	-using GPU resources in its spec
+//	-is found via grpc service with unallocated GPU devices
+//
 // returns:
-//  -the candidate pod struct pointer and no error, or
-//  -errRetry if unsuccessful, but there is perhaps hope of trying again with better luck
-//  -errZeroPending if no pending pods exist anymore (which is fine)
-//  -any grpc communication errors
+//
+//	-the candidate pod struct pointer and no error, or
+//	-errRetry if unsuccessful, but there is perhaps hope of trying again with better luck
+//	-errZeroPending if no pending pods exist anymore (which is fine)
+//	-any grpc communication errors
 func (rm *resourceManager) findAllocationPodCandidate() (*podCandidate, error) {
 	// get map of pending pods for this node
 	pendingPods, err := rm.getNodePendingGPUPods()

@@ -35,7 +35,7 @@ type testCase struct {
 	vendorID   int
 }
 
-//OpenDevices tries to inject gousb compatible fake device info.
+// OpenDevices tries to inject gousb compatible fake device info.
 func (t *testCase) OpenDevices(opener func(desc *gousb.DeviceDesc) bool) ([]*gousb.Device, error) {
 	var ret []*gousb.Device
 
