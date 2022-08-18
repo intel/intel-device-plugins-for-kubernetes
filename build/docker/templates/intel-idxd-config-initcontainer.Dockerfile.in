@@ -1,4 +1,4 @@
-FROM debian:testing-slim AS builder
+FROM debian:stable-slim AS builder
 
 RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
         /etc/apt/sources.list.d/deb-src.list && \
@@ -21,7 +21,7 @@ RUN cd idxd-config-accel-config-v$ACCEL_CONFIG_VERSION && \
     make && \
     make install
 ###
-FROM debian:testing-slim
+FROM debian:stable-slim
 
 RUN apt update && apt install -y libjson-c5 jq
 
