@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fake-gen-config
+  namespace: validation
+immutable: false
+data:
+  fakedev.json: |-
+    {
+        "Info": "8x 4 GiB DG1 [Iris Xe MAX Graphics] GPUs",
+        "DevCount": 8,
+        "DevMemSize": 4294967296,
+        "Capabilities": {
+            "platform": "fake_DG1",
+            "graphics version": "12.10",
+            "media version": "12",
+            "display version": "12"
+        }
+    }
