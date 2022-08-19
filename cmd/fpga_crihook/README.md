@@ -4,9 +4,6 @@ Table of Contents
 
 * [Introduction](#introduction)
 * [Dependencies](#dependencies)
-* [Building](#building)
-    * [Getting the source code](#getting-the-source-code)
-    * [Building the image](#building-the-image)
 * [Configuring CRI-O](#configuring-cri-o)
 
 ## Introduction
@@ -40,26 +37,7 @@ install the following:
 All components have the same basic dependencies as the
 [generic plugin framework dependencies](../../README.md#about)
 
-## Building
-
-The following sections detail how to obtain, build and deploy the CRI-O
-prestart hook.
-
-### Getting the source code
-
-```bash
-$ export INTEL_DEVICE_PLUGINS_SRC=/path/to/intel-device-plugins-for-kubernetes
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL_DEVICE_PLUGINS_SRC}
-```
-
-### Building the image
-
-```bash
-$ cd ${INTEL_DEVICE_PLUGINS_SRC}
-$ make intel-fpga-initcontainer
-...
-Successfully tagged intel/intel-fpga-initcontainer:devel
-```
+See [the development guide](../../DEVEL.md) for details if you want to deploy a customized version of the CRI hook.
 
 ## Configuring CRI-O
 

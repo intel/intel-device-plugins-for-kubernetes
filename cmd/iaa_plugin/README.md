@@ -4,17 +4,9 @@ Table of Contents
 
 * [Introduction](#introduction)
 * [Installation](#installation)
-    * [Deploy with pre-built container image](#deploy-with-pre-built-container-image)
-    * [Getting the source code](#getting-the-source-code)
-    * [Verify node kubelet config](#verify-node-kubelet-config)
-    * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
-        * [Build the plugin image](#build-the-plugin-image)
-        * [Deploy plugin DaemonSet](#deploy-plugin-daemonset)
-    * [Deploy by hand](#deploy-by-hand)
-        * [Build the plugin](#build-the-plugin)
-        * [Run the plugin as administrator](#run-the-plugin-as-administrator)
+    * [Pre-built images](#pre-built-images)
     * [Verify plugin registration](#verify-plugin-registration)
-    * [Testing the plugin](#testing-the-plugin)
+* [Testing and Demos](#testing-and-demos)
 
 ## Introduction
 
@@ -26,42 +18,28 @@ The IAA plugin and operator optionally support provisioning of IAA devices and w
 
 ## Installation
 
-The following sections detail how to obtain, build, deploy and test the IAA device plugin.
+The following sections detail how to use the IAA device plugin.
 
-### Getting the source code
+### Pre-built Images
 
-```bash
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes
-```
+[Pre-built images](https://hub.docker.com/r/intel/intel-iaa-plugin)
+of this component are available on the Docker hub. These images are automatically built and uploaded
+to the hub from the latest main branch of this repository.
 
-### Deploying as a DaemonSet
-
-To deploy the IAA plugin as a daemonset, you first need to build a container image for the
-plugin and ensure that is visible to your nodes.
-
-#### Build the plugin image
-
-The following will use `docker` to build a local container image called
-`intel/intel-iaa-plugin` with the tag `devel`.
+Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers in the format `x.y.z`, corresponding to the branches and releases in this
+repository. Thus the easiest way to deploy the plugin in your cluster is to run this command
 
 ```bash
-$ cd ${INTEL_DEVICE_PLUGINS_SRC}
-$ make intel-iaa-plugin
-...
-Successfully tagged intel/intel-iaa-plugin:devel
-```
-
-#### Deploy plugin DaemonSet
-
-You can then use the [example DaemonSet YAML](/deployments/iaa_plugin/base/intel-iaa-plugin.yaml)
-file provided to deploy the plugin. The default kustomization that deploys the YAML as is:
-
-```bash
-$ kubectl apply -k deployments/iaa_plugin
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/iaa_plugin?ref=<RELEASE_VERSION>
 daemonset.apps/intel-iaa-plugin created
 ```
 
-### Deploy with initcontainer
+Where `<RELEASE_VERSION>` needs to be substituted with the desired [release tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) or `main` to get `devel` images.
+
+Nothing else is needed. See [the development guide](../../DEVEL.md) for details if you want to deploy a customized version of the plugin.
+
+#### Automatic Provisioning
 
 There's a sample [idxd initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-idxd-initcontainer.Dockerfile) included that provisions IAA devices and workqueues (1 engine / 1 group / 1 wq (user/dedicated)), to deploy:
 
@@ -70,8 +48,6 @@ $ kubectl apply -k deployments/iaa_plugin/overlays/iaa_initcontainer/
 ```
 
 The provisioning [script](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/idxd-init.sh) and [template](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/iaa.conf) are available for customization.
-
-### Deploy with initcontainer and provisioning config in the ConfigMap
 
 The provisioning config can be optionally stored in the ProvisioningConfig configMap which is then passed to initcontainer through the volume mount.
 
@@ -83,29 +59,7 @@ To create a custom provisioning config:
 $ kubectl create configmap --namespace=inteldeviceplugins-system intel-iaa-config --from-file=demo/iaa.conf
 ```
 
-### Deploy by hand
-
-For development purposes, it is sometimes convenient to deploy the plugin 'by hand' on a node.
-In this case, you do not need to build the complete container image, and can build just the plugin.
-
-#### Build the plugin
-
-First we build the plugin:
-
-```bash
-$ make iaa_plugin
-```
-
-#### Run the plugin as administrator
-
-Now we can run the plugin directly on the node:
-
-```bash
-$ sudo -E ./cmd/iaa_plugin/iaa_plugin
-device-plugin registered
-```
-
-### Verify plugin registration
+### Verify Plugin Registration
 
 You can verify the plugin has been registered with the expected nodes by searching for the relevant
 resource allocation status on the nodes:
@@ -120,7 +74,7 @@ node1
  iaa.intel.com/wq-user-shared: 30
 ```
 
-### Testing the plugin
+## Testing and Demos
 
 We can test the plugin is working by deploying the provided example iaa-qpl-demo test image.
 

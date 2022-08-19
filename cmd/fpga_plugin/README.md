@@ -3,19 +3,12 @@
 Table of Contents
 
 * [Introduction](#introduction)
-* [Component overview](#component-overview)
-* [FPGA modes](#fpga-modes)
+    * [Component overview](#component-overview)
+* [Modes and Configuration Options](#modes-and-configuration-options)
 * [Installation](#installation)
-    * [Pre-built images](#pre-built-images)
-    * [Dependencies](#dependencies)
-    * [Getting the source code](#getting-the-source-code)
-    * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
-        * [Verify plugin registration](#verify-plugin-registration)
-        * [Building the plugin image](#building-the-plugin-image)
-    * [Deploy by hand](#deploy-by-hand)
-        * [Build FPGA device plugin](#build-fpga-device-plugin)
-        * [Run FPGA device plugin in af mode](#run-fpga-device-plugin-in-af-mode)
-        * [Run FPGA device plugin in region mode](#run-fpga-device-plugin-in-region-mode)
+    * [Prerequisites](#prerequisites)
+    * [Pre-built Images](#pre-built-images)
+    * [Verify Plugin Registration](#verify-plugin-registration)
 
 ## Introduction
 
@@ -37,7 +30,7 @@ The components together implement the following features:
 - orchestration of FPGA programming
 - access control for FPGA hardware
 
-## Component overview
+### Component overview
 
 The following components are part of this repository, and work together to support Intel FPGAs under
 Kubernetes:
@@ -70,7 +63,7 @@ Kubernetes:
 The repository also contains an [FPGA helper tool](../fpga_tool/README.md) that may be useful during
 development, initial deployment and debugging.
 
-## FPGA modes
+### Modes and Configuration options
 
 The FPGA plugin set can run in one of two modes:
 
@@ -97,33 +90,9 @@ af mode:
 
 ## Installation
 
-The below sections cover how to obtain, build and install this component.
+The below sections cover how to use this component.
 
-Components can generally be installed either using DaemonSets or running them
-'by hand' on each node.
-
-### Pre-built images
-
-Pre-built images of the components are available on the [Docker hub](https://hub.docker.com/u/intel).
-These images are automatically built and uploaded to the hub from the latest `main` branch of
-this repository.
-
-Release tagged images of the components are also available on the Docker hub, tagged with their
-release version numbers (of the form `x.y.z`, matching the branch/tag release number in this repo).
-
-The deployment YAML files supplied with these components in this repository use the images with the
-`devel` tag by default. If you do not build your own local images, then your Kubernetes cluster may
-pull down the `devel` images from the Docker hub by default.
-
-To use the release tagged versions of the images, edit the YAML deployment files appropriately.
-
-The following images are available on the Docker hub:
-
-- [The FPGA plugin](https://hub.docker.com/r/intel/intel-fpga-plugin)
-- [The FPGA admisson webhook](https://hub.docker.com/r/intel/intel-fpga-admissionwebhook)
-- [The FPGA CRI-O prestart hook (in the `initcontainer` image)](https://hub.docker.com/r/intel/intel-fpga-initcontainer)
-
-### Dependencies
+### Prerequisites
 
 All components have the same basic dependencies as the
 [generic plugin framework dependencies](../../README.md#about)
@@ -153,18 +122,6 @@ which is present and thus to use:
 Install this component (FPGA device plugin) first, and then follow the links
 and instructions to install the other components.
 
-### Getting the source code
-
-To obtain the YAML files used for deployment, or to obtain the source tree if you intend to
-do a hand-deployment or build your own image, you will require access to the source code:
-
-```bash
-$ export INTEL_DEVICE_PLUGINS_SRC=/path/to/intel-device-plugins-for-kubernetes
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL_DEVICE_PLUGINS_SRC}
-```
-
-### Deploying as a DaemonSet
-
 The FPGA webhook deployment depends on having [cert-manager](https://cert-manager.io/)
 installed. See its installation instructions [here](https://cert-manager.io/docs/installation/kubectl/).
 
@@ -177,9 +134,24 @@ cert-manager-webhook-64dc9fff44-29cfc     1/1     Running   0          1m
 
 ```
 
+### Pre-built Images
+
+Pre-built images of the components are available on the [Docker hub](https://hub.docker.com/u/intel).
+These images are automatically built and uploaded to the hub from the latest `main` branch of
+this repository.
+
+Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers (of the form `x.y.z`, matching the branch/tag release number in this repo).
+
+The following images are available on the Docker hub:
+
+- [The FPGA plugin](https://hub.docker.com/r/intel/intel-fpga-plugin)
+- [The FPGA admisson webhook](https://hub.docker.com/r/intel/intel-fpga-admissionwebhook)
+- [The FPGA CRI-O prestart hook (in the `initcontainer` image)](https://hub.docker.com/r/intel/intel-fpga-initcontainer)
+
 Depending on the FPGA mode, run either
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/af
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/af?ref=<RELEASE_VERSION>
 namespace/intelfpgaplugin-system created
 customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
 customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
@@ -196,7 +168,7 @@ issuer.cert-manager.io/intelfpgaplugin-selfsigned-issuer created
 ```
 or
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/region
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/region?ref=<RELEASE_VERSION>
 namespace/intelfpgaplugin-system created
 customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
 customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
@@ -211,6 +183,9 @@ daemonset.apps/intelfpgaplugin-fpgadeviceplugin created
 certificate.cert-manager.io/intelfpgaplugin-serving-cert created
 issuer.cert-manager.io/intelfpgaplugin-selfsigned-issuer created
 ```
+
+Where `<RELEASE_VERSION>` needs to be substituted with the desired [release tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) or `main` to get `devel` images.
+
 The command should result in two pods running:
 ```bash
 $ kubectl get pods -n intelfpgaplugin-system
@@ -218,12 +193,6 @@ NAME                                       READY   STATUS    RESTARTS   AGE
 intelfpgaplugin-fpgadeviceplugin-skcw5     1/1     Running   0          57s
 intelfpgaplugin-webhook-7d6bcb8b57-k52b9   1/1     Running   0          57s
 ```
-
-If you intend to deploy your own image, you will need to reference the
-[image build section](#build-the-plugin-image) first.
-
-If you do not want to deploy the `devel` or release tagged image, you will need to create your
-own kustomization overlay referencing your required image.
 
 If you need the FPGA plugin on some nodes to operate in a different mode then add this
 annotation to the nodes:
@@ -241,7 +210,7 @@ And restart the pods on the nodes.
 > also deploys the [FPGA CRI-O hook](../fpga_crihook/README.md) `initcontainer` image, but it will be
 > benign (un-used) when running the FPGA plugin in `af` mode.
 
-#### Verify plugin registration
+#### Verify Plugin Registration
 
 Verify the FPGA plugin has been deployed on the nodes. The below shows the output
 you can expect in `region` mode, but similar output should be expected for `af`
@@ -253,76 +222,7 @@ fpga.intel.com/region-ce48969398f05f33946d560708be108a:  1
 fpga.intel.com/region-ce48969398f05f33946d560708be108a:  1
 ```
 
-#### Building the plugin image
-
-If you need to build your own image from sources, and are not using the images
-available on the Docker Hub, follow the below details.
-
 > **Note:** The FPGA plugin [DaemonSet YAML](/deployments/fpga_plugin/fpga_plugin.yaml)
 > also deploys the [FPGA CRI-O hook](../fpga_crihook/README.md) `initcontainer` image as well. You may
 > also wish to build that image locally before deploying the FPGA plugin to avoid deploying
 > the Docker hub default image.
-
-The following will use `docker` to build a local container image called
-`intel/intel-fpga-plugin` with the tag `devel`.
-The image build tool can be changed from the default docker by setting the `BUILDER` argument
-to the [Makefile](/Makefile).
-
-```bash
-$ cd ${INTEL_DEVICE_PLUGINS_SRC}
-$ make intel-fpga-plugin
-...
-Successfully tagged intel/intel-fpga-plugin:devel
-```
-
-This image launches `fpga_plugin` in `af` mode by default.
-
-To use your own container image, create you own kustomization overlay patching
-[`deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml`](/deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml)
-file.
-
-### Deploy by hand
-
-For development purposes, it is sometimes convenient to deploy the plugin 'by hand'
-on a node. In this case, you do not need to build the complete container image,
-and can build just the plugin.
-
-> **Note:** The FPGA plugin has a number of other associated items that may also need
-> to be configured or installed. It is recommended you reference the actions of the
-> DaemonSet YAML deployment for more details.
-
-#### Build FPGA device plugin
-
-When deploying by hand, you only need to build the plugin itself, and not the whole
-container image:
-
-```bash
-$ cd ${INTEL_DEVICE_PLUGINS_SRC}
-$ make fpga_plugin
-```
-
-#### Run FPGA device plugin in af mode
-
-```bash
-$ export KUBE_CONF=/var/run/kubernetes/admin.kubeconfig # path to kubeconfig with admin's credentials
-$ export NODE_NAME="<node name>" # if the node's name was overridden and differs from hostname
-$ sudo -E ${INTEL_DEVICE_PLUGINS_SRC}/cmd/fpga_plugin/fpga_plugin -mode af -kubeconfig $KUBE_CONF
-FPGA device plugin started in af mode
-device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-af-f7df405cbd7acf7222f144b0b93acd18.sock
-device-plugin registered
-```
-
-> **Note**: It is also possible to run the FPGA device plugin using a non-root user. To do this,
-the nodes' DAC rules must be configured to device plugin socket creation and kubelet registration.
-Furthermore, the deployments `securityContext` must be configured with appropriate `runAsUser/runAsGroup`.
-
-#### Run FPGA device plugin in region mode
-
-```bash
-$ export KUBE_CONF=/var/run/kubernetes/admin.kubeconfig # path to kubeconfig with admin's credentials
-$ export NODE_NAME="<node name>" # if the node's name was overridden and differs from hostname
-$ sudo -E ${INTEL_DEVICE_PLUGINS_SRC}/cmd/fpga_plugin/fpga_plugin -mode region -kubeconfig $KUBE_CONF
-FPGA device plugin started in region mode
-device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-region-ce48969398f05f33946d560708be108a.sock
-device-plugin registered
-```

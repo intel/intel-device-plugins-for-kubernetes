@@ -4,16 +4,9 @@ Table of Contents
 
 * [Introduction](#introduction)
 * [Installation](#installation)
-    * [Deploy with pre-built container image](#deploy-with-pre-built-container-image)
-    * [Getting the source code](#getting-the-source-code)
-    * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
-        * [Build the plugin image](#build-the-plugin-image)
-        * [Deploy plugin DaemonSet](#deploy-plugin-daemonset)
-    * [Deploy by hand](#deploy-by-hand)
-        * [Build the plugin](#build-the-plugin)
-        * [Run the plugin as administrator](#run-the-plugin-as-administrator)
-    * [Verify plugin registration](#verify-plugin-registration)
-    * [Testing the plugin](#testing-the-plugin)
+    * [Pre-built Images](#pre-built-images)
+    * [Verify Plugin Registration](#verify-plugin-registration)
+* [Testing and Demos](#testing-and-demos)
 
 ## Introduction
 
@@ -138,7 +131,7 @@ The following sections detail how to obtain, build, deploy and test the DLB devi
 
 Examples are provided showing how to deploy the plugin either using a DaemonSet or by hand on a per-node basis.
 
-### Deploy with pre-built container image
+### Pre-built Images
 
 [Pre-built images](https://hub.docker.com/r/intel/intel-dlb-plugin)
 of this component are available on the Docker hub. These images are automatically built and uploaded
@@ -149,74 +142,15 @@ release version numbers in the format `x.y.z`, corresponding to the branches and
 repository. Thus the easiest way to deploy the plugin in your cluster is to run this command
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/dlb_plugin?ref=<REF>
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/dlb_plugin?ref=<RELEASE_VERSION>
 daemonset.apps/intel-dlb-plugin created
 ```
 
-Where `<REF>` needs to be substituted with the desired git ref, e.g. `main`.
+Where `<RELEASE_VERSION>` needs to be substituted with the desired [release tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) or `main` to get `devel` images.
 
-Nothing else is needed. But if you want to deploy a customized version of the plugin read further.
+Nothing else is needed. See [the development guide](../../DEVEL.md) for details if you want to deploy a customized version of the plugin.
 
-### Getting the source code
-
-```bash
-$ export INTEL_DEVICE_PLUGINS_SRC=/path/to/intel-device-plugins-for-kubernetes
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL_DEVICE_PLUGINS_SRC}
-```
-
-### Deploying as a DaemonSet
-
-To deploy the dlb plugin as a daemonset, you first need to build a container image for the
-plugin and ensure that is visible to your nodes.
-
-#### Build the plugin image
-
-The following will use `docker` to build a local container image called
-`intel/intel-dlb-plugin` with the tag `devel`.
-
-The image build tool can be changed from the default `docker` by setting the `BUILDER` argument
-to the [`Makefile`](Makefile).
-
-```bash
-$ cd ${INTEL_DEVICE_PLUGINS_SRC}
-$ make intel-dlb-plugin
-...
-Successfully tagged intel/intel-dlb-plugin:devel
-```
-
-#### Deploy plugin DaemonSet
-
-You can then use the [example DaemonSet YAML](/deployments/dlb_plugin/base/intel-dlb-plugin.yaml)
-file provided to deploy the plugin. The default kustomization that deploys the YAML as is:
-
-```bash
-$ kubectl apply -k deployments/dlb_plugin
-daemonset.apps/intel-dlb-plugin created
-```
-
-### Deploy by hand
-
-For development purposes, it is sometimes convenient to deploy the plugin 'by hand' on a node.
-In this case, you do not need to build the complete container image, and can build just the plugin.
-
-#### Build the plugin
-
-First we build the plugin:
-
-```bash
-$ cd ${INTEL_DEVICE_PLUGINS_SRC}
-$ make dlb_plugin
-```
-
-#### Run the plugin as administrator
-
-Now we can run the plugin directly on the node:
-
-```bash
-$ sudo -E ${INTEL_DEVICE_PLUGINS_SRC}/cmd/dlb_plugin/dlb_plugin
-```
-
-### Verify plugin registration
+### Verify Plugin Registration
 
 You can verify the plugin has been registered with the expected nodes by searching for the relevant
 resource allocation status on the nodes:
@@ -228,7 +162,7 @@ master
   dlb.intel.com/vf: 4
 ```
 
-### Testing the plugin
+## Testing and Demos
 
 We can test the plugin is working by deploying the provided example test images (dlb-libdlb-demo and dlb-dpdk-demo).
 

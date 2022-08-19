@@ -1,25 +1,18 @@
 # Intel Software Guard Extensions (SGX) device plugin for Kubernetes
 
-Contents
+Table of Contents
 
 * [Introduction](#introduction)
+* [Modes and Configuration Options](#modes-and-configuration-options)
 * [Installation](#installation)
     * [Prerequisites](#prerequisites)
-        * [Backwards compatiblity note](#backwards-compatibility-note)
-    * [Deploying with Pre-built images](#deploying-with-pre-built-images)
-    * [Getting the source code](#getting-the-source-code)
-    * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
-        * [Build the plugin image](#build-the-plugin-image)
-        * [Deploy the DaemonSet](#deploy-the-daemonset)
-        * [Verify SGX device plugin is registered](#verify-sgx-device-plugin-is-registered)
-    * [Deploying by hand](#deploying-by-hand)
-        * [Build SGX device plugin](#build-sgx-device-plugin)
-        * [Deploy SGX plugin](#deploy-sgx-plugin)
-    * [SGX device plugin demos](#sgx-device-plugin-demos)
-        * [SGX ECDSA Remote Attestation](#sgx-ecdsa-remote-attestation)
-            * [Remote Attestation Prerequisites](#remote-attestation-prerequisites)
-            * [Build the images](#build-the-image)
-            * [Deploy the pod](#deploy-the-pod)
+    * [Pre-built Images](#pre-built-images)
+    * [Verify Plugin Registration](#verify-plugin-registration)
+* [Testing and Demos](#testing-and-demos)
+    * [SGX ECDSA Remote Attestation](#sgx-ecdsa-remote-attestation)
+        * [Remote Attestation Prerequisites](#remote-attestation-prerequisites)
+        * [Build the images](#build-the-image)
+        * [Deploy the pod](#deploy-the-pod)
 
 ## Introduction
 
@@ -52,14 +45,12 @@ the complete list of logging related options.
 
 ## Installation
 
-The following sections cover how to obtain, build and install the necessary Kubernetes SGX specific
+The following sections cover how to use the necessary Kubernetes SGX specific
 components.
-
-They can be installed either using a DaemonSet or running 'by hand' on each node.
 
 ### Prerequisites
 
-The component has the same basic dependancies as the
+The component has the same basic dependencies as the
 [generic plugin framework dependencies](../../README.md#about).
 
 The SGX device plugin requires Linux Kernel SGX drivers to be available. These drivers
@@ -68,7 +59,10 @@ is also known to work.
 
 The hardware platform must support SGX Flexible Launch Control.
 
-### Deploying with Pre-built images
+The SGX deployment depends on having [cert-manager](https://cert-manager.io/)
+installed. See its installation instructions [here](https://cert-manager.io/docs/installation/kubectl/).
+
+### Pre-built Images
 
 [Pre-built images](https://hub.docker.com/u/intel/)
 are available on Docker Hub. These images are automatically built and uploaded
@@ -83,9 +77,11 @@ The deployment YAML files supplied with the components in this repository use th
 tag by default. If you do not build your own local images, your Kubernetes cluster may pull down
 the devel images from Docker Hub by default.
 
-`<RELEASE_VERSION>` needs to be substituted with the desired release version, e.g. `v0.19.0` or main.
+Where `<RELEASE_VERSION>` needs to be substituted with the desired [release tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) or `main` to get `devel` images.
 
-#### Deploy node-feature-discovery
+### Installation Using the Operator
+
+First, deploy `node-feature-discovery`:
 
 ```bash
 $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx?ref=<RELEASE_VERSION>
@@ -93,9 +89,9 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 ```
 
 **Note:** The [default configuration](/deployments/nfd/overlays/node-feature-rules/node-feature-rules.yaml) assumes that the in-tree driver is used and enabled (`CONFIG_X86_SGX=y`). If
-the SGX DCAP out-of-tree driver is used, the `kernel.config` match expression in must be removed.
+the SGX DCAP out-of-tree driver is used, the `kernel.config` match expression must be removed.
 
-#### Deploy Intel Device plugin operator
+Next, deploy the Intel Device plugin operator:
 
 ```bash
 $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=<RELEASE_VERSION>
@@ -103,47 +99,15 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 
 **Note:** See the operator [deployment details](/cmd/operator/README.md) for its dependencies and for setting it up on systems behind proxies.
 
-#### Deploy SGX device plugin with the operator
+Finally, deploy the SGX device plugin with the operator
 
 ```bash
 $ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/<RELEASE_VERSION>/deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml
 ```
 
-### Getting the source code
+### Installation Using kubectl
 
-```bash
-$ export INTEL_DEVICE_PLUGINS_SRC=/path/to/intel-device-plugins-for-kubernetes
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL_DEVICE_PLUGINS_SRC}
-```
-
-### Deploying as a DaemonSet
-
-The SGX deployment documented here depends on having [cert-manager](https://cert-manager.io/)
-installed. See its installation instructions [here](https://cert-manager.io/docs/installation/kubectl/).
-
-You also need to build a container image for the plugin and ensure that is
-visible to your nodes.
-
-
-#### Build the plugin and EPC source images
-
-The following will use `docker` to build a local container images called `intel/intel-sgx-plugin`
-and `intel/intel-sgx-initcontainer` with the tag `devel`. The image build tool can be changed from the
-default docker by setting the `BUILDER` argument to the [Makefile](/Makefile).
-
-```bash
-$ cd ${INTEL_DEVICE_PLUGINS_SRC}
-$ make intel-sgx-plugin
-...
-Successfully tagged intel/intel-sgx-plugin:devel
-$ make intel-sgx-initcontainer
-...
-Successfully tagged intel/intel-sgx-initcontainer:devel
-```
-
-#### Deploy the DaemonSet
-
-There are two alternative ways to deploy SGX device plugin.
+There are two alternative ways to deploy SGX device plugin using `kubectl`.
 
 The first approach involves deployment of the [SGX DaemonSet YAML](/deployments/sgx_plugin/base/intel-sgx-plugin.yaml)
 and [node-feature-discovery](/deployments/nfd/overlays/sgx/kustomization.yaml)
@@ -151,17 +115,22 @@ with the necessary configuration.
 
 There is a kustomization for deploying everything:
 ```bash
-$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/sgx_plugin/overlays/epc-nfd/
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_plugin/overlays/epc-nfd/
 ```
 
-The second approach has a lesser deployment footprint. It does not deploy NFD, but a helper daemonset that creates `sgx.intel.com/capable='true'` node label and advertises EPC capacity to the API server.
+The second approach has a lesser deployment footprint. It does not require NFD, but a helper daemonset that creates `sgx.intel.com/capable='true'` node label and advertises EPC capacity to the API server.
 
 The following kustomization is used for this approach:
 ```bash
-$ kubectl apply -k ${INTEL_DEVICE_PLUGINS_SRC}/deployments/sgx_plugin/overlays/epc-register/
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_plugin/overlays/epc-register/
 ```
 
-#### Verify SGX device plugin is registered:
+Additionally, SGX admission webhook must be deployed
+```bash
+$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_admissionwebhook/
+```
+
+### Verify Plugin Registration
 
 Verification of the plugin deployment and detection of SGX hardware can be confirmed by
 examining the resource allocations on the nodes:
@@ -180,33 +149,8 @@ $ kubectl describe node <node name> | grep sgx.intel.com
  sgx.intel.com/provision  1           1
 ```
 
-### Deploying by hand
-
-For development purposes, it is sometimes convenient to deploy the plugin 'by hand' on a node.
-In this case, you do not need to build the complete container image, and can build just the plugin.
-
-#### Build SGX device plugin
-
-```bash
-$ cd ${INTEL_DEVICE_PLUGINS_SRC}
-$ make sgx_plugin
-```
-
-#### Deploy SGX plugin
-
-Deploy the plugin on a node by running it as `root`. The below is just an example - modify the
-paramaters as necessary for your setup:
-
-```bash
-$ sudo -E ${INTEL_DEVICE_PLUGINS_SRC}/cmd/sgx_plugin/sgx_plugin -enclave-limit 50 -provision-limit 1 -v 2
-I0626 20:33:01.414446  964346 server.go:219] Start server for provision at: /var/lib/kubelet/device-plugins/sgx.intel.com-provision.sock
-I0626 20:33:01.414640  964346 server.go:219] Start server for enclave at: /var/lib/kubelet/device-plugins/sgx.intel.com-enclave.sock
-I0626 20:33:01.417315  964346 server.go:237] Device plugin for provision registered
-I0626 20:33:01.417748  964346 server.go:237] Device plugin for enclave registered
-```
-
-### SGX device plugin demos
-#### SGX ECDSA Remote Attestation
+## Testing and Demos
+### SGX ECDSA Remote Attestation
 
 The SGX remote attestation allows a relying party to verify that the software is running inside an Intel® SGX enclave on a platform
 that has the trusted computing base up to date.
@@ -216,7 +160,7 @@ SGX PCK Certificate Cache Service (PCCS) that is configured to service localhost
 
 Read more about [SGX Remote Attestation](https://software.intel.com/content/www/us/en/develop/topics/software-guard-extensions/attestation-services.html).
 
-##### Remote Attestation Prerequisites
+#### Remote Attestation Prerequisites
 
 For the SGX ECDSA Remote Attestation demo to work, the platform must be correctly registered and a PCCS running.
 
@@ -226,7 +170,7 @@ For documentation to set up Intel® reference PCCS, refer to:
 
 Furthermore, the Kubernetes cluster must be set up according the [instructions above](#deploying-with-pre-built-images).
 
-##### Build the image
+#### Build the image
 
 The demo uses container images build from Intel® SGX SDK and DCAP releases.
 
@@ -242,7 +186,7 @@ $ make sgx-sdk-demo
 Successfully tagged intel/sgx-sdk-demo:devel
 ```
 
-##### Deploy the pods
+#### Deploy the pods
 
 The demo runs Intel aesmd (architectural enclaves service daemon) that is responsible
 for generating SGX quotes for workloads. It is deployed with `hostNetwork: true`

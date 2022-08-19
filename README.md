@@ -26,7 +26,6 @@ Table of Contents
 * [Demos](#demos)
 * [Workload Authors](#workload-authors)
 * [Developers](#developers)
-* [Running e2e Tests](#running-e2e-tests)
 * [Supported Kubernetes versions](#supported-kubernetes-versions)
 * [Pre-built plugin images](#pre-built-plugin-images)
 * [License](#license)
@@ -38,7 +37,7 @@ Table of Contents
 
 Prerequisites for building and running these device plugins include:
 
-- Appropriate hardware
+- Appropriate hardware and drivers
 - A fully configured [Kubernetes cluster]
 - A working [Go environment], of at least version v1.16.
 
@@ -249,64 +248,8 @@ The summary of resources available via plugins in this repository is given in th
 
 ## Developers
 
-For information on how to develop a new plugin using the framework, see the
-[Developers Guide](DEVEL.md) and the code in the
-[device plugins pkg directory](pkg/deviceplugin).
-
-## Running E2E Tests
-
-Currently the E2E tests require having a Kubernetes cluster already configured
-on the nodes with the hardware required by the device plugins. Also all the
-container images with the executables under test must be available in the
-cluster. If these two conditions are satisfied, run the tests with:
-
-```bash
-$ go test -v ./test/e2e/...
-```
-
-In case you want to run only certain tests, e.g., QAT ones, run:
-
-```bash
-$ go test -v ./test/e2e/... -args -ginkgo.focus "QAT"
-```
-
-If you need to specify paths to your custom `kubeconfig` containing
-embedded authentication info then add the `-kubeconfig` argument:
-
-```bash
-$ go test -v ./test/e2e/... -args -kubeconfig /path/to/kubeconfig
-```
-
-The full list of available options can be obtained with:
-
-```bash
-$ go test ./test/e2e/... -args -help
-```
-
-It is possible to run the tests which don't depend on hardware
-without a pre-configured Kubernetes cluster. Just make sure you have
-[Kind](https://kind.sigs.k8s.io/) installed on your host and run:
-
-```
-$ make test-with-kind
-```
-
-## Running Controller Tests with a Local Control Plane
-
-The controller-runtime library provides a package for integration testing by
-starting a local control plane. The package is called
-[envtest](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest). The
-operator uses this package for its integration testing.
-Please have a look at `envtest`'s documentation to set up it properly. But basically
-you just need to have `etcd` and `kube-apiserver` binaries available on your
-host. By default they are expected to be located at `/usr/local/kubebuilder/bin`.
-But you can have it stored anywhere by setting the `KUBEBUILDER_ASSETS`
-environment variable. If you have the binaries copied to
-`${HOME}/work/kubebuilder-assets`, run the tests:
-
-```bash
-$ KUBEBUILDER_ASSETS=${HOME}/work/kubebuilder-assets make envtest
-```
+For information on how to develop a new plugin using the framework or work on development task in
+this repository, see the [Developers Guide](DEVEL.md).
 
 ## Supported Kubernetes Versions
 
