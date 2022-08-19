@@ -53,7 +53,7 @@ const (
 	sysfsPath  = "sys"
 	devfsPath  = "dev"
 	mib        = 1024.0 * 1024.0
-	// null device major, minor on linux
+	// null device major, minor on linux.
 	devNullMajor = 1
 	devNullMinor = 3
 	devNullType  = unix.S_IFCHR
@@ -62,13 +62,13 @@ const (
 var verbose bool
 
 type genOptions struct {
+	Capabilities map[string]string // device capabilities mapping for NFD hook
 	Info         string            // verbal config description
 	DevCount     int               // how many devices to fake
 	TilesPerDev  int               // per-device tile count
 	DevMemSize   int               // available per-device device-local memory, in bytes
 	DevsPerNode  int               // How many devices per Numa node
 	VfsPerPf     int               // How many SR-IOV VFs per PF
-	Capabilities map[string]string // device capabilities mapping for NFD hook
 	// fields for counting what was generated
 	files int
 	dirs  int
@@ -78,6 +78,7 @@ type genOptions struct {
 func addSysfsDriTree(root string, opts *genOptions, i int) error {
 	card := cardBase + i
 	base := fmt.Sprintf("%s/class/drm/card%d", root, card)
+
 	if err := os.MkdirAll(base, dirMode); err != nil {
 		return err
 	}
@@ -85,6 +86,7 @@ func addSysfsDriTree(root string, opts *genOptions, i int) error {
 
 	data := []byte(fmt.Sprintf("%d", opts.DevMemSize))
 	file := fmt.Sprintf("%s/lmem_total_bytes", base)
+
 	if err := os.WriteFile(file, data, fileMode); err != nil {
 		return err
 	}
@@ -104,6 +106,7 @@ func addSysfsDriTree(root string, opts *genOptions, i int) error {
 
 	data = []byte("0x8086")
 	file = fmt.Sprintf("%s/device/vendor", base)
+
 	if err := os.WriteFile(file, data, fileMode); err != nil {
 		return err
 	}
@@ -113,8 +116,10 @@ func addSysfsDriTree(root string, opts *genOptions, i int) error {
 	if opts.DevsPerNode > 0 {
 		node = i / opts.DevsPerNode
 	}
+
 	data = []byte(fmt.Sprintf("%d", node))
 	file = fmt.Sprintf("%s/device/numa_node", base)
+
 	if err := os.WriteFile(file, data, fileMode); err != nil {
 		return err
 	}
@@ -123,11 +128,13 @@ func addSysfsDriTree(root string, opts *genOptions, i int) error {
 	if opts.VfsPerPf > 0 && i%(opts.VfsPerPf+1) == 0 {
 		data = []byte(fmt.Sprintf("%d", opts.VfsPerPf))
 		file = fmt.Sprintf("%s/device/sriov_numvfs", base)
+
 		if err := os.WriteFile(file, data, fileMode); err != nil {
 			return err
 		}
 		opts.files++
 	}
+
 	for tile := 0; tile < opts.TilesPerDev; tile++ {
 		path := fmt.Sprintf("%s/gt/gt%d", base, tile)
 		if err := os.MkdirAll(path, dirMode); err != nil {
@@ -135,6 +142,7 @@ func addSysfsDriTree(root string, opts *genOptions, i int) error {
 		}
 		opts.dirs++
 	}
+
 	return nil
 }
 
@@ -159,21 +167,25 @@ func addDevfsDriTree(root string, opts *genOptions, i int) error {
 		return err
 	}
 	opts.devs++
+
 	return nil
 }
 
 func addDebugfsDriTree(root string, opts *genOptions, i int) error {
 	base := fmt.Sprintf("%s/kernel/debug/dri/%d", root, i)
-	os.MkdirAll(base, dirMode)
+	if err := os.MkdirAll(base, dirMode); err != nil {
+		return err
+	}
 	opts.dirs++
 
 	path := fmt.Sprintf("%s/i915_capabilities", base)
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, fileMode)
+
 	if err != nil {
 		return err
 	}
-	opts.files++
 	defer f.Close()
+	opts.files++
 
 	// keys are in random order which provides extra testing for NFD label parsing code
 	for key, value := range opts.Capabilities {
@@ -182,27 +194,32 @@ func addDebugfsDriTree(root string, opts *genOptions, i int) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
-// generateDriFiles generarates the fake sysfs + debugfs + devfs dirs & files according to given options
+// generateDriFiles generates the fake sysfs + debugfs + devfs dirs & files according to given options.
 func generateDriFiles(opts genOptions) {
 	if opts.Info != "" {
 		log.Printf("Config: '%s'", opts.Info)
 	}
+
 	entries, _ := os.ReadDir(devfsPath)
 	if len(entries) > 0 {
 		if len(entries) > 1 || entries[0].Name() != "dri" {
 			log.Fatalf("ERROR: >1 entries in '%s', or '%s' != 'dri' - real devfs?", devfsPath, entries[0].Name())
 		}
+
 		log.Printf("WARN: removing already existing %s'", devfsPath)
 		os.RemoveAll(devfsPath)
 	}
+
 	entries, _ = os.ReadDir(sysfsPath)
 	if len(entries) > 0 {
 		log.Printf("WARN: removing already existing '%s'", sysfsPath)
 		os.RemoveAll(sysfsPath)
 	}
+
 	log.Printf("Generating fake DRI device(s) sysfs, debugfs and devfs content under '%s' & '%s'",
 		sysfsPath, devfsPath)
 
@@ -211,9 +228,11 @@ func generateDriFiles(opts genOptions) {
 		if err := addSysfsDriTree(sysfsPath, &opts, i); err != nil {
 			log.Fatalf("ERROR: dev-%d sysfs tree generation failed: %v", i, err)
 		}
+
 		if err := addDebugfsDriTree(sysfsPath, &opts, i); err != nil {
 			log.Fatalf("ERROR: dev-%d debugfs tree generation failed: %v", i, err)
 		}
+
 		if err := addDevfsDriTree(devfsPath, &opts, i); err != nil {
 			log.Fatalf("ERROR: dev-%d devfs tree generation failed: %v", i, err)
 		}
@@ -221,47 +240,56 @@ func generateDriFiles(opts genOptions) {
 	log.Printf("Done, created %d dirs, %d devices and %d files.", opts.dirs, opts.devs, opts.files)
 }
 
-// getOptions parses options from given JSON file, validates and returns them
+// getOptions parses options from given JSON file, validates and returns them.
 func getOptions(name string) genOptions {
 	if name == "" {
 		log.Fatal("ERROR: no fake device spec provided")
 	}
-	var err error
-	var data []byte
-	if data, err = os.ReadFile(name); err != nil {
+
+	data, err := os.ReadFile(name)
+	if err != nil {
 		log.Fatalf("ERROR: reading JSON spec file '%s' failed: %v", name, err)
 	}
+
 	if verbose {
 		log.Printf("Using fake device spec: %v\n", string(data))
 	}
+
 	var opts genOptions
 	if err = json.Unmarshal(data, &opts); err != nil {
 		log.Fatalf("ERROR: Unmarshaling JSON spec file '%s' failed: %v", name, err)
 	}
+
 	if opts.DevCount < 1 || opts.DevCount > maxDevs {
 		log.Fatalf("ERROR: invalid device count: 1 <= %d <= %d", opts.DevCount, maxDevs)
 	}
+
 	if opts.VfsPerPf > 0 {
 		if opts.TilesPerDev > 0 || opts.DevsPerNode > 0 {
 			log.Fatalf("ERROR: SR-IOV VFs (%d) with device tiles (%d) or Numa nodes (%d) is unsupported for faking",
 				opts.VfsPerPf, opts.TilesPerDev, opts.DevsPerNode)
 		}
+
 		if opts.DevCount%(opts.VfsPerPf+1) != 0 {
 			log.Fatalf("ERROR: %d devices cannot be evenly split to between set of 1 SR-IOV PF + %d VFs",
 				opts.DevCount, opts.VfsPerPf)
 		}
 	}
+
 	if opts.DevsPerNode > opts.DevCount {
 		log.Fatalf("ERROR: DevsPerNode (%d) > DevCount (%d)", opts.DevsPerNode, opts.DevCount)
 	}
+
 	if opts.DevMemSize%mib != 0 {
 		log.Fatalf("ERROR: Invalid memory size (%f MiB), not even MiB", float64(opts.DevMemSize)/mib)
 	}
+
 	return opts
 }
 
 func main() {
 	var name string
+
 	flag.StringVar(&name, "json", "", "JSON spec for fake device sysfs, debugfs and devfs content")
 	flag.BoolVar(&verbose, "verbose", false, "More verbose output")
 	flag.Parse()
