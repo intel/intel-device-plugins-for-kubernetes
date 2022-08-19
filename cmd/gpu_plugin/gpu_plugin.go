@@ -244,9 +244,11 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 		for key := range devTree {
 			found += len(devTree[key])
 		}
+
 		if found != previouslyFound {
 			klog.V(1).Infof("GPU scan update: %d device resources (with %dx sharing) of %d types found",
 				found, dp.options.sharedDevNum, len(devTree))
+
 			previouslyFound = found
 		}
 
@@ -371,8 +373,10 @@ func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi
 }
 
 func main() {
-	var prefix string
-	var opts cliOptions
+	var (
+		prefix string
+		opts   cliOptions
+	)
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable 'i915_monitoring' (= all GPUs) resource")
@@ -407,6 +411,7 @@ func main() {
 		sysfs = sysfsDrmDirectory
 		devfs = devfsDriDirectory
 	}
+
 	plugin := newDevicePlugin(sysfs, devfs, opts)
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
