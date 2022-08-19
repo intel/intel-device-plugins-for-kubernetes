@@ -16,6 +16,26 @@ spec:
     spec:
       serviceAccountName: resource-reader-sa
       initContainers:
+      - name: fakedev-generator
+        image: intel/fakedev-generator:latest
+        securityContext:
+          runAsUser: 0
+          readOnlyRootFilesystem: false
+          allowPrivilegeEscalation: false
+        # files are generated under CWD
+        workingDir: /tmp/fakedev
+        volumeMounts:
+        - name: devfs
+          mountPath: /tmp/fakedev/dev
+          readOnly: false
+        - name: sysfs
+          mountPath: /tmp/fakedev/sys
+          readOnly: false
+        - name: fake-conf
+          mountPath: /config
+          readOnly: true
+        # generate fake sysfs / devfs files for GPU plugin based on config
+        command: ["/generator", "-json", "/config/fakedev.json", "-verbose"]
       - name: intel-gpu-initcontainer
         image: intel/intel-gpu-initcontainer:0.24.0
         imagePullPolicy: IfNotPresent
@@ -23,8 +43,15 @@ spec:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
         volumeMounts:
-        - mountPath: /etc/kubernetes/node-feature-discovery/source.d/
-          name: nfd-source-hooks
+        - name: sysfs
+          mountPath: /host-sys
+          readOnly: true
+        - name: nfd-features
+          mountPath: /nfd
+          readOnly: false
+        workingDir: /usr/local/bin/gpu-sw
+        # convert generated sysfs content to NFD feature labels
+        command: ["sh", "-c", "./intel-gpu-nfdhook | tee /nfd/fake-gpu"]
       containers:
       - name: intel-gpu-plugin
         env:
@@ -32,45 +59,50 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-gpu-plugin:0.24.0
-        imagePullPolicy: IfNotPresent
+        image: intel/intel-gpu-plugin:latest
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
         command: [
           "/usr/local/bin/intel_gpu_device_plugin",
-          "-shared-dev-num", "300",
+          "-shared-dev-num", "2",
+          "-fake-mode", "/tmp/fakedev",
           "-enable-monitoring",
           "-resource-manager",
           "-v", "2"
         ]
         volumeMounts:
+        # combined GPU plugin / container runtime limitation:
+        # device files need to be mounted to same path on host and inside container
         - name: devfs
-          mountPath: /dev/dri
+          mountPath: /tmp/fakedev/dev
           readOnly: true
         - name: sysfs
-          mountPath: /sys/class/drm
+          mountPath: /tmp/fakedev/sys
           readOnly: true
         - name: kubeletsockets
           mountPath: /var/lib/kubelet/device-plugins
         - name: podresources
           mountPath: /var/lib/kubelet/pod-resources
       volumes:
+      - name: fake-conf
+        configMap:
+          name: fake-gen-config
       - name: devfs
         hostPath:
-          path: /dev/dri
+          path: /tmp/fakedev/dev
+          type: DirectoryOrCreate
       - name: sysfs
-        hostPath:
-          path: /sys/class/drm
+        emptyDir: {}
       - name: kubeletsockets
         hostPath:
           path: /var/lib/kubelet/device-plugins
       - name: podresources
         hostPath:
           path: /var/lib/kubelet/pod-resources
-      - name: nfd-source-hooks
+      - name: nfd-features
         hostPath:
-          path: /etc/kubernetes/node-feature-discovery/source.d/
+          path: /etc/kubernetes/node-feature-discovery/features.d/
           type: DirectoryOrCreate
       nodeSelector:
         kubernetes.io/arch: amd64
