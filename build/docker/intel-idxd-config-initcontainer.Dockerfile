@@ -15,7 +15,7 @@
 ## limitations under the License.
 ###
 FROM debian:stable-slim AS builder
-RUN echo "deb-src http://deb.debian.org/debian unstable main" >> /etc/apt/sources.list.d/deb-src.list && apt update && apt install -y --no-install-recommends gcc make patch autoconf automake libtool pkg-config libjson-c-dev uuid-dev curl ca-certificates
+RUN apt update && apt install -y --no-install-recommends gcc make patch autoconf automake libtool pkg-config libjson-c-dev uuid-dev curl ca-certificates
 ARG ACCEL_CONFIG_VERSION="3.4.6.4"
 ARG ACCEL_CONFIG_DOWNLOAD_URL="https://github.com/intel/idxd-config/archive/accel-config-v$ACCEL_CONFIG_VERSION.tar.gz"
 ARG ACCEL_CONFIG_SHA256="5f9ee68f51913d803b9b0e51cdadaff14ea1523f6e9e4d4ab3e85de644ba6d21"
