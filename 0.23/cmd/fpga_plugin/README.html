@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel FPGA device plugin for Kubernetes &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Intel FPGA test tool" href="../fpga_tool/README.html" />
+    <link rel="prev" title="Intel FPGA prestart CRI-O webhook for Kubernetes" href="../fpga_crihook/README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Development</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../docs/extensions.html">Extensions</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../fpga_admissionwebhook/README.html">Intel FPGA admission controller for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_crihook/README.html">Intel FPGA prestart CRI-O webhook for Kubernetes</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Intel FPGA device plugin for Kubernetes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#component-overview">Component overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fpga-modes">FPGA modes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pre-built-images">Pre-built images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getting-the-source-code">Getting the source code</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deploying-as-a-daemonset">Deploying as a DaemonSet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deploy-by-hand">Deploy by hand</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_tool/README.html">Intel FPGA test tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_plugin/README.html">Intel GPU device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../operator/README.html">Intel Device Plugins Operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../qat_plugin/README.html">Intel QuickAssist Technology (QAT) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_plugin/README.html">Intel Software Guard Extensions (SGX) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vpu_plugin/README.html">Intel VPU device plugin for Kubernetes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../docs/extensions.html">Extensions</a> &raquo;</li>
+      <li>Intel FPGA device plugin for Kubernetes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/fpga_plugin/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-fpga-device-plugin-for-kubernetes">
+<h1>Intel FPGA device plugin for Kubernetes<a class="headerlink" href="#intel-fpga-device-plugin-for-kubernetes" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#component-overview">Component overview</a></p></li>
+<li><p><a class="reference external" href="#fpga-modes">FPGA modes</a></p></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#pre-built-images">Pre-built images</a></p></li>
+<li><p><a class="reference external" href="#dependencies">Dependencies</a></p></li>
+<li><p><a class="reference external" href="#getting-the-source-code">Getting the source code</a></p></li>
+<li><p><a class="reference external" href="#deploying-as-a-daemonset">Deploying as a DaemonSet</a></p>
+<ul>
+<li><p><a class="reference external" href="#verify-plugin-registration">Verify plugin registration</a></p></li>
+<li><p><a class="reference external" href="#building-the-plugin-image">Building the plugin image</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#deploy-by-hand">Deploy by hand</a></p>
+<ul>
+<li><p><a class="reference external" href="#build-fpga-device-plugin">Build FPGA device plugin</a></p></li>
+<li><p><a class="reference external" href="#run-fpga-device-plugin-in-af-mode">Run FPGA device plugin in af mode</a></p></li>
+<li><p><a class="reference external" href="#run-fpga-device-plugin-in-region-mode">Run FPGA device plugin in region mode</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>This FPGA device plugin is part of a collection of Kubernetes components found within this
+repository that enable integration of Intel FPGA hardware into Kubernetes.</p>
+<p>The following hardware platforms are supported:</p>
+<ul class="simple">
+<li><p>Intel Arria 10</p></li>
+<li><p>Intel Stratix 10</p></li>
+</ul>
+<p>The components support the <a class="reference external" href="https://opae.github.io/latest/index.html">Open Programmable Acceleration Engine (OPAE)</a>
+interface.</p>
+<p>The components together implement the following features:</p>
+<ul class="simple">
+<li><p>discovery of pre-programmed accelerator functions</p></li>
+<li><p>discovery of programmable regions</p></li>
+<li><p>orchestration of FPGA programming</p></li>
+<li><p>access control for FPGA hardware</p></li>
+</ul>
+</section>
+<section id="component-overview">
+<h2>Component overview<a class="headerlink" href="#component-overview" title="Permalink to this heading"></a></h2>
+<p>The following components are part of this repository, and work together to support Intel FPGAs under
+Kubernetes:</p>
+<ul>
+<li><p><a class="reference internal" href="#"><span class="doc">FPGA device plugin</span></a> (this component)</p>
+<p>A Kubernetes <a class="reference external" href="https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/">device plugin</a>
+that discovers available FPGA resources on a node and advertises them to the Kubernetes control plane
+via the node kubelet.</p>
+</li>
+<li><p><a class="reference internal" href="../fpga_admissionwebhook/README.html"><span class="doc">FPGA admission controller webhook</span></a></p>
+<p>A Kubernetes <a class="reference external" href="https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/">admission controller webhook</a>
+which can be used to dynamically convert logical resource names in pod specifications into actual FPGA
+resource names, as advertised by the device plugin.</p>
+<p>The webhook can also set environment variables to instruct the CRI-O prestart hook to program the FPGA
+before launching the container.</p>
+<blockquote>
+<div><p><strong>NOTE:</strong> Installation of the <a class="reference internal" href="../fpga_admissionwebhook/README.html"><span class="doc">FPGA admission controller webhook</span></a> can be skipped if the
+FPGA device plugin is operated with the Intel Device Plugins Operator
+since it integrates the controller’s functionality.
+However, <a class="reference external" href="../fpga_admissionwebhook/README.html#mappings-deployment">the mappings</a> still must be deployed.”</p>
+</div></blockquote>
+</li>
+<li><p><a class="reference internal" href="../fpga_crihook/README.html"><span class="doc">FPGA CRI-O prestart hook</span></a></p>
+<p>A <a class="reference external" href="https://github.com/cri-o/cri-o">CRI-O</a> prestart hook that, upon instruction from the FPGA admission
+controller, allocates and programs the FPGA before the container is launched.</p>
+</li>
+</ul>
+<p>The repository also contains an <a class="reference internal" href="../fpga_tool/README.html"><span class="doc">FPGA helper tool</span></a> that may be useful during
+development, initial deployment and debugging.</p>
+</section>
+<section id="fpga-modes">
+<h2>FPGA modes<a class="headerlink" href="#fpga-modes" title="Permalink to this heading"></a></h2>
+<p>The FPGA plugin set can run in one of two modes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">region</span></code> mode, where the plugins locate and advertise
+regions of the FPGA, and facilitate programing of those regions with the
+requested bistreams.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">af</span></code> mode, where the FPGA bitstreams are already loaded
+onto the FPGA, and the plugins discover and advertises the existing
+Accelerator Functions (AF).</p></li>
+</ul>
+<p>The example YAML deployments described in this document only currently support
+<code class="docutils literal notranslate"><span class="pre">af</span></code> mode. To utilise <code class="docutils literal notranslate"><span class="pre">region</span></code> mode, either modify the existing YAML appropriately,
+or deploy ‘by hand’.</p>
+<p>Overview diagrams of <code class="docutils literal notranslate"><span class="pre">af</span></code> and <code class="docutils literal notranslate"><span class="pre">region</span></code> modes are below:</p>
+<p>region mode:</p>
+<p><img alt="Overview of region mode" src="../../_images/FPGA-region.png" /></p>
+<p>af mode:</p>
+<p><img alt="Overview of af mode" src="../../_images/FPGA-af.png" /></p>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>The below sections cover how to obtain, build and install this component.</p>
+<p>Components can generally be installed either using DaemonSets or running them
+‘by hand’ on each node.</p>
+<section id="pre-built-images">
+<h3>Pre-built images<a class="headerlink" href="#pre-built-images" title="Permalink to this heading"></a></h3>
+<p>Pre-built images of the components are available on the <a class="reference external" href="https://hub.docker.com/u/intel">Docker hub</a>.
+These images are automatically built and uploaded to the hub from the latest <code class="docutils literal notranslate"><span class="pre">main</span></code> branch of
+this repository.</p>
+<p>Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers (of the form <code class="docutils literal notranslate"><span class="pre">x.y.z</span></code>, matching the branch/tag release number in this repo).</p>
+<p>The deployment YAML files supplied with these components in this repository use the images with the
+<code class="docutils literal notranslate"><span class="pre">devel</span></code> tag by default. If you do not build your own local images, then your Kubernetes cluster may
+pull down the <code class="docutils literal notranslate"><span class="pre">devel</span></code> images from the Docker hub by default.</p>
+<p>To use the release tagged versions of the images, edit the YAML deployment files appropriately.</p>
+<p>The following images are available on the Docker hub:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://hub.docker.com/r/intel/intel-fpga-plugin">The FPGA plugin</a></p></li>
+<li><p><a class="reference external" href="https://hub.docker.com/r/intel/intel-fpga-admissionwebhook">The FPGA admisson webhook</a></p></li>
+<li><p><a class="reference external" href="https://hub.docker.com/r/intel/intel-fpga-initcontainer">The FPGA CRI-O prestart hook (in the <code class="docutils literal notranslate"><span class="pre">initcontainer</span></code> image)</a></p></li>
+</ul>
+</section>
+<section id="dependencies">
+<h3>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this heading"></a></h3>
+<p>All components have the same basic dependencies as the
+<a class="reference external" href="../../README.html#about">generic plugin framework dependencies</a></p>
+<p>To obtain a fully operational FPGA enabled cluster, you must install all three
+major components:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#"><span class="doc">FPGA device plugin</span></a> (this component)</p></li>
+<li><p><a class="reference internal" href="../fpga_admissionwebhook/README.html"><span class="doc">FPGA admission controller webhook</span></a></p></li>
+<li><p><a class="reference internal" href="../fpga_crihook/README.html"><span class="doc">FPGA prestart CRI-O hook</span></a></p></li>
+</ul>
+<p>The CRI-O hook is only <em>required</em> if <code class="docutils literal notranslate"><span class="pre">region</span></code> mode is being used, but is installed by default by the
+<a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/cdf4905bfc7b1491975062077c92a0689da70bd8/deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml">FPGA plugin DaemonSet YAML</a>, and is benign
+in <code class="docutils literal notranslate"><span class="pre">af</span></code> mode.</p>
+<p>If using the <code class="docutils literal notranslate"><span class="pre">af</span></code> mode, and therefore <em>not</em> using the
+CRI-O prestart hook, runtimes other than CRI-O can be used (that is, the CRI-O hook presently
+<em>only</em> works with the CRI-O runtime).</p>
+<p>The FPGA device plugin requires a Linux Kernel FPGA driver to be installed and enabled to
+operate. The plugin supports the use of either of following two drivers, and auto detects
+which is present and thus to use:</p>
+<ul class="simple">
+<li><p>The Linux Kernel in-tree <a class="reference external" href="https://www.kernel.org/doc/html/latest/fpga/dfl.html">DFL</a> driver</p></li>
+<li><p>The out of tree <a class="reference external" href="https://opae.github.io/latest/docs/drv_arch/drv_arch.html">OPAE</a> driver</p></li>
+</ul>
+<p>Install this component (FPGA device plugin) first, and then follow the links
+and instructions to install the other components.</p>
+</section>
+<section id="getting-the-source-code">
+<h3>Getting the source code<a class="headerlink" href="#getting-the-source-code" title="Permalink to this heading"></a></h3>
+<p>To obtain the YAML files used for deployment, or to obtain the source tree if you intend to
+do a hand-deployment or build your own image, you will require access to the source code:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="o">=</span>/path/to/intel-device-plugins-for-kubernetes
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+</pre></div>
+</div>
+</section>
+<section id="deploying-as-a-daemonset">
+<h3>Deploying as a DaemonSet<a class="headerlink" href="#deploying-as-a-daemonset" title="Permalink to this heading"></a></h3>
+<p>As a pre-requisite you need to have <a class="reference external" href="https://cert-manager.io">cert-manager</a>
+up and running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
+$ kubectl get pods -n cert-manager
+NAME                                      READY   STATUS    RESTARTS   AGE
+cert-manager-7747db9d88-bd2nl             <span class="m">1</span>/1     Running   <span class="m">0</span>          1m
+cert-manager-cainjector-87c85c6ff-59sb5   <span class="m">1</span>/1     Running   <span class="m">0</span>          1m
+cert-manager-webhook-64dc9fff44-29cfc     <span class="m">1</span>/1     Running   <span class="m">0</span>          1m
+</pre></div>
+</div>
+<p>Depending on the FPGA mode, run either</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/af
+namespace/intelfpgaplugin-system created
+customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
+customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/intelfpgaplugin-mutating-webhook-configuration created
+clusterrole.rbac.authorization.k8s.io/intelfpgaplugin-manager-role created
+clusterrole.rbac.authorization.k8s.io/intelfpgaplugin-node-getter created
+clusterrolebinding.rbac.authorization.k8s.io/intelfpgaplugin-get-nodes created
+clusterrolebinding.rbac.authorization.k8s.io/intelfpgaplugin-manager-rolebinding created
+service/intelfpgaplugin-webhook-service created
+deployment.apps/intelfpgaplugin-webhook created
+daemonset.apps/intelfpgaplugin-fpgadeviceplugin created
+certificate.cert-manager.io/intelfpgaplugin-serving-cert created
+issuer.cert-manager.io/intelfpgaplugin-selfsigned-issuer created
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/region
+namespace/intelfpgaplugin-system created
+customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
+customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/intelfpgaplugin-mutating-webhook-configuration created
+clusterrole.rbac.authorization.k8s.io/intelfpgaplugin-manager-role created
+clusterrole.rbac.authorization.k8s.io/intelfpgaplugin-node-getter created
+clusterrolebinding.rbac.authorization.k8s.io/intelfpgaplugin-get-nodes created
+clusterrolebinding.rbac.authorization.k8s.io/intelfpgaplugin-manager-rolebinding created
+service/intelfpgaplugin-webhook-service created
+deployment.apps/intelfpgaplugin-webhook created
+daemonset.apps/intelfpgaplugin-fpgadeviceplugin created
+certificate.cert-manager.io/intelfpgaplugin-serving-cert created
+issuer.cert-manager.io/intelfpgaplugin-selfsigned-issuer created
+</pre></div>
+</div>
+<p>The command should result in two pods running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get pods -n intelfpgaplugin-system
+NAME                                       READY   STATUS    RESTARTS   AGE
+intelfpgaplugin-fpgadeviceplugin-skcw5     <span class="m">1</span>/1     Running   <span class="m">0</span>          57s
+intelfpgaplugin-webhook-7d6bcb8b57-k52b9   <span class="m">1</span>/1     Running   <span class="m">0</span>          57s
+</pre></div>
+</div>
+<p>If you intend to deploy your own image, you will need to reference the
+<a class="reference external" href="#build-the-plugin-image">image build section</a> first.</p>
+<p>If you do not want to deploy the <code class="docutils literal notranslate"><span class="pre">devel</span></code> or release tagged image, you will need to create your
+own kustomization overlay referencing your required image.</p>
+<p>If you need the FPGA plugin on some nodes to operate in a different mode then add this
+annotation to the nodes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl annotate node &lt;node_name&gt; <span class="s1">&#39;fpga.intel.com/device-plugin-mode=region&#39;</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl annotate node &lt;node_name&gt; <span class="s1">&#39;fpga.intel.com/device-plugin-mode=af&#39;</span>
+</pre></div>
+</div>
+<p>And restart the pods on the nodes.</p>
+<blockquote>
+<div><p><strong>Note:</strong> The FPGA plugin <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/cdf4905bfc7b1491975062077c92a0689da70bd8/deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml">DaemonSet YAML</a>
+also deploys the <a class="reference internal" href="../fpga_crihook/README.html"><span class="doc">FPGA CRI-O hook</span></a> <code class="docutils literal notranslate"><span class="pre">initcontainer</span></code> image, but it will be
+benign (un-used) when running the FPGA plugin in <code class="docutils literal notranslate"><span class="pre">af</span></code> mode.</p>
+</div></blockquote>
+<section id="verify-plugin-registration">
+<h4>Verify plugin registration<a class="headerlink" href="#verify-plugin-registration" title="Permalink to this heading"></a></h4>
+<p>Verify the FPGA plugin has been deployed on the nodes. The below shows the output
+you can expect in <code class="docutils literal notranslate"><span class="pre">region</span></code> mode, but similar output should be expected for <code class="docutils literal notranslate"><span class="pre">af</span></code>
+mode:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl describe nodes <span class="p">|</span> grep fpga.intel.com
+fpga.intel.com/region-ce48969398f05f33946d560708be108a:  <span class="m">1</span>
+fpga.intel.com/region-ce48969398f05f33946d560708be108a:  <span class="m">1</span>
+</pre></div>
+</div>
+</section>
+<section id="building-the-plugin-image">
+<h4>Building the plugin image<a class="headerlink" href="#building-the-plugin-image" title="Permalink to this heading"></a></h4>
+<p>If you need to build your own image from sources, and are not using the images
+available on the Docker Hub, follow the below details.</p>
+<blockquote>
+<div><p><strong>Note:</strong> The FPGA plugin <a class="reference external" href="/deployments/fpga_plugin/fpga_plugin.yaml">DaemonSet YAML</a>
+also deploys the <a class="reference internal" href="../fpga_crihook/README.html"><span class="doc">FPGA CRI-O hook</span></a> <code class="docutils literal notranslate"><span class="pre">initcontainer</span></code> image as well. You may
+also wish to build that image locally before deploying the FPGA plugin to avoid deploying
+the Docker hub default image.</p>
+</div></blockquote>
+<p>The following will use <code class="docutils literal notranslate"><span class="pre">docker</span></code> to build a local container image called
+<code class="docutils literal notranslate"><span class="pre">intel/intel-fpga-plugin</span></code> with the tag <code class="docutils literal notranslate"><span class="pre">devel</span></code>.
+The image build tool can be changed from the default docker by setting the <code class="docutils literal notranslate"><span class="pre">BUILDER</span></code> argument
+to the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/cdf4905bfc7b1491975062077c92a0689da70bd8/Makefile">Makefile</a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+$ make intel-fpga-plugin
+...
+Successfully tagged intel/intel-fpga-plugin:devel
+</pre></div>
+</div>
+<p>This image launches <code class="docutils literal notranslate"><span class="pre">fpga_plugin</span></code> in <code class="docutils literal notranslate"><span class="pre">af</span></code> mode by default.</p>
+<p>To use your own container image, create you own kustomization overlay patching
+<a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/cdf4905bfc7b1491975062077c92a0689da70bd8/deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml"><code class="docutils literal notranslate"><span class="pre">deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml</span></code></a>
+file.</p>
+</section>
+</section>
+<section id="deploy-by-hand">
+<h3>Deploy by hand<a class="headerlink" href="#deploy-by-hand" title="Permalink to this heading"></a></h3>
+<p>For development purposes, it is sometimes convenient to deploy the plugin ‘by hand’
+on a node. In this case, you do not need to build the complete container image,
+and can build just the plugin.</p>
+<blockquote>
+<div><p><strong>Note:</strong> The FPGA plugin has a number of other associated items that may also need
+to be configured or installed. It is recommended you reference the actions of the
+DaemonSet YAML deployment for more details.</p>
+</div></blockquote>
+<section id="build-fpga-device-plugin">
+<h4>Build FPGA device plugin<a class="headerlink" href="#build-fpga-device-plugin" title="Permalink to this heading"></a></h4>
+<p>When deploying by hand, you only need to build the plugin itself, and not the whole
+container image:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+$ make fpga_plugin
+</pre></div>
+</div>
+</section>
+<section id="run-fpga-device-plugin-in-af-mode">
+<h4>Run FPGA device plugin in af mode<a class="headerlink" href="#run-fpga-device-plugin-in-af-mode" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">KUBE_CONF</span><span class="o">=</span>/var/run/kubernetes/admin.kubeconfig <span class="c1"># path to kubeconfig with admin&#39;s credentials</span>
+$ <span class="nb">export</span> <span class="nv">NODE_NAME</span><span class="o">=</span><span class="s2">&quot;&lt;node name&gt;&quot;</span> <span class="c1"># if the node&#39;s name was overridden and differs from hostname</span>
+$ sudo -E <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/cmd/fpga_plugin/fpga_plugin -mode af -kubeconfig <span class="nv">$KUBE_CONF</span>
+FPGA device plugin started <span class="k">in</span> af mode
+device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-af-f7df405cbd7acf7222f144b0b93acd18.sock
+device-plugin registered
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>: It is also possible to run the FPGA device plugin using a non-root user. To do this,
+the nodes’ DAC rules must be configured to device plugin socket creation and kubelet registration.
+Furthermore, the deployments <code class="docutils literal notranslate"><span class="pre">securityContext</span></code> must be configured with appropriate <code class="docutils literal notranslate"><span class="pre">runAsUser/runAsGroup</span></code>.</p>
+</div></blockquote>
+</section>
+<section id="run-fpga-device-plugin-in-region-mode">
+<h4>Run FPGA device plugin in region mode<a class="headerlink" href="#run-fpga-device-plugin-in-region-mode" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">KUBE_CONF</span><span class="o">=</span>/var/run/kubernetes/admin.kubeconfig <span class="c1"># path to kubeconfig with admin&#39;s credentials</span>
+$ <span class="nb">export</span> <span class="nv">NODE_NAME</span><span class="o">=</span><span class="s2">&quot;&lt;node name&gt;&quot;</span> <span class="c1"># if the node&#39;s name was overridden and differs from hostname</span>
+$ sudo -E <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/cmd/fpga_plugin/fpga_plugin -mode region -kubeconfig <span class="nv">$KUBE_CONF</span>
+FPGA device plugin started <span class="k">in</span> region mode
+device-plugin start server at: /var/lib/kubelet/device-plugins/fpga.intel.com-region-ce48969398f05f33946d560708be108a.sock
+device-plugin registered
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../fpga_crihook/README.html" class="btn btn-neutral float-left" title="Intel FPGA prestart CRI-O webhook for Kubernetes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../fpga_tool/README.html" class="btn btn-neutral float-right" title="Intel FPGA test tool" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

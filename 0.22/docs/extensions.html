@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Extensions &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Intel FPGA admission controller for Kubernetes" href="../cmd/fpga_admissionwebhook/README.html" />
+    <link rel="prev" title="Development" href="../DEVEL.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../DEVEL.html">Development</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Extensions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_admissionwebhook/README.html">Intel FPGA admission controller for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_crihook/README.html">Intel FPGA prestart CRI-O webhook for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_plugin/README.html">Intel FPGA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_tool/README.html">Intel FPGA test tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/gpu_plugin/README.html">Intel GPU device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/operator/README.html">Intel Device Plugins Operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/qat_plugin/README.html">Intel QuickAssist Technology (QAT) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/sgx_plugin/README.html">Intel Software Guard Extensions (SGX) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/vpu_plugin/README.html">Intel VPU device plugin for Kubernetes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Extensions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/docs/extensions.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="extensions">
+<h1>Extensions<a class="headerlink" href="#extensions" title="Permalink to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cmd/fpga_admissionwebhook/README.html">Intel FPGA admission controller for Kubernetes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_admissionwebhook/README.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_admissionwebhook/README.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_admissionwebhook/README.html#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/fpga_admissionwebhook/README.html#pre-requisites">Pre-requisites</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_admissionwebhook/README.html#mappings">Mappings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/fpga_admissionwebhook/README.html#deployment">Deployment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/fpga_admissionwebhook/README.html#webhook-deployment">Webhook deployment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/fpga_admissionwebhook/README.html#mappings-deployment">Mappings deployment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_admissionwebhook/README.html#next-steps">Next steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cmd/fpga_crihook/README.html">Intel FPGA prestart CRI-O webhook for Kubernetes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_crihook/README.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_crihook/README.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_crihook/README.html#building">Building</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/fpga_crihook/README.html#getting-the-source-code">Getting the source code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/fpga_crihook/README.html#building-the-image">Building the image</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_crihook/README.html#configuring-cri-o">Configuring CRI-O</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cmd/fpga_plugin/README.html">Intel FPGA device plugin for Kubernetes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_plugin/README.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_plugin/README.html#component-overview">Component overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_plugin/README.html#fpga-modes">FPGA modes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_plugin/README.html#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/fpga_plugin/README.html#pre-built-images">Pre-built images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/fpga_plugin/README.html#dependencies">Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/fpga_plugin/README.html#getting-the-source-code">Getting the source code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/fpga_plugin/README.html#deploying-as-a-daemonset">Deploying as a DaemonSet</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/fpga_plugin/README.html#verify-plugin-registration">Verify plugin registration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/fpga_plugin/README.html#building-the-plugin-image">Building the plugin image</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/fpga_plugin/README.html#deploy-by-hand">Deploy by hand</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/fpga_plugin/README.html#build-fpga-device-plugin">Build FPGA device plugin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/fpga_plugin/README.html#run-fpga-device-plugin-in-af-mode">Run FPGA device plugin in af mode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/fpga_plugin/README.html#run-fpga-device-plugin-in-region-mode">Run FPGA device plugin in region mode</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cmd/fpga_tool/README.html">Intel FPGA test tool</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/fpga_tool/README.html#introduction">Introduction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/fpga_tool/README.html#command-line-and-usage">Command line and usage</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cmd/gpu_plugin/README.html">Intel GPU device plugin for Kubernetes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/gpu_plugin/README.html#introduction">Introduction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/gpu_plugin/README.html#configuration-options">Configuration options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/gpu_plugin/README.html#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/gpu_plugin/README.html#deploy-with-pre-built-container-image">Deploy with pre-built container image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/gpu_plugin/README.html#getting-the-source-code">Getting the source code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/gpu_plugin/README.html#deploying-as-a-daemonset">Deploying as a DaemonSet</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/gpu_plugin/README.html#build-the-plugin-image">Build the plugin image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/gpu_plugin/README.html#deploy-plugin-daemonset">Deploy plugin DaemonSet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/gpu_plugin/README.html#fractional-resources">Fractional resources</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/gpu_plugin/README.html#deploy-by-hand">Deploy by hand</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/gpu_plugin/README.html#build-the-plugin">Build the plugin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/gpu_plugin/README.html#run-the-plugin-as-administrator">Run the plugin as administrator</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/gpu_plugin/README.html#verify-plugin-registration">Verify plugin registration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/gpu_plugin/README.html#testing-the-plugin">Testing the plugin</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cmd/operator/README.html">Intel Device Plugins Operator</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/operator/README.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/operator/README.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/operator/README.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/operator/README.html#known-issues">Known issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cmd/qat_plugin/README.html">Intel QuickAssist Technology (QAT) device plugin for Kubernetes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/qat_plugin/README.html#introduction">Introduction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/qat_plugin/README.html#modes-and-configuration-options">Modes and Configuration options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/qat_plugin/README.html#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/qat_plugin/README.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/qat_plugin/README.html#pre-built-image">Pre-built image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/qat_plugin/README.html#getting-the-source-code">Getting the source code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/qat_plugin/README.html#deploying-as-a-daemonset">Deploying as a DaemonSet</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/qat_plugin/README.html#build-the-plugin-image">Build the plugin image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/qat_plugin/README.html#deploy-the-daemonset">Deploy the DaemonSet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/qat_plugin/README.html#verify-qat-device-plugin-is-registered">Verify QAT device plugin is registered</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/qat_plugin/README.html#deploying-by-hand">Deploying by hand</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/qat_plugin/README.html#build-qat-device-plugin">Build QAT device plugin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/qat_plugin/README.html#deploy-qat-plugin">Deploy QAT plugin</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/qat_plugin/README.html#qat-device-plugin-demos">QAT device plugin Demos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/qat_plugin/README.html#dpdk-qat-demos">DPDK QAT demos</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="../cmd/qat_plugin/README.html#dpdk-prerequisites">DPDK Prerequisites</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../cmd/qat_plugin/README.html#build-the-image">Build the image</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../cmd/qat_plugin/README.html#deploy-the-pod">Deploy the pod</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../cmd/qat_plugin/README.html#manual-test-run">Manual test run</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../cmd/qat_plugin/README.html#automated-test-run">Automated test run</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/qat_plugin/README.html#openssl-qat-demo">OpenSSL QAT demo</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/qat_plugin/README.html#checking-for-hardware">Checking for hardware</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cmd/sgx_plugin/README.html">Intel Software Guard Extensions (SGX) device plugin for Kubernetes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/sgx_plugin/README.html#introduction">Introduction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/sgx_plugin/README.html#modes-and-configuration-options">Modes and Configuration options</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/sgx_plugin/README.html#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/sgx_plugin/README.html#prerequisites">Prerequisites</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/sgx_plugin/README.html#backwards-compatibility-note">Backwards compatibility note</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/sgx_plugin/README.html#deploying-with-pre-built-images">Deploying with Pre-built images</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/sgx_plugin/README.html#deploy-node-feature-discovery">Deploy node-feature-discovery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/sgx_plugin/README.html#deploy-cert-manager">Deploy cert-manager</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/sgx_plugin/README.html#deploy-intel-device-plugin-operator">Deploy Intel Device plugin operator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/sgx_plugin/README.html#deploy-sgx-device-plugin-with-the-operator">Deploy SGX device plugin with the operator</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/sgx_plugin/README.html#getting-the-source-code">Getting the source code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/sgx_plugin/README.html#deploying-as-a-daemonset">Deploying as a DaemonSet</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/sgx_plugin/README.html#build-the-plugin-and-epc-source-images">Build the plugin and EPC source images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/sgx_plugin/README.html#deploy-the-daemonset">Deploy the DaemonSet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/sgx_plugin/README.html#verify-sgx-device-plugin-is-registered">Verify SGX device plugin is registered:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/sgx_plugin/README.html#deploying-by-hand">Deploying by hand</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/sgx_plugin/README.html#build-sgx-device-plugin">Build SGX device plugin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/sgx_plugin/README.html#deploy-sgx-plugin">Deploy SGX plugin</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/sgx_plugin/README.html#sgx-device-plugin-demos">SGX device plugin demos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/sgx_plugin/README.html#sgx-ecdsa-remote-attestation">SGX ECDSA Remote Attestation</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="../cmd/sgx_plugin/README.html#remote-attestation-prerequisites">Remote Attestation Prerequisites</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../cmd/sgx_plugin/README.html#build-the-image">Build the image</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../cmd/sgx_plugin/README.html#deploy-the-pods">Deploy the pods</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cmd/vpu_plugin/README.html">Intel VPU device plugin for Kubernetes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/vpu_plugin/README.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cmd/vpu_plugin/README.html#installation">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/vpu_plugin/README.html#getting-the-source-code">Getting the source code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/vpu_plugin/README.html#deploying-as-a-daemonset">Deploying as a DaemonSet</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/vpu_plugin/README.html#build-the-plugin-image">Build the plugin image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/vpu_plugin/README.html#deploy-plugin-daemonset">Deploy plugin DaemonSet</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/vpu_plugin/README.html#deploy-by-hand">Deploy by hand</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/vpu_plugin/README.html#build-the-plugin">Build the plugin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/vpu_plugin/README.html#run-the-plugin-as-administrator">Run the plugin as administrator</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/vpu_plugin/README.html#verify-plugin-registration">Verify plugin registration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cmd/vpu_plugin/README.html#testing-the-plugin">Testing the plugin</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/vpu_plugin/README.html#build-a-docker-image-with-an-classification-example">Build a Docker image with an classification example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/vpu_plugin/README.html#create-a-job-running-unit-tests-off-the-local-docker-image">Create a job running unit tests off the local Docker image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../cmd/vpu_plugin/README.html#review-the-job-logs">Review the job logs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../DEVEL.html" class="btn btn-neutral float-left" title="Development" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../cmd/fpga_admissionwebhook/README.html" class="btn btn-neutral float-right" title="Intel FPGA admission controller for Kubernetes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

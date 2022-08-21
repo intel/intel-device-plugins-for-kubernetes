@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel DSA device plugin for Kubernetes &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Intel DSA device plugin for Kubernetes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/dsa_plugin/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-dsa-device-plugin-for-kubernetes">
+<h1>Intel DSA device plugin for Kubernetes<a class="headerlink" href="#intel-dsa-device-plugin-for-kubernetes" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#deploy-with-pre-built-container-image">Deploy with pre-built container image</a></p></li>
+<li><p><a class="reference external" href="#getting-the-source-code">Getting the source code</a></p></li>
+<li><p><a class="reference external" href="#deploying-as-a-daemonset">Deploying as a DaemonSet</a></p>
+<ul>
+<li><p><a class="reference external" href="#build-the-plugin-image">Build the plugin image</a></p></li>
+<li><p><a class="reference external" href="#deploy-plugin-daemonset">Deploy plugin DaemonSet</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#deploy-by-hand">Deploy by hand</a></p>
+<ul>
+<li><p><a class="reference external" href="#build-the-plugin">Build the plugin</a></p></li>
+<li><p><a class="reference external" href="#run-the-plugin-as-administrator">Run the plugin as administrator</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#verify-plugin-registration">Verify plugin registration</a></p></li>
+<li><p><a class="reference external" href="#testing-the-plugin">Testing the plugin</a></p></li>
+</ul>
+</li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>The DSA device plugin for Kubernetes supports acceleration using the Intel Data Streaming accelerator(DSA).</p>
+<p>The DSA plugin discovers DSA work queues and presents them as a node resources.</p>
+<p>The DSA plugin and operator optionally support provisioning of DSA devices and workqueues with the help of <a class="reference external" href="https://github.com/intel/idxd-config">accel-config</a> utility through initcontainer.</p>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>The following sections detail how to obtain, build, deploy and test the DSA device plugin.</p>
+<p>Examples are provided showing how to deploy the plugin either using a DaemonSet or by hand on a per-node basis.</p>
+<section id="deploy-with-pre-built-container-image">
+<h3>Deploy with pre-built container image<a class="headerlink" href="#deploy-with-pre-built-container-image" title="Permalink to this heading"></a></h3>
+<p><a class="reference external" href="https://hub.docker.com/r/intel/intel-dsa-plugin">Pre-built images</a>
+of this component are available on the Docker hub. These images are automatically built and uploaded
+to the hub from the latest main branch of this repository.</p>
+<p>Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers in the format <code class="docutils literal notranslate"><span class="pre">x.y.z</span></code>, corresponding to the branches and releases in this
+repository. Thus the easiest way to deploy the plugin in your cluster is to run this command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/dsa_plugin?ref<span class="o">=</span>&lt;REF&gt;
+daemonset.apps/intel-dsa-plugin created
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;REF&gt;</span></code> needs to be substituted with the desired git ref, e.g. <code class="docutils literal notranslate"><span class="pre">main</span></code>.</p>
+<p>Nothing else is needed. But if you want to deploy a customized version of the plugin read further.</p>
+</section>
+<section id="deploy-with-initcontainer">
+<h3>Deploy with initcontainer<a class="headerlink" href="#deploy-with-initcontainer" title="Permalink to this heading"></a></h3>
+<p>There’s a sample <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-idxd-config-initcontainer.Dockerfile">DSA initcontainer</a> included that provisions DSA devices and workqueues (1 engine / 1 group / 1 wq (user/dedicated)), to deploy:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k deployments/dsa_plugin/overlays/dsa_initcontainer/
+</pre></div>
+</div>
+<p>The provisioning <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/idxd-init.sh">script</a> and <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/demo/dsa.conf">template</a> are available for customization.</p>
+</section>
+<section id="deploy-with-initcontainer-and-provisioning-config-in-the-configmap">
+<h3>Deploy with initcontainer and provisioning config in the ConfigMap<a class="headerlink" href="#deploy-with-initcontainer-and-provisioning-config-in-the-configmap" title="Permalink to this heading"></a></h3>
+<p>The provisioning config can be optionally stored in the ProvisioningConfig configMap which is then passed to initcontainer through the volume mount.</p>
+<p>There’s also a possibility for a node specific congfiguration through passing a nodename via NODE_NAME into initcontainer’s environment and passing a node specific profile via configMap volume mount.</p>
+<p>To create a custom provisioning config:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl create configmap --namespace<span class="o">=</span>inteldeviceplugins-system intel-dsa-config --from-file<span class="o">=</span>demo/dsa.conf
+</pre></div>
+</div>
+</section>
+<section id="getting-the-source-code">
+<h3>Getting the source code<a class="headerlink" href="#getting-the-source-code" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="o">=</span>/path/to/intel-device-plugins-for-kubernetes
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+</pre></div>
+</div>
+</section>
+<section id="deploying-as-a-daemonset">
+<h3>Deploying as a DaemonSet<a class="headerlink" href="#deploying-as-a-daemonset" title="Permalink to this heading"></a></h3>
+<p>To deploy the dsa plugin as a daemonset, you first need to build a container image for the
+plugin and ensure that is visible to your nodes.</p>
+<section id="build-the-plugin-image">
+<h4>Build the plugin image<a class="headerlink" href="#build-the-plugin-image" title="Permalink to this heading"></a></h4>
+<p>The following will use <code class="docutils literal notranslate"><span class="pre">docker</span></code> to build a local container image called
+<code class="docutils literal notranslate"><span class="pre">intel/intel-dsa-plugin</span></code> with the tag <code class="docutils literal notranslate"><span class="pre">devel</span></code>.</p>
+<p>The image build tool can be changed from the default <code class="docutils literal notranslate"><span class="pre">docker</span></code> by setting the <code class="docutils literal notranslate"><span class="pre">BUILDER</span></code> argument
+to the <a class="reference external" href="Makefile"><code class="docutils literal notranslate"><span class="pre">Makefile</span></code></a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+$ make intel-dsa-plugin
+...
+Successfully tagged intel/intel-dsa-plugin:devel
+</pre></div>
+</div>
+</section>
+<section id="deploy-plugin-daemonset">
+<h4>Deploy plugin DaemonSet<a class="headerlink" href="#deploy-plugin-daemonset" title="Permalink to this heading"></a></h4>
+<p>You can then use the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/330b56b6860cd036c77888ceccf0c6ba5d66d891/deployments/dsa_plugin/base/intel-dsa-plugin.yaml">example DaemonSet YAML</a>
+file provided to deploy the plugin. The default kustomization that deploys the YAML as is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k deployments/dsa_plugin
+daemonset.apps/intel-dsa-plugin created
+</pre></div>
+</div>
+</section>
+</section>
+<section id="deploy-by-hand">
+<h3>Deploy by hand<a class="headerlink" href="#deploy-by-hand" title="Permalink to this heading"></a></h3>
+<p>For development purposes, it is sometimes convenient to deploy the plugin ‘by hand’ on a node.
+In this case, you do not need to build the complete container image, and can build just the plugin.</p>
+<section id="build-the-plugin">
+<h4>Build the plugin<a class="headerlink" href="#build-the-plugin" title="Permalink to this heading"></a></h4>
+<p>First we build the plugin:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+$ make dsa_plugin
+</pre></div>
+</div>
+</section>
+<section id="run-the-plugin-as-administrator">
+<h4>Run the plugin as administrator<a class="headerlink" href="#run-the-plugin-as-administrator" title="Permalink to this heading"></a></h4>
+<p>Now we can run the plugin directly on the node:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ sudo -E <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/cmd/dsa_plugin/dsa_plugin
+device-plugin registered
+</pre></div>
+</div>
+</section>
+</section>
+<section id="verify-plugin-registration">
+<h3>Verify plugin registration<a class="headerlink" href="#verify-plugin-registration" title="Permalink to this heading"></a></h3>
+<p>You can verify the plugin has been registered with the expected nodes by searching for the relevant
+resource allocation status on the nodes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get nodes -o go-template<span class="o">=</span><span class="s1">&#39;{{range .items}}{{.metadata.name}}{{&quot;\n&quot;}}{{range $k,$v:=.status.allocatable}}{{&quot;  &quot;}}{{$k}}{{&quot;: &quot;}}{{$v}}{{&quot;\n&quot;}}{{end}}{{end}}&#39;</span> <span class="p">|</span> grep <span class="s1">&#39;^\([^ ]\)\|\(  dsa\)&#39;</span>
+master
+  dsa.intel.com/wq-user-dedicated: <span class="m">2</span>
+  dsa.intel.com/wq-user-shared: <span class="m">8</span>
+node1
+ dsa.intel.com/wq-user-dedicated: <span class="m">4</span>
+ dsa.intel.com/wq-user-shared: <span class="m">20</span>
+</pre></div>
+</div>
+</section>
+<section id="testing-the-plugin">
+<h3>Testing the plugin<a class="headerlink" href="#testing-the-plugin" title="Permalink to this heading"></a></h3>
+<p>We can test the plugin is working by deploying the provided example accel-config test image.</p>
+<ol>
+<li><p>Build a Docker image with an accel-config tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ make dsa-accel-config-demo
+...
+Successfully tagged dsa-accel-config-demo:devel
+</pre></div>
+</div>
+</li>
+<li><p>Create a pod running unit tests off the local Docker image:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -f <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/demo/dsa-accel-config-demo-pod.yaml
+pod/dsa-accel-config-demo created
+</pre></div>
+</div>
+</li>
+<li><p>Wait until pod is completed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get pods  <span class="p">|</span>grep dsa-accel-config-demo
+dsa-accel-config-demo    <span class="m">0</span>/1     Completed   <span class="m">0</span>          31m
+</pre></div>
+</div>
+</li>
+<li><p>Review the job’s logs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl logs dsa-accel-config-demo <span class="p">|</span> tail
+<span class="o">[</span>debug<span class="o">]</span> PF <span class="k">in</span> sub-task<span class="o">[</span><span class="m">6</span><span class="o">]</span>, consider as passed
+<span class="o">[</span>debug<span class="o">]</span> PF <span class="k">in</span> sub-task<span class="o">[</span><span class="m">7</span><span class="o">]</span>, consider as passed
+<span class="o">[</span>debug<span class="o">]</span> PF <span class="k">in</span> sub-task<span class="o">[</span><span class="m">8</span><span class="o">]</span>, consider as passed
+<span class="o">[</span>debug<span class="o">]</span> PF <span class="k">in</span> sub-task<span class="o">[</span><span class="m">9</span><span class="o">]</span>, consider as passed
+<span class="o">[</span>debug<span class="o">]</span> PF <span class="k">in</span> sub-task<span class="o">[</span><span class="m">10</span><span class="o">]</span>, consider as passed
+<span class="o">[</span>debug<span class="o">]</span> PF <span class="k">in</span> sub-task<span class="o">[</span><span class="m">11</span><span class="o">]</span>, consider as passed
+<span class="o">[</span>debug<span class="o">]</span> PF <span class="k">in</span> sub-task<span class="o">[</span><span class="m">12</span><span class="o">]</span>, consider as passed
+<span class="o">[</span>debug<span class="o">]</span> PF <span class="k">in</span> sub-task<span class="o">[</span><span class="m">13</span><span class="o">]</span>, consider as passed
+<span class="o">[</span>debug<span class="o">]</span> PF <span class="k">in</span> sub-task<span class="o">[</span><span class="m">14</span><span class="o">]</span>, consider as passed
+<span class="o">[</span>debug<span class="o">]</span> PF <span class="k">in</span> sub-task<span class="o">[</span><span class="m">15</span><span class="o">]</span>, consider as passed
+</pre></div>
+</div>
+<p>If the pod did not successfully launch, possibly because it could not obtain the DSA
+resource, it will be stuck in the <code class="docutils literal notranslate"><span class="pre">Pending</span></code> status:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get pods
+NAME                      READY   STATUS    RESTARTS   AGE
+dsa-accel-config-demo     <span class="m">0</span>/1     Pending   <span class="m">0</span>          7s
+</pre></div>
+</div>
+<p>This can be verified by checking the Events of the pod:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl describe pod dsa-accel-config-demo <span class="p">|</span> grep -A3 Events:
+Events:
+  Type     Reason            Age    From               Message
+  ----     ------            ----   ----               -------
+  Warning  FailedScheduling  2m26s  default-scheduler  <span class="m">0</span>/1 nodes are available: <span class="m">1</span> Insufficient dsa.intel.com/wq-user-dedicated, <span class="m">1</span> Insufficient dsa.intel.com/wq-user-shared.
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

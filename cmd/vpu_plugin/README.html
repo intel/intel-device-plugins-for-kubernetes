@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel VPU device plugin for Kubernetes &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Demo" href="../../demo/readme.html" />
+    <link rel="prev" title="Intel SGX admission controller for Kubernetes" href="../sgx_admissionwebhook/README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Development</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../docs/extensions.html">Extensions</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../dlb_plugin/README.html">Intel DLB device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dsa_plugin/README.html">Intel DSA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_admissionwebhook/README.html">Intel FPGA admission controller for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_crihook/README.html">Intel FPGA prestart CRI-O webhook for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_plugin/README.html">Intel FPGA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_tool/README.html">Intel FPGA test tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_nfdhook/README.html">Intel GPU NFD hook</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_plugin/README.html">Intel GPU device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iaa_plugin/README.html">Intel IAA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../operator/README.html">Intel Device Plugins Operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../qat_plugin/README.html">Intel QuickAssist Technology (QAT) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_plugin/README.html">Intel Software Guard Extensions (SGX) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_admissionwebhook/README.html">Intel SGX admission controller for Kubernetes</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Intel VPU device plugin for Kubernetes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#getting-the-source-code">Getting the source code</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deploying-as-a-daemonset">Deploying as a DaemonSet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deploy-by-hand">Deploy by hand</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#verify-plugin-registration">Verify plugin registration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#testing-the-plugin">Testing the plugin</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../docs/extensions.html">Extensions</a> &raquo;</li>
+      <li>Intel VPU device plugin for Kubernetes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/vpu_plugin/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-vpu-device-plugin-for-kubernetes">
+<h1>Intel VPU device plugin for Kubernetes<a class="headerlink" href="#intel-vpu-device-plugin-for-kubernetes" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#getting-the-source-code">Getting the source code</a></p></li>
+<li><p><a class="reference external" href="#deploying-as-a-daemonset">Deploying as a DaemonSet</a></p>
+<ul>
+<li><p><a class="reference external" href="#build-the-plugin-image">Build the plugin image</a></p></li>
+<li><p><a class="reference external" href="#deploy-plugin-daemonset">Deploy plugin DaemonSet</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#deploy-by-hand">Deploy by hand</a></p>
+<ul>
+<li><p><a class="reference external" href="#build-the-plugin">Build the plugin</a></p></li>
+<li><p><a class="reference external" href="#run-the-plugin-as-administrator">Run the plugin as administrator</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#verify-plugin-registration">Verify plugin registration</a></p></li>
+<li><p><a class="reference external" href="#testing-the-plugin">Testing the plugin</a></p>
+<ul>
+<li><p><a class="reference external" href="#build-a-docker-image-with-an-classification-example">Build a Docker image with an classification example</a></p></li>
+<li><p><a class="reference external" href="#create-a-job-running-unit-tests-off-the-local-docker-image">Create a job running unit tests off the local Docker image</a></p></li>
+<li><p><a class="reference external" href="#review-the-job-logs">Review the job logs</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>The VPU device plugin supports below cards:</p>
+<p><a class="reference external" href="https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/media-analytics-vcac-a-accelerator-card-by-celestica-datasheet.pdf">Intel VCAC-A</a>.
+This card has:</p>
+<ul class="simple">
+<li><p>1 Intel Core i3-7100U processor</p></li>
+<li><p>12 MyriadX VPUs</p></li>
+<li><p>8GB DDR4 memory</p></li>
+<li><p>PCIe interface to Xeon E3/E5 server</p></li>
+</ul>
+<p><a class="reference external" href="https://software.intel.com/en-us/articles/introducing-the-iei-tank-aiot-developer-kit-and-mustang-v100-mx8-pcie-accelerator-card">Intel Mustang V100</a>.
+This card has:</p>
+<ul class="simple">
+<li><p>8 MyriadX VPUs</p></li>
+<li><p>PCIe interface to 6th+ Generation Core PC or Xeon E3/E5 server</p></li>
+</ul>
+<p><a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/movidius-vpu.html">Gen 3 Intel® Movidius™ VPU HDDL VE3</a>
+This card has:</p>
+<ul class="simple">
+<li><p>3 Intel® Movidius Gen 3 Intel® Movidius™ VPU SoCs</p></li>
+</ul>
+<p><a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/movidius-vpu.html">Intel® Movidius™ S VPU</a>
+This card has:</p>
+<ul class="simple">
+<li><p>6 Intel® Movidius Gen 3 Intel® Movidius™ VPU SoCs</p></li>
+</ul>
+<blockquote>
+<div><p><strong>Note:</strong> This device plugin need HDDL daemon service to be running either natively or from a container.
+To get VCAC-A or Mustang card running hddl, please refer to:
+https://github.com/OpenVisualCloud/Dockerfiles/blob/master/VCAC-A/script/setup_hddl.sh</p>
+</div></blockquote>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>The following sections detail how to obtain, build, deploy and test the VPU device plugin.</p>
+<p>Examples are provided showing how to deploy the plugin either using a DaemonSet or by hand on a per-node basis.</p>
+<section id="getting-the-source-code">
+<h3>Getting the source code<a class="headerlink" href="#getting-the-source-code" title="Permalink to this heading"></a></h3>
+<blockquote>
+<div><p><strong>Note:</strong> It is presumed you have a valid and configured <a class="reference external" href="https://golang.org/">golang</a> environment
+that meets the minimum required version.</p>
+</div></blockquote>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ mkdir -p <span class="k">$(</span>go env GOPATH<span class="k">)</span>/src/github.com/intel
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes <span class="k">$(</span>go env GOPATH<span class="k">)</span>/src/github.com/intel/intel-device-plugins-for-kubernetes
+</pre></div>
+</div>
+</section>
+<section id="deploying-as-a-daemonset">
+<h3>Deploying as a DaemonSet<a class="headerlink" href="#deploying-as-a-daemonset" title="Permalink to this heading"></a></h3>
+<p>To deploy the vpu plugin as a daemonset, you first need to build a container image for the
+plugin and ensure that is visible to your nodes.</p>
+<section id="build-the-plugin-image">
+<h4>Build the plugin image<a class="headerlink" href="#build-the-plugin-image" title="Permalink to this heading"></a></h4>
+<p>The following will use <code class="docutils literal notranslate"><span class="pre">docker</span></code> to build a local container image called
+<code class="docutils literal notranslate"><span class="pre">intel/intel-vpu-plugin</span></code> with the tag <code class="docutils literal notranslate"><span class="pre">devel</span></code>.</p>
+<p>The image build tool can be changed from the default <code class="docutils literal notranslate"><span class="pre">docker</span></code> by setting the <code class="docutils literal notranslate"><span class="pre">BUILDER</span></code> argument
+to the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/d7554cd3377edbf29eb62d1717701c0ddad02dfc/Makefile"><code class="docutils literal notranslate"><span class="pre">Makefile</span></code></a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="k">$(</span>go env GOPATH<span class="k">)</span>/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ make intel-vpu-plugin
+...
+Successfully tagged intel/intel-vpu-plugin:devel
+</pre></div>
+</div>
+</section>
+<section id="deploy-plugin-daemonset">
+<h4>Deploy plugin DaemonSet<a class="headerlink" href="#deploy-plugin-daemonset" title="Permalink to this heading"></a></h4>
+<p>You can then use the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/d7554cd3377edbf29eb62d1717701c0ddad02dfc/deployments/vpu_plugin/base/intel-vpu-plugin.yaml">example DaemonSet YAML</a>
+file provided to deploy the plugin. The default kustomization that deploys the YAML as is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k deployments/vpu_plugin
+daemonset.apps/intel-vpu-plugin created
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>: It is also possible to run the VPU device plugin using a non-root user. To do this,
+the nodes’ DAC rules must be configured to device plugin socket creation and kubelet registration.
+Furthermore, the deployments <code class="docutils literal notranslate"><span class="pre">securityContext</span></code> must be configured with appropriate <code class="docutils literal notranslate"><span class="pre">runAsUser/runAsGroup</span></code>.</p>
+</div></blockquote>
+<p>For xlink device, deploy DaemonSet as</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k deployments/vpu_plugin/overlays/xlink
+daemonset.apps/intel-vpu-plugin created
+</pre></div>
+</div>
+</section>
+</section>
+<section id="deploy-by-hand">
+<h3>Deploy by hand<a class="headerlink" href="#deploy-by-hand" title="Permalink to this heading"></a></h3>
+<p>For development purposes, it is sometimes convenient to deploy the plugin ‘by hand’ on a node.
+In this case, you do not need to build the complete container image, and can build just the plugin.</p>
+<section id="build-the-plugin">
+<h4>Build the plugin<a class="headerlink" href="#build-the-plugin" title="Permalink to this heading"></a></h4>
+<p>First we build the plugin:</p>
+<blockquote>
+<div><p><strong>Note:</strong> this vpu plugin has dependency of libusb-1.0-0-dev, you need install it before building vpu plugin</p>
+</div></blockquote>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="k">$(</span>go env GOPATH<span class="k">)</span>/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ make vpu_plugin
+</pre></div>
+</div>
+</section>
+<section id="run-the-plugin-as-administrator">
+<h4>Run the plugin as administrator<a class="headerlink" href="#run-the-plugin-as-administrator" title="Permalink to this heading"></a></h4>
+<p>Now we can run the plugin directly on the node:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ sudo <span class="k">$(</span>go env GOPATH<span class="k">)</span>/src/github.com/intel/intel-device-plugins-for-kubernetes/cmd/vpu_plugin/vpu_plugin
+VPU device plugin started
+</pre></div>
+</div>
+</section>
+</section>
+<section id="verify-plugin-registration">
+<h3>Verify plugin registration<a class="headerlink" href="#verify-plugin-registration" title="Permalink to this heading"></a></h3>
+<p>You can verify the plugin has been registered with the expected nodes by searching for the relevant
+resource allocation status on the nodes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get nodes -o<span class="o">=</span><span class="nv">jsonpath</span><span class="o">=</span><span class="s2">&quot;{range .items[*]}{.metadata.name}{&#39;\n&#39;}{&#39; hddl: &#39;}{.status.allocatable.vpu\.intel\.com/hddl}{&#39;\n&#39;}&quot;</span>
+vcaanode00
+ hddl: <span class="m">12</span>
+</pre></div>
+</div>
+</section>
+<section id="testing-the-plugin">
+<h3>Testing the plugin<a class="headerlink" href="#testing-the-plugin" title="Permalink to this heading"></a></h3>
+<p>We can test the plugin is working by deploying the provided example OpenVINO image with HDDL plugin enabled.</p>
+<section id="build-a-docker-image-with-an-classification-example">
+<h4>Build a Docker image with an classification example<a class="headerlink" href="#build-a-docker-image-with-an-classification-example" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="k">$(</span>go env GOPATH<span class="k">)</span>/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ make ubuntu-demo-openvino
+...
+Successfully tagged intel/ubuntu-demo-openvino:devel
+</pre></div>
+</div>
+</section>
+<section id="create-a-job-running-unit-tests-off-the-local-docker-image">
+<h4>Create a job running unit tests off the local Docker image<a class="headerlink" href="#create-a-job-running-unit-tests-off-the-local-docker-image" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="k">$(</span>go env GOPATH<span class="k">)</span>/src/github.com/intel/intel-device-plugins-for-kubernetes
+$ kubectl apply -f demo/intelvpu-job.yaml
+job.batch/intelvpu-demo-job created
+</pre></div>
+</div>
+</section>
+<section id="review-the-job-logs">
+<h4>Review the job logs<a class="headerlink" href="#review-the-job-logs" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get pods <span class="p">|</span> fgrep intelvpu
+<span class="c1"># substitute the &#39;xxxxx&#39; below for the pod name listed in the above</span>
+$ kubectl logs intelvpu-demo-job-xxxxx
++ <span class="nb">export</span> <span class="nv">HDDL_INSTALL_DIR</span><span class="o">=</span>/root/hddl
++ <span class="nv">HDDL_INSTALL_DIR</span><span class="o">=</span>/root/hddl
++ <span class="nb">export</span> <span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span>/root/inference_engine_samples_build/intel64/Release/lib/
++ <span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span>/root/inference_engine_samples_build/intel64/Release/lib/
++ /root/inference_engine_samples_build/intel64/Release/classification_sample_async -m /root/openvino_models/ir/FP16/classification/squeezenet/1.1/caffe/squeezenet1.1.xml -i /root/car.png -d HDDL
+<span class="o">[</span> INFO <span class="o">]</span> InferenceEngine:
+    API version ............ <span class="m">2</span>.0
+    Build .................. custom_releases/2019/R2_f5827d4773ebbe727c9acac5f007f7d94dd4be4e
+    Description ....... API
+<span class="o">[</span> INFO <span class="o">]</span> Parsing input parameters
+<span class="o">[</span> INFO <span class="o">]</span> Parsing input parameters
+<span class="o">[</span> INFO <span class="o">]</span> Files were added: <span class="m">1</span>
+<span class="o">[</span> INFO <span class="o">]</span>     /root/car.png
+<span class="o">[</span> INFO <span class="o">]</span> Creating Inference Engine
+    HDDL
+    HDDLPlugin version ......... <span class="m">2</span>.0
+    Build ........... <span class="m">27579</span>
+
+<span class="o">[</span> INFO <span class="o">]</span> Loading network files
+<span class="o">[</span> INFO <span class="o">]</span> Preparing input blobs
+<span class="o">[</span> WARNING <span class="o">]</span> Image is resized from <span class="o">(</span><span class="m">787</span>, <span class="m">259</span><span class="o">)</span> to <span class="o">(</span><span class="m">227</span>, <span class="m">227</span><span class="o">)</span>
+<span class="o">[</span> INFO <span class="o">]</span> Batch size is <span class="m">1</span>
+<span class="o">[</span> INFO <span class="o">]</span> Loading model to the device
+<span class="o">[</span><span class="m">07</span>:49:01.0427<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>ServiceStarter.cpp:40<span class="o">]</span> Info: Waiting <span class="k">for</span> HDDL Service getting ready ...
+<span class="o">[</span><span class="m">07</span>:49:01.0428<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>ServiceStarter.cpp:45<span class="o">]</span> Info: Found HDDL Service is running.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span> <span class="o">[</span><span class="m">07</span>:49:01.0429<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlClient.cpp:256<span class="o">]</span> Hddl api version: <span class="m">2</span>.2
+<span class="o">[</span>HDDLPlugin<span class="o">]</span> <span class="o">[</span><span class="m">07</span>:49:01.0429<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlClient.cpp:259<span class="o">]</span> Info: Create Dispatcher2.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span> <span class="o">[</span><span class="m">07</span>:49:01.0432<span class="o">][</span><span class="m">10</span><span class="o">]</span>I<span class="o">[</span>Dispatcher2.cpp:148<span class="o">]</span> Info: SenderRoutine starts.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span> <span class="o">[</span><span class="m">07</span>:49:01.0432<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlClient.cpp:270<span class="o">]</span> Info: RegisterClient HDDLPlugin.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span> <span class="o">[</span><span class="m">07</span>:49:01.0435<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlClient.cpp:275<span class="o">]</span> Client Id: <span class="m">3</span>
+<span class="o">[</span> INFO <span class="o">]</span> Create infer request
+<span class="o">[</span>HDDLPlugin<span class="o">]</span> <span class="o">[</span><span class="m">07</span>:49:01.7235<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlBlob.cpp:166<span class="o">]</span> Info: HddlBlob initialize ion ...
+<span class="o">[</span>HDDLPlugin<span class="o">]</span> <span class="o">[</span><span class="m">07</span>:49:01.7237<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlBlob.cpp:176<span class="o">]</span> Info: HddlBlob initialize ion successfully.
+<span class="o">[</span> INFO <span class="o">]</span> Start inference <span class="o">(</span><span class="m">10</span> asynchronous executions<span class="o">)</span>
+<span class="o">[</span> INFO <span class="o">]</span> Completed <span class="m">1</span> async request execution
+<span class="o">[</span> INFO <span class="o">]</span> Completed <span class="m">2</span> async request execution
+<span class="o">[</span> INFO <span class="o">]</span> Completed <span class="m">3</span> async request execution
+<span class="o">[</span> INFO <span class="o">]</span> Completed <span class="m">4</span> async request execution
+<span class="o">[</span> INFO <span class="o">]</span> Completed <span class="m">5</span> async request execution
+<span class="o">[</span> INFO <span class="o">]</span> Completed <span class="m">6</span> async request execution
+<span class="o">[</span> INFO <span class="o">]</span> Completed <span class="m">7</span> async request execution
+<span class="o">[</span> INFO <span class="o">]</span> Completed <span class="m">8</span> async request execution
+<span class="o">[</span> INFO <span class="o">]</span> Completed <span class="m">9</span> async request execution
+<span class="o">[</span> INFO <span class="o">]</span> Completed <span class="m">10</span> async request execution
+<span class="o">[</span> INFO <span class="o">]</span> Processing output blobs
+
+Top <span class="m">10</span> results:
+
+Image /root/car.png
+
+classid probability label
+------- ----------- -----
+<span class="m">817</span>     <span class="m">0</span>.8295898   sports car, sport car
+<span class="m">511</span>     <span class="m">0</span>.0961304   convertible
+<span class="m">479</span>     <span class="m">0</span>.0439453   car wheel
+<span class="m">751</span>     <span class="m">0</span>.0101318   racer, race car, racing car
+<span class="m">436</span>     <span class="m">0</span>.0074234   beach wagon, station wagon, wagon, estate car, beach waggon, station waggon, waggon
+<span class="m">656</span>     <span class="m">0</span>.0042267   minivan
+<span class="m">586</span>     <span class="m">0</span>.0029869   half track
+<span class="m">717</span>     <span class="m">0</span>.0018148   pickup, pickup truck
+<span class="m">864</span>     <span class="m">0</span>.0013924   tow truck, tow car, wrecker
+<span class="m">581</span>     <span class="m">0</span>.0006595   grille, radiator grille
+
+<span class="o">[</span>HDDLPlugin<span class="o">]</span> <span class="o">[</span><span class="m">07</span>:49:01.9231<span class="o">][</span><span class="m">11</span><span class="o">]</span>I<span class="o">[</span>Dispatcher2.cpp:212<span class="o">]</span> Info: Listen Thread wake up and to exit.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span> <span class="o">[</span><span class="m">07</span>:49:01.9232<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>Dispatcher2.cpp:81<span class="o">]</span> Info: Client dispatcher exit.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span> <span class="o">[</span><span class="m">07</span>:49:01.9235<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlClient.cpp:203<span class="o">]</span> Info: Hddl client unregistered.
+<span class="o">[</span> INFO <span class="o">]</span> Execution successful
+
+<span class="o">[</span> INFO <span class="o">]</span> This sample is an API example, <span class="k">for</span> any performance measurements please use the dedicated benchmark_app tool
+</pre></div>
+</div>
+<p>If the pod did not successfully launch, possibly because it could not obtain the vpu HDDL
+resource, it will be stuck in the <code class="docutils literal notranslate"><span class="pre">Pending</span></code> status:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get pods
+NAME                      READY   STATUS    RESTARTS   AGE
+intelvpu-demo-job-xxxxx   <span class="m">0</span>/1     Pending   <span class="m">0</span>          8s
+</pre></div>
+</div>
+<p>This can be verified by checking the Events of the pod:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl describe pod intelvpu-demo-job-xxxxx
+...
+Events:
+Type     Reason            Age        From               Message
+----     ------            ----       ----               -------
+Warning  FailedScheduling  &lt;unknown&gt;  default-scheduler  <span class="m">0</span>/1 nodes are available: <span class="m">1</span> Insufficient vpu.intel.com/hddl.
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../sgx_admissionwebhook/README.html" class="btn btn-neutral float-left" title="Intel SGX admission controller for Kubernetes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../demo/readme.html" class="btn btn-neutral float-right" title="Demo" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

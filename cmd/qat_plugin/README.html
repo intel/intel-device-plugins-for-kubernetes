@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel QuickAssist Technology (QAT) device plugin for Kubernetes &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Intel Software Guard Extensions (SGX) device plugin for Kubernetes" href="../sgx_plugin/README.html" />
+    <link rel="prev" title="Intel Device Plugins Operator" href="../operator/README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Development</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../docs/extensions.html">Extensions</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../dlb_plugin/README.html">Intel DLB device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dsa_plugin/README.html">Intel DSA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_admissionwebhook/README.html">Intel FPGA admission controller for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_crihook/README.html">Intel FPGA prestart CRI-O webhook for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_plugin/README.html">Intel FPGA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_tool/README.html">Intel FPGA test tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_nfdhook/README.html">Intel GPU NFD hook</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_plugin/README.html">Intel GPU device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iaa_plugin/README.html">Intel IAA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../operator/README.html">Intel Device Plugins Operator</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Intel QuickAssist Technology (QAT) device plugin for Kubernetes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#modes-and-configuration-options">Modes and Configuration options</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pre-built-image">Pre-built image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getting-the-source-code">Getting the source code</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deploying-as-a-daemonset">Deploying as a DaemonSet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#deploying-by-hand">Deploying by hand</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#qat-device-plugin-demos">QAT device plugin Demos</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#checking-for-hardware">Checking for hardware</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_plugin/README.html">Intel Software Guard Extensions (SGX) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_admissionwebhook/README.html">Intel SGX admission controller for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vpu_plugin/README.html">Intel VPU device plugin for Kubernetes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../docs/extensions.html">Extensions</a> &raquo;</li>
+      <li>Intel QuickAssist Technology (QAT) device plugin for Kubernetes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/qat_plugin/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-quickassist-technology-qat-device-plugin-for-kubernetes">
+<h1>Intel QuickAssist Technology (QAT) device plugin for Kubernetes<a class="headerlink" href="#intel-quickassist-technology-qat-device-plugin-for-kubernetes" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p>
+<ul>
+<li><p><a class="reference external" href="#modes-and-configuration-options">Modes and Configuration options</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#prerequisites">Prerequisites</a></p></li>
+<li><p><a class="reference external" href="#pre-built-image">Pre-built image</a></p></li>
+<li><p><a class="reference external" href="#getting-the-source-code">Getting the source code:</a></p></li>
+<li><p><a class="reference external" href="#deploying-as-a-daemonset">Deploying as a DaemonSet</a></p>
+<ul>
+<li><p><a class="reference external" href="#build-the-plugin-image">Build the plugin image</a></p></li>
+<li><p><a class="reference external" href="#deploy-the-daemonset">Deploy the DaemonSet</a></p></li>
+<li><p><a class="reference external" href="#verify-qat-device-plugin-is-registered">Verify QAT device plugin is registered:</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#deploying-by-hand">Deploying by hand</a></p>
+<ul>
+<li><p><a class="reference external" href="#build-qat-device-plugin">Build QAT device plugin</a></p></li>
+<li><p><a class="reference external" href="#deploy-qat-plugin">Deploy QAT plugin</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#qat-device-plugin-demos">QAT device plugin Demos</a></p>
+<ul>
+<li><p><a class="reference external" href="#dpdk-qat-demos">DPDK QAT demos</a></p>
+<ul>
+<li><p><a class="reference external" href="#dpdk-prerequisites">DPDK Prerequisites</a></p></li>
+<li><p><a class="reference external" href="#build-the-image">Build the image</a></p></li>
+<li><p><a class="reference external" href="#deploy-the-pod">Deploy the pod</a></p></li>
+<li><p><a class="reference external" href="#manual-test-run">Manual test run</a></p></li>
+<li><p><a class="reference external" href="#automated-test-run">Automated test run</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#openssl-qat-demo">OpenSSL QAT demo</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#checking-for-hardware">Checking for hardware</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>This Intel QAT device plugin provides support for Intel QAT devices under Kubernetes.
+The supported devices are determined by the VF device drivers available in your Linux
+Kernel. See the <a class="reference external" href="#prerequisites">Prerequisites</a> section for more details.</p>
+<p>Supported Devices include, but may not be limited to, the following:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www-ssl.intel.com/content/www/us/en/design/products-and-solutions/processors-and-chipsets/purley/intel-xeon-scalable-processors.html">Intel® Xeon® with Intel® C62X Series Chipset</a></p></li>
+<li><p>Intel® Xeon® with Intel® QAT Gen4 devices</p></li>
+<li><p><a class="reference external" href="https://www.intel.com/content/www/us/en/design/products-and-solutions/processors-and-chipsets/denverton/ns/atom-processor-c3000-series.html">Intel® Atom™ Processor C3000</a></p></li>
+<li><p><a class="reference external" href="https://www.intel.com/content/www/us/en/ethernet-products/gigabit-server-adapters/quickassist-adapter-8950-brief.html">Intel® Communications Chipset 8925 to 8955 Series</a></p></li>
+</ul>
+<p>The QAT device plugin provides access to QAT hardware accelerated cryptographic and compression features.
+Demonstrations are provided utilising <a class="reference external" href="https://doc.dpdk.org/">DPDK</a> and <a class="reference external" href="https://www.openssl.org/">OpenSSL</a>.</p>
+<p><a class="reference external" href="https://katacontainers.io/">Kata Containers</a> QAT integration is documented in the
+<a class="reference external" href="https://github.com/kata-containers/documentation/blob/master/use-cases/using-Intel-QAT-and-kata.md">Kata Containers documentation repository</a>.</p>
+<section id="modes-and-configuration-options">
+<h3>Modes and Configuration options<a class="headerlink" href="#modes-and-configuration-options" title="Permalink to this heading"></a></h3>
+<p>The QAT plugin can take a number of command line arguments, summarised in the following table:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Flag</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">-dpdk-driver</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">DPDK Device driver for configuring the QAT device (default: <code>vfio-pci</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">-kernel-vf-drivers</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC, C62x, C3xxx, 4xxx/401xx, C4xxx and D15xx (default: <code>c6xxvf,4xxxvf</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">-max-num-devices</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">maximum number of QAT devices to be provided to the QuickAssist device plugin (default: <code>32</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">-mode</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">plugin mode which can be either <code>dpdk</code> or <code>kernel</code> (default: <code>dpdk</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">-allocation-policy</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">2 possible values: balanced and packed. Balanced mode spreads allocated QAT VF resources balanced among QAT PF devices, and packed mode packs one QAT PF device full of QAT VF resources before allocating resources from the next QAT PF. (There is no default.)</td>
+</tr>
+</tbody>
+</table><p>The plugin also accepts a number of other arguments related to logging. Please use the <code class="docutils literal notranslate"><span class="pre">-h</span></code> option to see
+the complete list of logging related options.</p>
+<p>For more details on the <code class="docutils literal notranslate"><span class="pre">-dpdk-driver</span></code> choice, see
+<a class="reference external" href="http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html">DPDK Linux Driver Guide</a>.</p>
+<blockquote>
+<div><p><strong>Note:</strong>: With Linux 5.9+ kernels the <code class="docutils literal notranslate"><span class="pre">vfio-pci</span></code> module must be loaded with
+<code class="docutils literal notranslate"><span class="pre">disable_denylist=1</span></code> parameter for the QAT device plugin to work correctly.</p>
+</div></blockquote>
+<p>For more details on the available options to the <code class="docutils literal notranslate"><span class="pre">-kernel-vf-drivers</span></code> option, see the list of
+vf drivers available in the <a class="reference external" href="https://github.com/torvalds/linux/tree/master/drivers/crypto/qat">Linux Kernel</a>.</p>
+<p>If the <code class="docutils literal notranslate"><span class="pre">-mode</span></code> parameter is set to <code class="docutils literal notranslate"><span class="pre">kernel</span></code>, no other parameter documented above are valid,
+except the <code class="docutils literal notranslate"><span class="pre">klog</span></code> logging related parameters.
+<code class="docutils literal notranslate"><span class="pre">kernel</span></code> mode implements resource allocation based on system configured <a class="reference external" href="https://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdfhttps://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdf">logical instances</a>.</p>
+<blockquote>
+<div><p><strong>Note</strong>: <code class="docutils literal notranslate"><span class="pre">kernel</span></code> mode is excluded by default from all builds (including those hosted on the Docker hub),
+by default. See the <a class="reference external" href="#build-the-plugin-image">Build the plugin image</a> section for more details.</p>
+</div></blockquote>
+<p>The <code class="docutils literal notranslate"><span class="pre">kernel</span></code> mode does not guarantee full device isolation between containers
+and therefore it’s not recommended. This mode will be deprecated and removed once <code class="docutils literal notranslate"><span class="pre">libqat</span></code>
+implements non-UIO based device access.</p>
+</section>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>The below sections cover how to obtain, build and install this component.</p>
+<p>The component can be installed either using a DaemonSet or running ‘by hand’ on each node.</p>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading"></a></h3>
+<p>The component has the same basic dependancies as the
+<a class="reference external" href="../../README.html#about">generic plugin framework dependencies</a>.</p>
+<p>You will also need <a class="reference external" href="#checking-for-hardware">appropriate hardware installed</a>.</p>
+<p>The QAT plugin requires Linux Kernel VF QAT drivers to be available. These drivers
+are available via two methods. One of them must be installed and enabled:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/torvalds/linux/tree/master/drivers/crypto/qat">Linux Kernel upstream drivers</a></p></li>
+<li><p><a class="reference external" href="https://01.org/sites/default/files/downloads/intelr-quickassist-technology/336212qatswgettingstartedguiderev003.pdf">Intel QuickAssist Technology software for Linux</a></p></li>
+</ul>
+<p>The demonstrations have their own requirements, listed in their own specific sections.</p>
+</section>
+<section id="pre-built-image">
+<h3>Pre-built image<a class="headerlink" href="#pre-built-image" title="Permalink to this heading"></a></h3>
+<p><a class="reference external" href="https://hub.docker.com/r/intel/intel-qat-plugin">Pre-built images</a>
+of this component are available on the Docker hub. These images are automatically built and uploaded
+to the hub from the latest main branch of this repository.</p>
+<p>Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers in the format <code class="docutils literal notranslate"><span class="pre">x.y.z</span></code>, corresponding to the branches and releases in this
+repository. Thus the easiest way to deploy the plugin in your cluster is to run this command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/qat_plugin?ref<span class="o">=</span>&lt;RELEASE_VERSION&gt;
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;RELEASE_VERSION&gt;</span></code> needs to be substituted with the desired release version, e.g. <code class="docutils literal notranslate"><span class="pre">v0.18.0</span></code>.</p>
+<p>An alternative kustomization for deploying the plugin is with the debug mode switched on:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/qat_plugin/overlays/debug?ref<span class="o">=</span>&lt;RELEASE_VERSION&gt;
+</pre></div>
+</div>
+<p>The deployment YAML files supplied with the component in this repository use the images with the <code class="docutils literal notranslate"><span class="pre">devel</span></code>
+tag by default. If you do not build your own local images, your Kubernetes cluster may pull down
+the devel images from the Docker hub by default.</p>
+<p>To use the release tagged versions of the images, edit the
+<a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/d7554cd3377edbf29eb62d1717701c0ddad02dfc/deployments/qat_plugin/base/">YAML deployment files</a>
+appropriately.</p>
+</section>
+<section id="getting-the-source-code">
+<h3>Getting the source code<a class="headerlink" href="#getting-the-source-code" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="o">=</span>/path/to/intel-device-plugins-for-kubernetes
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+</pre></div>
+</div>
+</section>
+<section id="deploying-as-a-daemonset">
+<h3>Deploying as a DaemonSet<a class="headerlink" href="#deploying-as-a-daemonset" title="Permalink to this heading"></a></h3>
+<p>To deploy the plugin as a DaemonSet, you first need to build a container image for the plugin and
+ensure that is visible to your nodes. If you do not build your own plugin, your cluster may pull
+the image from the pre-built Docker Hub images, depending on your configuration.</p>
+<section id="build-the-plugin-image">
+<h4>Build the plugin image<a class="headerlink" href="#build-the-plugin-image" title="Permalink to this heading"></a></h4>
+<p>The following will use <code class="docutils literal notranslate"><span class="pre">docker</span></code> to build a local container image called <code class="docutils literal notranslate"><span class="pre">intel/intel-qat-plugin</span></code>
+with the tag <code class="docutils literal notranslate"><span class="pre">devel</span></code>. The image build tool can be changed from the default docker by setting the
+<code class="docutils literal notranslate"><span class="pre">BUILDER</span></code> argument to the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/d7554cd3377edbf29eb62d1717701c0ddad02dfc/Makefile">Makefile</a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+$ make intel-qat-plugin
+...
+Successfully tagged intel/intel-qat-plugin:devel
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>: <code class="docutils literal notranslate"><span class="pre">kernel</span></code> mode is excluded from the build by default. Run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">intel-qat-plugin-kerneldrv</span></code>
+to get a <code class="docutils literal notranslate"><span class="pre">kernel</span></code> mode enabled image.</p>
+</div></blockquote>
+</section>
+<section id="deploy-the-daemonset">
+<h4>Deploy the DaemonSet<a class="headerlink" href="#deploy-the-daemonset" title="Permalink to this heading"></a></h4>
+<p>Deploying the plugin involves first the deployment of a
+<a class="reference external" href="/deployments/qat_plugin/base/intel-qat-plugin-config.yaml">ConfigMap</a> and the
+<a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/d7554cd3377edbf29eb62d1717701c0ddad02dfc/deployments/qat_plugin/base/intel-qat-plugin.yaml">DaemonSet YAML</a>.</p>
+<p>There is a kustomization for deploying both:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/deployments/qat_plugin
+</pre></div>
+</div>
+<p>and an alternative kustomization for deploying the plugin in the debug mode:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/deployments/qat_plugin/overlays/debug
+</pre></div>
+</div>
+<p>The third option is to deploy the <code class="docutils literal notranslate"><span class="pre">yaml</span></code>s separately:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl create -f <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/deployments/qat_plugin/base/intel-qat-plugin-config.yaml
+$ kubectl create -f <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/deployments/qat_plugin/base/intel-qat-plugin.yaml
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>: It is also possible to run the QAT device plugin using a non-root user. To do this,
+the nodes’ DAC rules must be configured to allow PCI driver unbinding/binding, device plugin
+socket creation and kubelet registration. Furthermore, the deployments <code class="docutils literal notranslate"><span class="pre">securityContext</span></code> must
+be configured with appropriate <code class="docutils literal notranslate"><span class="pre">runAsUser/runAsGroup</span></code>.</p>
+</div></blockquote>
+</section>
+<section id="verify-qat-device-plugin-is-registered">
+<h4>Verify QAT device plugin is registered<a class="headerlink" href="#verify-qat-device-plugin-is-registered" title="Permalink to this heading"></a></h4>
+<p>Verification of the plugin deployment and detection of QAT hardware can be confirmed by
+examining the resource allocations on the nodes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl describe node &lt;node name&gt; <span class="p">|</span> grep qat.intel.com/generic
+ qat.intel.com/generic: <span class="m">10</span>
+ qat.intel.com/generic: <span class="m">10</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="deploying-by-hand">
+<h3>Deploying by hand<a class="headerlink" href="#deploying-by-hand" title="Permalink to this heading"></a></h3>
+<p>For development purposes, it is sometimes convenient to deploy the plugin ‘by hand’ on a node.
+In this case, you do not need to build the complete container image, and can build just the plugin.</p>
+<section id="build-qat-device-plugin">
+<h4>Build QAT device plugin<a class="headerlink" href="#build-qat-device-plugin" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+$ make qat_plugin
+</pre></div>
+</div>
+</section>
+<section id="deploy-qat-plugin">
+<h4>Deploy QAT plugin<a class="headerlink" href="#deploy-qat-plugin" title="Permalink to this heading"></a></h4>
+<p>Deploy the plugin on a node by running it as <code class="docutils literal notranslate"><span class="pre">root</span></code>. The below is just an example - modify the
+paramaters as necessary for your setup:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ sudo -E <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/cmd/qat_plugin/qat_plugin <span class="se">\</span>
+-dpdk-driver igb_uio -kernel-vf-drivers dh895xccvf -max-num-devices <span class="m">10</span> -debug
+QAT device plugin started
+Discovered Devices below:
+<span class="m">03</span>:01.0 device: corresponding DPDK device detected is uio0
+<span class="m">03</span>:01.1 device: corresponding DPDK device detected is uio1
+<span class="m">03</span>:01.2 device: corresponding DPDK device detected is uio2
+<span class="m">03</span>:01.3 device: corresponding DPDK device detected is uio3
+<span class="m">03</span>:01.4 device: corresponding DPDK device detected is uio4
+<span class="m">03</span>:01.5 device: corresponding DPDK device detected is uio5
+<span class="m">03</span>:01.6 device: corresponding DPDK device detected is uio6
+<span class="m">03</span>:01.7 device: corresponding DPDK device detected is uio7
+<span class="m">03</span>:02.0 device: corresponding DPDK device detected is uio8
+<span class="m">03</span>:02.1 device: corresponding DPDK device detected is uio9
+The number of devices discovered are:10
+device-plugin start server at: /var/lib/kubelet/device-plugins/intelQAT.sock
+device-plugin registered
+ListAndWatch: Sending device response
+</pre></div>
+</div>
+</section>
+</section>
+<section id="qat-device-plugin-demos">
+<h3>QAT device plugin Demos<a class="headerlink" href="#qat-device-plugin-demos" title="Permalink to this heading"></a></h3>
+<p>The below sections cover <code class="docutils literal notranslate"><span class="pre">DPDK</span></code> and <code class="docutils literal notranslate"><span class="pre">OpenSSL</span></code> demos, both of which utilise the
+QAT device plugin under Kubernetes.</p>
+<section id="dpdk-qat-demos">
+<h4>DPDK QAT demos<a class="headerlink" href="#dpdk-qat-demos" title="Permalink to this heading"></a></h4>
+<p>The Data Plane Development Kit (DPDK) QAT demos use DPDK
+<a class="reference external" href="https://doc.dpdk.org/guides/tools/cryptoperf.html">crypto-perf</a> and
+<a class="reference external" href="https://doc.dpdk.org/guides/tools/comp_perf.html">compress-perf</a> utilities to exercise
+DPDK QAT Poll-Mode Drivers (PMD). For more information on the tools’ parameters, refer to the
+website links.</p>
+<section id="dpdk-prerequisites">
+<h5>DPDK Prerequisites<a class="headerlink" href="#dpdk-prerequisites" title="Permalink to this heading"></a></h5>
+<p>For the DPDK QAT demos to work, the DPDK drivers must be loaded and configured.
+For more information, refer to:
+<a class="reference external" href="https://doc.dpdk.org/guides/linux_gsg/index.html">DPDK Getting Started Guide for Linux</a> and
+<a class="reference external" href="http://dpdk.org/doc/guides/linux_gsg/linux_drivers.html">DPDK Getting Started Guide, Linux Drivers section</a></p>
+</section>
+<section id="build-the-image">
+<h5>Build the image<a class="headerlink" href="#build-the-image" title="Permalink to this heading"></a></h5>
+<p>The demo uses a container image. You can either use the
+<a class="reference external" href="https://hub.docker.com/r/intel/crypto-perf">pre-built image from the Docker Hub</a>, or build your own local copy.</p>
+<p>To build the DPDK demo image:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+$ make crypto-perf
+...
+Successfully tagged intel/crypto-perf:devel
+</pre></div>
+</div>
+</section>
+<section id="deploy-the-pod">
+<h5>Deploy the pod<a class="headerlink" href="#deploy-the-pod" title="Permalink to this heading"></a></h5>
+<p>In the pod specification file, add container resource request and limit.
+For example, <code class="docutils literal notranslate"><span class="pre">qat.intel.com/generic:</span> <span class="pre">&lt;number</span> <span class="pre">of</span> <span class="pre">devices&gt;</span></code> for a container requesting QAT devices.</p>
+<p>For a DPDK-based workload, you may need to add hugepage request and limit.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/deployments/qat_dpdk_app/base/
+$ kubectl get pods
+  NAME                     READY     STATUS    RESTARTS   AGE
+  qat-dpdk                 <span class="m">1</span>/1       Running   <span class="m">0</span>          27m
+  intel-qat-plugin-5zgvb   <span class="m">1</span>/1       Running   <span class="m">0</span>          3h
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>: If the <code class="docutils literal notranslate"><span class="pre">igb_uio</span></code> VF driver is used with the QAT device plugin,
+the workload be deployed with <code class="docutils literal notranslate"><span class="pre">SYS_ADMIN</span></code> capabilities added.</p>
+</div></blockquote>
+</section>
+<section id="manual-test-run">
+<h5>Manual test run<a class="headerlink" href="#manual-test-run" title="Permalink to this heading"></a></h5>
+<p>Manually execute the <code class="docutils literal notranslate"><span class="pre">dpdk-test-crypto-perf</span></code> application to review the logs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl <span class="nb">exec</span> -it qat-dpdk bash
+
+$ dpdk-test-crypto-perf -l <span class="m">6</span>-7 -w <span class="nv">$QAT1</span> <span class="se">\</span>
+-d /usr/lib64/librte_mempool_ring.so.1.1 <span class="se">\</span>
+-d /usr/lib64/librte_pmd_qat.so.1.1 -- <span class="se">\</span>
+--ptest throughput --devtype crypto_qat <span class="se">\</span>
+--optype cipher-only --cipher-algo aes-cbc --cipher-op encrypt <span class="se">\</span>
+--cipher-key-sz <span class="m">16</span> --total-ops <span class="m">10000000</span> --burst-sz <span class="m">32</span> --buffer-sz <span class="m">64</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>: Adapt the <code class="docutils literal notranslate"><span class="pre">.so</span></code> versions to what the DPDK version in the container provides.</p>
+</div></blockquote>
+</section>
+<section id="automated-test-run">
+<h5>Automated test run<a class="headerlink" href="#automated-test-run" title="Permalink to this heading"></a></h5>
+<p>It is also possible to deploy and run <code class="docutils literal notranslate"><span class="pre">crypto-perf</span></code> using the following
+<code class="docutils literal notranslate"><span class="pre">kustomize</span></code> overlays:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/deployments/qat_dpdk_app/test-crypto1
+$ kubectl apply -k <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/deployments/qat_dpdk_app/test-compress1
+$ kubectl logs qat-dpdk-test-crypto-perf-tc1
+$ kubectl logs qat-dpdk-test-compress-perf-tc1
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>: for <code class="docutils literal notranslate"><span class="pre">test-crypto1</span></code> and <code class="docutils literal notranslate"><span class="pre">test-compress1</span></code> to work, the cluster must enable
+<a class="reference external" href="https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/">Kubernetes CPU manager’s</a> <code class="docutils literal notranslate"><span class="pre">static</span></code> policy.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="openssl-qat-demo">
+<h4>OpenSSL QAT demo<a class="headerlink" href="#openssl-qat-demo" title="Permalink to this heading"></a></h4>
+<p>Please refer to the <a class="reference external" href="https://github.com/kata-containers/documentation/blob/master/use-cases/using-Intel-QAT-and-kata.md#build-openssl-intel-qat-engine-container">Kata Containers documentation</a> for details on the OpenSSL
+QAT acceleration demo.</p>
+</section>
+</section>
+</section>
+<section id="checking-for-hardware">
+<h2>Checking for hardware<a class="headerlink" href="#checking-for-hardware" title="Permalink to this heading"></a></h2>
+<p>In order to utilise the QAT device plugin, QuickAssist SR-IOV virtual functions must be configured.
+You can verify this on your nodes by checking for the relevant PCI identifiers:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> i <span class="k">in</span> <span class="m">0442</span> <span class="m">0443</span> 18a1 37c9 6f55 19e3 <span class="m">4941</span> <span class="m">4943</span><span class="p">;</span> <span class="k">do</span> lspci -d <span class="m">8086</span>:<span class="nv">$i</span><span class="p">;</span> <span class="k">done</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../operator/README.html" class="btn btn-neutral float-left" title="Intel Device Plugins Operator" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../sgx_plugin/README.html" class="btn btn-neutral float-right" title="Intel Software Guard Extensions (SGX) device plugin for Kubernetes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

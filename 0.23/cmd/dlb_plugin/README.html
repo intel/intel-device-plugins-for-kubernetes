@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel DLB device plugin for Kubernetes &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Intel DLB device plugin for Kubernetes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/dlb_plugin/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-dlb-device-plugin-for-kubernetes">
+<h1>Intel DLB device plugin for Kubernetes<a class="headerlink" href="#intel-dlb-device-plugin-for-kubernetes" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#deploy-with-pre-built-container-image">Deploy with pre-built container image</a></p></li>
+<li><p><a class="reference external" href="#getting-the-source-code">Getting the source code</a></p></li>
+<li><p><a class="reference external" href="#deploying-as-a-daemonset">Deploying as a DaemonSet</a></p>
+<ul>
+<li><p><a class="reference external" href="#build-the-plugin-image">Build the plugin image</a></p></li>
+<li><p><a class="reference external" href="#deploy-plugin-daemonset">Deploy plugin DaemonSet</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#deploy-by-hand">Deploy by hand</a></p>
+<ul>
+<li><p><a class="reference external" href="#build-the-plugin">Build the plugin</a></p></li>
+<li><p><a class="reference external" href="#run-the-plugin-as-administrator">Run the plugin as administrator</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#verify-plugin-registration">Verify plugin registration</a></p></li>
+<li><p><a class="reference external" href="#testing-the-plugin">Testing the plugin</a></p></li>
+</ul>
+</li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>This Intel DLB device plugin provides support for <a class="reference external" href="https://builders.intel.com/docs/networkbuilders/SKU-343247-001US-queue-management-and-load-balancing-on-intel-architecture.pdf">Intel DLB</a> devices under Kubernetes.</p>
+<section id="dlb2-driver-configuration-for-pfs">
+<h3>DLB2 driver configuration for PFs<a class="headerlink" href="#dlb2-driver-configuration-for-pfs" title="Permalink to this heading"></a></h3>
+<p>You should first build and load the dlb2 driver. Get <a class="reference external" href="https://downloadmirror.intel.com/690271/dlblinuxsrcrelease7.4.020211006.txz">DLB software release</a>, build the kernel module and load the module as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget -q https://downloadmirror.intel.com/690271/dlblinuxsrcrelease7.4.020211006.txz -O- <span class="p">|</span> tar -Jx
+$ <span class="nb">cd</span> /dlb/driver/dlb2/ <span class="o">&amp;&amp;</span> make
+$ sudo insmod dlb2.ko
+</pre></div>
+</div>
+<p>Then, available dlb device nodes are visible in devfs.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ls -1 /dev/dlb*
+/dev/dlb0  /dev/dlb1  /dev/dlb2 ...
+</pre></div>
+</div>
+</section>
+<section id="vf-configuration-using-a-dpdk-tool-but-with-dlb2-driver">
+<h3>VF configuration using a DPDK tool (but with dlb2 driver)<a class="headerlink" href="#vf-configuration-using-a-dpdk-tool-but-with-dlb2-driver" title="Permalink to this heading"></a></h3>
+<p>If you configure SR-IOV/VF (virtual functions), continue the following configurations. This instruction uses DPDK tool to check eventdev devices, unbind a VF device, and bind dlb2 driver to a VF device.</p>
+<p>Patch dpdk sources to work with DLB:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ wget -q https://fast.dpdk.org/rel/dpdk-20.11.3.tar.xz -O- <span class="p">|</span> tar -Jx
+$ wget -q https://downloadmirror.intel.com/690271/dlblinuxsrcrelease7.4.020211006.txz -O- <span class="p">|</span> tar -Jx
+$ <span class="nb">cd</span> ./dpdk-stable-20.11.3 <span class="o">&amp;&amp;</span> patch -p1 &lt; ../dlb/dpdk/dpdk_dlb_v20.11.3_29751a4_diff.patch
+$ sed -i <span class="s1">&#39;s/270b,2710,2714/270b,2710,2711,2714/g&#39;</span> ./usertools/dpdk-devbind.py
+</pre></div>
+</div>
+<p>List eventdev devices:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ./usertools/dpdk-devbind.py -s <span class="p">|</span> grep -A10 ^Eventdev
+Eventdev devices using kernel <span class="nv">driver</span>
+<span class="o">====================================</span>
+<span class="m">0000</span>:6d:00.0 <span class="s1">&#39;Device 2710&#39;</span> <span class="nv">drv</span><span class="o">=</span>dlb2 <span class="nv">unused</span><span class="o">=</span> 
+<span class="m">0000</span>:72:00.0 <span class="s1">&#39;Device 2710&#39;</span> <span class="nv">drv</span><span class="o">=</span>dlb2 <span class="nv">unused</span><span class="o">=</span> 
+...
+</pre></div>
+</div>
+<p>Enable virtual functions:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">echo</span> <span class="m">4</span> <span class="p">|</span> sudo tee -a /sys/bus/pci/devices/0000<span class="se">\:</span>6d<span class="se">\:</span><span class="m">00</span>.0/sriov_numvfs
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note:</strong>: If it fails saying “No such file or directory,” it may be bound to vfio-pci driver. Bind the device to dlb2 driver.</p>
+</div></blockquote>
+<p>Check if new dlb device nodes appear:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ls -1 /dev/dlb*
+/dev/dlb0  /dev/dlb1  /dev/dlb10 /dev/dlb11 ... /dev/dlb8  /dev/dlb9
+</pre></div>
+</div>
+<p>Check that new eventdev devices appear:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ./usertools/dpdk-devbind.py -s <span class="p">|</span> grep -A14 ^Eventdev
+Eventdev devices using kernel <span class="nv">driver</span>
+<span class="o">====================================</span>
+<span class="m">0000</span>:6d:00.0 <span class="s1">&#39;Device 2710&#39;</span> <span class="nv">drv</span><span class="o">=</span>dlb2 <span class="nv">unused</span><span class="o">=</span> 
+<span class="m">0000</span>:6d:00.1 <span class="s1">&#39;Device 2711&#39;</span> <span class="nv">drv</span><span class="o">=</span>dlb2 <span class="nv">unused</span><span class="o">=</span> 
+<span class="m">0000</span>:6d:00.2 <span class="s1">&#39;Device 2711&#39;</span> <span class="nv">drv</span><span class="o">=</span>dlb2 <span class="nv">unused</span><span class="o">=</span> 
+<span class="m">0000</span>:6d:00.3 <span class="s1">&#39;Device 2711&#39;</span> <span class="nv">drv</span><span class="o">=</span>dlb2 <span class="nv">unused</span><span class="o">=</span> 
+<span class="m">0000</span>:6d:00.4 <span class="s1">&#39;Device 2711&#39;</span> <span class="nv">drv</span><span class="o">=</span>dlb2 <span class="nv">unused</span><span class="o">=</span> 
+<span class="m">0000</span>:72:00.0 <span class="s1">&#39;Device 2710&#39;</span> <span class="nv">drv</span><span class="o">=</span>dlb2 <span class="nv">unused</span><span class="o">=</span> 
+...
+</pre></div>
+</div>
+<p>Assign PF resources to VF:</p>
+<blockquote>
+<div><p><strong>Note:</strong>: The process below is only for the first vf resource among 4 resources. Repeat for other vfN_resources in /sys/bus/pci/devices/0000:6d:00.0/, and then bind dlb2 driver to 0000:6d:00.M that corresponds to vfN_resources.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Unbind driver from the VF device before configuring it.</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ sudo ./usertools/dpdk-devbind.py --unbind <span class="m">0000</span>:6d:00.1
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Assign PF resources to VF:</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">echo</span> <span class="m">2048</span> <span class="p">|</span> sudo tee -a /sys/bus/pci/devices/0000<span class="se">\:</span>6d<span class="se">\:</span><span class="m">00</span>.0/vf0_resources/num_atomic_inflights <span class="o">&amp;&amp;</span>
+  <span class="nb">echo</span> <span class="m">2048</span> <span class="p">|</span> sudo tee -a /sys/bus/pci/devices/0000<span class="se">\:</span>6d<span class="se">\:</span><span class="m">00</span>.0/vf0_resources/num_dir_credits <span class="o">&amp;&amp;</span>
+  <span class="nb">echo</span> <span class="m">64</span> <span class="p">|</span> sudo tee -a /sys/bus/pci/devices/0000<span class="se">\:</span>6d<span class="se">\:</span><span class="m">00</span>.0/vf0_resources/num_dir_ports <span class="o">&amp;&amp;</span>
+  <span class="nb">echo</span> <span class="m">2048</span> <span class="p">|</span> sudo tee -a /sys/bus/pci/devices/0000<span class="se">\:</span>6d<span class="se">\:</span><span class="m">00</span>.0/vf0_resources/num_hist_list_entries <span class="o">&amp;&amp;</span>
+  <span class="nb">echo</span> <span class="m">8192</span> <span class="p">|</span> sudo tee -a /sys/bus/pci/devices/0000<span class="se">\:</span>6d<span class="se">\:</span><span class="m">00</span>.0/vf0_resources/num_ldb_credits <span class="o">&amp;&amp;</span>
+  <span class="nb">echo</span> <span class="m">64</span> <span class="p">|</span> sudo tee -a /sys/bus/pci/devices/0000<span class="se">\:</span>6d<span class="se">\:</span><span class="m">00</span>.0/vf0_resources/num_ldb_ports <span class="o">&amp;&amp;</span>
+  <span class="nb">echo</span> <span class="m">32</span> <span class="p">|</span> sudo tee -a /sys/bus/pci/devices/0000<span class="se">\:</span>6d<span class="se">\:</span><span class="m">00</span>.0/vf0_resources/num_ldb_queues <span class="o">&amp;&amp;</span>
+  <span class="nb">echo</span> <span class="m">32</span> <span class="p">|</span> sudo tee -a /sys/bus/pci/devices/0000<span class="se">\:</span>6d<span class="se">\:</span><span class="m">00</span>.0/vf0_resources/num_sched_domains <span class="o">&amp;&amp;</span>
+  <span class="nb">echo</span> <span class="m">2</span> <span class="p">|</span> sudo tee -a /sys/bus/pci/devices/0000<span class="se">\:</span>6d<span class="se">\:</span><span class="m">00</span>.0/vf0_resources/num_sn0_slots <span class="o">&amp;&amp;</span>
+  <span class="nb">echo</span> <span class="m">2</span> <span class="p">|</span> sudo tee -a /sys/bus/pci/devices/0000<span class="se">\:</span>6d<span class="se">\:</span><span class="m">00</span>.0/vf0_resources/num_sn1_slots
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Bind driver back to the VF device:</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ sudo ./usertools/dpdk-devbind.py --bind dlb2 <span class="m">0000</span>:6d:00.1
+</pre></div>
+</div>
+</section>
+<section id="verification-of-well-configured-devices">
+<h3>Verification of well-configured devices:<a class="headerlink" href="#verification-of-well-configured-devices" title="Permalink to this heading"></a></h3>
+<p>Run libdlb example app:</p>
+<blockquote>
+<div><p><strong>Note:</strong>: Alternative way is to use this <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/dlb-libdlb-demo/Dockerfile">Dockerfile</a> for running tests.</p>
+</div></blockquote>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ ls
+dlb dpdk-stable-20.11.3
+$ <span class="nb">cd</span> ./dlb/libdlb/ <span class="o">&amp;&amp;</span> make <span class="o">&amp;&amp;</span> sudo <span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$PWD</span> ./examples/dir_traffic -n <span class="m">128</span> -d <span class="m">1</span>
+<span class="c1"># For running test for /dev/dlbN, replace 1 with N.</span>
+</pre></div>
+</div>
+<p>Run dpdk example app:</p>
+<blockquote>
+<div><p><strong>Note:</strong>: Alternative way is to use this <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/dlb-dpdk-demo/Dockerfile">Dockerfile</a> for patching and building DPDK and running tests.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Install build dependencies and build dpdk:</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ sudo apt-get update <span class="o">&amp;&amp;</span> sudo apt-get install build-essential meson python3-pyelftools libnuma-dev python3-pip <span class="o">&amp;&amp;</span> sudo pip install ninja
+<span class="c1"># This configuration is based on Ubuntu/Debian distribution. For other distributions that do not use apt, install the dependencies using another way.</span>
+$ ls
+dlb dpdk-stable-20.11.3
+$ <span class="nb">cd</span> ./dpdk-stable-20.11.3 <span class="o">&amp;&amp;</span> meson setup --prefix <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/installdir builddir <span class="o">&amp;&amp;</span> ninja -C builddir install
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Run eventdev test</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo ./builddir/app/dpdk-test-eventdev --no-huge --vdev<span class="o">=</span><span class="s1">&#39;dlb2_event,dev_id=1&#39;</span> -- --test<span class="o">=</span>order_queue --nb_flows <span class="m">64</span> --nb_pkts <span class="m">512</span> --plcores <span class="m">1</span> --wlcores <span class="m">2</span>-7
+<span class="c1"># For running test for /dev/dlbN, replace 1 with N.</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>The following sections detail how to obtain, build, deploy and test the DLB device plugin.</p>
+<p>Examples are provided showing how to deploy the plugin either using a DaemonSet or by hand on a per-node basis.</p>
+<section id="deploy-with-pre-built-container-image">
+<h3>Deploy with pre-built container image<a class="headerlink" href="#deploy-with-pre-built-container-image" title="Permalink to this heading"></a></h3>
+<p><a class="reference external" href="https://hub.docker.com/r/intel/intel-dlb-plugin">Pre-built images</a>
+of this component are available on the Docker hub. These images are automatically built and uploaded
+to the hub from the latest main branch of this repository.</p>
+<p>Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers in the format <code class="docutils literal notranslate"><span class="pre">x.y.z</span></code>, corresponding to the branches and releases in this
+repository. Thus the easiest way to deploy the plugin in your cluster is to run this command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/dlb_plugin?ref<span class="o">=</span>&lt;REF&gt;
+daemonset.apps/intel-dlb-plugin created
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;REF&gt;</span></code> needs to be substituted with the desired git ref, e.g. <code class="docutils literal notranslate"><span class="pre">main</span></code>.</p>
+<p>Nothing else is needed. But if you want to deploy a customized version of the plugin read further.</p>
+</section>
+<section id="getting-the-source-code">
+<h3>Getting the source code<a class="headerlink" href="#getting-the-source-code" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="o">=</span>/path/to/intel-device-plugins-for-kubernetes
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+</pre></div>
+</div>
+</section>
+<section id="deploying-as-a-daemonset">
+<h3>Deploying as a DaemonSet<a class="headerlink" href="#deploying-as-a-daemonset" title="Permalink to this heading"></a></h3>
+<p>To deploy the dlb plugin as a daemonset, you first need to build a container image for the
+plugin and ensure that is visible to your nodes.</p>
+<section id="build-the-plugin-image">
+<h4>Build the plugin image<a class="headerlink" href="#build-the-plugin-image" title="Permalink to this heading"></a></h4>
+<p>The following will use <code class="docutils literal notranslate"><span class="pre">docker</span></code> to build a local container image called
+<code class="docutils literal notranslate"><span class="pre">intel/intel-dlb-plugin</span></code> with the tag <code class="docutils literal notranslate"><span class="pre">devel</span></code>.</p>
+<p>The image build tool can be changed from the default <code class="docutils literal notranslate"><span class="pre">docker</span></code> by setting the <code class="docutils literal notranslate"><span class="pre">BUILDER</span></code> argument
+to the <a class="reference external" href="Makefile"><code class="docutils literal notranslate"><span class="pre">Makefile</span></code></a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+$ make intel-dlb-plugin
+...
+Successfully tagged intel/intel-dlb-plugin:devel
+</pre></div>
+</div>
+</section>
+<section id="deploy-plugin-daemonset">
+<h4>Deploy plugin DaemonSet<a class="headerlink" href="#deploy-plugin-daemonset" title="Permalink to this heading"></a></h4>
+<p>You can then use the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/cdf4905bfc7b1491975062077c92a0689da70bd8/deployments/dlb_plugin/base/intel-dlb-plugin.yaml">example DaemonSet YAML</a>
+file provided to deploy the plugin. The default kustomization that deploys the YAML as is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k deployments/dlb_plugin
+daemonset.apps/intel-dlb-plugin created
+</pre></div>
+</div>
+</section>
+</section>
+<section id="deploy-by-hand">
+<h3>Deploy by hand<a class="headerlink" href="#deploy-by-hand" title="Permalink to this heading"></a></h3>
+<p>For development purposes, it is sometimes convenient to deploy the plugin ‘by hand’ on a node.
+In this case, you do not need to build the complete container image, and can build just the plugin.</p>
+<section id="build-the-plugin">
+<h4>Build the plugin<a class="headerlink" href="#build-the-plugin" title="Permalink to this heading"></a></h4>
+<p>First we build the plugin:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">cd</span> <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+$ make dlb_plugin
+</pre></div>
+</div>
+</section>
+<section id="run-the-plugin-as-administrator">
+<h4>Run the plugin as administrator<a class="headerlink" href="#run-the-plugin-as-administrator" title="Permalink to this heading"></a></h4>
+<p>Now we can run the plugin directly on the node:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ sudo -E <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/cmd/dlb_plugin/dlb_plugin
+</pre></div>
+</div>
+</section>
+</section>
+<section id="verify-plugin-registration">
+<h3>Verify plugin registration<a class="headerlink" href="#verify-plugin-registration" title="Permalink to this heading"></a></h3>
+<p>You can verify the plugin has been registered with the expected nodes by searching for the relevant
+resource allocation status on the nodes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get nodes -o go-template<span class="o">=</span><span class="s1">&#39;{{range .items}}{{.metadata.name}}{{&quot;\n&quot;}}{{range $k,$v:=.status.allocatable}}{{&quot;  &quot;}}{{$k}}{{&quot;: &quot;}}{{$v}}{{&quot;\n&quot;}}{{end}}{{end}}&#39;</span> <span class="p">|</span> grep <span class="s1">&#39;^\([^ ]\)\|\(  dlb\)&#39;</span>
+master
+  dlb.intel.com/pf: <span class="m">7</span>
+  dlb.intel.com/vf: <span class="m">4</span>
+</pre></div>
+</div>
+</section>
+<section id="testing-the-plugin">
+<h3>Testing the plugin<a class="headerlink" href="#testing-the-plugin" title="Permalink to this heading"></a></h3>
+<p>We can test the plugin is working by deploying the provided example test images (dlb-libdlb-demo and dlb-dpdk-demo).</p>
+<ol>
+<li><p>Create a pod running unit tests off the local Docker image:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -f <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/demo/dlb-libdlb-demo-pod.yaml
+pod/dlb-libdlb-demo-pod created
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -f <span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/demo/dlb-dpdk-demo-pod.yaml
+pod/dlb-dpdk-demo-pod created
+</pre></div>
+</div>
+</li>
+<li><p>Wait until pod is completed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get pods <span class="p">|</span> grep dlb-.*-demo
+NAME              READY   STATUS      RESTARTS   AGE
+dlb-dpdk-demo     <span class="m">0</span>/2     Completed   <span class="m">0</span>          79m
+dlb-libdlb-demo   <span class="m">0</span>/2     Completed   <span class="m">0</span>          18h
+</pre></div>
+</div>
+</li>
+<li><p>Review the job’s logs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl logs dlb-libdlb-demo &lt;pf/vf&gt;
+&lt;log output&gt;
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl logs dlb-dpdk-demo &lt;pf/vf&gt;
+&lt;log output&gt;
+</pre></div>
+</div>
+<p>If the pod did not successfully launch, possibly because it could not obtain the DLB
+resource, it will be stuck in the <code class="docutils literal notranslate"><span class="pre">Pending</span></code> status:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl get pods
+NAME              READY   STATUS      RESTARTS   AGE
+dlb-dpdk-demo     <span class="m">0</span>/2     Pending     <span class="m">0</span>          3s
+dlb-libdlb-demo   <span class="m">0</span>/2     Pending     <span class="m">0</span>          10s
+</pre></div>
+</div>
+<p>This can be verified by checking the Events of the pod:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ kubectl describe pod dlb-libdlb-demo <span class="p">|</span> grep -A3 Events:
+Events:
+Type     Reason            Age   From               Message
+----     ------            ----  ----               -------
+Warning  FailedScheduling  85s   default-scheduler  <span class="m">0</span>/1 nodes are available: <span class="m">1</span> Insufficient dlb.intel.com/pf, <span class="m">1</span> Insufficient dlb.intel.com/vf.
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
