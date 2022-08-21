@@ -1,0 +1,36 @@
+apiVersion: v1
+entries:
+  intel-device-plugins-operator:
+  - apiVersion: v2
+    appVersion: 0.24.0
+    created: "2022-08-21T19:16:12.96468436+03:00"
+    description: A Helm chart for Intel K8s Operator Device Plugin
+    digest: dc0067e9d2595a3407dfe081e93ef1433b5a204ea8637f1d31940195f308863d
+    name: intel-device-plugins-operator
+    type: application
+    urls:
+    - intel-device-plugins-operator-0.1.0.tgz
+    version: 0.1.0
+  intel-device-plugins-qat:
+  - apiVersion: v2
+    appVersion: 0.24.0
+    created: "2022-08-21T19:16:12.965395616+03:00"
+    description: A Helm chart for Intel QAT Device Plugin
+    digest: e08d97b7420735ef7230b9eba42918e2b7b3c79c08e1e77911f5121487bc3f83
+    name: intel-device-plugins-qat
+    type: application
+    urls:
+    - intel-device-plugins-qat-0.1.0.tgz
+    version: 0.1.0
+  intel-device-plugins-sgx:
+  - apiVersion: v2
+    appVersion: 0.24.0
+    created: "2022-08-21T19:16:12.966002995+03:00"
+    description: A Helm chart for Intel SGX Device Plugin
+    digest: b1ee0a152e448f50f12435e271e50a55d8ec6f8df07021c39ce58317fb26af6a
+    name: intel-device-plugins-sgx
+    type: application
+    urls:
+    - intel-device-plugins-sgx-0.1.0.tgz
+    version: 0.1.0
+generated: "2022-08-21T19:16:12.963472851+03:00"
