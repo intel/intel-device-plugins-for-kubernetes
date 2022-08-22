@@ -36,8 +36,10 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 
@@ -158,13 +160,15 @@ func addDevfsDriTree(root string, opts *genOptions, i int) error {
 
 	file := fmt.Sprintf("%s/card%d", base, cardBase+i)
 	if err := unix.Mknod(file, mode, devid); err != nil {
-		return err
+		return fmt.Errorf("NULL device (%d:%d) node creation failed for '%s': %w",
+			devNullMajor, devNullMinor, file, err)
 	}
 	opts.devs++
 
 	file = fmt.Sprintf("%s/renderD%d", base, renderBase+i)
 	if err := unix.Mknod(file, mode, devid); err != nil {
-		return err
+		return fmt.Errorf("NULL device (%d:%d) node creation failed for '%s': %w",
+			devNullMajor, devNullMinor, file, err)
 	}
 	opts.devs++
 
@@ -198,28 +202,39 @@ func addDebugfsDriTree(root string, opts *genOptions, i int) error {
 	return nil
 }
 
+func removeExistingDir(path, name string) {
+	entries, err := os.ReadDir(path)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		log.Fatalf("ERROR: ReadDir() failed on fake %s path '%s': %v", name, path, err)
+	}
+
+	if len(entries) == 0 {
+		return
+	}
+
+	if name == "sysfs" && len(entries) > 2 {
+		log.Fatalf("ERROR: >2 entries in '%s' - real sysfs?", path)
+	}
+
+	if name == "devfs" && (entries[0].Name() != "dri" || len(entries) > 1) {
+		log.Fatalf("ERROR: >1 entries in '%s', or '%s' != 'dri' - real devfs?", path, entries[0].Name())
+	}
+
+	log.Printf("WARN: removing already existing fake %s path '%s'", name, path)
+
+	if err = os.RemoveAll(path); err != nil {
+		log.Fatalf("ERROR: removing existing %s in '%s' failed: %v", name, path, err)
+	}
+}
+
 // generateDriFiles generates the fake sysfs + debugfs + devfs dirs & files according to given options.
 func generateDriFiles(opts genOptions) {
 	if opts.Info != "" {
 		log.Printf("Config: '%s'", opts.Info)
 	}
 
-	entries, _ := os.ReadDir(devfsPath)
-	if len(entries) > 0 {
-		if len(entries) > 1 || entries[0].Name() != "dri" {
-			log.Fatalf("ERROR: >1 entries in '%s', or '%s' != 'dri' - real devfs?", devfsPath, entries[0].Name())
-		}
-
-		log.Printf("WARN: removing already existing %s'", devfsPath)
-		os.RemoveAll(devfsPath)
-	}
-
-	entries, _ = os.ReadDir(sysfsPath)
-	if len(entries) > 0 {
-		log.Printf("WARN: removing already existing '%s'", sysfsPath)
-		os.RemoveAll(sysfsPath)
-	}
-
+	removeExistingDir(devfsPath, "devfs")
+	removeExistingDir(sysfsPath, "sysfs")
 	log.Printf("Generating fake DRI device(s) sysfs, debugfs and devfs content under '%s' & '%s'",
 		sysfsPath, devfsPath)
 
