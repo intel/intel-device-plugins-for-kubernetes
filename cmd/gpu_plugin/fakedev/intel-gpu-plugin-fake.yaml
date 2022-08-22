@@ -66,7 +66,7 @@ spec:
         command: [
           "/usr/local/bin/intel_gpu_device_plugin",
           "-shared-dev-num", "2",
-          "-fake-mode", "/tmp/fakedev",
+          "-prefix", "/tmp/fakedev",
           "-enable-monitoring",
           "-resource-manager",
           "-v", "2"
