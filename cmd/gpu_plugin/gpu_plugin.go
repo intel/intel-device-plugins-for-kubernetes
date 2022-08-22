@@ -403,16 +403,7 @@ func main() {
 
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
 
-	var sysfs, devfs string
-	if prefix != "" {
-		sysfs = prefix + sysfsDrmDirectory
-		devfs = prefix + devfsDriDirectory
-	} else {
-		sysfs = sysfsDrmDirectory
-		devfs = devfsDriDirectory
-	}
-
-	plugin := newDevicePlugin(sysfs, devfs, opts)
+	plugin := newDevicePlugin(prefix+sysfsDrmDirectory, prefix+devfsDriDirectory, opts)
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }
