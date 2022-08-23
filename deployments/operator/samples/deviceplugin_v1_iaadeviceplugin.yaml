@@ -6,7 +6,5 @@ spec:
   image: intel/intel-iaa-plugin:0.24.0
   sharedDevNum: 10
   logLevel: 4
-  # TODO: nodeSelector is supported and can be used once it becomes
-  #       available through the node feature discovery
-  # nodeSelector:
-  #  intel.feature.node.kubernetes.io/dsa: 'true'
+  nodeSelector:
+   intel.feature.node.kubernetes.io/iaa: 'true'
