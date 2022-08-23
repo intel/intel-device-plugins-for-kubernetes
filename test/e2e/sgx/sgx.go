@@ -71,8 +71,8 @@ func describe() {
 		msg = framework.RunKubectlOrDie("node-feature-discovery", "apply", "-k", filepath.Dir(nodeFeatureRulesPath))
 		framework.Logf("Create NodeFeatureRules:\n%s", msg)
 
-		if _, err = e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, "node-feature-discovery",
-			labels.Set{"app": "nfd-master"}.AsSelector(), 1 /* one replica */, 180*time.Second); err != nil {
+		if err = e2epod.WaitForPodsRunningReady(f.ClientSet, "node-feature-discovery", 2, 0,
+			100*time.Second, map[string]string{}); err != nil {
 			framework.Failf("unable to wait for NFD pods to be running and ready: %v", err)
 		}
 	})
