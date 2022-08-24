@@ -7,6 +7,10 @@ on:
     branches:
       - main
       - 'release-*'
+  push:
+    branches:
+      - main
+      - 'release-*'
 
 env:
   IMAGES: 'intel-iaa-plugin intel-idxd-config-initcontainer accel-config-demo'
