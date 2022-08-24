@@ -7,6 +7,10 @@ on:
     branches:
       - main
       - 'release-*'
+  push:
+    branches:
+      - main
+      - 'release-*'
 
 env:
   IMAGES: 'intel-qat-plugin intel-qat-initcontainer crypto-perf'
