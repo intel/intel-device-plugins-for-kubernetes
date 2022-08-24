@@ -154,7 +154,7 @@ e2e-gpu:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "GPU" -delete-namespace-on-failure=false
 
 e2e-dsa:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "DSA" -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "QAT Gen4" -delete-namespace-on-failure=false
 
 e2e-iaa:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "IAA" -delete-namespace-on-failure=false

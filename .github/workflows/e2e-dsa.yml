@@ -9,7 +9,7 @@ on:
       - 'release-*'
 
 env:
-  IMAGES: 'intel-dsa-plugin intel-idxd-config-initcontainer accel-config-demo'
+  IMAGES: 'intel-qat-plugin intel-qat-initcontainer openssl-qat-engine'
 
 permissions:
   contents: read
