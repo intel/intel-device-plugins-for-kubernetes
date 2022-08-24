@@ -3,27 +3,11 @@ apiVersion: v1
 metadata:
   name: openssl-qat-engine
 spec:
-  runtimeClassName: kata-containers
   containers:
   - name: openssl-qat-engine
-    image: docker.io/library/openssl-qat-engine:devel
-    imagePullPolicy: Never
-    volumeMounts:
-            - mountPath: /dev
-              name: dev-mount
-            - mountPath: /etc/c6xxvf_dev0.conf
-              name: dev0
-    command: [ "/bin/bash", "-c", "--" ]
-    args: [ "while true; do sleep 300000; done;" ]
+    image: intel/openssl-qat-engine:devel
+    imagePullPolicy: IfNotPresent
+    command: [ "openssl", "speed", "-engine", "qatengine", "-elapsed", "-async_jobs", "72", "rsa2048"]
     resources:
-      requests:
-        qat.intel.com/generic: '1'
       limits:
-        qat.intel.com/generic: '1'
-  volumes:
-  - name: dev-mount
-    hostPath:
-        path: /dev
-  - name: dev0
-    hostPath:
-        path: /etc/c6xxvf_dev0.conf
+        qat.intel.com/cy: '1'
