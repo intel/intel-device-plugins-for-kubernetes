@@ -147,4 +147,8 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 		Expect(dp.Spec.Image == image).To(BeTrue())
 		Expect(dp.Spec.InitImage == initimage).To(BeTrue())
 	})
+
+	var _ = AfterEach(func() {
+		CleanupAfter("gpu", &devicepluginv1.GpuDevicePlugin{})
+	})
 })

@@ -162,4 +162,8 @@ var _ = Describe("DsaDevicePlugin Controller", func() {
 		Expect(dp.Spec.Image == image).To(BeTrue())
 		Expect(dp.Spec.InitImage == initimage).To(BeTrue())
 	})
+
+	var _ = AfterEach(func() {
+		CleanupAfter("dsa", &devicepluginv1.DsaDevicePlugin{})
+	})
 })

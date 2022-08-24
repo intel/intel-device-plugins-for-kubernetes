@@ -177,4 +177,8 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 		Expect(dp.Spec.Image == image).To(BeTrue())
 		Expect(dp.Spec.InitImage == initimage).To(BeTrue())
 	})
+
+	var _ = AfterEach(func() {
+		CleanupAfter("qat", &devicepluginv1.QatDevicePlugin{})
+	})
 })

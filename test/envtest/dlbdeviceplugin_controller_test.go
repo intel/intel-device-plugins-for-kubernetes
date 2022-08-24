@@ -128,4 +128,8 @@ var _ = Describe("DlbDevicePlugin Controller", func() {
 
 		Expect(dp.Spec.Image == image).To(BeTrue())
 	})
+
+	var _ = AfterEach(func() {
+		CleanupAfter("dlb", &devicepluginv1.DlbDevicePlugin{})
+	})
 })

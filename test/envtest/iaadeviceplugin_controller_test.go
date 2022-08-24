@@ -166,4 +166,8 @@ var _ = Describe("IaaDevicePlugin Controller", func() {
 
 		Expect(dp.Spec.Image == image).To(BeTrue())
 	})
+
+	var _ = AfterEach(func() {
+		CleanupAfter("iaa", &devicepluginv1.IaaDevicePlugin{})
+	})
 })
