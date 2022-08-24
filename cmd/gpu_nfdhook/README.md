@@ -81,8 +81,8 @@ Depending on your kernel driver, running the NFD hook as root may introduce foll
 name | type | description|
 -----|------|------|
 |`gpu.intel.com/platform_gen`| string | GPU platform generation name, typically an integer. Deprecated.
-|`gpu.intel.com/media_version`| string | GPU platform Media pipeline generation name, typically a number.
-|`gpu.intel.com/graphics_version`| string | GPU platform graphics/compute pipeline generation name, typically a number.
+|`gpu.intel.com/media_version`| string | GPU platform Media pipeline generation name, typically a number. Deprecated.
+|`gpu.intel.com/graphics_version`| string | GPU platform graphics/compute pipeline generation name, typically a number. Deprecated.
 |`gpu.intel.com/platform_<PLATFORM_NAME>.count`| number | GPU count for the named platform.
 |`gpu.intel.com/platform_<PLATFORM_NAME>.tiles`| number | GPU tile count in the GPUs of the named platform.
 |`gpu.intel.com/platform_<PLATFORM_NAME>.present`| string | "true" for indicating the presense of the GPU platform.
