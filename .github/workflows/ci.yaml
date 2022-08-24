@@ -105,6 +105,7 @@ jobs:
         image:
           - intel-fpga-admissionwebhook
           - intel-fpga-initcontainer
+          - intel-gpu-fakedev
           - intel-gpu-initcontainer
           - intel-gpu-plugin
           - intel-fpga-plugin
