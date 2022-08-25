@@ -1,10 +1,20 @@
 # Intel GPU NFD hook
 
+Table of Contents
+
+* [Introduction](#introduction)
+* [GPU memory](#gpu-memory)
+* [Default labels](#default-labels)
+* [PCI-groups (optional)](#pci-groups-optional)
+* [Capability labels (optional)](#capability-labels-optional)
+* [Limitations](#limitations)
+
+## Introduction
+
 This is the [Node Feature Discovery](https://github.com/kubernetes-sigs/node-feature-discovery)
-binary hook implementation for the Intel GPUs. The intel-gpu-initcontainer which
-is built among other images can be placed as part of the gpu-plugin deployment,
-so that it copies this hook to the host system only in those hosts, in which also
-gpu-plugin is deployed.
+binary hook implementation for the Intel GPUs. The intel-gpu-initcontainer (which
+is built with the other images) can be used as part of the gpu-plugin deployment
+to copy hook to the host systems on which gpu-plugin itself is deployed.
 
 When NFD worker runs this hook, it will add a number of labels to the nodes,
 which can be used for example to deploy services to nodes with specific GPU
@@ -15,7 +25,7 @@ In the NFD deployment, the hook requires `/host-sys` -folder to have the host `/
 
 ## GPU memory
 
-GPU memory amount is read from sysfs gt/gt* files and turned into a label.
+GPU memory amount is read from sysfs `gt/gt*` files and turned into a label.
 There are two supported environment variables named `GPU_MEMORY_OVERRIDE` and
 `GPU_MEMORY_RESERVED`. Both are supposed to hold numeric byte amounts. For systems with
 older kernel drivers or GPUs which do not support reading the GPU memory
@@ -65,14 +75,14 @@ If the value of the `pci-groups` label would not fit into the 63 character lengt
 Capability labels are created from information found inside debugfs, and therefore
 unfortunately require running the NFD worker as root. Due to coming from debugfs,
 which is not guaranteed to be stable, these are not guaranteed to be stable either.
-If you don't need these, simply do not run NFD worker as root, that is also more secure.
+If you do not need these, simply do not run NFD worker as root, that is also more secure.
 Depending on your kernel driver, running the NFD hook as root may introduce following labels:
 
 name | type | description|
 -----|------|------|
 |`gpu.intel.com/platform_gen`| string | GPU platform generation name, typically an integer. Deprecated.
-|`gpu.intel.com/media_version`| string | GPU platform Media pipeline generation name, typically a number.
-|`gpu.intel.com/graphics_version`| string | GPU platform graphics/compute pipeline generation name, typically a number.
+|`gpu.intel.com/media_version`| string | GPU platform Media pipeline generation name, typically a number. Deprecated.
+|`gpu.intel.com/graphics_version`| string | GPU platform graphics/compute pipeline generation name, typically a number. Deprecated.
 |`gpu.intel.com/platform_<PLATFORM_NAME>.count`| number | GPU count for the named platform.
 |`gpu.intel.com/platform_<PLATFORM_NAME>.tiles`| number | GPU tile count in the GPUs of the named platform.
 |`gpu.intel.com/platform_<PLATFORM_NAME>.present`| string | "true" for indicating the presense of the GPU platform.
