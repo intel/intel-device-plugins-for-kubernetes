@@ -4,7 +4,7 @@ resources:
   - resource-cluster-role-binding.yaml
   - resource-cluster-role.yaml
   - resource-reader-sa.yaml
-patches:
+patchesStrategicMerge:
   - add-serviceaccount.yaml
   - add-podresource-mount.yaml
   - add-args.yaml

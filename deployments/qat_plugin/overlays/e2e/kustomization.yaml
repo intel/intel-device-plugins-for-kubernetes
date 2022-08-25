@@ -5,5 +5,5 @@ commonAnnotations:
 resources:
 - ../sriov_numvfs
 
-patches:
+patchesStrategicMerge:
   - add-args.yaml

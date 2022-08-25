@@ -1,6 +1,6 @@
 bases:
 - ../../base/
-patches:
+patchesStrategicMerge:
 - add_command_args.yaml
 patchesJson6902:
 - target:

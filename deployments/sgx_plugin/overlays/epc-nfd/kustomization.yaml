@@ -3,5 +3,5 @@ bases:
   - ../../../nfd/overlays/sgx
   - ../../../nfd/overlays/node-feature-rules
   - ../../../sgx_admissionwebhook/overlays/default-with-certmanager
-patches:
+patchesStrategicMerge:
   - add-epc-nfd-initcontainer.yaml

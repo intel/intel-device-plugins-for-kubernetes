@@ -1,4 +1,4 @@
 resources:
   - ../../base
-patches:
+patchesStrategicMerge:
   - add-epc-nfd-initcontainer.yaml
