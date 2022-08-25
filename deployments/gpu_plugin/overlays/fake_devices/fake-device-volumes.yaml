@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-gpu-plugin
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: fakedev-generator
+        # container runtime prevents writing to /sys & /dev,
+        # so volumes need to be mounted elsewhere
+        volumeMounts:
+        - name: devfs
+          mountPath: /tmp/fakedev/dev
+          readOnly: false
+        - name: sysfs
+          mountPath: /tmp/fakedev/sys
+          readOnly: false
+        # files are generated under CWD
+        workingDir: /tmp/fakedev
+      containers:
+      - name: intel-gpu-nfd
+        # expects sysfs here
+        volumeMounts:
+        - name: sysfs
+          mountPath: /host-sys
+          readOnly: true
+      - name: intel-gpu-plugin
+        args: [
+          "-prefix=/tmp/fakedev",
+          "-shared-dev-num=2",
+          "-enable-monitoring",
+          "-resource-manager"
+        ]
+        # devfs host & container paths must match for everything to work
+        volumeMounts:
+        - name: devfs
+          mountPath: /tmp/fakedev/dev
+          readOnly: true
+        - name: sysfs
+          mountPath: /tmp/fakedev/sys
+          readOnly: true
+      volumes:
+      - name: devfs
+        hostPath:
+          path: /tmp/fakedev/dev
+          type: DirectoryOrCreate
+      - name: sysfs
+        emptyDir: {}
