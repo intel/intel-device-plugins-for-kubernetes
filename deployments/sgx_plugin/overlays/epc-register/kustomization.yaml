@@ -4,5 +4,5 @@ namespace: kube-system
 resources:
   - service-account.yaml
   - init-daemonset.yaml
-patchesStrategicMerge:
-  - add-node-selector.yaml
+patches:
+  - path: add-node-selector.yaml

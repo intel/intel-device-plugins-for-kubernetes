@@ -1,4 +1,4 @@
 bases:
   - ../../base
-patchesStrategicMerge:
-  - add-nodeselector-intel-gpu.yaml
+patches:
+  - path: add-nodeselector-intel-gpu.yaml

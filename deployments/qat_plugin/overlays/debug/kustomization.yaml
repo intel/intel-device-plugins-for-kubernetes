@@ -1,5 +1,5 @@
 nameSuffix: -debug
 bases:
 - ../../base
-patchesStrategicMerge:
-  - add-args.yaml
+patches:
+  - path: add-args.yaml
