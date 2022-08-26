@@ -2,4 +2,4 @@ nameSuffix: -debug
 bases:
 - ../../base
 patches:
-  - add-args.yaml
+  - path: add-args.yaml

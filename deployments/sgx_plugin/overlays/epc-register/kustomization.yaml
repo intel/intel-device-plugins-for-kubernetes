@@ -5,4 +5,4 @@ resources:
   - service-account.yaml
   - init-daemonset.yaml
 patches:
-  - add-node-selector.yaml
+  - path: add-node-selector.yaml

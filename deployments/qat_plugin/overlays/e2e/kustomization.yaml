@@ -6,4 +6,4 @@ resources:
 - ../sriov_numvfs
 
 patches:
-  - add-args.yaml
+  - path: add-args.yaml

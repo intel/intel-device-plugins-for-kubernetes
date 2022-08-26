@@ -1,4 +1,4 @@
 bases:
   - ../../base
 patches:
-  - add-namespace-kube-system.yaml
+  - path: add-namespace-kube-system.yaml

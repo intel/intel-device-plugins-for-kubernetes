@@ -5,6 +5,6 @@ resources:
   - resource-cluster-role.yaml
   - resource-reader-sa.yaml
 patches:
-  - add-serviceaccount.yaml
-  - add-podresource-mount.yaml
-  - add-args.yaml
+  - path: add-serviceaccount.yaml
+  - path: add-podresource-mount.yaml
+  - path: add-args.yaml
