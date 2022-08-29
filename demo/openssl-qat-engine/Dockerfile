@@ -1,10 +1,10 @@
-FROM ubuntu:20.04 as builder
+FROM ubuntu:22.04 as builder
 
 ARG QATLIB_VERSION="22.07.0"
-ARG QAT_ENGINE_VERSION="v0.6.13"
+ARG QAT_ENGINE_VERSION="v0.6.15"
 ARG ASYNC_NGINX_VERSION="v0.4.7"
 ARG IPSEC_MB_VERSION="v1.2"
-ARG IPP_CRYPTO_VERSION="ippcp_2021.5"
+ARG IPP_CRYPTO_VERSION="ippcp_2021.6"
 
 RUN apt update && \
     env DEBIAN_FRONTEND=noninteractive apt install -y \
@@ -50,8 +50,7 @@ RUN cd /intel-ipsec-mb && \
 RUN cd /QAT_Engine && \
     ./autogen.sh && \
     ./configure \
-    --enable-qat_sw \
-    --with-qat_sw_install_dir=/usr/local && \
+    --enable-qat_sw && \
     make && make install
 
 RUN cd /asynch_mode_nginx && \
@@ -69,14 +68,14 @@ RUN cd /asynch_mode_nginx && \
     --with-ld-opt="-L/src" && \
     make && make install
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 COPY --from=builder /usr/bin/*_sample* /usr/bin/
 COPY --from=builder /usr/lib/libqat.so.3.0.0 /usr/lib/
 COPY --from=builder /usr/lib/libusdm.so.0.0.1 /usr/lib/
 COPY --from=builder /usr/lib64/libIPSec_MB.so.1 /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/local/lib/libcrypto_mb.so.11.3 /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/lib/x86_64-linux-gnu/engines-1.1/qatengine.so /usr/lib/x86_64-linux-gnu/engines-1.1/qatengine.so
+COPY --from=builder /usr/local/lib/libcrypto_mb.so.11.4 /usr/lib/x86_64-linux-gnu/
+COPY --from=builder /usr/lib/x86_64-linux-gnu/engines-3/qatengine.so /usr/lib/x86_64-linux-gnu/engines-3/qatengine.so
 COPY --from=builder /var/www/ /var/www/
 COPY --from=builder /usr/lib64/nginx/* /usr/lib64/nginx/
 COPY --from=builder /usr/bin/nginx /usr/bin
