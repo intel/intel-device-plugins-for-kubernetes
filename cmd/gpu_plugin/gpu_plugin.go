@@ -232,7 +232,9 @@ func (dp *devicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocatio
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
 
-	var previouslyFound = -1
+	klog.V(1).Infof("GPU '%s' resource share count = %d", deviceType, dp.options.sharedDevNum)
+
+	previousCount := map[string]int{deviceType: 0, monitorType: 0}
 
 	for {
 		devTree, err := dp.scan()
@@ -240,16 +242,13 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 			klog.Warning("Failed to scan: ", err)
 		}
 
-		found := 0
-		for _, resource := range devTree {
-			found += len(resource)
-		}
+		for name, prev := range previousCount {
+			count := devTree.DeviceTypeCount(name)
+			if count != prev {
+				klog.V(1).Infof("GPU scan update: %d->%d '%s' resources found", prev, count, name)
 
-		if found != previouslyFound {
-			klog.V(1).Infof("GPU scan update: %d device resources (with %dx sharing) of %d types found",
-				found, dp.options.sharedDevNum, len(devTree))
-
-			previouslyFound = found
+				previousCount[name] = count
+			}
 		}
 
 		notifier.Notify(devTree)

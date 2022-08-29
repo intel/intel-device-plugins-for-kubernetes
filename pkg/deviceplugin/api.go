@@ -100,6 +100,11 @@ func (tree DeviceTree) AddDevice(devType, id string, info DeviceInfo) {
 	tree[devType][id] = info
 }
 
+// DeviceTypeCount returns number of device of given type.
+func (tree DeviceTree) DeviceTypeCount(devType string) int {
+	return len(tree[devType])
+}
+
 // Notifier receives updates from Scanner, detects changes and sends the
 // detected changes to a channel given by the creator of a Notifier object.
 type Notifier interface {
