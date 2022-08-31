@@ -58,7 +58,7 @@ func describeQatDpdkPlugin() {
 
 	ginkgo.It("measures performance of DPDK", func() {
 		ginkgo.By("deploying QAT plugin in DPDK mode")
-		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
+		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for QAT plugin's availability")
 		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
@@ -80,13 +80,13 @@ func describeQatDpdkPlugin() {
 		}
 
 		ginkgo.By("submitting a crypto pod requesting QAT resources")
-		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
+		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
 		ginkgo.By("waiting the crypto pod to finnish successfully")
 		f.PodClient().WaitForSuccess("qat-dpdk-test-crypto-perf-tc1", 60*time.Second)
 
 		ginkgo.By("submitting a compress pod requesting QAT resources")
-		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
+		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
 		ginkgo.By("waiting the compress pod to finnish successfully")
 		f.PodClient().WaitForSuccess("qat-dpdk-test-compress-perf-tc1", 60*time.Second)

@@ -59,9 +59,9 @@ func describe() {
 
 	ginkgo.It("runs IAA plugin and a demo workload", func() {
 		ginkgo.By("deploying IAA plugin")
-		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "create", "configmap", "intel-iaa-config", "--from-file="+configmap)
+		framework.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "intel-iaa-config", "--from-file="+configmap)
 
-		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
+		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for IAA plugin's availability")
 		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
@@ -76,7 +76,7 @@ func describe() {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
 
-		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-f", demoPath)
+		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 		ginkgo.By("waiting for the IAA demo to succeed")
 		f.PodClient().WaitForSuccess(podName, 200*time.Second)
