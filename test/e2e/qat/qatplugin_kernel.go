@@ -50,7 +50,7 @@ func describeQatKernelPlugin() {
 
 	ginkgo.It("checks availability of QAT resources", func() {
 		ginkgo.By("deploying QAT plugin in kernel mode")
-		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "create", "-f", yamlPath)
+		framework.RunKubectlOrDie(f.Namespace.Name, "create", "-f", yamlPath)
 
 		ginkgo.By("waiting for QAT plugin's availability")
 		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,

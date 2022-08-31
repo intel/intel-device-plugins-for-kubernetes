@@ -88,7 +88,7 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 	framework.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-k", tmpDir)
 
 	ginkgo.By("deploying mappings")
-	framework.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-n", fmw.Namespace.Name, "-f", mappingsCollectionPath)
+	framework.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-f", mappingsCollectionPath)
 
 	waitForPod(fmw, "intel-fpga-plugin")
 
@@ -112,7 +112,7 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 	// If WaitForSuccess fails, ginkgo doesn't show the logs of the failed container.
 	// Replacing WaitForSuccess with WaitForFinish + 'kubelet logs' would show the logs
 	//fmw.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
-	//framework.RunKubectlOrDie(fmw.Namespace.Name, "--namespace", fmw.Namespace.Name, "logs", pod.ObjectMeta.Name)
+	//framework.RunKubectlOrDie(fmw.Namespace.Name, "logs", pod.ObjectMeta.Name)
 
 	ginkgo.By("submitting a pod requesting incorrect FPGA resources")
 

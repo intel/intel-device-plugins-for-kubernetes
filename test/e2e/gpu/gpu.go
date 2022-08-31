@@ -53,7 +53,7 @@ func describe() {
 
 	ginkgo.It("checks availability of GPU resources", func() {
 		ginkgo.By("deploying GPU plugin")
-		framework.RunKubectlOrDie(f.Namespace.Name, "--namespace", f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
+		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for GPU plugin's availability")
 		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
