@@ -222,9 +222,13 @@ func TestWebhookServerTLS(f *framework.Framework, serviceName string) error {
 				{
 					Args: []string{
 						"--openssl=/usr/bin/openssl",
-						"-p",
+						"--mapping",
+						"iana",
+						"-s",
 						"-f",
-						"-W",
+						"-p",
+						"-P",
+						"-U",
 						serviceName},
 					Name:            "testssl-container",
 					Image:           "drwetter/testssl.sh",
@@ -238,11 +242,7 @@ func TestWebhookServerTLS(f *framework.Framework, serviceName string) error {
 	_, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), podSpec, metav1.CreateOptions{})
 	framework.ExpectNoError(err, "pod Create API error")
 
-	// TODO: check testssl.sh exit codes
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(f.ClientSet, "testssl-tester", f.Namespace.Name, 180*time.Second)
-	if err != nil {
-		return errors.Wrap(err, "testssl.sh run did not succeed")
-	}
+	waitErr := e2epod.WaitForPodSuccessInNamespaceTimeout(f.ClientSet, "testssl-tester", f.Namespace.Name, 180*time.Second)
 
 	output, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, "testssl-tester", "testssl-container")
 	if err != nil {
@@ -250,6 +250,10 @@ func TestWebhookServerTLS(f *framework.Framework, serviceName string) error {
 	}
 
 	framework.Logf("testssl.sh output:\n %s", output)
+
+	if waitErr != nil {
+		return errors.Wrap(err, "testssl.sh run did not succeed")
+	}
 
 	return nil
 }
