@@ -357,6 +357,41 @@ func (dp *DevicePlugin) getDpdkMounts(dpdkDeviceName string) []pluginapi.Mount {
 	}
 }
 
+func readDeviceConfiguration(pfDev string) string {
+	qatState, err := os.ReadFile(filepath.Join(pfDev, "qat/state"))
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		klog.Warningf("failed to read device state for %s: %q", filepath.Base(pfDev), err)
+		return defaultCapabilities
+	}
+
+	if err == nil && strings.TrimSpace(string(qatState)) == "up" {
+		qatCfgServices, err2 := os.ReadFile(filepath.Join(pfDev, "qat/cfg_services"))
+		if err2 != nil && !errors.Is(err2, os.ErrNotExist) {
+			klog.Warningf("failed to read services config for %s: %q", filepath.Base(pfDev), err2)
+			return defaultCapabilities
+		}
+
+		if err2 == nil && len(qatCfgServices) != 0 {
+			return strings.TrimSpace(string(qatCfgServices))
+		}
+	}
+
+	lOpts := ini.LoadOptions{
+		IgnoreInlineComment: true,
+	}
+
+	devCfgPath := filepath.Join(filepath.Dir(filepath.Join(pfDev, "../../")), "kernel/debug",
+		fmt.Sprintf("qat_4xxx_%s/dev_cfg", filepath.Base(pfDev)))
+
+	devCfg, err := ini.LoadSources(lOpts, devCfgPath)
+	if err != nil {
+		klog.Warningf("failed to read dev_cfg for %s: %q", filepath.Base(pfDev), err)
+		return defaultCapabilities
+	}
+
+	return devCfg.Section("GENERAL").Key("ServicesEnabled").String()
+}
+
 func getDeviceCapabilities(device string) (string, error) {
 	devID, err := getDeviceID(device)
 	if err != nil {
@@ -377,22 +412,7 @@ func getDeviceCapabilities(device string) (string, error) {
 		return defaultCapabilities, nil
 	}
 
-	// TODO: check the sysfs state entry first when it lands.
-
-	lOpts := ini.LoadOptions{
-		IgnoreInlineComment: true,
-	}
-
-	devCfgPath := filepath.Join(filepath.Dir(filepath.Join(pfDev, "../../")), "kernel/debug",
-		fmt.Sprintf("qat_4xxx_%s/dev_cfg", filepath.Base(pfDev)))
-
-	devCfg, err := ini.LoadSources(lOpts, devCfgPath)
-	if err != nil {
-		klog.Warningf("failed to read dev_cfg for %s: %q", filepath.Base(pfDev), err)
-		return defaultCapabilities, nil
-	}
-
-	switch devCfg.Section("GENERAL").Key("ServicesEnabled").String() {
+	switch readDeviceConfiguration(pfDev) {
 	case "sym;asym":
 		return "cy", nil
 	case "asym;sym":
