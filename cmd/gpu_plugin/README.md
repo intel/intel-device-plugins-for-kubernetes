@@ -3,19 +3,12 @@
 Table of Contents
 
 * [Introduction](#introduction)
-    * [Configuration options](#configuration-options)
+* [Modes and Configuration Options](#modes-and-configuration-options)
 * [Installation](#installation)
-    * [Deploy with pre-built container image](#deploy-with-pre-built-container-image)
-    * [Getting the source code](#getting-the-source-code)
-    * [Deploying as a DaemonSet](#deploying-as-a-daemonset)
-        * [Build the plugin image](#build-the-plugin-image)
-        * [Deploy plugin DaemonSet](#deploy-plugin-daemonset)
-        * [Fractional resources](#fractional-resources)
-    * [Deploy by hand](#deploy-by-hand)
-        * [Build the plugin](#build-the-plugin)
-        * [Run the plugin as administrator](#run-the-plugin-as-administrator)
-    * [Verify plugin registration](#verify-plugin-registration)
-    * [Testing the plugin](#testing-the-plugin)
+    * [Pre-built Images](#pre-built-images)
+         * [Fractional Resources](#fractional-resources)
+    * [Verify Plugin Registration](#verify-plugin-registration)
+* [Testing and Demos](#testing-and-demos)
 * [Issues with media workloads on multi-GPU setups](#issues-with-media-workloads-on-multi-gpu-setups)
     * [Workaround for QSV and VA-API](#workaround-for-qsv-and-va-api)
 
@@ -36,7 +29,7 @@ For example containers with Intel media driver (and components using that), can 
 video transcoding operations, and containers with the Intel OpenCL / oneAPI Level Zero
 backend libraries can offload compute operations to GPU.
 
-### Configuration options
+## Modes and Configuration Options
 
 | Flag | Argument | Default | Meaning |
 |:---- |:-------- |:------- |:------- |
@@ -54,7 +47,7 @@ The following sections detail how to obtain, build, deploy and test the GPU devi
 
 Examples are provided showing how to deploy the plugin either using a DaemonSet or by hand on a per-node basis.
 
-### Deploy with pre-built container image
+### Pre-built Images
 
 [Pre-built images](https://hub.docker.com/r/intel/intel-gpu-plugin)
 of this component are available on the Docker hub. These images are automatically built and uploaded
@@ -69,7 +62,7 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 daemonset.apps/intel-gpu-plugin created
 ```
 
-Where `<RELEASE_VERSION>` needs to be substituted with the desired release version, e.g. `v0.18.0`.
+Where `<RELEASE_VERSION>` needs to be substituted with the desired [release tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) or `main` to get `devel` images.
 
 Alternatively, if your cluster runs
 [Node Feature Discovery](https://github.com/kubernetes-sigs/node-feature-discovery),
@@ -82,55 +75,7 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 daemonset.apps/intel-gpu-plugin created
 ```
 
-Nothing else is needed. But if you want to deploy a customized version of the plugin read further.
-
-### Getting the source code
-
-```bash
-$ export INTEL_DEVICE_PLUGINS_SRC=/path/to/intel-device-plugins-for-kubernetes
-$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL_DEVICE_PLUGINS_SRC}
-```
-
-### Deploying as a DaemonSet
-
-To deploy the gpu plugin as a daemonset, you first need to build a container image for the
-plugin and ensure that is visible to your nodes.
-
-#### Build the plugin image
-
-The following will use `docker` to build a local container image called
-`intel/intel-gpu-plugin` with the tag `devel`.
-
-The image build tool can be changed from the default `docker` by setting the `BUILDER` argument
-to the [`Makefile`](Makefile).
-
-```bash
-$ cd ${INTEL_DEVICE_PLUGINS_SRC}
-$ make intel-gpu-plugin
-...
-Successfully tagged intel/intel-gpu-plugin:devel
-```
-
-#### Deploy plugin DaemonSet
-
-You can then use the [example DaemonSet YAML](/deployments/gpu_plugin/base/intel-gpu-plugin.yaml)
-file provided to deploy the plugin. The default kustomization that deploys the YAML as is:
-
-```bash
-$ kubectl apply -k deployments/gpu_plugin
-daemonset.apps/intel-gpu-plugin created
-```
-
-Alternatively, if your cluster runs
-[Node Feature Discovery](https://github.com/kubernetes-sigs/node-feature-discovery),
-you can deploy the device plugin only on nodes with Intel GPU.
-The [nfd_labeled_nodes](/deployments/gpu_plugin/overlays/nfd_labeled_nodes/)
-kustomization adds the nodeSelector to the DaemonSet:
-
-```bash
-$ kubectl apply -k deployments/gpu_plugin/overlays/nfd_labeled_nodes
-daemonset.apps/intel-gpu-plugin created
-```
+Nothing else is needed. See [the development guide](../../DEVEL.md) for details if you want to deploy a customized version of the plugin.
 
 #### Fractional resources
 
@@ -181,31 +126,7 @@ and the second container gets tile 1 from card 1 and tile 0 from card 2.
 the nodes' DAC rules must be configured to device plugin socket creation and kubelet registration.
 Furthermore, the deployments `securityContext` must be configured with appropriate `runAsUser/runAsGroup`.
 
-### Deploy by hand
-
-For development purposes, it is sometimes convenient to deploy the plugin 'by hand' on a node.
-In this case, you do not need to build the complete container image, and can build just the plugin.
-
-#### Build the plugin
-
-First we build the plugin:
-
-```bash
-$ cd ${INTEL_DEVICE_PLUGINS_SRC}
-$ make gpu_plugin
-```
-
-#### Run the plugin as administrator
-
-Now we can run the plugin directly on the node:
-
-```bash
-$ sudo -E ${INTEL_DEVICE_PLUGINS_SRC}/cmd/gpu_plugin/gpu_plugin
-device-plugin start server at: /var/lib/kubelet/device-plugins/gpu.intel.com-i915.sock
-device-plugin registered
-```
-
-### Verify plugin registration
+### Verify Plugin Registration
 
 You can verify the plugin has been registered with the expected nodes by searching for the relevant
 resource allocation status on the nodes:
@@ -216,7 +137,7 @@ master
  i915: 1
 ```
 
-### Testing the plugin
+## Testing and Demos
 
 We can test the plugin is working by deploying an OpenCL image and running `clinfo`.
 The sample OpenCL image can be built using `make intel-opencl-icd` and must be made

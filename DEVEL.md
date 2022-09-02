@@ -1,7 +1,253 @@
-# Development
+# Instructions for Device Plugin Development and Maintenance
 
+Table of Contents
 
-## How to develop simple device plugins
+* [Day-to-day Development How to's](#day-to-day-development)
+   * [Get the Source Code](#get-the-source-code)
+   * [Build and Run Plugin Binaries](#build-and-run-plugin-binaries)
+   * [Build Container Images](#build-container-images)
+   * [Build Against a Newer Version of Kubernetes](#build-against-a-newer-version-of-kubernetes)
+   * [Work with Intel Device Plugins operator modifications](#work-with-intel-device-plugins-operator-modifications)
+   * [Publish a New Version of the Intel Device Plugins Operator to operatorhub.io](#publish-a-new-version-of-the-intel-device-plugins-operator-to-operatorhub.io)
+   * [Run E2E Tests](#run-e2e-tests)
+   * [Run Controller Tests with a Local Control Plane](#run-controller-tests-with-a-local-control-plane)
+* [How to Develop Simple Device Plugins](#how-to-develop-simple-device-plugins)
+    * [Logging](#logging)
+    * [Error conventions](#error-conventions)
+* [Checklist for new device plugins](#checklist-for-new-device-plugins)
+
+## Day-to-day Development How to's
+### Get the Source Code
+
+With `git` installed on the system, just clone the repository:
+
+```bash
+$ export INTEL_DEVICE_PLUGINS_SRC=/path/to/intel-device-plugins-for-kubernetes
+$ git clone https://github.com/intel/intel-device-plugins-for-kubernetes ${INTEL_DEVICE_PLUGINS_SRC}
+```
+
+### Build and Run Plugin Binaries
+
+With `go` development environment installed on the system, build the plugin:
+
+```bash
+$ cd ${INTEL_DEVICE_PLUGINS_SRC}
+$ make <plugin-build-target>
+```
+
+**Note:** All the available plugin build targets is roughly the output of `ls ${INTEL_DEVICE_PLUGINS_SRC}/cmd`.
+
+To test the plugin binary on the development system, run as administrator:
+
+```bash
+$ sudo -E ${INTEL_DEVICE_PLUGINS_SRC}/cmd/<plugin-build-target>/<plugin-build-target>
+```
+
+### Build Container Images
+
+The dockerfiles are generated on the fly from `.in` suffixed files and `.docker` include-snippets which are stitched together with
+cpp preprocessor. You need to install cpp for that, e.g. in ubuntu it is found from build-essential (sudo apt install build-essential).
+Don't edit the generated dockerfiles. Edit the inputs.
+
+The simplest way to build all the docker images, is:
+```
+$ make images
+```
+
+But it is very slow. You can drastically speed it up by first running once:
+```
+$ make vendor
+```
+
+Which brings the libraries into the builder container without downloading them again and again for each plugin.
+
+But it is still slow. You can further speed it up by first running once:
+```
+$ make licenses
+```
+
+Which pre-creates the go-licenses for all plugins, instead of re-creating them for each built plugin, every time.
+
+But it is still rather slow to build all the images, and unnecessary, if you iterate on just one. Instead, build just the one you are iterating on, example:
+
+```
+$ make <image-build-target>
+```
+
+**Note:** All the available image build targets is roughly the output of `ls ${INTEL_DEVICE_PLUGINS_SRC}/build/docker/*.Dockerfile`.
+
+If you iterate on only one plugin and if you know what its target cmd is (see folder `cmd/`), you can opt to pre-create just its licenses, example:
+```
+$ make licenses/<plugin-build-target>
+```
+
+The container image target names in the Makefile are derived from the `.Dockerfile.in` suffixed filenames under folder `build/docker/templates/`.
+
+Recap:
+```
+$ make vendor
+$ make licenses (or just make licenses/<plugin-build-target>)
+$ make <image-build-target>
+```
+
+Repeat the last step only, unless you change library dependencies. If you pull in new sources, start again from `make vendor`.
+
+**Note:** The image build tool can be changed from the default `docker` by setting the `BUILDER` argument
+to the [`Makefile`](Makefile): `make <image-build-target> BUILDER=buildah`.
+
+### Build Against a Newer Version of Kubernetes
+
+First you need to update module dependencies. The easiest way is to use the
+script copied from https://github.com/kubernetes/kubernetes/issues/79384#issuecomment-521493597:
+
+```bash
+#!/bin/sh
+set -euo pipefail
+
+VERSION=${1#"v"}
+if [ -z "$VERSION" ]; then
+    echo "Must specify version!"
+    exit 1
+fi
+MODS=($(
+    curl -sS https://raw.githubusercontent.com/kubernetes/kubernetes/v${VERSION}/go.mod |
+    sed -n 's|.*k8s.io/\(.*\) => ./staging/src/k8s.io/.*|k8s.io/\1|p'
+))
+for MOD in "${MODS[@]}"; do
+    V=$(
+        go mod download -json "${MOD}@kubernetes-${VERSION}" |
+        sed -n 's|.*"Version": "\(.*\)".*|\1|p'
+    )
+    go mod edit "-replace=${MOD}=${MOD}@${V}"
+done
+go get "k8s.io/kubernetes@v${VERSION}"
+```
+
+Just run it inside the repo's root, e.g.
+
+```
+$ ./k8s_gomod_update.sh 1.18.1
+```
+Finally run
+
+```
+$ make generate
+$ make test
+```
+
+and fix all new compilation issues.
+
+### Work with Intel Device Plugins Operator Modifications
+
+There are few useful steps when working with changes to Device Plugins CRDs and controllers:
+
+1. Install controller-gen: `GO111MODULE=on go get -u sigs.k8s.io/controller-tools/cmd/controller-gen@<release ver>, e.g, v0.4.1`
+2. Generate CRD and Webhook artifacts: `make generate`
+3. Test local changes using [envtest](https://book.kubebuilder.io/reference/envtest.html): `make envtest`
+4. Build a custom operator image: `make intel-deviceplugin-operator`
+5. (Un)deploy operator: `kubectl [apply|delete] -k deployments/operator/default`
+
+### Publish a New Version of the Intel Device Plugins Operator to operatorhub.io
+
+Update metadata.annotations.containerImage and metadata.annotations.createdAT fields in the base CSV manifest file
+deployments/operator/manifests/bases/intel-device-plugins-operator.clusterserviceversion.yaml
+to match current operator version and current date
+
+Fork the [Community Operators](https://github.com/k8s-operatorhub/community-operators) repo and clone it:
+```
+$ git clone https://github.com/<GitHub Username>/community-operators
+```
+
+Generate bundle and build bundle image:
+```
+$ make bundle OPERATOR_VERSION=0.X.Y CHANNELS=alpha DEFAULT_CHANNEL=alpha
+$ make bundle-build
+```
+
+> **Note**: You need to push the image to a registry if you want to follow the verification process below.
+
+Verify the operator deployment works OK via OLM in your development cluster:
+```
+$ operator-sdk olm install
+$ kubectl create namespace testoperator
+$ operator-sdk run bundle <Registry>/<Tag> -n testoperator --use-http
+# do verification checks
+...
+# do clean up
+$ operator-sdk cleanup intel-device-plugins-operator --namespace testoperator
+$ kubectl delete namespace testoperator
+$ operator-sdk olm uninstall
+```
+
+Review the package manifests by uploading the generated `packagemanifests` folder to
+https://operatorhub.io -> Contribute -> Package Your Operator.
+
+Commit files
+```
+$ cd community-operators
+$ git add operators/intel-device-plugins-operator/0.X.Y
+$ git commit -am 'operators intel-device-plugins-operator (0.X.Y)' -S
+```
+
+Submit a PR
+
+Check operator page
+https://operatorhub.io/operator/intel-device-plugins-operator
+after PR is merged
+
+### Run E2E Tests
+
+Currently the E2E tests require having a Kubernetes cluster already configured
+on the nodes with the hardware required by the device plugins. Also all the
+container images with the executables under test must be available in the
+cluster. If these two conditions are satisfied, run the tests with:
+
+```bash
+$ go test -v ./test/e2e/...
+```
+
+In case you want to run only certain tests, e.g., QAT ones, run:
+
+```bash
+$ go test -v ./test/e2e/... -args -ginkgo.focus "QAT"
+```
+
+If you need to specify paths to your custom `kubeconfig` containing
+embedded authentication info then add the `-kubeconfig` argument:
+
+```bash
+$ go test -v ./test/e2e/... -args -kubeconfig /path/to/kubeconfig
+```
+
+The full list of available options can be obtained with:
+
+```bash
+$ go test ./test/e2e/... -args -help
+```
+
+It is also possible to run the tests which don't depend on hardware
+without a pre-configured Kubernetes cluster. Just make sure you have
+[Kind](https://kind.sigs.k8s.io/) installed on your host and run:
+
+```
+$ make test-with-kind
+```
+
+### Run Controller Tests with a Local Control Plane
+
+The controller-runtime library provides a package for integration testing by
+starting a local control plane. The package is called
+[envtest](https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest). The
+operator uses this package for its integration testing.
+
+For setting up the environment for testing, `setup-envtest` can be used:
+
+```bash
+$ go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+$ setup-envtest use <K8S_VERSION>
+$ KUBEBUILDER_ASSETS=$(setup-envtest use -i -p path <K8S_VERSION>) make envtest
+```
+## How to Develop Simple Device Plugins
 
 To create a simple device plugin without the hassle of developing your own gRPC
 server, you can use a package included in this repository called
@@ -129,7 +375,7 @@ Otherwise, they can be logged as simple values:
     klog.Warningf("Example of a warning due to an external error: %v", err)
 ```
 
-### Checklist for new device plugins
+## Checklist for new device plugins
 
 For new device plugins contributed to this repository, below is a
 checklist to get the plugin on par feature and quality wise with
@@ -143,150 +389,3 @@ others:
 6. Plugin CRD validation tests implemented in [`test/envtest/`](test/envtest) and passing: `make envtest`.
 7. Plugin CRD controller implemented in [`pkg/controllers/`](pkg/controllers) and added to the manager in `cmd/operator/main.go`.
 8. Plugin documentation written `cmd/<plugin>/README.md` and optionally end to end demos created in [`demo`](demo).
-
-## How to build against a newer version of Kubernetes
-
-First you need to update module dependencies. The easiest way is to use the
-script copied from https://github.com/kubernetes/kubernetes/issues/79384#issuecomment-521493597:
-
-```bash
-#!/bin/sh
-set -euo pipefail
-
-VERSION=${1#"v"}
-if [ -z "$VERSION" ]; then
-    echo "Must specify version!"
-    exit 1
-fi
-MODS=($(
-    curl -sS https://raw.githubusercontent.com/kubernetes/kubernetes/v${VERSION}/go.mod |
-    sed -n 's|.*k8s.io/\(.*\) => ./staging/src/k8s.io/.*|k8s.io/\1|p'
-))
-for MOD in "${MODS[@]}"; do
-    V=$(
-        go mod download -json "${MOD}@kubernetes-${VERSION}" |
-        sed -n 's|.*"Version": "\(.*\)".*|\1|p'
-    )
-    go mod edit "-replace=${MOD}=${MOD}@${V}"
-done
-go get "k8s.io/kubernetes@v${VERSION}"
-```
-
-Just run it inside the repo's root, e.g.
-
-```
-$ ./k8s_gomod_update.sh 1.18.1
-```
-Finally run
-
-```
-$ make generate
-$ make test
-```
-
-and fix all new compilation issues.
-
-## How to build docker images
-
-The dockerfiles are generated on the fly from `.in` suffixed files and `.docker` include-snippets which are stitched together with
-cpp preprocessor. You need to install cpp for that, e.g. in ubuntu it is found from build-essential (sudo apt install build-essential).
-Don't edit the generated dockerfiles. Edit the inputs.
-
-The simplest way to build all the docker images, is:
-```
-$ make images
-```
-
-But it is very slow. You can drastically speed it up by first running once:
-```
-$ make vendor
-```
-
-Which brings the libraries into the builder container without downloading them again and again for each plugin.
-
-But it is still slow. You can further speed it up by first running once:
-```
-$ make licenses
-```
-
-Which pre-creates the go-licenses for all plugins, instead of re-creating them for each built plugin, every time.
-
-But it is still rather slow to build all the images, and unnecessary, if you iterate on just one. Instead, build just the one you are iterating on, example:
-
-```
-$ make intel-gpu-plugin
-```
-
-If you iterate on only one plugin and if you know what its target cmd is (see folder `cmd/`), you can opt to pre-create just its licenses, example:
-```
-$ make licenses/gpu_plugin
-```
-
-The docker image target names in the Makefile are derived from the `.Dockerfile.in` suffixed filenames under folder `build/docker/templates/`.
-
-Recap:
-```
-$ make vendor
-$ make licenses (or just make licenses/gpu_plugin)
-$ make intel-gpu-plugin
-```
-
-Repeat the last step only, unless you change library dependencies. If you pull in new sources, start again from `make vendor`.
-
-## How to work with Intel Device Plugins operator modifications
-
-There are few useful steps when working with changes to Device Plugins CRDs and controllers:
-
-1. Install controller-gen: `GO111MODULE=on go get -u sigs.k8s.io/controller-tools/cmd/controller-gen@<release ver>, e.g, v0.4.1`
-2. Generate CRD and Webhook artifacts: `make generate`
-3. Test local changes using [envtest](https://book.kubebuilder.io/reference/envtest.html): `make envtest`
-4. Build a custom operator image: `make intel-deviceplugin-operator`
-5. (Un)deploy operator: `kubectl [apply|delete] -k deployments/operator/default`
-
-## How to publish a new version of the Intel Device Plugins operator to operatorhub.io
-
-Update metadata.annotations.containerImage and metadata.annotations.createdAT fields in the base CSV manifest file
-deployments/operator/manifests/bases/intel-device-plugins-operator.clusterserviceversion.yaml
-to match current operator version and current date
-
-Fork the [Community Operators](https://github.com/k8s-operatorhub/community-operators) repo and clone it:
-```
-$ git clone https://github.com/<GitHub Username>/community-operators
-```
-
-Generate bundle and build bundle image:
-```
-$ make bundle OPERATOR_VERSION=0.X.Y CHANNELS=alpha DEFAULT_CHANNEL=alpha
-$ make bundle-build
-```
-
-> **Note**: You need to push the image to a registry if you want to follow the verification process below.
-
-Verify the operator deployment works OK via OLM in your development cluster:
-```
-$ operator-sdk olm install
-$ kubectl create namespace testoperator
-$ operator-sdk run bundle <Registry>/<Tag> -n testoperator --use-http
-# do verification checks
-...
-# do clean up
-$ operator-sdk cleanup intel-device-plugins-operator --namespace testoperator
-$ kubectl delete namespace testoperator
-$ operator-sdk olm uninstall
-```
-
-Review the package manifests by uploading the generated `packagemanifests` folder to
-https://operatorhub.io -> Contribute -> Package Your Operator.
-
-Commit files
-```
-$ cd community-operators
-$ git add operators/intel-device-plugins-operator/0.X.Y
-$ git commit -am 'operators intel-device-plugins-operator (0.X.Y)' -S
-```
-
-Submit a PR
-
-Check operator page
-https://operatorhub.io/operator/intel-device-plugins-operator
-after PR is merged
