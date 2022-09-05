@@ -37,6 +37,15 @@ jobs:
         email=$(git log --merges --pretty=format:%ae -n 1)
         git config --global user.name "$author"
         git config --global user.email "$email"
+    - name: Set up golang
+      uses: actions/setup-go@v3
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        check-latest: true
+    - name: Set up Helm
+      uses: azure/setup-helm@v3.3
+      with:
+        version: v3.9.2
     - name: Build latest
       run: |
         GITHUB_SHA=$(git rev-parse HEAD)
@@ -44,6 +53,7 @@ jobs:
         rm -rf _work/venv
         make vhtml
         mv _build/html/* $HOME/output/
+        make helm
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
