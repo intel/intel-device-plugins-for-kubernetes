@@ -49,7 +49,7 @@ func (c *mockClient) DeleteAllOf(context.Context, client.Object, ...client.Delet
 	return nil
 }
 
-func (c *mockClient) Get(context.Context, types.NamespacedName, client.Object) error {
+func (c *mockClient) Get(context.Context, types.NamespacedName, client.Object, ...client.GetOption) error {
 	return c.getError
 }
 
