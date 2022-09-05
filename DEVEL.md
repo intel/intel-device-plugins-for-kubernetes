@@ -7,14 +7,14 @@ Table of Contents
    * [Build and Run Plugin Binaries](#build-and-run-plugin-binaries)
    * [Build Container Images](#build-container-images)
    * [Build Against a Newer Version of Kubernetes](#build-against-a-newer-version-of-kubernetes)
-   * [Work with Intel Device Plugins operator modifications](#work-with-intel-device-plugins-operator-modifications)
+   * [Work with Intel Device Plugins Operator Modifications](#work-with-intel-device-plugins-operator-modifications)
    * [Publish a New Version of the Intel Device Plugins Operator to operatorhub.io](#publish-a-new-version-of-the-intel-device-plugins-operator-to-operatorhub.io)
    * [Run E2E Tests](#run-e2e-tests)
    * [Run Controller Tests with a Local Control Plane](#run-controller-tests-with-a-local-control-plane)
 * [How to Develop Simple Device Plugins](#how-to-develop-simple-device-plugins)
     * [Logging](#logging)
-    * [Error conventions](#error-conventions)
-* [Checklist for new device plugins](#checklist-for-new-device-plugins)
+    * [Error Conventions](#error-conventions)
+* [Checklist for New Device Plugins](#checklist-for-new-device-plugins)
 
 ## Day-to-day Development How to's
 ### Get the Source Code
@@ -97,38 +97,15 @@ to the [`Makefile`](Makefile): `make <image-build-target> BUILDER=buildah`.
 
 ### Build Against a Newer Version of Kubernetes
 
-First you need to update module dependencies. The easiest way is to use the
-script copied from https://github.com/kubernetes/kubernetes/issues/79384#issuecomment-521493597:
-
-```bash
-#!/bin/sh
-set -euo pipefail
-
-VERSION=${1#"v"}
-if [ -z "$VERSION" ]; then
-    echo "Must specify version!"
-    exit 1
-fi
-MODS=($(
-    curl -sS https://raw.githubusercontent.com/kubernetes/kubernetes/v${VERSION}/go.mod |
-    sed -n 's|.*k8s.io/\(.*\) => ./staging/src/k8s.io/.*|k8s.io/\1|p'
-))
-for MOD in "${MODS[@]}"; do
-    V=$(
-        go mod download -json "${MOD}@kubernetes-${VERSION}" |
-        sed -n 's|.*"Version": "\(.*\)".*|\1|p'
-    )
-    go mod edit "-replace=${MOD}=${MOD}@${V}"
-done
-go get "k8s.io/kubernetes@v${VERSION}"
-```
+First, you need to update module dependencies. The easiest way is to use
+`scripts/upgrade_k8s.sh` copied [from a k/k issue](https://github.com/kubernetes/kubernetes/issues/79384#issuecomment-521493597):
 
 Just run it inside the repo's root, e.g.
 
 ```
-$ ./k8s_gomod_update.sh 1.18.1
+$ ${INTEL_DEVICE_PLUGINS_SRC}/scripts/upgrade_k8s.sh <k8s version>
 ```
-Finally run
+Finally, run:
 
 ```
 $ make generate
@@ -375,7 +352,7 @@ Otherwise, they can be logged as simple values:
     klog.Warningf("Example of a warning due to an external error: %v", err)
 ```
 
-## Checklist for new device plugins
+## Checklist for New Device Plugins
 
 For new device plugins contributed to this repository, below is a
 checklist to get the plugin on par feature and quality wise with
