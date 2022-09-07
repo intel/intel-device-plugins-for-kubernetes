@@ -3,7 +3,7 @@
 Table of Contents
 
 * [Introduction](#introduction)
-    * [Component overview](#component-overview)
+    * [Component Overview](#component-overview)
 * [Modes and Configuration Options](#modes-and-configuration-options)
 * [Installation](#installation)
     * [Prerequisites](#prerequisites)
@@ -30,7 +30,7 @@ The components together implement the following features:
 - orchestration of FPGA programming
 - access control for FPGA hardware
 
-### Component overview
+### Component Overview
 
 The following components are part of this repository, and work together to support Intel FPGAs under
 Kubernetes:
@@ -63,7 +63,7 @@ Kubernetes:
 The repository also contains an [FPGA helper tool](../fpga_tool/README.md) that may be useful during
 development, initial deployment and debugging.
 
-### Modes and Configuration options
+### Modes and Configuration Options
 
 The FPGA plugin set can run in one of two modes:
 

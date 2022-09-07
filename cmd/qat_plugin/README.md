@@ -3,19 +3,19 @@
 Table of Contents
 
 * [Introduction](#introduction)
-* [Modes and Configuration options](#modes-and-configuration-options)
+* [Modes and Configuration Options](#modes-and-configuration-options)
 * [Installation](#installation)
     * [Prerequisites](#prerequisites)
-    * [Pre-built images](#pre-built-images)
+    * [Pre-built Images](#pre-built-images)
     * [Verify Plugin Registration](#verify-plugin-registration)
 * [Demos and Testing](#demos-and-testing)
-    * [DPDK QAT demos](#dpdk-qat-demos)
+    * [DPDK QAT Demos](#dpdk-qat-demos)
         * [DPDK Prerequisites](#dpdk-prerequisites)
         * [Deploy the pod](#deploy-the-pod)
         * [Manual test run](#manual-test-run)
         * [Automated test run](#automated-test-run)
-    * [OpenSSL QAT demo](#openssl-qat-demo)
-* [Checking for hardware](#checking-for-hardware)
+    * [OpenSSL QAT Demo](#openssl-qat-demo)
+* [Checking for Hardware](#checking-for-hardware)
 
 ## Introduction
 
@@ -36,7 +36,7 @@ Demonstrations are provided utilising [DPDK](https://doc.dpdk.org/) and [OpenSSL
 [Kata Containers](https://katacontainers.io/) QAT integration is documented in the
 [Kata Containers documentation repository][6].
 
-## Modes and Configuration options
+## Modes and Configuration Options
 
 The QAT plugin can take a number of command line arguments, summarised in the following table:
 
@@ -169,7 +169,7 @@ $ kubectl get pods
 > **Note**: If the `igb_uio` VF driver is used with the QAT device plugin,
 > the workload be deployed with `SYS_ADMIN` capabilities added.
 
-#### Manual test run
+#### Manual Test Run
 
 Manually execute the `dpdk-test-crypto-perf` application to review the logs:
 
@@ -186,7 +186,7 @@ $ dpdk-test-crypto-perf -l 6-7 -w $QAT1 \
 
 > **Note**: Adapt the `.so` versions to what the DPDK version in the container provides.
 
-#### Automated test run
+#### Automated Test Run
 
 It is also possible to deploy and run `crypto-perf` using the following
 `kustomize` overlays:
@@ -201,12 +201,12 @@ $ kubectl logs qat-dpdk-test-compress-perf-tc1
 > **Note**: for `test-crypto1` and `test-compress1` to work, the cluster must enable
 [Kubernetes CPU manager's](https://kubernetes.io/docs/tasks/administer-cluster/cpu-management-policies/) `static` policy.
 
-### OpenSSL QAT demo
+### OpenSSL QAT Demo
 
 Please refer to the [Kata Containers documentation][8] for details on the OpenSSL
 QAT acceleration demo.
 
-## Checking for hardware
+## Checking for Hardware
 
 In order to utilise the QAT device plugin, QuickAssist SR-IOV virtual functions must be configured.
 You can verify this on your nodes by checking for the relevant PCI identifiers:
