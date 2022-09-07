@@ -21,7 +21,7 @@ permissions:
 jobs:
   e2e-dlb:
     name: e2e-dlb
-    runs-on: [self-hosted, linux, x64, dlb]
+    runs-on: [simics-spr]
     steps:
       - uses: actions/checkout@v3
         with:
