@@ -21,7 +21,7 @@ permissions:
 jobs:
   e2e-dsa:
     name: e2e-dsa
-    runs-on: [self-hosted, linux, x64, dsa]
+    runs-on: [simics-spr]
     steps:
       - uses: actions/checkout@v3
         with:
