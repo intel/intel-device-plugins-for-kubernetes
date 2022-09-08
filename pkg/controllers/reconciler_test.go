@@ -28,16 +28,16 @@ func TestUpgrade(test *testing.T) {
 	}{
 		{
 			image:             "intel/intel-dsa-plugin:0.22.0",
-			expectedImage:     "intel/intel-dsa-plugin:0.24.0",
+			expectedImage:     "intel/intel-dsa-plugin:0.24.1",
 			initimage:         "intel/intel-idxd-config-initcontainer:0.22.0",
-			expectedInitimage: "intel/intel-idxd-config-initcontainer:0.24.0",
+			expectedInitimage: "intel/intel-idxd-config-initcontainer:0.24.1",
 			upgrade:           true,
 		},
 		{
-			image:             "intel/intel-dsa-plugin:0.24.0",
-			expectedImage:     "intel/intel-dsa-plugin:0.24.0",
-			initimage:         "intel/intel-idxd-config-initcontainer:0.24.0",
-			expectedInitimage: "intel/intel-idxd-config-initcontainer:0.24.0",
+			image:             "intel/intel-dsa-plugin:0.24.1",
+			expectedImage:     "intel/intel-dsa-plugin:0.24.1",
+			initimage:         "intel/intel-idxd-config-initcontainer:0.24.1",
+			expectedInitimage: "intel/intel-idxd-config-initcontainer:0.24.1",
 			upgrade:           false,
 		},
 		{

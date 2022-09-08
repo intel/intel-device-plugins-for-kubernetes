@@ -69,7 +69,7 @@ FROM ${FINAL_BASE}
 
 LABEL name='intel-gpu-initcontainer'
 LABEL vendor='Intel®'
-LABEL version=0.24.0
+LABEL version=0.24.1
 LABEL release='1'
 LABEL summary='Intel® GPU NFD hook for Kubernetes'
 LABEL description='The GPU fractional resources, such as GPU memory is registered as a kubernetes extended resource using node-feature-discovery (NFD). A custom NFD source hook is installed as part of GPU device plugin operator deployment and NFD is configured to register the GPU memory extended resource reported by the hook'

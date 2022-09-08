@@ -37,14 +37,14 @@ import (
 
 var (
 	bKeeper         = &bookKeeper{}
-	ImageMinVersion = versionutil.MustParseSemantic("0.24.0")
+	ImageMinVersion = versionutil.MustParseSemantic("0.24.1")
 )
 
 func init() {
 	bKeeper.pluginCounter = make(map[string]int)
 }
 
-//nolint: govet
+// nolint: govet
 type bookKeeper struct {
 	sync.Mutex
 	pluginCounter map[string]int

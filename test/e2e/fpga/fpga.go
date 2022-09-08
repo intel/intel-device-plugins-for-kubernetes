@@ -101,7 +101,7 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 	}
 
 	resource = v1.ResourceName(podResource)
-	image := "intel/opae-nlb-demo:0.24.0"
+	image := "intel/opae-nlb-demo:0.24.1"
 
 	ginkgo.By("submitting a pod requesting correct FPGA resources")
 

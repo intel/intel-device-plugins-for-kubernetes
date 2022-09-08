@@ -78,7 +78,7 @@ FROM ${FINAL_BASE}
 
 LABEL name='intel-fpga-initcontainer'
 LABEL vendor='Intel®'
-LABEL version=0.24.0
+LABEL version=0.24.1
 LABEL release='1'
 LABEL summary='Intel® FPGA programming CRI hook for Kubernetes'
 LABEL description='The FPGA prestart CRI-O hook performs discovery of the requested FPGA function bitstream and programs FPGA devices based on the environment variables in the workload description'
