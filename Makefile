@@ -279,6 +279,7 @@ helm:
 		output:crd:artifacts:config=charts/operator/crds
 	helm package charts/operator
 	helm package charts/sgx
+	helm package charts/qat
 
 clean-licenses:
 	rm -rf licenses
