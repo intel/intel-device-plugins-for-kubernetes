@@ -48,7 +48,7 @@ The below sections detail existing plugins developed using the framework.
 ### GPU Device Plugin
 
 The [GPU device plugin](cmd/gpu_plugin/README.md) provides access to
-discrete (Intel® Iris® Xe MAX) and integrated GPU HW device files.
+discrete and integrated Intel GPU device files.
 
 The demo subdirectory contains both a [GPU plugin demo video](demo/readme.md#intel-gpu-device-plugin-demo-video)
 and an OpenCL sample deployment (`intelgpu-job.yaml`).
