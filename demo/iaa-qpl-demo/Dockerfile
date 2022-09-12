@@ -17,18 +17,20 @@ FROM ubuntu:20.04 AS builder
 RUN apt update && DEBIAN_FRONTEND=noninteractive TZ="Etc/UTC" \
     apt install -y --no-install-recommends \
     g++ clang nasm cmake make git ca-certificates uuid-dev \
-    gcc autoconf automake libtool pkg-config libjson-c-dev curl
+    gcc autoconf automake libtool pkg-config libjson-c-dev curl zlib1g-dev
 
-RUN git clone --recursive --depth 1 --branch v0.1.20 \
+RUN git clone --recursive --depth 1 --branch v0.2.0 \
     https://github.com/intel/qpl.git && \
     mkdir qpl/build && cd qpl/build && \
     cmake .. && \
     make install
 
-ARG ACCEL_CONFIG_VERSION=v3.4.6.4
+ARG ACCEL_CONFIG_VERSION=3.5.0
+ARG ACCEL_CONFIG_DOWNLOAD_URL="https://github.com/intel/idxd-config/archive/accel-config-v$ACCEL_CONFIG_VERSION.tar.gz"
+ARG ACCEL_CONFIG_SHA256="4d2fecbbb29f293791214f475c44e73c25171f75c1725dbc516731b768e2e7c9"
 
-RUN curl -sSL https://github.com/intel/idxd-config/archive/accel-config-$ACCEL_CONFIG_VERSION.tar.gz | tar -zx && \
-    cd idxd-config-accel-config-$ACCEL_CONFIG_VERSION && \
+RUN curl -fsSL "$ACCEL_CONFIG_DOWNLOAD_URL" -o accel-config.tar.gz && echo "$ACCEL_CONFIG_SHA256 accel-config.tar.gz" | sha256sum -c - && tar -xzf accel-config.tar.gz
+RUN cd idxd-config-accel-config-v$ACCEL_CONFIG_VERSION && \
     ./git-version-gen && \
     autoreconf -i && \
     ./configure -q --libdir=/usr/lib64 --disable-test --disable-docs && \
