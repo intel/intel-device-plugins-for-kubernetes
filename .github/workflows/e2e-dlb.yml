@@ -21,7 +21,11 @@ permissions:
 jobs:
   e2e-dlb:
     name: e2e-dlb
-    runs-on: [simics-spr]
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [simics-spr, simics-gnr]
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v3
         with:
