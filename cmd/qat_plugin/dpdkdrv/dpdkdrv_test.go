@@ -429,7 +429,7 @@ func TestScan(t *testing.T) {
 			expectedDevNum: 1,
 		},
 		{
-			name:            "vfio-pci DPDKdriver with no kernel bound driver and where vfdevID is equal to qatDevId (4941), PF with dc capabilities",
+			name:            "vfio-pci DPDKdriver with no kernel bound driver and where vfdevID is equal to qatDevId (4941), PF with dc capabilities from debugfs",
 			dpdkDriver:      "vfio-pci",
 			kernelVfDrivers: []string{"4xxxvf"},
 			dirs: []string{
@@ -443,6 +443,34 @@ func TestScan(t *testing.T) {
 				"sys/devices/pci0000:02/0000:02:00.0/device":     []byte("0x4940"),
 				"sys/kernel/debug/qat_4xxx_0000:02:00.0/dev_cfg": []byte("[GENERAL]\nServicesEnabled = dc"),
 				"sys/bus/pci/devices/0000:02:01.0/device":        []byte("0x4941"),
+			},
+			symlinks: map[string]string{
+				"sys/bus/pci/devices/0000:02:01.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:02:01.0/physfn":      "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/bus/pci/drivers/4xxx/0000:02:00.0":        "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0":             "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/devices/pci0000:02/0000:02:00.0/virtfn0":  "sys/bus/pci/devices/0000:02:01.0",
+			},
+			maxDevNum:      1,
+			expectedDevNum: 1,
+		},
+		{
+			name:            "vfio-pci DPDKdriver with no kernel bound driver and where vfdevID is equal to qatDevId (4941), PF with cy capabilities from sysfs",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: []string{"4xxxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/4xxx",
+				"sys/bus/pci/drivers/vfio-pci",
+				"sys/devices/pci0000:02/0000:02:00.0",
+				"sys/devices/pci0000:02/0000:02:00.0/qat",
+				"sys/kernel/debug/qat_4xxx_0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:01.0",
+			},
+			files: map[string][]byte{
+				"sys/devices/pci0000:02/0000:02:00.0/device":           []byte("0x4940"),
+				"sys/devices/pci0000:02/0000:02:00.0/qat/state":        []byte("up"),
+				"sys/devices/pci0000:02/0000:02:00.0/qat/cfg_services": []byte("sym;asym"),
+				"sys/bus/pci/devices/0000:02:01.0/device":              []byte("0x4941"),
 			},
 			symlinks: map[string]string{
 				"sys/bus/pci/devices/0000:02:01.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
