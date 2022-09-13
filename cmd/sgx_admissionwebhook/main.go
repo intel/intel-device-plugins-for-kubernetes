@@ -15,7 +15,6 @@
 package main
 
 import (
-	"flag"
 	"os"
 
 	sgxwebhook "github.com/intel/intel-device-plugins-for-kubernetes/pkg/webhooks/sgx"
@@ -36,17 +35,6 @@ func init() {
 }
 
 func main() {
-	var (
-		metricsAddr          string
-		enableLeaderElection bool
-	)
-
-	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	flag.Parse()
-
 	ctrl.SetLogger(klogr.New())
 
 	webHook := &webhook.Server{
@@ -56,11 +44,9 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
-		MetricsBindAddress: metricsAddr,
+		MetricsBindAddress: "0",
 		Logger:             ctrl.Log.WithName("SgxAdmissionWebhook"),
 		WebhookServer:      webHook,
-		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "a9b71ad3.intel.com",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

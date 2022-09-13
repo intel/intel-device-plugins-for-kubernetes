@@ -164,7 +164,7 @@ No upgrade is done for:
 ## Known issues
 
 When the operator is run with leader election enabled, that is with the option
-`--enable-leader-election`, make sure the cluster is not overloaded with excessive
+`--leader-elect`, make sure the cluster is not overloaded with excessive
 number of pods. Otherwise a heart beat used by the leader election code may trigger
 a timeout and crash. We are going to use different clients for the controller and
 leader election code to alleviate the issue. See more details in
