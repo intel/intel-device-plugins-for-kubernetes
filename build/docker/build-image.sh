@@ -16,7 +16,7 @@ fi
 
 shift
 
-if [ "$1" = 'docker' -o "$1" = 'buildah' ]; then
+if [ "$1" = 'docker' -o "$1" = 'buildah' -o "$1" = 'podman' ]; then
     BUILDER=$1
     shift
 fi
@@ -30,8 +30,8 @@ if [ -d $(dirname $0)/../../vendor ] ; then
 fi
 
 BUILD_ARGS="${BUILD_ARGS} --build-arg FINAL_BASE=gcr.io/distroless/static"
-if [ -z "${BUILDER}" -o "${BUILDER}" = 'docker' ] ; then
-    docker build --pull -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .
+if [ -z "${BUILDER}" -o "${BUILDER}" = 'docker' -o "${BUILDER}" = 'podman' ] ; then
+    ${BUILDER} build --pull -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .
 elif [ "${BUILDER}" = 'buildah' ] ; then
     BUILDAH_RUNTIME=runc buildah bud --pull-always -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .
 else

@@ -17,8 +17,8 @@ fi
 CWD=`dirname $0`
 TAG=${TAG:-devel}
 
-if [ -z "$BUILDER" -o "$BUILDER" = 'docker' ] ; then
-    docker build --pull -t ${IMG}:${TAG} "$CWD/$DIR/"
+if [ -z "$BUILDER" -o "$BUILDER" = 'docker' -o "$BUILDER" = 'podman' ] ; then
+    ${BUILDER} build --pull -t ${IMG}:${TAG} "$CWD/$DIR/"
 elif [ "$BUILDER" = 'buildah' ] ; then
     buildah bud  --pull-always -t ${IMG}:${TAG} "$CWD/$DIR/"
 else

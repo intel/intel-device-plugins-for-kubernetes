@@ -93,7 +93,7 @@ $ make <image-build-target>
 Repeat the last step only, unless you change library dependencies. If you pull in new sources, start again from `make vendor`.
 
 **Note:** The image build tool can be changed from the default `docker` by setting the `BUILDER` argument
-to the [`Makefile`](Makefile): `make <image-build-target> BUILDER=buildah`.
+to the [`Makefile`](Makefile): `make <image-build-target> BUILDER=<builder>`. Supported values are `docker`, `buildah`, and `podman`.
 
 ### Build Against a Newer Version of Kubernetes
 
