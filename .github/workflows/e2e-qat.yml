@@ -2,7 +2,7 @@ name: e2e-qat
 on:
   workflow_dispatch:
   schedule:
-    - cron: '20 3 * * *'
+    - cron: '0 4 * * *'
   pull_request:
     branches:
       - main
