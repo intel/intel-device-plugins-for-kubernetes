@@ -71,7 +71,7 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 
 #### Install to nodes with Intel GPUs with NFD
 
-Deploying GPU plugin to only nodes that have Intel GPU attached. [Node Feature Discovery](https://github.com/kubernetes-sigs/node-feature-discovery) is required to detect the presense of Intel GPUs.
+Deploying GPU plugin to only nodes that have Intel GPU attached. [Node Feature Discovery](https://github.com/kubernetes-sigs/node-feature-discovery) is required to detect the presence of Intel GPUs.
 
 ```bash
 # Start NFD - if your cluster doesn't have NFD installed yet
