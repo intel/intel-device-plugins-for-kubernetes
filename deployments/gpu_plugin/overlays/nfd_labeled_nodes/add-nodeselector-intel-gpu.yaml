@@ -6,4 +6,4 @@ spec:
   template:
     spec:
       nodeSelector:
-        feature.node.kubernetes.io/pci-0300_8086.present: "true"
+        intel.feature.node.kubernetes.io/gpu: "true"
