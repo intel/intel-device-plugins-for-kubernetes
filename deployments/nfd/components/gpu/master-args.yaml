@@ -1,0 +1,3 @@
+- op: add
+  path: /spec/template/spec/containers/0/args
+  value: ["--resource-labels=gpu.intel.com/memory.max,gpu.intel.com/millicores,gpu.intel.com/tiles", "--extra-label-ns=gpu.intel.com"]
