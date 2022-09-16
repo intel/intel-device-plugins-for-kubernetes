@@ -21,7 +21,11 @@ permissions:
 jobs:
   e2e-iaa:
     name: e2e-iaa
-    runs-on: [simics-spr]
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [simics-spr, simics-gnr]
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v3
         with:
