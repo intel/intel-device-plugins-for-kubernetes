@@ -40,7 +40,7 @@ Following labels are created by default. You may turn numeric labels into extend
 name | type | description|
 -----|------|------|
 |`gpu.intel.com/millicores`| number | node GPU count * 1000. Can be used as a finer grained shared execution fraction.
-|`gpu.intel.com/memory.max`| number | sum of detected [GPU memory amounts](#GPU-memory) in bytes OR environment variable value * GPU count
+|`gpu.intel.com/memory.max`| number | sum of detected [GPU memory amounts](#gpu-memory) in bytes OR environment variable value * GPU count
 |`gpu.intel.com/cards`| string | list of card names separated by '`.`'. The names match host `card*`-folders under `/sys/class/drm/`. Deprecated, use `gpu-numbers`.
 |`gpu.intel.com/gpu-numbers`| string | list of numbers separated by '`.`'. The numbers correspond to device file numbers for the primary nodes of given GPUs in kernel DRI subsystem, listed as `/dev/dri/card<num>` in devfs, and `/sys/class/drm/card<num>` in sysfs.
 |`gpu.intel.com/tiles`| number | sum of all detected GPU tiles in the system.
