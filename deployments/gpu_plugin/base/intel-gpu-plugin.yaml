@@ -18,6 +18,8 @@ spec:
         image: intel/intel-gpu-initcontainer:devel
         imagePullPolicy: IfNotPresent
         securityContext:
+          seLinuxOptions:
+            type: "container_device_plugin_init_t"
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
         volumeMounts:
@@ -33,6 +35,8 @@ spec:
         image: intel/intel-gpu-plugin:devel
         imagePullPolicy: IfNotPresent
         securityContext:
+          seLinuxOptions:
+            type: "container_device_plugin_t"
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
         volumeMounts:
