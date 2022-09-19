@@ -59,7 +59,7 @@ spec:
             class: {op: In, value: ["0300", "0380"]}
         - feature: kernel.loadedmodule
           matchExpressions:
-            drm: {op: Exists}
+            i915: {op: Exists}
 
     - name: "intel.iaa"
       labels:
