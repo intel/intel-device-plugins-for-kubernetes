@@ -17,6 +17,8 @@ spec:
       - name: intel-qat-plugin
         image: intel/intel-qat-plugin:devel
         securityContext:
+          seLinuxOptions:
+            type: "container_device_plugin_t"
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
         imagePullPolicy: IfNotPresent
