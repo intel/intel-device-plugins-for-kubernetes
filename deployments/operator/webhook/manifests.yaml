@@ -134,6 +134,7 @@ webhooks:
       path: /mutate-deviceplugin-intel-com-v1-sgxdeviceplugin
   failurePolicy: Fail
   name: msgxdeviceplugin.kb.io
+  reinvocationPolicy: IfNeeded
   rules:
   - apiGroups:
     - deviceplugin.intel.com
@@ -172,9 +173,9 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /pods-sgx
-  reinvocationPolicy: IfNeeded
   failurePolicy: Ignore
   name: sgx.mutator.webhooks.intel.com
+  reinvocationPolicy: IfNeeded
   rules:
   - apiGroups:
     - ""

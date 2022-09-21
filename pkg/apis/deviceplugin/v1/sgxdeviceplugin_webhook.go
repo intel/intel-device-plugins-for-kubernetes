@@ -42,7 +42,7 @@ func (r *SgxDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-sgxdeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=sgxdeviceplugins,verbs=create;update,versions=v1,name=msgxdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-sgxdeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=sgxdeviceplugins,verbs=create;update,versions=v1,name=msgxdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1,reinvocationPolicy=IfNeeded
 
 var _ webhook.Defaulter = &SgxDevicePlugin{}
 
