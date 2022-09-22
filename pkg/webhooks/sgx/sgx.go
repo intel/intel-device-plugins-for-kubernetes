@@ -27,7 +27,7 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/internal/containers"
 )
 
-// +kubebuilder:webhook:path=/pods-sgx,mutating=true,failurePolicy=ignore,groups="",resources=pods,verbs=create;update,versions=v1,name=sgx.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/pods-sgx,mutating=true,failurePolicy=ignore,groups="",resources=pods,verbs=create;update,versions=v1,name=sgx.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1,reinvocationPolicy=IfNeeded
 
 // Mutator annotates Pods.
 type Mutator struct {

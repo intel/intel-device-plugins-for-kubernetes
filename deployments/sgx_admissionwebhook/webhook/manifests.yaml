@@ -1,4 +1,3 @@
-
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
@@ -13,9 +12,9 @@ webhooks:
       name: webhook-service
       namespace: system
       path: /pods-sgx
-  reinvocationPolicy: IfNeeded
   failurePolicy: Ignore
   name: sgx.mutator.webhooks.intel.com
+  reinvocationPolicy: IfNeeded
   rules:
   - apiGroups:
     - ""
