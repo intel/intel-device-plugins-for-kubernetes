@@ -8,3 +8,4 @@ patches:
   - path: add-serviceaccount.yaml
   - path: add-podresource-mount.yaml
   - path: add-args.yaml
+  - path: add-nodeselector-intel-gpu.yaml
