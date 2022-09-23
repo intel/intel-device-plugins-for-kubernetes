@@ -13,6 +13,7 @@ spec:
       labels:
         app: intel-dlb-plugin
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: intel-dlb-plugin
         env:

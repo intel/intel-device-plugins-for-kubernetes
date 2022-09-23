@@ -13,6 +13,7 @@ spec:
       labels:
         app: intel-vpu-plugin
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: intel-vpu-plugin
         env:

@@ -13,6 +13,7 @@ spec:
       labels:
         app: intel-sgx-plugin
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: intel-sgx-plugin
         image: intel/intel-sgx-plugin:devel

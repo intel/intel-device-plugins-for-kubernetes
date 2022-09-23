@@ -13,6 +13,7 @@ spec:
       labels:
         app: intel-dsa-plugin
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: intel-dsa-plugin
         env:

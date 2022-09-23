@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation. All Rights Reserved.
+// Copyright 2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package qat contains QAT specific reconciliation logic.
-package qat
+package iaa
 
 import (
 	"reflect"
@@ -28,28 +27,26 @@ import (
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 )
 
-const appLabel = "intel-qat-plugin"
+const appLabel = "intel-iaa-plugin"
 
 // newDaemonSetExpected creates plugin daemonset
 // it's copied from the original controller code (before the usage of go:embed).
 func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet {
-	devicePlugin := rawObj.(*devicepluginv1.QatDevicePlugin)
+	devicePlugin := rawObj.(*devicepluginv1.IaaDevicePlugin)
+
 	yes := true
 	no := false
-	pluginAnnotations := devicePlugin.ObjectMeta.DeepCopy().Annotations
-
-	return &apps.DaemonSet{
+	daemonSet := apps.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
 			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: c.ns,
-			Name:      "intel-qat-plugin",
+			Name:      appLabel,
 			Labels: map[string]string{
 				"app": appLabel,
 			},
-			Annotations: pluginAnnotations,
 		},
 		Spec: apps.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
@@ -62,37 +59,44 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 					Labels: map[string]string{
 						"app": appLabel,
 					},
-					Annotations: pluginAnnotations,
 				},
 				Spec: v1.PodSpec{
 					AutomountServiceAccountToken: &no,
 					Containers: []v1.Container{
 						{
-							Name:            appLabel,
+							Name: appLabel,
+							Env: []v1.EnvVar{
+								{
+									Name: "NODE_NAME",
+									ValueFrom: &v1.EnvVarSource{
+										FieldRef: &v1.ObjectFieldSelector{
+											FieldPath: "spec.nodeName",
+										},
+									},
+								},
+							},
 							Args:            getPodArgs(devicePlugin),
 							Image:           devicePlugin.Spec.Image,
 							ImagePullPolicy: "IfNotPresent",
 							SecurityContext: &v1.SecurityContext{
-								SELinuxOptions: &v1.SELinuxOptions{
-									Type: "container_device_plugin_t",
-								},
 								ReadOnlyRootFilesystem:   &yes,
 								AllowPrivilegeEscalation: &no,
 							},
 							VolumeMounts: []v1.VolumeMount{
 								{
-									Name:      "devdir",
-									MountPath: "/dev/vfio",
+									Name:      "devfs",
+									MountPath: "/dev/iax",
 									ReadOnly:  true,
 								},
 								{
-									Name:      "debugfsdir",
-									MountPath: "/sys/kernel/debug",
+									Name:      "chardevs",
+									MountPath: "/dev/char",
 									ReadOnly:  true,
 								},
 								{
-									Name:      "pcidir",
-									MountPath: "/sys/bus/pci",
+									Name:      "sysfs",
+									MountPath: "/sys/bus/dsa/devices",
+									ReadOnly:  true,
 								},
 								{
 									Name:      "kubeletsockets",
@@ -104,26 +108,26 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 					NodeSelector: map[string]string{"kubernetes.io/arch": "amd64"},
 					Volumes: []v1.Volume{
 						{
-							Name: "devdir",
+							Name: "devfs",
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev/vfio",
+									Path: "/dev/iax",
 								},
 							},
 						},
 						{
-							Name: "debugfsdir",
+							Name: "chardevs",
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
-									Path: "/sys/kernel/debug",
+									Path: "/dev/char",
 								},
 							},
 						},
 						{
-							Name: "pcidir",
+							Name: "sysfs",
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
-									Path: "/sys/bus/pci",
+									Path: "/sys/bus/dsa/devices",
 								},
 							},
 						},
@@ -140,14 +144,21 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 			},
 		},
 	}
+
+	// add the optional init container
+	if devicePlugin.Spec.InitImage != "" {
+		addInitContainer(&daemonSet, devicePlugin)
+	}
+
+	return &daemonSet
 }
 
-// Test that QAT daemonset created by using go:embed is
+// Test that IAA daemonset created by using go:embed is
 // equal to the expected daemonset.
-func TestNewDaemonSetQAT(t *testing.T) {
+func TestNewDaemonSetIAA(t *testing.T) {
+	plugin := &devicepluginv1.IaaDevicePlugin{}
 	c := &controller{}
 
-	plugin := &devicepluginv1.QatDevicePlugin{}
 	expected := c.newDaemonSetExpected(plugin)
 	actual := c.NewDaemonSet(plugin)
 
