@@ -61,6 +61,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 					},
 				},
 				Spec: v1.PodSpec{
+					AutomountServiceAccountToken: &no,
 					Containers: []v1.Container{
 						{
 							Name: appLabel,
