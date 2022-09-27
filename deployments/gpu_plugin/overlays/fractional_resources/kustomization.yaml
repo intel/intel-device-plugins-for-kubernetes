@@ -1,9 +1,9 @@
 bases:
   - ../../base
 resources:
-  - resource-cluster-role-binding.yaml
-  - resource-cluster-role.yaml
-  - resource-reader-sa.yaml
+  - gpu-manager-rolebinding.yaml
+  - gpu-manager-role.yaml
+  - gpu-manager-sa.yaml
 patches:
   - path: add-serviceaccount.yaml
   - path: add-podresource-mount.yaml
