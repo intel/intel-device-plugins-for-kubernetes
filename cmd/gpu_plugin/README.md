@@ -5,6 +5,11 @@ Table of Contents
 * [Introduction](#introduction)
 * [Modes and Configuration Options](#modes-and-configuration-options)
 * [Installation](#installation)
+    * [Prerequisites](#prerequisites)
+        * [Drivers for discrete GPUs](#drivers-for-discrete-gpus)
+            * [Kernel driver](#kernel-driver)
+            * [User-space drivers](#user-space-drivers)
+        * [Drivers for older (integrated) GPUs](#drivers-for-older-integrated-gpus)
     * [Pre-built Images](#pre-built-images)
          * [Install to all nodes](#install-to-all-nodes)
          * [Install to nodes with Intel GPUs with NFD](#install-to-nodes-with-intel-gpus-with-nfd)
@@ -19,7 +24,8 @@ Table of Contents
 ## Introduction
 
 Intel GPU plugin facilitates Kubernetes workload offloading by providing access to
-discrete (including Intel® Data Center GPU Flex Series) and integrated Intel GPU device files.
+discrete (including Intel® Data Center GPU Flex Series) and integrated Intel GPU devices
+supported by the host kernel.
 
 Use cases include, but are not limited to:
 - Media transcode
@@ -49,6 +55,73 @@ Please use the -h option to see the complete list of logging related options.
 The following sections detail how to obtain, build, deploy and test the GPU device plugin.
 
 Examples are provided showing how to deploy the plugin either using a DaemonSet or by hand on a per-node basis.
+
+### Prerequisites
+
+Access to a GPU device requires firmware, kernel and user-space
+drivers supporting it.  Firmware and kernel driver need to be on the
+host, user-space drivers in the GPU workload containers.
+
+Intel GPU devices supported by the current kernel can be listed with:
+```
+$ grep i915 /sys/class/drm/card?/device/uevent
+/sys/class/drm/card0/device/uevent:DRIVER=i915
+/sys/class/drm/card1/device/uevent:DRIVER=i915
+```
+
+#### Drivers for discrete GPUs
+
+##### Kernel driver
+
+For now, kernel needs to be built from sources. Later on there will
+also be pre-built kernels and/or DKMS GPU module distro packages for
+the enterprise / long-term-support kernels.
+
+While last 5.x upstream Linux kernel releases already had preliminary
+discrete Intel GPU support, one should really use kernel v6.x.
+
+In upstream kernels, discrete GPU support needs to be enabled with kernel
+`i915.force_probe=<PCI_ID>` command line option until relevant kernel
+driver features have been completed in upstream:
+https://www.kernel.org/doc/html/latest/gpu/rfc/index.html
+
+PCI IDs for the Intel GPUs on given host can be listed with:
+```
+$ lspci | grep -e VGA -e Display | grep Intel
+88:00.0 Display controller: Intel Corporation Device 56c1 (rev 05)
+8d:00.0 Display controller: Intel Corporation Device 56c1 (rev 05)
+```
+
+(`lspci` lists GPUs with display support as "VGA compatible controller",
+and server GPUs without display support, as "Display controller".)
+
+Mesa "Iris" 3D driver header provides a mapping between GPU PCI IDs and their Intel brand names:
+https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/include/pci_ids/iris_pci_ids.h
+
+If your kernel build does not find the correct firmware version for
+a given GPU from the host (see `dmesg | grep i915` output), latest
+firmware versions are available in upstream:
+https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/tree/i915
+
+##### User-space drivers
+
+Until new enough user-space drivers (supporting also discrete GPUs)
+are available directly from distribution package repositories, they
+can be installed to containers from Intel package repositories. See:
+https://dgpu-docs.intel.com/installation-guides/index.html
+
+Example container is listed in [Testing and demos](#testing-and-demos).
+
+Validation status against *upstream* kernel is listed in the user-space drivers release notes:
+* Media driver: https://github.com/intel/media-driver/releases
+* Compute driver: https://github.com/intel/compute-runtime/releases
+
+#### Drivers for older (integrated) GPUs
+
+For the older (integrated) GPUs, new enough firmware and kernel driver
+are typically included already with the host OS, and new enough
+user-space drivers (for the GPU containers) are in the host OS
+repositories.
 
 ### Pre-built Images
 
@@ -155,8 +228,8 @@ master
 ## Testing and Demos
 
 We can test the plugin is working by deploying an OpenCL image and running `clinfo`.
-The sample OpenCL image can be built using `make intel-opencl-icd` and must be made
-available in the cluster.
+[intel-opencl-icd](../../demo/intel-opencl-icd/) sample OpenCL image, built using
+`make intel-opencl-icd` and available from DockerHub, is used for this.
 
 1. Create a job:
 
@@ -174,8 +247,8 @@ available in the cluster.
     <log output>
     ```
 
-    If the pod did not successfully launch, possibly because it could not obtain the gpu
-    resource, it will be stuck in the `Pending` status:
+    If the pod did not successfully launch, possibly because it could not obtain
+    the requested GPU resource, it will be stuck in the `Pending` status:
 
     ```bash
     $ kubectl get pods
