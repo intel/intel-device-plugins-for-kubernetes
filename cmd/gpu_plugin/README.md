@@ -73,16 +73,13 @@ $ grep i915 /sys/class/drm/card?/device/uevent
 
 ##### Kernel driver
 
-For now, kernel needs to be built from sources. Later on there will
-also be pre-built kernels and/or DKMS GPU module distro packages for
-the enterprise / long-term-support kernels.
+For now, kernel needs to be built from sources. `i915` GPU driver DKMS package
+sources for a subset of older kernels in enterprise / LTS distributions, are in
+[intel-gpu-i915-backports](https://github.com/intel-gpu/intel-gpu-i915-backports).
 
-While last 5.x upstream Linux kernel releases already had preliminary
-discrete Intel GPU support, one should really use kernel v6.x.
-
-In upstream kernels, discrete GPU support needs to be enabled with kernel
-`i915.force_probe=<PCI_ID>` command line option until relevant kernel
-driver features have been completed in upstream:
+With upstream 6.x kernels, discrete GPU support needs to be enabled using
+kernel `i915.force_probe=<PCI_ID>` command line option until relevant kernel
+driver features have been completed also in upstream:
 https://www.kernel.org/doc/html/latest/gpu/rfc/index.html
 
 PCI IDs for the Intel GPUs on given host can be listed with:
@@ -228,8 +225,8 @@ master
 ## Testing and Demos
 
 We can test the plugin is working by deploying an OpenCL image and running `clinfo`.
-[intel-opencl-icd](../../demo/intel-opencl-icd/) sample OpenCL image, built using
-`make intel-opencl-icd` and available from DockerHub, is used for this.
+The sample [intel-opencl-icd](../../demo/intel-opencl-icd/) OpenCL image can be built
+using `make intel-opencl-icd` and must be made available in the cluster.
 
 1. Create a job:
 
