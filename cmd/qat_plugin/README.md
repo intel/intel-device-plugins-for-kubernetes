@@ -219,6 +219,6 @@ for i in 0442 0443 18a1 37c9 6f55 19e3 4941 4943; do lspci -d 8086:$i; done
 [2]:https://www.intel.com/content/www/us/en/design/products-and-solutions/processors-and-chipsets/denverton/ns/atom-processor-c3000-series.html
 [3]:https://www.intel.com/content/www/us/en/ethernet-products/gigabit-server-adapters/quickassist-adapter-8950-brief.html
 [6]:https://github.com/kata-containers/documentation/blob/master/use-cases/using-Intel-QAT-and-kata.md
-[7]:https://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdfhttps://01.org/sites/default/files/downloads//336210-009qatswprogrammersguide.pdf
+[7]:https://www.intel.com/content/www/us/en/content-details/710060/intel-quickassist-technology-software-for-linux-programmer-s-guide-hw-version-1-7.html
 [8]:https://github.com/kata-containers/documentation/blob/master/use-cases/using-Intel-QAT-and-kata.md#build-openssl-intel-qat-engine-container
-[9]:https://01.org/sites/default/files/downloads/intelr-quickassist-technology/336212qatswgettingstartedguiderev003.pdf
+[9]:https://www.intel.com/content/www/us/en/content-details/710059/intel-quickassist-technology-software-for-linux-getting-started-guide-hw-version-1-7.html
