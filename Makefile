@@ -8,11 +8,11 @@ BUILDTAGS ?= ""
 BUILDER ?= "docker"
 EXTRA_BUILD_ARGS ?= ""
 
-CERT_MANAGER_VERSION ?= v1.8.1
+CERT_MANAGER_VERSION ?= v1.9.1
 CONTROLLER_GEN_VERSION ?= v0.10.0
-GOLANGCI_LINT_VERSION ?= v1.48.0
-KIND_VERSION ?= v0.14.0
-GOLICENSES_VERSION ?= v1.2.0
+GOLANGCI_LINT_VERSION ?= v1.49.0
+KIND_VERSION ?= v0.16.0
+GOLICENSES_VERSION ?= v1.4.0
 # Current Operator version
 OPERATOR_VERSION ?= 0.24.0
 # Default bundle image tag
@@ -176,7 +176,7 @@ terrascan:
 
 pre-pull:
 ifeq ($(TAG),devel)
-	@$(BUILDER) pull golang:1.18-bullseye
+	@$(BUILDER) pull golang:1.19-bullseye
 	@$(BUILDER) pull debian:unstable-slim
 	@$(BUILDER) pull clearlinux:latest
 	@$(BUILDER) pull ubuntu:20.04

@@ -10,7 +10,7 @@ on:
       - 'release-*'
 env:
   GO_VERSION: 1.19
-  K8S_VERSION: 1.24.2
+  K8S_VERSION: 1.25.0
 permissions:
   contents: read
 
@@ -58,7 +58,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.48.0
+          version: v1.49.0
           args: -v --timeout 5m
 
   build:
