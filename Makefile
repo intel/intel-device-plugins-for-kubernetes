@@ -273,13 +273,6 @@ _work/venv/.stamp: docs/requirements.txt
 	. ${@D}/bin/activate && pip install wheel && pip install -r $<
 	touch $@
 
-helm:
-	$(CONTROLLER_GEN) crd:crdVersions=v1 \
-		paths="./pkg/apis/..." \
-		output:crd:artifacts:config=charts/operator/crds
-	helm package charts/operator
-	helm package charts/sgx
-
 clean-licenses:
 	rm -rf licenses
 
