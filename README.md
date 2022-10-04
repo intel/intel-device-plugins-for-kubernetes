@@ -93,7 +93,7 @@ The [FPGA prestart CRI-O hook](cmd/fpga_crihook/README.md) performs discovery
 of the requested FPGA function bitstream and programs FPGA devices based on the
 environment variables in the workload description.
 
-### [QAT](https://01.org/intel-quick-assist-technology) Device Plugin
+### [QAT](https://developer.intel.com/quickassist) Device Plugin
 
 The [QAT plugin](cmd/qat_plugin/README.md) supports device plugin for Intel QAT adapters, and includes
 code [showing deployment](cmd/qat_plugin/dpdkdrv) via [DPDK](https://doc.dpdk.org/guides/cryptodevs/qat.html).

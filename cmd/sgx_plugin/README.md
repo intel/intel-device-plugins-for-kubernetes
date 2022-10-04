@@ -54,8 +54,8 @@ The component has the same basic dependencies as the
 [generic plugin framework dependencies](../../README.md#about).
 
 The SGX device plugin requires Linux Kernel SGX drivers to be available. These drivers
-are available in Linux 5.11. [The SGX DCAP out-of-tree driver v1.41](https://github.com/intel/SGXDataCenterAttestationPrimitives)
-is also known to work.
+are available in Linux since 5.11. [The SGX DCAP out-of-tree driver](https://github.com/intel/SGXDataCenterAttestationPrimitives)
+(v1.41 and later) is also known to work.
 
 The hardware platform must support SGX Flexible Launch Control.
 
@@ -166,7 +166,7 @@ For the SGX ECDSA Remote Attestation demo to work, the platform must be correctl
 
 For documentation to set up Intel® reference PCCS, refer to:
 [Intel® Software Guard Extensions (Intel® SGX) Services](https://api.portal.trustedservices.intel.com/) and
-[Intel® Software Guard Extensions SDK for Linux](https://01.org/intel-software-guard-extensions)
+[Intel® Software Guard Extensions SDK for Linux](https://www.intel.com/content/www/us/en/developer/tools/software-guard-extensions/overview.html)
 
 Furthermore, the Kubernetes cluster must be set up according the [instructions above](#deploying-with-pre-built-images).
 
