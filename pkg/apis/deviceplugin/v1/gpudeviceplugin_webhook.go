@@ -95,5 +95,9 @@ func (r *GpuDevicePlugin) validatePlugin() error {
 		return errors.Errorf("PreferredAllocationPolicy is valid only when setting sharedDevNum > 1")
 	}
 
+	if r.Spec.SharedDevNum == 1 && r.Spec.ResourceManager {
+		return errors.Errorf("resourceManager is valid only when setting sharedDevNum > 1")
+	}
+
 	return validatePluginImage(r.Spec.Image, "intel-gpu-plugin", gpuMinVersion)
 }
