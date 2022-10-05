@@ -204,6 +204,8 @@ func (rm *resourceManager) listPodsOnNodeWithState(state string) map[string]*v1.
 	})
 
 	if err != nil {
+		klog.Error("pod listing failed:", err)
+
 		return pods
 	}
 
