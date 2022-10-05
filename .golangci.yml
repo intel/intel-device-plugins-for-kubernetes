@@ -10,7 +10,6 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - deadcode
     - dogsled
     - errcheck
     - exportloopref
@@ -33,14 +32,11 @@ linters:
     - nolintlint
     - prealloc
     - revive
-    - rowserrcheck
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unused
-    - varcheck
     - whitespace
     - wsl
 
