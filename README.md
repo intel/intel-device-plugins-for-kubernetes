@@ -316,4 +316,9 @@ A related Intel SRIOV network device plugin can be found in
 
 ### Helm Charts
 
-The [helm charts](charts/README.md) is one way of distributing Kubernetes resources of the device plugins framework.
+Device Plugins Helm Charts are located in Intel Helm Charts repository [Intel Helm Charts](https://github.com/intel/helm-charts). This is another way of distributing Kubernetes resources of the device plugins framework.
+
+To add repo:
+```
+helm repo add intel https://intel.github.io/helm-charts
+```
