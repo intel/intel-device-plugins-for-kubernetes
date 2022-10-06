@@ -56,7 +56,7 @@ func describeQatDpdkPlugin() {
 		framework.Failf("unable to locate %q: %v", cryptoTestYaml, err)
 	}
 
-	ginkgo.It("measures performance of DPDK", func() {
+	ginkgo.It("runs QAT plugin in DPDK mode", func() {
 		ginkgo.By("deploying QAT plugin in DPDK mode")
 		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
@@ -73,22 +73,28 @@ func describeQatDpdkPlugin() {
 		if err := utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
+	})
 
-		ginkgo.By("checking the resource is allocatable")
+	ginkgo.It("checks the availability of QAT resources", func() {
+		ginkgo.By("checking if the resource is allocatable")
 		if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/generic", 30*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
+	})
 
+	ginkgo.It("deploys a crypto pod requesting QAT resources", func() {
 		ginkgo.By("submitting a crypto pod requesting QAT resources")
 		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
-		ginkgo.By("waiting the crypto pod to finnish successfully")
+		ginkgo.By("waiting the crypto pod to finish successfully")
 		f.PodClient().WaitForSuccess("qat-dpdk-test-crypto-perf-tc1", 60*time.Second)
+	})
 
+	ginkgo.It("deploys a compress pod requesting QAT resources", func() {
 		ginkgo.By("submitting a compress pod requesting QAT resources")
 		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
-		ginkgo.By("waiting the compress pod to finnish successfully")
+		ginkgo.By("waiting the compress pod to finish successfully")
 		f.PodClient().WaitForSuccess("qat-dpdk-test-compress-perf-tc1", 60*time.Second)
 	})
 }

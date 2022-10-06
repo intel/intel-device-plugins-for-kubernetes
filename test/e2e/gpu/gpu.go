@@ -51,7 +51,7 @@ func describe() {
 		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
 	}
 
-	ginkgo.It("checks availability of GPU resources", func() {
+	ginkgo.It("runs GPU plugin", func() {
 		ginkgo.By("deploying GPU plugin")
 		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
@@ -62,12 +62,16 @@ func describe() {
 			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
+	})
 
-		ginkgo.By("checking the resource is allocatable")
+	ginkgo.It("checks the availability of GPU resources", func() {
+		ginkgo.By("checking if the resource is allocatable")
 		if err := utils.WaitForNodesWithResource(f.ClientSet, "gpu.intel.com/i915", 30*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
+	})
 
+	ginkgo.It("deploys a pod requesting GPU resources", func() {
 		ginkgo.By("submitting a pod requesting GPU resources")
 		podSpec := &v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{Name: "gpuplugin-tester"},
@@ -90,7 +94,7 @@ func describe() {
 		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), podSpec, metav1.CreateOptions{})
 		framework.ExpectNoError(err, "pod Create API error")
 
-		ginkgo.By("waiting the pod to finnish successfully")
+		ginkgo.By("waiting the pod to finish successfully")
 		f.PodClient().WaitForSuccess(pod.ObjectMeta.Name, 60*time.Second)
 
 		ginkgo.By("checking log output")

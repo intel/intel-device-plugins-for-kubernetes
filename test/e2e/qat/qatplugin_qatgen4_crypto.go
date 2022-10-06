@@ -50,7 +50,7 @@ func describeQatPluginCy() {
 		framework.Failf("unable to locate %q: %v", opensslTestYaml, err)
 	}
 
-	ginkgo.It("measures performance of QAT Cy Services", func() {
+	ginkgo.It("runs QAT plugin in DPDK mode", func() {
 		ginkgo.By("deploying QAT plugin in DPDK mode")
 		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
@@ -67,12 +67,16 @@ func describeQatPluginCy() {
 		if err := utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
+	})
 
-		ginkgo.By("checking the resource is allocatable")
+	ginkgo.It("checks the availability of QAT resources", func() {
+		ginkgo.By("checking if the resource is allocatable")
 		if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy", 30*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
+	})
 
+	ginkgo.It("deploys a crypto pod requesting QAT resources", func() {
 		ginkgo.By("submitting a crypto pod requesting QAT resources")
 		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", opensslTestYamlPath)
 

@@ -48,7 +48,7 @@ func describeQatKernelPlugin() {
 		framework.Failf("unable to locate %q: %v", qatPluginKernelYaml, err)
 	}
 
-	ginkgo.It("checks availability of QAT resources", func() {
+	ginkgo.It("runs QAT plugin in kernel mode", func() {
 		ginkgo.By("deploying QAT plugin in kernel mode")
 		framework.RunKubectlOrDie(f.Namespace.Name, "create", "-f", yamlPath)
 
@@ -59,12 +59,16 @@ func describeQatKernelPlugin() {
 			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
+	})
 
-		ginkgo.By("checking the resource is allocatable")
+	ginkgo.It("checks the availability of QAT resources", func() {
+		ginkgo.By("checking if the resource is allocatable")
 		if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy1_dc0", 30*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
+	})
 
+	ginkgo.It("deploys a pod requesting QAT resources", func() {
 		ginkgo.By("submitting a pod requesting QAT resources")
 		podSpec := &v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{Name: "qatplugin-tester"},
@@ -88,7 +92,7 @@ func describeQatKernelPlugin() {
 			podSpec, metav1.CreateOptions{})
 		framework.ExpectNoError(err, "pod Create API error")
 
-		ginkgo.By("waiting the pod to finnish successfully")
+		ginkgo.By("waiting the pod to finish successfully")
 		f.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
 	})
 }
