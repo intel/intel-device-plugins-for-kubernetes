@@ -8,6 +8,8 @@ Table of Contents
     * [Prerequisites](#prerequisites)
         * [Drivers for discrete GPUs](#drivers-for-discrete-gpus)
             * [Kernel driver](#kernel-driver)
+                * [Intel DKMS packages](#intel-dkms-packages)
+                * [Upstream kernel](#upstream-kernel)
             * [User-space drivers](#user-space-drivers)
         * [Drivers for older (integrated) GPUs](#drivers-for-older-integrated-gpus)
     * [Pre-built Images](#pre-built-images)
@@ -73,9 +75,17 @@ $ grep i915 /sys/class/drm/card?/device/uevent
 
 ##### Kernel driver
 
-For now, kernel needs to be built from sources. `i915` GPU driver DKMS package
-sources for a subset of older kernels in enterprise / LTS distributions, are in
-[intel-gpu-i915-backports](https://github.com/intel-gpu/intel-gpu-i915-backports).
+###### Intel DKMS packages
+
+`i915` GPU driver DKMS[^dkms] package is recommended until Intel
+discrete GPU support in upstream is complete.  It can be installed
+from Intel package repositories for a subset of older kernel versions
+used in enterprise / LTS distributions:
+https://dgpu-docs.intel.com/installation-guides/index.html
+
+[^dkms]: [intel-gpu-i915-backports](https://github.com/intel-gpu/intel-gpu-i915-backports).
+
+###### Upstream kernel
 
 With upstream 6.x kernels, discrete GPU support needs to be enabled using
 kernel `i915.force_probe=<PCI_ID>` command line option until relevant kernel
