@@ -198,7 +198,8 @@ func makeDevicePlugin(name, image, initimage string) client.Object {
 	case "dlb":
 		obj = &devicepluginv1.DlbDevicePlugin{
 			Spec: devicepluginv1.DlbDevicePluginSpec{
-				Image: image,
+				Image:     image,
+				InitImage: initimage,
 			},
 		}
 	case "dsa":

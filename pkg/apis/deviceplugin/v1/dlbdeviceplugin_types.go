@@ -31,6 +31,9 @@ type DlbDevicePluginSpec struct {
 	// Image is a container image with DLB device plugin executable.
 	Image string `json:"image,omitempty"`
 
+	// InitImage is a container image with a script that initializes devices.
+	InitImage string `json:"initImage,omitempty"`
+
 	// LogLevel sets the plugin's log level.
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`

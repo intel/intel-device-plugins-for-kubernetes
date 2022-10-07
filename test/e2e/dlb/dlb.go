@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	kustomizationYaml = "deployments/dlb_plugin/kustomization.yaml"
+	kustomizationYaml = "deployments/dlb_plugin/overlays/dlb_initcontainer/kustomization.yaml"
 	demoPFYaml        = "demo/dlb-libdlb-demo-pf-pod.yaml"
 	demoVFYaml        = "demo/dlb-libdlb-demo-vf-pod.yaml"
 )

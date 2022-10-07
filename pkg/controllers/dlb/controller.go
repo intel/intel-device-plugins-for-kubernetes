@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	apps "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -67,7 +68,7 @@ func (c *controller) CreateEmptyObject() client.Object {
 
 func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
 	dp := obj.(*devicepluginv1.DlbDevicePlugin)
-	return controllers.UpgradeImages(&dp.Spec.Image, nil)
+	return controllers.UpgradeImages(&dp.Spec.Image, &dp.Spec.InitImage)
 }
 
 func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client) (int, error) {
@@ -82,17 +83,24 @@ func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.DlbDevicePlugin)
 
-	daemonSet := deployments.DLBPluginDaemonSet()
+	ds := deployments.DLBPluginDaemonSet()
 	if len(devicePlugin.Spec.NodeSelector) > 0 {
-		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
+		ds.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
 
-	daemonSet.ObjectMeta.Namespace = c.ns
+	if devicePlugin.Spec.InitImage == "" {
+		ds.Spec.Template.Spec.InitContainers = nil
+		ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "sysfs-devices", "sysfs-driver-dlb2")
+	} else {
+		setInitContainer(&ds.Spec.Template.Spec, devicePlugin.Spec)
+	}
 
-	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
-	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
+	ds.ObjectMeta.Namespace = c.ns
 
-	return daemonSet
+	ds.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
+	ds.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
+
+	return ds
 }
 
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
@@ -100,6 +108,17 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 
 	if ds.Spec.Template.Spec.Containers[0].Image != dp.Spec.Image {
 		ds.Spec.Template.Spec.Containers[0].Image = dp.Spec.Image
+		updated = true
+	}
+
+	if dp.Spec.InitImage == "" {
+		if ds.Spec.Template.Spec.InitContainers != nil {
+			ds.Spec.Template.Spec.InitContainers = nil
+			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "sysfs-devices", "sysfs-driver-dlb2")
+			updated = true
+		}
+	} else {
+		setInitContainer(&ds.Spec.Template.Spec, dp.Spec)
 		updated = true
 	}
 
@@ -151,6 +170,70 @@ func (c *controller) UpdateStatus(rawObj client.Object, ds *apps.DaemonSet, node
 	}
 
 	return updated, nil
+}
+
+func removeVolume(volumes []v1.Volume, names ...string) []v1.Volume {
+	newVolumes := []v1.Volume{}
+
+	for _, volume := range volumes {
+		for i, name := range names {
+			if volume.Name == name {
+				break
+			}
+
+			if i == len(names)-1 {
+				newVolumes = append(newVolumes, volume)
+			}
+		}
+	}
+
+	return newVolumes
+}
+
+func setInitContainer(dsSpec *v1.PodSpec, dpSpec devicepluginv1.DlbDevicePluginSpec) {
+	yes := true
+
+	dsSpec.InitContainers = []v1.Container{
+		{
+			Image:           dpSpec.InitImage,
+			ImagePullPolicy: "IfNotPresent",
+			Name:            "enable-vfs",
+			SecurityContext: &v1.SecurityContext{
+				Privileged:             &yes,
+				ReadOnlyRootFilesystem: &yes,
+			},
+			VolumeMounts: []v1.VolumeMount{
+				{
+					Name:      "sysfs-devices",
+					MountPath: "/sys/devices",
+				},
+				{
+					Name:      "sysfs-driver-dlb2",
+					MountPath: "/sys/bus/pci/drivers/dlb2",
+				},
+			},
+		}}
+
+	addVolumeIfMissing(dsSpec, "sysfs-devices", "/sys/devices", v1.HostPathDirectoryOrCreate)
+	addVolumeIfMissing(dsSpec, "sysfs-driver-dlb2", "/sys/bus/pci/drivers/dlb2", v1.HostPathDirectoryOrCreate)
+}
+
+func addVolumeIfMissing(spec *v1.PodSpec, name, path string, hpType v1.HostPathType) {
+	for _, vol := range spec.Volumes {
+		if vol.Name == name {
+			return
+		}
+	}
+
+	spec.Volumes = append(spec.Volumes, v1.Volume{
+		Name: name,
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: path,
+				Type: &hpType,
+			},
+		},
+	})
 }
 
 func getPodArgs(gdp *devicepluginv1.DlbDevicePlugin) []string {

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-dlb-plugin
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: intel-dlb-initcontainer
+        image: intel/intel-dlb-initcontainer:devel
+        securityContext:
+          readOnlyRootFilesystem: true
+          privileged: true
+        volumeMounts:
+        - name: sysfs-driver-dlb2
+          mountPath: /sys/bus/pci/drivers/dlb2
+        - name: sysfs-devices
+          mountPath: /sys/devices
+      volumes:
+      - name: sysfs-driver-dlb2
+        hostPath:
+          path: /sys/bus/pci/drivers/dlb2
+      - name: sysfs-devices
+        hostPath:
+          path: /sys/devices
