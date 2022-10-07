@@ -14,7 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	golang.org/x/sys v0.0.0-20220808155132-1c4a2a72c664
 	golang.org/x/text v0.3.7
-	google.golang.org/grpc v1.49.0
+	google.golang.org/grpc v1.50.0
 	k8s.io/api v0.25.2
 	k8s.io/apimachinery v0.25.2
 	k8s.io/client-go v1.5.2
