@@ -234,9 +234,32 @@ master
 
 ## Testing and Demos
 
-We can test the plugin is working by deploying an OpenCL image and running `clinfo`.
-The sample [intel-opencl-icd](../../demo/intel-opencl-icd/) OpenCL image can be built
-using `make intel-opencl-icd` and must be made available in the cluster.
+The GPU plugin functionality can be verified by deploying an [OpenCL image](../../demo/intel-opencl-icd/) which runs `clinfo` outputting the GPU capabilities (detected by driver installed to the image).
+
+1. Make the image available to the cluster:
+
+    Build image:
+
+    ```bash
+    $ make intel-opencl-icd
+    ```
+
+    Tag and push the `intel-opencl-icd` image to a repository available in the cluster. Then modify the `intelgpu-job.yaml`'s image location accordingly:
+
+    ```bash
+    $ docker tag intel/intel-opencl-icd:devel <repository>/intel/intel-opencl-icd:latest
+    $ docker push <repository>/intel/intel-opencl-icd:latest
+    $ $EDITOR ${INTEL_DEVICE_PLUGINS_SRC}/demo/intelgpu-job.yaml
+    ```
+
+    If you are running the demo on a single node cluster, and do not have your own registry, you can add image to node image cache instead. For example, to import docker image to containerd cache:
+
+    ```bash
+    $ IMAGE_NAME=opencl-icd.tar
+    $ docker save -o $IMAGE_NAME intel/intel-opencl-icd:devel
+    $ ctr -n=k8s.io images import $IMAGE_NAME
+    $ rm $IMAGE_NAME
+    ```
 
 1. Create a job:
 
@@ -245,7 +268,7 @@ using `make intel-opencl-icd` and must be made available in the cluster.
     job.batch/intelgpu-demo-job created
     ```
 
-2. Review the job's logs:
+1. Review the job's logs:
 
     ```bash
     $ kubectl get pods | fgrep intelgpu
