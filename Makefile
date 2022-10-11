@@ -240,10 +240,11 @@ null  :=
 space := $(null) #
 comma := ,
 images_json := $(subst $(space),$(comma),[$(addprefix ",$(addsuffix ",$(images) $(demos))]))
+skip_images := "ubuntu-demo-openvino"
 
 check-github-actions:
 	@python3 -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin, Loader=yaml.SafeLoader), sys.stdout)' < .github/workflows/ci.yaml | \
-	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
+	jq -e '$(images_json) - [$(skip_images)] - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
 
 .PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture install-tools test-image-base-layer

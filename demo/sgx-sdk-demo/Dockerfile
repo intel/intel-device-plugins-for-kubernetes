@@ -23,11 +23,13 @@ RUN apt-get update && \
 # SGX SDK is installed in /opt/intel directory.
 WORKDIR /opt/intel
 
-ARG SGX_SDK_INSTALLER=sgx_linux_x64_sdk_2.16.100.4.bin
-ARG DCAP_VERSION=DCAP_1.13
+ARG SGX_SDK_INSTALLER=sgx_linux_x64_sdk_2.17.101.1.bin
+ARG DCAP_VERSION=DCAP_1.14
 
-RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" >> /etc/apt/sources.list.d/intel-sgx.list \
- && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add - \
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" | \
+    tee -a /etc/apt/sources.list.d/intel-sgx.list \
+ && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | \
+    gpg --dearmor --output /usr/share/keyrings/intel-sgx.gpg \
  && apt-get update \
  && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libsgx-dcap-ql-dev \
@@ -35,7 +37,7 @@ RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu foc
     libsgx-quote-ex-dev
 
 # Install SGX SDK
-RUN wget https://download.01.org/intel-sgx/sgx-linux/2.16/distro/ubuntu20.04-server/$SGX_SDK_INSTALLER \
+RUN wget https://download.01.org/intel-sgx/sgx-linux/2.17.1/distro/ubuntu20.04-server/$SGX_SDK_INSTALLER \
  && chmod +x  $SGX_SDK_INSTALLER \
  && echo "yes" | ./$SGX_SDK_INSTALLER \
  && rm $SGX_SDK_INSTALLER
