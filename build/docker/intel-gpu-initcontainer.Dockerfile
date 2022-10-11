@@ -54,8 +54,8 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
     --save_path /install_root/licenses/$CMD/go-licenses ; \
     else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi
 ###
-ARG TOYBOX_VERSION="0.8.7"
-ARG TOYBOX_SHA256="b6f43d5738df54623ed21c32f430d1d5c5ac7ef465a6a883890f104b59d5d9e4"
+ARG TOYBOX_VERSION="0.8.8"
+ARG TOYBOX_SHA256="2bed6bb9edd5a249023103cf0402a835b0e53d10304a263f6f1e77a8aa49a898"
 ARG ROOT=/install_root
 RUN apt update && apt -y install musl musl-tools musl-dev
 RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz -o toybox.tar.gz \
