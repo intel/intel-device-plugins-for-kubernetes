@@ -25,7 +25,7 @@ ARG CMD=gpu_plugin
 ## (see build-image.sh).
 ## 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based.
 ## The RedHat build tool does not allow additional image build parameters.
-ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro
+ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro:latest
 ###
 ##
 ## GOLANG_BASE can be used to make the build reproducible by choosing an
@@ -45,8 +45,7 @@ ARG EP=/usr/local/bin/intel_gpu_device_plugin
 ARG CMD
 WORKDIR ${DIR}
 COPY . .
-RUN cd cmd/${CMD}; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}"; cd - \
-    && install -D /go/bin/${CMD} /install_root${EP}
+RUN (cd cmd/${CMD}; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}") && install -D /go/bin/${CMD} /install_root${EP}
 RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && if [ ! -d "licenses/$CMD" ] ; then \
     GO111MODULE=on go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \

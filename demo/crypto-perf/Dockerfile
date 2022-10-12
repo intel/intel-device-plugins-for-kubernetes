@@ -21,7 +21,7 @@ RUN mkdir /install_root && \
     --no-boot-update && \
     rm -rf /install_root/var/lib/swupd/*
 
-ADD run-dpdk-test /install_root/usr/bin/run-dpdk-test
+COPY run-dpdk-test /install_root/usr/bin/run-dpdk-test
 
 FROM scratch as final
 COPY --from=builder /install_root /

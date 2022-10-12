@@ -3,7 +3,8 @@ ARG TOYBOX_SHA256="2bed6bb9edd5a249023103cf0402a835b0e53d10304a263f6f1e77a8aa49a
 
 ARG ROOT=/install_root
 
-RUN apt update && apt -y install musl musl-tools musl-dev
+RUN apt-get update && apt-get --no-install-recommends -y install musl musl-tools musl-dev
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz -o toybox.tar.gz \N
     && echo "$TOYBOX_SHA256 toybox.tar.gz" | sha256sum -c - \N
     && tar -xzf toybox.tar.gz \N
