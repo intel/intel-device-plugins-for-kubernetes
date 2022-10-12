@@ -10,7 +10,7 @@ require (
 	github.com/google/gousb v1.1.2
 	github.com/klauspost/cpuid/v2 v2.1.2
 	github.com/onsi/ginkgo/v2 v2.3.0
-	github.com/onsi/gomega v1.21.1
+	github.com/onsi/gomega v1.22.1
 	github.com/pkg/errors v0.9.1
 	golang.org/x/sys v0.0.0-20220808155132-1c4a2a72c664
 	golang.org/x/text v0.3.8
