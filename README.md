@@ -201,10 +201,9 @@ Intel SGX device plugins. Each device plugin has its own custom resource
 definition (CRD) and the corresponding controller that watches CRUD operations
 to those custom resources.
 
-The [Device plugins operator README](cmd/operator/README.md) gives the
-installation and usage details. The operator is also available via
-[operatorhub.io](https://operatorhub.io/operator/intel-device-plugins-operator)
-and on Red Hat OpenShift Container Platform.
+The [Device plugins operator README](cmd/operator/README.md) gives the installation and usage details for the community operator available on [operatorhub.io](https://operatorhub.io/operator/intel-device-plugins-operator).
+
+The [Device plugins Operator for OCP](cmd/operator/ocp_quickstart_guide/README.md) gives the installation and usage details for the operator available on [Red Hat OpenShift Container Platform](https://catalog.redhat.com/software/operators/detail/61e9f2d7b9cdd99018fc5736).
 
 ## Demos
 
