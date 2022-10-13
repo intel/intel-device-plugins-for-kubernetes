@@ -56,15 +56,21 @@ func describe() {
 		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for GPU plugin's availability")
-		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
-			labels.Set{"app": "intel-gpu-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second); err != nil {
+		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
+			labels.Set{"app": "intel-gpu-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
+		if err != nil {
 			framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
 			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 
+		ginkgo.By("checking GPU plugin's securityContext")
+		if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
+			framework.Failf("container filesystem info checks failed: %v", err)
+		}
+
 		ginkgo.By("checking the resource is allocatable")
-		if err := utils.WaitForNodesWithResource(f.ClientSet, "gpu.intel.com/i915", 30*time.Second); err != nil {
+		if err = utils.WaitForNodesWithResource(f.ClientSet, "gpu.intel.com/i915", 30*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
 
