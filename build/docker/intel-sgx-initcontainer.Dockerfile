@@ -24,7 +24,7 @@
 ## (see build-image.sh).
 ## 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based.
 ## The RedHat build tool does not allow additional image build parameters.
-ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro
+ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro:latest
 ###
 ##
 ## GOLANG_BASE can be used to make the build reproducible by choosing an
@@ -46,8 +46,7 @@ ARG NFD_HOOK=intel-sgx-epchook
 ARG SRC_DIR=/usr/local/bin/sgx-sw
 WORKDIR ${DIR}
 COPY . .
-RUN cd cmd/${CMD}; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}"; cd - \
-    && install -D /go/bin/${CMD} /install_root${EP}
+RUN (cd cmd/${CMD}; GO111MODULE=${GO111MODULE} CGO_ENABLED=0 go install "${BUILDFLAGS}") && install -D /go/bin/${CMD} /install_root${EP}
 RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && if [ ! -d "licenses/$CMD" ] ; then \
     GO111MODULE=on go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
@@ -57,7 +56,8 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
 ARG TOYBOX_VERSION="0.8.8"
 ARG TOYBOX_SHA256="2bed6bb9edd5a249023103cf0402a835b0e53d10304a263f6f1e77a8aa49a898"
 ARG ROOT=/install_root
-RUN apt update && apt -y install musl musl-tools musl-dev
+RUN apt-get update && apt-get --no-install-recommends -y install musl musl-tools musl-dev
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz -o toybox.tar.gz \
     && echo "$TOYBOX_SHA256 toybox.tar.gz" | sha256sum -c - \
     && tar -xzf toybox.tar.gz \
