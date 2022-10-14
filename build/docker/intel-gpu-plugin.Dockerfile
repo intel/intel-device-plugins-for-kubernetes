@@ -49,7 +49,7 @@ FROM ${FINAL_BASE}
 
 LABEL name='intel-gpu-plugin'
 LABEL vendor='Intel®'
-LABEL version=0.24.0
+LABEL version=0.24.1
 LABEL release='1'
 LABEL summary='Intel® GPU device plugin for Kubernetes'
 LABEL description='The GPU device plugin provides access to Intel discrete (Xe) and integrated GPU HW device files'

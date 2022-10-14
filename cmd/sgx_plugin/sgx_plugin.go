@@ -94,13 +94,13 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	for i := uint(0); i < dp.nEnclave; i++ {
 		devID := fmt.Sprintf("%s-%d", "sgx-enclave", i)
 		nodes := []pluginapi.DeviceSpec{{HostPath: sgxEnclavePath, ContainerPath: sgxEnclavePath, Permissions: "rw"}}
-		devTree.AddDevice(deviceTypeEnclave, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, deprecatedMounts, nil, nil))
+		devTree.AddDevice(deviceTypeEnclave, devID, dpapi.NewDeviceInfoWithTopologyHints(pluginapi.Healthy, nodes, deprecatedMounts, nil, nil, nil))
 	}
 
 	for i := uint(0); i < dp.nProvision; i++ {
 		devID := fmt.Sprintf("%s-%d", "sgx-provision", i)
 		nodes := []pluginapi.DeviceSpec{{HostPath: sgxProvisionPath, ContainerPath: sgxProvisionPath, Permissions: "rw"}}
-		devTree.AddDevice(deviceTypeProvision, devID, dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, deprecatedMounts, nil, nil))
+		devTree.AddDevice(deviceTypeProvision, devID, dpapi.NewDeviceInfoWithTopologyHints(pluginapi.Healthy, nodes, deprecatedMounts, nil, nil, nil))
 	}
 
 	return devTree, nil

@@ -20,7 +20,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-iaa-plugin:0.24.0
+        image: intel/intel-iaa-plugin:0.24.1
         imagePullPolicy: IfNotPresent
         securityContext:
           readOnlyRootFilesystem: true
