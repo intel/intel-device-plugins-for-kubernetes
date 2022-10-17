@@ -5,7 +5,7 @@ metadata:
     alm-examples: '[]'
     capabilities: Seamless Upgrades
     categories: Drivers and plugins
-    containerImage: intel/intel-deviceplugin-operator:0.24.0
+    containerImage: intel/intel-deviceplugin-operator:0.25.0
     createdAt: "2022-05-20"
     description: This operator is a Kubernetes custom controller whose goal is to
       serve the installation and lifecycle management of Intel device plugins for

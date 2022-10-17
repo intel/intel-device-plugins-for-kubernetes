@@ -56,7 +56,7 @@ FROM ${FINAL_BASE}
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_sgx_admissionwebhook"]
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version=0.25.0
 LABEL release='1'
 LABEL name='intel-sgx-admissionwebhook'
 LABEL summary='Intel® SGX admission controller webhook for Kubernetes'

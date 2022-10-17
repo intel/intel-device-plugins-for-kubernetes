@@ -14,7 +14,7 @@ spec:
                 fieldPath: spec.nodeName
           - name: IDXD_DEVICE_TYPE
             value: "iax"
-        image: intel/intel-idxd-config-initcontainer:devel
+        image: intel/intel-idxd-config-initcontainer:0.25.0
         securityContext:
           readOnlyRootFilesystem: true
           privileged: true
