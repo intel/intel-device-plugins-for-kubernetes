@@ -31,7 +31,7 @@ pipeline {
     }
     stage("Build && Publish") {
       agent {
-        label "bionic-intel-device-plugins"
+        label "jammy-intel-device-plugins"
       }
       stages {
         stage("Get requirements") {
@@ -70,7 +70,7 @@ pipeline {
             stage("make terrascan") {
               steps {
                 dir(path: "$REPO_DIR") {
-                  sh "curl -sL `curl -s https://api.github.com/repos/accurics/terrascan/releases/latest | grep -o -E https://.+?_Linux_x86_64.tar.gz` | tar -zx terrascan"
+                  sh "curl -sL `curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E https://.+?_Linux_x86_64.tar.gz` | tar -zx terrascan"
                   sh "sudo mv terrascan /usr/local/bin/"
                   sh "make terrascan"
                 }
