@@ -41,7 +41,7 @@ Nothing else is needed. See [the development guide](../../DEVEL.md) for details 
 
 #### Automatic Provisioning
 
-There's a sample [idxd initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-idxd-initcontainer.Dockerfile) included that provisions IAA devices and workqueues (1 engine / 1 group / 1 wq (user/dedicated)), to deploy:
+There's a sample [idxd initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-idxd-config-initcontainer.Dockerfile) included that provisions IAA devices and workqueues (1 engine / 1 group / 1 wq (user/dedicated)), to deploy:
 
 ```bash
 $ kubectl apply -k deployments/iaa_plugin/overlays/iaa_initcontainer/
