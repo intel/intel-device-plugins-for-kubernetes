@@ -1,29 +1,46 @@
-# CLEAR_LINUX_BASE and CLEAR_LINUX_VERSION can be used to make the build
-# reproducible by choosing an image by its hash and installing an OS version
-# with --version=:
-# CLEAR_LINUX_BASE=clearlinux@sha256:b8e5d3b2576eb6d868f8d52e401f678c873264d349e469637f98ee2adf7b33d4
-# CLEAR_LINUX_VERSION="--version=29970"
-#
-# This is used on release branches before tagging a stable version.
-# The main branch defaults to using the latest Clear Linux.
-ARG CLEAR_LINUX_BASE=clearlinux:latest
+FROM debian:sid-slim as builder
 
-FROM ${CLEAR_LINUX_BASE} as builder
+ARG DIR=/dpdk-build
+WORKDIR $DIR
 
-ARG CLEAR_LINUX_VERSION=
+RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
+    /etc/apt/sources.list.d/deb-src.list
+RUN apt-get update && apt-get install -y wget build-essential meson python3-pyelftools libnuma-dev python3-pip libssl-dev pkg-config dpkg-dev
+RUN pip install ninja
 
-RUN mkdir /install_root && \
-    swupd os-install \
-    ${CLEAR_LINUX_VERSION} \
-    --path /install_root \
-    --statedir /swupd-state \
-    --bundles=dpdk \
-    --no-boot-update && \
-    rm -rf /install_root/var/lib/swupd/*
+# Download & unpack DPDK tarball
+ARG DPDK_TARBALL=dpdk-22.11.tar.xz
+ARG DPDK_TARBALL_SHA256="8eefcc69afa87dccaf8d730d805ded70fb8b64905295d6396977c1322e59eadb"
 
-COPY run-dpdk-test /install_root/usr/bin/run-dpdk-test
+ARG SOVERSION=23
+RUN wget -q https://git.dpdk.org/dpdk/snapshot/$DPDK_TARBALL \
+    && echo "$DPDK_TARBALL_SHA256 $DPDK_TARBALL" | sha256sum -c - \
+    && tar -xf $DPDK_TARBALL && rm $DPDK_TARBALL
 
-FROM scratch as final
+RUN cd dpdk-* && meson setup \
+    -Dplatform=generic \
+    -Dcpu_instruction_set=westmere \
+    "-Denable_drivers=common/qat,compress/qat,crypto/qat" \
+    "-Denable_apps=test-crypto-perf,test-compress-perf" \
+    --prefix $(pwd)/installdir \
+     builddir
+RUN cd dpdk-* && ninja -C builddir install
+RUN cd dpdk-* && \
+    install -D builddir/app/dpdk-test-crypto-perf /install_root/usr/bin/dpdk-test-crypto-perf && \
+    install -D builddir/app/dpdk-test-compress-perf /install_root/usr/bin/dpdk-test-compress-perf && \
+    install -d /install_root/usr/lib/x86_64-linux-gnu/ && \
+    for r in bus_pci eal kvargs hash security telemetry pci mbuf mempool ring net rcu ipsec cryptodev compressdev common_qat; do \
+       install installdir/lib/x86_64-linux-gnu/librte_${r}.so.${SOVERSION} /install_root/usr/lib/x86_64-linux-gnu/; \
+    done
+
+RUN mkdir -p /install_root/licenses/dpdk && \
+    cp dpdk-*/license/bsd-3-clause.txt /install_root/licenses/dpdk && \
+    cd /install_root/licenses/dpdk && \
+    apt-get source --download-only -y libatomic1 libnuma1
+
+FROM debian:sid-slim
+RUN apt-get update && apt-get install -y libssl3 libnuma1 libatomic1 && ldconfig -v
 COPY --from=builder /install_root /
+COPY run-dpdk-test /usr/bin/
 
-CMD ["/bin/bash"]
+ENTRYPOINT /usr/bin/run-dpdk-test

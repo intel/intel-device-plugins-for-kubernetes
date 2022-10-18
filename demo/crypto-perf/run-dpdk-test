@@ -14,6 +14,6 @@ for i in `echo ${!QAT*}`; do PCI_ALLOWLIST="$PCI_ALLOWLIST -a ${!i}"; done
 
 LCORE=$(cat /sys/fs/cgroup/cpuset/cpuset.cpus)
 
-EAL="-l ${LCORE} ${PCI_ALLOWLIST}"
+EAL="--no-telemetry -l ${LCORE} ${PCI_ALLOWLIST}"
 
 dpdk-test-${TESTCMD}-perf ${EAL} -- ${PTEST} \
