@@ -62,4 +62,4 @@ LABEL summary='Intel® QAT initcontainer for Kubernetes'
 LABEL description='Intel QAT initcontainer initializes devices'
 COPY --from=builder /install_root /
 COPY demo/qat-init.sh /usr/local/bin/
-ENTRYPOINT ["/usr/local/bin/qat-init.sh"]
+ENTRYPOINT [ "/bin/bash", "/usr/local/bin/qat-init.sh"]
