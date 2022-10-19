@@ -35,6 +35,7 @@ const (
 	configmapYaml     = "demo/iaa.conf"
 	demoYaml          = "demo/iaa-accel-config-demo-pod.yaml"
 	podName           = "iaa-accel-config-demo"
+	iaaPluginName     = "intel-iaa-plugin"
 )
 
 func init() {
@@ -68,7 +69,7 @@ func describe() {
 
 		ginkgo.By("waiting for IAA plugin's availability")
 		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
-			labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1 /* one replica */, 300*time.Second)
+			labels.Set{"app": iaaPluginName}.AsSelector(), 1 /* one replica */, 300*time.Second)
 		if err != nil {
 			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
 			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
@@ -78,6 +79,11 @@ func describe() {
 		ginkgo.By("checking IAA plugin's securityContext")
 		if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
+		}
+
+		ginkgo.By("checking if IAA initcontainer is idempotent")
+		if err = utils.TestInitcontainersRunIdempotent(f, podList, iaaPluginName); err != nil {
+			framework.Failf("initcontainer idempotence checks failed: %v", err)
 		}
 
 		ginkgo.By("checking the resource is allocatable")

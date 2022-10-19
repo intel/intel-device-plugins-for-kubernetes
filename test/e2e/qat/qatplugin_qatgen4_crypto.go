@@ -31,6 +31,7 @@ import (
 const (
 	qatPluginKustomizationYaml = "deployments/qat_plugin/overlays/e2e/kustomization.yaml"
 	opensslTestYaml            = "demo/openssl-qat-engine-cpa-sample-pod.yaml"
+	qatPluginName              = "intel-qat-plugin"
 )
 
 func init() {
@@ -57,7 +58,7 @@ func describeQatPluginCy() {
 
 		ginkgo.By("waiting for QAT plugin's availability")
 		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
-			labels.Set{"app": "intel-qat-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
+			labels.Set{"app": qatPluginName}.AsSelector(), 1 /* one replica */, 100*time.Second)
 		if err != nil {
 			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
 			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
@@ -67,6 +68,11 @@ func describeQatPluginCy() {
 		ginkgo.By("checking QAT plugin's securityContext")
 		if err := utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
+		}
+
+		ginkgo.By("checking if QAT initcontainer is idempotent")
+		if err := utils.TestInitcontainersRunIdempotent(f, podList, qatPluginName); err != nil {
+			framework.Failf("initcontainer idempotence checks failed: %v", err)
 		}
 
 		ginkgo.By("checking the resource is allocatable")

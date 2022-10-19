@@ -34,6 +34,7 @@ const (
 	kustomizationYaml = "deployments/dlb_plugin/overlays/dlb_initcontainer/kustomization.yaml"
 	demoPFYaml        = "demo/dlb-libdlb-demo-pf-pod.yaml"
 	demoVFYaml        = "demo/dlb-libdlb-demo-vf-pod.yaml"
+	dlbPluginName     = "intel-dlb-plugin"
 )
 
 func init() {
@@ -55,7 +56,7 @@ func describe() {
 
 		ginkgo.By("waiting for DLB plugin's availability")
 		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
-			labels.Set{"app": "intel-dlb-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
+			labels.Set{"app": dlbPluginName}.AsSelector(), 1 /* one replica */, 100*time.Second)
 		if err != nil {
 			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
 			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
@@ -65,6 +66,11 @@ func describe() {
 		ginkgo.By("checking DLB plugin's securityContext")
 		if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
+		}
+
+		ginkgo.By("checking if DLB initcontainer is idempotent")
+		if err = utils.TestInitcontainersRunIdempotent(f, podList, dlbPluginName); err != nil {
+			framework.Failf("initcontainer idempotence checks failed: %v", err)
 		}
 
 		for _, resource := range []v1.ResourceName{"dlb.intel.com/pf", "dlb.intel.com/vf"} {

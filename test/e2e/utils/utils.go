@@ -212,6 +212,23 @@ func TestPodsFileSystemInfo(pods []v1.Pod) error {
 	return nil
 }
 
+func TestInitcontainersRunIdempotent(f *framework.Framework, podList *v1.PodList, pluginName string) error {
+	if err := e2epod.DeletePodWithWaitByName(f.ClientSet, podList.Items[0].Name, f.Namespace.Name); err != nil {
+		e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
+		return errors.Errorf("unable to wait for the plugin to be terminated: %v", err)
+	}
+
+	if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
+		labels.Set{"app": pluginName}.AsSelector(), 1 /* one replica */, 100*time.Second); err != nil {
+		e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
+		e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+
+		return errors.Errorf("unable to wait for all pods to be running and ready: %v", err)
+	}
+
+	return nil
+}
+
 func TestWebhookServerTLS(f *framework.Framework, serviceName string) error {
 	podSpec := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
