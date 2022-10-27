@@ -29,7 +29,7 @@ import (
 
 const (
 	kustomizationYaml = "deployments/iaa_plugin/overlays/iaa_initcontainer/iaa_initcontainer.yaml"
-	configmapYaml     = "demo/iax.conf"
+	configmapYaml     = "demo/iaa.conf"
 	demoYaml          = "demo/iaa-accel-config-demo-pod.yaml"
 	podName           = "iaa-accel-config-demo"
 )

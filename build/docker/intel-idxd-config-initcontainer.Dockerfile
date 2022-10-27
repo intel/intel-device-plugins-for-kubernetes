@@ -31,7 +31,7 @@ COPY --from=builder /usr/bin/accel-config /usr/bin/
 COPY --from=builder /accel-config.tar.gz /licenses/accel-config/
 COPY demo/idxd-init.sh /usr/local/bin/
 COPY demo/dsa.conf /idxd-init/
-COPY demo/iax.conf /idxd-init/
+COPY demo/iaa.conf /idxd-init/
 RUN mkdir /idxd-init/scratch
 WORKDIR /idxd-init
 ENTRYPOINT ["bash", "/usr/local/bin/idxd-init.sh"]

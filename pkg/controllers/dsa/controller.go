@@ -125,7 +125,7 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 				},
 			},
 			{
-				Name:  "IDXD_DEVICE_TYPE",
+				Name:  "DEVICE_TYPE",
 				Value: "dsa",
 			},
 		},
