@@ -123,7 +123,7 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 				},
 			},
 			{
-				Name:  "IDXD_DEVICE_TYPE",
+				Name:  "DEVICE_TYPE",
 				Value: "iaa",
 			},
 		},
