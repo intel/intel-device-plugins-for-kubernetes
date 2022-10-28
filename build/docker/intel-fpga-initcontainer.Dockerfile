@@ -70,7 +70,7 @@ RUN echo "{\n\
     \"stage\" : [ \"prestart\" ],\n\
     \"annotation\": [ \"fpga.intel.com/region\" ]\n\
 }\n">>/install_root/$SRC_DIR/$CRI_HOOK.json
-ARG TOYBOX_VERSION="0.8.8"
+ARG TOYBOX_VERSION="1.8.8"
 ARG TOYBOX_SHA256="2bed6bb9edd5a249023103cf0402a835b0e53d10304a263f6f1e77a8aa49a898"
 ARG ROOT=/install_root
 RUN apt-get update && apt-get --no-install-recommends -y install musl musl-tools musl-dev

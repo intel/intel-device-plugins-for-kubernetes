@@ -21,6 +21,7 @@ permissions:
 jobs:
   e2e-qat:
     name: e2e-qat
+    needs: images
     #if: contains('["bart0sh"]', github.actor)
     runs-on: [self-hosted, linux, x64, qat]
     steps:
