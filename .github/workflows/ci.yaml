@@ -13,89 +13,9 @@ env:
   K8S_VERSION: 1.25.0
 permissions:
   contents: read
+  packages: write
 
 jobs:
-
-  docs:
-    name: Check docs are buildable
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y python3-venv
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Set up doc directory
-      run: |
-        mkdir $HOME/output
-        touch $HOME/output/.nojekyll
-    - name: Build latest
-      run: |
-        GITHUB_SHA=$(git rev-parse HEAD)
-        export GITHUB_SHA
-        rm -rf _work/venv
-        make vhtml
-        mv _build/html/* $HOME/output/
-
-  golangci:
-    permissions:
-      contents: read  # for actions/checkout to fetch code
-      pull-requests: read  # for golangci/golangci-lint-action to fetch pull requests
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          check-latest: true
-      - name: Install build dependencies needed for VPU plugin
-        run: |
-          sudo apt-get update
-          sudo apt-get -y install libusb-1.0-0-dev
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.50.0
-          args: -v --timeout 5m
-
-  build:
-    name: Build and check device plugins
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          check-latest: true
-      - uses: actions/cache@v3
-        with:
-          path: |
-                ~/.cache/go-build
-                ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - name: Check Dockerfiles
-        run: make check-dockerfiles
-      - name: Install build dependencies needed for VPU plugin
-        run: |
-          sudo apt-get update
-          sudo apt-get -y install libusb-1.0-0-dev
-      - run: make go-mod-tidy
-      - run: make BUILDTAGS=kerneldrv
-      - run: make test BUILDTAGS=kerneldrv
-      - name: Install envtest tool and run envtest
-        run: |
-          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-          setup-envtest use ${K8S_VERSION}
-      - run: |
-          KUBEBUILDER_ASSETS=$(setup-envtest use -i -p path ${K8S_VERSION}) make envtest
-      - run: make check-github-actions
-      - name: Codecov report
-        run: bash <(curl -s https://codecov.io/bash)
 
   image:
     name: Build image
@@ -103,36 +23,8 @@ jobs:
     strategy:
       matrix:
         image:
-          - intel-fpga-admissionwebhook
-          - intel-fpga-initcontainer
-          - intel-gpu-initcontainer
-          - intel-gpu-plugin
-          - intel-fpga-plugin
-          - intel-qat-initcontainer
-          - intel-qat-plugin
-          - intel-qat-plugin-kerneldrv
-          - intel-vpu-plugin
-          - intel-deviceplugin-operator
-          - intel-sgx-admissionwebhook
-          - intel-sgx-plugin
-          - intel-sgx-initcontainer
           - intel-dsa-plugin
-          - intel-iaa-plugin
-          - intel-idxd-config-initcontainer
-          - intel-dlb-plugin
-          - intel-dlb-initcontainer
 
-          # Demo images
-          - crypto-perf
-          - accel-config-demo
-          - intel-opencl-icd
-          - iaa-qpl-demo
-          - opae-nlb-demo
-          - openssl-qat-engine
-          - sgx-sdk-demo
-          - sgx-aesmd-demo
-          - dlb-dpdk-demo
-          - dlb-libdlb-demo
         builder: [buildah, docker]
     steps:
       - uses: actions/checkout@v3
@@ -151,30 +43,14 @@ jobs:
           IMAGE_NAME: ${{ matrix.image }}
           BUILDER_NAME: ${{ matrix.builder }}
         run: |
-          make ${IMAGE_NAME} BUILDER=${BUILDER_NAME}
-
-  kind-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+          make ${IMAGE_NAME} BUILDER=${BUILDER_NAME} REG=ghcr.io/intel/ TAG=devel
+      - uses: docker/login-action@v2
+        if: ${{ github.event_name == 'pull_request' && matrix.builder == 'docker' }}
         with:
-          go-version: ${{ env.GO_VERSION }}
-          check-latest: true
-      - name: Test SGX & FPGA Admission Webhook, Deploy Operator
-        run: |
-          make test-with-kind
-
-  terrascan:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-    - name: Install terrascan
-      run: |
-        curl -sL "$(curl -sL https://api.github.com/repos/tenable/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
-        tar -xf terrascan.tar.gz terrascan && rm terrascan.tar.gz
-        install terrascan /usr/local/bin && rm terrascan
-    - name: Run Terrascan
-      run: make terrascan
-
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: |
+          docker images
+          docker push ghcr.io/intel/${{ matrix.image }}:devel
+        if: ${{ github.event_name == 'pull_request' && matrix.builder == 'docker' }}
