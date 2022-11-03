@@ -25,6 +25,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
@@ -97,6 +98,7 @@ func contains(arr []string, val string) bool {
 func main() {
 	var (
 		metricsAddr           string
+		probeAddr             string
 		devicePluginNamespace string
 		enableLeaderElection  bool
 		pm                    *patcher.Manager
@@ -105,6 +107,7 @@ func main() {
 	ctrl.SetLogger(klogr.NewWithOptions(klogr.WithFormat(klogr.FormatKlog)))
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&devicePluginNamespace, "deviceplugin-namespace", metav1.NamespaceSystem, "The namespace where deviceplugin daemonsets are created")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
@@ -132,12 +135,13 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		MetricsBindAddress: metricsAddr,
-		Logger:             ctrl.Log.WithName("intel-device-plugins-manager"),
-		WebhookServer:      webHook,
-		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "d1c7b6d5.intel.com",
+		Scheme:                 scheme,
+		MetricsBindAddress:     metricsAddr,
+		Logger:                 ctrl.Log.WithName("intel-device-plugins-manager"),
+		WebhookServer:          webHook,
+		HealthProbeBindAddress: probeAddr,
+		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "d1c7b6d5.intel.com",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -188,6 +192,16 @@ func main() {
 			setupLog.Error(err, "unable to create controller", "controller", "FpgaRegion")
 			os.Exit(1)
 		}
+	}
+
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
 	}
 
 	setupLog.Info("starting manager")
