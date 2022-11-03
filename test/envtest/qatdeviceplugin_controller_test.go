@@ -22,6 +22,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	apps "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -92,6 +93,7 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			By("updating QatDevicePlugin successfully")
 			updatedImage := "updated-qat-testimage"
 			updatedInitImage := "updated-qat-testinitimage"
+			updatedProvisioningConfig := "updated-qat-provisioningconfig"
 			updatedLogLevel := 2
 			updatedDpdkDriver := "igb_uio"
 			updatedKernelVfDrivers := "c3xxxvf"
@@ -101,6 +103,7 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 
 			fetched.Spec.Image = updatedImage
 			fetched.Spec.InitImage = updatedInitImage
+			fetched.Spec.ProvisioningConfig = updatedProvisioningConfig
 			fetched.Spec.LogLevel = updatedLogLevel
 			fetched.Spec.DpdkDriver = updatedDpdkDriver
 			fetched.Spec.KernelVfDrivers = []devicepluginv1.KernelVfDriver{devicepluginv1.KernelVfDriver(updatedKernelVfDrivers)}
@@ -131,11 +134,24 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 				"-allocation-policy",
 				updatedPreferredAllocationPolicy,
 			}
+			mode := int32(0440)
+			expectedVolume := v1.Volume{
+				Name: "qat-config",
+				VolumeSource: v1.VolumeSource{
+					ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{Name: updatedProvisioningConfig},
+						DefaultMode:          &mode,
+					},
+				},
+			}
 
 			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(ConsistOf(expectArgs))
 			Expect(ds.Spec.Template.Spec.Containers[0].Image).Should(Equal(updatedImage))
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(updatedInitImage))
+
+			Expect(ds.Spec.Template.Spec.Volumes).To(ContainElement(expectedVolume))
+
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(Equal(updatedNodeSelector))
 
 			By("updating QatDevicePlugin with different values successfully")
@@ -151,6 +167,7 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			By("checking DaemonSet is updated with different values successfully")
 			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-qat-plugin"}, ds)
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(0))
+			Expect(ds.Spec.Template.Spec.Volumes).ShouldNot(ContainElement(expectedVolume))
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(And(HaveLen(1), HaveKeyWithValue("kubernetes.io/arch", "amd64")))
 
 			By("deleting QatDevicePlugin successfully")

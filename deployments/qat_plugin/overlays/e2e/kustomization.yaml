@@ -3,7 +3,7 @@ commonAnnotations:
   container.apparmor.security.beta.kubernetes.io/intel-qat-plugin: unconfined
 
 resources:
-- ../sriov_numvfs
+- ../qat_initcontainer
 
 patches:
   - path: add-args.yaml

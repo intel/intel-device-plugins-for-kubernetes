@@ -35,6 +35,10 @@ type QatDevicePluginSpec struct {
 
 	// InitImage is a container image with a script that initialize devices.
 	InitImage string `json:"initImage,omitempty"`
+
+	// ProvisioningConfig is a ConfigMap used to pass the configuration of QAT devices into qat initcontainer.
+	ProvisioningConfig string `json:"provisioningConfig,omitempty"`
+
 	// PreferredAllocationPolicy sets the mode of allocating QAT devices on a node.
 	// See documentation for detailed description of the policies.
 	// +kubebuilder:validation:Enum=balanced;packed

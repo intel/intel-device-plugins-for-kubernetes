@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # ToyBox version: KCONFIG_VERSION
-# Tue Oct 11 13:47:43 2022
+# Thu Nov 17 14:23:21 2022
 #
 # CONFIG_TOYBOX_ON_ANDROID is not set
 CONFIG_TOYBOX_FORK=y
@@ -23,7 +23,7 @@ CONFIG_CP=y
 # CONFIG_MV is not set
 # CONFIG_INSTALL is not set
 # CONFIG_CPIO is not set
-# CONFIG_CUT is not set
+CONFIG_CUT=y
 # CONFIG_DATE is not set
 # CONFIG_DF is not set
 # CONFIG_DIRNAME is not set

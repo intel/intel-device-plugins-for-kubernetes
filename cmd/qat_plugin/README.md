@@ -119,6 +119,34 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 > socket creation and kubelet registration. Furthermore, the deployments `securityContext` must
 > be configured with appropriate `runAsUser/runAsGroup`.
 
+#### Automatic Provisioning
+
+There's a sample [qat initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-qat-initcontainer.Dockerfile). Regardless of device types, the script running inside the initcontainer enables QAT SR-IOV VFs. 
+
+To deploy, run as follows:
+
+```bash
+$ kubectl apply -k deployments/qat_plugin/overlays/qat_initcontainer/
+```
+
+In addition to the default configuration, you can add device-specific configurations via ConfigMap.
+
+| Device | Possible Configuration | How To Customize | Options | Notes | 
+|:-------|:-----------------------|:-----------------|:--------|:------|
+| 4xxx, 401xx | [cfg_services](https://github.com/torvalds/linux/blob/42e66b1cc3a070671001f8a1e933a80818a192bf/Documentation/ABI/testing/sysfs-driver-qat) reports the configured services (crypto services or compression services) of the QAT device. | `ServicesEnabled=<value>` | compress:`dc`, crypto:`sym;asym` | Linux 6.0+ kernel is required. | 
+
+To create a provisioning config after customizing, run as follows:
+
+```bash
+$ kubectl create configmap --namespace=inteldeviceplugins-system qat-config --from-file=deployments/qat_plugin/overlays/qat_initcontainer/qat.conf
+```
+> **Note**: When deploying the overlay qat_initcontainer, such a manual creation is not necessary since ConfigMap is generated automatically. Just set the values in the config file and deploy the overlay.
+
+When using the operator for deploying the plugin with provisioning config, use `provisioningConfig` field for the name of the ConfigMap, then the config is passed to initcontainer through the volume mount.
+
+There's also a possibility for a node specific congfiguration through passing a nodename via `NODE_NAME` into initcontainer's environment and passing a node specific profile (`qat-$NODE_NAME.conf`) via ConfigMap volume mount.
+
+
 #### Verify Plugin Registration
 
 Verification of the plugin deployment and detection of QAT hardware can be confirmed by
