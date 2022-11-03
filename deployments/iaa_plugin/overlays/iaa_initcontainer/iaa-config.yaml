@@ -19,6 +19,7 @@ data:
                 "size": 16,
                 "group_id": 0,
                 "priority": 10,
+                "max_transfer_size": 4194304,
                 "name": "iaxX0"
               }
             ],
@@ -39,6 +40,7 @@ data:
                 "size": 16,
                 "group_id": 1,
                 "priority": 10,
+                "max_transfer_size": 4194304,
                 "name": "iaxX1"
               }
             ],
@@ -59,6 +61,7 @@ data:
                 "size": 16,
                 "group_id": 2,
                 "priority": 10,
+                "max_transfer_size": 4194304,
                 "name": "iaxX2"
               }
             ],
@@ -79,6 +82,7 @@ data:
                 "size": 16,
                 "group_id": 3,
                 "priority": 10,
+                "max_transfer_size": 4194304,
                 "name": "iaxX3"
               }
             ],
@@ -107,6 +111,7 @@ data:
                 "size": 16,
                 "group_id": 0,
                 "priority": 10,
+                "max_transfer_size": 4194304,
                 "name": "iaxX0"
               }
             ],
@@ -127,6 +132,7 @@ data:
                 "size": 16,
                 "group_id": 1,
                 "priority": 10,
+                "max_transfer_size": 4194304,
                 "name": "iaxX1"
               }
             ],
@@ -147,6 +153,7 @@ data:
                 "size": 16,
                 "group_id": 2,
                 "priority": 10,
+                "max_transfer_size": 4194304,
                 "name": "iaxX2"
               }
             ],
@@ -167,6 +174,7 @@ data:
                 "size": 16,
                 "group_id": 3,
                 "priority": 10,
+                "max_transfer_size": 4194304,
                 "name": "iaxX3"
               }
             ],
