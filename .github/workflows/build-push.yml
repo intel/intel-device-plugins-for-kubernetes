@@ -1,0 +1,82 @@
+name: build-push
+on:
+  push:
+    branches:
+      - main
+env:
+  GO_VERSION: 1.19
+  K8S_VERSION: 1.25.0
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+
+  image:
+    name: Build image
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        image:
+          - intel-fpga-admissionwebhook
+          - intel-fpga-initcontainer
+          - intel-gpu-initcontainer
+          - intel-gpu-plugin
+          - intel-fpga-plugin
+          - intel-qat-initcontainer
+          - intel-qat-plugin
+          - intel-qat-plugin-kerneldrv
+          - intel-vpu-plugin
+          - intel-deviceplugin-operator
+          - intel-sgx-admissionwebhook
+          - intel-sgx-plugin
+          - intel-sgx-initcontainer
+          - intel-dsa-plugin
+          - intel-iaa-plugin
+          - intel-idxd-config-initcontainer
+          - intel-dlb-plugin
+          - intel-dlb-initcontainer
+
+          # Demo images
+          - crypto-perf
+          - accel-config-demo
+          - intel-opencl-icd
+          - iaa-qpl-demo
+          - opae-nlb-demo
+          - openssl-qat-engine
+          - sgx-sdk-demo
+          - sgx-aesmd-demo
+          - dlb-dpdk-demo
+          - dlb-libdlb-demo
+        builder: [buildah, docker]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+                ~/.cache/go-build
+                ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - uses: actions/setup-go@v3
+      - run: make -e vendor
+      - run: |
+          echo "ref: ${{ github.ref }}"
+          echo "ref_name: ${{ github.ref_name }}"
+      - uses: docker/login-action@v2
+        if: ${{ github.event_name == 'push' && github.ref_name == 'main' && matrix.builder == 'docker' }}
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build image
+        env:
+          IMAGE_NAME: ${{ matrix.image }}
+          BUILDER_NAME: ${{ matrix.builder }}
+        run: |
+          make ${IMAGE_NAME} BUILDER=${BUILDER_NAME} REG=ghcr.io/intel/ TAG=devel
+        if: ${{ github.event_name == 'push' && github.ref_name == 'main' && matrix.builder == 'docker' }}
+      - run: |
+          docker push ghcr.io/intel/${{ matrix.image }}:devel
+        if: ${{ github.event_name == 'push' && github.ref_name == 'main' && matrix.builder == 'docker' }}
