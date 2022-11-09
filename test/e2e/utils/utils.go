@@ -257,3 +257,17 @@ func TestWebhookServerTLS(f *framework.Framework, serviceName string) error {
 
 	return nil
 }
+
+func Kubectl(ns string, cmd string, opt string, file string) {
+	path, err := LocateRepoFile(file)
+	if err != nil {
+		framework.Failf("unable to locate %q: %v", file, err)
+	}
+
+	if opt == "-k" {
+		path = filepath.Dir(path)
+	}
+
+	msg := framework.RunKubectlOrDie(ns, cmd, opt, path)
+	framework.Logf("%s", msg)
+}

@@ -33,10 +33,8 @@ import (
 )
 
 const (
-	kustomizationWebhook  = "deployments/sgx_admissionwebhook/overlays/default-with-certmanager/kustomization.yaml"
-	kustomizationPlugin   = "deployments/sgx_plugin/overlays/epc-hook-initcontainer/kustomization.yaml"
-	kustomizationNFD      = "deployments/nfd/overlays/sgx/kustomization.yaml"
-	kustomizationNFDRules = "deployments/nfd/overlays/node-feature-rules/kustomization.yaml"
+	kustomizationWebhook = "deployments/sgx_admissionwebhook/overlays/default-with-certmanager/kustomization.yaml"
+	kustomizationPlugin  = "deployments/sgx_plugin/overlays/epc-hook-initcontainer/kustomization.yaml"
 )
 
 func init() {
@@ -47,43 +45,15 @@ func describe() {
 	f := framework.NewDefaultFramework("sgxplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	deploymentWebhookPath, err := utils.LocateRepoFile(kustomizationWebhook)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationWebhook, err)
-	}
-
-	deploymentNFDPath, err := utils.LocateRepoFile(kustomizationNFD)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationNFD, err)
-	}
-
-	nodeFeatureRulesPath, err := utils.LocateRepoFile(kustomizationNFDRules)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationNFDRules, err)
-	}
-
-	ginkgo.BeforeEach(func() {
-		_ = utils.DeployWebhook(f, deploymentWebhookPath)
-
-		msg := framework.RunKubectlOrDie("node-feature-discovery", "apply", "-k", filepath.Dir(deploymentNFDPath))
-		framework.Logf("Deploy node-feature-discovery:\n%s", msg)
-
-		msg = framework.RunKubectlOrDie("node-feature-discovery", "apply", "-k", filepath.Dir(nodeFeatureRulesPath))
-		framework.Logf("Create NodeFeatureRules:\n%s", msg)
-
-		if err = e2epod.WaitForPodsRunningReady(f.ClientSet, "node-feature-discovery", 2, 0,
-			100*time.Second, map[string]string{}); err != nil {
-			framework.Failf("unable to wait for NFD pods to be running and ready: %v", err)
-		}
-	})
-
-	ginkgo.AfterEach(func() {
-		msg := framework.RunKubectlOrDie("node-feature-discovery", "delete", "-k", filepath.Dir(deploymentNFDPath))
-		framework.Logf("Delete node-feature-discovery:\n%s", msg)
-	})
-
 	ginkgo.It("checks availability of SGX resources", func() {
 		ginkgo.By("deploying SGX plugin")
+
+		deploymentWebhookPath, err := utils.LocateRepoFile(kustomizationWebhook)
+		if err != nil {
+			framework.Failf("unable to locate %q: %v", kustomizationWebhook, err)
+		}
+
+		_ = utils.DeployWebhook(f, deploymentWebhookPath)
 
 		deploymentPluginPath, err := utils.LocateRepoFile(kustomizationPlugin)
 		if err != nil {
