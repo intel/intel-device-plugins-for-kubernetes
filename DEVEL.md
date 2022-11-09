@@ -142,12 +142,14 @@ $ make bundle-build
 ```
 
 > **Note**: You need to push the image to a registry if you want to follow the verification process below.
+If pushing to the Docker hub, specify `docker.io/` in front of the image name for running bundle.
+If pushing to the local registry, put the option `--use-http` for running bundle.
 
 Verify the operator deployment works OK via OLM in your development cluster:
 ```
 $ operator-sdk olm install
 $ kubectl create namespace testoperator
-$ operator-sdk run bundle <Registry>/<Tag> -n testoperator --use-http
+$ operator-sdk run bundle <Registry>:<Tag> -n testoperator
 # do verification checks
 ...
 # do clean up

@@ -5,15 +5,15 @@ metadata:
     alm-examples: '[]'
     capabilities: Seamless Upgrades
     categories: Drivers and plugins
-    containerImage: intel/intel-deviceplugin-operator:0.24.0
-    createdAt: "2022-05-20"
+    containerImage: docker.io/intel/intel-deviceplugin-operator:0.25.0
+    createdAt: "2022-11-09"
     description: This operator is a Kubernetes custom controller whose goal is to
       serve the installation and lifecycle management of Intel device plugins for
       Kubernetes.
-    operators.operatorframework.io/builder: operator-sdk-v1.20.0
+    operators.operatorframework.io/builder: operator-sdk-v1.25.0
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
     repository: https://github.com/intel/intel-device-plugins-for-kubernetes
-  name: intel-device-plugins-operator.v0.24.0
+  name: intel-device-plugins-operator.v0.25.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -122,5 +122,5 @@ spec:
   provider:
     name: Intel® Corporation
     url: https://intel.com
-  replaces: intel-device-plugins-operator.v0.23.0
-  version: 0.24.0
+  replaces: intel-device-plugins-operator.v0.24.0
+  version: 0.25.0
