@@ -4,6 +4,7 @@ metadata:
   name: iaadeviceplugin-sample
 spec:
   image: intel/intel-iaa-plugin:0.25.0
+  initImage: intel/intel-idxd-config-initcontainer:0.25.0
   sharedDevNum: 10
   logLevel: 4
   nodeSelector:
