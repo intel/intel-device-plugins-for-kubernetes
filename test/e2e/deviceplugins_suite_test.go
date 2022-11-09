@@ -18,6 +18,7 @@ import (
 	"flag"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -32,6 +33,7 @@ import (
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/qat"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/sgx"
 	_ "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/sgxadmissionwebhook"
+	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/component-base/logs"
@@ -97,6 +99,15 @@ func setupFirstNode() []byte {
 
 	if serverVersion != nil {
 		framework.Logf("kube-apiserver version: %s", serverVersion.GitVersion)
+	}
+
+	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/overlays/sgx/kustomization.yaml")
+
+	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
+
+	if err = e2epod.WaitForPodsRunningReady(c, "node-feature-discovery", 2, 0,
+		100*time.Second, map[string]string{}); err != nil {
+		framework.Failf("unable to wait for NFD pods to be running and ready: %v", err)
 	}
 
 	return []byte{}
