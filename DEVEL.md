@@ -137,7 +137,7 @@ $ git clone https://github.com/<GitHub Username>/community-operators
 
 Generate bundle and build bundle image:
 ```
-$ make bundle OPERATOR_VERSION=0.X.Y CHANNELS=alpha DEFAULT_CHANNEL=alpha
+$ make bundle TAG=0.X.Y CHANNELS=alpha DEFAULT_CHANNEL=alpha
 $ make bundle-build
 ```
 
