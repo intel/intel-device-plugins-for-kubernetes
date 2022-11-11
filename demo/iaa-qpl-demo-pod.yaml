@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
   - name: iaa-qpl-demo
-    image: iaa-qpl-demo:devel
+    image: intel/iaa-qpl-demo:devel
     imagePullPolicy: IfNotPresent
     resources:
       limits:

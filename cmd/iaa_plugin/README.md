@@ -83,7 +83,7 @@ We can test the plugin is working by deploying the provided example iaa-qpl-demo
     ```bash
     $ make iaa-qpl-demo
     ...
-    Successfully tagged iaa-qpl-demo:devel
+    Successfully tagged intel/iaa-qpl-demo:devel
     ```
 
 1. Create a pod running unit tests off the local Docker image:
