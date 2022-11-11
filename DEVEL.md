@@ -8,7 +8,7 @@ Table of Contents
    * [Build Container Images](#build-container-images)
    * [Build Against a Newer Version of Kubernetes](#build-against-a-newer-version-of-kubernetes)
    * [Work with Intel Device Plugins Operator Modifications](#work-with-intel-device-plugins-operator-modifications)
-   * [Publish a New Version of the Intel Device Plugins Operator to operatorhub.io](#publish-a-new-version-of-the-intel-device-plugins-operator-to-operatorhub.io)
+   * [Publish a New Version of the Intel Device Plugins Operator to operatorhub.io](#publish-a-new-version-of-the-intel-device-plugins-operator-to-operatorhubio)
    * [Run E2E Tests](#run-e2e-tests)
    * [Run Controller Tests with a Local Control Plane](#run-controller-tests-with-a-local-control-plane)
 * [How to Develop Simple Device Plugins](#how-to-develop-simple-device-plugins)
@@ -126,9 +126,11 @@ There are few useful steps when working with changes to Device Plugins CRDs and 
 
 ### Publish a New Version of the Intel Device Plugins Operator to operatorhub.io
 
-Update metadata.annotations.containerImage and metadata.annotations.createdAT fields in the base CSV manifest file
-deployments/operator/manifests/bases/intel-device-plugins-operator.clusterserviceversion.yaml
-to match current operator version and current date
+Check if the fields mentioned below in the [base CSV manifest file](deployments/operator/manifests/bases/intel-device-plugins-operator.clusterserviceversion.yaml) have the correct values. If not, fix them manually (operator-sdk does not support updating these fields in any other way).
+- spec.version
+- spec.replaces
+- metadata.annotations.containerImage
+- metadata.annotations.createdAT
 
 Fork the [Community Operators](https://github.com/k8s-operatorhub/community-operators) repo and clone it:
 ```
@@ -141,9 +143,9 @@ $ make bundle TAG=0.X.Y CHANNELS=alpha DEFAULT_CHANNEL=alpha
 $ make bundle-build
 ```
 
-> **Note**: You need to push the image to a registry if you want to follow the verification process below.
-If pushing to the Docker hub, specify `docker.io/` in front of the image name for running bundle.
-If pushing to the local registry, put the option `--use-http` for running bundle.
+Push the image to a registry:
+- If pushing to the Docker hub, specify `docker.io/` in front of the image name for running bundle.
+- If pushing to the local registry, put the option `--use-http` for running bundle.
 
 Verify the operator deployment works OK via OLM in your development cluster:
 ```
@@ -158,21 +160,18 @@ $ kubectl delete namespace testoperator
 $ operator-sdk olm uninstall
 ```
 
-Review the package manifests by uploading the generated `packagemanifests` folder to
-https://operatorhub.io -> Contribute -> Package Your Operator.
-
-Commit files
+Commit files:
 ```
 $ cd community-operators
 $ git add operators/intel-device-plugins-operator/0.X.Y
-$ git commit -am 'operators intel-device-plugins-operator (0.X.Y)' -S
+$ git commit -am 'operators intel-device-plugins-operator (0.X.Y)' -s
 ```
 
-Submit a PR
+Submit a PR to [Community Operators](https://github.com/k8s-operatorhub/community-operators) repo.
 
 Check operator page
 https://operatorhub.io/operator/intel-device-plugins-operator
-after PR is merged
+after PR is merged.
 
 ### Run E2E Tests
 
