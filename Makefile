@@ -13,10 +13,8 @@ CONTROLLER_GEN_VERSION ?= v0.10.0
 GOLANGCI_LINT_VERSION ?= v1.50.0
 KIND_VERSION ?= v0.16.0
 GOLICENSES_VERSION ?= v1.4.0
-# Current Operator version
-OPERATOR_VERSION ?= 0.24.0
 # Default bundle image tag
-BUNDLE_IMG ?= intel-device-plugins-controller-bundle:$(OPERATOR_VERSION)
+BUNDLE_IMG ?= intel-device-plugins-controller-bundle:$(TAG)
 # Options for 'bundle-build'
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
@@ -26,7 +24,7 @@ BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 OLM_MANIFESTS = deployments/operator/manifests
-BUNDLE_DIR = community-operators/operators/intel-device-plugins-operator/$(OPERATOR_VERSION)
+BUNDLE_DIR = community-operators/operators/intel-device-plugins-operator/$(TAG)
 
 TESTDATA_DIR = pkg/topology/testdata
 
@@ -122,7 +120,7 @@ bundle:
 	rm -rf $(BUNDLE_DIR)
 	mkdir -p $(BUNDLE_DIR)
 	$(OPERATOR_SDK) generate kustomize manifests -q --input-dir $(OLM_MANIFESTS) --output-dir $(OLM_MANIFESTS) --apis-dir pkg/apis
-	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(OPERATOR_VERSION)|" | $(OPERATOR_SDK) generate bundle -q --overwrite --kustomize-dir $(OLM_MANIFESTS) --version $(OPERATOR_VERSION) $(BUNDLE_METADATA_OPTS) --output-dir .
+	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(TAG)|" | $(OPERATOR_SDK) generate bundle -q --overwrite --kustomize-dir $(OLM_MANIFESTS) --version $(TAG) $(BUNDLE_METADATA_OPTS) --output-dir .
 	# Remove unneeded resources
 	rm manifests/*service.yaml
 	rm manifests/*clusterrole.yaml
