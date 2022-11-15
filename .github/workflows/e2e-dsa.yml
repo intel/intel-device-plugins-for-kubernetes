@@ -13,7 +13,7 @@ on:
       - 'release-*'
 
 env:
-  IMAGES: 'intel-dsa-plugin intel-idxd-config-initcontainer accel-config-demo'
+  IMAGES: 'intel-dsa-plugin intel-idxd-config-initcontainer accel-config-demo intel-deviceplugin-operator'
 
 permissions:
   contents: read

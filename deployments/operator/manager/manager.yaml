@@ -62,4 +62,4 @@ spec:
               fieldRef:
                 fieldPath: metadata.namespace
       serviceAccountName: default
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 120

@@ -28,6 +28,8 @@ import (
 )
 
 const (
+	ns                = "inteldeviceplugins-system"
+	timeout           = time.Second * 120
 	kustomizationYaml = "deployments/iaa_plugin/overlays/iaa_initcontainer/iaa_initcontainer.yaml"
 	configmapYaml     = "demo/iaa.conf"
 	demoYaml          = "demo/iaa-accel-config-demo-pod.yaml"
@@ -95,5 +97,27 @@ func describe() {
 		}
 
 		framework.Logf("log output: %s", log)
+	})
+
+	ginkgo.It("deploys IAA plugin with operator", func() {
+		utils.Kubectl("", "apply", "-k", "deployments/operator/default/kustomization.yaml")
+
+		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1, timeout); err != nil {
+			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+		}
+
+		utils.Kubectl("", "apply", "-f", "deployments/operator/samples/deviceplugin_v1_iaadeviceplugin.yaml")
+
+		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1, timeout); err != nil {
+			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+		}
+
+		if err := utils.WaitForNodesWithResource(f.ClientSet, "iaa.intel.com/wq-user-dedicated", timeout); err != nil {
+			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+		}
+
+		utils.Kubectl("", "delete", "-f", "deployments/operator/samples/deviceplugin_v1_iaadeviceplugin.yaml")
+
+		utils.Kubectl("", "delete", "-k", "deployments/operator/default/kustomization.yaml")
 	})
 }

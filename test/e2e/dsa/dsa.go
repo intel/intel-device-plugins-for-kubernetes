@@ -28,6 +28,8 @@ import (
 )
 
 const (
+	ns                = "inteldeviceplugins-system"
+	timeout           = time.Second * 120
 	kustomizationYaml = "deployments/dsa_plugin/overlays/dsa_initcontainer/dsa_initcontainer.yaml"
 	configmapYaml     = "demo/dsa.conf"
 	demoYaml          = "demo/dsa-accel-config-demo-pod.yaml"
@@ -95,5 +97,27 @@ func describe() {
 		}
 
 		framework.Logf("log output: %s", log)
+	})
+
+	ginkgo.It("deploys DSA plugin with operator", func() {
+		utils.Kubectl("", "apply", "-k", "deployments/operator/default/kustomization.yaml")
+
+		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1, timeout); err != nil {
+			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+		}
+
+		utils.Kubectl("", "apply", "-f", "deployments/operator/samples/deviceplugin_v1_dsadeviceplugin.yaml")
+
+		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"app": "intel-dsa-plugin"}.AsSelector(), 1, timeout); err != nil {
+			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+		}
+
+		if err := utils.WaitForNodesWithResource(f.ClientSet, "dsa.intel.com/wq-user-dedicated", timeout); err != nil {
+			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+		}
+
+		utils.Kubectl("", "delete", "-f", "deployments/operator/samples/deviceplugin_v1_dsadeviceplugin.yaml")
+
+		utils.Kubectl("", "delete", "-k", "deployments/operator/default/kustomization.yaml")
 	})
 }
