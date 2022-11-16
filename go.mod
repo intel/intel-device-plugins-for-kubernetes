@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gousb v1.1.2
 	github.com/klauspost/cpuid/v2 v2.2.1
-	github.com/onsi/ginkgo/v2 v2.4.0
+	github.com/onsi/ginkgo/v2 v2.5.0
 	github.com/onsi/gomega v1.24.0
 	github.com/pkg/errors v0.9.1
 	golang.org/x/sys v0.2.0
