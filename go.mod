@@ -8,7 +8,7 @@ require (
 	github.com/go-logr/logr v1.2.3
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gousb v1.1.2
-	github.com/klauspost/cpuid/v2 v2.2.0
+	github.com/klauspost/cpuid/v2 v2.2.1
 	github.com/onsi/ginkgo/v2 v2.4.0
 	github.com/onsi/gomega v1.24.0
 	github.com/pkg/errors v0.9.1
