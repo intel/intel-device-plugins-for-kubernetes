@@ -1,4 +1,4 @@
-FROM debian:unstable-slim AS builder
+FROM debian:stable-slim AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y curl python3-dev git gcc g++ make cmake uuid-dev libjson-c-dev libedit-dev libudev-dev
