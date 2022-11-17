@@ -85,7 +85,7 @@ func describe() {
 		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 		ginkgo.By("waiting for the IAA demo to succeed")
-		f.PodClient().WaitForSuccess(podName, 200*time.Second)
+		f.PodClient().WaitForSuccess(podName, 300*time.Second)
 
 		ginkgo.By("getting workload log")
 		log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, podName, podName)
