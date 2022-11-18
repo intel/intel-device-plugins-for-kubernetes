@@ -1,0 +1,87 @@
+name: e2e
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * *'
+  pull_request:
+    branches:
+      - main
+      - 'release-*'
+  push:
+    branches:
+      - main
+      - 'release-*'
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: e2e-dsa-spr
+            targetjob: e2e-dsa
+            runner: simics-spr
+            images: intel-dsa-plugin intel-idxd-config-initcontainer accel-config-demo intel-deviceplugin-operator
+          - name: e2e-dsa-gnr
+            targetjob: e2e-dsa
+            runner: simics-gnr
+            images: intel-dsa-plugin intel-idxd-config-initcontainer accel-config-demo intel-deviceplugin-operator
+          - name: e2e-dlb-spr
+            targetjob: e2e-dlb
+            runner: simics-spr
+            images: intel-dlb-plugin intel-dlb-initcontainer dlb-libdlb-demo
+          - name: e2e-dlb-gnr
+            targetjob: e2e-dlb
+            runner: simics-gnr
+            images: intel-dlb-plugin intel-dlb-initcontainer dlb-libdlb-demo
+          - name: e2e-fpga
+            runner: fpga
+            images: intel-fpga-plugin intel-fpga-initcontainer intel-fpga-admissionwebhook opae-nlb-demo
+          - name: e2e-gpu
+            runner: gpu
+            images: intel-gpu-plugin intel-gpu-initcontainer
+          - name: e2e-iaa-spr
+            targetjob: e2e-iaa
+            runner: simics-spr
+            images: intel-iaa-plugin intel-idxd-config-initcontainer accel-config-demo intel-deviceplugin-operator
+          - name: e2e-iaa-gnr
+            targetjob: e2e-iaa
+            runner: simics-gnr
+            images: intel-iaa-plugin intel-idxd-config-initcontainer accel-config-demo intel-deviceplugin-operator
+          - name: e2e-qat
+            runner: qat
+            images: intel-qat-plugin intel-qat-initcontainer crypto-perf
+          - name: e2e-qat4
+            runner: simics-spr
+            images: intel-qat-plugin intel-qat-initcontainer openssl-qat-engine
+          - name: e2e-sgx
+            runner: sgx
+            images: intel-sgx-plugin intel-sgx-initcontainer intel-sgx-admissionwebhook
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    env:
+      TARGET_JOB: ${{ matrix.targetjob || matrix.name }}
+      IMAGES: ${{ matrix.images }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Describe test environment
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Images: $IMAGES"
+          echo "Target job: $TARGET_JOB"
+      - name: Wait for ready state
+        run: ../../../../bmetal/actions-bmetal-runstage.sh waitready
+      - name: Prepare test environment
+        run: ../../../../bmetal/actions-bmetal-runstage.sh prepare
+      - name: Run tests
+        run: ../../../../bmetal/actions-bmetal-runstage.sh test
