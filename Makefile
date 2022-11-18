@@ -227,9 +227,6 @@ $(image_tags):
 
 push: test-image-base-layer $(image_tags)
 
-lock-images:
-	@scripts/update-clear-linux-base.sh clearlinux:latest $(shell find demo -name Dockerfile)
-
 set-version:
 	@scripts/set-version.sh $(TAG)
 
