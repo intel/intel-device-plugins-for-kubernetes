@@ -541,6 +541,42 @@ func getTestCases() []testcase {
 			sysfsdirs: []string{
 				"card0/device/drm/card0",
 				"card1/device/drm/card1",
+				"card1/gt/gt0",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor":    []byte("0xfefe"),
+				"card0/device/numa_node": []byte("0"),
+				"card1/device/vendor":    []byte("0x8086"),
+				"card1/lmem_total_bytes": []byte("8000"),
+				"card1/device/numa_node": []byte("1"),
+			},
+			name:           "successful labeling with one 0x8086 card and numa node info",
+			memoryOverride: 16000000000,
+			capabilityFile: map[string][]byte{
+				"1/i915_capabilities": []byte(
+					"platform: newnew\n" +
+						"gen: 9"),
+			},
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/graphics_version":        "9",
+				"gpu.intel.com/media_version":           "9",
+				"gpu.intel.com/millicores":              "1000",
+				"gpu.intel.com/memory.max":              "8000",
+				"gpu.intel.com/platform_newnew.count":   "1",
+				"gpu.intel.com/platform_newnew.present": "true",
+				"gpu.intel.com/platform_newnew.tiles":   "1",
+				"gpu.intel.com/platform_gen":            "9",
+				"gpu.intel.com/gpu-numbers":             "1",
+				"gpu.intel.com/cards":                   "card1",
+				"gpu.intel.com/tiles":                   "1",
+				"gpu.intel.com/numa-gpu-map":            "1-1",
+			},
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card1/device/drm/card1",
 				"card2/device/drm/card2",
 				"card3/device/drm/card3",
 				"card4/device/drm/card4",
