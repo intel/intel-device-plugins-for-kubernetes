@@ -37,7 +37,7 @@ import (
 
 var (
 	bKeeper         = &bookKeeper{}
-	ImageMinVersion = versionutil.MustParseSemantic("0.25.0")
+	ImageMinVersion = versionutil.MustParseSemantic("0.25.1")
 )
 
 func init() {
