@@ -463,7 +463,7 @@ func createNumaNodeMappingLabel(mapping map[int][]string) string {
 
 	sort.Ints(numas)
 
-	for numaNode := range numas {
+	for _, numaNode := range numas {
 		gpus := mapping[numaNode]
 		numaString := strconv.FormatInt(int64(numaNode), 10)
 		gpusString := strings.Join(gpus, ".")

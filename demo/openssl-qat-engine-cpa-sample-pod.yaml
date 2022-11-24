@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: openssl-qat-engine
-    image: intel/openssl-qat-engine:0.25.0
+    image: intel/openssl-qat-engine:0.25.1
     imagePullPolicy: IfNotPresent
     command: [ "cpa_sample_code", "runTests=4", "signOfLife=1" ]
     securityContext:
