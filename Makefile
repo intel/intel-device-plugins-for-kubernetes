@@ -176,8 +176,7 @@ pre-pull:
 ifeq ($(TAG),devel)
 	@$(BUILDER) pull golang:1.19-bullseye
 	@$(BUILDER) pull debian:unstable-slim
-	@$(BUILDER) pull clearlinux:latest
-	@$(BUILDER) pull ubuntu:20.04
+	@$(BUILDER) pull ubuntu:22.04
 endif
 
 dockerlib = build/docker/lib
