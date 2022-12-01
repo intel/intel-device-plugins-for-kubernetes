@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 AS builder
+FROM ubuntu:22.04 AS builder
 
 WORKDIR /root
 
@@ -23,10 +23,9 @@ RUN apt-get update && \
 # SGX SDK is installed in /opt/intel directory.
 WORKDIR /opt/intel
 
-ARG SGX_SDK_INSTALLER=sgx_linux_x64_sdk_2.17.101.1.bin
-ARG DCAP_VERSION=DCAP_1.14
+ARG DCAP_VERSION=DCAP_1.15
 
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" | \
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main" | \
     tee -a /etc/apt/sources.list.d/intel-sgx.list \
  && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | \
     gpg --dearmor --output /usr/share/keyrings/intel-sgx.gpg \
@@ -37,8 +36,10 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://d
     libsgx-quote-ex-dev
 
 # Install SGX SDK
-RUN wget https://download.01.org/intel-sgx/sgx-linux/2.17.1/distro/ubuntu20.04-server/$SGX_SDK_INSTALLER \
- && chmod +x  $SGX_SDK_INSTALLER \
+ARG SGX_SDK_URL=https://download.01.org/intel-sgx/sgx-linux/2.18/distro/ubuntu22.04-server/sgx_linux_x64_sdk_2.18.100.3.bin
+RUN wget ${SGX_SDK_URL} \
+ && export SGX_SDK_INSTALLER=$(basename $SGX_SDK_URL) \
+ && chmod +x $SGX_SDK_INSTALLER \
  && echo "yes" | ./$SGX_SDK_INSTALLER \
  && rm $SGX_SDK_INSTALLER
 
@@ -54,7 +55,7 @@ RUN cd SGXDataCenterAttestationPrimitives/SampleCode/QuoteGenerationSample \
     && make \
     && cd -
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 RUN apt-get update && \
     apt-get install -y \
@@ -62,7 +63,7 @@ RUN apt-get update && \
     gnupg-agent
 
 # Add 01.org to apt for SGX packages and install SGX runtime components
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" | \
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main" | \
     tee -a /etc/apt/sources.list.d/intel-sgx.list \
  && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | \
     gpg --dearmor --output /usr/share/keyrings/intel-sgx.gpg \
