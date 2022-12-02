@@ -31,7 +31,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
-	"k8s.io/kubernetes/test/e2e/framework/kubectl"
+	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
+	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 )
 
@@ -149,13 +150,13 @@ func DeployWebhook(f *framework.Framework, kustomizationPath string) v1.Pod {
 		framework.Failf("unable to kustomization overlay: %v", err)
 	}
 
-	framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", tmpDir)
+	e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", tmpDir)
 
 	podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
 		labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1 /* one replica */, 60*time.Second)
 	if err != nil {
-		framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-		kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+		e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
+		e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 		framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 	}
 
@@ -268,6 +269,6 @@ func Kubectl(ns string, cmd string, opt string, file string) {
 		path = filepath.Dir(path)
 	}
 
-	msg := framework.RunKubectlOrDie(ns, cmd, opt, path)
+	msg := e2ekubectl.RunKubectlOrDie(ns, cmd, opt, path)
 	framework.Logf("%s", msg)
 }

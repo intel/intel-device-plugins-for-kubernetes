@@ -26,7 +26,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubernetes/test/e2e/framework"
-	"k8s.io/kubernetes/test/e2e/framework/kubectl"
+	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
+	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	imageutils "k8s.io/kubernetes/test/utils/image"
 	admissionapi "k8s.io/pod-security-admission/api"
 )
@@ -170,8 +171,8 @@ func checkMutatedResources(f *framework.Framework, r v1.ResourceRequirements, ex
 	for _, res := range expectedResources {
 		q, ok := r.Limits[res]
 		if !ok {
-			framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Fail("the pod has missing resources")
 		}
 
@@ -181,8 +182,8 @@ func checkMutatedResources(f *framework.Framework, r v1.ResourceRequirements, ex
 	for _, res := range forbiddenResources {
 		_, ok := r.Limits[res]
 		if ok {
-			framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Fail("the pod has extra resources")
 		}
 	}

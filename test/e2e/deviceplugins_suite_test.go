@@ -41,7 +41,9 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/test/e2e/framework"
 	"k8s.io/kubernetes/test/e2e/framework/config"
-	"k8s.io/kubernetes/test/e2e/framework/kubectl"
+	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
+	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
+	e2enode "k8s.io/kubernetes/test/e2e/framework/node"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 )
 
@@ -71,11 +73,11 @@ func setupFirstNode() []byte {
 
 	framework.Logf("Waiting for deletion of the following namespaces: %v", deleted)
 
-	if err = framework.WaitForNamespacesDeleted(c, deleted, framework.DefaultPodDeletionTimeout); err != nil {
+	if err = framework.WaitForNamespacesDeleted(c, deleted, e2epod.DefaultPodDeletionTimeout); err != nil {
 		framework.Failf("Failed to delete orphaned namespaces %v: %v", deleted, err)
 	}
 
-	framework.ExpectNoError(framework.WaitForAllNodesSchedulable(c, framework.TestContext.NodeSchedulableTimeout))
+	framework.ExpectNoError(e2enode.WaitForAllNodesSchedulable(c, framework.TestContext.NodeSchedulableTimeout))
 
 	// Ensure all pods are running and ready before starting tests (otherwise,
 	// cluster infrastructure pods that are being pulled or started can block
@@ -84,8 +86,8 @@ func setupFirstNode() []byte {
 	if err = e2epod.WaitForPodsRunningReady(c, metav1.NamespaceSystem, int32(framework.TestContext.MinStartupPods),
 		int32(framework.TestContext.AllowedNotReadyNodes), framework.TestContext.SystemPodsStartupTimeout,
 		map[string]string{}); err != nil {
-		framework.DumpAllNamespaceInfo(c, metav1.NamespaceSystem)
-		kubectl.LogFailedContainers(c, metav1.NamespaceSystem, framework.Logf)
+		e2edebug.DumpAllNamespaceInfo(c, metav1.NamespaceSystem)
+		e2ekubectl.LogFailedContainers(c, metav1.NamespaceSystem, framework.Logf)
 		framework.Failf("Error waiting for all pods to be running and ready: %v", err)
 	}
 
