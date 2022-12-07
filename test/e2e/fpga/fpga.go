@@ -29,7 +29,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
-	"k8s.io/kubernetes/test/e2e/framework/kubectl"
+	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
+	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	admissionapi "k8s.io/pod-security-admission/api"
 )
@@ -85,10 +86,10 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 	}
 
 	ginkgo.By(fmt.Sprintf("namespace %s: deploying FPGA plugin in %s mode", fmw.Namespace.Name, pluginMode))
-	framework.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-k", tmpDir)
+	e2ekubectl.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-k", tmpDir)
 
 	ginkgo.By("deploying mappings")
-	framework.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-f", mappingsCollectionPath)
+	e2ekubectl.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-f", mappingsCollectionPath)
 
 	waitForPod(fmw, "intel-fpga-plugin")
 
@@ -108,7 +109,7 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 	pod := createPod(fmw, fmt.Sprintf("fpgaplugin-%s-%s-%s-correct", pluginMode, cmd1, cmd2), resource, image, []string{cmd1, "-S0"})
 
 	ginkgo.By("waiting the pod to finish successfully")
-	fmw.PodClient().WaitForSuccess(pod.ObjectMeta.Name, 60*time.Second)
+	e2epod.NewPodClient(fmw).WaitForSuccess(pod.ObjectMeta.Name, 60*time.Second)
 	// If WaitForSuccess fails, ginkgo doesn't show the logs of the failed container.
 	// Replacing WaitForSuccess with WaitForFinish + 'kubelet logs' would show the logs
 	//fmw.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
@@ -162,8 +163,8 @@ func waitForPod(fmw *framework.Framework, name string) {
 	podList, err := e2epod.WaitForPodsWithLabelRunningReady(fmw.ClientSet, fmw.Namespace.Name,
 		labels.Set{"app": name}.AsSelector(), 1, 100*time.Second)
 	if err != nil {
-		framework.DumpAllNamespaceInfo(fmw.ClientSet, fmw.Namespace.Name)
-		kubectl.LogFailedContainers(fmw.ClientSet, fmw.Namespace.Name, framework.Logf)
+		e2edebug.DumpAllNamespaceInfo(fmw.ClientSet, fmw.Namespace.Name)
+		e2ekubectl.LogFailedContainers(fmw.ClientSet, fmw.Namespace.Name, framework.Logf)
 		framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 	}
 

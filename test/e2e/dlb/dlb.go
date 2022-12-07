@@ -24,7 +24,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
-	"k8s.io/kubernetes/test/e2e/framework/kubectl"
+	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
+	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	admissionapi "k8s.io/pod-security-admission/api"
 )
@@ -50,14 +51,14 @@ func describe() {
 
 	ginkgo.It("runs DLB plugin and a demo workload", func() {
 		ginkgo.By("deploying DLB plugin")
-		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
+		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for DLB plugin's availability")
 		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
 			labels.Set{"app": "intel-dlb-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
 		if err != nil {
-			framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 
@@ -82,10 +83,10 @@ func describe() {
 			podName := strings.TrimSuffix(filepath.Base(yaml), filepath.Ext(yaml))
 
 			ginkgo.By("submitting a pod requesting DLB " + function + " resources")
-			framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 			ginkgo.By("waiting for the DLB demo to succeed")
-			f.PodClient().WaitForSuccess(podName, 200*time.Second)
+			e2epod.NewPodClient(f).WaitForSuccess(podName, 200*time.Second)
 
 			ginkgo.By("getting workload log")
 			log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, podName, podName)

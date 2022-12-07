@@ -22,7 +22,8 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
-	"k8s.io/kubernetes/test/e2e/framework/kubectl"
+	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
+	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	admissionapi "k8s.io/pod-security-admission/api"
 )
@@ -58,14 +59,14 @@ func describeQatDpdkPlugin() {
 
 	ginkgo.It("measures performance of DPDK", func() {
 		ginkgo.By("deploying QAT plugin in DPDK mode")
-		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
+		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for QAT plugin's availability")
 		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
 			labels.Set{"app": "intel-qat-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
 		if err != nil {
-			framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 
@@ -80,15 +81,15 @@ func describeQatDpdkPlugin() {
 		}
 
 		ginkgo.By("submitting a crypto pod requesting QAT resources")
-		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
+		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
 		ginkgo.By("waiting the crypto pod to finnish successfully")
-		f.PodClient().WaitForSuccess("qat-dpdk-test-crypto-perf-tc1", 60*time.Second)
+		e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-crypto-perf-tc1", 60*time.Second)
 
 		ginkgo.By("submitting a compress pod requesting QAT resources")
-		framework.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
+		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
 		ginkgo.By("waiting the compress pod to finnish successfully")
-		f.PodClient().WaitForSuccess("qat-dpdk-test-compress-perf-tc1", 60*time.Second)
+		e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-compress-perf-tc1", 60*time.Second)
 	})
 }

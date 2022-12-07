@@ -61,7 +61,11 @@ func (c *mockClient) Patch(context.Context, client.Object, client.Patch, ...clie
 	return nil
 }
 
-func (c *mockClient) Status() client.StatusWriter {
+func (c *mockClient) Status() client.SubResourceWriter {
+	return nil
+}
+
+func (c *mockClient) SubResource(subResource string) client.SubResourceWriter {
 	return nil
 }
 

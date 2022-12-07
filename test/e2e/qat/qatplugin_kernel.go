@@ -25,7 +25,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
-	"k8s.io/kubernetes/test/e2e/framework/kubectl"
+	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
+	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	imageutils "k8s.io/kubernetes/test/utils/image"
 	admissionapi "k8s.io/pod-security-admission/api"
@@ -50,14 +51,14 @@ func describeQatKernelPlugin() {
 
 	ginkgo.It("checks availability of QAT resources", func() {
 		ginkgo.By("deploying QAT plugin in kernel mode")
-		framework.RunKubectlOrDie(f.Namespace.Name, "create", "-f", yamlPath)
+		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "-f", yamlPath)
 
 		ginkgo.By("waiting for QAT plugin's availability")
 		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
 			labels.Set{"app": "intel-qat-kernel-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
 		if err != nil {
-			framework.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			kubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 
@@ -95,6 +96,6 @@ func describeQatKernelPlugin() {
 		framework.ExpectNoError(err, "pod Create API error")
 
 		ginkgo.By("waiting the pod to finnish successfully")
-		f.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
+		e2epod.NewPodClient(f).WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
 	})
 }
