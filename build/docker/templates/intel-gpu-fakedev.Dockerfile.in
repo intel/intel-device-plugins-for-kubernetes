@@ -1,0 +1,8 @@
+#define _ENTRYPOINT_ /usr/local/bin/intel_gpu_fakedev
+ARG CMD=gpu_fakedev
+
+#include "default_plugin.docker"
+
+LABEL name='intel-gpu-fakedev'
+LABEL summary='Fake device file generator for Intel® GPU plugin'
+LABEL description='Fake device file generator provides fake sysfs+devfs content for Intel GPU plugin from its initcontainer, for scalability testing'

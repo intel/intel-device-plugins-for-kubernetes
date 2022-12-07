@@ -11,6 +11,7 @@ cmd/fpga_crihook/fpga_crihook
 cmd/dlb_plugin/dlb_plugin
 cmd/fpga_plugin/fpga_plugin
 cmd/fpga_tool/fpga_tool
+cmd/gpu_fakedev/gpu_fakedev
 cmd/gpu_nfdhook/gpu_nfdhook
 cmd/gpu_plugin/gpu_plugin
 cmd/iaa_plugin/iaa_plugin
