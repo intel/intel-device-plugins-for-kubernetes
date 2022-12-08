@@ -238,7 +238,7 @@ The summary of resources available via plugins in this repository is given in th
    * [intelgpu-job.yaml](demo/intelgpu-job.yaml)
  * `iaa.intel.com`  : `wq-user-[shared or dedicated]`
    * [iaa-qpl-demo-pod.yaml](demo/iaa-qpl-demo-pod.yaml)
- * `qat.intel.com`  : `generic` or `cy`/`dc`/`sym`/`asym`
+ * `qat.intel.com`  : `generic` or `cy`/`dc`
    * [crypto-perf-dpdk-pod-requesting-qat.yaml](deployments/qat_dpdk_app/base/crypto-perf-dpdk-pod-requesting-qat.yaml)
  * `sgx.intel.com`  : `epc`
    * [intelsgx-job.yaml](deployments/sgx_enclave_apps/base/intelsgx-job.yaml)
