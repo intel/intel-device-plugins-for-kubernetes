@@ -67,7 +67,7 @@ func describeQatKernelPlugin() {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
 
-		ginkgo.By("checking the resource is allocatable")
+		ginkgo.By("checking if the resource is allocatable")
 		if err = utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy1_dc0", 30*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
@@ -95,7 +95,7 @@ func describeQatKernelPlugin() {
 			podSpec, metav1.CreateOptions{})
 		framework.ExpectNoError(err, "pod Create API error")
 
-		ginkgo.By("waiting the pod to finnish successfully")
+		ginkgo.By("waiting the pod to finish successfully")
 		e2epod.NewPodClient(f).WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
 	})
 }

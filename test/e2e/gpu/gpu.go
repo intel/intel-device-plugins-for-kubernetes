@@ -70,7 +70,7 @@ func describe() {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
 
-		ginkgo.By("checking the resource is allocatable")
+		ginkgo.By("checking if the resource is allocatable")
 		if err = utils.WaitForNodesWithResource(f.ClientSet, "gpu.intel.com/i915", 30*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
@@ -97,7 +97,7 @@ func describe() {
 		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), podSpec, metav1.CreateOptions{})
 		framework.ExpectNoError(err, "pod Create API error")
 
-		ginkgo.By("waiting the pod to finnish successfully")
+		ginkgo.By("waiting the pod to finish successfully")
 		e2epod.NewPodClient(f).WaitForSuccess(pod.ObjectMeta.Name, 60*time.Second)
 
 		ginkgo.By("checking log output")

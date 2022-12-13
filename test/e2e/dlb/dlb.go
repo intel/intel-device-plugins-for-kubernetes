@@ -68,7 +68,7 @@ func describe() {
 		}
 
 		for _, resource := range []v1.ResourceName{"dlb.intel.com/pf", "dlb.intel.com/vf"} {
-			ginkgo.By("checking the " + resource.String() + " resource is allocatable")
+			ginkgo.By("checking if the " + resource.String() + " resource is allocatable")
 			if err = utils.WaitForNodesWithResource(f.ClientSet, resource, 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource %s: %v", resource, err)
 			}

@@ -69,7 +69,7 @@ func describeQatPluginCy() {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
 
-		ginkgo.By("checking the resource is allocatable")
+		ginkgo.By("checking if the resource is allocatable")
 		if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy", 30*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}

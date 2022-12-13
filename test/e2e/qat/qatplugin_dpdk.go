@@ -75,7 +75,7 @@ func describeQatDpdkPlugin() {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
 
-		ginkgo.By("checking the resource is allocatable")
+		ginkgo.By("checking if the resource is allocatable")
 		if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/generic", 30*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
@@ -83,13 +83,13 @@ func describeQatDpdkPlugin() {
 		ginkgo.By("submitting a crypto pod requesting QAT resources")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
-		ginkgo.By("waiting the crypto pod to finnish successfully")
+		ginkgo.By("waiting the crypto pod to finish successfully")
 		e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-crypto-perf-tc1", 60*time.Second)
 
 		ginkgo.By("submitting a compress pod requesting QAT resources")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
-		ginkgo.By("waiting the compress pod to finnish successfully")
+		ginkgo.By("waiting the compress pod to finish successfully")
 		e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-compress-perf-tc1", 60*time.Second)
 	})
 }
