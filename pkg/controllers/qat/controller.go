@@ -34,7 +34,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-const ownerKey = ".metadata.controller.qat"
+const (
+	ownerKey          = ".metadata.controller.qat"
+	initcontainerName = "intel-qat-initcontainer"
+)
 
 var defaultNodeSelector = deployments.QATPluginDaemonSet().Spec.Template.Spec.NodeSelector
 
@@ -126,6 +129,7 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		if ds.Spec.Template.Spec.InitContainers != nil {
 			ds.Spec.Template.Spec.InitContainers = nil
 			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "sysfs")
+			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "qat-config")
 			updated = true
 		}
 	} else {
@@ -217,10 +221,20 @@ func setInitContainer(dsSpec *v1.PodSpec, dpSpec devicepluginv1.QatDevicePluginS
 			Image:           dpSpec.InitImage,
 			ImagePullPolicy: "IfNotPresent",
 			Name:            "init-sriov-numvfs",
-			Env: []v1.EnvVar{{
-				Name:  "ENABLED_QAT_PF_PCIIDS",
-				Value: strings.Join(enablingPfPciIDs, " "),
-			}},
+			Env: []v1.EnvVar{
+				{
+					Name:  "ENABLED_QAT_PF_PCIIDS",
+					Value: strings.Join(enablingPfPciIDs, " "),
+				},
+				{
+					Name: "NODE_NAME",
+					ValueFrom: &v1.EnvVarSource{
+						FieldRef: &v1.ObjectFieldSelector{
+							FieldPath: "spec.nodeName",
+						},
+					},
+				},
+			},
 			SecurityContext: &v1.SecurityContext{
 				SELinuxOptions: &v1.SELinuxOptions{
 					Type: "container_device_plugin_init_t",
@@ -236,6 +250,29 @@ func setInitContainer(dsSpec *v1.PodSpec, dpSpec devicepluginv1.QatDevicePluginS
 			},
 		}}
 	addVolumeIfMissing(dsSpec, "sysfs", "/sys", v1.HostPathDirectoryOrCreate)
+
+	mode := int32(0440)
+
+	if dpSpec.ProvisioningConfig != "" {
+		dsSpec.Volumes = append(dsSpec.Volumes, v1.Volume{
+			Name: "qat-config",
+			VolumeSource: v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{Name: dpSpec.ProvisioningConfig},
+					DefaultMode:          &mode,
+				},
+			},
+		})
+
+		for i, initcontainer := range dsSpec.InitContainers {
+			if initcontainer.Name == initcontainerName {
+				dsSpec.InitContainers[i].VolumeMounts = append(dsSpec.InitContainers[i].VolumeMounts, v1.VolumeMount{
+					Name:      "qat-config",
+					MountPath: "/qat-init/conf",
+				})
+			}
+		}
+	}
 }
 
 func addVolumeIfMissing(spec *v1.PodSpec, name, path string, hpType v1.HostPathType) {

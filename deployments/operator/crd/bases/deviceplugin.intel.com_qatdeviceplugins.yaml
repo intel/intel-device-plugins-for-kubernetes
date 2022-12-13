@@ -102,6 +102,10 @@ spec:
                 - balanced
                 - packed
                 type: string
+              provisioningConfig:
+                description: ProvisioningConfig is a ConfigMap used to pass the configuration
+                  of QAT devices into qat initcontainer.
+                type: string
             type: object
           status:
             description: 'QatDevicePluginStatus defines the observed state of QatDevicePlugin.

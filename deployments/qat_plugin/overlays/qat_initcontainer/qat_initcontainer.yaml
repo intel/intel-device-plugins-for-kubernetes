@@ -6,7 +6,12 @@ spec:
   template:
     spec:
       initContainers:
-      - name: sriov-numvfs
+      - name: intel-qat-initcontainer
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
         image: intel/intel-qat-initcontainer:devel
         securityContext:
           readOnlyRootFilesystem: true
@@ -14,7 +19,13 @@ spec:
         volumeMounts:
         - name: sysfs
           mountPath: /sys
+        - name: qat-config
+          mountPath: /qat-init/conf
       volumes:
       - name: sysfs
         hostPath:
           path: /sys
+      - name: qat-config
+        configMap:
+          name: qat-config
+          defaultMode: 0440

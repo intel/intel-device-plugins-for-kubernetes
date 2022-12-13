@@ -91,5 +91,28 @@ func (r *QatDevicePlugin) validatePlugin() error {
 		}
 	}
 
+	if len(r.Spec.ProvisioningConfig) > 0 {
+		if len(r.Spec.InitImage) == 0 {
+			return errors.Errorf("ProvisioningConfig is set with no InitImage")
+		}
+
+		// check if 4xxxvf is enabled
+		contains := false
+		devicesWithCapabilities := map[KernelVfDriver]struct{}{
+			"4xxxvf": {},
+		}
+
+		for _, kernelVfDriver := range r.Spec.KernelVfDrivers {
+			if _, ok := devicesWithCapabilities[kernelVfDriver]; ok {
+				contains = true
+				break
+			}
+		}
+
+		if !contains {
+			return errors.Errorf("ProvisioningConfig is available only for 4xxx devices")
+		}
+	}
+
 	return validatePluginImage(r.Spec.Image, "intel-qat-plugin", qatMinVersion)
 }

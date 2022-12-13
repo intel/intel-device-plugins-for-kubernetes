@@ -38,7 +38,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	no := false
 	pluginAnnotations := devicePlugin.ObjectMeta.DeepCopy().Annotations
 
-	return &apps.DaemonSet{
+	daemonSet := apps.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
 			APIVersion: "apps/v1",
@@ -68,7 +68,17 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 					AutomountServiceAccountToken: &no,
 					Containers: []v1.Container{
 						{
-							Name:            appLabel,
+							Name: appLabel,
+							Env: []v1.EnvVar{
+								{
+									Name: "NODE_NAME",
+									ValueFrom: &v1.EnvVarSource{
+										FieldRef: &v1.ObjectFieldSelector{
+											FieldPath: "spec.nodeName",
+										},
+									},
+								},
+							},
 							Args:            getPodArgs(devicePlugin),
 							Image:           devicePlugin.Spec.Image,
 							ImagePullPolicy: "IfNotPresent",
@@ -140,6 +150,12 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 			},
 		},
 	}
+	// add the optional init container
+	if devicePlugin.Spec.InitImage != "" {
+		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec)
+	}
+
+	return &daemonSet
 }
 
 // Test that QAT daemonset created by using go:embed is

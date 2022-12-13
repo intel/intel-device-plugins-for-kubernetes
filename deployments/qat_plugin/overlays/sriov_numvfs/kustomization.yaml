@@ -1,4 +1,0 @@
-bases:
-- ../../base
-patchesStrategicMerge:
-- sriov_numvfs_init.yaml
