@@ -80,7 +80,7 @@ func describe() {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
 
-		ginkgo.By("checking the resource is allocatable")
+		ginkgo.By("checking if the resource is allocatable")
 		if err = utils.WaitForNodesWithResource(f.ClientSet, "iaa.intel.com/wq-user-dedicated", 300*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
