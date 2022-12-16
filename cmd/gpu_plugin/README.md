@@ -149,7 +149,7 @@ See [the development guide](../../DEVEL.md) for details if you want to deploy a 
 Simplest option to enable use of Intel GPUs in Kubernetes Pods.
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin?ref=<RELEASE_VERSION>'
 ```
 
 #### Install to nodes with Intel GPUs with NFD
@@ -158,13 +158,13 @@ Deploying GPU plugin to only nodes that have Intel GPU attached. [Node Feature D
 
 ```bash
 # Start NFD - if your cluster doesn't have NFD installed yet
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=<RELEASE_VERSION>'
 
 # Create NodeFeatureRules for detecting GPUs on nodes
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=<RELEASE_VERSION>'
 
 # Create GPU plugin daemonset
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/nfd_labeled_nodes?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/nfd_labeled_nodes?ref=<RELEASE_VERSION>'
 ```
 
 #### Install to nodes with Intel GPUs with Fractional resources
@@ -184,13 +184,13 @@ the flag enabling, it is recommended to use kustomization by running:
 
 ```bash
 # Start NFD with GPU related configuration changes
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/gpu?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/gpu?ref=<RELEASE_VERSION>'
 
 # Create NodeFeatureRules for detecting GPUs on nodes
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=<RELEASE_VERSION>'
 
 # Create GPU plugin daemonset
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/fractional_resources?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/fractional_resources?ref=<RELEASE_VERSION>'
 ```
 
 ##### Fractional resources details
