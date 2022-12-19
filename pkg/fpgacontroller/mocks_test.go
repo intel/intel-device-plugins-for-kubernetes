@@ -65,7 +65,7 @@ func (c *mockClient) Status() client.SubResourceWriter {
 	return nil
 }
 
-func (c *mockClient) SubResource(subResource string) client.SubResourceWriter {
+func (c *mockClient) SubResource(subResource string) client.SubResourceClient {
 	return nil
 }
 
