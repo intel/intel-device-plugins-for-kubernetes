@@ -1,0 +1,6 @@
+resources:
+# XeLink topology information is only available from >= 1.x.y release
+- https://raw.githubusercontent.com/intel/xpumanager/v1.2.0_golden/deployment/kubernetes/daemonset-intel-xpum.yaml
+namespace: monitoring
+patchesStrategicMerge:
+- kustom/kustom_xpumanager.yaml

@@ -122,6 +122,7 @@ jobs:
           - intel-idxd-config-initcontainer
           - intel-dlb-plugin
           - intel-dlb-initcontainer
+          - intel-xpumanager-sidecar
 
           # Demo images
           - crypto-perf
