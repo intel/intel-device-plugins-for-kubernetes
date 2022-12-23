@@ -16,9 +16,9 @@
 ###
 FROM debian:unstable-slim AS builder
 RUN apt-get update && apt-get install -y --no-install-recommends gcc make patch autoconf automake libtool pkg-config libjson-c-dev uuid-dev curl ca-certificates
-ARG ACCEL_CONFIG_VERSION="3.5.0"
+ARG ACCEL_CONFIG_VERSION="3.5.2"
 ARG ACCEL_CONFIG_DOWNLOAD_URL="https://github.com/intel/idxd-config/archive/accel-config-v$ACCEL_CONFIG_VERSION.tar.gz"
-ARG ACCEL_CONFIG_SHA256="4d2fecbbb29f293791214f475c44e73c25171f75c1725dbc516731b768e2e7c9"
+ARG ACCEL_CONFIG_SHA256="a2d52007b4bfdc050a21893466e78328c6800f9a87b0806c7e7f5775ff48387b"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -fsSL "$ACCEL_CONFIG_DOWNLOAD_URL" -o accel-config.tar.gz && echo "$ACCEL_CONFIG_SHA256 accel-config.tar.gz" | sha256sum -c - && tar -xzf accel-config.tar.gz
 RUN cd idxd-config-accel-config-v$ACCEL_CONFIG_VERSION && ./git-version-gen && autoreconf -i && ./configure -q --libdir=/usr/lib64 --disable-test --disable-docs && make && make install
