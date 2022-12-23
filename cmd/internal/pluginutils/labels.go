@@ -14,6 +14,12 @@
 
 package pluginutils
 
+import (
+	"strings"
+
+	"k8s.io/klog/v2"
+)
+
 // Split returns the given string cut to chunks of size up to maxLength size.
 // maxLength refers to the max length of the strings in the returned slice.
 // If the whole input string fits under maxLength, it is not split.
@@ -25,7 +31,7 @@ func Split(str string, maxLength uint) []string {
 	for len(remainingString) >= 0 {
 		if uint(len(remainingString)) <= maxLength {
 			results = append(results, remainingString)
-			return results
+			break
 		}
 
 		results = append(results, remainingString[:maxLength])
@@ -33,4 +39,79 @@ func Split(str string, maxLength uint) []string {
 	}
 
 	return results
+}
+
+// SplitAtLastAlphaNum returns the given string cut to chunks of size up to maxLength.
+// Difference to the Split above, this cuts the string at the last alpha numeric character
+// (a-z0-9A-Z) and adds concatChars at the beginning of the next string chunk.
+func SplitAtLastAlphaNum(str string, maxLength uint, concatChars string) []string {
+	remainingString := str
+	results := []string{}
+
+	if maxLength <= uint(len(concatChars)) {
+		klog.Errorf("SplitAtLastAlphaNum: maxLength cannot be smaller than concatChars: %d vs %d", maxLength, uint(len(concatChars)))
+
+		results = []string{}
+
+		return results
+	}
+
+	isAlphaNum := func(c byte) bool {
+		return c >= 'a' && c <= 'z' ||
+			c >= 'A' && c <= 'Z' ||
+			c >= '0' && c <= '9'
+	}
+
+	strPrefix := ""
+
+	for len(remainingString) >= 0 {
+		if uint(len(remainingString)) <= maxLength {
+			results = append(results, (strPrefix + remainingString))
+			break
+		}
+
+		alphaNumIndex := int(maxLength) - 1
+		for alphaNumIndex >= 0 && !isAlphaNum(remainingString[alphaNumIndex]) {
+			alphaNumIndex--
+		}
+
+		if alphaNumIndex < 0 {
+			klog.Errorf("SplitAtLastAlphaNum: chunk without any alpha numeric characters: %s", remainingString)
+
+			results = []string{}
+
+			return results
+		}
+
+		// increase by one to get the actual cut index
+		alphaNumIndex++
+
+		results = append(results, strPrefix+remainingString[:alphaNumIndex])
+		remainingString = remainingString[alphaNumIndex:]
+
+		if strPrefix == "" {
+			maxLength -= uint(len(concatChars))
+			strPrefix = concatChars
+		}
+	}
+
+	return results
+}
+
+func ConcatAlphaNumSplitChunks(chunks []string, concatChars string) string {
+	if len(chunks) == 1 {
+		return chunks[0]
+	}
+
+	s := chunks[0]
+
+	for _, chunk := range chunks[1:] {
+		if !strings.HasPrefix(chunk, concatChars) {
+			klog.Warningf("Chunk has invalid prefix: %s (should have %s)", chunk[:len(concatChars)], concatChars)
+		}
+
+		s += chunk[len(concatChars):]
+	}
+
+	return s
 }

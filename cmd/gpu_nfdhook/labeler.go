@@ -46,6 +46,7 @@ const (
 	controlDeviceRE     = `^controlD[0-9]+$`
 	vendorString        = "0x8086"
 	labelMaxLength      = 63
+	labelControlChar    = "Z"
 )
 
 type labelMap map[string]string
@@ -391,11 +392,12 @@ func (l *labeler) createLabels() error {
 
 	if gpuCount > 0 {
 		// add gpu list label (example: "card0.card1.card2") - deprecated
-		l.labels[labelNamespace+gpuListLabelName] = pluginutils.Split(strings.Join(gpuNameList, "."), labelMaxLength)[0]
+		l.labels[labelNamespace+gpuListLabelName] = pluginutils.SplitAtLastAlphaNum(
+			strings.Join(gpuNameList, "."), labelMaxLength, labelControlChar)[0]
 
 		// add gpu num list label(s) (example: "0.1.2", which is short form of "card0.card1.card2")
 		allGPUs := strings.Join(gpuNumList, ".")
-		gpuNumLists := pluginutils.Split(allGPUs, labelMaxLength)
+		gpuNumLists := pluginutils.SplitAtLastAlphaNum(allGPUs, labelMaxLength, labelControlChar)
 
 		l.labels[labelNamespace+gpuNumListLabelName] = gpuNumLists[0]
 		for i := 1; i < len(gpuNumLists); i++ {
@@ -406,7 +408,7 @@ func (l *labeler) createLabels() error {
 			// add numa node mapping to labels: gpu.intel.com/numa-gpu-map="0-0.1.2.3_1-4.5.6.7"
 			numaMappingLabel := createNumaNodeMappingLabel(numaMapping)
 
-			numaMappingLabelList := pluginutils.Split(numaMappingLabel, labelMaxLength)
+			numaMappingLabelList := pluginutils.SplitAtLastAlphaNum(numaMappingLabel, labelMaxLength, labelControlChar)
 
 			l.labels[labelNamespace+numaMappingName] = numaMappingLabelList[0]
 			for i := 1; i < len(numaMappingLabelList); i++ {
@@ -420,7 +422,7 @@ func (l *labeler) createLabels() error {
 		// aa pci-group label(s), (two group example: "1.2.3.4_5.6.7.8")
 		allPCIGroups := l.createPCIGroupLabel(gpuNumList)
 		if allPCIGroups != "" {
-			pciGroups := pluginutils.Split(allPCIGroups, labelMaxLength)
+			pciGroups := pluginutils.SplitAtLastAlphaNum(allPCIGroups, labelMaxLength, labelControlChar)
 
 			l.labels[labelNamespace+pciGroupLabelName] = pciGroups[0]
 			for i := 1; i < len(gpuNumLists); i++ {
