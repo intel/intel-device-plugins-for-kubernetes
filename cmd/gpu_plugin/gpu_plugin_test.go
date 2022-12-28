@@ -239,14 +239,37 @@ func TestScan(t *testing.T) {
 			sysfsdirs: []string{
 				"card0/device/drm/card0",
 				"card1/device/drm/card1",
+				"card0/gt/gt0/error_counter",
+				"card1/gt/gt0/error_counter",
 			},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 				"card1/device/vendor": []byte("0x8086"),
+				"card0/gt/gt0/error_counter/fatal_guc": []byte("0"),
+				"card1/gt/gt0/error_counter/sgunit_fatal": []byte("0"),
 			},
 			devfsdirs:        []string{"card0", "card1"},
 			options:          cliOptions{sharedDevNum: 13, enableMonitoring: true},
 			expectedDevs:     26,
+			expectedMonitors: 1,
+		},
+		{
+			name: "two devices with with fatal errors + monitoring",
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card1/device/drm/card1",
+				"card0/gt/gt0/error_counter",
+				"card1/gt/gt0/error_counter",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card1/device/vendor": []byte("0x8086"),
+				"card0/gt/gt0/error_counter/fatal_guc": []byte("1"),
+				"card1/gt/gt0/error_counter/sgunit_fatal": []byte("1"),
+			},
+			devfsdirs:        []string{"card0", "card1"},
+			options:          cliOptions{sharedDevNum: 13, enableMonitoring: true},
+			expectedDevs:     0,
 			expectedMonitors: 1,
 		},
 		{

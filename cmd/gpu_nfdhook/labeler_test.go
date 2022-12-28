@@ -346,6 +346,32 @@ func getTestCases() []testcase {
 			sysfsdirs: []string{
 				"card0/device/drm/card0",
 				"card1/device/drm/card1",
+				"card0/gt/gt0/error_counter",
+				"card0/gt/gt1/error_counter",
+				"card1/gt/gt0/error_counter",
+			},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor":                  []byte("0x8086"),
+				"card1/device/vendor":                  []byte("0x8086"),
+				"card0/gt/gt0/error_counter/fatal_guc": []byte("0"),
+				"card0/gt/gt1/error_counter/fatal_guc": []byte("1"),
+				"card1/gt/gt0/error_counter/fatal_guc": []byte("0"),
+			},
+			name:           "when one tile on multi-tile gpu has fatal errors",
+			memoryOverride: 16000000000,
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/millicores": "1000",
+				"gpu.intel.com/memory.max": "16000000000",
+				"gpu.intel.com/gpu-numbers": "1",
+				"gpu.intel.com/cards":      "card1",
+				"gpu.intel.com/tiles":      "1",
+			},
+		},
+		{
+			sysfsdirs: []string{
+				"card0/device/drm/card0",
+				"card1/device/drm/card1",
 				"card2/device/drm/card2",
 				"card3/device/drm/card3",
 				"card4/device/drm/card4",
