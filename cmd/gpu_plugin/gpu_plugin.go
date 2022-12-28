@@ -304,7 +304,9 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			return nil, errors.Wrap(err, "Can't read device folder")
 		}
 
-		isPFwithVFs := pluginutils.IsSriovPFwithVFs(path.Join(dp.sysfsDir, f.Name()))
+		sysPath := path.Join(dp.sysfsDir, f.Name())
+		isPFwithVFs := pluginutils.IsSriovPFwithVFs(sysPath)
+		errors, _ := pluginutils.GpuFatalErrors(sysPath)
 
 		for _, drmFile := range drmFiles {
 			if dp.controlDeviceReg.MatchString(drmFile.Name()) {
@@ -324,7 +326,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				Permissions:   "rw",
 			}
 
-			if !isPFwithVFs {
+			if errors == 0 && !isPFwithVFs {
 				klog.V(4).Infof("Adding %s to GPU %s", devPath, f.Name())
 
 				nodes = append(nodes, devSpec)

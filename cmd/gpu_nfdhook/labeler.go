@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2022 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -115,7 +115,9 @@ func (l *labeler) scan() ([]string, error) {
 			continue
 		}
 
-		dat, err := os.ReadFile(path.Join(l.sysfsDRMDir, f.Name(), "device/vendor"))
+		sysPath := path.Join(l.sysfsDRMDir, f.Name())
+
+		dat, err := os.ReadFile(path.Join(sysPath, "device/vendor"))
 		if err != nil {
 			klog.Warning("Skipping. Can't read vendor file: ", err)
 			continue
@@ -126,14 +128,19 @@ func (l *labeler) scan() ([]string, error) {
 			continue
 		}
 
-		if pluginutils.IsSriovPFwithVFs(path.Join(l.sysfsDRMDir, f.Name())) {
+		if pluginutils.IsSriovPFwithVFs(sysPath) {
 			klog.V(4).Infof("Skipping PF with VF")
 			continue
 		}
 
-		_, err = os.ReadDir(path.Join(l.sysfsDRMDir, f.Name(), "device/drm"))
+		_, err = os.ReadDir(path.Join(sysPath, "device/drm"))
 		if err != nil {
 			return gpuNameList, errors.Wrap(err, "Can't read device folder")
+		}
+
+		if errors, errname := pluginutils.GpuFatalErrors(sysPath); errors != 0 {
+			klog.V(4).Infof("Skipping device with %d '%s' errors", errors, errname)
+			continue
 		}
 
 		gpuNameList = append(gpuNameList, f.Name())
