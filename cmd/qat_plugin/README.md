@@ -104,7 +104,7 @@ release version numbers in the format `x.y.z`, corresponding to the branches and
 repository. Thus the easiest way to deploy the plugin in your cluster is to run this command
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/qat_plugin?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/qat_plugin?ref=<RELEASE_VERSION>'
 ```
 
 Where `<RELEASE_VERSION>` needs to be substituted with the desired [release tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) or `main` to get `devel` images.
@@ -112,7 +112,7 @@ Where `<RELEASE_VERSION>` needs to be substituted with the desired [release tag]
 An alternative kustomization for deploying the plugin is with the debug mode switched on:
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/qat_plugin/overlays/debug?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/qat_plugin/overlays/debug?ref=<RELEASE_VERSION>'
 ```
 
 > **Note**: It is also possible to run the QAT device plugin using a non-root user. To do this,
@@ -122,7 +122,7 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 
 #### Automatic Provisioning
 
-There's a sample [qat initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-qat-initcontainer.Dockerfile). Regardless of device types, the script running inside the initcontainer enables QAT SR-IOV VFs. 
+There's a sample [qat initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-qat-initcontainer.Dockerfile). Regardless of device types, the script running inside the initcontainer enables QAT SR-IOV VFs.
 
 To deploy, run as follows:
 
@@ -132,9 +132,9 @@ $ kubectl apply -k deployments/qat_plugin/overlays/qat_initcontainer/
 
 In addition to the default configuration, you can add device-specific configurations via ConfigMap.
 
-| Device | Possible Configuration | How To Customize | Options | Notes | 
+| Device | Possible Configuration | How To Customize | Options | Notes |
 |:-------|:-----------------------|:-----------------|:--------|:------|
-| 4xxx, 401xx | [cfg_services](https://github.com/torvalds/linux/blob/42e66b1cc3a070671001f8a1e933a80818a192bf/Documentation/ABI/testing/sysfs-driver-qat) reports the configured services (crypto services or compression services) of the QAT device. | `ServicesEnabled=<value>` | compress:`dc`, crypto:`sym;asym` | Linux 6.0+ kernel is required. | 
+| 4xxx, 401xx | [cfg_services](https://github.com/torvalds/linux/blob/42e66b1cc3a070671001f8a1e933a80818a192bf/Documentation/ABI/testing/sysfs-driver-qat) reports the configured services (crypto services or compression services) of the QAT device. | `ServicesEnabled=<value>` | compress:`dc`, crypto:`sym;asym` | Linux 6.0+ kernel is required. |
 
 To create a provisioning config after customizing, run as follows:
 

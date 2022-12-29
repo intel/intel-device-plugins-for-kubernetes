@@ -84,8 +84,8 @@ Where `<RELEASE_VERSION>` needs to be substituted with the desired [release tag]
 First, deploy `node-feature-discovery`:
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx?ref=<RELEASE_VERSION>
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx?ref=<RELEASE_VERSION>'
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=<RELEASE_VERSION>'
 ```
 
 **Note:** The [default configuration](/deployments/nfd/overlays/node-feature-rules/node-feature-rules.yaml) assumes that the in-tree driver is used and enabled (`CONFIG_X86_SGX=y`). If
@@ -94,7 +94,7 @@ the SGX DCAP out-of-tree driver is used, the `kernel.config` match expression mu
 Next, deploy the Intel Device plugin operator:
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=<RELEASE_VERSION>'
 ```
 
 **Note:** See the operator [deployment details](/cmd/operator/README.md) for its dependencies and for setting it up on systems behind proxies.
@@ -102,7 +102,7 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 Finally, deploy the SGX device plugin with the operator
 
 ```bash
-$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/<RELEASE_VERSION>/deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml
+$ kubectl apply -f 'https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/<RELEASE_VERSION>/deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml'
 ```
 
 ### Installation Using kubectl
@@ -193,7 +193,7 @@ for generating SGX quotes for workloads. It is deployed with `hostNetwork: true`
 to allow connections to localhost PCCS.
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_aesmd?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_aesmd?ref=<RELEASE_VERSION>'
 $ kubectl get pods
   NAME                     READY     STATUS    RESTARTS   AGE
   intel-sgx-aesmd-mrnm8                1/1     Running   0          3h47m
@@ -211,7 +211,7 @@ $ kubectl get pods
 >   extraMounts:
 >   - hostPath: /var/run/aesmd
 >     containerPath: /var/run/aesmd
->     propagation: Bidirectional 
+>     propagation: Bidirectional
 >```
 > And bootstrap kind with it \
 > `$ kind create cluster --config kind_config.yaml`
@@ -219,7 +219,7 @@ $ kubectl get pods
 The sample application runs SGX DCAP Quote Generation sample:
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_enclave_apps/overlays/sgx_ecdsa_aesmd_quote?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_enclave_apps/overlays/sgx_ecdsa_aesmd_quote?ref=<RELEASE_VERSION>'
 $ kubectl get pods
   NAME                                 READY   STATUS      RESTARTS   AGE
   intel-sgx-aesmd-mrnm8                1/1     Running     0          3h55m

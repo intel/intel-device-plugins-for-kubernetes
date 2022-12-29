@@ -151,7 +151,7 @@ The following images are available on the Docker hub:
 
 Depending on the FPGA mode, run either
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/af?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/af?ref=<RELEASE_VERSION>'
 namespace/intelfpgaplugin-system created
 customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
 customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created
@@ -168,7 +168,7 @@ issuer.cert-manager.io/intelfpgaplugin-selfsigned-issuer created
 ```
 or
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/region?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_plugin/overlays/region?ref=<RELEASE_VERSION>'
 namespace/intelfpgaplugin-system created
 customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com created
 customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com created

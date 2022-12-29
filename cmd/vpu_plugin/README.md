@@ -51,7 +51,7 @@ release version numbers in the format `x.y.z`, corresponding to the branches and
 repository. Thus the easiest way to deploy the plugin in your cluster is to run this command
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/vpu_plugin?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/vpu_plugin?ref=<RELEASE_VERSION>'
 daemonset.apps/intel-vpu-plugin created
 ```
 
