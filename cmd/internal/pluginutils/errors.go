@@ -28,9 +28,11 @@ import (
 // file with non-zero value, or (0, "") if there were no fatal errors.
 func GpuFatalErrors(syspath string) (int64, string) {
 	var errname string
+
 	errors := int64(0)
 	for tile := 0; errors == 0; tile++ {
 		path := path.Join(syspath, fmt.Sprintf("gt/gt%d", tile))
+
 		errors, errname = tileFatalErrors(path)
 		if errors > 0 {
 			return errors, errname
@@ -50,7 +52,7 @@ func tileFatalErrors(tilepath string) (int64, string) {
 		return -1, ""
 	}
 
-	if paths == nil || len(paths) == 0 {
+	if len(paths) == 0 {
 		return -1, ""
 	}
 

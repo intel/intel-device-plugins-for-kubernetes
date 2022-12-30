@@ -361,11 +361,11 @@ func getTestCases() []testcase {
 			memoryOverride: 16000000000,
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/millicores": "1000",
-				"gpu.intel.com/memory.max": "16000000000",
+				"gpu.intel.com/millicores":  "1000",
+				"gpu.intel.com/memory.max":  "16000000000",
 				"gpu.intel.com/gpu-numbers": "1",
-				"gpu.intel.com/cards":      "card1",
-				"gpu.intel.com/tiles":      "1",
+				"gpu.intel.com/cards":       "card1",
+				"gpu.intel.com/tiles":       "1",
 			},
 		},
 		{
