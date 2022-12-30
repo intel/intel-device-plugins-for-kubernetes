@@ -14,10 +14,9 @@
 
 FROM ubuntu:22.04 AS builder
 
-RUN apt update && DEBIAN_FRONTEND=noninteractive TZ="Etc/UTC" \
-    apt install -y --no-install-recommends \
-    g++ clang nasm cmake make git ca-certificates uuid-dev \
-    gcc autoconf automake libtool pkg-config libjson-c-dev curl zlib1g-dev
+RUN apt update && apt install -y --no-install-recommends \
+    autoconf automake libtool pkg-config gcc g++ nasm make cmake \
+    git patch ca-certificates curl uuid-dev libjson-c-dev
 
 ARG ACCEL_CONFIG_VERSION=3.5.2
 ARG ACCEL_CONFIG_DOWNLOAD_URL="https://github.com/intel/idxd-config/archive/accel-config-v$ACCEL_CONFIG_VERSION.tar.gz"
@@ -27,25 +26,24 @@ RUN curl -fsSL "$ACCEL_CONFIG_DOWNLOAD_URL" -o accel-config.tar.gz && echo "$ACC
 RUN cd idxd-config-accel-config-v$ACCEL_CONFIG_VERSION && \
     ./git-version-gen && \
     autoreconf -i && \
-    ./configure -q --libdir=/usr/lib64 --disable-test --disable-docs && \
+    ./configure -q --disable-test --disable-docs && \
     make install
 
-RUN git clone --recursive --depth 1 --branch v1.0.0 \
-    https://github.com/intel/qpl.git && \
+RUN git clone --recursive --depth 1 --branch v1.0.0 https://github.com/intel/qpl.git && \
     mkdir qpl/build && cd qpl/build && \
     sed -i '10i #include <stdexcept>' ../tools/benchmarks/include/types.hpp && \
     cmake -DLOG_HW_INIT=ON .. && \
-    cmake --build . --target install
+    make install
 
 FROM ubuntu:22.04
 
-RUN apt update && DEBIAN_FRONTEND=noninteractive TZ="Etc/UTC" \
-    apt install -y libjson-c5 python3
+RUN apt update && apt install -y libjson-c5 python3-minimal sudo
 
-COPY --from=builder /usr/bin/accel-config /usr/bin/
-COPY --from=builder /usr/lib64/libaccel-config.so.1.0.0 "/lib/x86_64-linux-gnu/"
+COPY --from=builder /usr/lib/libaccel-config.so.1.0.0 /lib/x86_64-linux-gnu/
 RUN ldconfig
 
-COPY --from=builder /usr/local/bin/ /usr/local/bin/
+COPY --from=builder /usr/local /usr/local
+COPY --from=builder /qpl/build/examples /usr/local/bin/
+COPY --from=builder /usr/bin/accel-config /usr/local/bin/
 
-ENTRYPOINT cd /usr/local/bin/test_frontend && python init_tests.py --test_path=/usr/local/bin/init_tests
+ENTRYPOINT /bin/bash -e -c '/usr/local/bin/init_tests --gtest_filter="*:-*not*"; cd /usr/local/bin/low-level-api; time for i in $(ls ll_* | grep -v ll_canned_mode_with_data_example); do echo $i; ./$i; echo $?; done'
