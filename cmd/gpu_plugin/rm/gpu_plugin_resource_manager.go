@@ -85,20 +85,20 @@ type ResourceManager interface {
 	SetDevInfos(DeviceInfoMap)
 }
 
-type ContainerAssignments struct {
+type containerAssignments struct {
 	deviceIds map[string]bool
 	tileEnv   string
 }
 
-type PodAssignmentDetails struct {
-	containers []ContainerAssignments
+type podAssignmentDetails struct {
+	containers []containerAssignments
 }
 
 type resourceManager struct {
 	clientset        kubernetes.Interface
 	deviceInfos      DeviceInfoMap
 	prGetClientFunc  getClientFunc
-	assignments      map[string]PodAssignmentDetails // pod name -> assignment details
+	assignments      map[string]podAssignmentDetails // pod name -> assignment details
 	nodeName         string
 	skipID           string
 	fullResourceName string
@@ -139,7 +139,7 @@ func NewResourceManager(skipID, fullResourceName string) (ResourceManager, error
 		skipID:           skipID,
 		fullResourceName: fullResourceName,
 		prGetClientFunc:  podresources.GetV1Client,
-		assignments:      make(map[string]PodAssignmentDetails),
+		assignments:      make(map[string]podAssignmentDetails),
 		retryTimeout:     1 * time.Second,
 		cleanupInterval:  2 * time.Minute,
 	}
@@ -331,7 +331,7 @@ func (rm *resourceManager) GetPreferredFractionalAllocation(request *pluginapi.P
 	assignments, found := rm.assignments[podKey]
 
 	if !found {
-		assignments.containers = make([]ContainerAssignments, podCandidate.allocationTargetNum)
+		assignments.containers = make([]containerAssignments, podCandidate.allocationTargetNum)
 	}
 
 	assignments.containers[containerIndex].tileEnv = affinityMask
