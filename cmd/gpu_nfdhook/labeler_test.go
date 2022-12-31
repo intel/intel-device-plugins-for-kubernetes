@@ -20,6 +20,8 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 )
 
 type testcase struct {
@@ -413,8 +415,8 @@ func getTestCases() []testcase {
 				"gpu.intel.com/millicores":   "27000",
 				"gpu.intel.com/memory.max":   "432000000000",
 				"gpu.intel.com/cards":        "card0.card1.card10.card11.card12.card13.card14.card15.card16.ca",
-				"gpu.intel.com/gpu-numbers":  "0.1.10.11.12.13.14.15.16.17.18.19.2.20.21.22.23.24.25.26.3.4.5.",
-				"gpu.intel.com/gpu-numbers2": "6.7.8.9",
+				"gpu.intel.com/gpu-numbers":  "0.1.10.11.12.13.14.15.16.17.18.19.2.20.21.22.23.24.25.26.3.4.5",
+				"gpu.intel.com/gpu-numbers2": "Z.6.7.8.9",
 				"gpu.intel.com/tiles":        "27",
 			},
 		},
@@ -665,12 +667,12 @@ func getTestCases() []testcase {
 			expectedRetval: nil,
 			expectedLabels: labelMap{
 				"gpu.intel.com/cards":         "card0.card1.card10.card11.card12.card13.card14.card15.card16.ca",
-				"gpu.intel.com/gpu-numbers":   "0.1.10.11.12.13.14.15.16.17.18.19.2.20.21.22.23.24.25.26.3.4.5.",
-				"gpu.intel.com/gpu-numbers2":  "6.7.8.9",
+				"gpu.intel.com/gpu-numbers":   "0.1.10.11.12.13.14.15.16.17.18.19.2.20.21.22.23.24.25.26.3.4.5",
+				"gpu.intel.com/gpu-numbers2":  "Z.6.7.8.9",
 				"gpu.intel.com/memory.max":    "432000000000",
 				"gpu.intel.com/millicores":    "27000",
 				"gpu.intel.com/numa-gpu-map":  "0-0.1.2.3.4.5.6.7.8_1-13.14.15.16.17.18.19.20.21_2-10.11.12.9_3",
-				"gpu.intel.com/numa-gpu-map2": "-22.23.24.25.26",
+				"gpu.intel.com/numa-gpu-map2": "Z-22.23.24.25.26",
 				"gpu.intel.com/tiles":         "27",
 			},
 		},
@@ -729,7 +731,7 @@ func TestSplit(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := split(test.str, test.maxLength)
+		result := pluginutils.Split(test.str, test.maxLength)
 		if !reflect.DeepEqual(test.expectedResult, result) {
 			t.Errorf("\n%q ended up with unexpected result %v vs expected %v", test.name, result, test.expectedResult)
 		}
