@@ -101,7 +101,7 @@ func newMockResourceManager(pods []v1.Pod) ResourceManager {
 		},
 		skipID:           "all",
 		fullResourceName: "gpu.intel.com/i915",
-		assignments:      make(map[string]PodAssignmentDetails),
+		assignments:      make(map[string]podAssignmentDetails),
 		retryTimeout:     1 * time.Millisecond,
 	}
 
