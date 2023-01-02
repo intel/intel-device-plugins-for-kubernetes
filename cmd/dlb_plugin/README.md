@@ -37,8 +37,8 @@ List eventdev devices:
 $ ./usertools/dpdk-devbind.py -s | grep -A10 ^Eventdev
 Eventdev devices using kernel driver
 ====================================
-0000:6d:00.0 'Device 2710' drv=dlb2 unused= 
-0000:72:00.0 'Device 2710' drv=dlb2 unused= 
+0000:6d:00.0 'Device 2710' drv=dlb2 unused=
+0000:72:00.0 'Device 2710' drv=dlb2 unused=
 ...
 ```
 
@@ -59,12 +59,12 @@ Check that new eventdev devices appear:
 $ ./usertools/dpdk-devbind.py -s | grep -A14 ^Eventdev
 Eventdev devices using kernel driver
 ====================================
-0000:6d:00.0 'Device 2710' drv=dlb2 unused= 
-0000:6d:00.1 'Device 2711' drv=dlb2 unused= 
-0000:6d:00.2 'Device 2711' drv=dlb2 unused= 
-0000:6d:00.3 'Device 2711' drv=dlb2 unused= 
-0000:6d:00.4 'Device 2711' drv=dlb2 unused= 
-0000:72:00.0 'Device 2710' drv=dlb2 unused= 
+0000:6d:00.0 'Device 2710' drv=dlb2 unused=
+0000:6d:00.1 'Device 2711' drv=dlb2 unused=
+0000:6d:00.2 'Device 2711' drv=dlb2 unused=
+0000:6d:00.3 'Device 2711' drv=dlb2 unused=
+0000:6d:00.4 'Device 2711' drv=dlb2 unused=
+0000:72:00.0 'Device 2710' drv=dlb2 unused=
 ...
 ```
 
@@ -142,7 +142,7 @@ release version numbers in the format `x.y.z`, corresponding to the branches and
 repository. Thus the easiest way to deploy the plugin in your cluster is to run this command
 
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/dlb_plugin?ref=<RELEASE_VERSION>
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/dlb_plugin?ref=<RELEASE_VERSION>'
 daemonset.apps/intel-dlb-plugin created
 ```
 
