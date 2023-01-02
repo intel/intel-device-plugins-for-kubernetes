@@ -1,0 +1,5 @@
+bases:
+  - ../../base
+patches:
+  - path: add-args.yaml
+  - path: add-nodeselector-intel-gpu.yaml

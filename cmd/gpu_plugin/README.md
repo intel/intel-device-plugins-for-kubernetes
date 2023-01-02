@@ -15,6 +15,7 @@ Table of Contents
     * [Pre-built Images](#pre-built-images)
          * [Install to all nodes](#install-to-all-nodes)
          * [Install to nodes with Intel GPUs with NFD](#install-to-nodes-with-intel-gpus-with-nfd)
+         * [Install to nodes with NFD, Monitoring and Shared-dev](#install-to-nodes-with-nfd-monitoring-and-shared-dev)
          * [Install to nodes with Intel GPUs with Fractional resources](#install-to-nodes-with-intel-gpus-with-fractional-resources)
               * [Fractional resources details](#fractional-resources-details)
     * [Verify Plugin Registration](#verify-plugin-registration)
@@ -165,6 +166,21 @@ $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes
 
 # Create GPU plugin daemonset
 $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/nfd_labeled_nodes?ref=<RELEASE_VERSION>'
+```
+
+#### Install to nodes with NFD, Monitoring and Shared-dev
+
+Same as above, but configures GPU plugin with logging, [monitoring and shared-dev](#modes-and-configuration-options) features enabled. This option is useful when there is a desire to retrieve GPU metrics from nodes. For example with [XPU-Manager](https://github.com/intel/xpumanager/) or [collectd](https://github.com/collectd/collectd/tree/collectd-6.0).
+
+```bash
+# Start NFD - if your cluster doesn't have NFD installed yet
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=<RELEASE_VERSION>'
+
+# Create NodeFeatureRules for detecting GPUs on nodes
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=<RELEASE_VERSION>'
+
+# Create GPU plugin daemonset
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/monitoring_shared-dev_nfd/?ref=<RELEASE_VERSION>'
 ```
 
 #### Install to nodes with Intel GPUs with Fractional resources
