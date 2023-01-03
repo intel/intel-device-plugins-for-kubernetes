@@ -26,58 +26,54 @@ import (
 
 // GpuFatalErrors returns (value, name) of first GPU fatal_* error counter
 // file with non-zero value, or (0, "") if there were no fatal errors.
-func GpuFatalErrors(syspath string) (int64, string) {
-	var errname string
-
-	errors := int64(0)
-	for tile := 0; errors == 0; tile++ {
+func GpuFatalErrors(syspath string) (uint64, string) {
+	for tile := 0; ; tile++ {
 		path := path.Join(syspath, fmt.Sprintf("gt/gt%d", tile))
 
-		errors, errname = tileFatalErrors(path)
-		if errors > 0 {
-			return errors, errname
+		ok, count, fname := tileFatalErrors(path)
+		if count > 0 {
+			return count, fname
+		}
+
+		if !ok {
+			return 0, ""
 		}
 	}
-
-	return 0, ""
 }
 
-// tileFatalErrors returns (counter value, file name) for first >0 tile
-// fatal_* error counter, (0,"") if none are, and (-1,"") if data is missing.
-func tileFatalErrors(tilepath string) (int64, string) {
+// tileFatalErrors returns (true, counter value, file name) for first >0 tile
+// '*fatal*' error counter value, (true, 0, "") if all counters were zero,
+// and (false, 0, "") if there was an error, or no counter files matched.
+func tileFatalErrors(tilepath string) (bool, uint64, string) {
 	// match files like 'fatal_guc' and 'sgunit_fatal'
 	paths, err := filepath.Glob(path.Join(tilepath, "error_counter/*fatal*"))
 	if err != nil {
 		klog.Error("Error counter glob failed: ", err)
-		return -1, ""
+		return false, 0, ""
 	}
 
 	if len(paths) == 0 {
-		return -1, ""
+		return false, 0, ""
 	}
 
 	for _, f := range paths {
 		dat, err := os.ReadFile(f)
 		if err != nil {
 			klog.Warning("Failed to read:", f)
-			return -1, ""
+			return false, 0, ""
 		}
 
-		value, err := strconv.ParseInt(string(dat), 10, 64)
+		value, err := strconv.ParseUint(string(dat), 10, 64)
 		if err != nil {
 			klog.Warning("Failed to parse:", f)
-			return -1, ""
+			return false, 0, ""
 		}
 
 		if value > 0 {
 			// first >0 fatal counter value
-			return value, path.Base(f)
-		}
-
-		if value < 0 {
-			klog.Warning("Negative counter value in:", f)
+			return true, value, path.Base(f)
 		}
 	}
 
-	return 0, ""
+	return true, 0, ""
 }
