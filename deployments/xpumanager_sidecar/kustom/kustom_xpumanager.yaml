@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: intel-xpumanager
+  name: intel-xpumanager
+spec:
+  template:
+    spec:
+      volumes:
+        - name: features-d
+          hostPath:
+            path: "/etc/kubernetes/node-feature-discovery/features.d/"
+      containers:
+      - name: xelink-sidecar
+        image: intel/intel-xpumanager-sidecar:devel
+        imagePullPolicy: Always
+        args:
+          - -v=2
+        volumeMounts:
+        - name: features-d
+          mountPath: "/etc/kubernetes/node-feature-discovery/features.d/"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsUser: 0
+      - name: xpumd
+        resources:
+          limits:
+            $patch: replace
+            gpu.intel.com/i915_monitoring: 1
