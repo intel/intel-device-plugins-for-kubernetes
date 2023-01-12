@@ -86,8 +86,10 @@ func (w *mockPodResources) GetAllocatableResources(ctx context.Context,
 }
 
 func newMockResourceManager(pods []v1.Pod) ResourceManager {
-	client, err := grpc.Dial("", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client, err := grpc.Dial("fake", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to create client: %v\n", err)
+
 		os.Exit(1)
 	}
 
