@@ -21,8 +21,6 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
-            capabilities:
-              add: ["IPC_LOCK"]
           resources:
             limits:
               sgx.intel.com/epc: "512Ki"
