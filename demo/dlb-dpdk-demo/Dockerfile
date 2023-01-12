@@ -26,7 +26,7 @@ RUN cd dpdk-* && patch -Np1 < $(echo ../dlb/dpdk/dpdk_dlb_*.patch) && sed -i 's/
 RUN cd dpdk-* && ninja -C builddir install && install -D builddir/app/dpdk-test-eventdev /install_root/usr/bin/dpdk-test-eventdev
 
 FROM ubuntu:20.04
-RUN apt-get update && apt-get install -y libnuma1
+RUN apt-get update && apt-get install -y libnuma1 libatomic1
 COPY --from=builder /install_root /
 COPY test.sh /usr/bin/
 
