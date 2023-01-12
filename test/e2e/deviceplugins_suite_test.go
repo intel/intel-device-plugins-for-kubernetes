@@ -108,7 +108,7 @@ func setupFirstNode() []byte {
 	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
 
 	if err = e2epod.WaitForPodsRunningReady(c, "node-feature-discovery", 2, 0,
-		100*time.Second, map[string]string{}); err != nil {
+		200*time.Second, map[string]string{}); err != nil {
 		framework.Failf("unable to wait for NFD pods to be running and ready: %v", err)
 	}
 
