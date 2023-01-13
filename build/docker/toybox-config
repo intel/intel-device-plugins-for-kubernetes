@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # ToyBox version: KCONFIG_VERSION
-# Thu Nov 17 14:23:21 2022
+# Thu Jan 12 14:29:15 2023
 #
 # CONFIG_TOYBOX_ON_ANDROID is not set
 CONFIG_TOYBOX_FORK=y
@@ -123,6 +123,12 @@ CONFIG_TEST_GLUE=y
 # CONFIG_GETFATTR is not set
 # CONFIG_GETOPT is not set
 # CONFIG_GETTY is not set
+# CONFIG_GITCOMPAT is not set
+# CONFIG_GITCLONE is not set
+# CONFIG_GITINIT is not set
+# CONFIG_GITREMOTE is not set
+# CONFIG_GITFETCH is not set
+# CONFIG_GITCHECKOUT is not set
 # CONFIG_GROUPADD is not set
 # CONFIG_GROUPDEL is not set
 # CONFIG_HEXDUMP is not set
@@ -238,6 +244,7 @@ CONFIG_LSPCI=y
 # CONFIG_MODINFO is not set
 # CONFIG_MOUNTPOINT is not set
 # CONFIG_NBD_CLIENT is not set
+# CONFIG_NBD_SERVER is not set
 # CONFIG_UNSHARE is not set
 # CONFIG_NSENTER is not set
 # CONFIG_ONEIT is not set
