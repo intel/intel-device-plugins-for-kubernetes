@@ -1,0 +1,51 @@
+From 31be752ada72f85b2eca9b5a3eef8c41dedb4ad6 Mon Sep 17 00:00:00 2001
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Date: Wed, 28 Dec 2022 17:21:15 +0200
+Subject: [PATCH] tests: Ass includes in order to compile with gcc 11, gcc 12
+
+Signed-off-by: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+---
+ include/dml/detail/ml/buffer.hpp     | 1 +
+ tests/common/t_utility_functions.hpp | 1 +
+ tests/utils/include/utils/memory.hpp | 1 +
+ 3 files changed, 3 insertions(+)
+
+diff --git a/include/dml/detail/ml/buffer.hpp b/include/dml/detail/ml/buffer.hpp
+index 8f2f529..d59514c 100644
+--- a/include/dml/detail/ml/buffer.hpp
++++ b/include/dml/detail/ml/buffer.hpp
+@@ -10,6 +10,7 @@
+ #include <dml/detail/ml/allocator.hpp>
+ #include <dml/detail/ml/utils.hpp>
+ #include <memory>
++#include <utility>
+ 
+ namespace dml::detail::ml
+ {
+diff --git a/tests/common/t_utility_functions.hpp b/tests/common/t_utility_functions.hpp
+index c445cb7..caaf411 100644
+--- a/tests/common/t_utility_functions.hpp
++++ b/tests/common/t_utility_functions.hpp
+@@ -7,6 +7,7 @@
+ #ifndef DML_T_UTILITY_FUNCTIONS_HPP
+ #define DML_T_UTILITY_FUNCTIONS_HPP
+ 
++#include <stdlib.h>
+ #include <vector>
+ #include <cstdint>
+ 
+diff --git a/tests/utils/include/utils/memory.hpp b/tests/utils/include/utils/memory.hpp
+index 4f3cdcf..e408cd9 100644
+--- a/tests/utils/include/utils/memory.hpp
++++ b/tests/utils/include/utils/memory.hpp
+@@ -12,6 +12,7 @@
+ #include <memory>
+ #include <vector>
+ #include <ostream>
++#include <utility>
+ 
+ namespace dml::testing
+ {
+-- 
+2.39.0
+

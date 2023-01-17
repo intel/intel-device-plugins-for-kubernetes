@@ -128,7 +128,6 @@ jobs:
           - crypto-perf
           - accel-config-demo
           - intel-opencl-icd
-          - iaa-qpl-demo
           - opae-nlb-demo
           - openssl-qat-engine
           - sgx-sdk-demo
