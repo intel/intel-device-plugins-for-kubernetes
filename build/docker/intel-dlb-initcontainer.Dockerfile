@@ -58,5 +58,5 @@ LABEL vendor='Intel®'
 LABEL version='devel'
 LABEL release='1'
 COPY --from=builder /install_root /
-COPY demo/dlb-init.sh /usr/bin/
-ENTRYPOINT [ "/bin/bash", "dlb-init.sh"]
+COPY demo/dlb-init.sh /usr/local/bin/
+ENTRYPOINT [ "/bin/bash", "/usr/local/bin/dlb-init.sh"]
