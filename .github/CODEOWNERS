@@ -2,7 +2,7 @@
 # Syntax and details are here: https://help.github.com/articles/about-codeowners/
 #
 # Global code ownership, fallback
-*                   @kad @mythi @bart0sh
+*                   @kad @mythi @bart0sh @tkatila
 
 # CI and building
 .github/workflows/  @bart0sh @kad @mythi
@@ -37,5 +37,5 @@ Makefile            @bart0sh @kad @mythi
 /test/              @mythi @bart0sh @ozhuraki @hj-johannes-lee
 
 # New dependencies review
-/go.sum             @kad @mythi @bart0sh
-/go.mod             @kad @mythi @bart0sh
+/go.sum             @kad @mythi @bart0sh @tkatila
+/go.mod             @kad @mythi @bart0sh @tkatila
