@@ -55,7 +55,7 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
 ###
 FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version='0.26.0'
 LABEL release='1'
 COPY --from=builder /install_root /
 COPY demo/dlb-init.sh /usr/local/bin/

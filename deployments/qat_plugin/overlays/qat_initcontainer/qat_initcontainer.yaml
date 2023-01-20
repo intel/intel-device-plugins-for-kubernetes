@@ -12,7 +12,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-qat-initcontainer:devel
+        image: intel/intel-qat-initcontainer:0.26.0
         securityContext:
           readOnlyRootFilesystem: true
           privileged: true
