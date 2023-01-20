@@ -1,16 +1,18 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: iaa-qpl-demo
+  name: dsa-dml-demo
+  labels:
+    app: dsa-dml-demo
 spec:
   containers:
-  - name: iaa-qpl-demo
+  - name: dsa-dml-demo
     image: intel/accel-config-demo:devel
-    command: [ "/bin/bash", "-c", "/usr/local/bin/qpl-test.sh" ]
+    command: [ "/bin/bash", "-c", "/usr/local/bin/dml-test.sh" ]
     imagePullPolicy: IfNotPresent
     resources:
       limits:
-        iaa.intel.com/wq-user-dedicated: 1
+        dsa.intel.com/wq-user-dedicated: 1
         # In kernels 5.13-5.17, ENQCMD is disabled (is to be reinstated in 5.18)
         # iaa.intel.com/wq-user-shared: 1
   restartPolicy: Never

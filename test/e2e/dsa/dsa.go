@@ -34,7 +34,6 @@ const (
 	kustomizationYaml = "deployments/dsa_plugin/overlays/dsa_initcontainer/dsa_initcontainer.yaml"
 	configmapYaml     = "demo/dsa.conf"
 	demoYaml          = "demo/dsa-accel-config-demo-pod.yaml"
-	podName           = "dsa-accel-config-demo"
 )
 
 func init() {
@@ -87,11 +86,28 @@ func describe() {
 
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
+		podName := "dsa-accel-config-demo"
 		ginkgo.By("waiting for the DSA demo to succeed")
 		e2epod.NewPodClient(f).WaitForSuccess(podName, 200*time.Second)
 
 		ginkgo.By("getting workload log")
 		log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, podName, podName)
+
+		if err != nil {
+			framework.Failf("unable to get log from pod: %v", err)
+		}
+
+		framework.Logf("log output: %s", log)
+
+		utils.Kubectl(f.Namespace.Name, "apply", "-f", "demo/dsa-dml-demo-pod.yaml")
+
+		ginkgo.By("waiting for the DSA DML demo to succeed")
+
+		podName = "dsa-dml-demo"
+		e2epod.NewPodClient(f).WaitForSuccess(podName, 600*time.Second)
+
+		ginkgo.By("getting workload log")
+		log, err = e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, podName, podName)
 
 		if err != nil {
 			framework.Failf("unable to get log from pod: %v", err)

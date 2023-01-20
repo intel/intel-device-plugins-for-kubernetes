@@ -34,7 +34,6 @@ const (
 	kustomizationYaml = "deployments/iaa_plugin/overlays/iaa_initcontainer/iaa_initcontainer.yaml"
 	configmapYaml     = "demo/iaa.conf"
 	demoYaml          = "demo/iaa-accel-config-demo-pod.yaml"
-	podName           = "iaa-accel-config-demo"
 )
 
 func init() {
@@ -88,10 +87,28 @@ func describe() {
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 		ginkgo.By("waiting for the IAA demo to succeed")
-		e2epod.NewPodClient(f).WaitForSuccess(podName, 300*time.Second)
+
+		podName := "iaa-accel-config-demo"
+		e2epod.NewPodClient(f).WaitForSuccess(podName, 600*time.Second)
 
 		ginkgo.By("getting workload log")
 		log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, podName, podName)
+
+		if err != nil {
+			framework.Failf("unable to get log from pod: %v", err)
+		}
+
+		framework.Logf("log output: %s", log)
+
+		utils.Kubectl(f.Namespace.Name, "apply", "-f", "demo/iaa-qpl-demo-pod.yaml")
+
+		ginkgo.By("waiting for the IAA QPL demo to succeed")
+
+		podName = "iaa-qpl-demo"
+		e2epod.NewPodClient(f).WaitForSuccess(podName, 300*time.Second)
+
+		ginkgo.By("getting workload log")
+		log, err = e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, podName, podName)
 
 		if err != nil {
 			framework.Failf("unable to get log from pod: %v", err)
