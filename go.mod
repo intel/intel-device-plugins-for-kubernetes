@@ -16,7 +16,7 @@ require (
 	github.com/prometheus/common v0.39.0
 	golang.org/x/sys v0.4.0
 	golang.org/x/text v0.6.0
-	google.golang.org/grpc v1.52.0
+	google.golang.org/grpc v1.52.3
 	k8s.io/api v0.26.1
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v1.5.2
