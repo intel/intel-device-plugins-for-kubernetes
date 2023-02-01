@@ -36,6 +36,8 @@ import (
 )
 
 const (
+	ns                      = "inteldeviceplugins-system"
+	timeout                 = time.Second * 120
 	pluginKustomizationYaml = "deployments/fpga_plugin/base/kustomization.yaml"
 	mappingsCollectionYaml  = "deployments/fpga_admissionwebhook/mappings-collection.yaml"
 	nlb0NodeResource        = "fpga.intel.com/af-695.d84.aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs"
@@ -69,6 +71,26 @@ func describe() {
 		runTestCase(fmw, pluginKustomizationPath, mappingsCollectionPath, "region", arria10NodeResource, nlb0PodResource, "nlb0", "nlb3")
 		// Run af test case
 		runTestCase(fmw, pluginKustomizationPath, mappingsCollectionPath, "af", nlb0NodeResource, nlb0PodResourceAF, "nlb0", "nlb3")
+	})
+
+	ginkgo.It("deploys FPGA plugin with operator", func() {
+		utils.Kubectl("", "apply", "-k", "deployments/operator/default/kustomization.yaml")
+
+		if _, err := e2epod.WaitForPodsWithLabelRunningReady(fmw.ClientSet, ns, labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1, timeout); err != nil {
+			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+		}
+
+		utils.Kubectl("", "apply", "-f", "deployments/operator/samples/deviceplugin_v1_fpgadeviceplugin.yaml")
+
+		if _, err := e2epod.WaitForPodsWithLabelRunningReady(fmw.ClientSet, ns, labels.Set{"app": "intel-fpga-plugin"}.AsSelector(), 1, timeout); err != nil {
+			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+		}
+
+		// TODO: Add a check for resources
+
+		utils.Kubectl("", "delete", "-f", "deployments/operator/samples/deviceplugin_v1_fpgadeviceplugin.yaml")
+
+		utils.Kubectl("", "delete", "-k", "deployments/operator/default/kustomization.yaml")
 	})
 }
 
