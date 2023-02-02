@@ -34,6 +34,8 @@ import (
 )
 
 const (
+	ns                   = "inteldeviceplugins-system"
+	timeout              = time.Second * 120
 	kustomizationWebhook = "deployments/sgx_admissionwebhook/overlays/default-with-certmanager/kustomization.yaml"
 	kustomizationPlugin  = "deployments/sgx_plugin/overlays/epc-hook-initcontainer/kustomization.yaml"
 )
@@ -112,5 +114,37 @@ func describe() {
 
 		ginkgo.By("waiting the pod to finish successfully")
 		e2epod.NewPodClient(f).WaitForSuccess(pod.ObjectMeta.Name, 60*time.Second)
+
+		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(deploymentPluginPath))
+	})
+
+	ginkgo.It("deploys SGX plugin with operator", func() {
+		utils.Kubectl("", "apply", "-k", "deployments/operator/default/kustomization.yaml")
+
+		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1, timeout); err != nil {
+			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+		}
+
+		utils.Kubectl("", "apply", "-f", "deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml")
+
+		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"app": "intel-sgx-plugin"}.AsSelector(), 1, timeout); err != nil {
+			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+		}
+
+		if err := utils.WaitForNodesWithResource(f.ClientSet, "sgx.intel.com/epc", 150*time.Second); err != nil {
+			framework.Failf("unable to wait for nodes to have positive allocatable epc resource: %v", err)
+		}
+
+		if err := utils.WaitForNodesWithResource(f.ClientSet, "sgx.intel.com/enclave", 30*time.Second); err != nil {
+			framework.Failf("unable to wait for nodes to have positive allocatable enclave resource: %v", err)
+		}
+
+		if err := utils.WaitForNodesWithResource(f.ClientSet, "sgx.intel.com/provision", 30*time.Second); err != nil {
+			framework.Failf("unable to wait for nodes to have positive allocatable provision resource: %v", err)
+		}
+
+		utils.Kubectl("", "delete", "-f", "deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml")
+
+		utils.Kubectl("", "delete", "-k", "deployments/operator/default/kustomization.yaml")
 	})
 }
