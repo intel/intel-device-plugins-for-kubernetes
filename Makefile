@@ -174,7 +174,7 @@ terrascan:
 
 pre-pull:
 ifeq ($(TAG),devel)
-	@$(BUILDER) pull golang:1.19-bullseye
+	@$(BUILDER) pull golang:1.20-bullseye
 	@$(BUILDER) pull debian:unstable-slim
 	@$(BUILDER) pull ubuntu:22.04
 endif
