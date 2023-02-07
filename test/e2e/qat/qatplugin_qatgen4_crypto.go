@@ -51,7 +51,7 @@ func describeQatPluginCy() {
 		framework.Failf("unable to locate %q: %v", opensslTestYaml, err)
 	}
 
-	ginkgo.It("measures performance of QAT Cy Services", func() {
+	ginkgo.BeforeEach(func() {
 		ginkgo.By("deploying QAT plugin in DPDK mode")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
@@ -68,20 +68,26 @@ func describeQatPluginCy() {
 		if err := utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
+	})
 
-		ginkgo.By("checking if the resource is allocatable")
-		if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy", 30*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-		}
+	ginkgo.Context("When QAT4 resources are available", func() {
+		ginkgo.BeforeEach(func() {
+			ginkgo.By("checking if the resource is allocatable")
+			if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy", 30*time.Second); err != nil {
+				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+			}
+		})
 
-		ginkgo.By("submitting a crypto pod requesting QAT resources")
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", opensslTestYamlPath)
+		ginkgo.It("deploys a crypto pod requesting QAT resources", func() {
+			ginkgo.By("submitting a crypto pod requesting QAT resources")
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", opensslTestYamlPath)
 
-		ginkgo.By("waiting the crypto pod to finish successfully")
-		e2epod.NewPodClient(f).WaitForSuccess("openssl-qat-engine", 300*time.Second)
+			ginkgo.By("waiting the crypto pod to finish successfully")
+			e2epod.NewPodClient(f).WaitForSuccess("openssl-qat-engine", 300*time.Second)
 
-		output, _ := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, "openssl-qat-engine", "openssl-qat-engine")
+			output, _ := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, "openssl-qat-engine", "openssl-qat-engine")
 
-		framework.Logf("cpa_sample_code output:\n %s", output)
+			framework.Logf("cpa_sample_code output:\n %s", output)
+		})
 	})
 }
