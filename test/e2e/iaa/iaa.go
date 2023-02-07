@@ -60,65 +60,75 @@ func describe() {
 		framework.Failf("unable to locate %q: %v", demoYaml, err)
 	}
 
-	ginkgo.It("runs IAA plugin and a demo workload", func() {
-		ginkgo.By("deploying IAA plugin")
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "intel-iaa-config", "--from-file="+configmap)
+	ginkgo.Describe("Without using operator", func() {
+		ginkgo.BeforeEach(func() {
+			ginkgo.By("deploying IAA plugin")
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "intel-iaa-config", "--from-file="+configmap)
 
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
-		ginkgo.By("waiting for IAA plugin's availability")
-		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
-			labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1 /* one replica */, 300*time.Second)
-		if err != nil {
-			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
-			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
-		}
+			ginkgo.By("waiting for IAA plugin's availability")
+			podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
+				labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1 /* one replica */, 300*time.Second)
+			if err != nil {
+				e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
+				e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+				framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+			}
 
-		ginkgo.By("checking IAA plugin's securityContext")
-		if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
-			framework.Failf("container filesystem info checks failed: %v", err)
-		}
+			ginkgo.By("checking IAA plugin's securityContext")
+			if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
+				framework.Failf("container filesystem info checks failed: %v", err)
+			}
+		})
 
-		ginkgo.By("checking if the resource is allocatable")
-		if err = utils.WaitForNodesWithResource(f.ClientSet, "iaa.intel.com/wq-user-dedicated", 300*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-		}
+		ginkgo.Context("When IAA resources are available", func() {
+			ginkgo.BeforeEach(func() {
+				ginkgo.By("checking if the resource is allocatable")
+				if err := utils.WaitForNodesWithResource(f.ClientSet, "iaa.intel.com/wq-user-dedicated", 300*time.Second); err != nil {
+					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+				}
+			})
 
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
+			ginkgo.It("deploys a demo app", func() {
+				e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
-		ginkgo.By("waiting for the IAA demo to succeed")
-		e2epod.NewPodClient(f).WaitForSuccess(podName, 300*time.Second)
+				ginkgo.By("waiting for the IAA demo to succeed")
+				e2epod.NewPodClient(f).WaitForSuccess(podName, 300*time.Second)
 
-		ginkgo.By("getting workload log")
-		log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, podName, podName)
+				ginkgo.By("getting workload log")
+				log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, podName, podName)
 
-		if err != nil {
-			framework.Failf("unable to get log from pod: %v", err)
-		}
+				if err != nil {
+					framework.Failf("unable to get log from pod: %v", err)
+				}
 
-		framework.Logf("log output: %s", log)
+				framework.Logf("log output: %s", log)
+			})
+		})
 	})
 
-	ginkgo.It("deploys IAA plugin with operator", func() {
-		utils.Kubectl("", "apply", "-k", "deployments/operator/default/kustomization.yaml")
+	ginkgo.Describe("With using operator", func() {
+		ginkgo.It("deploys IAA plugin with operator", func() {
+			utils.Kubectl("", "apply", "-k", "deployments/operator/default/kustomization.yaml")
 
-		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1, timeout); err != nil {
-			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
-		}
+			if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1, timeout); err != nil {
+				framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+			}
 
-		utils.Kubectl("", "apply", "-f", "deployments/operator/samples/deviceplugin_v1_iaadeviceplugin.yaml")
+			utils.Kubectl("", "apply", "-f", "deployments/operator/samples/deviceplugin_v1_iaadeviceplugin.yaml")
 
-		if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1, timeout); err != nil {
-			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
-		}
+			if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1, timeout); err != nil {
+				framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+			}
 
-		if err := utils.WaitForNodesWithResource(f.ClientSet, "iaa.intel.com/wq-user-dedicated", timeout); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-		}
+			if err := utils.WaitForNodesWithResource(f.ClientSet, "iaa.intel.com/wq-user-dedicated", timeout); err != nil {
+				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+			}
 
-		utils.Kubectl("", "delete", "-f", "deployments/operator/samples/deviceplugin_v1_iaadeviceplugin.yaml")
+			utils.Kubectl("", "delete", "-f", "deployments/operator/samples/deviceplugin_v1_iaadeviceplugin.yaml")
 
-		utils.Kubectl("", "delete", "-k", "deployments/operator/default/kustomization.yaml")
+			utils.Kubectl("", "delete", "-k", "deployments/operator/default/kustomization.yaml")
+		})
 	})
 }
