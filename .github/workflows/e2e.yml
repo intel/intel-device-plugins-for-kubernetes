@@ -29,10 +29,6 @@ jobs:
             targetjob: e2e-dsa
             runner: simics-gnr
             images: intel-dsa-plugin intel-idxd-config-initcontainer accel-config-demo intel-deviceplugin-operator
-          - name: e2e-dlb-spr
-            targetjob: e2e-dlb
-            runner: simics-spr
-            images: intel-dlb-plugin intel-dlb-initcontainer dlb-libdlb-demo
           - name: e2e-dlb-gnr
             targetjob: e2e-dlb
             runner: simics-gnr

@@ -7,10 +7,10 @@ RUN apt-get update && apt-get install -y wget build-essential meson python3-pyel
 RUN pip install ninja
 
 # Download & unpack DLB tarball
-ARG DLB_TARBALL="dlb_linux_src_release_7.7.0_2022_06_17.txz"
-ARG DLB_TARBALL_SHA256="b596bdcc1ace67a1e1f994d98be33561f5fae26b92bfbd26027a793d4cb54c8d"
+ARG DLB_TARBALL="dlb_linux_src_release8.0.0.txz"
+ARG DLB_TARBALL_SHA256="075533229bb2bd2f945ec8089a707205f3f8e8d87a8030e9208603d997236171"
 
-RUN wget https://downloadmirror.intel.com/734482/$DLB_TARBALL \
+RUN wget https://downloadmirror.intel.com/763709/$DLB_TARBALL \
     && echo "$DLB_TARBALL_SHA256 $DLB_TARBALL" | sha256sum -c - \
     && tar -Jxf $DLB_TARBALL --no-same-owner && rm $DLB_TARBALL
 
