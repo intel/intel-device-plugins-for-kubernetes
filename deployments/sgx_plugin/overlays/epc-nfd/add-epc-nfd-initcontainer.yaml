@@ -14,9 +14,9 @@ spec:
           allowPrivilegeEscalation: false
         volumeMounts:
         - mountPath: /etc/kubernetes/node-feature-discovery/source.d/
-          name: nfd-source-hooks
+          name: nfd-features
       volumes:
-      - name: nfd-source-hooks
+      - name: nfd-features
         hostPath:
           path: /etc/kubernetes/node-feature-discovery/source.d/
           type: DirectoryOrCreate

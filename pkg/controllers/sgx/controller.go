@@ -114,11 +114,11 @@ func setInitContainer(spec *v1.PodSpec, imageName string) {
 			VolumeMounts: []v1.VolumeMount{
 				{
 					MountPath: "/etc/kubernetes/node-feature-discovery/source.d/",
-					Name:      "nfd-source-hooks",
+					Name:      "nfd-features",
 				},
 			},
 		}}
-	addVolumeIfMissing(spec, "nfd-source-hooks", "/etc/kubernetes/node-feature-discovery/source.d/", v1.HostPathDirectoryOrCreate)
+	addVolumeIfMissing(spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/source.d/", v1.HostPathDirectoryOrCreate)
 }
 
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
@@ -165,7 +165,7 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 	if dp.Spec.InitImage == "" {
 		if ds.Spec.Template.Spec.InitContainers != nil {
 			ds.Spec.Template.Spec.InitContainers = nil
-			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "nfd-source-hooks")
+			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "nfd-features")
 			updated = true
 		}
 	} else {

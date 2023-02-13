@@ -142,7 +142,7 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 
 	if devicePlugin.Spec.InitImage == "" {
 		daemonSet.Spec.Template.Spec.InitContainers = nil
-		daemonSet.Spec.Template.Spec.Volumes = removeVolume(daemonSet.Spec.Template.Spec.Volumes, "nfd-source-hooks")
+		daemonSet.Spec.Template.Spec.Volumes = removeVolume(daemonSet.Spec.Template.Spec.Volumes, "nfd-features")
 	} else {
 		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
 	}
@@ -204,11 +204,11 @@ func setInitContainer(spec *v1.PodSpec, imageName string) {
 			VolumeMounts: []v1.VolumeMount{
 				{
 					MountPath: "/etc/kubernetes/node-feature-discovery/source.d/",
-					Name:      "nfd-source-hooks",
+					Name:      "nfd-features",
 				},
 			},
 		}}
-	addVolumeIfMissing(spec, "nfd-source-hooks", "/etc/kubernetes/node-feature-discovery/source.d/", v1.HostPathDirectoryOrCreate)
+	addVolumeIfMissing(spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/source.d/", v1.HostPathDirectoryOrCreate)
 }
 
 func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
@@ -246,7 +246,7 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 	if dp.Spec.InitImage == "" {
 		if ds.Spec.Template.Spec.InitContainers != nil {
 			ds.Spec.Template.Spec.InitContainers = nil
-			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "nfd-source-hooks")
+			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "nfd-features")
 			updated = true
 		}
 	} else {
