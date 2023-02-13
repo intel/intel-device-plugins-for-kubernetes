@@ -4,7 +4,6 @@ ARG DIR=/dpdk-build
 WORKDIR $DIR
 
 RUN apt-get update && apt-get install -y wget build-essential meson python3-pyelftools libnuma-dev python3-pip
-RUN pip install ninja
 
 # Download & unpack DLB tarball
 ARG DLB_TARBALL="dlb_linux_src_release8.0.0.txz"
