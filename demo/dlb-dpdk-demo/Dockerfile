@@ -3,7 +3,7 @@ FROM ubuntu:20.04 as builder
 ARG DIR=/dpdk-build
 WORKDIR $DIR
 
-RUN apt-get update && apt-get install -y wget build-essential meson python3-pyelftools libnuma-dev python3-pip
+RUN apt-get update && apt-get install -y --no-install-recommends wget build-essential meson ninja-build python3-pyelftools libnuma-dev python3-pip
 
 # Download & unpack DLB tarball
 ARG DLB_TARBALL="dlb_linux_src_release8.0.0.txz"
@@ -25,7 +25,7 @@ RUN cd dpdk-* && patch -Np1 < $(echo ../dlb/dpdk/dpdk_dlb_*.patch) && sed -i 's/
 RUN cd dpdk-* && ninja -C builddir install && install -D builddir/app/dpdk-test-eventdev /install_root/usr/bin/dpdk-test-eventdev
 
 FROM ubuntu:20.04
-RUN apt-get update && apt-get install -y libnuma1 libatomic1
+RUN apt-get update && apt-get install -y --no-install-recommends libnuma1 libatomic1
 COPY --from=builder /install_root /
 COPY test.sh /usr/bin/
 
