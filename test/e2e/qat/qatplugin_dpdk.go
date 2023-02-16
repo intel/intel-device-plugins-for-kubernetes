@@ -57,7 +57,7 @@ func describeQatDpdkPlugin() {
 		framework.Failf("unable to locate %q: %v", cryptoTestYaml, err)
 	}
 
-	ginkgo.It("measures performance of DPDK", func() {
+	ginkgo.BeforeEach(func() {
 		ginkgo.By("deploying QAT plugin in DPDK mode")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
@@ -74,22 +74,30 @@ func describeQatDpdkPlugin() {
 		if err := utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
+	})
 
-		ginkgo.By("checking if the resource is allocatable")
-		if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/generic", 30*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-		}
+	ginkgo.Context("When QAT resources are available", func() {
+		ginkgo.BeforeEach(func() {
+			ginkgo.By("checking if the resource is allocatable")
+			if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/generic", 30*time.Second); err != nil {
+				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+			}
+		})
 
-		ginkgo.By("submitting a crypto pod requesting QAT resources")
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
+		ginkgo.It("deploys a crypto pod requesting QAT resources", func() {
+			ginkgo.By("submitting a crypto pod requesting QAT resources")
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
-		ginkgo.By("waiting the crypto pod to finish successfully")
-		e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-crypto-perf-tc1", 60*time.Second)
+			ginkgo.By("waiting the crypto pod to finish successfully")
+			e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-crypto-perf-tc1", 60*time.Second)
+		})
 
-		ginkgo.By("submitting a compress pod requesting QAT resources")
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
+		ginkgo.It("deploys a compress pod requesting QAT resources", func() {
+			ginkgo.By("submitting a compress pod requesting QAT resources")
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
-		ginkgo.By("waiting the compress pod to finish successfully")
-		e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-compress-perf-tc1", 60*time.Second)
+			ginkgo.By("waiting the compress pod to finish successfully")
+			e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-compress-perf-tc1", 60*time.Second)
+		})
 	})
 }

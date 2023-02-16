@@ -49,7 +49,7 @@ func describeQatKernelPlugin() {
 		framework.Failf("unable to locate %q: %v", qatPluginKernelYaml, err)
 	}
 
-	ginkgo.It("checks availability of QAT resources", func() {
+	ginkgo.BeforeEach(func() {
 		ginkgo.By("deploying QAT plugin in kernel mode")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "-f", yamlPath)
 
@@ -66,36 +66,42 @@ func describeQatKernelPlugin() {
 		if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
+	})
 
-		ginkgo.By("checking if the resource is allocatable")
-		if err = utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy1_dc0", 30*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-		}
+	ginkgo.Context("When QAT resources are available", func() {
+		ginkgo.BeforeEach(func() {
+			ginkgo.By("checking if the resource is allocatable")
+			if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy1_dc0", 30*time.Second); err != nil {
+				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+			}
+		})
 
-		ginkgo.By("submitting a pod requesting QAT resources")
-		podSpec := &v1.Pod{
-			ObjectMeta: metav1.ObjectMeta{Name: "qatplugin-tester"},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					{
-						Args:    []string{"-c", "echo mode"},
-						Name:    "testcontainer",
-						Image:   imageutils.GetE2EImage(imageutils.BusyBox),
-						Command: []string{"/bin/sh"},
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{"qat.intel.com/cy1_dc0": resource.MustParse("1")},
-							Limits:   v1.ResourceList{"qat.intel.com/cy1_dc0": resource.MustParse("1")},
+		ginkgo.It("deploys a pod requesting QAT resources", func() {
+			ginkgo.By("submitting a pod requesting QAT resources")
+			podSpec := &v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Name: "qatplugin-tester"},
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{
+						{
+							Args:    []string{"-c", "echo mode"},
+							Name:    "testcontainer",
+							Image:   imageutils.GetE2EImage(imageutils.BusyBox),
+							Command: []string{"/bin/sh"},
+							Resources: v1.ResourceRequirements{
+								Requests: v1.ResourceList{"qat.intel.com/cy1_dc0": resource.MustParse("1")},
+								Limits:   v1.ResourceList{"qat.intel.com/cy1_dc0": resource.MustParse("1")},
+							},
 						},
 					},
+					RestartPolicy: v1.RestartPolicyNever,
 				},
-				RestartPolicy: v1.RestartPolicyNever,
-			},
-		}
-		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(),
-			podSpec, metav1.CreateOptions{})
-		framework.ExpectNoError(err, "pod Create API error")
+			}
+			pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(),
+				podSpec, metav1.CreateOptions{})
+			framework.ExpectNoError(err, "pod Create API error")
 
-		ginkgo.By("waiting the pod to finish successfully")
-		e2epod.NewPodClient(f).WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
+			ginkgo.By("waiting the pod to finish successfully")
+			e2epod.NewPodClient(f).WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
+		})
 	})
 }
