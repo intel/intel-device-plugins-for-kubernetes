@@ -7,12 +7,10 @@
 # CI and building
 .github/workflows/  @bart0sh @kad @mythi
 Jenkinsfile         @bart0sh @kad @mythi
-Makefile            @bart0sh @kad @mythi
-/build/             @bart0sh @kad @mythi
 /scripts/           @bart0sh @kad @mythi
 
 # Binaries
-/cmd/               @mythi @bart0sh
+/cmd/               @mythi @bart0sh @tkatila
 /cmd/fpga_tool/     @bart0sh @kad @mythi
 /cmd/gpu_plugin/    @tkatila @bart0sh @uniemimu
 /cmd/gpu_nfdhook/   @tkatila @bart0sh @uniemimu
@@ -22,9 +20,10 @@ Makefile            @bart0sh @kad @mythi
 /cmd/iaa_plugin/    @hj-johannes-lee @ozhuraki @mythi
 /cmd/vpu_plugin/    @bart0sh @mythi
 /cmd/dlb_plugin/    @bart0sh @hj-johannes-lee
+/cmd/xpumanager_sidecar/   @tkatila @uniemimu
 
 # Framework
-/pkg/               @mythi @bart0sh
+/pkg/               @mythi @bart0sh @tkatila
 /pkg/topology/      @bart0sh @kad
 
 # Deployments
