@@ -16,6 +16,8 @@ package rm
 
 import (
 	"context"
+	"crypto/rand"
+	"math/big"
 	"os"
 	"sort"
 	"strconv"
@@ -141,16 +143,26 @@ func NewResourceManager(skipID, fullResourceName string) (ResourceManager, error
 		prGetClientFunc:  podresources.GetV1Client,
 		assignments:      make(map[string]podAssignmentDetails),
 		retryTimeout:     1 * time.Second,
-		cleanupInterval:  2 * time.Minute,
+		cleanupInterval:  20 * time.Minute,
 	}
 
 	klog.Info("GPU device plugin resource manager enabled")
 
 	go func() {
-		ticker := time.NewTicker(rm.cleanupInterval)
+		getRandDuration := func() time.Duration {
+			cleanupIntervalSeconds := int(rm.cleanupInterval.Seconds())
+
+			n, _ := rand.Int(rand.Reader, big.NewInt(int64(cleanupIntervalSeconds)))
+
+			return rm.cleanupInterval/2 + time.Duration(n.Int64())*time.Second
+		}
+
+		ticker := time.NewTicker(getRandDuration())
 
 		for range ticker.C {
 			klog.V(4).Info("Running cleanup")
+
+			ticker.Reset(getRandDuration())
 
 			// Gather both running and pending pods. It might happen that
 			// cleanup is triggered between GetPreferredAllocation and Allocate
