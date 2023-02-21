@@ -126,7 +126,7 @@ func CreateKustomizationOverlay(namespace, base, overlay string) error {
 	}
 
 	relPath = relPath + base[1:]
-	content := fmt.Sprintf("namespace: %s\nbases:\n  - %s", namespace, relPath)
+	content := fmt.Sprintf("namespace: %s\nresources:\n  - %s", namespace, relPath)
 
 	return os.WriteFile(overlay+"/kustomization.yaml", []byte(content), 0600)
 }
