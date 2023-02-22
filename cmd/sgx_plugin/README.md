@@ -113,9 +113,13 @@ The first approach involves deployment of the [SGX DaemonSet YAML](/deployments/
 and [node-feature-discovery](/deployments/nfd/overlays/sgx/kustomization.yaml)
 with the necessary configuration.
 
-There is a kustomization for deploying everything:
+The following kustomizations are needed for deploying everything:
 ```bash
-$ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_plugin/overlays/epc-nfd/
+# first, deploy NFD and the necessary NodeFeatureRules
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx'
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules'
+# and then, deploy SGX plugin
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_plugin/overlays/epc-nfd/'
 ```
 
 The second approach has a lesser deployment footprint. It does not require NFD, but a helper daemonset that creates `sgx.intel.com/capable='true'` node label and advertises EPC capacity to the API server.
