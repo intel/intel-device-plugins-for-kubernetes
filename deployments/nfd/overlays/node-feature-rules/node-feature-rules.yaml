@@ -95,9 +95,9 @@ spec:
           matchExpressions:
             SGX: {op: Exists}
             SGXLC: {op: Exists}
-        - feature: cpu.sgx
+        - feature: cpu.security
           matchExpressions:
-            enabled: {op: IsTrue}
+            sgx.enabled: {op: IsTrue}
         - feature: kernel.config
           matchExpressions:
             X86_SGX: {op: Exists}
