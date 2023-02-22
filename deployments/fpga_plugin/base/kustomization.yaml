@@ -2,3 +2,4 @@ resources:
   - role.yaml
   - role_binding.yaml
   - intel-fpga-plugin-daemonset.yaml
+  - namespace.yaml
