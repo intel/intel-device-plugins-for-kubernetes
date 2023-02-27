@@ -143,6 +143,9 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 	for _, crqt := range rqt.ContainerRequests {
 		cresp := new(pluginapi.ContainerAllocateResponse)
 
+		cresp.Envs = map[string]string{}
+		cresp.Annotations = map[string]string{}
+
 		for _, id := range crqt.DevicesIDs {
 			dev, ok := srv.devices[id]
 			if !ok {
@@ -161,13 +164,9 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 				cresp.Mounts = append(cresp.Mounts, &dev.mounts[i])
 			}
 
-			cresp.Envs = map[string]string{}
-
 			for key, value := range dev.envs {
 				cresp.Envs[key] = value
 			}
-
-			cresp.Annotations = map[string]string{}
 
 			for key, value := range dev.annotations {
 				cresp.Annotations[key] = value
