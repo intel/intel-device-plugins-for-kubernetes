@@ -132,6 +132,8 @@ $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/
 Additionally, SGX admission webhook must be deployed
 ```bash
 $ kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_admissionwebhook/
+# or when cert-manager is used
+$ https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_admissionwebhook/overlays/default-with-certmanager
 ```
 
 ### Verify Plugin Registration
