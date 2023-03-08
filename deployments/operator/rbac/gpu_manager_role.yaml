@@ -8,6 +8,13 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - nodes/proxy
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
   - pods
   verbs:
   - list
