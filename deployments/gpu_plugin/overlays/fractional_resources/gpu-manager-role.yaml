@@ -4,5 +4,5 @@ metadata:
   name: gpu-manager-role
 rules:
 - apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["list"]
+  resources: ["pods", "nodes/proxy"]
+  verbs: ["list", "get"]
