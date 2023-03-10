@@ -207,7 +207,7 @@ func setInitContainer(dsSpec *v1.PodSpec, dpSpec devicepluginv1.QatDevicePluginS
 		"c3xxxvf":    "19e2",
 		"c6xxvf":     "37c8",
 		"d15xxvf":    "6f54",
-		"4xxxvf":     "4940 4942",
+		"4xxxvf":     "4940 4942 4944",
 		"c4xxxvf":    "18a0",
 	}
 
