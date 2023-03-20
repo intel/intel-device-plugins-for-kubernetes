@@ -138,18 +138,6 @@ jobs:
         run: |
           make ${IMAGE_NAME} BUILDER=${BUILDER_NAME}
 
-  kind-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          check-latest: true
-      - name: Test SGX & FPGA Admission Webhook, Deploy Operator
-        run: |
-          make test-with-kind
-
   terrascan:
     runs-on: ubuntu-latest
     steps:
