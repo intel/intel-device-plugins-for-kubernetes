@@ -62,12 +62,12 @@ func createDevice(pciBusRootDir string, bdf string, vid string, pid string) erro
 	vidHex := append([]byte(vid), 0xa)
 	pidHex := append([]byte(pid), 0xa)
 
-	err = os.WriteFile(filepath.Join(pciBusRootDir, bdf, "vendor"), vidHex, 0444)
+	err = os.WriteFile(filepath.Join(pciBusRootDir, bdf, "vendor"), vidHex, 0400)
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(pciBusRootDir, bdf, "device"), pidHex, 0444)
+	err = os.WriteFile(filepath.Join(pciBusRootDir, bdf, "device"), pidHex, 0400)
 	if err != nil {
 		return err
 	}

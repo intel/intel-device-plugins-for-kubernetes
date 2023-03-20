@@ -41,6 +41,10 @@ linters:
     - wsl
 
 linters-settings:
+  revive:
+    rules:
+      - name: unused-parameter
+        disabled: true
   gofmt:
     simplify: true
   golint:
