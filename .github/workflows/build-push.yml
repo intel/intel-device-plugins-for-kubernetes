@@ -59,7 +59,7 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
       - run: make -e vendor
       - run: |
           echo "ref: ${{ github.ref }}"
