@@ -12,7 +12,13 @@ PCI_ALLOWLIST=""
 
 for i in ${!QAT*}; do PCI_ALLOWLIST="$PCI_ALLOWLIST -a ${!i}"; done
 
-LCORE=$(cat /sys/fs/cgroup/cpuset/cpuset.cpus)
+CGROUP_PATH="/sys/fs/cgroup/"
+
+if [ -d "${CGROUP_PATH}"/cpuset ]; then
+	CGROUP_PATH="${CGROUP_PATH}"/cpuset
+fi
+
+LCORE=$(cat "${CGROUP_PATH}"/cpuset.cpus)
 
 EAL="--no-telemetry -l ${LCORE} ${PCI_ALLOWLIST}"
 
