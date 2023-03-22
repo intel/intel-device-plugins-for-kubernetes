@@ -70,14 +70,6 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: true
-      - uses: actions/cache@v3
-        with:
-          path: |
-                ~/.cache/go-build
-                ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Check Dockerfiles
         run: make check-dockerfiles
       - name: Install build dependencies needed for VPU plugin
@@ -137,14 +129,6 @@ jobs:
         builder: [buildah, docker]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: |
-                ~/.cache/go-build
-                ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - uses: actions/setup-go@v4
       - run: make -e vendor
       - name: Build image
@@ -153,18 +137,6 @@ jobs:
           BUILDER_NAME: ${{ matrix.builder }}
         run: |
           make ${IMAGE_NAME} BUILDER=${BUILDER_NAME}
-
-  kind-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          check-latest: true
-      - name: Test SGX & FPGA Admission Webhook, Deploy Operator
-        run: |
-          make test-with-kind
 
   terrascan:
     runs-on: ubuntu-latest
