@@ -10,7 +10,7 @@ EXTRA_BUILD_ARGS ?= ""
 
 CERT_MANAGER_VERSION ?= v1.11.0
 CONTROLLER_GEN_VERSION ?= v0.11.3
-GOLANGCI_LINT_VERSION ?= v1.50.1
+GOLANGCI_LINT_VERSION ?= v1.52.1
 KIND_VERSION ?= v0.17.0
 GOLICENSES_VERSION ?= v1.6.0
 # Default bundle image tag
@@ -174,7 +174,7 @@ terrascan:
 
 pre-pull:
 ifeq ($(TAG),devel)
-	@$(BUILDER) pull golang:1.19-bullseye
+	@$(BUILDER) pull golang:1.20-bullseye
 	@$(BUILDER) pull debian:unstable-slim
 	@$(BUILDER) pull ubuntu:22.04
 endif

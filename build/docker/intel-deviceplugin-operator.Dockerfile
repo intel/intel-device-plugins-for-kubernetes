@@ -34,7 +34,7 @@ ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro:latest
 ##
 ## This is used on release branches before tagging a stable version.
 ## The main branch defaults to using the latest Golang base image.
-ARG GOLANG_BASE=golang:1.19-bullseye
+ARG GOLANG_BASE=golang:1.20-bullseye
 ###
 FROM ${GOLANG_BASE} as builder
 ARG DIR=/intel-device-plugins-for-kubernetes
