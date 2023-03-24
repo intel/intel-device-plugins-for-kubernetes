@@ -60,6 +60,8 @@ func describe() {
 		framework.Failf("unable to locate %q: %v", demoYaml, err)
 	}
 
+	var dpPodName string
+
 	ginkgo.Describe("Without using operator", func() {
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("deploying DSA plugin")
@@ -75,6 +77,7 @@ func describe() {
 				e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 				framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 			}
+			dpPodName = podList.Items[0].Name
 
 			ginkgo.By("checking DSA plugin's securityContext")
 			if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
@@ -87,6 +90,14 @@ func describe() {
 				ginkgo.By("checking if the resource is allocatable")
 				if err := utils.WaitForNodesWithResource(f.ClientSet, "dsa.intel.com/wq-user-dedicated", 300*time.Second); err != nil {
 					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+				}
+			})
+
+			ginkgo.AfterEach(func() {
+				ginkgo.By("undeploying DSA plugin")
+				e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(kustomizationPath))
+				if err := e2epod.WaitForPodNotFoundInNamespace(f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
+					framework.Failf("failed to terminate pod: %v", err)
 				}
 			})
 
