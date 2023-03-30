@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-ini/ini v1.67.0
-	github.com/go-logr/logr v1.2.3
+	github.com/go-logr/logr v1.2.4
 	github.com/google/go-cmp v0.5.9
 	github.com/google/gousb v1.1.2
 	github.com/klauspost/cpuid/v2 v2.2.4
