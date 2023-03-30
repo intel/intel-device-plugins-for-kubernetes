@@ -49,6 +49,8 @@ func describe() {
 		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
 	}
 
+	var dpPodName string
+
 	ginkgo.BeforeEach(func() {
 		ginkgo.By("deploying DLB plugin")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
@@ -61,10 +63,19 @@ func describe() {
 			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
+		dpPodName = podList.Items[0].Name
 
 		ginkgo.By("checking DLB plugin's securityContext")
 		if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
+		}
+	})
+
+	ginkgo.AfterEach(func() {
+		ginkgo.By("undeploying DLB plugin")
+		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(kustomizationPath))
+		if err := e2epod.WaitForPodNotFoundInNamespace(f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
+			framework.Failf("failed to terminate pod: %v", err)
 		}
 	})
 
