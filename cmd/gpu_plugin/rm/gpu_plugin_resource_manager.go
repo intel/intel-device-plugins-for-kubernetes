@@ -16,6 +16,14 @@ package rm
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/json"
+	"io"
+	"math/big"
+	"net"
+	"net/http"
 	"os"
 	"sort"
 	"strconv"
@@ -35,6 +43,7 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 	podresourcesv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
 	"k8s.io/kubernetes/pkg/kubelet/apis/podresources"
+	"k8s.io/utils/strings/slices"
 )
 
 const (
@@ -47,6 +56,13 @@ const (
 	grpcAddress    = "unix:///var/lib/kubelet/pod-resources/kubelet.sock"
 	grpcBufferSize = 4 * 1024 * 1024
 	grpcTimeout    = 5 * time.Second
+
+	kubeletAPITimeout    = 5 * time.Second
+	kubeletAPIMaxRetries = 5
+	kubeletHTTPSCertPath = "/var/lib/kubelet/pki/kubelet.crt"
+	// This is detected incorrectly as credentials
+	//nolint:gosec
+	serviceAccountTokenPath = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 )
 
 // Errors.
@@ -100,12 +116,14 @@ type resourceManager struct {
 	prGetClientFunc  getClientFunc
 	assignments      map[string]podAssignmentDetails // pod name -> assignment details
 	nodeName         string
+	hostIP           string
 	skipID           string
 	fullResourceName string
 	retryTimeout     time.Duration
 	cleanupInterval  time.Duration
 	mutex            sync.RWMutex // for devTree updates during scan
 	cleanupMutex     sync.RWMutex // for assignment details during cleanup
+	useKubelet       bool
 }
 
 // NewDeviceInfo creates a new DeviceInfo.
@@ -135,30 +153,50 @@ func NewResourceManager(skipID, fullResourceName string) (ResourceManager, error
 
 	rm := resourceManager{
 		nodeName:         os.Getenv("NODE_NAME"),
+		hostIP:           os.Getenv("HOST_IP"),
 		clientset:        clientset,
 		skipID:           skipID,
 		fullResourceName: fullResourceName,
 		prGetClientFunc:  podresources.GetV1Client,
 		assignments:      make(map[string]podAssignmentDetails),
 		retryTimeout:     1 * time.Second,
-		cleanupInterval:  2 * time.Minute,
+		cleanupInterval:  20 * time.Minute,
+		useKubelet:       true,
 	}
 
 	klog.Info("GPU device plugin resource manager enabled")
 
+	// Try listing Pods once to detect if Kubelet API works
+	_, err = rm.listPodsFromKubelet()
+
+	if err != nil {
+		klog.V(2).Info("Not using Kubelet API")
+
+		rm.useKubelet = false
+	} else {
+		klog.V(2).Info("Using Kubelet API")
+	}
+
 	go func() {
-		ticker := time.NewTicker(rm.cleanupInterval)
+		getRandDuration := func() time.Duration {
+			cleanupIntervalSeconds := int(rm.cleanupInterval.Seconds())
+
+			n, _ := rand.Int(rand.Reader, big.NewInt(int64(cleanupIntervalSeconds)))
+
+			return rm.cleanupInterval/2 + time.Duration(n.Int64())*time.Second
+		}
+
+		ticker := time.NewTicker(getRandDuration())
 
 		for range ticker.C {
 			klog.V(4).Info("Running cleanup")
 
+			ticker.Reset(getRandDuration())
+
 			// Gather both running and pending pods. It might happen that
 			// cleanup is triggered between GetPreferredAllocation and Allocate
 			// and it would remove the assignment data for the soon-to-be allocated pod
-			running := rm.listPodsOnNodeWithState(string(v1.PodRunning))
-			for podName, podItem := range rm.listPodsOnNodeWithState(string(v1.PodPending)) {
-				running[podName] = podItem
-			}
+			running := rm.listPodsOnNodeWithStates([]string{string(v1.PodRunning), string(v1.PodPending)})
 
 			func() {
 				rm.cleanupMutex.Lock()
@@ -189,15 +227,14 @@ func getPodResourceKey(res *podresourcesv1.PodResources) string {
 	return res.Namespace + "&" + res.Name
 }
 
-func (rm *resourceManager) listPodsOnNodeWithState(state string) map[string]*v1.Pod {
-	pods := make(map[string]*v1.Pod)
-
-	selector, err := fields.ParseSelector("spec.nodeName=" + rm.nodeName +
-		",status.phase=" + state)
+func (rm *resourceManager) listPodsFromAPIServer() (*v1.PodList, error) {
+	selector, err := fields.ParseSelector("spec.nodeName=" + rm.nodeName)
 
 	if err != nil {
-		return pods
+		return &v1.PodList{}, err
 	}
+
+	klog.V(4).Info("Requesting pods from API server")
 
 	podList, err := rm.clientset.CoreV1().Pods(v1.NamespaceAll).List(context.Background(), metav1.ListOptions{
 		FieldSelector: selector.String(),
@@ -206,12 +243,125 @@ func (rm *resourceManager) listPodsOnNodeWithState(state string) map[string]*v1.
 	if err != nil {
 		klog.Error("pod listing failed:", err)
 
+		if err != nil {
+			return &v1.PodList{}, err
+		}
+	}
+
+	return podList, nil
+}
+
+// +kubebuilder:rbac:groups="",resources=nodes/proxy,verbs=list;get
+
+func (rm *resourceManager) listPodsFromKubelet() (*v1.PodList, error) {
+	var podList v1.PodList
+
+	token, err := os.ReadFile(serviceAccountTokenPath)
+	if err != nil {
+		klog.Warning("Failed to read token for kubelet API access: ", err)
+
+		return &podList, err
+	}
+
+	kubeletCert, err := os.ReadFile(kubeletHTTPSCertPath)
+	if err != nil {
+		klog.Warning("Failed to read kubelet cert: ", err)
+
+		return &podList, err
+	}
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(kubeletCert)
+
+	// There isn't an official documentation for the kubelet API. There is a blog post:
+	// https://www.deepnetwork.com/blog/2020/01/13/kubelet-api.html
+	// And a tool to work with the API:
+	// https://github.com/cyberark/kubeletctl
+
+	kubeletURL := "https://" + rm.hostIP + ":10250/pods"
+	req, _ := http.NewRequestWithContext(context.Background(), "GET", kubeletURL, nil)
+	req.Header.Set("Authorization", "Bearer "+string(token))
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			RootCAs:    certPool,
+			ServerName: rm.nodeName,
+		},
+	}
+	client := &http.Client{
+		Timeout:   kubeletAPITimeout,
+		Transport: tr,
+	}
+
+	klog.V(4).Infof("Requesting pods from kubelet (%s)", kubeletURL)
+
+	resp, err := (*client).Do(req)
+	if err != nil {
+		klog.Warning("Failed to read pods from kubelet API: ", err)
+
+		return &podList, err
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		klog.Warning("Failed to read http response body: ", err)
+
+		return &podList, err
+	}
+
+	resp.Body.Close()
+
+	err = json.Unmarshal(body, &podList)
+	if err != nil {
+		klog.Warning("Failed to unmarshal PodList from response: ", err)
+
+		return &podList, err
+	}
+
+	return &podList, nil
+}
+
+func (rm *resourceManager) listPods() (*v1.PodList, error) {
+	// Try to use kubelet API as long as it provides listings within retries
+	if rm.useKubelet {
+		var neterr net.Error
+
+		for i := 0; i < kubeletAPIMaxRetries; i++ {
+			if podList, err := rm.listPodsFromKubelet(); err == nil {
+				return podList, nil
+			} else if errors.As(err, neterr); neterr.Timeout() {
+				continue
+			}
+
+			// If error is non-timeout, break to stop using kubelet API
+			break
+		}
+
+		klog.Warning("Stopping Kubelet API use due to error/timeout")
+
+		rm.useKubelet = false
+	}
+
+	return rm.listPodsFromAPIServer()
+}
+
+func (rm *resourceManager) listPodsOnNodeWithStates(states []string) map[string]*v1.Pod {
+	pods := make(map[string]*v1.Pod)
+
+	podList, err := rm.listPods()
+	if err != nil {
+		klog.Error("pod listing failed:", err)
+
 		return pods
 	}
 
 	for i := range podList.Items {
-		key := getPodKey(&podList.Items[i])
-		pods[key] = &podList.Items[i]
+		phase := string(podList.Items[i].Status.Phase)
+		if slices.Contains(states, phase) {
+			key := getPodKey(&podList.Items[i])
+			pods[key] = &podList.Items[i]
+		}
 	}
 
 	return pods
@@ -516,7 +666,7 @@ func (rm *resourceManager) findAllocationPodCandidate() (*podCandidate, error) {
 
 // getNodePendingGPUPods returns a map of pod names -> pods that are pending and use the gpu.
 func (rm *resourceManager) getNodePendingGPUPods() (map[string]*v1.Pod, error) {
-	pendingPods := rm.listPodsOnNodeWithState(string(v1.PodPending))
+	pendingPods := rm.listPodsOnNodeWithStates([]string{string(v1.PodPending)})
 
 	for podName, pod := range pendingPods {
 		if numGPUUsingContainers(pod, rm.fullResourceName) == 0 {

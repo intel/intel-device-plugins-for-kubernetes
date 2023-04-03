@@ -32,6 +32,10 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
         image: intel/intel-gpu-plugin:devel
         imagePullPolicy: IfNotPresent
         securityContext:

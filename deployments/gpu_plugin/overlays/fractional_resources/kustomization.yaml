@@ -9,3 +9,4 @@ patches:
   - path: add-podresource-mount.yaml
   - path: add-args.yaml
   - path: add-nodeselector-intel-gpu.yaml
+  - path: add-kubelet-crt-mount.yaml
