@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -39,6 +40,7 @@ const (
 	devfsDriDirectory = "/dev/dri"
 	gpuDeviceRE       = `^card[0-9]+$`
 	controlDeviceRE   = `^controlD[0-9]+$`
+	pciAddressRE      = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
 	vendorString      = "0x8086"
 
 	// Device plugin settings.
@@ -145,32 +147,85 @@ func packedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
 	return deviceIds
 }
 
+// Returns a slice of by-path Mounts for a cardPath&Name.
+// by-path files are searched from the given bypathDir.
+// In the by-path dir, any files that start with "pci-<pci addr>" will be added to mounts.
+func (dp *devicePlugin) bypathMountsForPci(cardPath, cardName, bypathDir string) []pluginapi.Mount {
+	linkPath, err := os.Readlink(cardPath)
+	if err != nil {
+		return nil
+	}
+
+	// Fetches the pci address for a drm card by reading the
+	// symbolic link that the /sys/class/drm/cardX points to.
+	// ../../devices/pci0000:00/0000:00:02.0/drm/card
+	// -------------------------^^^^^^^^^^^^---------.
+	pciAddress := filepath.Base(strings.TrimSuffix(linkPath, filepath.Join("drm", cardName)))
+
+	if !dp.pciAddressReg.MatchString(pciAddress) {
+		klog.Warningf("Invalid pci address for %s: %s", cardPath, pciAddress)
+
+		return nil
+	}
+
+	files, err := os.ReadDir(bypathDir)
+	if err != nil {
+		klog.Warningf("Failed to read by-path directory: %+v", err)
+
+		return nil
+	}
+
+	linkPrefix := "pci-" + pciAddress
+
+	var mounts []pluginapi.Mount
+
+	for _, f := range files {
+		if strings.HasPrefix(f.Name(), linkPrefix) {
+			absPath := path.Join(bypathDir, f.Name())
+			mounts = append(mounts, pluginapi.Mount{
+				ContainerPath: absPath,
+				HostPath:      absPath,
+				ReadOnly:      true,
+			})
+		}
+	}
+
+	return mounts
+}
+
 type devicePlugin struct {
 	gpuDeviceReg     *regexp.Regexp
 	controlDeviceReg *regexp.Regexp
+	pciAddressReg    *regexp.Regexp
 
 	scanTicker *time.Ticker
 	scanDone   chan bool
 
 	resMan rm.ResourceManager
 
-	sysfsDir string
-	devfsDir string
+	sysfsDir  string
+	devfsDir  string
+	bypathDir string
 
 	// Note: If restarting the plugin with a new policy, the allocations for existing pods remain with old policy.
 	policy  preferredAllocationPolicyFunc
 	options cliOptions
+
+	bypathFound bool
 }
 
 func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugin {
 	dp := &devicePlugin{
 		sysfsDir:         sysfsDir,
 		devfsDir:         devfsDir,
+		bypathDir:        path.Join(devfsDir, "/by-path"),
 		options:          options,
 		gpuDeviceReg:     regexp.MustCompile(gpuDeviceRE),
 		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
+		pciAddressReg:    regexp.MustCompile(pciAddressRE),
 		scanTicker:       time.NewTicker(scanPeriod),
 		scanDone:         make(chan bool, 1), // buffered as we may send to it before Scan starts receiving from it
+		bypathFound:      true,
 	}
 
 	if options.resourceManagement {
@@ -190,6 +245,12 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 		dp.policy = packedPolicy
 	default:
 		dp.policy = nonePolicy
+	}
+
+	if _, err := os.ReadDir(dp.bypathDir); err != nil {
+		klog.Warningf("failed to read by-path dir: $+v", err)
+
+		dp.bypathFound = false
 	}
 
 	return dp
@@ -299,7 +360,9 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			continue
 		}
 
-		drmFiles, err := os.ReadDir(path.Join(dp.sysfsDir, f.Name(), "device/drm"))
+		cardPath := path.Join(dp.sysfsDir, f.Name())
+
+		drmFiles, err := os.ReadDir(path.Join(cardPath, "device/drm"))
 		if err != nil {
 			return nil, errors.Wrap(err, "Can't read device folder")
 		}
@@ -338,7 +401,12 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		}
 
 		if len(nodes) > 0 {
-			deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil)
+			mounts := []pluginapi.Mount{}
+			if dp.bypathFound {
+				mounts = dp.bypathMountsForPci(cardPath, f.Name(), dp.bypathDir)
+			}
+
+			deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, mounts, nil, nil)
 
 			for i := 0; i < dp.options.sharedDevNum; i++ {
 				devID := fmt.Sprintf("%s-%d", f.Name(), i)
@@ -346,7 +414,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 				// TODO: check model ID to differentiate device models.
 				devTree.AddDevice(deviceType, devID, deviceInfo)
 
-				rmDevInfos[devID] = rm.NewDeviceInfo(nodes, nil, nil)
+				rmDevInfos[devID] = rm.NewDeviceInfo(nodes, mounts, nil)
 			}
 		}
 	}
