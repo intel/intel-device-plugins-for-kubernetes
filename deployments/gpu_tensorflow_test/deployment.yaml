@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: training-pod
+spec:
+  restartPolicy: Never
+  containers:
+  - name: testcontainer
+    image: intel/intel-extension-for-tensorflow:latest
+    imagePullPolicy: IfNotPresent
+    securityContext:
+      allowPrivilegeEscalation: false
+    command: ["/bin/sh", "-c"]
+    args: ["python /code/training.py"]
+    resources:
+      limits:
+        gpu.intel.com/i915: 1
+      requests:
+        gpu.intel.com/i915: 1
+    volumeMounts:
+    - mountPath: /code
+      name: code
+  volumes:
+  - configMap:
+      name: training-code
+    name: code

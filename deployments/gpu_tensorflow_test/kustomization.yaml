@@ -1,0 +1,11 @@
+configMapGenerator:
+- name: training-code
+  files:
+  - training.py
+
+resources:
+  - deployment.yaml
+
+images:
+  - name: intel/intel-extension-for-tensorflow
+    newTag: 1.2.0-gpu
