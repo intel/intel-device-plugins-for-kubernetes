@@ -26,8 +26,6 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 OLM_MANIFESTS = deployments/operator/manifests
 BUNDLE_DIR = community-operators/operators/intel-device-plugins-operator/$(TAG)
 
-TESTDATA_DIR = pkg/topology/testdata
-
 EXTRA_BUILD_ARGS += --build-arg GOLICENSES_VERSION=$(GOLICENSES_VERSION)
 
 pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e | grep -v envtest)
@@ -50,13 +48,7 @@ go-mod-tidy:
 	$(GO) mod download all
 	@report=`$(GO) mod tidy -v 2>&1` ; if [ -n "$$report" ]; then echo "$$report"; exit 1; fi
 
-update-fixture:
-	@scripts/ttar -C $(TESTDATA_DIR) -c -f $(TESTDATA_DIR)/sys.ttar sys/
-
-fixture:
-	@scripts/ttar --recursive-unlink -C $(TESTDATA_DIR) -x -f $(TESTDATA_DIR)/sys.ttar
-
-test: fixture
+test:
 ifndef WHAT
 	@$(GO) test -tags $(BUILDTAGS) -race -coverprofile=coverage.txt -covermode=atomic $(pkgs)
 else
@@ -68,7 +60,7 @@ else
 	    exit $$rc
 endif
 
-test-with-kind: fixture intel-sgx-admissionwebhook intel-fpga-admissionwebhook intel-deviceplugin-operator install-tools
+test-with-kind: intel-sgx-admissionwebhook intel-fpga-admissionwebhook intel-deviceplugin-operator install-tools
 	# Build a Cluster with KinD & Load Images & Install Cert-Manager
 	kind create cluster
 	kind load docker-image $(REG)intel-sgx-admissionwebhook:$(TAG)
@@ -241,7 +233,7 @@ check-github-actions:
 	jq -e '$(images_json) - [$(skip_images)] - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
 
-.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture install-tools test-image-base-layer
+.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest install-tools test-image-base-layer
 
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build

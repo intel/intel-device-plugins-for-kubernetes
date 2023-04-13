@@ -3,6 +3,7 @@ module github.com/intel/intel-device-plugins-for-kubernetes
 go 1.20
 
 require (
+	github.com/containers/nri-plugins/pkg/topology v0.0.0-20230417061637-0847843000f8
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/go-ini/ini v1.67.0
 	github.com/go-logr/logr v1.2.4
