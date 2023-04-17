@@ -34,6 +34,7 @@ const (
 	opensslTestYaml            = "demo/openssl-qat-engine-cpa-sample-pod.yaml"
 	compressTestYaml           = "deployments/qat_dpdk_app/test-compress1/kustomization.yaml"
 	cryptoTestYaml             = "deployments/qat_dpdk_app/test-crypto1/kustomization.yaml"
+	cryptoTestGen4Yaml         = "deployments/qat_dpdk_app/test-crypto1-gen4/kustomization.yaml"
 )
 
 func init() {
@@ -57,6 +58,11 @@ func describeQatDpdkPlugin() {
 	cryptoTestYamlPath, err := utils.LocateRepoFile(cryptoTestYaml)
 	if err != nil {
 		framework.Failf("unable to locate %q: %v", cryptoTestYaml, err)
+	}
+
+	cryptoTestGen4YamlPath, err := utils.LocateRepoFile(cryptoTestGen4Yaml)
+	if err != nil {
+		framework.Failf("unable to locate %q: %v", cryptoTestGen4Yaml, err)
 	}
 
 	opensslTestYamlPath, err := utils.LocateRepoFile(opensslTestYaml)
@@ -111,7 +117,7 @@ func describeQatDpdkPlugin() {
 			resourceName = "qat.intel.com/cy"
 		})
 
-		ginkgo.It("deploys a crypto pod requesting QAT resources", func() {
+		ginkgo.It("deploys a crypto pod (openssl) requesting QAT resources", func() {
 			ginkgo.By("submitting a crypto pod requesting QAT resources")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", opensslTestYamlPath)
 
@@ -121,6 +127,18 @@ func describeQatDpdkPlugin() {
 			output, _ := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, "openssl-qat-engine", "openssl-qat-engine")
 
 			framework.Logf("cpa_sample_code output:\n %s", output)
+		})
+
+		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources", func() {
+			ginkgo.By("submitting a crypto pod requesting QAT resources")
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestGen4YamlPath))
+
+			ginkgo.By("waiting the crypto pod to finish successfully")
+			e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-crypto-perf-tc1-gen4", 300*time.Second)
+
+			output, _ := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, "qat-dpdk-test-crypto-perf-tc1-gen4", "crypto-perf")
+
+			framework.Logf("crypto-perf output:\n %s", output)
 		})
 	})
 
