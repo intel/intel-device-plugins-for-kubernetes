@@ -152,7 +152,9 @@ Release tagged images of the components are also available on the Docker hub, ta
 release version numbers in the format `x.y.z`, corresponding to the branches and releases in this
 repository. Thus the easiest way to deploy the plugin in your cluster is to run this command
 
-Note: Replace `<RELEASE_VERSION>` with the desired [release tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) or `main` to get `devel` images.
+> **Note**: Replace `<RELEASE_VERSION>` with the desired [release tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) or `main` to get `devel` images.
+
+> **Note**: Add ```--dry-run=client -o yaml``` to the ```kubectl``` commands below to visualize the yaml content being applied.
 
 See [the development guide](../../DEVEL.md) for details if you want to deploy a customized version of the plugin.
 
