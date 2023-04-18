@@ -20,6 +20,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
@@ -60,28 +61,28 @@ func (r *GpuDevicePlugin) Default() {
 var _ webhook.Validator = &GpuDevicePlugin{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *GpuDevicePlugin) ValidateCreate() error {
+func (r *GpuDevicePlugin) ValidateCreate() (admission.Warnings, error) {
 	gpudevicepluginlog.Info("validate create", "name", r.Name)
 
 	if controllers.GetDevicePluginCount(gpuPluginKind) > 0 {
-		return errors.Errorf("an instance of %q already exists in the cluster", gpuPluginKind)
+		return nil, errors.Errorf("an instance of %q already exists in the cluster", gpuPluginKind)
 	}
 
-	return r.validatePlugin()
+	return nil, r.validatePlugin()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *GpuDevicePlugin) ValidateUpdate(old runtime.Object) error {
+func (r *GpuDevicePlugin) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	gpudevicepluginlog.Info("validate update", "name", r.Name)
 
-	return r.validatePlugin()
+	return nil, r.validatePlugin()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *GpuDevicePlugin) ValidateDelete() error {
+func (r *GpuDevicePlugin) ValidateDelete() (admission.Warnings, error) {
 	gpudevicepluginlog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }
 
 func (r *GpuDevicePlugin) validatePlugin() error {

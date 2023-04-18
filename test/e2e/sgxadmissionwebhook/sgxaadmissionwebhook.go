@@ -46,46 +46,46 @@ func describe() {
 
 	var webhook v1.Pod
 
-	ginkgo.BeforeEach(func() {
+	ginkgo.BeforeEach(func(ctx context.Context) {
 		kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
 		if err != nil {
 			framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
 		}
-		webhook = utils.DeployWebhook(f, kustomizationPath)
+		webhook = utils.DeployWebhook(ctx, f, kustomizationPath)
 	})
 
-	ginkgo.It("checks the webhook pod is safely configured", func() {
+	ginkgo.It("checks the webhook pod is safely configured", func(ctx context.Context) {
 		err := utils.TestContainersRunAsNonRoot([]v1.Pod{webhook})
 		gomega.Expect(err).To(gomega.BeNil())
-		err = utils.TestWebhookServerTLS(f, "https://intelsgxwebhook-webhook-service")
+		err = utils.TestWebhookServerTLS(ctx, f, "https://intelsgxwebhook-webhook-service")
 		gomega.Expect(err).To(gomega.BeNil())
 	})
-	ginkgo.It("mutates created pods when no quote generation is needed", func() {
+	ginkgo.It("mutates created pods when no quote generation is needed", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")
-		pod := submitPod(f, []string{"test"}, "")
+		pod := submitPod(ctx, f, []string{"test"}, "")
 
 		ginkgo.By("checking the container resources have been mutated")
-		checkMutatedResources(f, pod.Spec.Containers[0].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
+		checkMutatedResources(ctx, f, pod.Spec.Containers[0].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
 
 		ginkgo.By("checking the pod total EPC size annotation is correctly set")
 		gomega.Expect(pod.Annotations["sgx.intel.com/epc"]).To(gomega.Equal("1Mi"))
 	})
-	ginkgo.It("mutates created pods when the container contains the quote generation libraries", func() {
+	ginkgo.It("mutates created pods when the container contains the quote generation libraries", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")
-		pod := submitPod(f, []string{"test"}, "test")
+		pod := submitPod(ctx, f, []string{"test"}, "test")
 
 		ginkgo.By("checking the container resources have been mutated")
-		checkMutatedResources(f, pod.Spec.Containers[0].Resources, []v1.ResourceName{"sgx.intel.com/enclave", "sgx.intel.com/provision"}, []v1.ResourceName{})
+		checkMutatedResources(ctx, f, pod.Spec.Containers[0].Resources, []v1.ResourceName{"sgx.intel.com/enclave", "sgx.intel.com/provision"}, []v1.ResourceName{})
 
 		ginkgo.By("checking the pod total EPC size annotation is correctly set")
 		gomega.Expect(pod.Annotations["sgx.intel.com/epc"]).To(gomega.Equal("1Mi"))
 	})
-	ginkgo.It("mutates created pods when the container uses aesmd from a side-car container to generate quotes", func() {
+	ginkgo.It("mutates created pods when the container uses aesmd from a side-car container to generate quotes", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")
-		pod := submitPod(f, []string{"test", "aesmd"}, "aesmd")
+		pod := submitPod(ctx, f, []string{"test", "aesmd"}, "aesmd")
 		ginkgo.By("checking the container resources have been mutated")
-		checkMutatedResources(f, pod.Spec.Containers[0].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
-		checkMutatedResources(f, pod.Spec.Containers[1].Resources, []v1.ResourceName{"sgx.intel.com/enclave", "sgx.intel.com/provision"}, []v1.ResourceName{})
+		checkMutatedResources(ctx, f, pod.Spec.Containers[0].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
+		checkMutatedResources(ctx, f, pod.Spec.Containers[1].Resources, []v1.ResourceName{"sgx.intel.com/enclave", "sgx.intel.com/provision"}, []v1.ResourceName{})
 		ginkgo.By("checking the container volumes have been mutated")
 		checkMutatedVolumes(f, pod, "aesmd-socket", v1.EmptyDirVolumeSource{})
 		ginkgo.By("checking the container envvars have been mutated")
@@ -94,11 +94,11 @@ func describe() {
 		ginkgo.By("checking the pod total EPC size annotation is correctly set")
 		gomega.Expect(pod.Annotations["sgx.intel.com/epc"]).To(gomega.Equal("2Mi"))
 	})
-	ginkgo.It("mutates created pods where one container uses host/daemonset aesmd to generate quotes", func() {
+	ginkgo.It("mutates created pods where one container uses host/daemonset aesmd to generate quotes", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")
-		pod := submitPod(f, []string{"test"}, "aesmd")
+		pod := submitPod(ctx, f, []string{"test"}, "aesmd")
 		ginkgo.By("checking the container resources have been mutated")
-		checkMutatedResources(f, pod.Spec.Containers[0].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
+		checkMutatedResources(ctx, f, pod.Spec.Containers[0].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
 		ginkgo.By("checking the container volumes have been mutated")
 		checkMutatedVolumes(f, pod, "aesmd-socket", v1.HostPathVolumeSource{})
 		ginkgo.By("checking the container envvars have been mutated")
@@ -107,13 +107,13 @@ func describe() {
 		ginkgo.By("checking the pod total EPC size annotation is correctly set")
 		gomega.Expect(pod.Annotations["sgx.intel.com/epc"]).To(gomega.Equal("1Mi"))
 	})
-	ginkgo.It("mutates created pods where three containers use host/daemonset aesmd to generate quotes", func() {
+	ginkgo.It("mutates created pods where three containers use host/daemonset aesmd to generate quotes", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")
-		pod := submitPod(f, []string{"test1", "test2", "test3"}, "aesmd")
+		pod := submitPod(ctx, f, []string{"test1", "test2", "test3"}, "aesmd")
 		ginkgo.By("checking the container resources have been mutated")
-		checkMutatedResources(f, pod.Spec.Containers[0].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
-		checkMutatedResources(f, pod.Spec.Containers[1].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
-		checkMutatedResources(f, pod.Spec.Containers[2].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
+		checkMutatedResources(ctx, f, pod.Spec.Containers[0].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
+		checkMutatedResources(ctx, f, pod.Spec.Containers[1].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
+		checkMutatedResources(ctx, f, pod.Spec.Containers[2].Resources, []v1.ResourceName{"sgx.intel.com/enclave"}, []v1.ResourceName{"sgx.intel.com/provision"})
 		ginkgo.By("checking the container volumes have been mutated")
 		checkMutatedVolumes(f, pod, "aesmd-socket", v1.HostPathVolumeSource{})
 		ginkgo.By("checking the container envvars have been mutated")
@@ -126,7 +126,7 @@ func describe() {
 		ginkgo.By("checking the pod total EPC size annotation is correctly set")
 		gomega.Expect(pod.Annotations["sgx.intel.com/epc"]).To(gomega.Equal("3Mi"))
 	})
-	ginkgo.It("checks that Volumes and VolumeMounts are created only once", func() {
+	ginkgo.It("checks that Volumes and VolumeMounts are created only once", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")
 		podSpec := createPodSpec([]string{"test"}, "aesmd")
 		podSpec.Spec.Volumes = make([]v1.Volume, 0)
@@ -143,7 +143,7 @@ func describe() {
 			Name:      "aesmd-socket",
 			MountPath: "/var/run/aesmd",
 		})
-		pod := submitCustomPod(f, podSpec)
+		pod := submitCustomPod(ctx, f, podSpec)
 		ginkgo.By("checking the container volumes have been not mutated")
 		checkMutatedVolumes(f, pod, "aesmd-socket", v1.EmptyDirVolumeSource{})
 	})
@@ -167,12 +167,12 @@ func checkMutatedVolumes(f *framework.Framework, pod *v1.Pod, volumeName string,
 	}
 }
 
-func checkMutatedResources(f *framework.Framework, r v1.ResourceRequirements, expectedResources, forbiddenResources []v1.ResourceName) {
+func checkMutatedResources(ctx context.Context, f *framework.Framework, r v1.ResourceRequirements, expectedResources, forbiddenResources []v1.ResourceName) {
 	for _, res := range expectedResources {
 		q, ok := r.Limits[res]
 		if !ok {
-			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Fail("the pod has missing resources")
 		}
 
@@ -182,15 +182,15 @@ func checkMutatedResources(f *framework.Framework, r v1.ResourceRequirements, ex
 	for _, res := range forbiddenResources {
 		_, ok := r.Limits[res]
 		if ok {
-			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Fail("the pod has extra resources")
 		}
 	}
 }
 
-func submitCustomPod(f *framework.Framework, podSpec *v1.Pod) *v1.Pod {
-	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(),
+func submitCustomPod(ctx context.Context, f *framework.Framework, podSpec *v1.Pod) *v1.Pod {
+	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx,
 		podSpec, metav1.CreateOptions{})
 
 	framework.ExpectNoError(err, "pod Create API error")
@@ -230,6 +230,6 @@ func createPodSpec(containerNames []string, quoteProvider string) *v1.Pod {
 	return podSpec
 }
 
-func submitPod(f *framework.Framework, containerNames []string, quoteProvider string) *v1.Pod {
-	return submitCustomPod(f, createPodSpec(containerNames, quoteProvider))
+func submitPod(ctx context.Context, f *framework.Framework, containerNames []string, quoteProvider string) *v1.Pod {
+	return submitCustomPod(ctx, f, createPodSpec(containerNames, quoteProvider))
 }

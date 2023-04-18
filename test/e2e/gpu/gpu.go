@@ -52,16 +52,16 @@ func describe() {
 		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
 	}
 
-	ginkgo.It("checks availability of GPU resources", func() {
+	ginkgo.It("checks availability of GPU resources", func(ctx context.Context) {
 		ginkgo.By("deploying GPU plugin")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for GPU plugin's availability")
-		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
+		podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
 			labels.Set{"app": "intel-gpu-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
 		if err != nil {
-			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 
@@ -71,7 +71,7 @@ func describe() {
 		}
 
 		ginkgo.By("checking if the resource is allocatable")
-		if err = utils.WaitForNodesWithResource(f.ClientSet, "gpu.intel.com/i915", 30*time.Second); err != nil {
+		if err = utils.WaitForNodesWithResource(ctx, f.ClientSet, "gpu.intel.com/i915", 30*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
 
@@ -94,14 +94,14 @@ func describe() {
 				RestartPolicy: v1.RestartPolicyNever,
 			},
 		}
-		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), podSpec, metav1.CreateOptions{})
+		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx, podSpec, metav1.CreateOptions{})
 		framework.ExpectNoError(err, "pod Create API error")
 
 		ginkgo.By("waiting the pod to finish successfully")
-		e2epod.NewPodClient(f).WaitForSuccess(pod.ObjectMeta.Name, 60*time.Second)
+		e2epod.NewPodClient(f).WaitForSuccess(ctx, pod.ObjectMeta.Name, 60*time.Second)
 
 		ginkgo.By("checking log output")
-		log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, pod.Name, containerName)
+		log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, pod.Name, containerName)
 
 		if err != nil {
 			framework.Failf("unable to get log from pod: %v", err)

@@ -10,7 +10,7 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /pods-sgx
+      path: /mutate--v1-pod
   failurePolicy: Ignore
   name: sgx.mutator.webhooks.intel.com
   reinvocationPolicy: IfNeeded

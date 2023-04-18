@@ -18,15 +18,15 @@ import (
 	"os"
 
 	sgxwebhook "github.com/intel/intel-device-plugins-for-kubernetes/pkg/webhooks/sgx"
-	"k8s.io/apimachinery/pkg/runtime"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 var (
-	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
 
@@ -43,7 +43,6 @@ func main() {
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
 		MetricsBindAddress: "0",
 		Logger:             ctrl.Log.WithName("SgxAdmissionWebhook"),
 		WebhookServer:      webHook,
@@ -53,9 +52,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	mgr.GetWebhookServer().Register("/pods-sgx", &webhook.Admission{
-		Handler: &sgxwebhook.Mutator{Client: mgr.GetClient()},
-	})
+	if err := builder.WebhookManagedBy(mgr).
+		For(&corev1.Pod{}).
+		WithDefaulter(&sgxwebhook.Mutator{}).
+		Complete(); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Pod")
+		os.Exit(1)
+	}
 
 	setupLog.Info("starting manager")
 

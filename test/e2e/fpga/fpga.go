@@ -63,16 +63,16 @@ func describe() {
 	fmw := framework.NewDefaultFramework("fpgaplugin-e2e")
 	fmw.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	ginkgo.It("Run FPGA plugin tests", func() {
+	ginkgo.It("Run FPGA plugin tests", func(ctx context.Context) {
 		// Run region test case twice to ensure that device is reprogrammed at least once
-		runTestCase(fmw, pluginKustomizationPath, mappingsCollectionPath, "region", arria10NodeResource, nlb3PodResource, "nlb3", "nlb0")
-		runTestCase(fmw, pluginKustomizationPath, mappingsCollectionPath, "region", arria10NodeResource, nlb0PodResource, "nlb0", "nlb3")
+		runTestCase(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, "region", arria10NodeResource, nlb3PodResource, "nlb3", "nlb0")
+		runTestCase(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, "region", arria10NodeResource, nlb0PodResource, "nlb0", "nlb3")
 		// Run af test case
-		runTestCase(fmw, pluginKustomizationPath, mappingsCollectionPath, "af", nlb0NodeResource, nlb0PodResourceAF, "nlb0", "nlb3")
+		runTestCase(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, "af", nlb0NodeResource, nlb0PodResourceAF, "nlb0", "nlb3")
 	})
 }
 
-func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsCollectionPath, pluginMode, nodeResource, podResource, cmd1, cmd2 string) {
+func runTestCase(ctx context.Context, fmw *framework.Framework, pluginKustomizationPath, mappingsCollectionPath, pluginMode, nodeResource, podResource, cmd1, cmd2 string) {
 	tmpDir, err := os.MkdirTemp("", "fpgaplugine2etest-"+fmw.Namespace.Name)
 	if err != nil {
 		framework.Failf("unable to create temp directory: %v", err)
@@ -91,13 +91,13 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 	ginkgo.By("deploying mappings")
 	e2ekubectl.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-f", mappingsCollectionPath)
 
-	waitForPod(fmw, "intel-fpga-plugin")
+	waitForPod(ctx, fmw, "intel-fpga-plugin")
 
 	resource := v1.ResourceName(nodeResource)
 
 	ginkgo.By("checking if the resource is allocatable")
 
-	if err := utils.WaitForNodesWithResource(fmw.ClientSet, resource, 30*time.Second); err != nil {
+	if err := utils.WaitForNodesWithResource(ctx, fmw.ClientSet, resource, 30*time.Second); err != nil {
 		framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 	}
 
@@ -106,10 +106,10 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 
 	ginkgo.By("submitting a pod requesting correct FPGA resources")
 
-	pod := createPod(fmw, fmt.Sprintf("fpgaplugin-%s-%s-%s-correct", pluginMode, cmd1, cmd2), resource, image, []string{cmd1, "-S0"})
+	pod := createPod(ctx, fmw, fmt.Sprintf("fpgaplugin-%s-%s-%s-correct", pluginMode, cmd1, cmd2), resource, image, []string{cmd1, "-S0"})
 
 	ginkgo.By("waiting the pod to finish successfully")
-	e2epod.NewPodClient(fmw).WaitForSuccess(pod.ObjectMeta.Name, 60*time.Second)
+	e2epod.NewPodClient(fmw).WaitForSuccess(ctx, pod.ObjectMeta.Name, 60*time.Second)
 	// If WaitForSuccess fails, ginkgo doesn't show the logs of the failed container.
 	// Replacing WaitForSuccess with WaitForFinish + 'kubelet logs' would show the logs
 	//fmw.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
@@ -117,13 +117,13 @@ func runTestCase(fmw *framework.Framework, pluginKustomizationPath, mappingsColl
 
 	ginkgo.By("submitting a pod requesting incorrect FPGA resources")
 
-	pod = createPod(fmw, fmt.Sprintf("fpgaplugin-%s-%s-%s-incorrect", pluginMode, cmd1, cmd2), resource, image, []string{cmd2, "-S0"})
+	pod = createPod(ctx, fmw, fmt.Sprintf("fpgaplugin-%s-%s-%s-incorrect", pluginMode, cmd1, cmd2), resource, image, []string{cmd2, "-S0"})
 
 	ginkgo.By("waiting the pod failure")
-	utils.WaitForPodFailure(fmw, pod.ObjectMeta.Name, 60*time.Second)
+	utils.WaitForPodFailure(ctx, fmw, pod.ObjectMeta.Name, 60*time.Second)
 }
 
-func createPod(fmw *framework.Framework, name string, resourceName v1.ResourceName, image string, command []string) *v1.Pod {
+func createPod(ctx context.Context, fmw *framework.Framework, name string, resourceName v1.ResourceName, image string, command []string) *v1.Pod {
 	resourceList := v1.ResourceList{resourceName: resource.MustParse("1"),
 		"cpu":           resource.MustParse("1"),
 		"hugepages-2Mi": resource.MustParse("20Mi")}
@@ -150,21 +150,21 @@ func createPod(fmw *framework.Framework, name string, resourceName v1.ResourceNa
 		},
 	}
 
-	pod, err := fmw.ClientSet.CoreV1().Pods(fmw.Namespace.Name).Create(context.TODO(),
+	pod, err := fmw.ClientSet.CoreV1().Pods(fmw.Namespace.Name).Create(ctx,
 		podSpec, metav1.CreateOptions{})
 	framework.ExpectNoError(err, "pod Create API error")
 
 	return pod
 }
 
-func waitForPod(fmw *framework.Framework, name string) {
+func waitForPod(ctx context.Context, fmw *framework.Framework, name string) {
 	ginkgo.By(fmt.Sprintf("waiting for %s availability", name))
 
-	podList, err := e2epod.WaitForPodsWithLabelRunningReady(fmw.ClientSet, fmw.Namespace.Name,
+	podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, fmw.ClientSet, fmw.Namespace.Name,
 		labels.Set{"app": name}.AsSelector(), 1, 100*time.Second)
 	if err != nil {
-		e2edebug.DumpAllNamespaceInfo(fmw.ClientSet, fmw.Namespace.Name)
-		e2ekubectl.LogFailedContainers(fmw.ClientSet, fmw.Namespace.Name, framework.Logf)
+		e2edebug.DumpAllNamespaceInfo(ctx, fmw.ClientSet, fmw.Namespace.Name)
+		e2ekubectl.LogFailedContainers(ctx, fmw.ClientSet, fmw.Namespace.Name, framework.Logf)
 		framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 	}
 

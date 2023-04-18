@@ -16,24 +16,23 @@ package sgx
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
+	"errors"
+	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+	"k8s.io/apimachinery/pkg/runtime"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/internal/containers"
 )
 
-// +kubebuilder:webhook:path=/pods-sgx,mutating=true,failurePolicy=ignore,groups="",resources=pods,verbs=create;update,versions=v1,name=sgx.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1,reinvocationPolicy=IfNeeded
+var ErrObjectType = errors.New("invalid runtime object type")
+
+// +kubebuilder:webhook:path=/mutate--v1-pod,mutating=true,failurePolicy=ignore,groups="",resources=pods,verbs=create;update,versions=v1,name=sgx.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1,reinvocationPolicy=IfNeeded
 
 // Mutator annotates Pods.
-type Mutator struct {
-	Client  client.Client
-	decoder *admission.Decoder
-}
+type Mutator struct{}
 
 const (
 	namespace                = "sgx.intel.com"
@@ -96,22 +95,6 @@ func createAesmdVolumeIfNotExists(needsAesmd bool, epcUserCount int32, aesmdPres
 	return vol
 }
 
-func warnWrongResources(resources map[string]int64) []string {
-	warnings := make([]string, 0)
-
-	_, ok := resources[encl]
-	if ok {
-		warnings = append(warnings, encl+" should not be used in Pod spec directly")
-	}
-
-	_, ok = resources[provision]
-	if ok {
-		warnings = append(warnings, provision+" should not be used in Pod spec directly")
-	}
-
-	return warnings
-}
-
 func volumeMountExists(path string, container *corev1.Container) bool {
 	if container.VolumeMounts != nil {
 		for _, vm := range container.VolumeMounts {
@@ -132,18 +115,20 @@ func createNewVolumeMounts(container *corev1.Container, volumeMount *corev1.Volu
 	return append(container.VolumeMounts, *volumeMount)
 }
 
-// Handle implements controller-runtimes's admission.Handler inteface.
-func (s *Mutator) Handle(ctx context.Context, req admission.Request) admission.Response {
-	pod := &corev1.Pod{}
+func (s *Mutator) Default(ctx context.Context, obj runtime.Object) error {
+	var pod *corev1.Pod
 
-	if err := s.decoder.Decode(req, pod); err != nil {
-		return admission.Errored(http.StatusBadRequest, err)
+	log := logf.FromContext(ctx)
+
+	pod, ok := obj.(*corev1.Pod)
+
+	if !ok {
+		return fmt.Errorf("%w: expected a Pod but got a %T", ErrObjectType, obj)
 	}
 
 	totalEpc := int64(0)
 	epcUserCount := int32(0)
 	aesmdPresent := bool(false)
-	warnings := make([]string, 0)
 
 	if pod.Annotations == nil {
 		pod.Annotations = make(map[string]string)
@@ -154,10 +139,8 @@ func (s *Mutator) Handle(ctx context.Context, req admission.Request) admission.R
 	for idx, container := range pod.Spec.Containers {
 		requestedResources, err := containers.GetRequestedResources(container, namespace)
 		if err != nil {
-			return admission.Errored(http.StatusInternalServerError, err)
+			return err
 		}
-
-		warnings = append(warnings, warnWrongResources(requestedResources)...)
 
 		// the container has no sgx.intel.com/epc
 		epcSize, ok := requestedResources[epc]
@@ -242,17 +225,7 @@ func (s *Mutator) Handle(ctx context.Context, req admission.Request) admission.R
 		pod.Annotations["sgx.intel.com/epc"] = quantity.String()
 	}
 
-	marshaledPod, err := json.Marshal(pod)
-	if err != nil {
-		return admission.Errored(http.StatusInternalServerError, err)
-	}
+	log.Info("Mutated SGX Pod")
 
-	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod).WithWarnings(warnings...)
-}
-
-// InjectDecoder implements controller-runtime's admission.DecoderInjector interface.
-// A decoder will be automatically injected.
-func (s *Mutator) InjectDecoder(d *admission.Decoder) error {
-	s.decoder = d
 	return nil
 }

@@ -15,6 +15,7 @@
 package iaa
 
 import (
+	"context"
 	"path/filepath"
 	"time"
 
@@ -63,18 +64,18 @@ func describe() {
 	var dpPodName string
 
 	ginkgo.Describe("Without using operator", func() {
-		ginkgo.BeforeEach(func() {
+		ginkgo.BeforeEach(func(ctx context.Context) {
 			ginkgo.By("deploying IAA plugin")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "intel-iaa-config", "--from-file="+configmap)
 
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 			ginkgo.By("waiting for IAA plugin's availability")
-			podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
+			podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
 				labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1 /* one replica */, 300*time.Second)
 			if err != nil {
-				e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-				e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+				e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+				e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
 				framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 			}
 			dpPodName = podList.Items[0].Name
@@ -85,30 +86,30 @@ func describe() {
 			}
 		})
 
-		ginkgo.AfterEach(func() {
+		ginkgo.AfterEach(func(ctx context.Context) {
 			ginkgo.By("undeploying IAA plugin")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(kustomizationPath))
-			if err := e2epod.WaitForPodNotFoundInNamespace(f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
+			if err := e2epod.WaitForPodNotFoundInNamespace(ctx, f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
 				framework.Failf("failed to terminate pod: %v", err)
 			}
 		})
 
 		ginkgo.Context("When IAA resources are available", func() {
-			ginkgo.BeforeEach(func() {
+			ginkgo.BeforeEach(func(ctx context.Context) {
 				ginkgo.By("checking if the resource is allocatable")
-				if err := utils.WaitForNodesWithResource(f.ClientSet, "iaa.intel.com/wq-user-dedicated", 300*time.Second); err != nil {
+				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "iaa.intel.com/wq-user-dedicated", 300*time.Second); err != nil {
 					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 				}
 			})
 
-			ginkgo.It("deploys a demo app", func() {
+			ginkgo.It("deploys a demo app", func(ctx context.Context) {
 				e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 				ginkgo.By("waiting for the IAA demo to succeed")
-				e2epod.NewPodClient(f).WaitForSuccess(podName, 300*time.Second)
+				e2epod.NewPodClient(f).WaitForSuccess(ctx, podName, 300*time.Second)
 
 				ginkgo.By("getting workload log")
-				log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, podName, podName)
+				log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, podName, podName)
 
 				if err != nil {
 					framework.Failf("unable to get log from pod: %v", err)
@@ -120,20 +121,20 @@ func describe() {
 	})
 
 	ginkgo.Describe("With using operator", func() {
-		ginkgo.It("deploys IAA plugin with operator", func() {
+		ginkgo.It("deploys IAA plugin with operator", func(ctx context.Context) {
 			utils.Kubectl("", "apply", "-k", "deployments/operator/default/kustomization.yaml")
 
-			if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1, timeout); err != nil {
+			if _, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, ns, labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1, timeout); err != nil {
 				framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 			}
 
 			utils.Kubectl("", "apply", "-f", "deployments/operator/samples/deviceplugin_v1_iaadeviceplugin.yaml")
 
-			if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, ns, labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1, timeout); err != nil {
+			if _, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, ns, labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1, timeout); err != nil {
 				framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 			}
 
-			if err := utils.WaitForNodesWithResource(f.ClientSet, "iaa.intel.com/wq-user-dedicated", timeout); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "iaa.intel.com/wq-user-dedicated", timeout); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 			}
 

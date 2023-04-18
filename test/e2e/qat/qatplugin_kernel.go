@@ -51,16 +51,16 @@ func describeQatKernelPlugin() {
 
 	var dpPodName string
 
-	ginkgo.BeforeEach(func() {
+	ginkgo.BeforeEach(func(ctx context.Context) {
 		ginkgo.By("deploying QAT plugin in kernel mode")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "-f", yamlPath)
 
 		ginkgo.By("waiting for QAT plugin's availability")
-		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
+		podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
 			labels.Set{"app": "intel-qat-kernel-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
 		if err != nil {
-			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 		dpPodName = podList.Items[0].Name
@@ -71,23 +71,23 @@ func describeQatKernelPlugin() {
 		}
 	})
 
-	ginkgo.AfterEach(func() {
+	ginkgo.AfterEach(func(ctx context.Context) {
 		ginkgo.By("undeploying QAT plugin")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-f", yamlPath)
-		if err := e2epod.WaitForPodNotFoundInNamespace(f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
+		if err := e2epod.WaitForPodNotFoundInNamespace(ctx, f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
 			framework.Failf("failed to terminate pod: %v", err)
 		}
 	})
 
 	ginkgo.Context("When QAT resources are available", func() {
-		ginkgo.BeforeEach(func() {
+		ginkgo.BeforeEach(func(ctx context.Context) {
 			ginkgo.By("checking if the resource is allocatable")
-			if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy1_dc0", 30*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "qat.intel.com/cy1_dc0", 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 			}
 		})
 
-		ginkgo.It("deploys a pod requesting QAT resources", func() {
+		ginkgo.It("deploys a pod requesting QAT resources", func(ctx context.Context) {
 			ginkgo.By("submitting a pod requesting QAT resources")
 			podSpec := &v1.Pod{
 				ObjectMeta: metav1.ObjectMeta{Name: "qatplugin-tester"},
@@ -107,12 +107,12 @@ func describeQatKernelPlugin() {
 					RestartPolicy: v1.RestartPolicyNever,
 				},
 			}
-			pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(),
+			pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx,
 				podSpec, metav1.CreateOptions{})
 			framework.ExpectNoError(err, "pod Create API error")
 
 			ginkgo.By("waiting the pod to finish successfully")
-			e2epod.NewPodClient(f).WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
+			e2epod.NewPodClient(f).WaitForFinish(ctx, pod.ObjectMeta.Name, 60*time.Second)
 		})
 	})
 }
