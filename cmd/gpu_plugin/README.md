@@ -10,6 +10,8 @@ Table of Contents
             * [Kernel driver](#kernel-driver)
                 * [Intel DKMS packages](#intel-dkms-packages)
                 * [Upstream kernel](#upstream-kernel)
+            * [GPU Version](#gpu-version)
+            * [GPU Firmware](#gpu-firmware)
             * [User-space drivers](#user-space-drivers)
         * [Drivers for older (integrated) GPUs](#drivers-for-older-integrated-gpus)
     * [Pre-built Images](#pre-built-images)
@@ -74,24 +76,31 @@ $ grep i915 /sys/class/drm/card?/device/uevent
 
 #### Drivers for discrete GPUs
 
+> **Note**: Kernel (on host) and user-space drivers (in containers)
+> should be installed from the same repository as there are some
+> differences between DKMS and upstream GPU driver uAPI.
+
 ##### Kernel driver
 
 ###### Intel DKMS packages
 
-`i915` GPU driver DKMS[^dkms] package is recommended until Intel
-discrete GPU support in upstream is complete.  It can be installed
-from Intel package repositories for a subset of older kernel versions
-used in enterprise / LTS distributions:
+`i915` GPU driver DKMS[^dkms] package is recommended for Intel
+discrete GPUs, until their support in upstream is complete.  DKMS
+package(s) can be installed from Intel package repositories for a
+subset of older kernel versions used in enterprise / LTS
+distributions:
 https://dgpu-docs.intel.com/installation-guides/index.html
 
 [^dkms]: [intel-gpu-i915-backports](https://github.com/intel-gpu/intel-gpu-i915-backports).
 
 ###### Upstream kernel
 
-With upstream 6.x kernels, discrete GPU support needs to be enabled using
-kernel `i915.force_probe=<PCI_ID>` command line option until relevant kernel
-driver features have been completed also in upstream:
-https://www.kernel.org/doc/html/latest/gpu/rfc/index.html
+Upstream Linux kernel 6.2 or newer is needed for Intel discrete GPU
+support.  For now, upstream kernel is still missing support for a few
+of the features available in DKMS kernels (e.g. Level-Zero Sysman API
+GPU error counters).
+
+##### GPU Version
 
 PCI IDs for the Intel GPUs on given host can be listed with:
 ```
@@ -105,6 +114,8 @@ and server GPUs without display support, as "Display controller".)
 
 Mesa "Iris" 3D driver header provides a mapping between GPU PCI IDs and their Intel brand names:
 https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/include/pci_ids/iris_pci_ids.h
+
+###### GPU Firmware
 
 If your kernel build does not find the correct firmware version for
 a given GPU from the host (see `dmesg | grep i915` output), latest
@@ -316,21 +327,22 @@ The GPU plugin functionality can be verified by deploying an [OpenCL image](../.
 
 ## Issues with media workloads on multi-GPU setups
 
-Unlike with 3D & compute, and OneVPL media API, QSV (MediaSDK) & VA-API
-media APIs do not offer device discovery functionality for applications.
-There is nothing (e.g. environment variable) with which the default
-device could be overridden either.
+OneVPL media API, 3D and compute APIs provide device discovery
+functionality for applications and work fine in multi-GPU setups.
+VA-API and legacy QSV (MediaSDK) media APIs do not, and do not
+provide (e.g. environment variable) override for their _default_
+device file.
 
-As result, most (all?) media applications using VA-API or QSV, fail to
-locate the correct GPU device file unless it is the first ("renderD128")
-one, or device file name is explictly specified with an application option.
+As result, media applications using VA-API or QSV, fail to locate the
+correct GPU device file unless it is the first ("renderD128") one, or
+device file name is explictly specified with an application option.
 
 Kubernetes device plugins expose only requested number of device
 files, and their naming matches host device file names (for several
 reasons unrelated to media).  Therefore, on multi-GPU hosts, the only
-GPU device file mapped to the media container can be some other one
-than "renderD128", and media applications using VA-API or QSV need to
-be explicitly told which one to use.
+GPU device file mapped to the media container can differ from
+"renderD128", and media applications using VA-API or QSV need to be
+explicitly told which one to use.
 
 These options differ from application to application.  Relevant FFmpeg
 options are documented here:
