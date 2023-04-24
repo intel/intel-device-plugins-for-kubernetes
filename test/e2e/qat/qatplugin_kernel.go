@@ -71,19 +71,19 @@ func describeQatKernelPlugin() {
 		}
 	})
 
+	ginkgo.AfterEach(func() {
+		ginkgo.By("undeploying QAT plugin")
+		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-f", yamlPath)
+		if err := e2epod.WaitForPodNotFoundInNamespace(f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
+			framework.Failf("failed to terminate pod: %v", err)
+		}
+	})
+
 	ginkgo.Context("When QAT resources are available", func() {
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("checking if the resource is allocatable")
 			if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy1_dc0", 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-			}
-		})
-
-		ginkgo.AfterEach(func() {
-			ginkgo.By("undeploying QAT plugin")
-			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-f", yamlPath)
-			if err := e2epod.WaitForPodNotFoundInNamespace(f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
-				framework.Failf("failed to terminate pod: %v", err)
 			}
 		})
 
