@@ -20,9 +20,13 @@ fi
 echo "Testing $IMG base layer"
 
 if [ -z "${BUILDER}" ] || [ "${BUILDER}" = 'docker' ] ; then
+    if [ -z "$(docker image ls -q gcr.io/distroless/static:latest)" ]; then
+        docker pull gcr.io/distroless/static:latest
+    fi
     distroless_base=$(docker inspect --format='{{index .RootFS.Layers 0}}' "gcr.io/distroless/static") || die "failed to inspect gcr.io/distroless/static"
     img_base=$(docker inspect --format='{{index .RootFS.Layers 0}}' "$IMG") || die "failed to inspect $IMG"
 elif [ "${BUILDER}" = 'buildah' ] ; then
+    buildah images -q gcr.io/distroless/static:latest 2>/dev/null || buildah pull gcr.io/distroless/static:latest
     distroless_base=$(buildah inspect --type image --format='{{index .OCIv1.RootFS.DiffIDs 0}}' "gcr.io/distroless/static") || die "failed to inspect gcr.io/distroless/static"
     img_base=$(buildah inspect --type image --format='{{index .OCIv1.RootFS.DiffIDs 0}}' "$IMG") || die "failed to inspect $IMG"
 else
