@@ -65,7 +65,7 @@ func describeQatDpdkPlugin() {
 
 	var dpPodName string
 
-	ginkgo.BeforeEach(func() {
+	ginkgo.JustBeforeEach(func() {
 		ginkgo.By("deploying QAT plugin in DPDK mode")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
@@ -94,7 +94,7 @@ func describeQatDpdkPlugin() {
 	})
 
 	ginkgo.Context("When QAT Gen4 resources are available", func() {
-		ginkgo.BeforeEach(func() {
+		ginkgo.JustBeforeEach(func() {
 			ginkgo.By("checking if the resource is allocatable")
 			if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy", 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
@@ -115,7 +115,7 @@ func describeQatDpdkPlugin() {
 	})
 
 	ginkgo.Context("When QAT Gen2 resources are available", func() {
-		ginkgo.BeforeEach(func() {
+		ginkgo.JustBeforeEach(func() {
 			ginkgo.By("checking if the resource is allocatable")
 			if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/generic", 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)

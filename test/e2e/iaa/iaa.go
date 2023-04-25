@@ -63,7 +63,7 @@ func describe() {
 	var dpPodName string
 
 	ginkgo.Describe("Without using operator", func() {
-		ginkgo.BeforeEach(func() {
+		ginkgo.JustBeforeEach(func() {
 			ginkgo.By("deploying IAA plugin")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "intel-iaa-config", "--from-file="+configmap)
 
@@ -94,7 +94,7 @@ func describe() {
 		})
 
 		ginkgo.Context("When IAA resources are available", func() {
-			ginkgo.BeforeEach(func() {
+			ginkgo.JustBeforeEach(func() {
 				ginkgo.By("checking if the resource is allocatable")
 				if err := utils.WaitForNodesWithResource(f.ClientSet, "iaa.intel.com/wq-user-dedicated", 300*time.Second); err != nil {
 					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)

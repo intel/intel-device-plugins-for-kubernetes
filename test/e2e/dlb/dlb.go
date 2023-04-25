@@ -51,7 +51,7 @@ func describe() {
 
 	var dpPodName string
 
-	ginkgo.BeforeEach(func() {
+	ginkgo.JustBeforeEach(func() {
 		ginkgo.By("deploying DLB plugin")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
@@ -80,7 +80,7 @@ func describe() {
 	})
 
 	ginkgo.Context("When PF resources are available", func() {
-		ginkgo.BeforeEach(func() {
+		ginkgo.JustBeforeEach(func() {
 			resource := v1.ResourceName("dlb.intel.com/pf")
 			if err := utils.WaitForNodesWithResource(f.ClientSet, resource, 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource %s: %v", resource, err)
@@ -93,7 +93,7 @@ func describe() {
 	})
 
 	ginkgo.Context("When VF resources are available", func() {
-		ginkgo.BeforeEach(func() {
+		ginkgo.JustBeforeEach(func() {
 			resource := v1.ResourceName("dlb.intel.com/vf")
 			if err := utils.WaitForNodesWithResource(f.ClientSet, resource, 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource %s: %v", resource, err)

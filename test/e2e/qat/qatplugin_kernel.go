@@ -51,7 +51,7 @@ func describeQatKernelPlugin() {
 
 	var dpPodName string
 
-	ginkgo.BeforeEach(func() {
+	ginkgo.JustBeforeEach(func() {
 		ginkgo.By("deploying QAT plugin in kernel mode")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "-f", yamlPath)
 
@@ -80,7 +80,7 @@ func describeQatKernelPlugin() {
 	})
 
 	ginkgo.Context("When QAT resources are available", func() {
-		ginkgo.BeforeEach(func() {
+		ginkgo.JustBeforeEach(func() {
 			ginkgo.By("checking if the resource is allocatable")
 			if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy1_dc0", 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
