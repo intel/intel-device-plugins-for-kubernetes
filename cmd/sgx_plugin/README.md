@@ -84,7 +84,7 @@ Where `<RELEASE_VERSION>` needs to be substituted with the desired [release tag]
 First, deploy `node-feature-discovery`:
 
 ```bash
-$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx?ref=<RELEASE_VERSION>'
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/?ref=<RELEASE_VERSION>'
 $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=<RELEASE_VERSION>'
 ```
 
@@ -110,13 +110,13 @@ $ kubectl apply -f 'https://raw.githubusercontent.com/intel/intel-device-plugins
 There are two alternative ways to deploy SGX device plugin using `kubectl`.
 
 The first approach involves deployment of the [SGX DaemonSet YAML](/deployments/sgx_plugin/base/intel-sgx-plugin.yaml)
-and [node-feature-discovery](/deployments/nfd/overlays/sgx/kustomization.yaml)
+and [node-feature-discovery](/deployments/nfd/kustomization.yaml)
 with the necessary configuration.
 
 The following kustomizations are needed for deploying everything:
 ```bash
 # first, deploy NFD and the necessary NodeFeatureRules
-$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx'
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd'
 $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules'
 # and then, deploy SGX plugin
 $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_plugin/overlays/epc-nfd/'
@@ -150,9 +150,9 @@ $ kubectl describe node <node name> | grep sgx.intel.com
  sgx.intel.com/enclave:    20
  sgx.intel.com/epc:        98566144
  sgx.intel.com/provision:  20
- sgx.intel.com/enclave    1           1
- sgx.intel.com/epc        400         400
- sgx.intel.com/provision  1           1
+ sgx.intel.com/enclave    0           0
+ sgx.intel.com/epc        0           0
+ sgx.intel.com/provision  0           0
 ```
 
 ## Testing and Demos
