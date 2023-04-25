@@ -20,6 +20,7 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
 	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
@@ -65,7 +66,9 @@ func describeQatDpdkPlugin() {
 
 	var dpPodName string
 
-	ginkgo.BeforeEach(func() {
+	var resourceName v1.ResourceName
+
+	ginkgo.JustBeforeEach(func() {
 		ginkgo.By("deploying QAT plugin in DPDK mode")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
@@ -83,6 +86,11 @@ func describeQatDpdkPlugin() {
 		if err := utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
+
+		ginkgo.By("checking if the resource is allocatable")
+		if err := utils.WaitForNodesWithResource(f.ClientSet, resourceName, 30*time.Second); err != nil {
+			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+		}
 	})
 
 	ginkgo.AfterEach(func() {
@@ -93,12 +101,14 @@ func describeQatDpdkPlugin() {
 		}
 	})
 
-	ginkgo.Context("When QAT Gen4 resources are available", func() {
+	ginkgo.Context("When QAT Gen4 resources are available with crypto (cy) services enabled", func() {
+		// This BeforeEach runs even before the JustBeforeEach above.
 		ginkgo.BeforeEach(func() {
-			ginkgo.By("checking if the resource is allocatable")
-			if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/cy", 30*time.Second); err != nil {
-				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-			}
+			ginkgo.By("creating a configMap before plugin gets deployed")
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "--from-literal", "qat.conf=ServicesEnabled=sym;asym", "qat-config")
+
+			ginkgo.By("setting resourceName for cy services")
+			resourceName = "qat.intel.com/cy"
 		})
 
 		ginkgo.It("deploys a crypto pod requesting QAT resources", func() {
@@ -116,10 +126,8 @@ func describeQatDpdkPlugin() {
 
 	ginkgo.Context("When QAT Gen2 resources are available", func() {
 		ginkgo.BeforeEach(func() {
-			ginkgo.By("checking if the resource is allocatable")
-			if err := utils.WaitForNodesWithResource(f.ClientSet, "qat.intel.com/generic", 30*time.Second); err != nil {
-				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-			}
+			ginkgo.By("setting resourceName for Gen2 resources")
+			resourceName = "qat.intel.com/generic"
 		})
 
 		ginkgo.It("deploys a crypto pod requesting QAT resources", func() {
