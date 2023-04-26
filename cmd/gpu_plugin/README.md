@@ -4,6 +4,7 @@ Table of Contents
 
 * [Introduction](#introduction)
 * [Modes and Configuration Options](#modes-and-configuration-options)
+* [Operation modes for different workload types](#operation-modes-for-different-workload-types)
 * [Installation](#installation)
     * [Prerequisites](#prerequisites)
         * [Drivers for discrete GPUs](#drivers-for-discrete-gpus)
@@ -50,10 +51,22 @@ backend libraries can offload compute operations to GPU.
 | -enable-monitoring | - | disabled | Enable 'i915_monitoring' resource that provides access to all Intel GPU devices on the node |
 | -resource-manager | - | disabled | Enable fractional resource management, [see also dependencies](#fractional-resources) |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
-| -allocation-policy | string | none | 3 possible values: balanced, packed, none. It is meaningful when shared-dev-num > 1, balanced mode is suitable for workload balance among GPU devices, packed mode is suitable for making full use of each GPU device, none mode is the default. Allocation policy does not have effect when resource manager is enabled. |
+| -allocation-policy | string | none | 3 possible values: balanced, packed, none. For shared-dev-num > 1: _balanced_ mode spreads workloads among GPU devices, _packed_ mode fills one GPU fully before moving to next, and _none_ selects first available device from kubelet. Default is _none_. Allocation policy does not have an effect when resource manager is enabled. |
 
 The plugin also accepts a number of other arguments (common to all plugins) related to logging.
 Please use the -h option to see the complete list of logging related options.
+
+## Operation modes for different workload types
+
+Intel GPU-plugin supports a few different operation modes. Depending on the workloads the cluster is running, some modes make more sense than others. Below is a table that explains the differences between the modes and suggests workload types for each mode. Mode selection applies to the whole GPU plugin deployment, so it is a cluster wide decision.
+
+| Mode | Sharing | Intended workloads | Suitable for time critical workloads |
+|:---- |:-------- |:------- |:------- |
+| shared-dev-num == 1 | No, 1 container per GPU | Workloads using all GPU capacity, e.g. AI training | Yes |
+| shared-dev-num > 1 | Yes, >1 containers per GPU | (Batch) workloads using only part of GPU resources, e.g. inference, media transcode/analytics, or CPU bound GPU workloads | No |
+| shared-dev-num > 1 && resource-management | Yes and no, 1>= containers per GPU | Any. For best results, all workloads should declare their expected GPU resource usage (memory, millicores). Requires [GAS](https://github.com/intel/platform-aware-scheduling/tree/master/gpu-aware-scheduling). See also [fractional use](#fractional-resources-details) | Yes. 1000 millicores = exclusive GPU usage. See note below. |
+
+> **Note**: Exclusive GPU usage with >=1000 millicores requires that also *all other GPU containers* specify (non-zero) millicores resource usage.
 
 ## Installation
 
@@ -152,7 +165,9 @@ Release tagged images of the components are also available on the Docker hub, ta
 release version numbers in the format `x.y.z`, corresponding to the branches and releases in this
 repository. Thus the easiest way to deploy the plugin in your cluster is to run this command
 
-Note: Replace `<RELEASE_VERSION>` with the desired [release tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) or `main` to get `devel` images.
+> **Note**: Replace `<RELEASE_VERSION>` with the desired [release tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) or `main` to get `devel` images.
+
+> **Note**: Add ```--dry-run=client -o yaml``` to the ```kubectl``` commands below to visualize the yaml content being applied.
 
 See [the development guide](../../DEVEL.md) for details if you want to deploy a customized version of the plugin.
 

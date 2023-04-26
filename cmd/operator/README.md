@@ -5,6 +5,7 @@ Table of Contents
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [Upgrade](#upgrade)
+* [Limiting Supported Devices](#limiting-supported-devices)
 * [Known issues](#known-issues)
 
 ## Introduction
@@ -15,6 +16,12 @@ It provides a single point of control for GPU, QAT, SGX, FPGA, DSA and DLB devic
 administrators.
 
 ## Installation
+
+The default operator deployment depends on NFD and cert-manager. Those components have to be installed to the cluster before the operator can be deployed.
+
+> **Note**: Operator can also be installed via Helm charts. See [INSTALL.md](../../INSTALL.md) for details.
+
+### NFD
 
 Install NFD (if it's not already installed) and node labelling rules (requires NFD v0.10+):
 
@@ -38,7 +45,7 @@ nfd-worker-qqq4h              1/1     Running   0          25h
 Note that labelling is not performed immediately. Give NFD 1 minute to pick up the rules and label nodes.
 
 As a result all found devices should have correspondent labels, e.g. for Intel DLB devices the label is
-intel.feature.node.kubernetes.io/dlb:
+`intel.feature.node.kubernetes.io/dlb`:
 ```
 $ kubectl get no -o json | jq .items[].metadata.labels |grep intel.feature.node.kubernetes.io/dlb
   "intel.feature.node.kubernetes.io/dlb": "true",
@@ -55,6 +62,8 @@ deployments/operator/samples/deviceplugin_v1_fpgadeviceplugin.yaml:    intel.fea
 deployments/operator/samples/deviceplugin_v1_dsadeviceplugin.yaml:    intel.feature.node.kubernetes.io/dsa: 'true'
 ```
 
+### Cert-Manager
+
 The default operator deployment depends on [cert-manager](https://cert-manager.io/) running in the cluster.
 See installation instructions [here](https://cert-manager.io/docs/installation/kubectl/).
 
@@ -68,7 +77,67 @@ cert-manager-cainjector-87c85c6ff-59sb5   1/1     Running   0          21d
 cert-manager-webhook-64dc9fff44-29cfc     1/1     Running   0          21d
 ```
 
-Also if your cluster operates behind a corporate proxy make sure that the API
+### Device Plugin Operator
+
+Finally deploy the operator itself:
+
+```
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=<RELEASE_VERSION>'
+```
+
+Now you can deploy the device plugins by creating corresponding custom resources.
+The samples for them are available [here](/deployments/operator/samples/).
+
+### Device Plugin Custom Resource
+
+Deploy your device plugin by applying its custom resource, e.g.
+`GpuDevicePlugin` with
+
+```bash
+$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml
+```
+
+Observe it is up and running:
+
+```bash
+$ kubectl get GpuDevicePlugin
+NAME                     DESIRED   READY   NODE SELECTOR   AGE
+gpudeviceplugin-sample   1         1                       5s
+```
+
+## Upgrade
+
+The upgrade of the deployed plugins can be done by simply installing a new release of the operator.
+
+The operator auto-upgrades operator-managed plugins (CR images and thus corresponding deployed daemonsets) to the current release of the operator.
+
+During upgrade the tag in the image path is updated (e.g. docker.io/intel/intel-sgx-plugin:tag), but the rest of the path is left intact.
+
+No upgrade is done for:
+- Non-operator managed deployments
+- Operator deployments without numeric tags
+
+## Limiting Supported Devices
+
+In order to limit the deployment to a specific device type,
+use one of kustomizations under `deployments/operator/device`.
+
+For example, to limit the deployment to FPGA, use:
+
+```bash
+$ kubectl apply -k deployments/operator/device/fpga
+```
+
+Operator also supports deployments with multiple selected device types.
+In this case, create a new kustomization with the necessary resources
+that passes the desired device types to the operator using `--device`
+command line argument multiple times.
+
+## Known issues
+
+### Cluster behind a proxy
+
+If your cluster operates behind a corporate proxy make sure that the API
 server is configured not to send requests to cluster services through the
 proxy. You can check that with the following command:
 
@@ -108,60 +177,7 @@ set the cluster service names to `$no_proxy` before `kubeadm init`:
 $ export no_proxy=$no_proxy,.svc,.svc.cluster.local
 ```
 
-Finally deploy the operator itself:
-
-```
-$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=<RELEASE_VERSION>'
-```
-
-Now you can deploy the device plugins by creating corresponding custom resources.
-The samples for them are available [here](/deployments/operator/samples/).
-
-## Usage
-
-Deploy your device plugin by applying its custom resource, e.g.
-`GpuDevicePlugin` with
-
-```bash
-$ kubectl apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/main/deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml
-```
-
-Observe it is up and running:
-
-```bash
-$ kubectl get GpuDevicePlugin
-NAME                     DESIRED   READY   NODE SELECTOR   AGE
-gpudeviceplugin-sample   1         1                       5s
-```
-
-In order to limit the deployment to a specific device type,
-use one of kustomizations under deployments/operator/device.
-
-For example, to limit the deployment to FPGA, use:
-
-```bash
-$ kubectl apply -k deployments/operator/device/fpga
-```
-
-Operator also supports deployments with multiple selected device types.
-In this case, create a new kustomization with the necessary resources
-that passes the desired device types to the operator using `--device`
-command line argument multiple times.
-
-## Upgrade
-
-The upgrade of the deployed plugins can be done by simply installing a new release of the operator.
-
-The operator auto-upgrades operator-managed plugins (CR images and thus corresponding deployed daemonsets) to the current release of the operator.
-
-The [registry-url]/[namespace]/[image] are kept intact on the upgrade.
-
-No upgrade is done for:
-
-- Non-operator managed deployments
-- Operator deployments without numeric tags
-
-## Known issues
+### Leader election enabled
 
 When the operator is run with leader election enabled, that is with the option
 `--leader-elect`, make sure the cluster is not overloaded with excessive
