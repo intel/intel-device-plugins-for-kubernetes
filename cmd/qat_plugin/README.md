@@ -44,7 +44,7 @@ The QAT plugin can take a number of command line arguments, summarised in the fo
 |:---- |:-------- |:------- |
 | -dpdk-driver | string | DPDK Device driver for configuring the QAT device (default: `vfio-pci`) |
 | -kernel-vf-drivers | string | Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC, C62x, C3xxx, 4xxx/401xx/402xx, C4xxx and D15xx (default: `c6xxvf,4xxxvf`) |
-| -max-num-devices | int | maximum number of QAT devices to be provided to the QuickAssist device plugin (default: `32`) |
+| -max-num-devices | int | maximum number of QAT devices to be provided to the QuickAssist device plugin (default: `64`) |
 | -mode | string | plugin mode which can be either `dpdk` or `kernel` (default: `dpdk`) |
 | -allocation-policy | string | 2 possible values: balanced and packed. Balanced mode spreads allocated QAT VF resources balanced among QAT PF devices, and packed mode packs one QAT PF device full of QAT VF resources before allocating resources from the next QAT PF. (There is no default.) |
 

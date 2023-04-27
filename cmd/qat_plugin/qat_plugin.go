@@ -42,7 +42,7 @@ func main() {
 	dpdkDriver := flag.String("dpdk-driver", "vfio-pci", "DPDK Device driver for configuring the QAT device")
 	kernelVfDrivers := flag.String("kernel-vf-drivers", "c6xxvf,4xxxvf", "Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC, C62x, C3xxx, C4xxx, 4xxx, and D15xx")
 	preferredAllocationPolicy := flag.String("allocation-policy", "", "Modes of allocating QAT devices: balanced and packed")
-	maxNumDevices := flag.Int("max-num-devices", 32, "maximum number of QAT devices to be provided to the QuickAssist device plugin")
+	maxNumDevices := flag.Int("max-num-devices", 64, "maximum number of QAT devices to be provided to the QuickAssist device plugin")
 	flag.Parse()
 
 	switch *mode {
