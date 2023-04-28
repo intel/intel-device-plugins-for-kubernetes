@@ -20,6 +20,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -99,8 +100,17 @@ func TestGetPreferredAllocation(t *testing.T) {
 	rqt := &v1beta1.PreferredAllocationRequest{
 		ContainerRequests: []*v1beta1.ContainerPreferredAllocationRequest{
 			{
-				AvailableDeviceIDs: []string{"card0-4", "card1-1", "card2-3", "card2-4", "card2-1", "card1-0", "card1-4", "card3-4", "card1-2", "card0-1", "card2-0", "card2-2", "card1-3", "card0-2", "card3-0", "card3-3", "card0-3", "card0-0", "card3-1", "card3-2"},
+				AvailableDeviceIDs: []string{"card0-4", "card0-2", "card1-1", "card2-3", "card2-4", "card2-1", "card1-0", "card1-4", "card3-4", "card1-2", "card0-1", "card2-0", "card2-2", "card1-3", "card3-0", "card3-3", "card0-3", "card0-0", "card3-1", "card3-2"},
 				AllocationSize:     4,
+			},
+		},
+	}
+
+	rqtNotEnough := &v1beta1.PreferredAllocationRequest{
+		ContainerRequests: []*v1beta1.ContainerPreferredAllocationRequest{
+			{
+				AvailableDeviceIDs: []string{"card0-1", "card0-2", "card0-3", "card1-1"},
+				AllocationSize:     3,
 			},
 		},
 	}
@@ -117,22 +127,24 @@ func TestGetPreferredAllocation(t *testing.T) {
 	plugin := newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "none"})
 	response, _ := plugin.GetPreferredAllocation(rqt)
 
-	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-4", "card1-1", "card2-3", "card2-4"}) {
-		t.Error("Unexpected return value for none preferred allocation")
+	sort.Strings(response.ContainerResponses[0].DeviceIDs)
+
+	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-4", "card1-1", "card2-3", "card3-4"}) {
+		t.Error("Unexpected return value for none preferred allocation", response.ContainerResponses[0].DeviceIDs)
 	}
 
 	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "balanced"})
 	response, _ = plugin.GetPreferredAllocation(rqt)
 
 	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-0", "card1-0", "card2-0", "card3-0"}) {
-		t.Error("Unexpected return value for balanced preferred allocation")
+		t.Error("Unexpected return value for balanced preferred allocation", response.ContainerResponses[0].DeviceIDs)
 	}
 
 	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "packed"})
 	response, _ = plugin.GetPreferredAllocation(rqt)
 
 	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-0", "card0-1", "card0-2", "card0-3"}) {
-		t.Error("Unexpected return value for packed preferred allocation")
+		t.Error("Unexpected return value for packed preferred allocation", response.ContainerResponses[0].DeviceIDs)
 	}
 
 	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "none"})
@@ -140,6 +152,16 @@ func TestGetPreferredAllocation(t *testing.T) {
 
 	if response != nil {
 		t.Error("Fail to handle the input error that req.AllocationSize is greater than len(req.AvailableDeviceIDs).")
+	}
+
+	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "none"})
+	response, _ = plugin.GetPreferredAllocation(rqtNotEnough)
+
+	sort.Strings(response.ContainerResponses[0].DeviceIDs)
+
+	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-1", "card0-2", "card1-1"}) {
+		t.Error("Unexpected return value for none preferred allocation with too few separate devices",
+			response.ContainerResponses[0].DeviceIDs)
 	}
 }
 

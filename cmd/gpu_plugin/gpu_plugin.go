@@ -64,15 +64,58 @@ type cliOptions struct {
 
 type preferredAllocationPolicyFunc func(*pluginapi.ContainerPreferredAllocationRequest) []string
 
-// nonePolicy is used for allocating GPU devices randomly.
+// nonePolicy is used for allocating GPU devices randomly, while trying
+// to select as many individual GPU devices as requested.
 func nonePolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
 	klog.V(2).Info("Select nonePolicy for GPU device allocation")
 
-	deviceIds := req.AvailableDeviceIDs[0:req.AllocationSize]
+	devices := make(map[string]bool)
+	selected := make(map[string]bool)
+	neededCount := req.AllocationSize
 
-	klog.V(2).Infof("Allocate deviceIds: %q", deviceIds)
+	// When shared-dev-num is greater than 1, try to find as
+	// many independent GPUs as possible, to satisfy the request.
 
-	return deviceIds
+	for _, deviceID := range req.AvailableDeviceIDs {
+		device := strings.Split(deviceID, "-")[0]
+
+		if _, found := devices[device]; !found {
+			devices[device] = true
+			selected[deviceID] = true
+			neededCount--
+
+			if neededCount == 0 {
+				break
+			}
+		}
+	}
+
+	// If there were not enough independent GPUs, use remaining untaken deviceIDs.
+
+	if neededCount > 0 {
+		for _, deviceID := range req.AvailableDeviceIDs {
+			if _, found := selected[deviceID]; !found {
+				selected[deviceID] = true
+				neededCount--
+
+				if neededCount == 0 {
+					break
+				}
+			}
+		}
+	}
+
+	// Convert selected map into an array
+
+	deviceIDs := []string{}
+
+	for deviceID := range selected {
+		deviceIDs = append(deviceIDs, deviceID)
+	}
+
+	klog.V(2).Infof("Allocate deviceIds: %q", deviceIDs)
+
+	return deviceIDs
 }
 
 // balancedPolicy is used for allocating GPU devices in balance.
