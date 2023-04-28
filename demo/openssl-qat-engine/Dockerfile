@@ -79,6 +79,7 @@ COPY --from=builder /usr/lib/x86_64-linux-gnu/engines-3/qatengine.so /usr/lib/x8
 COPY --from=builder /var/www/ /var/www/
 COPY --from=builder /usr/lib64/nginx/* /usr/lib64/nginx/
 COPY --from=builder /usr/bin/nginx /usr/bin
+COPY --from=builder /usr/share/qat/calgary32 /usr/share/qat/
 COPY --from=builder /usr/share/nginx/conf/* /usr/share/nginx/conf/
 COPY --from=builder /qatlib/LICENSE /usr/share/package-licenses/qatlib/LICENSE
 COPY --from=builder /QAT_Engine/LICENSE /usr/share/package-licenses/QAT_Engine/LICENSE
