@@ -28,4 +28,5 @@ spec:
       - name: qat-config
         configMap:
           name: qat-config
+          optional: true
           defaultMode: 0440

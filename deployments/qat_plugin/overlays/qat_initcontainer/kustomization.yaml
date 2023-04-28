@@ -2,7 +2,3 @@ bases:
 - ../../base
 patchesStrategicMerge:
 - qat_initcontainer.yaml
-configMapGenerator:
-- name: qat-config
-  files:
-  - qat.conf

@@ -44,7 +44,7 @@ The QAT plugin can take a number of command line arguments, summarised in the fo
 |:---- |:-------- |:------- |
 | -dpdk-driver | string | DPDK Device driver for configuring the QAT device (default: `vfio-pci`) |
 | -kernel-vf-drivers | string | Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC, C62x, C3xxx, 4xxx/401xx/402xx, C4xxx and D15xx (default: `c6xxvf,4xxxvf`) |
-| -max-num-devices | int | maximum number of QAT devices to be provided to the QuickAssist device plugin (default: `32`) |
+| -max-num-devices | int | maximum number of QAT devices to be provided to the QuickAssist device plugin (default: `64`) |
 | -mode | string | plugin mode which can be either `dpdk` or `kernel` (default: `dpdk`) |
 | -allocation-policy | string | 2 possible values: balanced and packed. Balanced mode spreads allocated QAT VF resources balanced among QAT PF devices, and packed mode packs one QAT PF device full of QAT VF resources before allocating resources from the next QAT PF. (There is no default.) |
 
@@ -136,12 +136,11 @@ In addition to the default configuration, you can add device-specific configurat
 |:-------|:-----------------------|:-----------------|:--------|:------|
 | 4xxx, 401xx,402xx | [cfg_services](https://github.com/torvalds/linux/blob/42e66b1cc3a070671001f8a1e933a80818a192bf/Documentation/ABI/testing/sysfs-driver-qat) reports the configured services (crypto services or compression services) of the QAT device. | `ServicesEnabled=<value>` | compress:`dc`, crypto:`sym;asym` | Linux 6.0+ kernel is required. |
 
-To create a provisioning config after customizing, run as follows:
+To create a provisioning `configMap`, run the following command before deploying initcontainer:
 
 ```bash
 $ kubectl create configmap --namespace=inteldeviceplugins-system qat-config --from-file=deployments/qat_plugin/overlays/qat_initcontainer/qat.conf
 ```
-> **Note**: When deploying the overlay qat_initcontainer, such a manual creation is not necessary since ConfigMap is generated automatically. Just set the values in the config file and deploy the overlay.
 
 When using the operator for deploying the plugin with provisioning config, use `provisioningConfig` field for the name of the ConfigMap, then the config is passed to initcontainer through the volume mount.
 
