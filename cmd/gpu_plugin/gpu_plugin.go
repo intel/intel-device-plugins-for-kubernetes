@@ -182,6 +182,7 @@ func (dp *devicePlugin) bypathMountsForPci(cardPath, cardName, bypathDir string)
 	for _, f := range files {
 		if strings.HasPrefix(f.Name(), linkPrefix) {
 			absPath := path.Join(bypathDir, f.Name())
+
 			mounts = append(mounts, pluginapi.Mount{
 				ContainerPath: absPath,
 				HostPath:      absPath,
