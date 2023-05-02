@@ -1,5 +1,3 @@
 bases:
   - ../../base
   - ../../../sgx_admissionwebhook/overlays/default-with-certmanager
-patches:
-  - path: add-epc-nfd-initcontainer.yaml

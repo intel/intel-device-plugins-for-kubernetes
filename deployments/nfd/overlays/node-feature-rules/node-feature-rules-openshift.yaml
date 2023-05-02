@@ -86,14 +86,16 @@ spec:
     - name: "intel.sgx"
       labels:
         "intel.feature.node.kubernetes.io/sgx": "true"
+      extendedResources:
+        sgx.intel.com/epc: "@cpu.security.sgx.epc"
       matchFeatures:
         - feature: cpu.cpuid
           matchExpressions:
             SGX: {op: Exists}
             SGXLC: {op: Exists}
-        - feature: cpu.sgx
+        - feature: cpu.security
           matchExpressions:
-            enabled: {op: IsTrue}
+            sgx.enabled: {op: IsTrue}
         - feature: kernel.config
           matchExpressions:
             X86_SGX: {op: Exists}

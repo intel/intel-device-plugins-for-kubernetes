@@ -103,7 +103,7 @@ func setupFirstNode() []byte {
 		framework.Logf("kube-apiserver version: %s", serverVersion.GitVersion)
 	}
 
-	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/overlays/sgx/kustomization.yaml")
+	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/kustomization.yaml")
 
 	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
 

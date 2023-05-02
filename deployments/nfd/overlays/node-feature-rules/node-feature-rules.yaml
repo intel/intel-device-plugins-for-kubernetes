@@ -90,6 +90,8 @@ spec:
     - name: "intel.sgx"
       labels:
         "intel.feature.node.kubernetes.io/sgx": "true"
+      extendedResources:
+        sgx.intel.com/epc: "@cpu.security.sgx.epc"
       matchFeatures:
         - feature: cpu.cpuid
           matchExpressions:

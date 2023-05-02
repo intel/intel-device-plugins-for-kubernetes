@@ -4,7 +4,6 @@ metadata:
   name: sgxdeviceplugin-sample
 spec:
   image: intel/intel-sgx-plugin:0.26.0
-  initImage: intel/intel-sgx-initcontainer:0.26.0
   enclaveLimit: 110
   provisionLimit: 110
   logLevel: 4
