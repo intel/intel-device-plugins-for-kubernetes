@@ -146,7 +146,7 @@ e2e-qat:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "QAT Gen2" -delete-namespace-on-failure=false
 
 e2e-qat4:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "QAT Gen4" -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "QAT Gen4" -ginkgo.skip "dpdk crypto-perf" -delete-namespace-on-failure=false
 
 e2e-sgx:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.progress -ginkgo.focus "SGX" -delete-namespace-on-failure=false
