@@ -6,7 +6,6 @@ WORKDIR $DIR
 RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
     /etc/apt/sources.list.d/deb-src.list
 RUN apt-get update && apt-get install -y wget build-essential meson python3-pyelftools libnuma-dev python3-pip libssl-dev pkg-config dpkg-dev
-RUN pip install ninja
 
 # Download & unpack DPDK tarball
 ARG DPDK_TARBALL=dpdk-22.11.tar.xz

@@ -105,6 +105,7 @@ func newMockResourceManager(pods []v1.Pod) ResourceManager {
 		fullResourceName: "gpu.intel.com/i915",
 		assignments:      make(map[string]podAssignmentDetails),
 		retryTimeout:     1 * time.Millisecond,
+		useKubelet:       false,
 	}
 
 	deviceInfoMap := NewDeviceInfoMap()
@@ -167,6 +168,9 @@ func TestGetPreferredFractionalAllocation(t *testing.T) {
 					},
 				},
 			},
+		},
+		Status: v1.PodStatus{
+			Phase: v1.PodPending,
 		},
 	}
 
@@ -326,6 +330,9 @@ func TestCreateFractionalResourceResponse(t *testing.T) {
 				},
 			},
 		},
+		Status: v1.PodStatus{
+			Phase: v1.PodPending,
+		},
 	}
 	unAnnotatedTestPod := *properTestPod.DeepCopy()
 	unAnnotatedTestPod.ObjectMeta.Annotations = nil
@@ -458,6 +465,9 @@ func TestCreateFractionalResourceResponseWithOneCardTwoTiles(t *testing.T) {
 				},
 			},
 		},
+		Status: v1.PodStatus{
+			Phase: v1.PodPending,
+		},
 	}
 
 	properPrefContainerRequests := []*v1beta1.ContainerPreferredAllocationRequest{
@@ -520,6 +530,9 @@ func TestCreateFractionalResourceResponseWithTwoCardsOneTile(t *testing.T) {
 					},
 				},
 			},
+		},
+		Status: v1.PodStatus{
+			Phase: v1.PodPending,
 		},
 	}
 
@@ -588,6 +601,9 @@ func TestCreateFractionalResourceResponseWithThreeCardsTwoTiles(t *testing.T) {
 					},
 				},
 			},
+		},
+		Status: v1.PodStatus{
+			Phase: v1.PodPending,
 		},
 	}
 
@@ -663,6 +679,9 @@ func TestCreateFractionalResourceResponseWithMultipleContainersTileEach(t *testi
 					},
 				},
 			},
+		},
+		Status: v1.PodStatus{
+			Phase: v1.PodPending,
 		},
 	}
 

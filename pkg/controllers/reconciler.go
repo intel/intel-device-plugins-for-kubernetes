@@ -37,7 +37,7 @@ import (
 
 var (
 	bKeeper         = &bookKeeper{}
-	ImageMinVersion = versionutil.MustParseSemantic("0.26.0")
+	ImageMinVersion = versionutil.MustParseSemantic("0.26.1")
 )
 
 func init() {
@@ -73,6 +73,7 @@ func GetDevicePluginCount(pluginKind string) int {
 // +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;watch;create;delete
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=nodes/proxy,verbs=get;list
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=create
 // +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,resourceNames=privileged,verbs=use
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,resourceNames=d1c7b6d5.intel.com,verbs=get;update

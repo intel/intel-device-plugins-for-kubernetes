@@ -18,11 +18,13 @@ import (
 	"flag"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"testing"
 
 	"github.com/pkg/errors"
 	"k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
@@ -43,6 +45,7 @@ type mockNotifier struct {
 func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.monitorCount = len(newDeviceTree[monitorType])
 	n.devCount = len(newDeviceTree[deviceType])
+
 	n.scanDone <- true
 }
 
@@ -190,7 +193,11 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
-			devfsdirs:    []string{"card0"},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+			},
 			expectedDevs: 1,
 		},
 		{
@@ -312,5 +319,128 @@ func TestScan(t *testing.T) {
 					tc.expectedMonitors, notifier.monitorCount)
 			}
 		})
+	}
+}
+
+// Would be nice to combine these with the overall Scan unit tests.
+func createBypathTestFiles(t *testing.T, card, root, linkFile string, bypathFiles []string) (string, string) {
+	drmPath := path.Join(root, "sys/class/drm/", card)
+	devPath := path.Join(root, "sys", linkFile)
+	byPath := path.Join(root, "by-path")
+
+	if linkFile != "" {
+		if err := os.MkdirAll(filepath.Dir(devPath), os.ModePerm); err != nil {
+			t.Fatal("Couldn't create test dev dir", err)
+		}
+
+		if err := os.MkdirAll(filepath.Dir(drmPath), os.ModePerm); err != nil {
+			t.Fatal("Couldn't create test drm dir", err)
+		}
+
+		if err := os.WriteFile(devPath, []byte{0}, os.ModePerm); err != nil {
+			t.Fatal("Couldn't create card file", err)
+		}
+
+		if err := os.Symlink(devPath, drmPath); err != nil {
+			t.Fatal("Couldn't create symlink between pci path and sysfs drm path")
+		}
+	}
+
+	if len(bypathFiles) > 0 {
+		if err := os.MkdirAll(byPath, os.ModePerm); err != nil {
+			t.Fatal("Mkdir failed:", byPath)
+		}
+
+		for _, f := range bypathFiles {
+			if err := os.WriteFile(path.Join(byPath, f), []byte{1}, os.ModePerm); err != nil {
+				t.Fatal("WriteFile failed:", path.Join(byPath, f))
+			}
+		}
+	}
+
+	return drmPath, byPath
+}
+
+func TestBypath(t *testing.T) {
+	type testData struct {
+		desc        string
+		linkpath    string
+		bypathFiles []string
+		mountCount  int
+	}
+
+	const cardName string = "card0"
+
+	tds := []testData{
+		{
+			"card with two by-path files",
+			"00.10.2/00.334.302/0.0.1.00/0000:0f:05.0/drm/" + cardName,
+			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render"},
+			2,
+		},
+		{
+			"different by-path files",
+			"00.10.2/00.334.302/0.0.1.00/0000:ff:05.0/drm/" + cardName,
+			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render"},
+			0,
+		},
+		{
+			"invalid pci address",
+			"00.10.2/00.334.302/0.0.1.00/000:ff:05.1/drm/" + cardName,
+			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render"},
+			0,
+		},
+		{
+			"symlink without card",
+			"00.10.2/00.334.302/0.0.1.00/0000:0f:05.0/drm",
+			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render"},
+			0,
+		},
+		{
+			"no symlink",
+			"",
+			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render"},
+			0,
+		},
+		{
+			"no by-path files",
+			"00.10.2/00.334.302/0.0.1.00/0000:0f:05.0/drm/" + cardName,
+			[]string{},
+			0,
+		},
+	}
+
+	for _, td := range tds {
+		root, err := os.MkdirTemp("", "test_bypath_mounting")
+		if err != nil {
+			t.Fatalf("can't create temporary directory: %+v", err)
+		}
+		// dirs/files need to be removed for the next test
+		defer os.RemoveAll(root)
+
+		plugin := newDevicePlugin("/", "/", cliOptions{})
+
+		drmPath, byPath := createBypathTestFiles(t, cardName, root, td.linkpath, td.bypathFiles)
+
+		mounts := plugin.bypathMountsForPci(drmPath, cardName, byPath)
+
+		if len(mounts) != td.mountCount {
+			t.Errorf("%s: Wrong number of mounts %d vs. %d", td.desc, len(mounts), td.mountCount)
+		}
+
+		absPaths := []string{}
+		for _, link := range td.bypathFiles {
+			absPaths = append(absPaths, path.Join(byPath, link))
+		}
+
+		for _, mount := range mounts {
+			if !slices.Contains(absPaths, mount.ContainerPath) {
+				t.Errorf("%s: containerpath is incorrect: %s", td.desc, mount.ContainerPath)
+			}
+
+			if !slices.Contains(absPaths, mount.HostPath) {
+				t.Errorf("%s: hostpath is incorrect: %s", td.desc, mount.HostPath)
+			}
+		}
 	}
 }

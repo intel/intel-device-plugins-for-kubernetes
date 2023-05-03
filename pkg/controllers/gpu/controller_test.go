@@ -74,6 +74,14 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 										},
 									},
 								},
+								{
+									Name: "HOST_IP",
+									ValueFrom: &v1.EnvVarSource{
+										FieldRef: &v1.ObjectFieldSelector{
+											FieldPath: "status.hostIP",
+										},
+									},
+								},
 							},
 							Args:            getPodArgs(devicePlugin),
 							Image:           devicePlugin.Spec.Image,
@@ -145,6 +153,8 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 		daemonSet.Spec.Template.Spec.ServiceAccountName = serviceAccountName
 		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
 		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources")
+		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt", v1.HostPathFileOrCreate)
+		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt")
 	}
 
 	return &daemonSet
@@ -189,7 +199,7 @@ func TestNewDamonSetGPU(t *testing.T) {
 		}
 
 		if tc.isInitImage {
-			plugin.Spec.InitImage = "intel/intel-gpu-initcontainer:0.26.0"
+			plugin.Spec.InitImage = "intel/intel-gpu-initcontainer:0.26.1"
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
