@@ -17,6 +17,7 @@ package qat
 import (
 	"context"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
@@ -37,6 +38,17 @@ const (
 	compressTestYaml           = "deployments/qat_dpdk_app/test-compress1/kustomization.yaml"
 	cryptoTestYaml             = "deployments/qat_dpdk_app/test-crypto1/kustomization.yaml"
 	cryptoTestGen4Yaml         = "deployments/qat_dpdk_app/test-crypto1-gen4/kustomization.yaml"
+)
+
+const (
+	// The numbers for test below are from the document "Intel QuckAssist Technology Software for Linux*".
+	// It is possible to add them for multiple test runs.
+	symmetric = 1 << iota
+	rsa
+	dsa
+	ecdsa
+	dh
+	compression
 )
 
 func init() {
@@ -115,7 +127,7 @@ func describeQatDpdkPlugin() {
 		})
 
 		ginkgo.It("deploys a crypto pod (openssl) requesting QAT resources", func(ctx context.Context) {
-			runCpaSampleCode(ctx, f, "4", resourceName)
+			runCpaSampleCode(ctx, f, symmetric, resourceName)
 		})
 
 		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources", func(ctx context.Context) {
@@ -142,7 +154,7 @@ func describeQatDpdkPlugin() {
 		})
 
 		ginkgo.It("deploys a compress pod (openssl) requesting QAT resources", func(ctx context.Context) {
-			runCpaSampleCode(ctx, f, "32", resourceName)
+			runCpaSampleCode(ctx, f, compression, resourceName)
 		})
 	})
 
@@ -170,7 +182,7 @@ func describeQatDpdkPlugin() {
 	})
 }
 
-func runCpaSampleCode(ctx context.Context, f *framework.Framework, runTests string, resourceName v1.ResourceName) {
+func runCpaSampleCode(ctx context.Context, f *framework.Framework, runTests int, resourceName v1.ResourceName) {
 	ginkgo.By("submitting a pod requesting QAT" + resourceName.String() + "resources")
 	podSpec := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{Name: "openssl-qat-engine"},
@@ -180,7 +192,7 @@ func runCpaSampleCode(ctx context.Context, f *framework.Framework, runTests stri
 					Name:            "openssl-qat-engine",
 					Image:           "intel/openssl-qat-engine:devel",
 					ImagePullPolicy: "IfNotPresent",
-					Command:         []string{"cpa_sample_code", "runTests=" + runTests, "signOfLife=1"},
+					Command:         []string{"cpa_sample_code", "runTests=" + strconv.Itoa(runTests), "signOfLife=1"},
 					SecurityContext: &v1.SecurityContext{
 						Capabilities: &v1.Capabilities{
 							Add: []v1.Capability{"IPC_LOCK"}},
