@@ -15,6 +15,7 @@
 package dlb
 
 import (
+	"context"
 	"path/filepath"
 	"strings"
 	"time"
@@ -51,16 +52,16 @@ func describe() {
 
 	var dpPodName string
 
-	ginkgo.BeforeEach(func() {
+	ginkgo.BeforeEach(func(ctx context.Context) {
 		ginkgo.By("deploying DLB plugin")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for DLB plugin's availability")
-		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
+		podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
 			labels.Set{"app": "intel-dlb-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
 		if err != nil {
-			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 		dpPodName = podList.Items[0].Name
@@ -71,42 +72,42 @@ func describe() {
 		}
 	})
 
-	ginkgo.AfterEach(func() {
+	ginkgo.AfterEach(func(ctx context.Context) {
 		ginkgo.By("undeploying DLB plugin")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(kustomizationPath))
-		if err := e2epod.WaitForPodNotFoundInNamespace(f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
+		if err := e2epod.WaitForPodNotFoundInNamespace(ctx, f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
 			framework.Failf("failed to terminate pod: %v", err)
 		}
 	})
 
 	ginkgo.Context("When PF resources are available", func() {
-		ginkgo.BeforeEach(func() {
+		ginkgo.BeforeEach(func(ctx context.Context) {
 			resource := v1.ResourceName("dlb.intel.com/pf")
-			if err := utils.WaitForNodesWithResource(f.ClientSet, resource, 30*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resource, 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource %s: %v", resource, err)
 			}
 		})
 
-		ginkgo.It("can run demo app", func() {
-			runDemoApp("PF", demoPFYaml, f)
+		ginkgo.It("can run demo app", func(ctx context.Context) {
+			runDemoApp(ctx, "PF", demoPFYaml, f)
 		})
 	})
 
 	ginkgo.Context("When VF resources are available", func() {
-		ginkgo.BeforeEach(func() {
+		ginkgo.BeforeEach(func(ctx context.Context) {
 			resource := v1.ResourceName("dlb.intel.com/vf")
-			if err := utils.WaitForNodesWithResource(f.ClientSet, resource, 30*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resource, 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource %s: %v", resource, err)
 			}
 		})
 
-		ginkgo.It("can run demo app", func() {
-			runDemoApp("VF", demoVFYaml, f)
+		ginkgo.It("can run demo app", func(ctx context.Context) {
+			runDemoApp(ctx, "VF", demoVFYaml, f)
 		})
 	})
 }
 
-func runDemoApp(function, yaml string, f *framework.Framework) {
+func runDemoApp(ctx context.Context, function, yaml string, f *framework.Framework) {
 	demoPath, err := utils.LocateRepoFile(yaml)
 	if err != nil {
 		framework.Failf("unable to locate %q: %v", yaml, err)
@@ -118,11 +119,11 @@ func runDemoApp(function, yaml string, f *framework.Framework) {
 	e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 	ginkgo.By("waiting for the DLB demo to succeed")
-	e2epod.NewPodClient(f).WaitForSuccess(podName, 200*time.Second)
+	e2epod.NewPodClient(f).WaitForSuccess(ctx, podName, 200*time.Second)
 
 	ginkgo.By("getting workload log")
 
-	log, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, podName, podName)
+	log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, podName, podName)
 
 	if err != nil {
 		framework.Failf("unable to get log from pod: %v", err)

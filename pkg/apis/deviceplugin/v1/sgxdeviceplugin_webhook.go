@@ -20,6 +20,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
@@ -60,28 +61,28 @@ func (r *SgxDevicePlugin) Default() {
 var _ webhook.Validator = &SgxDevicePlugin{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SgxDevicePlugin) ValidateCreate() error {
+func (r *SgxDevicePlugin) ValidateCreate() (admission.Warnings, error) {
 	sgxdevicepluginlog.Info("validate create", "name", r.Name)
 
 	if controllers.GetDevicePluginCount(sgxPluginKind) > 0 {
-		return errors.Errorf("an instance of %q already exists in the cluster", sgxPluginKind)
+		return nil, errors.Errorf("an instance of %q already exists in the cluster", sgxPluginKind)
 	}
 
-	return r.validatePlugin()
+	return nil, r.validatePlugin()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SgxDevicePlugin) ValidateUpdate(old runtime.Object) error {
+func (r *SgxDevicePlugin) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	sgxdevicepluginlog.Info("validate update", "name", r.Name)
 
-	return r.validatePlugin()
+	return nil, r.validatePlugin()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *SgxDevicePlugin) ValidateDelete() error {
+func (r *SgxDevicePlugin) ValidateDelete() (admission.Warnings, error) {
 	sgxdevicepluginlog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }
 
 func (r *SgxDevicePlugin) validatePlugin() error {

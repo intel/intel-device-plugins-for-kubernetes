@@ -20,6 +20,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
@@ -64,28 +65,28 @@ func (r *FpgaDevicePlugin) Default() {
 var _ webhook.Validator = &FpgaDevicePlugin{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *FpgaDevicePlugin) ValidateCreate() error {
+func (r *FpgaDevicePlugin) ValidateCreate() (admission.Warnings, error) {
 	fpgadevicepluginlog.Info("validate create", "name", r.Name)
 
 	if controllers.GetDevicePluginCount(fpgaPluginKind) > 0 {
-		return errors.Errorf("an instance of %q already exists in the cluster", fpgaPluginKind)
+		return nil, errors.Errorf("an instance of %q already exists in the cluster", fpgaPluginKind)
 	}
 
-	return r.validatePlugin()
+	return nil, r.validatePlugin()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *FpgaDevicePlugin) ValidateUpdate(old runtime.Object) error {
+func (r *FpgaDevicePlugin) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	fpgadevicepluginlog.Info("validate update", "name", r.Name)
 
-	return r.validatePlugin()
+	return nil, r.validatePlugin()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *FpgaDevicePlugin) ValidateDelete() error {
+func (r *FpgaDevicePlugin) ValidateDelete() (admission.Warnings, error) {
 	fpgadevicepluginlog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }
 
 func (r *FpgaDevicePlugin) validatePlugin() error {

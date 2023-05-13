@@ -16,6 +16,8 @@
 package inteldevicepluginsoperator
 
 import (
+	"context"
+
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -38,18 +40,18 @@ func describe() {
 
 	var webhook v1.Pod
 
-	ginkgo.BeforeEach(func() {
+	ginkgo.BeforeEach(func(ctx context.Context) {
 		kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
 		if err != nil {
 			framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
 		}
-		webhook = utils.DeployWebhook(f, kustomizationPath)
+		webhook = utils.DeployWebhook(ctx, f, kustomizationPath)
 	})
 
-	ginkgo.It("checks the operator webhook pod is safely configured", func() {
+	ginkgo.It("checks the operator webhook pod is safely configured", func(ctx context.Context) {
 		err := utils.TestContainersRunAsNonRoot([]v1.Pod{webhook})
 		gomega.Expect(err).To(gomega.BeNil())
-		err = utils.TestWebhookServerTLS(f, "https://inteldeviceplugins-webhook-service")
+		err = utils.TestWebhookServerTLS(ctx, f, "https://inteldeviceplugins-webhook-service")
 		gomega.Expect(err).To(gomega.BeNil())
 	})
 }

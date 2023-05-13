@@ -41,15 +41,15 @@ const (
 )
 
 // WaitForNodesWithResource waits for nodes to have positive allocatable resource.
-func WaitForNodesWithResource(c clientset.Interface, res v1.ResourceName, timeout time.Duration) error {
+func WaitForNodesWithResource(ctx context.Context, c clientset.Interface, res v1.ResourceName, timeout time.Duration) error {
 	framework.Logf("Waiting up to %s for any positive allocatable resource %q", timeout, res)
 
 	start := time.Now()
 
-	err := wait.Poll(poll, timeout,
-		func() (bool, error) {
+	err := wait.PollUntilContextTimeout(ctx, poll, timeout, true,
+		func(ctx context.Context) (bool, error) {
 			for t := time.Now(); time.Since(t) < timeout; time.Sleep(poll) {
-				nodelist, err := c.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+				nodelist, err := c.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 				if err != nil {
 					return false, err
 				}
@@ -75,8 +75,8 @@ func WaitForNodesWithResource(c clientset.Interface, res v1.ResourceName, timeou
 // WaitForPodFailure waits for a pod to fail.
 // This function used to be a part of k8s e2e framework, but was deleted in
 // https://github.com/kubernetes/kubernetes/pull/86732.
-func WaitForPodFailure(f *framework.Framework, name string, timeout time.Duration) {
-	gomega.Expect(e2epod.WaitForPodCondition(f.ClientSet, f.Namespace.Name, name, "success or failure", timeout,
+func WaitForPodFailure(ctx context.Context, f *framework.Framework, name string, timeout time.Duration) {
+	gomega.Expect(e2epod.WaitForPodCondition(ctx, f.ClientSet, f.Namespace.Name, name, "success or failure", timeout,
 		func(pod *v1.Pod) (bool, error) {
 			switch pod.Status.Phase {
 			case v1.PodFailed:
@@ -132,8 +132,8 @@ func CreateKustomizationOverlay(namespace, base, overlay string) error {
 }
 
 // DeployWebhook deploys an admission webhook to a framework-specific namespace.
-func DeployWebhook(f *framework.Framework, kustomizationPath string) v1.Pod {
-	if _, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, "cert-manager",
+func DeployWebhook(ctx context.Context, f *framework.Framework, kustomizationPath string) v1.Pod {
+	if _, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, "cert-manager",
 		labels.Set{"app.kubernetes.io/name": "cert-manager"}.AsSelector(), 1 /* one replica */, 10*time.Second); err != nil {
 		framework.Failf("unable to detect running cert-manager: %v", err)
 	}
@@ -152,11 +152,11 @@ func DeployWebhook(f *framework.Framework, kustomizationPath string) v1.Pod {
 
 	e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", tmpDir)
 
-	podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
+	podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
 		labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1 /* one replica */, 60*time.Second)
 	if err != nil {
-		e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-		e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+		e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+		e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
 		framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 	}
 
@@ -212,7 +212,7 @@ func TestPodsFileSystemInfo(pods []v1.Pod) error {
 	return nil
 }
 
-func TestWebhookServerTLS(f *framework.Framework, serviceName string) error {
+func TestWebhookServerTLS(ctx context.Context, f *framework.Framework, serviceName string) error {
 	podSpec := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "testssl-tester",
@@ -240,12 +240,12 @@ func TestWebhookServerTLS(f *framework.Framework, serviceName string) error {
 		},
 	}
 
-	_, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), podSpec, metav1.CreateOptions{})
+	_, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx, podSpec, metav1.CreateOptions{})
 	framework.ExpectNoError(err, "pod Create API error")
 
-	waitErr := e2epod.WaitForPodSuccessInNamespaceTimeout(f.ClientSet, "testssl-tester", f.Namespace.Name, 180*time.Second)
+	waitErr := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "testssl-tester", f.Namespace.Name, 180*time.Second)
 
-	output, err := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, "testssl-tester", "testssl-container")
+	output, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, "testssl-tester", "testssl-container")
 	if err != nil {
 		return errors.Wrap(err, "failed to get output for testssl.sh run")
 	}

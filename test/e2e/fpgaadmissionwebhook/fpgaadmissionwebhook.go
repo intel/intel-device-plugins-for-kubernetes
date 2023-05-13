@@ -42,32 +42,32 @@ func init() {
 func describe() {
 	f := framework.NewDefaultFramework("webhook")
 
-	ginkgo.It("mutates created pods to reference resolved AFs", func() {
-		checkPodMutation(f, f.Namespace.Name, "fpga.intel.com/d5005-nlb3-preprogrammed",
+	ginkgo.It("mutates created pods to reference resolved AFs", func(ctx context.Context) {
+		checkPodMutation(ctx, f, f.Namespace.Name, "fpga.intel.com/d5005-nlb3-preprogrammed",
 			"fpga.intel.com/af-bfa.f7d.v6xNhR7oVv6MlYZc4buqLfffQFy9es9yIvFEsLk6zRg")
 	})
 
-	ginkgo.It("mutates created pods to reference resolved Regions", func() {
-		checkPodMutation(f, f.Namespace.Name, "fpga.intel.com/arria10.dcp1.0-nlb0-orchestrated",
+	ginkgo.It("mutates created pods to reference resolved Regions", func(ctx context.Context) {
+		checkPodMutation(ctx, f, f.Namespace.Name, "fpga.intel.com/arria10.dcp1.0-nlb0-orchestrated",
 			"fpga.intel.com/region-ce48969398f05f33946d560708be108a")
 	})
 
-	ginkgo.It("mutates created pods to reference resolved Regions in regiondevel mode", func() {
-		checkPodMutation(f, f.Namespace.Name, "fpga.intel.com/arria10.dcp1.0",
+	ginkgo.It("mutates created pods to reference resolved Regions in regiondevel mode", func(ctx context.Context) {
+		checkPodMutation(ctx, f, f.Namespace.Name, "fpga.intel.com/arria10.dcp1.0",
 			"fpga.intel.com/region-ce48969398f05f33946d560708be108a")
 	})
 
-	ginkgo.It("doesn't mutate a pod if it's created in a namespace different from mappings'", func() {
+	ginkgo.It("doesn't mutate a pod if it's created in a namespace different from mappings'", func(ctx context.Context) {
 		ginkgo.By("create another namespace for mappings")
-		ns, err := f.CreateNamespace("mappings", nil)
+		ns, err := f.CreateNamespace(ctx, "mappings", nil)
 		framework.ExpectNoError(err, "unable to create a namespace")
 
-		checkPodMutation(f, ns.Name, "fpga.intel.com/arria10.dcp1.0-nlb0-orchestrated",
+		checkPodMutation(ctx, f, ns.Name, "fpga.intel.com/arria10.dcp1.0-nlb0-orchestrated",
 			"fpga.intel.com/arria10.dcp1.0-nlb0-orchestrated")
 	})
 }
 
-func checkPodMutation(f *framework.Framework, mappingsNamespace string, source, expectedMutation v1.ResourceName) {
+func checkPodMutation(ctx context.Context, f *framework.Framework, mappingsNamespace string, source, expectedMutation v1.ResourceName) {
 	kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
 	if err != nil {
 		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
@@ -75,7 +75,7 @@ func checkPodMutation(f *framework.Framework, mappingsNamespace string, source, 
 
 	ginkgo.By("deploying webhook")
 
-	_ = utils.DeployWebhook(f, kustomizationPath)
+	_ = utils.DeployWebhook(ctx, f, kustomizationPath)
 
 	ginkgo.By("deploying mappings")
 	e2ekubectl.RunKubectlOrDie(mappingsNamespace, "apply", "-f", filepath.Dir(kustomizationPath)+"/../mappings-collection.yaml")
@@ -109,11 +109,11 @@ func checkPodMutation(f *framework.Framework, mappingsNamespace string, source, 
 			},
 		},
 	}
-	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(),
+	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx,
 		podSpec, metav1.CreateOptions{})
 
 	if source.String() == expectedMutation.String() {
-		framework.ExpectError(err, "pod mistakenly got accepted")
+		gomega.Expect(err).To(gomega.HaveOccurred(), "pod mistakenly got accepted")
 		return
 	}
 
@@ -123,8 +123,8 @@ func checkPodMutation(f *framework.Framework, mappingsNamespace string, source, 
 
 	q, ok := pod.Spec.Containers[0].Resources.Limits[expectedMutation]
 	if !ok {
-		e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-		e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+		e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+		e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
 		framework.Fail("pod hasn't been mutated")
 	}
 

@@ -22,12 +22,13 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -79,6 +80,14 @@ func (c *mockClient) Scheme() *runtime.Scheme {
 
 func (c *mockClient) RESTMapper() meta.RESTMapper {
 	return nil
+}
+
+func (c *mockClient) GroupVersionKindFor(runtime.Object) (schema.GroupVersionKind, error) {
+	return schema.GroupVersionKind{}, nil
+}
+
+func (c *mockClient) IsObjectNamespaced(runtime.Object) (bool, error) {
+	return false, nil
 }
 
 type mockManager struct {
@@ -146,8 +155,8 @@ func (m *mockManager) GetLogger() logr.Logger {
 	return m.log
 }
 
-func (m *mockManager) GetControllerOptions() v1alpha1.ControllerConfigurationSpec {
-	return v1alpha1.ControllerConfigurationSpec{}
+func (m *mockManager) GetControllerOptions() config.Controller {
+	return config.Controller{}
 }
 
 func (m *mockManager) SetFields(interface{}) error {
@@ -155,5 +164,9 @@ func (m *mockManager) SetFields(interface{}) error {
 }
 
 func (m *mockManager) Start(context.Context) error {
+	return nil
+}
+
+func (m *mockManager) GetHTTPClient() *http.Client {
 	return nil
 }

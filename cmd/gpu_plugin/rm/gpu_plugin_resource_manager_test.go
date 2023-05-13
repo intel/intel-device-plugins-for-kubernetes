@@ -85,6 +85,12 @@ func (w *mockPodResources) GetAllocatableResources(ctx context.Context,
 	return nil, nil
 }
 
+func (w *mockPodResources) Get(ctx context.Context,
+	in *podresourcesv1.GetPodResourcesRequest,
+	opts ...grpc.CallOption) (*podresourcesv1.GetPodResourcesResponse, error) {
+	return nil, nil
+}
+
 func newMockResourceManager(pods []v1.Pod) ResourceManager {
 	client, err := grpc.Dial("fake", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

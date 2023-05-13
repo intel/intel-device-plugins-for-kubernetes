@@ -15,6 +15,7 @@
 package e2e_test
 
 import (
+	"context"
 	"flag"
 	"os"
 	"testing"
@@ -51,7 +52,7 @@ func init() {
 	ginkgo.SynchronizedBeforeSuite(setupFirstNode, func(data []byte) {})
 }
 
-func setupFirstNode() []byte {
+func setupFirstNode(ctx context.Context) []byte {
 	c, err := framework.LoadClientset()
 	if err != nil {
 		framework.Failf("Error loading client: %v", err)
@@ -59,35 +60,38 @@ func setupFirstNode() []byte {
 
 	// Delete any namespaces except those created by the system. This ensures no
 	// lingering resources are left over from a previous test run.
-	deleted, err := framework.DeleteNamespaces(c, nil, /* deleteFilter */
-		[]string{
-			metav1.NamespaceSystem,
-			metav1.NamespaceDefault,
-			metav1.NamespacePublic,
-			v1.NamespaceNodeLease,
-			"cert-manager",
-		})
-	if err != nil {
-		framework.Failf("Error deleting orphaned namespaces: %v", err)
+	if framework.TestContext.CleanStart {
+		deleted, err2 := framework.DeleteNamespaces(ctx, c, nil, /* deleteFilter */
+			[]string{
+				metav1.NamespaceSystem,
+				metav1.NamespaceDefault,
+				metav1.NamespacePublic,
+				v1.NamespaceNodeLease,
+				"cert-manager",
+			})
+		if err2 != nil {
+			framework.Failf("Error deleting orphaned namespaces: %v", err2)
+		}
+
+		framework.Logf("Waiting for deletion of the following namespaces: %v", deleted)
+
+		if err2 = framework.WaitForNamespacesDeleted(ctx, c, deleted, e2epod.DefaultPodDeletionTimeout); err2 != nil {
+			framework.Failf("Failed to delete orphaned namespaces %v: %v", deleted, err2)
+		}
 	}
 
-	framework.Logf("Waiting for deletion of the following namespaces: %v", deleted)
+	timeouts := framework.NewTimeoutContext()
 
-	if err = framework.WaitForNamespacesDeleted(c, deleted, e2epod.DefaultPodDeletionTimeout); err != nil {
-		framework.Failf("Failed to delete orphaned namespaces %v: %v", deleted, err)
-	}
-
-	framework.ExpectNoError(e2enode.WaitForAllNodesSchedulable(c, framework.TestContext.NodeSchedulableTimeout))
+	framework.ExpectNoError(e2enode.WaitForAllNodesSchedulable(ctx, c, timeouts.NodeSchedulable))
 
 	// Ensure all pods are running and ready before starting tests (otherwise,
 	// cluster infrastructure pods that are being pulled or started can block
 	// test pods from running, and tests that ensure all pods are running and
 	// ready will fail).
-	if err = e2epod.WaitForPodsRunningReady(c, metav1.NamespaceSystem, int32(framework.TestContext.MinStartupPods),
-		int32(framework.TestContext.AllowedNotReadyNodes), framework.TestContext.SystemPodsStartupTimeout,
-		map[string]string{}); err != nil {
-		e2edebug.DumpAllNamespaceInfo(c, metav1.NamespaceSystem)
-		e2ekubectl.LogFailedContainers(c, metav1.NamespaceSystem, framework.Logf)
+	if err = e2epod.WaitForPodsRunningReady(ctx, c, metav1.NamespaceSystem, int32(framework.TestContext.MinStartupPods),
+		int32(framework.TestContext.AllowedNotReadyNodes), timeouts.SystemPodsStartup); err != nil {
+		e2edebug.DumpAllNamespaceInfo(ctx, c, metav1.NamespaceSystem)
+		e2ekubectl.LogFailedContainers(ctx, c, metav1.NamespaceSystem, framework.Logf)
 		framework.Failf("Error waiting for all pods to be running and ready: %v", err)
 	}
 
@@ -107,8 +111,8 @@ func setupFirstNode() []byte {
 
 	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
 
-	if err = e2epod.WaitForPodsRunningReady(c, "node-feature-discovery", 2, 0,
-		300*time.Second, map[string]string{}); err != nil {
+	if err = e2epod.WaitForPodsRunningReady(ctx, c, "node-feature-discovery", 2, 0,
+		300*time.Second); err != nil {
 		framework.Failf("unable to wait for NFD pods to be running and ready: %v", err)
 	}
 

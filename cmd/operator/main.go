@@ -20,6 +20,7 @@ import (
 	"os"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -41,6 +42,7 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller/patcher"
 	sgxwebhook "github.com/intel/intel-device-plugins-for-kubernetes/pkg/webhooks/sgx"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 )
 
 var (
@@ -163,9 +165,13 @@ func main() {
 	}
 
 	if contains(devices, "sgx") {
-		mgr.GetWebhookServer().Register("/pods-sgx", &webhook.Admission{
-			Handler: &sgxwebhook.Mutator{Client: mgr.GetClient()},
-		})
+		if err = builder.WebhookManagedBy(mgr).
+			For(&corev1.Pod{}).
+			WithDefaulter(&sgxwebhook.Mutator{}).
+			Complete(); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Pod")
+			os.Exit(1)
+		}
 	}
 
 	if contains(devices, "fpga") {

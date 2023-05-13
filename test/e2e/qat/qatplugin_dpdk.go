@@ -71,16 +71,16 @@ func describeQatDpdkPlugin() {
 
 	var resourceName v1.ResourceName
 
-	ginkgo.JustBeforeEach(func() {
+	ginkgo.JustBeforeEach(func(ctx context.Context) {
 		ginkgo.By("deploying QAT plugin in DPDK mode")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
 		ginkgo.By("waiting for QAT plugin's availability")
-		podList, err := e2epod.WaitForPodsWithLabelRunningReady(f.ClientSet, f.Namespace.Name,
+		podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
 			labels.Set{"app": "intel-qat-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
 		if err != nil {
-			e2edebug.DumpAllNamespaceInfo(f.ClientSet, f.Namespace.Name)
-			e2ekubectl.LogFailedContainers(f.ClientSet, f.Namespace.Name, framework.Logf)
+			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
 			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 		dpPodName = podList.Items[0].Name
@@ -91,15 +91,15 @@ func describeQatDpdkPlugin() {
 		}
 
 		ginkgo.By("checking if the resource is allocatable")
-		if err := utils.WaitForNodesWithResource(f.ClientSet, resourceName, 30*time.Second); err != nil {
+		if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 30*time.Second); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
 	})
 
-	ginkgo.AfterEach(func() {
+	ginkgo.AfterEach(func(ctx context.Context) {
 		ginkgo.By("undeploying QAT plugin")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(kustomizationPath))
-		if err := e2epod.WaitForPodNotFoundInNamespace(f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
+		if err := e2epod.WaitForPodNotFoundInNamespace(ctx, f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
 			framework.Failf("failed to terminate pod: %v", err)
 		}
 	})
@@ -114,25 +114,25 @@ func describeQatDpdkPlugin() {
 			resourceName = "qat.intel.com/cy"
 		})
 
-		ginkgo.It("deploys a crypto pod (openssl) requesting QAT resources", func() {
-			runCpaSampleCode(f, "4", resourceName)
+		ginkgo.It("deploys a crypto pod (openssl) requesting QAT resources", func(ctx context.Context) {
+			runCpaSampleCode(ctx, f, "4", resourceName)
 		})
 
-		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources", func() {
+		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources", func(ctx context.Context) {
 			ginkgo.By("submitting a crypto pod requesting QAT resources")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestGen4YamlPath))
 
 			ginkgo.By("waiting the crypto pod to finish successfully")
-			e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-crypto-perf-tc1-gen4", 300*time.Second)
 
-			output, _ := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, "qat-dpdk-test-crypto-perf-tc1-gen4", "crypto-perf")
+			e2epod.NewPodClient(f).WaitForSuccess(ctx, "qat-dpdk-test-crypto-perf-tc1-gen4", 300*time.Second)
+
+			output, _ := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, "qat-dpdk-test-crypto-perf-tc1-gen4", "crypto-perf")
 
 			framework.Logf("crypto-perf output:\n %s", output)
 		})
 	})
 
 	ginkgo.Context("When QAT Gen4 resources are available with compress (dc) services enabled", func() {
-		// This BeforeEach runs even before the JustBeforeEach above.
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("creating a configMap before plugin gets deployed")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "--from-literal", "qat.conf=ServicesEnabled=dc", "qat-config")
@@ -141,8 +141,8 @@ func describeQatDpdkPlugin() {
 			resourceName = "qat.intel.com/dc"
 		})
 
-		ginkgo.It("deploys a compress pod (openssl) requesting QAT resources", func() {
-			runCpaSampleCode(f, "32", resourceName)
+		ginkgo.It("deploys a compress pod (openssl) requesting QAT resources", func(ctx context.Context) {
+			runCpaSampleCode(ctx, f, "32", resourceName)
 		})
 	})
 
@@ -152,25 +152,25 @@ func describeQatDpdkPlugin() {
 			resourceName = "qat.intel.com/generic"
 		})
 
-		ginkgo.It("deploys a crypto pod requesting QAT resources", func() {
+		ginkgo.It("deploys a crypto pod requesting QAT resources", func(ctx context.Context) {
 			ginkgo.By("submitting a crypto pod requesting QAT resources")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
 			ginkgo.By("waiting the crypto pod to finish successfully")
-			e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-crypto-perf-tc1", 60*time.Second)
+			e2epod.NewPodClient(f).WaitForSuccess(ctx, "qat-dpdk-test-crypto-perf-tc1", 60*time.Second)
 		})
 
-		ginkgo.It("deploys a compress pod requesting QAT resources", func() {
+		ginkgo.It("deploys a compress pod requesting QAT resources", func(ctx context.Context) {
 			ginkgo.By("submitting a compress pod requesting QAT resources")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
 			ginkgo.By("waiting the compress pod to finish successfully")
-			e2epod.NewPodClient(f).WaitForSuccess("qat-dpdk-test-compress-perf-tc1", 60*time.Second)
+			e2epod.NewPodClient(f).WaitForSuccess(ctx, "qat-dpdk-test-compress-perf-tc1", 60*time.Second)
 		})
 	})
 }
 
-func runCpaSampleCode(f *framework.Framework, runTests string, resourceName v1.ResourceName) {
+func runCpaSampleCode(ctx context.Context, f *framework.Framework, runTests string, resourceName v1.ResourceName) {
 	ginkgo.By("submitting a pod requesting QAT" + resourceName.String() + "resources")
 	podSpec := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{Name: "openssl-qat-engine"},
@@ -194,13 +194,13 @@ func runCpaSampleCode(f *framework.Framework, runTests string, resourceName v1.R
 			RestartPolicy: v1.RestartPolicyNever,
 		},
 	}
-	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(context.TODO(), podSpec, metav1.CreateOptions{})
+	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx, podSpec, metav1.CreateOptions{})
 	framework.ExpectNoError(err, "pod Create API error")
 
 	ginkgo.By("waiting the cpa_sample_code pod for the resource" + resourceName.String() + "to finish successfully")
-	e2epod.NewPodClient(f).WaitForSuccess(pod.ObjectMeta.Name, 300*time.Second)
+	e2epod.NewPodClient(f).WaitForSuccess(ctx, pod.ObjectMeta.Name, 300*time.Second)
 
-	output, _ := e2epod.GetPodLogs(f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name)
+	output, _ := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name)
 
 	framework.Logf("cpa_sample_code output:\n %s", output)
 }
