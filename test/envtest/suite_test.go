@@ -56,7 +56,6 @@ import (
 var (
 	cfg         *rest.Config
 	k8sClient   client.Client
-	k8sManager  ctrl.Manager
 	testEnv     *envtest.Environment
 	ctx         context.Context
 	cancel      context.CancelFunc
@@ -108,7 +107,8 @@ var _ = AfterEach(func() {
 })
 
 func up() {
-	k8sManager, _ = ctrl.NewManager(cfg, ctrl.Options{Scheme: scheme.Scheme})
+	k8sManager, managerErr := ctrl.NewManager(cfg, ctrl.Options{Scheme: scheme.Scheme, MetricsBindAddress: "0"})
+	Expect(managerErr).To(BeNil())
 
 	withWebhook := true
 
