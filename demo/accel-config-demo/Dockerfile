@@ -16,11 +16,11 @@ FROM ubuntu:22.04 AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ nasm make cmake patch autoconf automake libtool pkg-config git curl ca-certificates \
-    libjson-c-dev uuid-dev zlib1g-dev
+    libjson-c-dev uuid-dev zlib1g-dev libssl-dev
 
-ARG ACCEL_CONFIG_VERSION="3.5.2"
+ARG ACCEL_CONFIG_VERSION="4.0"
 ARG ACCEL_CONFIG_DOWNLOAD_URL="https://github.com/intel/idxd-config/archive/accel-config-v$ACCEL_CONFIG_VERSION.tar.gz"
-ARG ACCEL_CONFIG_SHA256="a2d52007b4bfdc050a21893466e78328c6800f9a87b0806c7e7f5775ff48387b"
+ARG ACCEL_CONFIG_SHA256="6d9bce40d797a87508ce5c5a5b71bb2bdc1cb544848925ed2c4c37b46a1252ce"
 
 RUN curl -fsSL "$ACCEL_CONFIG_DOWNLOAD_URL" -o accel-config.tar.gz && echo "$ACCEL_CONFIG_SHA256 accel-config.tar.gz" | sha256sum -c - && tar -xzf accel-config.tar.gz
 
@@ -53,14 +53,15 @@ RUN cd / && git clone --recursive --depth 1 --branch v1.0.0 https://github.com/i
 
 FROM ubuntu:22.04
 
-RUN apt-get update && apt-get install -y --no-install-recommends libjson-c5 && rm -rf /var/lib/apt/lists/\*
+RUN apt-get update && apt-get install -y --no-install-recommends libjson-c5 libssl3 && rm -rf /var/lib/apt/lists/\*
 
 COPY --from=builder /usr/lib64/libaccel-config.so.1.0.0 "/lib/x86_64-linux-gnu/"
 RUN ldconfig
 
 COPY --from=builder /usr/bin/accel-config /usr/bin/
-COPY --from=builder /usr/lib/accel-config/test /test
+COPY --from=builder /usr/libexec/accel-config/test /test
 COPY --from=builder /idxd-reset.patch /usr/local/share/package-sources/
+COPY --from=builder /test_runner_disable_shared_queues.patch /usr/local/share/package-sources/
 
 COPY --from=builder /usr/local /usr/local
 COPY --from=builder /qpl/build/examples /usr/local/bin/

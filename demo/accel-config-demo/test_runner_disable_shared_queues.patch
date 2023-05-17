@@ -1,5 +1,7 @@
---- idxd-config-accel-config-v3.5.2/test/dsa_user_test_runner.sh.orig	2022-11-29 12:41:55.188306049 +0200
-+++ idxd-config-accel-config-v3.5.2/test/dsa_user_test_runner.sh	2022-11-29 12:44:20.711820711 +0200
+diff --git a/test/dsa_user_test_runner.sh b/test/dsa_user_test_runner.sh
+index 6c9f771..4504d9c 100755
+--- a/test/dsa_user_test_runner.sh
++++ b/test/dsa_user_test_runner.sh
 @@ -6,7 +6,8 @@
  
  rc="$EXIT_SKIP"
@@ -10,7 +12,7 @@
  WQ0=wq0.0
  WQ1=wq0.1
  
-@@ -70,7 +71,7 @@
+@@ -70,7 +71,7 @@ test_op()
  		for xfer_size in $SIZE_1 $SIZE_4K $SIZE_64K $SIZE_1M $SIZE_2M; do
  			echo "Testing $xfer_size bytes"
  			"$DSATEST" -w "$wq_mode_code" -l "$xfer_size" -o "$opcode" \
@@ -19,7 +21,7 @@
  		done
  	done
  }
-@@ -99,7 +100,7 @@
+@@ -99,7 +100,7 @@ test_op_batch()
  		for xfer_size in $SIZE_1 $SIZE_4K $SIZE_64K $SIZE_1M $SIZE_2M; do
  			echo "Testing $xfer_size bytes"
  			"$DSATEST" -w "$wq_mode_code" -l "$xfer_size" -o 0x1 -b "$opcode" \
@@ -28,7 +30,7 @@
  		done
  	done
  }
-@@ -124,7 +125,7 @@
+@@ -124,7 +125,7 @@ test_dif_op()
  		for xfer_size in $SIZE_512 $SIZE_1K $SIZE_4K; do
  			echo "Testing $xfer_size bytes"
  			"$DSATEST" -w "$wq_mode_code" -l "$xfer_size" -o "$opcode" \
@@ -37,7 +39,7 @@
  		done
  	done
  }
-@@ -149,13 +150,10 @@
+@@ -149,13 +150,10 @@ test_dif_op_batch()
  		for xfer_size in $SIZE_512 $SIZE_1K $SIZE_4K; do
  			echo "Testing $xfer_size bytes"
  			"$DSATEST" -w "$wq_mode_code" -l "$xfer_size" -o 0x1 -b "$opcode" \
@@ -52,7 +54,7 @@
  # shellcheck disable=SC2034
  rc="$EXIT_FAILURE"
  
-@@ -188,7 +186,3 @@
+@@ -188,7 +186,3 @@ for opcode in "0x12" "0x13" "0x14" "0x15"; do
  	test_dif_op_batch $opcode $flag
  done
  
@@ -60,8 +62,10 @@
 -stop_dsa
 -_cleanup
 -exit 0
---- idxd-config-accel-config-v3.5.2/test/iaa_user_test_runner.sh.orig	2022-11-29 12:41:55.188306049 +0200
-+++ idxd-config-accel-config-v3.5.2/test/iaa_user_test_runner.sh	2022-11-29 12:44:20.711820711 +0200
+diff --git a/test/iaa_user_test_runner.sh b/test/iaa_user_test_runner.sh
+index c8f2686..9156a94 100755
+--- a/test/iaa_user_test_runner.sh
++++ b/test/iaa_user_test_runner.sh
 @@ -6,7 +6,8 @@
  
  rc="$EXIT_SKIP"
@@ -71,8 +75,8 @@
 +IAA=`echo $DEV | cut -f1 -d/`
  WQ0=wq1.4
  WQ1=wq1.1
- 
-@@ -72,10 +73,10 @@
+ DBDF=`ls -l /sys/bus/dsa/devices/iax3 | awk -F '/' '{print $(NF - 1)}'`
+@@ -104,10 +105,10 @@ test_op()
  			if [ "$extra_flag" != "" ]
  			then
  				"$IAATEST" -w "$wq_mode_code" -l "$xfer_size" -o "$opcode" \
@@ -85,7 +89,7 @@
  			fi
  		done
  	done
-@@ -91,127 +92,124 @@
+@@ -123,121 +124,121 @@ test_op_filter()
  		wq_mode_name=$(wq_mode2name "$wq_mode_code")
  
  		./iaa_test -w "$wq_mode_code" -f "$flag" -l 512 -2 0x7c -3 128 \
@@ -261,13 +265,17 @@
  	done
  }
  
+@@ -286,9 +287,6 @@ test_op_transl_fetch()
+ 	done
+ }
+ 
 -_cleanup
 -start_iaa
 -enable_wqs
  # shellcheck disable=SC2034
  rc="$EXIT_FAILURE"
  
-@@ -245,13 +243,13 @@
+@@ -322,69 +320,12 @@ unset SIZE_1
  
  flag="0x1"
  echo "Testing with 'block on fault' flag ON"
@@ -282,11 +290,59 @@
 +for opcode in "0x4d" "0x49" "0x4c" "0x48" "0x43"; do
  	test_op $opcode $flag
  done
- 
-@@ -261,7 +259,3 @@
- flag="0x0"
- test_op_filter $flag
- 
+-
+-if [ "$IDXD_VERSION" != "0x100" ]; then
+-	flag="0x1"
+-	echo "Testing with 'block on fault' flag ON"
+-	for opcode in "0x4e" "0x4a"; do
+-		test_op $opcode $flag
+-	done
+-
+-	flag="0x0"
+-	echo "Testing with 'block on fault' flag OFF"
+-	for opcode in "0x4e" "0x4a"; do
+-		test_op $opcode $flag
+-	done
+-fi
+-
+-flag="0x1"
+-test_op_filter $flag
+-
+-flag="0x0"
+-test_op_filter $flag
+-
+-if [ "$IDXD_VERSION" != "0x100" ]; then
+-	flag="0x1"
+-	aecs_flag="0x0101"
+-	echo "Testing with 'block on fault' flag ON"
+-	for opcode in "0x41" "0x40"; do
+-		test_op_crypto $opcode $flag $aecs_flag
+-	done
+-
+-	flag="0x0"
+-	aecs_flag="0x0301"
+-	echo "Testing with 'block on fault' flag OFF"
+-	for opcode in "0x41" "0x40"; do
+-		test_op_crypto $opcode $flag $aecs_flag
+-	done
+-
+-	bind_vfio
+-
+-	flag="0x1"
+-	echo "Testing with 'block on fault' flag ON"
+-	for opcode in "0x0a"; do
+-		test_op_transl_fetch $opcode $flag
+-	done
+-
+-	flag="0x0"
+-	echo "Testing with 'block on fault' flag OFF"
+-	for opcode in "0x0a"; do
+-		test_op_transl_fetch $opcode $flag
+-	done
+-
+-	unbind_vfio
+-fi
+-
 -disable_wqs
 -stop_iaa
 -_cleanup
