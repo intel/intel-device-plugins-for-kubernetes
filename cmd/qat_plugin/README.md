@@ -139,7 +139,11 @@ In addition to the default configuration, you can add device-specific configurat
 To create a provisioning `configMap`, run the following command before deploying initcontainer:
 
 ```bash
-$ kubectl create configmap --namespace=inteldeviceplugins-system qat-config --from-file=deployments/qat_plugin/overlays/qat_initcontainer/qat.conf
+$ kubectl create configmap --namespace=inteldeviceplugins-system qat-config --from-file=/path/to/qat.conf
+```
+or
+```bash
+$ kubectl create configmap --namespace=inteldeviceplugins-system --from-literal "qat.conf=ServicesEnabled=<option>" qat-config 
 ```
 
 When using the operator for deploying the plugin with provisioning config, use `provisioningConfig` field for the name of the ConfigMap, then the config is passed to initcontainer through the volume mount.
