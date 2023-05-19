@@ -5,8 +5,8 @@ enable_and_configure_vfs() {
   
   sriov_numvfs_path="$devpath/sriov_numvfs"
   if ! test -w "$sriov_numvfs_path"; then
-    echo "error: $sriov_numvfs_path is not found or not writable. Check if dlb driver module is loaded"
-    exit 1
+    echo "$sriov_numvfs_path is not found or not writable. In case there is no configured VF yet, check if dlb driver module is loaded"
+    exit 0
   fi
   if [ "$(cat "$sriov_numvfs_path")" -ne 0 ]; then
     echo "$devpath already configured"
