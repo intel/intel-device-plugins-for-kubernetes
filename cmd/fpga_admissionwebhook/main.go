@@ -53,7 +53,7 @@ func main() {
 
 	ctrl.SetLogger(klogr.New())
 
-	webHook := &webhook.Server{
+	webhookOptions := webhook.Options{
 		Port:          9443,
 		TLSMinVersion: "1.3",
 	}
@@ -62,7 +62,7 @@ func main() {
 		Scheme:             scheme,
 		MetricsBindAddress: "0",
 		Logger:             ctrl.Log.WithName("FpgaAdmissionWebhook"),
-		WebhookServer:      webHook,
+		WebhookServer:      webhook.NewServer(webhookOptions),
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "f2c6a4df.intel.com",
 	})

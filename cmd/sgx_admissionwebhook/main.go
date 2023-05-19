@@ -37,7 +37,7 @@ func init() {
 func main() {
 	ctrl.SetLogger(klogr.New())
 
-	webHook := &webhook.Server{
+	webhookOptions := webhook.Options{
 		Port:          9443,
 		TLSMinVersion: "1.3",
 	}
@@ -45,7 +45,7 @@ func main() {
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		MetricsBindAddress: "0",
 		Logger:             ctrl.Log.WithName("SgxAdmissionWebhook"),
-		WebhookServer:      webHook,
+		WebhookServer:      webhook.NewServer(webhookOptions),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

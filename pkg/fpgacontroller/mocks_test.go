@@ -147,7 +147,7 @@ func (m *mockManager) GetScheme() *runtime.Scheme {
 	return m.scheme
 }
 
-func (m *mockManager) GetWebhookServer() *webhook.Server {
+func (m *mockManager) GetWebhookServer() webhook.Server {
 	return nil
 }
 
