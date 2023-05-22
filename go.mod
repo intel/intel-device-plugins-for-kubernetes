@@ -10,7 +10,7 @@ require (
 	github.com/google/gousb v1.1.2
 	github.com/klauspost/cpuid/v2 v2.2.4
 	github.com/onsi/ginkgo/v2 v2.9.5
-	github.com/onsi/gomega v1.27.6
+	github.com/onsi/gomega v1.27.7
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_model v0.4.0
 	github.com/prometheus/common v0.43.0
