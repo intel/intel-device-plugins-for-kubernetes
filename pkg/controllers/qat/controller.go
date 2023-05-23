@@ -37,6 +37,7 @@ import (
 const (
 	ownerKey          = ".metadata.controller.qat"
 	initcontainerName = "intel-qat-initcontainer"
+	qatConfigVolume   = "intel-qat-config-volume"
 )
 
 var defaultNodeSelector = deployments.QATPluginDaemonSet().Spec.Template.Spec.NodeSelector
@@ -96,10 +97,7 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
 
-	if devicePlugin.Spec.InitImage == "" {
-		daemonSet.Spec.Template.Spec.InitContainers = nil
-		daemonSet.Spec.Template.Spec.Volumes = removeVolume(daemonSet.Spec.Template.Spec.Volumes, "sysfs")
-	} else {
+	if devicePlugin.Spec.InitImage != "" {
 		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec)
 	}
 
@@ -129,7 +127,7 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		if ds.Spec.Template.Spec.InitContainers != nil {
 			ds.Spec.Template.Spec.InitContainers = nil
 			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "sysfs")
-			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "qat-config")
+			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, qatConfigVolume)
 			updated = true
 		}
 	} else {
@@ -220,7 +218,7 @@ func setInitContainer(dsSpec *v1.PodSpec, dpSpec devicepluginv1.QatDevicePluginS
 		{
 			Image:           dpSpec.InitImage,
 			ImagePullPolicy: "IfNotPresent",
-			Name:            "init-sriov-numvfs",
+			Name:            initcontainerName,
 			Env: []v1.EnvVar{
 				{
 					Name:  "ENABLED_QAT_PF_PCIIDS",
@@ -254,20 +252,35 @@ func setInitContainer(dsSpec *v1.PodSpec, dpSpec devicepluginv1.QatDevicePluginS
 	mode := int32(0440)
 
 	if dpSpec.ProvisioningConfig != "" {
-		dsSpec.Volumes = append(dsSpec.Volumes, v1.Volume{
-			Name: "qat-config",
+		qatVol := v1.Volume{
+			Name: qatConfigVolume,
 			VolumeSource: v1.VolumeSource{
 				ConfigMap: &v1.ConfigMapVolumeSource{
 					LocalObjectReference: v1.LocalObjectReference{Name: dpSpec.ProvisioningConfig},
 					DefaultMode:          &mode,
 				},
 			},
-		})
+		}
+
+		volumeUpdated := false
+
+		// update ProvisioningConfig volume
+		for idx, vol := range dsSpec.Volumes {
+			if vol.Name == qatConfigVolume {
+				dsSpec.Volumes[idx] = qatVol
+				volumeUpdated = true
+			}
+		}
+
+		// or add if it's completely missing
+		if !volumeUpdated {
+			dsSpec.Volumes = append(dsSpec.Volumes, qatVol)
+		}
 
 		for i, initcontainer := range dsSpec.InitContainers {
 			if initcontainer.Name == initcontainerName {
 				dsSpec.InitContainers[i].VolumeMounts = append(dsSpec.InitContainers[i].VolumeMounts, v1.VolumeMount{
-					Name:      "qat-config",
+					Name:      qatConfigVolume,
 					MountPath: "/qat-init/conf",
 				})
 			}
