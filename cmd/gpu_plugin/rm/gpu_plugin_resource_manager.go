@@ -279,7 +279,14 @@ func (rm *resourceManager) listPodsFromKubelet() (*v1.PodList, error) {
 	// https://github.com/cyberark/kubeletctl
 
 	kubeletURL := "https://" + rm.hostIP + ":10250/pods"
-	req, _ := http.NewRequestWithContext(context.Background(), "GET", kubeletURL, nil)
+
+	req, err := http.NewRequestWithContext(context.Background(), "GET", kubeletURL, nil)
+	if err != nil {
+		klog.Warning("Failure creating new request: ", err)
+
+		return &podList, err
+	}
+
 	req.Header.Set("Authorization", "Bearer "+string(token))
 
 	tr := &http.Transport{
