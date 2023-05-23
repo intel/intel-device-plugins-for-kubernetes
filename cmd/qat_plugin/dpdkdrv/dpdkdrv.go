@@ -400,7 +400,9 @@ func getDeviceCapabilities(device string) (string, error) {
 	}
 
 	devicesWithCapabilities := map[string]struct{}{
-		"4941": {}, // Check QAT Gen4 (4xxx) VF PCI ID only
+		"4941": {}, // QAT Gen4 (4xxx) VF PCI ID
+		"4943": {}, // QAT Gen4 (401xx) VF PCI ID
+		"4945": {}, // QAT Gen4 (402xx) VF PCI ID
 	}
 
 	if _, ok := devicesWithCapabilities[devID]; !ok {
