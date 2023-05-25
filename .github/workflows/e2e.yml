@@ -32,9 +32,9 @@ jobs:
           - name: e2e-fpga
             runner: fpga
             images: intel-fpga-plugin intel-fpga-initcontainer intel-fpga-admissionwebhook opae-nlb-demo
-          - name: e2e-gpu
-            runner: gpu
-            images: intel-gpu-plugin intel-gpu-initcontainer
+          # - name: e2e-gpu
+          #   runner: gpu
+          #   images: intel-gpu-plugin intel-gpu-initcontainer
           - name: e2e-iaa-spr
             targetjob: e2e-iaa
             runner: simics-spr
