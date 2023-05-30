@@ -86,7 +86,7 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
 ###
 FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version='0.27.0'
 LABEL release='1'
 LABEL name='intel-fpga-initcontainer'
 LABEL summary='Intel® FPGA programming CRI hook for Kubernetes'
