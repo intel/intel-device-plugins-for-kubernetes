@@ -1,10 +1,10 @@
 FROM ubuntu:22.04 as builder
 
 ARG QATLIB_VERSION="23.02.0"
-ARG QAT_ENGINE_VERSION="v0.6.19"
+ARG QAT_ENGINE_VERSION="v1.1.0"
 ARG ASYNC_NGINX_VERSION="v0.5.0"
 ARG IPSEC_MB_VERSION="v1.3"
-ARG IPP_CRYPTO_VERSION="ippcp_2021.7"
+ARG IPP_CRYPTO_VERSION="ippcp_2021.7.1"
 
 RUN apt update && \
     env DEBIAN_FRONTEND=noninteractive apt install -y \
@@ -74,7 +74,7 @@ COPY --from=builder /usr/bin/*_sample* /usr/bin/
 COPY --from=builder /usr/lib/libqat.so.3.0.3 /usr/lib/
 COPY --from=builder /usr/lib/libusdm.so.0.1.0 /usr/lib/
 COPY --from=builder /usr/lib64/libIPSec_MB.so.1 /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/local/lib/libcrypto_mb.so.11.5 /usr/lib/x86_64-linux-gnu/
+COPY --from=builder /usr/local/lib/libcrypto_mb.so.11.6 /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /usr/lib/x86_64-linux-gnu/engines-3/qatengine.so /usr/lib/x86_64-linux-gnu/engines-3/qatengine.so
 COPY --from=builder /var/www/ /var/www/
 COPY --from=builder /usr/lib64/nginx/* /usr/lib64/nginx/
