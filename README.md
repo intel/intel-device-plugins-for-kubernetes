@@ -166,10 +166,10 @@ as a standalone [SGX Admission webhook image](cmd/sgx_admissionwebhook/README.md
 #### Intel SGX EPC memory registration
 
 The Intel SGX EPC memory available on each node is registered as a Kubernetes extended resource using
-node-feature-discovery (NFD). A custom NFD source hook is installed as part of
+node-feature-discovery (NFD). An NFD Node Feature Rule is installed as part of
 [SGX device plugin](cmd/sgx_plugin/README.md)
 operator deployment and NFD is configured to register the Intel SGX EPC memory
-extended resource reported by the hook.
+extended resource.
 
 Containers requesting Intel SGX EPC resources in the cluster use
 `sgx.intel.com/epc` resource which is of

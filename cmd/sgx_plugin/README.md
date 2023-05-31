@@ -19,7 +19,7 @@ Table of Contents
 The Intel SGX device plugin and related components allow workloads to use Intel SGX on
 platforms with SGX Flexible Launch Control enabled, e.g.,:
 
-- 3rd Generation Intel® Xeon® Scalable Platform, code-named “Ice Lake”
+- 3rd/4th Generation Intel® Xeon® Scalable Platforms
 - Intel® Xeon® E3
 - Intel® NUC Kit NUC7CJYH
 
@@ -122,7 +122,7 @@ $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes
 $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_plugin/overlays/epc-nfd/'
 ```
 
-The second approach has a lesser deployment footprint. It does not require NFD, but a helper daemonset that creates `sgx.intel.com/capable='true'` node label and advertises EPC capacity to the API server.
+The second approach has a lesser deployment footprint. It does not require NFD, but a helper daemonset that creates `sgx.intel.com/capable='true'` node label and advertises EPC capacity directly to the API server.
 
 The following kustomization is used for this approach:
 ```bash
