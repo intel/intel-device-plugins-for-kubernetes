@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: iaa-accel-config-demo
-    image: intel/accel-config-demo:devel
+    image: intel/accel-config-demo:0.27.0
     command: [ "/bin/bash", "-c", "cd /test && /bin/bash -e ./iaa_user_test_runner.sh" ]
     imagePullPolicy: IfNotPresent
     resources:

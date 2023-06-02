@@ -7,7 +7,7 @@ spec:
     spec:
       initContainers:
       - name: intel-dlb-initcontainer
-        image: intel/intel-dlb-initcontainer:devel
+        image: intel/intel-dlb-initcontainer:0.27.0
         securityContext:
           readOnlyRootFilesystem: true
           privileged: true
