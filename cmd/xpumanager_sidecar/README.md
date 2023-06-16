@@ -21,6 +21,8 @@ Intel GPUs can be interconnected via an XeLink. In some workloads it is benefici
 | -interval | int | 10 | Interval for XeLink topology fetching and label writing (seconds, >= 1) |
 | -startup-delay | int | 10 | Startup delay before the first topology fetching (seconds, >= 0) |
 | -label-namespace | string | gpu.intel.com | Namespace or prefix for the labels. i.e. **gpu.intel.com**/xe-links |
+| -allow-subdeviceless-links | bool | false | Include xelinks that are not on subdevices |
+| -use-https | bool | false | Use HTTPS protocol when connecting to XPU-Manager |
 
 The sidecar also accepts a number of other arguments. Please use the -h option to see the complete list of options.
 
