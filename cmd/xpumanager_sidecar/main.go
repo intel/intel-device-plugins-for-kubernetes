@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"io"
@@ -65,6 +66,7 @@ type xpuManagerSidecar struct {
 	xpumPort                uint64
 	laneCount               uint64
 	allowSubdevicelessLinks bool
+	useHTTPS                bool
 }
 
 func (e *invalidEntryErr) Error() string {
@@ -74,6 +76,14 @@ func (e *invalidEntryErr) Error() string {
 func (xms *xpuManagerSidecar) getMetricsDataFromXPUM() []byte {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
+	}
+
+	if xms.useHTTPS {
+		customTransport := http.DefaultTransport.(*http.Transport).Clone()
+		//#nosec
+		customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
+		client.Transport = customTransport
 	}
 
 	ctx := context.Background()
@@ -369,6 +379,7 @@ func main() {
 	flag.Uint64Var(&xms.laneCount, "lane-count", 4, "minimum lane count for xelink")
 	flag.StringVar(&xms.labelNamespace, "label-namespace", "gpu.intel.com", "namespace for the labels")
 	flag.BoolVar(&xms.allowSubdevicelessLinks, "allow-subdeviceless-links", false, "allow xelinks that are not tied to subdevices (=1 tile GPUs)")
+	flag.BoolVar(&xms.useHTTPS, "use-https", false, "Use HTTPS protocol to connect to xpumanager")
 	klog.InitFlags(nil)
 
 	flag.Parse()
@@ -377,7 +388,12 @@ func main() {
 		klog.Fatal("zero interval won't work, set it to at least 1")
 	}
 
-	xms.url = fmt.Sprintf("http://127.0.0.1:%d/metrics", xms.xpumPort)
+	protocol := "http"
+	if xms.useHTTPS {
+		protocol = "https"
+	}
+
+	xms.url = fmt.Sprintf("%s://127.0.0.1:%d/metrics", protocol, xms.xpumPort)
 
 	keepIterating := true
 
