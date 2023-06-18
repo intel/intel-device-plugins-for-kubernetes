@@ -23,10 +23,11 @@ import (
 )
 
 type testCase struct {
-	name           string
-	metricsData    []string
-	expectedLabels []string
-	minLaneCount   int
+	name               string
+	metricsData        []string
+	expectedLabels     []string
+	minLaneCount       int
+	allowSubdeviceless bool
 }
 
 func createTestCases() []testCase {
@@ -59,11 +60,24 @@ func createTestCases() []testCase {
 			metricsData: []string{
 				`# HELP xpum_topology_link Connection type fo two GPU tiles`,
 				`# TYPE xpum_topology_link gauge`,
-				`xpum_topology_link{dev_file="card1",dev_name="Intel(R) Graphics [0x0bdb]",pci_bdf="0000:51:00.0",pci_dev="0xbdb",src="direct",uuid="01000000-0000-0000-0000-000000510000",vendor="Intel(R) Corporation",local_cpu_affinity="0-23,48-71",local_device_id="0",local_numa_index="0",local_on_subdevice="false",local_subdevice_id="0",remote_device_id="0",remote_subdevice_id="0"} 1`,
-				`xpum_topology_link{dev_file="card1",dev_name="Intel(R) Graphics [0x0bdb]",pci_bdf="0000:51:00.0",pci_dev="0xbdb",src="direct",uuid="01000000-0000-0000-0000-000000510000",vendor="Intel(R) Corporation",local_cpu_affinity="0-23,48-71",local_device_id="0",local_numa_index="0",local_on_subdevice="false",local_subdevice_id="0",remote_device_id="1",remote_subdevice_id="0"} 1`,
+				`xpum_topology_link{dev_file="card1",dev_name="Intel(R) Graphics [0x0bdb]",pci_bdf="0000:51:00.0",pci_dev="0xbdb",src="direct",uuid="01000000-0000-0000-0000-000000510000",vendor="Intel(R) Corporation",local_cpu_affinity="0-23,48-71",local_device_id="0",local_numa_index="0",local_on_subdevice="false",local_subdevice_id="0",remote_device_id="1",remote_subdevice_id="0",lane_count="4"} 1`,
+				`xpum_topology_link{dev_file="card1",dev_name="Intel(R) Graphics [0x0bdb]",pci_bdf="0000:51:00.0",pci_dev="0xbdb",src="direct",uuid="01000000-0000-0000-0000-000000510000",vendor="Intel(R) Corporation",local_cpu_affinity="0-23,48-71",local_device_id="0",local_numa_index="0",local_on_subdevice="false",local_subdevice_id="0",remote_device_id="1",remote_subdevice_id="1",lane_count="4"} 1`,
 				"",
 			},
 			expectedLabels: []string{"xpumanager.intel.com/xe-links="},
+		},
+		{
+			name:         "Xelinks not on sub devices when it's allowed",
+			minLaneCount: 4,
+			metricsData: []string{
+				`# HELP xpum_topology_link Connection type fo two GPU tiles`,
+				`# TYPE xpum_topology_link gauge`,
+				`xpum_topology_link{dev_file="card1",dev_name="Intel(R) Graphics [0x0bdb]",pci_bdf="0000:51:00.0",pci_dev="0xbdb",src="direct",uuid="01000000-0000-0000-0000-000000510000",vendor="Intel(R) Corporation",local_cpu_affinity="0-23,48-71",local_device_id="0",local_numa_index="0",local_on_subdevice="false",local_subdevice_id="0",remote_device_id="1",remote_subdevice_id="0",lane_count="4"} 1`,
+				`xpum_topology_link{dev_file="card1",dev_name="Intel(R) Graphics [0x0bdb]",pci_bdf="0000:51:00.0",pci_dev="0xbdb",src="direct",uuid="01000000-0000-0000-0000-000000510000",vendor="Intel(R) Corporation",local_cpu_affinity="0-23,48-71",local_device_id="0",local_numa_index="0",local_on_subdevice="false",local_subdevice_id="0",remote_device_id="1",remote_subdevice_id="1",lane_count="4"} 1`,
+				"",
+			},
+			expectedLabels:     []string{"xpumanager.intel.com/xe-links=0.0-1.0_0.0-1.1"},
+			allowSubdeviceless: true,
 		},
 		{
 			name:         "Xelinks without lan counts",
@@ -208,6 +222,9 @@ func TestLabeling(t *testing.T) {
 	for _, tc := range tcs {
 		print("Testcase (labeling): ", tc.name, "\n")
 		xms := tc.createFakeXMS(tc.metricsData, tc.minLaneCount)
+
+		xms.allowSubdevicelessLinks = tc.allowSubdeviceless
+
 		topologyInfos := xms.GetTopologyFromXPUMMetrics([]byte(strings.Join(tc.metricsData, "\n")))
 
 		labels := xms.createLabels(topologyInfos)
@@ -223,6 +240,8 @@ func TestIterate(t *testing.T) {
 	for _, tc := range tcs {
 		print("Testcase (iterate): ", tc.name, "\n")
 		xms := tc.createFakeXMS(tc.metricsData, tc.minLaneCount)
+
+		xms.allowSubdevicelessLinks = tc.allowSubdeviceless
 
 		root, err := os.MkdirTemp("", "test_new_xms")
 		if err != nil {
