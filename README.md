@@ -7,7 +7,7 @@ This repository contains a framework for developing plugins for the Kubernetes
 [device plugins framework](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/),
 along with a number of device plugin implementations utilizing that framework.
 
-The [v0.27 release](https://github.com/intel/intel-device-plugins-for-kubernetes/releases/latest)
+The [v0.27.1 release](https://github.com/intel/intel-device-plugins-for-kubernetes/releases/latest)
 is the latest feature release with its documentation available [here](https://intel.github.io/intel-device-plugins-for-kubernetes/0.27/).
 
 Table of Contents
