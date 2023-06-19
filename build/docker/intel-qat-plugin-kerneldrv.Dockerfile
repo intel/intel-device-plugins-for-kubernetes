@@ -57,7 +57,7 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
     else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi
 FROM debian:unstable-slim
 LABEL vendor='Intel®'
-LABEL version='0.27.0'
+LABEL version='0.27.1'
 LABEL release='1'
 LABEL name='intel-qat-plugin-kerneldrv'
 LABEL summary='Intel® QAT device plugin kerneldrv for Kubernetes'
