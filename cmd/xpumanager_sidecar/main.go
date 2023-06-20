@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"io"
@@ -55,15 +56,17 @@ type xpuManagerTopologyMatrixCell struct {
 }
 
 type xpuManagerSidecar struct {
-	getMetricsData func() []byte
-	tmpDirPrefix   string
-	dstFilePath    string
-	labelNamespace string
-	url            string
-	interval       uint64
-	startDelay     uint64
-	xpumPort       uint64
-	laneCount      uint64
+	getMetricsData          func() []byte
+	tmpDirPrefix            string
+	dstFilePath             string
+	labelNamespace          string
+	url                     string
+	interval                uint64
+	startDelay              uint64
+	xpumPort                uint64
+	laneCount               uint64
+	allowSubdevicelessLinks bool
+	useHTTPS                bool
 }
 
 func (e *invalidEntryErr) Error() string {
@@ -73,6 +76,14 @@ func (e *invalidEntryErr) Error() string {
 func (xms *xpuManagerSidecar) getMetricsDataFromXPUM() []byte {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
+	}
+
+	if xms.useHTTPS {
+		customTransport := http.DefaultTransport.(*http.Transport).Clone()
+		//#nosec
+		customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
+		client.Transport = customTransport
 	}
 
 	ctx := context.Background()
@@ -108,7 +119,7 @@ func (xms *xpuManagerSidecar) getMetricsDataFromXPUM() []byte {
 	return resBody
 }
 
-func processMetricsLabels(labels []*io_prometheus_client.LabelPair) (xpuManagerTopologyMatrixCell, error) {
+func processMetricsLabels(labels []*io_prometheus_client.LabelPair, allowNonSubdeviceLinks bool) (xpuManagerTopologyMatrixCell, error) {
 	cell := createInvalidTopologyCell()
 
 	for _, label := range labels {
@@ -118,7 +129,7 @@ func processMetricsLabels(labels []*io_prometheus_client.LabelPair) (xpuManagerT
 		klog.V(5).Info(name, " ", strVal)
 
 		// xelinks should always be on subdevices
-		if name == "local_on_subdevice" && strVal != "true" {
+		if !allowNonSubdeviceLinks && name == "local_on_subdevice" && strVal != "true" {
 			return cell, &invalidEntryErr{}
 		}
 
@@ -193,7 +204,7 @@ func (xms *xpuManagerSidecar) GetTopologyFromXPUMMetrics(data []byte) (topologyI
 				continue
 			}
 
-			cell, err := processMetricsLabels(metric.Label)
+			cell, err := processMetricsLabels(metric.Label, xms.allowSubdevicelessLinks)
 			if err == nil {
 				klog.V(5).Info("topology entry: ", cell)
 				topologyInfos = append(topologyInfos, cell)
@@ -367,6 +378,8 @@ func main() {
 	flag.StringVar(&xms.dstFilePath, "dst-file-path", "/etc/kubernetes/node-feature-discovery/features.d/xpum-sidecar-labels.txt", "label file destination")
 	flag.Uint64Var(&xms.laneCount, "lane-count", 4, "minimum lane count for xelink")
 	flag.StringVar(&xms.labelNamespace, "label-namespace", "gpu.intel.com", "namespace for the labels")
+	flag.BoolVar(&xms.allowSubdevicelessLinks, "allow-subdeviceless-links", false, "allow xelinks that are not tied to subdevices (=1 tile GPUs)")
+	flag.BoolVar(&xms.useHTTPS, "use-https", false, "Use HTTPS protocol to connect to xpumanager")
 	klog.InitFlags(nil)
 
 	flag.Parse()
@@ -375,7 +388,12 @@ func main() {
 		klog.Fatal("zero interval won't work, set it to at least 1")
 	}
 
-	xms.url = fmt.Sprintf("http://127.0.0.1:%d/metrics", xms.xpumPort)
+	protocol := "http"
+	if xms.useHTTPS {
+		protocol = "https"
+	}
+
+	xms.url = fmt.Sprintf("%s://127.0.0.1:%d/metrics", protocol, xms.xpumPort)
 
 	keepIterating := true
 

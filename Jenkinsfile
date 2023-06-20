@@ -10,7 +10,7 @@ pipeline {
     REG="cloud-native-image-registry.westus.cloudapp.azure.com/"
     K8S_VERSION="1.27.1"
     GOLANGCI_LINT_VERSION="v1.52.2"
-    GO_VERSION="1.20"
+    GO_VERSION="1.20.5"
     GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
     GOROOT="/usr/local/go"
     GOPATH="/tmp/go"
@@ -46,7 +46,7 @@ pipeline {
 		      echo -e 'unqualified-search-registries = ["docker.io"]' | sudo tee -a /etc/containers/registries.conf
 		'''
 		sh "sudo curl -L https://dl.k8s.io/release/v${K8S_VERSION}/bin/linux/amd64/kubectl -o /usr/bin/kubectl"
-		sh "sudo chmod +x /usr/bin/kubectl"   
+		sh "sudo chmod +x /usr/bin/kubectl"
               }
         }
         stage("make go-mod-tidy") {
@@ -142,7 +142,7 @@ pipeline {
         stage('make test-with-kind') {
           steps {
             dir(path: "$REPO_DIR") {
-              sh "make test-with-kind REG=intel/ TAG=0.27.0"
+              sh "make test-with-kind REG=intel/ TAG=0.27.1"
             }
           }
         }
