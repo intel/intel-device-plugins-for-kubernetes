@@ -8,13 +8,13 @@ data:
     [
       {
         "dev":"dsaX",
-        "token_limit":0,
+        "read_buffer_limit":0,
         "groups":[
           {
             "dev":"groupX.0",
-            "tokens_reserved":0,
-            "use_token_limit":0,
-            "tokens_allowed":8,
+            "read_buffers_reserved":0,
+            "use_read_buffer_limit":0,
+            "read_buffers_allowed":8,
             "grouped_workqueues":[
               {
                 "dev":"wqX.0",
@@ -37,9 +37,9 @@ data:
           },
           {
             "dev":"groupX.1",
-            "tokens_reserved":0,
-            "use_token_limit":0,
-            "tokens_allowed":8,
+            "read_buffers_reserved":0,
+            "use_read_buffer_limit":0,
+            "read_buffers_allowed":8,
             "grouped_workqueues":[
               {
                 "dev":"wqX.1",
@@ -62,9 +62,9 @@ data:
           },
           {
             "dev":"groupX.2",
-            "tokens_reserved":0,
-            "use_token_limit":0,
-            "tokens_allowed":8,
+            "read_buffers_reserved":0,
+            "use_read_buffer_limit":0,
+            "read_buffers_allowed":8,
             "grouped_workqueues":[
               {
                 "dev":"wqX.2",
@@ -87,9 +87,9 @@ data:
           },
           {
             "dev":"groupX.3",
-            "tokens_reserved":0,
-            "use_token_limit":0,
-            "tokens_allowed":8,
+            "read_buffers_reserved":0,
+            "use_read_buffer_limit":0,
+            "read_buffers_allowed":8,
             "grouped_workqueues":[
               {
                 "dev":"wqX.3",
@@ -117,13 +117,13 @@ data:
     [
       {
         "dev":"dsaX",
-        "token_limit":0,
+        "read_buffer_limit":0,
         "groups":[
           {
             "dev":"groupX.0",
-            "tokens_reserved":0,
-            "use_token_limit":0,
-            "tokens_allowed":8,
+            "read_buffers_reserved":0,
+            "use_read_buffer_limit":0,
+            "read_buffers_allowed":8,
             "grouped_workqueues":[
               {
                 "dev":"wqX.0",
@@ -146,9 +146,9 @@ data:
           },
           {
             "dev":"groupX.1",
-            "tokens_reserved":0,
-            "use_token_limit":0,
-            "tokens_allowed":8,
+            "read_buffers_reserved":0,
+            "use_read_buffer_limit":0,
+            "read_buffers_allowed":8,
             "grouped_workqueues":[
               {
                 "dev":"wqX.1",
@@ -171,9 +171,9 @@ data:
           },
           {
             "dev":"groupX.2",
-            "tokens_reserved":0,
-            "use_token_limit":0,
-            "tokens_allowed":8,
+            "read_buffers_reserved":0,
+            "use_read_buffer_limit":0,
+            "read_buffers_allowed":8,
             "grouped_workqueues":[
               {
                 "dev":"wqX.2",
@@ -196,9 +196,9 @@ data:
           },
           {
             "dev":"groupX.3",
-            "tokens_reserved":0,
-            "use_token_limit":0,
-            "tokens_allowed":8,
+            "read_buffers_reserved":0,
+            "use_read_buffer_limit":0,
+            "read_buffers_allowed":8,
             "grouped_workqueues":[
               {
                 "dev":"wqX.3",
