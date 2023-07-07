@@ -48,21 +48,20 @@ func describe() {
 	f := framework.NewDefaultFramework("sgxplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	ginkgo.It("checks availability of SGX resources", func(ctx context.Context) {
-		ginkgo.By("deploying SGX plugin")
+	deploymentWebhookPath, err := utils.LocateRepoFile(kustomizationWebhook)
+	if err != nil {
+		framework.Failf("unable to locate %q: %v", kustomizationWebhook, err)
+	}
 
-		deploymentWebhookPath, err := utils.LocateRepoFile(kustomizationWebhook)
-		if err != nil {
-			framework.Failf("unable to locate %q: %v", kustomizationWebhook, err)
-		}
+	deploymentPluginPath, err := utils.LocateRepoFile(kustomizationPlugin)
+	if err != nil {
+		framework.Failf("unable to locate %q: %v", kustomizationPlugin, err)
+	}
 
+	ginkgo.BeforeEach(func(ctx context.Context) {
 		_ = utils.DeployWebhook(ctx, f, deploymentWebhookPath)
 
-		deploymentPluginPath, err := utils.LocateRepoFile(kustomizationPlugin)
-		if err != nil {
-			framework.Failf("unable to locate %q: %v", kustomizationPlugin, err)
-		}
-
+		ginkgo.By("deploying SGX plugin")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(deploymentPluginPath))
 
 		ginkgo.By("waiting for SGX plugin's availability")
@@ -78,44 +77,52 @@ func describe() {
 		if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
+	})
 
-		ginkgo.By("checking if the resource is allocatable")
-		if err = utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/epc", 150*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable epc resource: %v", err)
-		}
-		if err = utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/enclave", 30*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable enclave resource: %v", err)
-		}
-		if err = utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/provision", 30*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable provision resource: %v", err)
-		}
+	ginkgo.Context("When SGX resources are available", func() {
+		ginkgo.BeforeEach(func(ctx context.Context) {
+			ginkgo.By("checking if the resource is allocatable")
+			if err = utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/epc", 150*time.Second); err != nil {
+				framework.Failf("unable to wait for nodes to have positive allocatable epc resource: %v", err)
+			}
+			if err = utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/enclave", 30*time.Second); err != nil {
+				framework.Failf("unable to wait for nodes to have positive allocatable enclave resource: %v", err)
+			}
+			if err = utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/provision", 30*time.Second); err != nil {
+				framework.Failf("unable to wait for nodes to have positive allocatable provision resource: %v", err)
+			}
+		})
 
-		ginkgo.By("submitting a pod requesting SGX enclave resources")
-		podSpec := &v1.Pod{
-			ObjectMeta: metav1.ObjectMeta{Name: "sgxplugin-tester"},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					{
-						Args:    []string{"-c", "echo hello world"},
-						Name:    "testcontainer",
-						Image:   imageutils.GetE2EImage(imageutils.BusyBox),
-						Command: []string{"/bin/sh"},
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{"sgx.intel.com/epc": resource.MustParse("42")},
-							Limits:   v1.ResourceList{"sgx.intel.com/epc": resource.MustParse("42")},
+		ginkgo.It("deploys a pod requesting SGX enclave resources", func(ctx context.Context) {
+			podSpec := &v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Name: "sgxplugin-tester"},
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{
+						{
+							Args:    []string{"-c", "echo hello world"},
+							Name:    "testcontainer",
+							Image:   imageutils.GetE2EImage(imageutils.BusyBox),
+							Command: []string{"/bin/sh"},
+							Resources: v1.ResourceRequirements{
+								Requests: v1.ResourceList{"sgx.intel.com/epc": resource.MustParse("42")},
+								Limits:   v1.ResourceList{"sgx.intel.com/epc": resource.MustParse("42")},
+							},
 						},
 					},
+					RestartPolicy: v1.RestartPolicyNever,
 				},
-				RestartPolicy: v1.RestartPolicyNever,
-			},
-		}
-		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx, podSpec, metav1.CreateOptions{})
-		framework.ExpectNoError(err, "pod Create API error")
+			}
+			pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx, podSpec, metav1.CreateOptions{})
+			framework.ExpectNoError(err, "pod Create API error")
 
-		ginkgo.By("waiting the pod to finish successfully")
+			ginkgo.By("waiting the pod to finish successfully")
 
-		e2epod.NewPodClient(f).WaitForSuccess(ctx, pod.ObjectMeta.Name, 60*time.Second)
+			e2epod.NewPodClient(f).WaitForSuccess(ctx, pod.ObjectMeta.Name, 60*time.Second)
+		})
+	})
 
+	ginkgo.AfterEach(func() {
+		ginkgo.By("undeploying SGX plugin")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(deploymentPluginPath))
 	})
 }
