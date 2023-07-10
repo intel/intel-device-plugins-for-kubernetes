@@ -21,6 +21,7 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
 	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
@@ -106,16 +107,8 @@ func describe() {
 				e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 				ginkgo.By("waiting for the IAA demo to succeed")
-				e2epod.NewPodClient(f).WaitForSuccess(ctx, podName, 300*time.Second)
-
-				ginkgo.By("getting workload log")
-				log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, podName, podName)
-
-				if err != nil {
-					framework.Failf("unable to get log from pod: %v", err)
-				}
-
-				framework.Logf("log output: %s", log)
+				err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, podName, f.Namespace.Name, 300*time.Second)
+				gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
 			})
 		})
 	})

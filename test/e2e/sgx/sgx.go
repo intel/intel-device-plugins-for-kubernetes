@@ -21,6 +21,7 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -115,8 +116,8 @@ func describe() {
 			framework.ExpectNoError(err, "pod Create API error")
 
 			ginkgo.By("waiting the pod to finish successfully")
-
-			e2epod.NewPodClient(f).WaitForSuccess(ctx, pod.ObjectMeta.Name, 60*time.Second)
+			err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 60*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, "testcontainer"))
 		})
 	})
 
