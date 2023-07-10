@@ -29,7 +29,6 @@ import (
 	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
 	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
-	imageutils "k8s.io/kubernetes/test/utils/image"
 	admissionapi "k8s.io/pod-security-admission/api"
 )
 
@@ -93,16 +92,16 @@ func describe() {
 			}
 		})
 
-		ginkgo.It("deploys a pod requesting SGX enclave resources", func(ctx context.Context) {
+		ginkgo.It("deploys a sgx-sdk-demo pod requesting SGX enclave resources", func(ctx context.Context) {
 			podSpec := &v1.Pod{
 				ObjectMeta: metav1.ObjectMeta{Name: "sgxplugin-tester"},
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
 						{
-							Args:    []string{"-c", "echo hello world"},
-							Name:    "testcontainer",
-							Image:   imageutils.GetE2EImage(imageutils.BusyBox),
-							Command: []string{"/bin/sh"},
+							Name:       "testcontainer",
+							Image:      "intel/sgx-sdk-demo:devel",
+							WorkingDir: "/opt/intel/sgx-sample-app/",
+							Command:    []string{"/opt/intel/sgx-sample-app/sgx-sample-app"},
 							Resources: v1.ResourceRequirements{
 								Requests: v1.ResourceList{"sgx.intel.com/epc": resource.MustParse("42")},
 								Limits:   v1.ResourceList{"sgx.intel.com/epc": resource.MustParse("42")},
