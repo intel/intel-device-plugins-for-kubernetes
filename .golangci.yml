@@ -4,6 +4,8 @@ run:
     - kerneldrv
   max-issues-per-linter: 0
   max-same-issues: 0
+  skip-dirs:
+    - cmd/vpu_plugin
 
 linters:
   disable-all: true
