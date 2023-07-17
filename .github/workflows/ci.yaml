@@ -50,10 +50,6 @@ jobs:
         with:
           go-version-file: go.mod
           check-latest: true
-      - name: Install build dependencies needed for VPU plugin
-        run: |
-          sudo apt-get update
-          sudo apt-get -y install libusb-1.0-0-dev
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
@@ -71,10 +67,6 @@ jobs:
           check-latest: true
       - name: Check Dockerfiles
         run: make check-dockerfiles
-      - name: Install build dependencies needed for VPU plugin
-        run: |
-          sudo apt-get update
-          sudo apt-get -y install libusb-1.0-0-dev
       - run: make go-mod-tidy
       - run: make BUILDTAGS=kerneldrv
       - run: make test BUILDTAGS=kerneldrv
@@ -103,7 +95,6 @@ jobs:
           - intel-qat-initcontainer
           - intel-qat-plugin
           - intel-qat-plugin-kerneldrv
-          - intel-vpu-plugin
           - intel-deviceplugin-operator
           - intel-sgx-admissionwebhook
           - intel-sgx-plugin
