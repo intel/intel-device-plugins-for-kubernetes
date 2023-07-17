@@ -4,13 +4,13 @@ FROM debian:unstable-slim AS builder
 RUN apt-get update && apt-get install -y curl python3-dev git gcc g++ make cmake uuid-dev libjson-c-dev libedit-dev libudev-dev
 
 # Download and unpack OPAE tarball
-ARG OPAE_RELEASE=2.1.0-1
-ARG OPAE_SHA256=0c9f52ff1279ca5e34e64828ddf3a6c001fb2969a6349a966cd9515c1048ea01
+ARG OPAE_RELEASE=2.2.0-1
+ARG OPAE_SHA256=1f80f73a652b456adee87a260c7ec66fe3cbb35184b7d7b531766fb6bb0295d7
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir -p /usr/src/opae && \
     cd /usr/src/opae && \
-    curl -fsSL https://github.com/OPAE/opae-sdk/archive/${OPAE_RELEASE}.tar.gz -o opae.tar.gz && \
+    curl -fsSL https://github.com/OFS/opae-sdk/archive/${OPAE_RELEASE}.tar.gz -o opae.tar.gz && \
     echo "$OPAE_SHA256 opae.tar.gz" | sha256sum -c - && \
     tar -xzf opae.tar.gz && \
     rm -f opae.tar.gz
