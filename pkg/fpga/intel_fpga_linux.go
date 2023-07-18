@@ -408,7 +408,7 @@ func (f *IntelFpgaPort) GetFME() (fme FME, err error) {
 
 	pci, err := f.GetPCIDevice()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if pci.PhysFn != nil {
@@ -421,17 +421,17 @@ func (f *IntelFpgaPort) GetFME() (fme FME, err error) {
 		"dev": &dev,
 	}
 	if err = readFilesInDirectory(fileMap, filepath.Join(pci.SysFsPath, intelFpgaFmeGlobPCI)); err != nil {
-		return
+		return nil, err
 	}
 
 	realDev, err := filepath.EvalSymlinks(filepath.Join("/dev/char", dev))
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	fme, err = NewIntelFpgaFME(realDev)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	f.FME = fme

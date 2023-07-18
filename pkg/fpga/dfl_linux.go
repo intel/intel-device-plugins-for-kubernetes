@@ -403,7 +403,7 @@ func (f *DflPort) GetFME() (fme FME, err error) {
 
 	pci, err := f.GetPCIDevice()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if pci.PhysFn != nil {
@@ -417,17 +417,17 @@ func (f *DflPort) GetFME() (fme FME, err error) {
 	}
 
 	if err = readFilesInDirectory(fileMap, filepath.Join(pci.SysFsPath, dflFpgaFmeGlobPCI)); err != nil {
-		return
+		return nil, err
 	}
 
 	realDev, err := filepath.EvalSymlinks(filepath.Join("/dev/char", dev))
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	fme, err = NewDflFME(realDev)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	f.FME = fme
