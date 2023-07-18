@@ -175,6 +175,12 @@ rules:
 - apiGroups:
   - deviceplugin.intel.com
   resources:
+  - iaadeviceplugins/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - deviceplugin.intel.com
+  resources:
   - iaadeviceplugins/status
   verbs:
   - get
