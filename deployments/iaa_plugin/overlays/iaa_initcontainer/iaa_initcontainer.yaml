@@ -16,6 +16,8 @@ spec:
             value: "iaa"
         image: intel/intel-idxd-config-initcontainer:devel
         securityContext:
+          seLinuxOptions:
+            type: "container_device_plugin_init_t"
           readOnlyRootFilesystem: true
           privileged: true
         volumeMounts:
