@@ -118,7 +118,7 @@ func validateFlags(cmd, bitstream, device string, port uint) error {
 func installBitstream(fname string, dryRun, force, quiet bool) (err error) {
 	info, err := bitstream.Open(fname)
 	if err != nil {
-		return
+		return err
 	}
 	defer info.Close()
 
@@ -129,7 +129,7 @@ func installBitstream(fname string, dryRun, force, quiet bool) (err error) {
 
 		if dryRun {
 			fmt.Println("Dry-run: no copying performed")
-			return
+			return nil
 		}
 	}
 
@@ -285,21 +285,21 @@ func printFpgaPort(f fpga.Port, quiet bool) (err error) {
 
 	pci, err := f.GetPCIDevice()
 	if err != nil {
-		return
+		return err
 	}
 
 	printPCIeInfo(pci, quiet)
 
 	fme, err := f.GetFME()
 	if err != nil {
-		return
+		return err
 	}
 
 	fmt.Printf("FME Name                         : %s\n", fme.GetName())
 
 	num, err := f.GetPortID()
 	if err != nil {
-		return
+		return err
 	}
 
 	fmt.Printf("Port Id                          : %d\n", num)
