@@ -129,6 +129,9 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 			},
 		},
 		SecurityContext: &v1.SecurityContext{
+			SELinuxOptions: &v1.SELinuxOptions{
+				Type: "container_device_plugin_init_t",
+			},
 			ReadOnlyRootFilesystem: &yes,
 			Privileged:             &yes,
 		},
