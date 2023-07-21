@@ -35,19 +35,15 @@ RUN cd idxd-config-accel-config-v$ACCEL_CONFIG_VERSION && \
     ./configure -q --libdir=/usr/lib64 --enable-test=yes --disable-docs && \
     make install
 
-COPY dml.patch /
-RUN cd / && git clone --recurse-submodules --branch v0.1.9-beta --depth 1 https://github.com/intel/DML.git && \
+RUN cd / && git clone --recurse-submodules --branch v1.1.0 --depth 1 https://github.com/intel/DML.git && \
     mkdir DML/build && cd DML/build && \
-    patch -d .. -p1 < /dml.patch && \
     cmake .. && \
     make install && \
     mv -v /usr/local/bin/tests /usr/local/bin/dml_tests && \
-    mv -v /usr/local/bin/tests_mt /usr/local/bin/dml_tests_mt && \
-    mv -v /usr/local/bin/job_api_samples /usr/local/bin/dml_job_api_samples
+    mv -v /usr/local/bin/tests_mt /usr/local/bin/dml_tests_mt
 
-RUN cd / && git clone --recursive --depth 1 --branch v1.0.0 https://github.com/intel/qpl.git && \
+RUN cd / && git clone --recursive --depth 1 --branch v1.2.0 https://github.com/intel/qpl.git && \
     mkdir qpl/build && cd qpl/build && \
-    sed -i '10i #include <stdexcept>' ../tools/benchmarks/include/types.hpp && \
     cmake -DLOG_HW_INIT=ON .. && \
     make install
 
