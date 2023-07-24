@@ -37,7 +37,7 @@ import (
 )
 
 var (
-	adfCtlRegex = regexp.MustCompile(`type: (?P<devtype>[[:alnum:]]+), .* inst_id: (?P<instid>[0-9]+), .* bsf: ([0-9a-f]{4}:)?(?P<bsf>[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]), .* state: (?P<state>[[:alpha:]]+)$`)
+	adfCtlRegex = regexp.MustCompile(`type: (?P<devtype>[[:print:]]+), .* inst_id: (?P<instid>[0-9]+), .* bsf: ([0-9a-f]{4}:)?(?P<bsf>[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f]), .* state: (?P<state>[[:alpha:]]+)$`)
 )
 
 type endpoint struct {
