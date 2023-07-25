@@ -29,7 +29,7 @@ import (
 
 var ErrObjectType = errors.New("invalid runtime object type")
 
-// +kubebuilder:webhook:path=/mutate--v1-pod,mutating=true,failurePolicy=ignore,groups="",resources=pods,verbs=create;update,versions=v1,name=sgx.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1,reinvocationPolicy=IfNeeded
+// +kubebuilder:webhook:path=/mutate--v1-pod,mutating=true,failurePolicy=ignore,groups="",resources=pods,verbs=create,versions=v1,name=sgx.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1,reinvocationPolicy=IfNeeded
 
 // Mutator annotates Pods.
 type Mutator struct{}
