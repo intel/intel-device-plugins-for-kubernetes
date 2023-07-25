@@ -119,28 +119,4 @@ func describe() {
 			})
 		})
 	})
-
-	ginkgo.Describe("With using operator", func() {
-		ginkgo.It("deploys IAA plugin with operator", func(ctx context.Context) {
-			utils.Kubectl("", "apply", "-k", "deployments/operator/default/kustomization.yaml")
-
-			if _, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, ns, labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1, timeout); err != nil {
-				framework.Failf("unable to wait for all pods to be running and ready: %v", err)
-			}
-
-			utils.Kubectl("", "apply", "-f", "deployments/operator/samples/deviceplugin_v1_iaadeviceplugin.yaml")
-
-			if _, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, ns, labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1, timeout); err != nil {
-				framework.Failf("unable to wait for all pods to be running and ready: %v", err)
-			}
-
-			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "iaa.intel.com/wq-user-dedicated", timeout); err != nil {
-				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-			}
-
-			utils.Kubectl("", "delete", "-f", "deployments/operator/samples/deviceplugin_v1_iaadeviceplugin.yaml")
-
-			utils.Kubectl("", "delete", "-k", "deployments/operator/default/kustomization.yaml")
-		})
-	})
 }

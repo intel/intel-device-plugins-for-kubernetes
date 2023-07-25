@@ -17,17 +17,22 @@ package inteldevicepluginsoperator
 
 import (
 	"context"
+	"time"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
+	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	admissionapi "k8s.io/pod-security-admission/api"
 )
 
 const (
 	kustomizationYaml = "deployments/operator/default/kustomization.yaml"
+	ns                = "inteldeviceplugins-system"
+	timeout           = time.Second * 120
 )
 
 func init() {
@@ -41,11 +46,17 @@ func describe() {
 	var webhook v1.Pod
 
 	ginkgo.BeforeEach(func(ctx context.Context) {
-		kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
-		if err != nil {
-			framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
+		ginkgo.By("deploying operator")
+		utils.Kubectl("", "apply", "-k", kustomizationYaml)
+
+		if _, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, ns, labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1, timeout); err != nil {
+			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
-		webhook = utils.DeployWebhook(ctx, f, kustomizationPath)
+	})
+
+	ginkgo.AfterEach(func() {
+		ginkgo.By("undeploying operator")
+		utils.Kubectl("", "delete", "-k", kustomizationYaml)
 	})
 
 	ginkgo.It("checks the operator webhook pod is safely configured", func(ctx context.Context) {
@@ -54,4 +65,34 @@ func describe() {
 		err = utils.TestWebhookServerTLS(ctx, f, "https://inteldeviceplugins-webhook-service")
 		gomega.Expect(err).To(gomega.BeNil())
 	})
+
+	ginkgo.It("deploys IAA plugin with operator", func(ctx context.Context) {
+		testPluginWithOperator("iaa", []v1.ResourceName{"iaa.intel.com/wq-user-dedicated"}, f, ctx)
+	})
+
+	ginkgo.It("deploys DSA plugin with operator", func(ctx context.Context) {
+		testPluginWithOperator("dsa", []v1.ResourceName{"dsa.intel.com/wq-user-dedicated"}, f, ctx)
+	})
+
+	ginkgo.It("deploys SGX plugin with operator", func(ctx context.Context) {
+		testPluginWithOperator("sgx", []v1.ResourceName{"sgx.intel.com/epc", "sgx.intel.com/enclave", "sgx.intel.com/provision"}, f, ctx)
+	})
+}
+
+func testPluginWithOperator(deviceName string, resourceNames []v1.ResourceName, f *framework.Framework, ctx context.Context) {
+	dpSampleYaml := "deployments/operator/samples/deviceplugin_v1_" + deviceName + "deviceplugin.yaml"
+
+	utils.Kubectl("", "apply", "-f", dpSampleYaml)
+
+	if _, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, ns, labels.Set{"app": "intel-" + deviceName + "-plugin"}.AsSelector(), 1, timeout); err != nil {
+		framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+	}
+
+	for _, resourceName := range resourceNames {
+		if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, timeout); err != nil {
+			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+		}
+	}
+
+	utils.Kubectl("", "delete", "-f", dpSampleYaml)
 }
