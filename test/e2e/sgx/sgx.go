@@ -65,12 +65,12 @@ func describe() {
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(deploymentPluginPath))
 
 		ginkgo.By("waiting for SGX plugin's availability")
-		podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
+		podList, errPodNotRunning := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
 			labels.Set{"app": "intel-sgx-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
-		if err != nil {
+		if errPodNotRunning != nil {
 			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
 			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
-			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+			framework.Failf("unable to wait for all pods to be running and ready: %v", errPodNotRunning)
 		}
 
 		ginkgo.By("checking SGX plugin's securityContext")
