@@ -23,7 +23,7 @@ RUN apt-get update && \
 # SGX SDK is installed in /opt/intel directory.
 WORKDIR /opt/intel
 
-ARG DCAP_VERSION=DCAP_1.15
+ARG DCAP_VERSION=DCAP_1.17
 
 RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main" | \
     tee -a /etc/apt/sources.list.d/intel-sgx.list \
@@ -36,7 +36,7 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://d
     libsgx-quote-ex-dev
 
 # Install SGX SDK
-ARG SGX_SDK_URL=https://download.01.org/intel-sgx/sgx-linux/2.18/distro/ubuntu22.04-server/sgx_linux_x64_sdk_2.18.100.3.bin
+ARG SGX_SDK_URL=https://download.01.org/intel-sgx/sgx-linux/2.20/distro/ubuntu22.04-server/sgx_linux_x64_sdk_2.20.100.4.bin
 RUN wget ${SGX_SDK_URL} \
  && export SGX_SDK_INSTALLER=$(basename $SGX_SDK_URL) \
  && chmod +x $SGX_SDK_INSTALLER \
