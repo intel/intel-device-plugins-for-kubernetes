@@ -232,7 +232,7 @@ func TestWebhookServerTLS(ctx context.Context, f *framework.Framework, serviceNa
 						"-U",
 						serviceName},
 					Name:            "testssl-container",
-					Image:           "drwetter/testssl.sh",
+					Image:           "drwetter/testssl.sh:3.0",
 					ImagePullPolicy: "IfNotPresent",
 				},
 			},
