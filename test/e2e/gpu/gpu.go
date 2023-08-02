@@ -108,6 +108,7 @@ func describe() {
 		}
 
 		if !strings.Contains(log, "card") || !strings.Contains(log, "renderD") {
+			framework.Logf("log output: %s", log)
 			framework.Failf("device mounts not found from log")
 		}
 
