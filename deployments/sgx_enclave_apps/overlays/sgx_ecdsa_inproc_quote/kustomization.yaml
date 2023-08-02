@@ -4,11 +4,11 @@ namePrefix: inproc-
 resources:
 - ../sgx_ecdsa_aesmd_quote
 commonAnnotations:
-  sgx.intel.com/quote-provider: "intelsgx-demo-job-1"
+  sgx.intel.com/quote-provider: intelsgx-demo-job-1
 configMapGenerator:
-- name: sgx-attestation-conf
-  files:
+- files:
   - sgx_default_qcnl.conf
-patchesStrategicMerge:
-- add_hostnetwork.yaml
-- add_sgx_default_qcnl_conf.yaml
+  name: sgx-attestation-conf
+patches:
+- path: add_hostnetwork.yaml
+- path: add_sgx_default_qcnl_conf.yaml

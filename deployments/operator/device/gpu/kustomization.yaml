@@ -1,5 +1,7 @@
 resources:
  - ../../default
 
-patchesStrategicMerge:
- - gpu.yaml
+patches:
+- path: gpu.yaml
+  target:
+    kind: Deployment

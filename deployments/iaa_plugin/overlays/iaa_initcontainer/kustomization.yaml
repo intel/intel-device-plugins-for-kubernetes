@@ -1,4 +1,6 @@
 resources:
 - ../../base
-patchesStrategicMerge:
-- iaa_initcontainer.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- path: iaa_initcontainer.yaml

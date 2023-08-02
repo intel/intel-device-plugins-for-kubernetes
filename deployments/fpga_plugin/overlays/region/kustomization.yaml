@@ -5,5 +5,9 @@ resources:
 - ../../base
 - ../../../fpga_admissionwebhook/base
 
-patchesStrategicMerge:
-  - mode-region.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- path: mode-region.yaml
+  target:
+    kind: DaemonSet

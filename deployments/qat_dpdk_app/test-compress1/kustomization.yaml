@@ -1,9 +1,11 @@
 nameSuffix: -tc1
 resources:
 - ../patches/compress-perf
-patchesJson6902:
-- target:
-    version: v1
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- path: tc1.json
+  target:
     kind: Pod
     name: qat-dpdk
-  path: tc1.json
+    version: v1

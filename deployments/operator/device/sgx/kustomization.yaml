@@ -1,5 +1,7 @@
 resources:
  - ../../default
 
-patchesStrategicMerge:
- - sgx.yaml
+patches:
+- path: sgx.yaml
+  target:
+    kind: Deployment

@@ -1,5 +1,7 @@
 resources:
  - ../../default
 
-patchesStrategicMerge:
- - dlb.yaml
+patches:
+- path: dlb.yaml
+  target:
+    kind: Deployment

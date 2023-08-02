@@ -6,9 +6,11 @@ resources:
 - ../../default
 - ../../certmanager
 
-patchesStrategicMerge:
+patches:
   # Enable certmanager integration
-- webhookcainjection_patch.yaml
+- path: webhookcainjection_patch.yaml
+  target:
+    name: mutating-webhook-configuration
 
 vars:
 - name: CERTIFICATE_NAMESPACE # namespace of the certificate CR

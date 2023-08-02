@@ -1,5 +1,7 @@
 resources:
  - ../../default
 
-patchesStrategicMerge:
- - qat.yaml
+patches:
+- path: qat.yaml
+  target:
+    kind: Deployment

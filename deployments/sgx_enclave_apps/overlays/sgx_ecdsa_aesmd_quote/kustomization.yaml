@@ -4,11 +4,11 @@ namePrefix: ecdsa-quote-
 resources:
 - ../../base
 commonAnnotations:
-  sgx.intel.com/quote-provider: "aesmd"
-patchesJson6902:
-- target:
+  sgx.intel.com/quote-provider: aesmd
+patches:
+- path: change_workingdir_and_command.json
+  target:
     group: batch
-    version: v1
     kind: Job
     name: intelsgx-demo-job
-  path: change_workingdir_and_command.json
+    version: v1

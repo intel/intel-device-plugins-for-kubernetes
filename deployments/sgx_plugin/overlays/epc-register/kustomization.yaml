@@ -5,3 +5,6 @@ resources:
   - init-daemonset.yaml
 patches:
   - path: add-node-selector.yaml
+    target:
+      kind: DaemonSet
+
