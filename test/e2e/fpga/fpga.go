@@ -47,7 +47,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("FPGA Plugin E2E tests", describe)
+	ginkgo.Describe("FPGA Plugin", describe)
 }
 
 func describe() {
@@ -64,16 +64,27 @@ func describe() {
 	fmw := framework.NewDefaultFramework("fpgaplugin-e2e")
 	fmw.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	ginkgo.It("Run FPGA plugin tests", func(ctx context.Context) {
-		// Run region test case twice to ensure that device is reprogrammed at least once
-		runTestCase(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, "region", arria10NodeResource, nlb3PodResource, "nlb3", "nlb0")
-		runTestCase(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, "region", arria10NodeResource, nlb0PodResource, "nlb0", "nlb3")
-		// Run af test case
-		runTestCase(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, "af", nlb0NodeResource, nlb0PodResourceAF, "nlb0", "nlb3")
+	ginkgo.Context("When FPGA plugin is running in region mode", func() {
+		ginkgo.BeforeEach(func(ctx context.Context) {
+			runDevicePlugin(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, arria10NodeResource, "region")
+		})
+		ginkgo.It("runs an opae-nlb-demo pod two times", func(ctx context.Context) {
+			runTestCase(ctx, fmw, "region", nlb3PodResource, "nlb3", "nlb0")
+			runTestCase(ctx, fmw, "region", nlb0PodResource, "nlb0", "nlb3")
+		})
+	})
+
+	ginkgo.Context("When FPGA plugin is running in af mode", func() {
+		ginkgo.BeforeEach(func(ctx context.Context) {
+			runDevicePlugin(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, nlb0NodeResource, "af")
+		})
+		ginkgo.It("runs an opae-nlb-demo pod", func(ctx context.Context) {
+			runTestCase(ctx, fmw, "af", nlb0PodResourceAF, "nlb0", "nlb3")
+		})
 	})
 }
 
-func runTestCase(ctx context.Context, fmw *framework.Framework, pluginKustomizationPath, mappingsCollectionPath, pluginMode, nodeResource, podResource, cmd1, cmd2 string) {
+func runDevicePlugin(ctx context.Context, fmw *framework.Framework, pluginKustomizationPath, mappingsCollectionPath, nodeResource, pluginMode string) {
 	tmpDir, err := os.MkdirTemp("", "fpgaplugine2etest-"+fmw.Namespace.Name)
 	if err != nil {
 		framework.Failf("unable to create temp directory: %v", err)
@@ -101,8 +112,10 @@ func runTestCase(ctx context.Context, fmw *framework.Framework, pluginKustomizat
 	if err = utils.WaitForNodesWithResource(ctx, fmw.ClientSet, resource, 30*time.Second); err != nil {
 		framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 	}
+}
 
-	resource = v1.ResourceName(podResource)
+func runTestCase(ctx context.Context, fmw *framework.Framework, pluginMode, podResource, cmd1, cmd2 string) {
+	resource := v1.ResourceName(podResource)
 	image := "intel/opae-nlb-demo:devel"
 
 	ginkgo.By("submitting a pod requesting correct FPGA resources")
@@ -111,7 +124,7 @@ func runTestCase(ctx context.Context, fmw *framework.Framework, pluginKustomizat
 
 	ginkgo.By("waiting the pod to finish successfully")
 
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, fmw.ClientSet, pod.ObjectMeta.Name, fmw.Namespace.Name, 60*time.Second)
+	err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, fmw.ClientSet, pod.ObjectMeta.Name, fmw.Namespace.Name, 60*time.Second)
 	gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, fmw, pod.ObjectMeta.Name, "testcontainer"))
 
 	ginkgo.By("submitting a pod requesting incorrect FPGA resources")
