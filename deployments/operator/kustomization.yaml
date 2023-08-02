@@ -1,4 +1,4 @@
-bases:
+resources:
   - default
   - manager
   - webhook

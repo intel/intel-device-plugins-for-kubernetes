@@ -1,5 +1,5 @@
 nameSuffix: -test
-bases:
+resources:
 - ../../base/
 patchesJson6902:
 - target:

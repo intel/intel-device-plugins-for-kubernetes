@@ -1,7 +1,6 @@
-bases:
-  - ../../base
 namespace: kube-system
 resources:
+  - ../../base
   - service-account.yaml
   - init-daemonset.yaml
 patches:

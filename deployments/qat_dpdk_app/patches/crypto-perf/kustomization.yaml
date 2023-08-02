@@ -1,5 +1,5 @@
 nameSuffix: -crypto-perf
-bases:
+resources:
 - ../dpdk-test/
 patchesJson6902:
 - target:

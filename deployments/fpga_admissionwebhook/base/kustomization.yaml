@@ -1,4 +1,4 @@
-bases:
+resources:
 - ../crd
 - ../rbac
 - ../manager

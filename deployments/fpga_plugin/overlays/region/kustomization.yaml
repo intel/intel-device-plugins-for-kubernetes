@@ -2,8 +2,8 @@ namespace: intelfpgaplugin-system
 namePrefix: intelfpgaplugin-
 
 resources:
-  - ../../base
-  - ../../../fpga_admissionwebhook/base
+- ../../base
+- ../../../fpga_admissionwebhook/base
 
 patchesStrategicMerge:
   - mode-region.yaml

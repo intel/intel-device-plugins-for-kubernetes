@@ -1,5 +1,5 @@
 nameSuffix: -tc1
-bases:
+resources:
 - ../patches/crypto-perf
 patchesJson6902:
 - target:

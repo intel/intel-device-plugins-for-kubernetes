@@ -1,4 +1,4 @@
-bases:
+resources:
 - ../../base
 patchesStrategicMerge:
 - dsa_initcontainer.yaml

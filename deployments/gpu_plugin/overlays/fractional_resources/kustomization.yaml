@@ -1,6 +1,5 @@
-bases:
-  - ../../base
 resources:
+  - ../../base
   - gpu-manager-rolebinding.yaml
   - gpu-manager-role.yaml
   - gpu-manager-sa.yaml

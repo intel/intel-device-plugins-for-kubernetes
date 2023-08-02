@@ -1,5 +1,5 @@
 nameSuffix: -compress-perf
-bases:
+resources:
 - ../dpdk-test/
 patchesStrategicMerge:
 - volume_add_configmap.yaml
