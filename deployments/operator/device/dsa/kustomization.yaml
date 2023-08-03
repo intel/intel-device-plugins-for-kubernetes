@@ -1,5 +1,7 @@
-bases:
+resources:
  - ../../default
 
-patchesStrategicMerge:
- - dsa.yaml
+patches:
+- path: dsa.yaml
+  target:
+    kind: Deployment

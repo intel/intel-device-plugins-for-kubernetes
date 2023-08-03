@@ -1,12 +1,21 @@
-bases:
-  - ../../base
 resources:
+  - ../../base
   - gpu-manager-rolebinding.yaml
   - gpu-manager-role.yaml
   - gpu-manager-sa.yaml
 patches:
   - path: add-serviceaccount.yaml
+    target:
+      kind: DaemonSet
   - path: add-podresource-mount.yaml
+    target:
+      kind: DaemonSet
   - path: add-args.yaml
+    target:
+      kind: DaemonSet
   - path: add-nodeselector-intel-gpu.yaml
+    target:
+      kind: DaemonSet
   - path: add-kubelet-crt-mount.yaml
+    target:
+      kind: DaemonSet

@@ -230,7 +230,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// Synchronize the DaemonSet with its owner.
 	if r.controller.UpdateDaemonSet(devicePlugin, ds) {
-		log.Info("", cmp.Diff(ds0.Spec.Template.Spec, ds.Spec.Template.Spec, diff.IgnoreUnset()))
+		log.Info("daemonset difference", "diff", cmp.Diff(ds0.Spec.Template.Spec, ds.Spec.Template.Spec, diff.IgnoreUnset()))
 
 		if err := r.Update(ctx, ds); err != nil {
 			log.Error(err, "unable to update DaemonSet", "DaemonSet", ds)

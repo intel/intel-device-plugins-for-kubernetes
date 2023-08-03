@@ -1,5 +1,5 @@
 nameSuffix: -debug
-bases:
+resources:
 - ../../base
 patches:
   - path: add-args.yaml

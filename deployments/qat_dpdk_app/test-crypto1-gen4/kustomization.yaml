@@ -1,5 +1,5 @@
 nameSuffix: -gen4
-bases:
+resources:
 - ../test-crypto1
 patches:
 - target:

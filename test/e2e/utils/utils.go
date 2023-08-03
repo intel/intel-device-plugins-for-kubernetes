@@ -17,7 +17,7 @@ package utils
 
 import (
 	"context"
-	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,6 +25,7 @@ import (
 
 	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -118,17 +119,85 @@ func LocateRepoFile(repopath string) (string, error) {
 	return "", errors.New("no file found, try to define PLUGINS_REPO_DIR pointing to the root of the repository")
 }
 
-// CreateKustomizationOverlay creates an overlay with overridden namespace.
-func CreateKustomizationOverlay(namespace, base, overlay string) error {
-	relPath := ""
-	for range strings.Split(overlay[1:], "/") {
-		relPath = relPath + "../"
+func copyFiles(srcDir, dstDir string) error {
+	err := filepath.WalkDir(srcDir, func(path string, d os.DirEntry, err error) error {
+		if d.IsDir() || err != nil {
+			return nil
+		}
+
+		n, err := os.ReadFile(path)
+		if err != nil && err != io.EOF || len(n) == 0 {
+			return err
+		}
+
+		fn := filepath.Join(dstDir, filepath.Base(path))
+
+		if err := os.WriteFile(fn, n, 0600); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+// CreateKustomizationOverlay copies the base overlay, and changes the namespace
+// and relative paths to resources. The deletion of the files is left for the caller.
+func CreateKustomizationOverlay(namespace, kustomizeYamlFileDir, overlayDir string) error {
+	relPath, err := filepath.Rel(overlayDir, kustomizeYamlFileDir)
+	if err != nil {
+		return err
 	}
 
-	relPath = relPath + base[1:]
-	content := fmt.Sprintf("namespace: %s\nresources:\n  - %s", namespace, relPath)
+	// Copy all files under the kustomize path under the temp overlay path.
+	err = copyFiles(kustomizeYamlFileDir, overlayDir)
+	if err != nil {
+		return err
+	}
 
-	return os.WriteFile(overlay+"/kustomization.yaml", []byte(content), 0600)
+	kustomizationFile := filepath.Join(overlayDir, "kustomization.yaml")
+
+	bytes, err := os.ReadFile(kustomizationFile)
+	if err != nil {
+		return err
+	}
+
+	content := make(map[string]interface{})
+
+	err = yaml.Unmarshal(bytes, content)
+	if err != nil {
+		return err
+	}
+
+	content["namespace"] = namespace
+
+	resInterface := content["resources"].([]interface{})
+	resources := make([]string, len(resInterface))
+
+	for i, v := range resInterface {
+		resources[i] = v.(string)
+	}
+
+	// Add relative path for directories. Leave local (.yaml) files as they are.
+	for i, res := range resources {
+		if !strings.HasSuffix(res, ".yaml") {
+			resources[i] = relPath + "/" + res
+		}
+	}
+
+	content["resources"] = resources
+
+	bytes, err = yaml.Marshal(content)
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(kustomizationFile, bytes, 0600); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // DeployWebhook deploys an admission webhook to a framework-specific namespace.
@@ -145,6 +214,7 @@ func DeployWebhook(ctx context.Context, f *framework.Framework, kustomizationPat
 
 	defer os.RemoveAll(tmpDir)
 
+	// The overlay files are deleted by the deferred RemoveAll call above.
 	err = CreateKustomizationOverlay(f.Namespace.Name, filepath.Dir(kustomizationPath), tmpDir)
 	if err != nil {
 		framework.Failf("unable to kustomization overlay: %v", err)

@@ -1,5 +1,8 @@
-bases:
+resources:
  - ../../default
 
-patchesStrategicMerge:
- - fpga.yaml
+patches:
+- path: fpga.yaml
+  target:
+    kind: Deployment
+

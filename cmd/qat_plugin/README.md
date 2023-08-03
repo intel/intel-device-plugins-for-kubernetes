@@ -59,7 +59,7 @@ For more details on the `-dpdk-driver` choice, see
 > devices prior to Gen4 (`4xxx`).
 
 For more details on the available options to the `-kernel-vf-drivers` option, see the list of
-vf drivers available in the [Linux Kernel](https://github.com/torvalds/linux/tree/master/drivers/crypto/qat).
+vf drivers available in the [Linux Kernel](https://github.com/torvalds/linux/tree/master/drivers/crypto/intel/qat).
 
 If the `-mode` parameter is set to `kernel`, no other parameter documented above are valid,
 except the `klog` logging related parameters.
@@ -88,7 +88,7 @@ You will also need [appropriate hardware installed](#checking-for-hardware).
 The QAT plugin requires Linux Kernel VF QAT drivers to be available. These drivers
 are available via two methods. One of them must be installed and enabled:
 
-- [Linux Kernel upstream drivers](https://github.com/torvalds/linux/tree/master/drivers/crypto/qat)
+- [Linux Kernel upstream drivers](https://github.com/torvalds/linux/tree/master/drivers/crypto/intel/qat)
 - [Intel QuickAssist Technology software for Linux][9]
 
 The demonstrations have their own requirements, listed in their own specific sections.
