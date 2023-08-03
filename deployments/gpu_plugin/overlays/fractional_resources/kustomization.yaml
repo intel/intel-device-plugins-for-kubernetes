@@ -7,15 +7,12 @@ patches:
   - path: add-serviceaccount.yaml
     target:
       kind: DaemonSet
-  - path: add-podresource-mount.yaml
+  - path: add-mounts.yaml
     target:
       kind: DaemonSet
   - path: add-args.yaml
     target:
       kind: DaemonSet
   - path: add-nodeselector-intel-gpu.yaml
-    target:
-      kind: DaemonSet
-  - path: add-kubelet-crt-mount.yaml
     target:
       kind: DaemonSet

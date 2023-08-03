@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-gpu-plugin
+spec:
+  template:
+    spec:
+      containers:
+      - name: intel-gpu-plugin
+        volumeMounts:
+        - name: kubeletcrt
+          mountPath: /var/lib/kubelet/pki/kubelet.crt
+        - mountPath: /etc/kubernetes/node-feature-discovery/features.d/
+          name: nfd-features
+        - mountPath: /sys/devices
+          name: sysfsdevices
+          readOnly: true
+        - name: podresources
+          mountPath: /var/lib/kubelet/pod-resources
+      volumes:
+      - name: kubeletcrt
+        hostPath:
+          path: /var/lib/kubelet/pki/kubelet.crt
+          type: FileOrCreate
+      - name: sysfsdevices
+        hostPath:
+          path: /sys/devices
+      - name: nfd-features
+        hostPath:
+          path: /etc/kubernetes/node-feature-discovery/features.d/
+          type: DirectoryOrCreate
+      - name: podresources
+        hostPath:
+          path: /var/lib/kubelet/pod-resources

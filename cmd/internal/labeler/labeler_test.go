@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package labeler
 
 import (
 	"os"
@@ -22,6 +22,10 @@ import (
 	"testing"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
+)
+
+const (
+	sysfsDirectory = "/sys/"
 )
 
 type testcase struct {
@@ -49,24 +53,13 @@ func getTestCases() []testcase {
 			},
 			name:           "successful labeling via lmem_total_bytes",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"0/i915_capabilities": []byte(
-					"platform: new\n" +
-						"gen: 9"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/millicores":           "1000",
-				"gpu.intel.com/memory.max":           "8086",
-				"gpu.intel.com/platform_new.count":   "1",
-				"gpu.intel.com/platform_new.present": "true",
-				"gpu.intel.com/platform_new.tiles":   "1",
-				"gpu.intel.com/graphics_version":     "9",
-				"gpu.intel.com/media_version":        "9",
-				"gpu.intel.com/platform_gen":         "9",
-				"gpu.intel.com/cards":                "card0",
-				"gpu.intel.com/gpu-numbers":          "0",
-				"gpu.intel.com/tiles":                "1",
+				"gpu.intel.com/millicores":  "1000",
+				"gpu.intel.com/memory.max":  "8086",
+				"gpu.intel.com/cards":       "card0",
+				"gpu.intel.com/gpu-numbers": "0",
+				"gpu.intel.com/tiles":       "1",
 			},
 		},
 		{
@@ -79,11 +72,6 @@ func getTestCases() []testcase {
 			},
 			name:           "pf with vfs",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"0/i915_capabilities": []byte(
-					"platform: new\n" +
-						"gen: 9"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
 				"gpu.intel.com/tiles": "0",
@@ -101,24 +89,13 @@ func getTestCases() []testcase {
 			},
 			name:           "successful labeling via card0/lmem_total_bytes and two tiles",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"0/i915_capabilities": []byte(
-					"platform: new\n" +
-						"gen: 9"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/millicores":           "1000",
-				"gpu.intel.com/memory.max":           "16000",
-				"gpu.intel.com/platform_new.count":   "1",
-				"gpu.intel.com/platform_new.present": "true",
-				"gpu.intel.com/platform_new.tiles":   "2",
-				"gpu.intel.com/graphics_version":     "9",
-				"gpu.intel.com/media_version":        "9",
-				"gpu.intel.com/platform_gen":         "9",
-				"gpu.intel.com/cards":                "card0",
-				"gpu.intel.com/gpu-numbers":          "0",
-				"gpu.intel.com/tiles":                "2",
+				"gpu.intel.com/millicores":  "1000",
+				"gpu.intel.com/memory.max":  "16000",
+				"gpu.intel.com/cards":       "card0",
+				"gpu.intel.com/gpu-numbers": "0",
+				"gpu.intel.com/tiles":       "2",
 			},
 		},
 		{
@@ -133,24 +110,13 @@ func getTestCases() []testcase {
 			name:           "successful labeling via lmem_total_bytes and reserved memory",
 			memoryOverride: 16000000000,
 			memoryReserved: 86,
-			capabilityFile: map[string][]byte{
-				"0/i915_capabilities": []byte(
-					"platform: new\n" +
-						"gen: 9"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/millicores":           "1000",
-				"gpu.intel.com/memory.max":           "8000",
-				"gpu.intel.com/platform_new.count":   "1",
-				"gpu.intel.com/platform_new.present": "true",
-				"gpu.intel.com/platform_new.tiles":   "1",
-				"gpu.intel.com/graphics_version":     "9",
-				"gpu.intel.com/media_version":        "9",
-				"gpu.intel.com/platform_gen":         "9",
-				"gpu.intel.com/cards":                "card0",
-				"gpu.intel.com/gpu-numbers":          "0",
-				"gpu.intel.com/tiles":                "1",
+				"gpu.intel.com/millicores":  "1000",
+				"gpu.intel.com/memory.max":  "8000",
+				"gpu.intel.com/cards":       "card0",
+				"gpu.intel.com/gpu-numbers": "0",
+				"gpu.intel.com/tiles":       "1",
 			},
 		},
 		{
@@ -162,24 +128,13 @@ func getTestCases() []testcase {
 			},
 			name:           "successful labeling via memory override",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"0/i915_capabilities": []byte(
-					"platform: new\n" +
-						"gen: 9"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/millicores":           "1000",
-				"gpu.intel.com/memory.max":           "16000000000",
-				"gpu.intel.com/platform_new.count":   "1",
-				"gpu.intel.com/platform_new.present": "true",
-				"gpu.intel.com/platform_new.tiles":   "1",
-				"gpu.intel.com/graphics_version":     "9",
-				"gpu.intel.com/media_version":        "9",
-				"gpu.intel.com/platform_gen":         "9",
-				"gpu.intel.com/cards":                "card0",
-				"gpu.intel.com/gpu-numbers":          "0",
-				"gpu.intel.com/tiles":                "1",
+				"gpu.intel.com/millicores":  "1000",
+				"gpu.intel.com/memory.max":  "16000000000",
+				"gpu.intel.com/cards":       "card0",
+				"gpu.intel.com/gpu-numbers": "0",
+				"gpu.intel.com/tiles":       "1",
 			},
 		},
 		{
@@ -191,20 +146,13 @@ func getTestCases() []testcase {
 			},
 			name:           "when gen:capability info is missing",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"0/i915_capabilities": []byte(
-					"platform: new"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/millicores":           "1000",
-				"gpu.intel.com/memory.max":           "16000000000",
-				"gpu.intel.com/platform_new.count":   "1",
-				"gpu.intel.com/platform_new.present": "true",
-				"gpu.intel.com/platform_new.tiles":   "1",
-				"gpu.intel.com/cards":                "card0",
-				"gpu.intel.com/gpu-numbers":          "0",
-				"gpu.intel.com/tiles":                "1",
+				"gpu.intel.com/millicores":  "1000",
+				"gpu.intel.com/memory.max":  "16000000000",
+				"gpu.intel.com/cards":       "card0",
+				"gpu.intel.com/gpu-numbers": "0",
+				"gpu.intel.com/tiles":       "1",
 			},
 		},
 		{
@@ -216,25 +164,13 @@ func getTestCases() []testcase {
 			},
 			name:           "gen version missing, but media & graphics versions present",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"0/i915_capabilities": []byte(
-					"platform: new\n" +
-						"media version: 12.5\n" +
-						"graphics version: 12.2"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/millicores":           "1000",
-				"gpu.intel.com/memory.max":           "16000000000",
-				"gpu.intel.com/platform_new.count":   "1",
-				"gpu.intel.com/platform_new.present": "true",
-				"gpu.intel.com/platform_new.tiles":   "1",
-				"gpu.intel.com/graphics_version":     "12.2",
-				"gpu.intel.com/media_version":        "12.5",
-				"gpu.intel.com/platform_gen":         "12",
-				"gpu.intel.com/cards":                "card0",
-				"gpu.intel.com/gpu-numbers":          "0",
-				"gpu.intel.com/tiles":                "1",
+				"gpu.intel.com/millicores":  "1000",
+				"gpu.intel.com/memory.max":  "16000000000",
+				"gpu.intel.com/cards":       "card0",
+				"gpu.intel.com/gpu-numbers": "0",
+				"gpu.intel.com/tiles":       "1",
 			},
 		},
 		{
@@ -246,48 +182,13 @@ func getTestCases() []testcase {
 			},
 			name:           "only media version present",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"0/i915_capabilities": []byte(
-					"platform: new\n" +
-						"media version: 12.5"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/millicores":           "1000",
-				"gpu.intel.com/memory.max":           "16000000000",
-				"gpu.intel.com/platform_new.count":   "1",
-				"gpu.intel.com/platform_new.present": "true",
-				"gpu.intel.com/platform_new.tiles":   "1",
-				"gpu.intel.com/media_version":        "12.5",
-				"gpu.intel.com/platform_gen":         "12",
-				"gpu.intel.com/cards":                "card0",
-				"gpu.intel.com/gpu-numbers":          "0",
-				"gpu.intel.com/tiles":                "1",
-			},
-		},
-		{
-			sysfsdirs: []string{
-				"card0/device/drm/card0",
-				"card1/device/drm/card1",
-			},
-			sysfsfiles: map[string][]byte{
-				"card0/device/vendor": []byte("0x8086"),
-				"card1/device/vendor": []byte("0x8086"),
-			},
-			name:           "when capability file is missing (foobar), related labels don't appear",
-			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"foobar": []byte(
-					"platform: new\n" +
-						"gen: 9"),
-			},
-			expectedRetval: nil,
-			expectedLabels: labelMap{
-				"gpu.intel.com/millicores":  "2000",
-				"gpu.intel.com/memory.max":  "32000000000",
-				"gpu.intel.com/cards":       "card0.card1",
-				"gpu.intel.com/gpu-numbers": "0.1",
-				"gpu.intel.com/tiles":       "2",
+				"gpu.intel.com/millicores":  "1000",
+				"gpu.intel.com/memory.max":  "16000000000",
+				"gpu.intel.com/cards":       "card0",
+				"gpu.intel.com/gpu-numbers": "0",
+				"gpu.intel.com/tiles":       "1",
 			},
 		},
 		{
@@ -433,24 +334,13 @@ func getTestCases() []testcase {
 			},
 			name:           "successful labeling via card0/lmem_total_bytes and three tiles",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"0/i915_capabilities": []byte(
-					"platform: new\n" +
-						"gen: 9"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/graphics_version":     "9",
-				"gpu.intel.com/media_version":        "9",
-				"gpu.intel.com/millicores":           "1000",
-				"gpu.intel.com/memory.max":           "24000",
-				"gpu.intel.com/platform_new.count":   "1",
-				"gpu.intel.com/platform_new.present": "true",
-				"gpu.intel.com/platform_new.tiles":   "3",
-				"gpu.intel.com/platform_gen":         "9",
-				"gpu.intel.com/cards":                "card0",
-				"gpu.intel.com/gpu-numbers":          "0",
-				"gpu.intel.com/tiles":                "3",
+				"gpu.intel.com/millicores":  "1000",
+				"gpu.intel.com/memory.max":  "24000",
+				"gpu.intel.com/cards":       "card0",
+				"gpu.intel.com/gpu-numbers": "0",
+				"gpu.intel.com/tiles":       "3",
 			},
 		},
 		{
@@ -469,30 +359,13 @@ func getTestCases() []testcase {
 			},
 			name:           "successful labeling with two cards and total three tiles",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"0/i915_capabilities": []byte(
-					"platform: new\n" +
-						"gen: 9"),
-				"1/i915_capabilities": []byte(
-					"platform: newnew\n" +
-						"gen: 9"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/graphics_version":        "9",
-				"gpu.intel.com/media_version":           "9",
-				"gpu.intel.com/millicores":              "2000",
-				"gpu.intel.com/memory.max":              "24000",
-				"gpu.intel.com/platform_new.count":      "1",
-				"gpu.intel.com/platform_new.present":    "true",
-				"gpu.intel.com/platform_new.tiles":      "2",
-				"gpu.intel.com/platform_newnew.count":   "1",
-				"gpu.intel.com/platform_newnew.present": "true",
-				"gpu.intel.com/platform_newnew.tiles":   "1",
-				"gpu.intel.com/platform_gen":            "9",
-				"gpu.intel.com/gpu-numbers":             "0.1",
-				"gpu.intel.com/cards":                   "card0.card1",
-				"gpu.intel.com/tiles":                   "3",
+				"gpu.intel.com/millicores":  "2000",
+				"gpu.intel.com/memory.max":  "24000",
+				"gpu.intel.com/gpu-numbers": "0.1",
+				"gpu.intel.com/cards":       "card0.card1",
+				"gpu.intel.com/tiles":       "3",
 			},
 		},
 		{
@@ -512,31 +385,14 @@ func getTestCases() []testcase {
 			},
 			name:           "successful labeling with two cards and numa node info",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"0/i915_capabilities": []byte(
-					"platform: new\n" +
-						"gen: 9"),
-				"1/i915_capabilities": []byte(
-					"platform: newnew\n" +
-						"gen: 9"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/graphics_version":        "9",
-				"gpu.intel.com/media_version":           "9",
-				"gpu.intel.com/millicores":              "2000",
-				"gpu.intel.com/memory.max":              "16000",
-				"gpu.intel.com/platform_new.count":      "1",
-				"gpu.intel.com/platform_new.present":    "true",
-				"gpu.intel.com/platform_new.tiles":      "1",
-				"gpu.intel.com/platform_newnew.count":   "1",
-				"gpu.intel.com/platform_newnew.present": "true",
-				"gpu.intel.com/platform_newnew.tiles":   "1",
-				"gpu.intel.com/platform_gen":            "9",
-				"gpu.intel.com/gpu-numbers":             "0.1",
-				"gpu.intel.com/cards":                   "card0.card1",
-				"gpu.intel.com/tiles":                   "2",
-				"gpu.intel.com/numa-gpu-map":            "0-0_1-1",
+				"gpu.intel.com/millicores":   "2000",
+				"gpu.intel.com/memory.max":   "16000",
+				"gpu.intel.com/gpu-numbers":  "0.1",
+				"gpu.intel.com/cards":        "card0.card1",
+				"gpu.intel.com/tiles":        "2",
+				"gpu.intel.com/numa-gpu-map": "0-0_1-1",
 			},
 		},
 		{
@@ -554,25 +410,14 @@ func getTestCases() []testcase {
 			},
 			name:           "successful labeling with one 0x8086 card and numa node info",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{
-				"1/i915_capabilities": []byte(
-					"platform: newnew\n" +
-						"gen: 9"),
-			},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
-				"gpu.intel.com/graphics_version":        "9",
-				"gpu.intel.com/media_version":           "9",
-				"gpu.intel.com/millicores":              "1000",
-				"gpu.intel.com/memory.max":              "8000",
-				"gpu.intel.com/platform_newnew.count":   "1",
-				"gpu.intel.com/platform_newnew.present": "true",
-				"gpu.intel.com/platform_newnew.tiles":   "1",
-				"gpu.intel.com/platform_gen":            "9",
-				"gpu.intel.com/gpu-numbers":             "1",
-				"gpu.intel.com/cards":                   "card1",
-				"gpu.intel.com/tiles":                   "1",
-				"gpu.intel.com/numa-gpu-map":            "1-1",
+				"gpu.intel.com/millicores":   "1000",
+				"gpu.intel.com/memory.max":   "8000",
+				"gpu.intel.com/gpu-numbers":  "1",
+				"gpu.intel.com/cards":        "card1",
+				"gpu.intel.com/tiles":        "1",
+				"gpu.intel.com/numa-gpu-map": "1-1",
 			},
 		},
 		{
@@ -663,7 +508,6 @@ func getTestCases() []testcase {
 			},
 			name:           "successful labeling with two cards and numa node info",
 			memoryOverride: 16000000000,
-			capabilityFile: map[string][]byte{},
 			expectedRetval: nil,
 			expectedLabels: labelMap{
 				"gpu.intel.com/cards":         "card0.card1.card10.card11.card12.card13.card14.card15.card16.ca",
@@ -680,22 +524,6 @@ func getTestCases() []testcase {
 }
 
 func (tc *testcase) createFiles(t *testing.T, sysfs, root string) {
-	var err error
-
-	for filename, body := range tc.capabilityFile {
-		filePath := path.Join(root, filename)
-		dirOnly := path.Dir(filePath)
-
-		err = os.MkdirAll(dirOnly, 0750)
-		if err != nil {
-			t.Fatalf("Failed to create base directories: %+v", err)
-		}
-
-		if err = os.WriteFile(filePath, body, 0600); err != nil {
-			t.Fatalf("Failed to create fake capability file: %+v", err)
-		}
-	}
-
 	for _, sysfsdir := range tc.sysfsdirs {
 		if err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0750); err != nil {
 			t.Fatalf("Failed to create fake sysfs directory: %+v", err)
@@ -768,7 +596,7 @@ func TestLabeling(t *testing.T) {
 			os.Setenv(memoryReservedEnv, strconv.FormatUint(tc.memoryReserved, 10))
 			os.Setenv(pciGroupingEnv, strconv.FormatUint(tc.pciGroupLevel, 10))
 
-			labeler := newLabeler(sysfs, subroot)
+			labeler := newLabeler(sysfs)
 			err = labeler.createLabels()
 			if err != nil && tc.expectedRetval == nil ||
 				err == nil && tc.expectedRetval != nil {

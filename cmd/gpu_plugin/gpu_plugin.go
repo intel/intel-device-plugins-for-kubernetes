@@ -1,4 +1,4 @@
-// Copyright 2017-2022 Intel Corporation. All Rights Reserved.
+// Copyright 2017-2023 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/labeler"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
@@ -38,6 +39,8 @@ import (
 const (
 	sysfsDrmDirectory = "/sys/class/drm"
 	devfsDriDirectory = "/dev/dri"
+	nfdFeatureDir     = "/etc/kubernetes/node-feature-discovery/features.d"
+	resourceFilename  = "intel-gpu-resources.txt"
 	gpuDeviceRE       = `^card[0-9]+$`
 	controlDeviceRE   = `^controlD[0-9]+$`
 	pciAddressRE      = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
@@ -53,6 +56,9 @@ const (
 
 	// Period of device scans.
 	scanPeriod = 5 * time.Second
+
+	// Labeler's max update interval, 5min.
+	labelerMaxInterval = 5 * 60 * time.Second
 )
 
 type cliOptions struct {
@@ -242,8 +248,9 @@ type devicePlugin struct {
 	controlDeviceReg *regexp.Regexp
 	pciAddressReg    *regexp.Regexp
 
-	scanTicker *time.Ticker
-	scanDone   chan bool
+	scanTicker    *time.Ticker
+	scanDone      chan bool
+	scanResources chan bool
 
 	resMan rm.ResourceManager
 
@@ -270,6 +277,7 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 		scanTicker:       time.NewTicker(scanPeriod),
 		scanDone:         make(chan bool, 1), // buffered as we may send to it before Scan starts receiving from it
 		bypathFound:      true,
+		scanResources:    make(chan bool, 1),
 	}
 
 	if options.resourceManagement {
@@ -347,16 +355,25 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 			klog.Warning("Failed to scan: ", err)
 		}
 
+		countChanged := false
+
 		for name, prev := range previousCount {
 			count := devTree.DeviceTypeCount(name)
 			if count != prev {
 				klog.V(1).Infof("GPU scan update: %d->%d '%s' resources found", prev, count, name)
 
 				previousCount[name] = count
+
+				countChanged = true
 			}
 		}
 
 		notifier.Notify(devTree)
+
+		// Trigger resource scan if it's enabled.
+		if dp.resMan != nil && countChanged {
+			dp.scanResources <- true
+		}
 
 		select {
 		case <-dp.scanDone:
@@ -515,6 +532,18 @@ func main() {
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
 
 	plugin := newDevicePlugin(prefix+sysfsDrmDirectory, prefix+devfsDriDirectory, opts)
+
+	if plugin.options.resourceManagement {
+		// Start labeler to export labels file for NFD.
+		nfdFeatureFile := path.Join(nfdFeatureDir, resourceFilename)
+
+		klog.V(2).Infof("NFD feature file location: %s", nfdFeatureFile)
+
+		// Labeler catches OS signals and calls os.Exit() after receiving any.
+		go labeler.Run(prefix+sysfsDrmDirectory, nfdFeatureFile,
+			labelerMaxInterval, plugin.scanResources)
+	}
+
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }

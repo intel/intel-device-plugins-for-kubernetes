@@ -151,15 +151,19 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	if devicePlugin.Spec.ResourceManager {
 		daemonSet.Spec.Template.Spec.ServiceAccountName = serviceAccountName
 		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
-		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources")
+		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", false)
 		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt", v1.HostPathFileOrCreate)
-		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt")
+		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt", true)
+		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/features.d/", v1.HostPathDirectory)
+		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/features.d/", false)
+		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "sysfsdevices", "/sys/devices", v1.HostPathDirectory)
+		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "sysfsdevices", "/sys/devices", true)
 	}
 
 	return daemonSet
 }
 
-func addVolumeMountIfMissing(spec *v1.PodSpec, name, mountPath string) {
+func addVolumeMountIfMissing(spec *v1.PodSpec, name, mountPath string, readOnly bool) {
 	for _, mount := range spec.Containers[0].VolumeMounts {
 		if mount.Name == name {
 			return
@@ -169,6 +173,7 @@ func addVolumeMountIfMissing(spec *v1.PodSpec, name, mountPath string) {
 	spec.Containers[0].VolumeMounts = append(spec.Containers[0].VolumeMounts, v1.VolumeMount{
 		Name:      name,
 		MountPath: mountPath,
+		ReadOnly:  readOnly,
 	})
 }
 
@@ -206,11 +211,11 @@ func setInitContainer(spec *v1.PodSpec, imageName string) {
 			VolumeMounts: []v1.VolumeMount{
 				{
 					MountPath: "/etc/kubernetes/node-feature-discovery/source.d/",
-					Name:      "nfd-features",
+					Name:      "nfd-sources",
 				},
 			},
 		}}
-	addVolumeIfMissing(spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/source.d/", v1.HostPathDirectoryOrCreate)
+	addVolumeIfMissing(spec, "nfd-sources", "/etc/kubernetes/node-feature-discovery/source.d/", v1.HostPathDirectoryOrCreate)
 }
 
 func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
@@ -267,9 +272,38 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 	}
 
 	newargs := getPodArgs(dp)
-	if strings.Join(ds.Spec.Template.Spec.Containers[0].Args, " ") != strings.Join(newargs, " ") {
+	oldArgString := strings.Join(ds.Spec.Template.Spec.Containers[0].Args, " ")
+
+	if oldArgString != strings.Join(newargs, " ") {
 		ds.Spec.Template.Spec.Containers[0].Args = newargs
 		updated = true
+	}
+
+	hadRM := strings.Contains(oldArgString, "-resource-manager")
+
+	// Add volumes if they do not exist, or remove them when
+	// labels are not requested anymore.
+	if !hadRM && dp.Spec.ResourceManager {
+		addVolumeIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
+		addVolumeMountIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", false)
+		addVolumeIfMissing(&ds.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt", v1.HostPathFileOrCreate)
+		addVolumeMountIfMissing(&ds.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt", true)
+		addVolumeIfMissing(&ds.Spec.Template.Spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/features.d/", v1.HostPathDirectory)
+		addVolumeMountIfMissing(&ds.Spec.Template.Spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/features.d/", false)
+		addVolumeIfMissing(&ds.Spec.Template.Spec, "sysfsdevices", "/sys/devices", v1.HostPathDirectory)
+		addVolumeMountIfMissing(&ds.Spec.Template.Spec, "sysfsdevices", "/sys/devices", true)
+	} else if hadRM && !dp.Spec.ResourceManager {
+		volMounts := &ds.Spec.Template.Spec.Containers[0].VolumeMounts
+		*volMounts = removeVolumeMount(*volMounts, "nfd-features")
+		*volMounts = removeVolumeMount(*volMounts, "sysfsdevices")
+		*volMounts = removeVolumeMount(*volMounts, "kubeletcrt")
+		*volMounts = removeVolumeMount(*volMounts, "podresources")
+
+		volumes := &ds.Spec.Template.Spec.Volumes
+		*volumes = removeVolume(*volumes, "nfd-features")
+		*volumes = removeVolume(*volumes, "sysfsdevices")
+		*volumes = removeVolume(*volumes, "kubeletcrt")
+		*volumes = removeVolume(*volumes, "podresources")
 	}
 
 	newServiceAccountName := "default"
@@ -281,7 +315,7 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		ds.Spec.Template.Spec.ServiceAccountName = newServiceAccountName
 		if dp.Spec.ResourceManager {
 			addVolumeIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
-			addVolumeMountIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources")
+			addVolumeMountIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", false)
 		} else {
 			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "podresources")
 			ds.Spec.Template.Spec.Containers[0].VolumeMounts = removeVolumeMount(ds.Spec.Template.Spec.Containers[0].VolumeMounts, "podresources")

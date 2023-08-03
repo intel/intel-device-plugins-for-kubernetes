@@ -4,7 +4,6 @@ metadata:
   name: gpudeviceplugin-sample
 spec:
   image: intel/intel-gpu-plugin:0.27.1
-  initImage: intel/intel-gpu-initcontainer:0.27.1
   sharedDevNum: 10
   logLevel: 4
   nodeSelector:

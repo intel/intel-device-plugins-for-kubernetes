@@ -86,12 +86,6 @@ func (r *GpuDevicePlugin) ValidateDelete() (admission.Warnings, error) {
 }
 
 func (r *GpuDevicePlugin) validatePlugin() error {
-	if r.Spec.InitImage != "" {
-		if err := validatePluginImage(r.Spec.InitImage, "intel-gpu-initcontainer", gpuMinVersion); err != nil {
-			return err
-		}
-	}
-
 	if r.Spec.SharedDevNum == 1 && r.Spec.PreferredAllocationPolicy != "none" {
 		return errors.Errorf("PreferredAllocationPolicy is valid only when setting sharedDevNum > 1")
 	}

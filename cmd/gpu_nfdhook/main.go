@@ -15,25 +15,14 @@
 package main
 
 import (
-	"os"
-
-	"k8s.io/klog/v2"
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/labeler"
 )
 
 const (
-	sysfsDirectory      = "/host-sys"
-	sysfsDRMDirectory   = sysfsDirectory + "/class/drm"
-	debugfsDRIDirectory = sysfsDirectory + "/kernel/debug/dri"
+	sysfsDirectory    = "/host-sys"
+	sysfsDRMDirectory = sysfsDirectory + "/class/drm"
 )
 
 func main() {
-	l := newLabeler(sysfsDRMDirectory, debugfsDRIDirectory)
-
-	err := l.createLabels()
-	if err != nil {
-		klog.Errorf("%+v", err)
-		os.Exit(1)
-	}
-
-	l.printLabels()
+	labeler.CreateAndPrintLabels(sysfsDRMDirectory)
 }

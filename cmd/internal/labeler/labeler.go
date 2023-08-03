@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2023 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,18 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package labeler
 
 import (
-	"bufio"
 	"fmt"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 	"github.com/pkg/errors"
@@ -57,16 +60,16 @@ type labeler struct {
 	labels           labelMap
 
 	sysfsDRMDir   string
-	debugfsDRIDir string
+	labelsChanged bool
 }
 
-func newLabeler(sysfsDRMDir, debugfsDRIDir string) *labeler {
+func newLabeler(sysfsDRMDir string) *labeler {
 	return &labeler{
 		sysfsDRMDir:      sysfsDRMDir,
-		debugfsDRIDir:    debugfsDRIDir,
 		gpuDeviceReg:     regexp.MustCompile(gpuDeviceRE),
 		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
 		labels:           labelMap{},
+		labelsChanged:    true,
 	}
 }
 
@@ -222,88 +225,6 @@ func (lm labelMap) addNumericLabel(labelName string, valueToAdd int64) {
 	lm[labelName] = strconv.FormatInt(value, 10)
 }
 
-// createCapabilityLabels creates labels from the gpu capability file under debugfs.
-func (l *labeler) createCapabilityLabels(gpuNum string, numTiles uint64) {
-	// try to read the capabilities from the i915_capabilities file
-	file, err := os.Open(filepath.Join(l.debugfsDRIDir, gpuNum, "i915_capabilities"))
-	if err != nil {
-		klog.V(3).Infof("Couldn't open file:%s", err.Error()) // debugfs is not stable, there is no need to spam with error level prints
-		return
-	}
-	defer file.Close()
-
-	gen := ""
-	media := ""
-	graphics := ""
-	// define string prefixes to search from the file, and the actions to take in order to create labels from those strings (as funcs)
-	searchStringActionMap := map[string]func(string){
-		"platform:": func(platformName string) {
-			l.labels.addNumericLabel(labelNamespace+"platform_"+platformName+".count", 1)
-			l.labels[labelNamespace+"platform_"+platformName+".tiles"] = strconv.FormatInt(int64(numTiles), 10)
-			l.labels[labelNamespace+"platform_"+platformName+".present"] = "true"
-		},
-		// there's also display block version, but that's not relevant
-		"media version:": func(version string) {
-			l.labels[labelNamespace+"media_version"] = version
-			media = version
-		},
-		"graphics version:": func(version string) {
-			l.labels[labelNamespace+"graphics_version"] = version
-			graphics = version
-		},
-		"gen:": func(version string) {
-			l.labels[labelNamespace+"platform_gen"] = version
-			gen = version
-		},
-	}
-
-	// Finally, read the file, and try to find the matches. Perform actions and reduce the search map size as we proceed. Return at 0 size.
-	scanner := bufio.NewScanner(file)
-scanning:
-	for scanner.Scan() {
-		line := scanner.Text()
-		for prefix, action := range searchStringActionMap {
-			if !strings.HasPrefix(line, prefix) {
-				continue
-			}
-
-			fields := strings.Split(line, ": ")
-			if len(fields) == 2 {
-				action(fields[1])
-			} else {
-				klog.Warningf("invalid '%s' line format: '%s'", file.Name(), line)
-			}
-
-			delete(searchStringActionMap, prefix)
-
-			if len(searchStringActionMap) == 0 {
-				break scanning
-			}
-			break
-		}
-	}
-
-	if gen == "" {
-		// TODO: drop gen label before engine types
-		// start to have diverging major gen values
-		if graphics != "" {
-			gen = graphics
-		} else if media != "" {
-			gen = media
-		}
-
-		if gen != "" {
-			// truncate to major value
-			gen = strings.SplitN(gen, ".", 2)[0]
-			l.labels[labelNamespace+"platform_gen"] = gen
-		}
-	} else if media == "" && graphics == "" {
-		// 5.14 or older kernels need this
-		l.labels[labelNamespace+"media_version"] = gen
-		l.labels[labelNamespace+"graphics_version"] = gen
-	}
-}
-
 // this returns pci groups label value, groups separated by "_", gpus separated by ".".
 // Example for two groups with 4 gpus: "0.1.2.3_4.5.6.7".
 func (l *labeler) createPCIGroupLabel(gpuNumList []string) string {
@@ -345,6 +266,10 @@ func (l *labeler) createPCIGroupLabel(gpuNumList []string) string {
 
 // createLabels is the main function of plugin labeler, it creates label-value pairs for the gpus.
 func (l *labeler) createLabels() error {
+	prevLabels := l.labels
+
+	l.labels = labelMap{}
+
 	gpuNameList, err := l.scan()
 	if err != nil {
 		return err
@@ -379,9 +304,6 @@ func (l *labeler) createLabels() error {
 
 			numaMapping[numaNode] = numaList
 		}
-
-		// try to add capability labels
-		l.createCapabilityLabels(gpuNum, numTiles)
 
 		l.labels.addNumericLabel(labelNamespace+"memory.max", int64(memoryAmount))
 	}
@@ -431,6 +353,8 @@ func (l *labeler) createLabels() error {
 		}
 	}
 
+	l.labelsChanged = !reflect.DeepEqual(prevLabels, l.labels)
+
 	return nil
 }
 
@@ -455,8 +379,114 @@ func createNumaNodeMappingLabel(mapping map[int][]string) string {
 	return strings.Join(parts, "_")
 }
 
-func (l *labeler) printLabels() {
+func (l *labeler) atomicPrintLabelsToFile(labelFile string) error {
+	baseDir := filepath.Dir(labelFile)
+
+	// TODO: Use NFD's "hidden file" feature when it becomes available.
+	d, err := os.MkdirTemp(baseDir, "labels")
+	if err != nil {
+		klog.Warning("could not create temporary directory, writing directly to destination")
+
+		return l.printLabelsToFile(labelFile)
+	}
+
+	defer os.RemoveAll(d)
+
+	tmpFile := filepath.Join(d, "labels.txt")
+
+	if err := l.printLabelsToFile(tmpFile); err != nil {
+		return err
+	}
+
+	return os.Rename(tmpFile, labelFile)
+}
+
+func (l *labeler) printLabelsToFile(labelFile string) error {
+	f, err := os.OpenFile(labelFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open file (%s): %w", labelFile, err)
+	}
+
+	defer f.Close()
+
+	for key, val := range l.labels {
+		if _, err := f.WriteString(key + "=" + val + "\n"); err != nil {
+			return fmt.Errorf("failed to write label (%s=%s) to file: %w", key, val, err)
+		}
+	}
+
+	return nil
+}
+
+func CreateAndPrintLabels(sysfsDRMDir string) {
+	l := newLabeler(sysfsDRMDir)
+
+	if err := l.createLabels(); err != nil {
+		klog.Warningf("failed to create labels: %+v", err)
+
+		return
+	}
+
 	for key, val := range l.labels {
 		fmt.Println(key + "=" + val)
 	}
+}
+
+// Gathers node's GPU labels on channel trigger or timeout, and write them to a file.
+// The created label file is deleted on exit (process dying).
+func Run(sysfsDrmDir, nfdFeatureFile string, updateInterval time.Duration, scanResources chan bool) {
+	l := newLabeler(sysfsDrmDir)
+
+	interruptChan := make(chan os.Signal, 1)
+	signal.Notify(interruptChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP, syscall.SIGQUIT)
+
+	klog.V(1).Info("Starting GPU labeler")
+
+Loop:
+	for {
+		timeout := time.After(updateInterval)
+
+		select {
+		case <-timeout:
+		case <-scanResources:
+		case interrupt := <-interruptChan:
+			klog.V(2).Infof("Interrupt %d received", interrupt)
+
+			break Loop
+		}
+
+		klog.V(1).Info("Ext resources scanning")
+
+		err := l.createLabels()
+		if err != nil {
+			klog.Warningf("label creation failed: %+v", err)
+
+			continue
+		}
+
+		if l.labelsChanged {
+			klog.V(1).Info("Writing labels")
+
+			if err := l.atomicPrintLabelsToFile(nfdFeatureFile); err != nil {
+				klog.Warningf("failed to write labels to file: %+v", err)
+
+				// Reset labels so that next time the labeler runs the writing is retried.
+				l.labels = labelMap{}
+			}
+		}
+	}
+
+	signal.Stop(interruptChan)
+
+	klog.V(2).Info("Removing label file")
+
+	err := os.Remove(nfdFeatureFile)
+	if err != nil {
+		klog.Errorf("Failed to cleanup label file: %+v", err)
+	}
+
+	klog.V(1).Info("Stopping GPU labeler")
+
+	// Close the whole application
+	os.Exit(0)
 }
