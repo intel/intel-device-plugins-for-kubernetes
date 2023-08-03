@@ -13,18 +13,6 @@ spec:
       labels:
         app: intel-gpu-plugin
     spec:
-      initContainers:
-      - name: intel-gpu-initcontainer
-        image: intel/intel-gpu-initcontainer:devel
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          seLinuxOptions:
-            type: "container_device_plugin_init_t"
-          readOnlyRootFilesystem: true
-          allowPrivilegeEscalation: false
-        volumeMounts:
-        - mountPath: /etc/kubernetes/node-feature-discovery/source.d/
-          name: nfd-features
       containers:
       - name: intel-gpu-plugin
         env:
@@ -47,7 +35,7 @@ spec:
         - name: devfs
           mountPath: /dev/dri
           readOnly: true
-        - name: sysfs
+        - name: sysfsdrm
           mountPath: /sys/class/drm
           readOnly: true
         - name: kubeletsockets
@@ -56,15 +44,11 @@ spec:
       - name: devfs
         hostPath:
           path: /dev/dri
-      - name: sysfs
+      - name: sysfsdrm
         hostPath:
           path: /sys/class/drm
       - name: kubeletsockets
         hostPath:
           path: /var/lib/kubelet/device-plugins
-      - name: nfd-features
-        hostPath:
-          path: /etc/kubernetes/node-feature-discovery/source.d/
-          type: DirectoryOrCreate
       nodeSelector:
         kubernetes.io/arch: amd64

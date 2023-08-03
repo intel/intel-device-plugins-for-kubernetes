@@ -11,6 +11,8 @@ Table of Contents
 
 ## Introduction
 
+***NOTE:*** NFD's binary hook support will be turned off by default in the 0.14 release. The functionality in the GPU NFD hook is moved into a new NFD rule and into GPU plugin, and the capability labels are being removed completely. The GPU plugin deployment doesn't anymore support using init container. This directory will be removed in the future.
+
 This is the [Node Feature Discovery](https://github.com/kubernetes-sigs/node-feature-discovery)
 binary hook implementation for the Intel GPUs. The intel-gpu-initcontainer (which
 is built with the other images) can be used as part of the gpu-plugin deployment

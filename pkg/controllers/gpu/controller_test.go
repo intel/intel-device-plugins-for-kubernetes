@@ -17,6 +17,7 @@ package gpu
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	apps "k8s.io/api/apps/v1"
@@ -100,7 +101,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 									ReadOnly:  true,
 								},
 								{
-									Name:      "sysfs",
+									Name:      "sysfsdrm",
 									MountPath: "/sys/class/drm",
 									ReadOnly:  true,
 								},
@@ -122,7 +123,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							},
 						},
 						{
-							Name: "sysfs",
+							Name: "sysfsdrm",
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
 									Path: "/sys/class/drm",
@@ -143,50 +144,74 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 		},
 	}
 
-	// add the optional init container
-	if devicePlugin.Spec.InitImage != "" {
-		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
-	}
-
 	// add service account if resource manager is enabled
 	if devicePlugin.Spec.ResourceManager {
 		daemonSet.Spec.Template.Spec.ServiceAccountName = serviceAccountName
+
 		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
-		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources")
+		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", false)
 		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt", v1.HostPathFileOrCreate)
-		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt")
+		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt", true)
+		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/features.d/", v1.HostPathDirectory)
+		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/features.d/", false)
+		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "sysfsdevices", "/sys/devices", v1.HostPathDirectory)
+		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "sysfsdevices", "/sys/devices", true)
 	}
 
 	return &daemonSet
+}
+
+func (c *controller) updateDaemonSetExpected(rawObj client.Object, ds *apps.DaemonSet) {
+	dp := rawObj.(*devicepluginv1.GpuDevicePlugin)
+
+	argString := strings.Join(ds.Spec.Template.Spec.Containers[0].Args, " ")
+
+	hadRM := strings.Contains(argString, "-resource-manager")
+
+	if !hadRM && dp.Spec.ResourceManager {
+		ds.Spec.Template.Spec.ServiceAccountName = "gpu-manager-sa"
+
+		addVolumeIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
+		addVolumeMountIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", false)
+		addVolumeIfMissing(&ds.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt", v1.HostPathFileOrCreate)
+		addVolumeMountIfMissing(&ds.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt", true)
+		addVolumeIfMissing(&ds.Spec.Template.Spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/features.d/", v1.HostPathDirectory)
+		addVolumeMountIfMissing(&ds.Spec.Template.Spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/features.d/", false)
+		addVolumeIfMissing(&ds.Spec.Template.Spec, "sysfsdevices", "/sys/devices", v1.HostPathDirectory)
+		addVolumeMountIfMissing(&ds.Spec.Template.Spec, "sysfsdevices", "/sys/devices", true)
+	} else if hadRM && !dp.Spec.ResourceManager {
+		ds.Spec.Template.Spec.ServiceAccountName = "default"
+
+		volMounts := &ds.Spec.Template.Spec.Containers[0].VolumeMounts
+		*volMounts = removeVolumeMount(*volMounts, "nfd-features")
+		*volMounts = removeVolumeMount(*volMounts, "sysfsdevices")
+		*volMounts = removeVolumeMount(*volMounts, "kubeletcrt")
+		*volMounts = removeVolumeMount(*volMounts, "podresources")
+
+		volumes := &ds.Spec.Template.Spec.Volumes
+		*volumes = removeVolume(*volumes, "nfd-features")
+		*volumes = removeVolume(*volumes, "sysfsdevices")
+		*volumes = removeVolume(*volumes, "kubeletcrt")
+		*volumes = removeVolume(*volumes, "podresources")
+	}
+
+	ds.Spec.Template.Spec.Containers[0].Args = getPodArgs(dp)
 }
 
 // Test that GPU daemonsets created by using go:embed
 // are equal to the expected daemonsets.
 func TestNewDamonSetGPU(t *testing.T) {
 	tcases := []struct {
-		name            string
-		resourceManager bool
-		isInitImage     bool
+		name string
+		rm   bool
 	}{
 		{
-			"plugin without resource manager and without initcontainer",
-			false,
-			false,
-		},
-		{
-			"plugin without resource manager and with initcontainer",
-			false,
+			"plugin with resource manager",
 			true,
 		},
 		{
-			"plugin with resource manager and without initcontainer",
-			true,
+			"plugin without resource manager",
 			false,
-		},
-		{
-			"plugin with resource manager and with initcontainer",
-			true,
-			true,
 		},
 	}
 
@@ -194,13 +219,8 @@ func TestNewDamonSetGPU(t *testing.T) {
 
 	for _, tc := range tcases {
 		plugin := &devicepluginv1.GpuDevicePlugin{}
-		if tc.resourceManager {
-			plugin.Spec.ResourceManager = true
-		}
 
-		if tc.isInitImage {
-			plugin.Spec.InitImage = "intel/intel-gpu-initcontainer:devel"
-		}
+		plugin.Spec.ResourceManager = tc.rm
 
 		t.Run(tc.name, func(t *testing.T) {
 			expected := c.newDaemonSetExpected(plugin)
@@ -208,6 +228,53 @@ func TestNewDamonSetGPU(t *testing.T) {
 
 			if !reflect.DeepEqual(expected, actual) {
 				t.Errorf("expected and actuall daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+			}
+		})
+	}
+}
+
+func TestUpdateDamonSetGPU(t *testing.T) {
+	tcases := []struct {
+		name        string
+		rmInitially bool
+	}{
+		{
+			"plugin without rm and then with rm",
+			false,
+		},
+		{
+			"plugin with rm and then without rm",
+			true,
+		},
+	}
+
+	c := &controller{}
+
+	for _, tc := range tcases {
+		before := &devicepluginv1.GpuDevicePlugin{}
+
+		before.Spec.ResourceManager = tc.rmInitially
+
+		after := &devicepluginv1.GpuDevicePlugin{}
+
+		after.Spec.ResourceManager = !tc.rmInitially
+
+		t.Run(tc.name, func(t *testing.T) {
+			expected := c.newDaemonSetExpected(before)
+			actual := c.NewDaemonSet(before)
+
+			if !reflect.DeepEqual(expected, actual) {
+				t.Errorf("expected and actual daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+			}
+
+			updated := c.UpdateDaemonSet(after, actual)
+			if updated == false {
+				t.Error("daemonset didn't update while it should have")
+			}
+			c.updateDaemonSetExpected(after, expected)
+
+			if !reflect.DeepEqual(expected, actual) {
+				t.Errorf("updated expected and actual daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
 			}
 		})
 	}
