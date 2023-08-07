@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # ToyBox version: KCONFIG_VERSION
-# Thu Jan 12 14:29:15 2023
+# Sat Aug  5 15:52:20 2023
 #
 # CONFIG_TOYBOX_ON_ANDROID is not set
 CONFIG_TOYBOX_FORK=y
@@ -25,6 +25,7 @@ CONFIG_CP=y
 # CONFIG_CPIO is not set
 CONFIG_CUT=y
 # CONFIG_DATE is not set
+# CONFIG_DD is not set
 # CONFIG_DF is not set
 # CONFIG_DIRNAME is not set
 # CONFIG_DU is not set
@@ -109,7 +110,6 @@ CONFIG_TEST_GLUE=y
 # CONFIG_CHSH is not set
 # CONFIG_CROND is not set
 # CONFIG_CRONTAB is not set
-# CONFIG_DD is not set
 # CONFIG_DHCP is not set
 # CONFIG_DHCP6 is not set
 # CONFIG_DHCPD is not set
@@ -225,6 +225,7 @@ CONFIG_SH=y
 # CONFIG_I2CDUMP is not set
 # CONFIG_I2CGET is not set
 # CONFIG_I2CSET is not set
+# CONFIG_I2CTRANSFER is not set
 # CONFIG_INOTIFYD is not set
 # CONFIG_INSMOD is not set
 # CONFIG_IONICE is not set
@@ -270,6 +271,7 @@ CONFIG_REALPATH=y
 # CONFIG_SETSID is not set
 # CONFIG_SHA3SUM is not set
 # CONFIG_SHRED is not set
+# CONFIG_SHUF is not set
 # CONFIG_STAT is not set
 # CONFIG_SWAPOFF is not set
 # CONFIG_SWAPON is not set

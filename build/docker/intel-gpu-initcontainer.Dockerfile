@@ -53,8 +53,8 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
     --save_path /install_root/licenses/$CMD/go-licenses ; \
     else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi
 ###
-ARG TOYBOX_VERSION="0.8.9"
-ARG TOYBOX_SHA256="8f2782073c1c862a405315b6516d8410e47139fc2c94b98bb5d23804537c1b65"
+ARG TOYBOX_VERSION="0.8.10"
+ARG TOYBOX_SHA256="3c31e235fe87e74e6c6cf7cd7299fcbffb0f4a4834dae607aa26bb4f1583549a"
 ARG ROOT=/install_root
 RUN apt-get update && apt-get --no-install-recommends -y install musl musl-tools musl-dev
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -63,7 +63,7 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && tar -xzf toybox.tar.gz \
     && rm toybox.tar.gz \
     && cd toybox-$TOYBOX_VERSION \
-    && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT make toybox install \
+    && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \
     && install -D LICENSE $ROOT/licenses/toybox \
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 ###
