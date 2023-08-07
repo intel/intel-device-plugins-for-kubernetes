@@ -46,19 +46,19 @@ func describe() {
 	f := framework.NewDefaultFramework("dsaplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
+	kustomizationPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", kustomizationYaml, errFailedToLocateRepoFile)
 	}
 
-	configmap, err := utils.LocateRepoFile(configmapYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", configmapYaml, err)
+	configmap, errFailedToLocateRepoFile := utils.LocateRepoFile(configmapYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", configmapYaml, errFailedToLocateRepoFile)
 	}
 
-	demoPath, err := utils.LocateRepoFile(demoYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", demoYaml, err)
+	demoPath, errFailedToLocateRepoFile := utils.LocateRepoFile(demoYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", demoYaml, errFailedToLocateRepoFile)
 	}
 
 	var dpPodName string

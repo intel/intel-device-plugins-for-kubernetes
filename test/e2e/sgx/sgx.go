@@ -47,14 +47,14 @@ func describe() {
 	f := framework.NewDefaultFramework("sgxplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	deploymentWebhookPath, err := utils.LocateRepoFile(kustomizationWebhook)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationWebhook, err)
+	deploymentWebhookPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationWebhook)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", kustomizationWebhook, errFailedToLocateRepoFile)
 	}
 
-	deploymentPluginPath, err := utils.LocateRepoFile(kustomizationPlugin)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationPlugin, err)
+	deploymentPluginPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationPlugin)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", kustomizationPlugin, errFailedToLocateRepoFile)
 	}
 
 	ginkgo.BeforeEach(func(ctx context.Context) {
@@ -64,12 +64,12 @@ func describe() {
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(deploymentPluginPath))
 
 		ginkgo.By("waiting for SGX plugin's availability")
-		podList, errPodNotRunning := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
+		podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
 			labels.Set{"app": "intel-sgx-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
-		if errPodNotRunning != nil {
+		if err != nil {
 			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
 			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
-			framework.Failf("unable to wait for all pods to be running and ready: %v", errPodNotRunning)
+			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
 		}
 
 		ginkgo.By("checking SGX plugin's securityContext")
@@ -81,13 +81,13 @@ func describe() {
 	ginkgo.Context("When SGX resources are available", func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			ginkgo.By("checking if the resource is allocatable")
-			if err = utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/epc", 150*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/epc", 150*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable epc resource: %v", err)
 			}
-			if err = utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/enclave", 30*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/enclave", 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable enclave resource: %v", err)
 			}
-			if err = utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/provision", 30*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/provision", 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable provision resource: %v", err)
 			}
 		})

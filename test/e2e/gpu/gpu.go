@@ -47,9 +47,9 @@ func describe() {
 	f := framework.NewDefaultFramework("gpuplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
+	kustomizationPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", kustomizationYaml, errFailedToLocateRepoFile)
 	}
 
 	ginkgo.It("checks availability of GPU resources", func(ctx context.Context) {

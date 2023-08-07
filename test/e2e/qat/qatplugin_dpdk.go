@@ -59,24 +59,24 @@ func describeQatDpdkPlugin() {
 	f := framework.NewDefaultFramework("qatplugindpdk")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	kustomizationPath, err := utils.LocateRepoFile(qatPluginKustomizationYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", qatPluginKustomizationYaml, err)
+	kustomizationPath, errFailedToLocateRepoFile := utils.LocateRepoFile(qatPluginKustomizationYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", qatPluginKustomizationYaml, errFailedToLocateRepoFile)
 	}
 
-	compressTestYamlPath, err := utils.LocateRepoFile(compressTestYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", compressTestYaml, err)
+	compressTestYamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(compressTestYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", compressTestYaml, errFailedToLocateRepoFile)
 	}
 
-	cryptoTestYamlPath, err := utils.LocateRepoFile(cryptoTestYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", cryptoTestYaml, err)
+	cryptoTestYamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(cryptoTestYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", cryptoTestYaml, errFailedToLocateRepoFile)
 	}
 
-	cryptoTestGen4YamlPath, err := utils.LocateRepoFile(cryptoTestGen4Yaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", cryptoTestGen4Yaml, err)
+	cryptoTestGen4YamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(cryptoTestGen4Yaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", cryptoTestGen4Yaml, errFailedToLocateRepoFile)
 	}
 
 	var dpPodName string

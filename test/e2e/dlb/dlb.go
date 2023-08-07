@@ -45,9 +45,9 @@ func describe() {
 	f := framework.NewDefaultFramework("dlbplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
+	kustomizationPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", kustomizationYaml, errFailedToLocateRepoFile)
 	}
 
 	var dpPodName string
@@ -108,9 +108,9 @@ func describe() {
 }
 
 func runDemoApp(ctx context.Context, function, yaml string, f *framework.Framework) {
-	demoPath, err := utils.LocateRepoFile(yaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", yaml, err)
+	demoPath, errFailedToLocateRepoFile := utils.LocateRepoFile(yaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", yaml, errFailedToLocateRepoFile)
 	}
 
 	podName := strings.TrimSuffix(filepath.Base(yaml), filepath.Ext(yaml))

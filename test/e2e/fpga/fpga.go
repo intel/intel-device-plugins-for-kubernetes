@@ -50,14 +50,14 @@ func init() {
 }
 
 func describe() {
-	pluginKustomizationPath, err := utils.LocateRepoFile(pluginKustomizationYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", pluginKustomizationYaml, err)
+	pluginKustomizationPath, errFailedToLocateRepoFile := utils.LocateRepoFile(pluginKustomizationYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", pluginKustomizationYaml, errFailedToLocateRepoFile)
 	}
 
-	mappingsCollectionPath, err := utils.LocateRepoFile(mappingsCollectionYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", mappingsCollectionYaml, err)
+	mappingsCollectionPath, errFailedToLocateRepoFile := utils.LocateRepoFile(mappingsCollectionYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", mappingsCollectionYaml, errFailedToLocateRepoFile)
 	}
 
 	fmw := framework.NewDefaultFramework("fpgaplugin-e2e")
