@@ -3,8 +3,8 @@ kind: FpgaDevicePlugin
 metadata:
   name: fpgadeviceplugin-sample
 spec:
-  image: intel/intel-fpga-plugin:0.26.1
-  initImage: intel/intel-fpga-initcontainer:0.26.1
+  image: intel/intel-fpga-plugin:0.26.2
+  initImage: intel/intel-fpga-initcontainer:0.26.2
   mode: region
   logLevel: 4
   nodeSelector:

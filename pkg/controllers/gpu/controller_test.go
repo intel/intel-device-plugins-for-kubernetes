@@ -199,7 +199,7 @@ func TestNewDamonSetGPU(t *testing.T) {
 		}
 
 		if tc.isInitImage {
-			plugin.Spec.InitImage = "intel/intel-gpu-initcontainer:0.26.1"
+			plugin.Spec.InitImage = "intel/intel-gpu-initcontainer:0.26.2"
 		}
 
 		t.Run(tc.name, func(t *testing.T) {

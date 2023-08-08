@@ -21,7 +21,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-qat-plugin:0.26.1
+        image: intel/intel-qat-plugin:0.26.2
         securityContext:
           seLinuxOptions:
             type: "container_device_plugin_t"

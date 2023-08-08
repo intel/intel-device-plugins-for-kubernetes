@@ -19,7 +19,7 @@ spec:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
           privileged: true
-        image: intel/intel-qat-plugin:0.26.1
+        image: intel/intel-qat-plugin:0.26.2
         imagePullPolicy: IfNotPresent
         args: ["-mode", "kernel"]
         volumeMounts:

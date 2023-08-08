@@ -14,7 +14,7 @@ spec:
                 fieldPath: spec.nodeName
           - name: DEVICE_TYPE
             value: "iaa"
-        image: intel/intel-idxd-config-initcontainer:0.26.1
+        image: intel/intel-idxd-config-initcontainer:0.26.2
         securityContext:
           readOnlyRootFilesystem: true
           privileged: true
