@@ -136,7 +136,7 @@ clean:
 
 ORG?=intel
 REG?=$(ORG)/
-TAG?=0.26.1
+TAG?=0.26.2
 export TAG
 
 e2e-fpga:

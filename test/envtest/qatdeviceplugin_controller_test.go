@@ -136,7 +136,7 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			}
 			mode := int32(0440)
 			expectedVolume := v1.Volume{
-				Name: "qat-config",
+				Name: "intel-qat-config-volume",
 				VolumeSource: v1.VolumeSource{
 					ConfigMap: &v1.ConfigMapVolumeSource{
 						LocalObjectReference: v1.LocalObjectReference{Name: updatedProvisioningConfig},
