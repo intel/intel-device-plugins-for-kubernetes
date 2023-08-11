@@ -109,11 +109,13 @@ The upgrade of the deployed plugins can be done by simply installing a new relea
 
 The operator auto-upgrades operator-managed plugins (CR images and thus corresponding deployed daemonsets) to the current release of the operator.
 
-During upgrade the tag in the image path is updated (e.g. docker.io/intel/intel-sgx-plugin:tag), but the rest of the path is left intact.
+From `0.28.0` release, each version of the operator can have a set of images in `deployments/operator/manager/manager.yaml` as env variables.
 
-No upgrade is done for:
-- Non-operator managed deployments
-- Operator deployments without numeric tags
+When env variables are set for specific plugins (and their initcontainers), plugins are upgraded to the images set as env variables and all user input is ignored.
+
+The name of env variables is capitalized image with '_SHA' ending (e.g. in case of the image for `intel-sgx-plugin`, the env variable is `INTEL_SGX_PLUGIN_SHA`).
+
+The value of env variables is the full path of the image (e.g. `docker.io/intel/intel-sgx-plugin@sha256:<digest>`).
 
 ## Limiting Supported Devices
 

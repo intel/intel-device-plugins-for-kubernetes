@@ -132,6 +132,8 @@ Check if the fields mentioned below in the [base CSV manifest file](deployments/
 - metadata.annotations.containerImage
 - metadata.annotations.createdAT
 
+Check if [manager yaml file](deployments/operator/manager/manager.yaml) `spec.template.spec.containers.env` has correct sha256 digest for each plugin image.
+
 Fork the [Community Operators](https://github.com/k8s-operatorhub/community-operators) repo and clone it:
 ```
 $ git clone https://github.com/<GitHub Username>/community-operators
