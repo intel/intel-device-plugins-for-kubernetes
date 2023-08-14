@@ -1,30 +1,37 @@
-name: CI
+name: Devel
 on:
   push:
     branches:
-      - 'release-*'
-  pull_request:
-    branches:
       - main
-      - 'release-*'
 permissions:
   contents: read
   pull-requests: read
+  security-events: write
 
 jobs:
   trivy:
     uses: "./.github/workflows/lib-trivy.yaml"
+    with:
+      upload-to-github-security-tab: true
 
   validate:
     uses: "./.github/workflows/lib-validate.yaml"
 
   build:
     needs:
-      - trivy
       - validate
+      - trivy
     uses: "./.github/workflows/lib-build.yaml"
 
   e2e:
     needs:
       - build
     uses: "./.github/workflows/lib-e2e.yaml"
+
+  # devel image push
+  publish:
+    needs:
+      - e2e
+      - build
+    uses: "./.github/workflows/lib-publish.yaml"
+    secrets: inherit

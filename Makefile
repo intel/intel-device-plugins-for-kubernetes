@@ -184,11 +184,8 @@ dockertemplates = build/docker/templates
 images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in)
 dockerfiles = $(shell basename -s .in -a $(dockertemplates)/*.Dockerfile.in | xargs -I"{}" echo build/docker/{})
 
-
-skipbaselayercheck = intel-vpu-plugin intel-qat-plugin-kerneldrv intel-idxd-config-initcontainer
-distroless_images = $(patsubst %,$(REG)%\:$(TAG),$(filter-out $(skipbaselayercheck),$(images)))
 test-image-base-layer:
-	@for img in $(distroless_images); do scripts/test-image-base-layer.sh $$img $(BUILDER) || exit 1; done
+	@scripts/test-image-base-layer.sh $(IMG) $(BUILDER)
 
 $(dockerfiles): $(dockertemplates)/*.Dockerfile.in $(dockerlib)/*.docker
 	@cat $(dockerlib)/default_header.docker $(dockertemplates)/$(shell basename $@.in) \
@@ -221,12 +218,6 @@ $(demos):
 
 demos: $(demos)
 
-image_tags = $(patsubst %,$(REG)%\:$(TAG),$(images) $(demos))
-$(image_tags):
-	@docker push $@
-
-push: test-image-base-layer $(image_tags)
-
 set-version:
 	@scripts/set-version.sh $(TAG)
 
@@ -238,9 +229,9 @@ skip_images_source := ubuntu-demo-openvino intel-vpu-plugin
 skip_images := $(subst $(space),$(comma),$(addprefix ",$(addsuffix ", $(skip_images_source))))
 
 check-github-actions:
-	@python3 -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin, Loader=yaml.SafeLoader), sys.stdout)' < .github/workflows/ci.yaml | \
+	@python3 -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin, Loader=yaml.SafeLoader), sys.stdout)' < .github/workflows/lib-build.yaml | \
 	jq -e '$(images_json) - [$(skip_images)] - .jobs.image.strategy.matrix.image == []' > /dev/null || \
-	(echo "Make sure all images are listed in .github/workflows/ci.yaml"; exit 1)
+	(echo "Make sure all images are listed in .github/workflows/lib-build.yaml"; exit 1)
 
 .PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture install-tools test-image-base-layer
 
