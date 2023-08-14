@@ -24,6 +24,7 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,14 +51,14 @@ func init() {
 }
 
 func describe() {
-	pluginKustomizationPath, err := utils.LocateRepoFile(pluginKustomizationYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", pluginKustomizationYaml, err)
+	pluginKustomizationPath, errFailedToLocateRepoFile := utils.LocateRepoFile(pluginKustomizationYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", pluginKustomizationYaml, errFailedToLocateRepoFile)
 	}
 
-	mappingsCollectionPath, err := utils.LocateRepoFile(mappingsCollectionYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", mappingsCollectionYaml, err)
+	mappingsCollectionPath, errFailedToLocateRepoFile := utils.LocateRepoFile(mappingsCollectionYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", mappingsCollectionYaml, errFailedToLocateRepoFile)
 	}
 
 	fmw := framework.NewDefaultFramework("fpgaplugin-e2e")
@@ -97,7 +98,7 @@ func runTestCase(ctx context.Context, fmw *framework.Framework, pluginKustomizat
 
 	ginkgo.By("checking if the resource is allocatable")
 
-	if err := utils.WaitForNodesWithResource(ctx, fmw.ClientSet, resource, 30*time.Second); err != nil {
+	if err = utils.WaitForNodesWithResource(ctx, fmw.ClientSet, resource, 30*time.Second); err != nil {
 		framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 	}
 
@@ -109,11 +110,9 @@ func runTestCase(ctx context.Context, fmw *framework.Framework, pluginKustomizat
 	pod := createPod(ctx, fmw, fmt.Sprintf("fpgaplugin-%s-%s-%s-correct", pluginMode, cmd1, cmd2), resource, image, []string{cmd1, "-S0"})
 
 	ginkgo.By("waiting the pod to finish successfully")
-	e2epod.NewPodClient(fmw).WaitForSuccess(ctx, pod.ObjectMeta.Name, 60*time.Second)
-	// If WaitForSuccess fails, ginkgo doesn't show the logs of the failed container.
-	// Replacing WaitForSuccess with WaitForFinish + 'kubelet logs' would show the logs
-	//fmw.PodClient().WaitForFinish(pod.ObjectMeta.Name, 60*time.Second)
-	//framework.RunKubectlOrDie(fmw.Namespace.Name, "logs", pod.ObjectMeta.Name)
+
+	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, fmw.ClientSet, pod.ObjectMeta.Name, fmw.Namespace.Name, 60*time.Second)
+	gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, fmw, pod.ObjectMeta.Name, "testcontainer"))
 
 	ginkgo.By("submitting a pod requesting incorrect FPGA resources")
 

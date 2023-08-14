@@ -21,6 +21,7 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
 	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
@@ -46,19 +47,19 @@ func describe() {
 	f := framework.NewDefaultFramework("dsaplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
+	kustomizationPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", kustomizationYaml, errFailedToLocateRepoFile)
 	}
 
-	configmap, err := utils.LocateRepoFile(configmapYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", configmapYaml, err)
+	configmap, errFailedToLocateRepoFile := utils.LocateRepoFile(configmapYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", configmapYaml, errFailedToLocateRepoFile)
 	}
 
-	demoPath, err := utils.LocateRepoFile(demoYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", demoYaml, err)
+	demoPath, errFailedToLocateRepoFile := utils.LocateRepoFile(demoYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", demoYaml, errFailedToLocateRepoFile)
 	}
 
 	var dpPodName string
@@ -106,16 +107,8 @@ func describe() {
 				e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 				ginkgo.By("waiting for the DSA demo to succeed")
-				e2epod.NewPodClient(f).WaitForSuccess(ctx, podName, 200*time.Second)
-
-				ginkgo.By("getting workload log")
-				log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, podName, podName)
-
-				if err != nil {
-					framework.Failf("unable to get log from pod: %v", err)
-				}
-
-				framework.Logf("log output: %s", log)
+				err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, podName, f.Namespace.Name, 200*time.Second)
+				gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
 			})
 		})
 	})

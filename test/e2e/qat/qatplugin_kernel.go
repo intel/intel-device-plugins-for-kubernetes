@@ -44,9 +44,9 @@ func describeQatKernelPlugin() {
 	f := framework.NewDefaultFramework("qatpluginkernel")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	yamlPath, err := utils.LocateRepoFile(qatPluginKernelYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", qatPluginKernelYaml, err)
+	yamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(qatPluginKernelYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", qatPluginKernelYaml, errFailedToLocateRepoFile)
 	}
 
 	var dpPodName string

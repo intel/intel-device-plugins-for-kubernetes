@@ -17,6 +17,7 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -40,6 +41,16 @@ import (
 const (
 	poll = time.Second
 )
+
+// GetPodLogs returns the log of the container. If not possible to get logs, it returns the error message.
+func GetPodLogs(ctx context.Context, f *framework.Framework, podName, containerName string) string {
+	log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, podName, containerName)
+	if err != nil {
+		return fmt.Sprintf("unable to get log from pod: %v", err)
+	}
+
+	return fmt.Sprintf("log output of the container %s in the pod %s:%s", containerName, podName, log)
+}
 
 // WaitForNodesWithResource waits for nodes to have positive allocatable resource.
 func WaitForNodesWithResource(ctx context.Context, c clientset.Interface, res v1.ResourceName, timeout time.Duration) error {

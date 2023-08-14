@@ -22,6 +22,7 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +39,7 @@ const (
 	compressTestYaml           = "deployments/qat_dpdk_app/test-compress1/kustomization.yaml"
 	cryptoTestYaml             = "deployments/qat_dpdk_app/test-crypto1/kustomization.yaml"
 	cryptoTestGen4Yaml         = "deployments/qat_dpdk_app/test-crypto1-gen4/kustomization.yaml"
+	demoPodContainerName       = "crypto-perf"
 )
 
 const (
@@ -59,24 +61,24 @@ func describeQatDpdkPlugin() {
 	f := framework.NewDefaultFramework("qatplugindpdk")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	kustomizationPath, err := utils.LocateRepoFile(qatPluginKustomizationYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", qatPluginKustomizationYaml, err)
+	kustomizationPath, errFailedToLocateRepoFile := utils.LocateRepoFile(qatPluginKustomizationYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", qatPluginKustomizationYaml, errFailedToLocateRepoFile)
 	}
 
-	compressTestYamlPath, err := utils.LocateRepoFile(compressTestYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", compressTestYaml, err)
+	compressTestYamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(compressTestYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", compressTestYaml, errFailedToLocateRepoFile)
 	}
 
-	cryptoTestYamlPath, err := utils.LocateRepoFile(cryptoTestYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", cryptoTestYaml, err)
+	cryptoTestYamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(cryptoTestYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", cryptoTestYaml, errFailedToLocateRepoFile)
 	}
 
-	cryptoTestGen4YamlPath, err := utils.LocateRepoFile(cryptoTestGen4Yaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", cryptoTestGen4Yaml, err)
+	cryptoTestGen4YamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(cryptoTestGen4Yaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", cryptoTestGen4Yaml, errFailedToLocateRepoFile)
 	}
 
 	var dpPodName string
@@ -135,12 +137,8 @@ func describeQatDpdkPlugin() {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestGen4YamlPath))
 
 			ginkgo.By("waiting the crypto pod to finish successfully")
-
-			e2epod.NewPodClient(f).WaitForSuccess(ctx, "qat-dpdk-test-crypto-perf-tc1-gen4", 300*time.Second)
-
-			output, _ := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, "qat-dpdk-test-crypto-perf-tc1-gen4", "crypto-perf")
-
-			framework.Logf("crypto-perf output:\n %s", output)
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-crypto-perf-tc1-gen4", f.Namespace.Name, 300*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-crypto-perf-tc1-gen4", "crypto-perf"))
 		})
 	})
 
@@ -169,7 +167,9 @@ func describeQatDpdkPlugin() {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
 			ginkgo.By("waiting the crypto pod to finish successfully")
-			e2epod.NewPodClient(f).WaitForSuccess(ctx, "qat-dpdk-test-crypto-perf-tc1", 60*time.Second)
+			demoPodName := "qat-dpdk-test-crypto-perf-tc1"
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, demoPodName, f.Namespace.Name, 60*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, demoPodName, demoPodContainerName))
 		})
 
 		ginkgo.It("deploys a compress pod requesting QAT resources", func(ctx context.Context) {
@@ -177,7 +177,9 @@ func describeQatDpdkPlugin() {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
 			ginkgo.By("waiting the compress pod to finish successfully")
-			e2epod.NewPodClient(f).WaitForSuccess(ctx, "qat-dpdk-test-compress-perf-tc1", 60*time.Second)
+			demoPodName := "qat-dpdk-test-compress-perf-tc1"
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, demoPodName, f.Namespace.Name, 60*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, demoPodName, demoPodContainerName))
 		})
 	})
 }
@@ -210,9 +212,7 @@ func runCpaSampleCode(ctx context.Context, f *framework.Framework, runTests int,
 	framework.ExpectNoError(err, "pod Create API error")
 
 	ginkgo.By("waiting the cpa_sample_code pod for the resource" + resourceName.String() + "to finish successfully")
-	e2epod.NewPodClient(f).WaitForSuccess(ctx, pod.ObjectMeta.Name, 300*time.Second)
 
-	output, _ := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name)
-
-	framework.Logf("cpa_sample_code output:\n %s", output)
+	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
+	gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 }
