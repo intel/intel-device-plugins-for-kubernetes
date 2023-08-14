@@ -54,7 +54,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("QAT plugin in DPDK mode", describeQatDpdkPlugin)
+	ginkgo.Describe("QAT plugin in DPDK mode [Device:qat] [Mode:dpdk]", describeQatDpdkPlugin)
 }
 
 func describeQatDpdkPlugin() {
@@ -118,7 +118,7 @@ func describeQatDpdkPlugin() {
 		}
 	})
 
-	ginkgo.Context("When QAT Gen4 resources are available with crypto (cy) services enabled", func() {
+	ginkgo.Context("When QAT Gen4 resources are available with crypto (cy) services enabled [Resource:cy]", func() {
 		// This BeforeEach runs even before the JustBeforeEach above.
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("creating a configMap before plugin gets deployed")
@@ -128,11 +128,11 @@ func describeQatDpdkPlugin() {
 			resourceName = "qat.intel.com/cy"
 		})
 
-		ginkgo.It("deploys a crypto pod (openssl) requesting QAT resources", func(ctx context.Context) {
+		ginkgo.It("deploys a crypto pod (openssl) requesting QAT resources [App:openssl]", func(ctx context.Context) {
 			runCpaSampleCode(ctx, f, symmetric, resourceName)
 		})
 
-		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources", func(ctx context.Context) {
+		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources [App:crypto-perf]", func(ctx context.Context) {
 			ginkgo.By("submitting a crypto pod requesting QAT resources")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestGen4YamlPath))
 
@@ -140,9 +140,13 @@ func describeQatDpdkPlugin() {
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-crypto-perf-tc1-gen4", f.Namespace.Name, 300*time.Second)
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-crypto-perf-tc1-gen4", "crypto-perf"))
 		})
+
+		ginkgo.When("there is no app to run [App:noapp]", func() {
+			ginkgo.It("does nothing", func() {})
+		})
 	})
 
-	ginkgo.Context("When QAT Gen4 resources are available with compress (dc) services enabled", func() {
+	ginkgo.Context("When QAT Gen4 resources are available with compress (dc) services enabled [Resource:dc]", func() {
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("creating a configMap before plugin gets deployed")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "--from-literal", "qat.conf=ServicesEnabled=dc", "qat-config")
@@ -151,18 +155,22 @@ func describeQatDpdkPlugin() {
 			resourceName = "qat.intel.com/dc"
 		})
 
-		ginkgo.It("deploys a compress pod (openssl) requesting QAT resources", func(ctx context.Context) {
+		ginkgo.It("deploys a compress pod (openssl) requesting QAT resources [App:openssl]", func(ctx context.Context) {
 			runCpaSampleCode(ctx, f, compression, resourceName)
+		})
+
+		ginkgo.When("there is no app to run [App:noapp]", func() {
+			ginkgo.It("does nothing", func() {})
 		})
 	})
 
-	ginkgo.Context("When QAT Gen2 resources are available", func() {
+	ginkgo.Context("When QAT Gen2 resources are available [Resource:generic]", func() {
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("setting resourceName for Gen2 resources")
 			resourceName = "qat.intel.com/generic"
 		})
 
-		ginkgo.It("deploys a crypto pod requesting QAT resources", func(ctx context.Context) {
+		ginkgo.It("deploys a crypto pod requesting QAT resources [App:crypto-perf]", func(ctx context.Context) {
 			ginkgo.By("submitting a crypto pod requesting QAT resources")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
@@ -172,7 +180,7 @@ func describeQatDpdkPlugin() {
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, demoPodName, demoPodContainerName))
 		})
 
-		ginkgo.It("deploys a compress pod requesting QAT resources", func(ctx context.Context) {
+		ginkgo.It("deploys a compress pod requesting QAT resources [App:compress-perf]", func(ctx context.Context) {
 			ginkgo.By("submitting a compress pod requesting QAT resources")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
@@ -180,6 +188,10 @@ func describeQatDpdkPlugin() {
 			demoPodName := "qat-dpdk-test-compress-perf-tc1"
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, demoPodName, f.Namespace.Name, 60*time.Second)
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, demoPodName, demoPodContainerName))
+		})
+
+		ginkgo.When("there is no app to run [App:noapp]", func() {
+			ginkgo.It("does nothing", func() {})
 		})
 	})
 }

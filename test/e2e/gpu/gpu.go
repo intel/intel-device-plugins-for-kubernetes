@@ -43,7 +43,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("GPU plugin", describe)
+	ginkgo.Describe("GPU plugin [Device:gpu]", describe)
 }
 
 func describe() {
@@ -74,14 +74,14 @@ func describe() {
 		}
 	})
 
-	ginkgo.Context("When GPU resources are available", func() {
+	ginkgo.Context("When GPU resources are available [Resource:i915]", func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			ginkgo.By("checking if the resource is allocatable")
 			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "gpu.intel.com/i915", 30*time.Second); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 			}
 		})
-		ginkgo.It("checks availability of GPU resources", func(ctx context.Context) {
+		ginkgo.It("checks availability of GPU resources [App:busybox]", func(ctx context.Context) {
 			ginkgo.By("submitting a pod requesting GPU resources")
 			podSpec := &v1.Pod{
 				ObjectMeta: metav1.ObjectMeta{Name: "gpuplugin-tester"},
@@ -122,7 +122,7 @@ func describe() {
 			framework.Logf("found card and renderD from the log")
 		})
 
-		ginkgo.It("run a small workload on the GPU", func(ctx context.Context) {
+		ginkgo.It("run a small workload on the GPU [App:tensorflow]", func(ctx context.Context) {
 			kustomYaml, err := utils.LocateRepoFile(tfKustomizationYaml)
 			if err != nil {
 				framework.Failf("unable to locate %q: %v", tfKustomizationYaml, err)
@@ -138,6 +138,10 @@ func describe() {
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, tfPodName, containerName))
 
 			framework.Logf("tensorflow execution succeeded!")
+		})
+
+		ginkgo.When("there is no app to run [App:noapp]", func() {
+			ginkgo.It("does nothing", func() {})
 		})
 	})
 }
