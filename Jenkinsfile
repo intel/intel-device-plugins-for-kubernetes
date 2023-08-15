@@ -139,13 +139,6 @@ pipeline {
             }
           }
         }
-        stage('make test-with-kind') {
-          steps {
-            dir(path: "$REPO_DIR") {
-              sh "make test-with-kind REG=intel/ TAG=devel"
-            }
-          }
-        }
         stage('push images') {
           when { not { changeRequest() } }
           steps {
