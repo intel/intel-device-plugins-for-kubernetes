@@ -280,8 +280,9 @@ matching Kubernetes versions are listed below:
 | release-0.15      | Kubernetes 1.15 branch v1.15.x | unsupported |
 | release-0.11      | Kubernetes 1.11 branch v1.11.x | unsupported |
 
-[Go environment]: https://golang.org/doc/install
-[Kubernetes cluster]: https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
+*Note:* Device plugins leverage the Kubernetes v1 API. The API itself is GA (generally available) and [does not change](https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-changes) between Kubernetes versions. One does not necessarily need to use the latest Kubernetes cluster with the latest device plugin version. Using a newer device plugins release should work without issues on an older Kubernetes cluster. One possible exception to this are the device plugins CRDs that can vary between versions.
+
+[Go environment](https://golang.org/doc/install) | [Kubernetes cluster setup](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
 
 ### Release procedures
 
