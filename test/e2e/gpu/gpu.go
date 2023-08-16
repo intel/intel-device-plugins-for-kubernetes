@@ -52,7 +52,7 @@ func describe() {
 		framework.Failf("unable to locate %q: %v", kustomizationYaml, errFailedToLocateRepoFile)
 	}
 
-	ginkgo.It("checks availability of GPU resources", func(ctx context.Context) {
+	ginkgo.BeforeEach(func(ctx context.Context) {
 		ginkgo.By("deploying GPU plugin")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
 
@@ -69,49 +69,54 @@ func describe() {
 		if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
+	})
 
-		ginkgo.By("checking if the resource is allocatable")
-		if err = utils.WaitForNodesWithResource(ctx, f.ClientSet, "gpu.intel.com/i915", 30*time.Second); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-		}
-
-		ginkgo.By("submitting a pod requesting GPU resources")
-		podSpec := &v1.Pod{
-			ObjectMeta: metav1.ObjectMeta{Name: "gpuplugin-tester"},
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					{
-						Args:    []string{"-c", "ls /dev/dri"},
-						Name:    containerName,
-						Image:   imageutils.GetE2EImage(imageutils.BusyBox),
-						Command: []string{"/bin/sh"},
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{"gpu.intel.com/i915": resource.MustParse("1")},
-							Limits:   v1.ResourceList{"gpu.intel.com/i915": resource.MustParse("1")},
+	ginkgo.Context("When GPU resources are available", func() {
+		ginkgo.BeforeEach(func(ctx context.Context) {
+			ginkgo.By("checking if the resource is allocatable")
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "gpu.intel.com/i915", 30*time.Second); err != nil {
+				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+			}
+		})
+		ginkgo.It("checks availability of GPU resources", func(ctx context.Context) {
+			ginkgo.By("submitting a pod requesting GPU resources")
+			podSpec := &v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Name: "gpuplugin-tester"},
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{
+						{
+							Args:    []string{"-c", "ls /dev/dri"},
+							Name:    containerName,
+							Image:   imageutils.GetE2EImage(imageutils.BusyBox),
+							Command: []string{"/bin/sh"},
+							Resources: v1.ResourceRequirements{
+								Requests: v1.ResourceList{"gpu.intel.com/i915": resource.MustParse("1")},
+								Limits:   v1.ResourceList{"gpu.intel.com/i915": resource.MustParse("1")},
+							},
 						},
 					},
+					RestartPolicy: v1.RestartPolicyNever,
 				},
-				RestartPolicy: v1.RestartPolicyNever,
-			},
-		}
-		pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx, podSpec, metav1.CreateOptions{})
-		framework.ExpectNoError(err, "pod Create API error")
+			}
+			pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx, podSpec, metav1.CreateOptions{})
+			framework.ExpectNoError(err, "pod Create API error")
 
-		ginkgo.By("waiting the pod to finish successfully")
-		e2epod.NewPodClient(f).WaitForSuccess(ctx, pod.ObjectMeta.Name, 60*time.Second)
+			ginkgo.By("waiting the pod to finish successfully")
+			e2epod.NewPodClient(f).WaitForSuccess(ctx, pod.ObjectMeta.Name, 60*time.Second)
 
-		ginkgo.By("checking log output")
-		log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, pod.Name, containerName)
+			ginkgo.By("checking log output")
+			log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, pod.Name, containerName)
 
-		if err != nil {
-			framework.Failf("unable to get log from pod: %v", err)
-		}
+			if err != nil {
+				framework.Failf("unable to get log from pod: %v", err)
+			}
 
-		if !strings.Contains(log, "card") || !strings.Contains(log, "renderD") {
-			framework.Logf("log output: %s", log)
-			framework.Failf("device mounts not found from log")
-		}
+			if !strings.Contains(log, "card") || !strings.Contains(log, "renderD") {
+				framework.Logf("log output: %s", log)
+				framework.Failf("device mounts not found from log")
+			}
 
-		framework.Logf("found card and renderD from the log")
+			framework.Logf("found card and renderD from the log")
+		})
 	})
 }
