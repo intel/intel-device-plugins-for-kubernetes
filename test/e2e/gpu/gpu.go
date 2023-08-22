@@ -22,6 +22,7 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,8 +36,10 @@ import (
 )
 
 const (
-	kustomizationYaml = "deployments/gpu_plugin/kustomization.yaml"
-	containerName     = "testcontainer"
+	kustomizationYaml   = "deployments/gpu_plugin/kustomization.yaml"
+	containerName       = "testcontainer"
+	tfKustomizationYaml = "deployments/gpu_tensorflow_test/kustomization.yaml"
+	tfPodName           = "training-pod"
 )
 
 func init() {
@@ -117,6 +120,24 @@ func describe() {
 			}
 
 			framework.Logf("found card and renderD from the log")
+		})
+
+		ginkgo.It("run a small workload on the GPU", func(ctx context.Context) {
+			kustomYaml, err := utils.LocateRepoFile(tfKustomizationYaml)
+			if err != nil {
+				framework.Failf("unable to locate %q: %v", tfKustomizationYaml, err)
+			}
+
+			ginkgo.By("submitting demo deployment")
+
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomYaml))
+
+			ginkgo.By("waiting the pod to finish")
+
+			err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, tfPodName, f.Namespace.Name, 300*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, tfPodName, containerName))
+
+			framework.Logf("tensorflow execution succeeded!")
 		})
 	})
 }
