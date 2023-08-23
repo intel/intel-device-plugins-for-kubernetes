@@ -15,6 +15,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"os"
 
@@ -22,6 +23,7 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
@@ -53,18 +55,24 @@ func main() {
 
 	ctrl.SetLogger(klogr.New())
 
+	tlsCfgFunc := func(cfg *tls.Config) {
+		cfg.MinVersion = tls.VersionTLS13
+	}
+
 	webhookOptions := webhook.Options{
-		Port:          9443,
-		TLSMinVersion: "1.3",
+		Port: 9443,
+		TLSOpts: []func(*tls.Config){
+			tlsCfgFunc,
+		},
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		MetricsBindAddress: "0",
-		Logger:             ctrl.Log.WithName("FpgaAdmissionWebhook"),
-		WebhookServer:      webhook.NewServer(webhookOptions),
-		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "f2c6a4df.intel.com",
+		Scheme:           scheme,
+		Metrics:          metricsserver.Options{BindAddress: "0"},
+		Logger:           ctrl.Log.WithName("FpgaAdmissionWebhook"),
+		WebhookServer:    webhook.NewServer(webhookOptions),
+		LeaderElection:   enableLeaderElection,
+		LeaderElectionID: "f2c6a4df.intel.com",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
