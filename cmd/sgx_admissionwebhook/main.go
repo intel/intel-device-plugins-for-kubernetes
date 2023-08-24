@@ -15,6 +15,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"os"
 
 	sgxwebhook "github.com/intel/intel-device-plugins-for-kubernetes/pkg/webhooks/sgx"
@@ -23,6 +24,7 @@ import (
 	"k8s.io/klog/v2/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
@@ -37,15 +39,21 @@ func init() {
 func main() {
 	ctrl.SetLogger(klogr.New())
 
+	tlsCfgFunc := func(cfg *tls.Config) {
+		cfg.MinVersion = tls.VersionTLS13
+	}
+
 	webhookOptions := webhook.Options{
-		Port:          9443,
-		TLSMinVersion: "1.3",
+		Port: 9443,
+		TLSOpts: []func(*tls.Config){
+			tlsCfgFunc,
+		},
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		MetricsBindAddress: "0",
-		Logger:             ctrl.Log.WithName("SgxAdmissionWebhook"),
-		WebhookServer:      webhook.NewServer(webhookOptions),
+		Metrics:       metricsserver.Options{BindAddress: "0"},
+		Logger:        ctrl.Log.WithName("SgxAdmissionWebhook"),
+		WebhookServer: webhook.NewServer(webhookOptions),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

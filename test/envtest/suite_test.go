@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/deployments"
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
@@ -107,7 +108,7 @@ var _ = AfterEach(func() {
 })
 
 func up() {
-	k8sManager, managerErr := ctrl.NewManager(cfg, ctrl.Options{Scheme: scheme.Scheme, MetricsBindAddress: "0"})
+	k8sManager, managerErr := ctrl.NewManager(cfg, ctrl.Options{Scheme: scheme.Scheme, Metrics: metricsserver.Options{BindAddress: "0"}})
 	Expect(managerErr).To(BeNil())
 
 	withWebhook := true

@@ -15,6 +15,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"os"
@@ -27,6 +28,7 @@ import (
 	"k8s.io/klog/v2/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
@@ -131,14 +133,20 @@ func main() {
 		"sgx":  sgx.SetupReconciler,
 	}
 
+	tlsCfgFunc := func(cfg *tls.Config) {
+		cfg.MinVersion = tls.VersionTLS13
+	}
+
 	webhookOptions := webhook.Options{
-		Port:          9443,
-		TLSMinVersion: "1.3",
+		Port: 9443,
+		TLSOpts: []func(*tls.Config){
+			tlsCfgFunc,
+		},
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
+		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
 		Logger:                 ctrl.Log.WithName("intel-device-plugins-manager"),
 		WebhookServer:          webhook.NewServer(webhookOptions),
 		HealthProbeBindAddress: probeAddr,
