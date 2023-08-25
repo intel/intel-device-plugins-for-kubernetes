@@ -27,7 +27,9 @@ Table of Contents
 * [Demos](#demos)
 * [Workload Authors](#workload-authors)
 * [Developers](#developers)
-* [Supported Kubernetes versions](#supported-kubernetes-versions)
+* [Releases](#releases)
+    * [Supported Kubernetes versions](#supported-kubernetes-versions)
+    * [Release procedures](#release-procedures)
 * [Pre-built plugin images](#pre-built-plugin-images)
 * [License](#license)
 * [Helm charts](#helm-charts)
@@ -255,7 +257,9 @@ The summary of resources available via plugins in this repository is given in th
 For information on how to develop a new plugin using the framework or work on development task in
 this repository, see the [Developers Guide](DEVEL.md).
 
-## Supported Kubernetes Versions
+## Releases
+
+### Supported Kubernetes Versions
 
 Releases are made under the github [releases area](https://github.com/intel/intel-device-plugins-for-kubernetes/releases). Supported releases and
 matching Kubernetes versions are listed below:
@@ -276,8 +280,17 @@ matching Kubernetes versions are listed below:
 | release-0.15      | Kubernetes 1.15 branch v1.15.x | unsupported |
 | release-0.11      | Kubernetes 1.11 branch v1.11.x | unsupported |
 
-[Go environment]: https://golang.org/doc/install
-[Kubernetes cluster]: https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/
+*Note:* Device plugins leverage the Kubernetes v1 API. The API itself is GA (generally available) and [does not change](https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-changes) between Kubernetes versions. One does not necessarily need to use the latest Kubernetes cluster with the latest device plugin version. Using a newer device plugins release should work without issues on an older Kubernetes cluster. One possible exception to this are the device plugins CRDs that can vary between versions.
+
+[Go environment](https://golang.org/doc/install) | [Kubernetes cluster setup](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
+
+### Release procedures
+
+Project's release cadence is tied to Kubernetes release cadence. Device plugins release typically follows a couple of weeks after the Kubernetes release. There can be some delays on the releases due to required changes in the pull request pipeline. Once the content is available in the `main` branch and CI & e2e validation <span style="color:green">PASS</span>es, release branch will be created (e.g. release-0.26). The HEAD of release branch will also be tagged with the corresponding [tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) (e.g. v0.26.0).
+
+During the [release creation](https://github.com/intel/intel-device-plugins-for-kubernetes/issues/1393), the project's documentation, deployment files etc. will be [changed](https://github.com/intel/intel-device-plugins-for-kubernetes/pull/1441) to point to the newly created version.
+
+Patch releases (e.g. 0.26.3) are done on a need basis if there are security issues or minor fixes requested for specific version. Fixes are always cherry-picked from the `main` branch to the release branches.
 
 ## Pre-built plugin images
 
