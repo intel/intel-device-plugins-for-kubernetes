@@ -1,0 +1,28 @@
+# Image user should not be ‘root’
+# Running containers with ‘root’ user can lead to a container escape situation.
+# It is a best practice to run containers as non-root users, which can be done by
+# adding # a ‘USER’ statement to the Dockerfile.
+AVD-DS-0002
+
+# Privileged containers share namespaces with the host system and do not offer any security.
+# They should be used exclusively for system containers that require high  # privileges.
+# initcontainers require privileged access
+AVD-KSV-0017
+
+# Sharing the host’s network namespace permits processes in the pod to communicate with
+# processes bound to the host’s loopback adapter.
+# sgx single-node demo deployment uses hostNetwork: true to be able to use the default setting for PCCS URL from containers
+AVD-KSV-0009
+
+# Do not allow privilege escalation from node proxy
+# Check whether role permits privilege escalation from node proxy
+# gpu plugin in kubelet mode requires "nodes/proxy" resource access
+AVD-KSV-0047
+
+# Do not allow update/create of a malicious pod
+# Check whether role permits update/create of a malicious pod
+# device plugin operator requires access to daemonset creation etc.
+AVD-KSV-0048
+
+# Device plugins do not use any CSIs
+## CVE-2019-11255
