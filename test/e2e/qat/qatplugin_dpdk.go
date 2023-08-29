@@ -118,7 +118,7 @@ func describeQatDpdkPlugin() {
 		}
 	})
 
-	ginkgo.Context("When QAT Gen4 resources are available with crypto (cy) services enabled [Resource:cy]", func() {
+	ginkgo.Context("When QAT resources are available with crypto (cy) services enabled [Resource:cy]", func() {
 		// This BeforeEach runs even before the JustBeforeEach above.
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("creating a configMap before plugin gets deployed")
@@ -146,7 +146,7 @@ func describeQatDpdkPlugin() {
 		})
 	})
 
-	ginkgo.Context("When QAT Gen4 resources are available with compress (dc) services enabled [Resource:dc]", func() {
+	ginkgo.Context("When QAT resources are available with compress (dc) services enabled [Resource:dc]", func() {
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("creating a configMap before plugin gets deployed")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "--from-literal", "qat.conf=ServicesEnabled=dc", "qat-config")
@@ -164,9 +164,9 @@ func describeQatDpdkPlugin() {
 		})
 	})
 
-	ginkgo.Context("When QAT Gen2 resources are available [Resource:generic]", func() {
+	ginkgo.Context("When QAT resources are available [Resource:generic]", func() {
 		ginkgo.BeforeEach(func() {
-			ginkgo.By("setting resourceName for Gen2 resources")
+			ginkgo.By("setting resourceName for generic resources")
 			resourceName = "qat.intel.com/generic"
 		})
 
