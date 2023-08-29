@@ -64,52 +64,50 @@ func describe() {
 
 	var dpPodName string
 
-	ginkgo.Describe("Without using operator", func() {
+	ginkgo.BeforeEach(func(ctx context.Context) {
+		ginkgo.By("deploying IAA plugin")
+		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "intel-iaa-config", "--from-file="+configmap)
+
+		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
+
+		ginkgo.By("waiting for IAA plugin's availability")
+		podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
+			labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1 /* one replica */, 300*time.Second)
+		if err != nil {
+			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
+			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+		}
+		dpPodName = podList.Items[0].Name
+
+		ginkgo.By("checking IAA plugin's securityContext")
+		if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
+			framework.Failf("container filesystem info checks failed: %v", err)
+		}
+	})
+
+	ginkgo.AfterEach(func(ctx context.Context) {
+		ginkgo.By("undeploying IAA plugin")
+		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(kustomizationPath))
+		if err := e2epod.WaitForPodNotFoundInNamespace(ctx, f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
+			framework.Failf("failed to terminate pod: %v", err)
+		}
+	})
+
+	ginkgo.Context("When IAA resources are available", func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
-			ginkgo.By("deploying IAA plugin")
-			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "intel-iaa-config", "--from-file="+configmap)
-
-			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
-
-			ginkgo.By("waiting for IAA plugin's availability")
-			podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
-				labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1 /* one replica */, 300*time.Second)
-			if err != nil {
-				e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
-				e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
-				framework.Failf("unable to wait for all pods to be running and ready: %v", err)
-			}
-			dpPodName = podList.Items[0].Name
-
-			ginkgo.By("checking IAA plugin's securityContext")
-			if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
-				framework.Failf("container filesystem info checks failed: %v", err)
+			ginkgo.By("checking if the resource is allocatable")
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "iaa.intel.com/wq-user-dedicated", 300*time.Second); err != nil {
+				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 			}
 		})
 
-		ginkgo.AfterEach(func(ctx context.Context) {
-			ginkgo.By("undeploying IAA plugin")
-			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(kustomizationPath))
-			if err := e2epod.WaitForPodNotFoundInNamespace(ctx, f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
-				framework.Failf("failed to terminate pod: %v", err)
-			}
-		})
+		ginkgo.It("deploys a demo app", func(ctx context.Context) {
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
-		ginkgo.Context("When IAA resources are available", func() {
-			ginkgo.BeforeEach(func(ctx context.Context) {
-				ginkgo.By("checking if the resource is allocatable")
-				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "iaa.intel.com/wq-user-dedicated", 300*time.Second); err != nil {
-					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-				}
-			})
-
-			ginkgo.It("deploys a demo app", func(ctx context.Context) {
-				e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
-
-				ginkgo.By("waiting for the IAA demo to succeed")
-				err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, podName, f.Namespace.Name, 300*time.Second)
-				gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
-			})
+			ginkgo.By("waiting for the IAA demo to succeed")
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, podName, f.Namespace.Name, 300*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
 		})
 	})
 }
