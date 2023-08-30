@@ -1,0 +1,11 @@
+#!/bin/bash
+
+pushd sgx-quote-generation
+
+./sgx-quote-generation
+
+popd
+
+pushd sgx-quote-verification
+
+./sgx-quote-verification -quote ../sgx-quote-generation/quote.dat

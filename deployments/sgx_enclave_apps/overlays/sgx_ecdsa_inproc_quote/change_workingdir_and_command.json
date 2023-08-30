@@ -1,0 +1,5 @@
+[
+  {"op": "replace", "path": "/spec/template/spec/containers/0/workingDir", "value": "/opt/intel/"},
+  {"op": "replace", "path": "/spec/template/spec/containers/0/command", "value": ["/opt/intel/run-dcap-flow"]},
+  {"op": "remove", "path": "/spec/template/spec/containers/0/securityContext/readOnlyRootFilesystem"}
+]

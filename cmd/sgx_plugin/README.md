@@ -195,8 +195,10 @@ Successfully tagged intel/sgx-sdk-demo:devel
 #### Deploy the pods
 
 The demo runs Intel aesmd (architectural enclaves service daemon) that is responsible
-for generating SGX quotes for workloads. It is deployed with `hostNetwork: true`
-to allow connections to localhost PCCS.
+for generating SGX quotes for workloads.
+
+**Note**: The PCCS URL must be configured in `sgx_default_qcnl.conf`. The default `localhost` URL
+is not available in containers
 
 ```bash
 $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_aesmd?ref=<RELEASE_VERSION>'
@@ -238,6 +240,8 @@ $ kubectl logs ecdsa-quote-intelsgx-demo-job-vtq84
   Step3: Call sgx_qe_get_quote_size:succeed!
   Step4: Call sgx_qe_get_quote:succeed!cert_key_type = 0x5
 ```
+
+Similarly, full SGX DCAP Flow with Quote Generation and Trusted Quote Verification can be deployed using the `sgx_ecdsa_inproc_quote` overlay. Again, the PCCS URL must be set beforehand.
 
 > **Note**: The deployment example above uses [kustomize](https://github.com/kubernetes-sigs/kustomize)
 > that is available in kubectl since Kubernetes v1.14 release.

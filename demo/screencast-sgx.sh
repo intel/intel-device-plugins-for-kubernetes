@@ -27,7 +27,7 @@ cleanup()
   out 'Cleanup demo artifacts' 20
   out 'delete node-feature-discovery deployment:' 20
   command 'kubectl delete -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=main || true' 20
-  command 'kubectl delete -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx?ref=main || true' 20
+  command 'kubectl delete -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=main || true' 20
   out 'delete SGX Device Plugin deployment:' 20
   command 'kubectl delete sgxdeviceplugin sgxdeviceplugin-sample || true' 20
   out 'delete Intel Device Plugin Operator deployment:' 20
@@ -69,10 +69,10 @@ screen3()
   clear
   out "2. Deploy node-feature-discovery for Kubernetes"
   out "It's used to label SGX capable nodes and register SGX EPC as an extended resource"
-  command "kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/sgx?ref=main"
+  command "kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=main"
   out "Check its pod is running"
   command "kubectl wait --for=condition=Ready pod/$(kubectl get --no-headers -l app=nfd-worker -o=jsonpath='{.items[0].metadata.name}' pods -n node-feature-discovery) -n node-feature-discovery"
-  out "Create NodeFeatureRules for SGX specific labels"
+  out "Create NodeFeatureRules for SGX specific labels and SGX EPC extended resource"
   command 'kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=main || true' 20
 }
 
@@ -91,8 +91,8 @@ screen5()
 {
   clear
   out "4. Verify node resources"
-  command "kubectl get nodes -o json | jq .items[].status.allocatable | grep sgx"
-  command "kubectl get nodes -o json | jq .items[].metadata.labels | grep sgx"
+  command "kubectl get nodes -o jsonpath='{.items[].status.allocatable}' | jq | grep sgx"
+  command "kubectl get nodes -o jsonpath='{.items[].metadata.labels}' | jq | grep kubernetes.io\/sgx"
   out "Both node labels and resources for SGX are in place"
 }
 
@@ -104,7 +104,10 @@ screen6()
   command "sudo ctr -n k8s.io i import sgx-aesmd.tar"
   command "sudo ctr -n k8s.io i import sgx-demo.tar"
   out "Deploy Intel(R) AESMD"
-  command "kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_aesmd?ref=main -n sgx-ecdsa-quote"
+  pushd ../deployments/sgx_aesmd/base
+  jq --arg pccs_url "$PCCS_URL" '.pccs_url = $pccs_url' sgx_default_qcnl.template > sgx_default_qcnl.conf
+  command "kubectl apply -k . -n sgx-ecdsa-quote"
+  popd
   out "Deploy Intel(R) SGX DCAP ECDSA Quote Generation"
   command "kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_enclave_apps/overlays/sgx_ecdsa_aesmd_quote?ref=main -n sgx-ecdsa-quote"
   command "kubectl logs $(kubectl get --no-headers -l job-name=ecdsa-quote-intelsgx-demo-job -o=jsonpath='{.items[0].metadata.name}' pods -n sgx-ecdsa-quote) -n sgx-ecdsa-quote"
@@ -117,11 +120,14 @@ screen6()
 screen7()
 {
   clear
-  out "6. Run Intel(R) SGX DCAP ECDSA Quote Generation (in-proc)"
-  out "Deploy Intel(R) SGX DCAP ECDSA Quote Generation"
-  command "kubectl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_enclave_apps/overlays/sgx_ecdsa_inproc_quote?ref=main -n sgx-ecdsa-quote"
+  out "6. Run Intel(R) SGX DCAP ECDSA Quote Generation (in-proc) and Trusted Quote Verification"
+  out "Deploy Intel(R) SGX DCAP ECDSA DCAP Flow"
+  pushd ../deployments/sgx_enclave_apps/overlays/sgx_ecdsa_inproc_quote
+  jq --arg pccs_url "$PCCS_URL" '.pccs_url = $pccs_url' sgx_default_qcnl.template > sgx_default_qcnl.conf
+  command "kubectl apply -k . -n sgx-ecdsa-quote"
+  popd
   command "kubectl logs $(kubectl get --no-headers -l job-name=inproc-ecdsa-quote-intelsgx-demo-job -o=jsonpath='{.items[0].metadata.name}' pods -n sgx-ecdsa-quote) -n sgx-ecdsa-quote"
-  out "Intel(R) SGX DCAP QuoteGenerationSample successfully generated a quote using DCAP Quote Provider Library"
+  out "Intel(R) SGX DCAP QuoteGenerationSample successfully generated and verified a quote using DCAP Quote Provider Library"
   out "Delete the deployment"
   command "kubectl delete -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_enclave_apps/overlays/sgx_ecdsa_inproc_quote?ref=main -n sgx-ecdsa-quote"
 }
@@ -134,6 +140,7 @@ screen8()
   out "* SGX Kubernetes* Device Plugin deployment with an Operator"
   out "* Intel(R) SGX node resource and feature label registration to Kubernetes*"
   out "* Intel(R) SGX DCAP ECDSA Quote Generation (out-of-proc and in-proc)"
+  out "* Intel(R) SGX DCAP ECDSA Trusted Quote Verification"
 }
 
 if [ "$1" == 'play' ] ; then
