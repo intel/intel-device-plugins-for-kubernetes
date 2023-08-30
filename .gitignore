@@ -32,5 +32,6 @@ deployments/fpga_admissionwebhook/base/intel-fpga-webhook-certs-secret
 _build
 _work
 
-*.tgz
-charts/operator/crds
+vendor/*
+licenses/*
+

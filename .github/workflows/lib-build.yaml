@@ -1,0 +1,51 @@
+name: build
+on:
+  workflow_call:
+jobs:
+  image:
+    name: Build image
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        image:
+          - intel-fpga-admissionwebhook
+          - intel-fpga-initcontainer
+          - intel-gpu-fakedev
+          - intel-gpu-initcontainer
+          - intel-gpu-plugin
+          - intel-fpga-plugin
+          - intel-qat-initcontainer
+          - intel-qat-plugin
+          - intel-qat-plugin-kerneldrv
+          - intel-deviceplugin-operator
+          - intel-sgx-admissionwebhook
+          - intel-sgx-plugin
+          - intel-sgx-initcontainer
+          - intel-dsa-plugin
+          - intel-iaa-plugin
+          - intel-idxd-config-initcontainer
+          - intel-dlb-plugin
+          - intel-dlb-initcontainer
+          - intel-xpumanager-sidecar
+
+          # # Demo images
+          - crypto-perf
+          - accel-config-demo
+          - intel-opencl-icd
+          - opae-nlb-demo
+          - openssl-qat-engine
+          - sgx-sdk-demo
+          - sgx-aesmd-demo
+          - dlb-dpdk-demo
+          - dlb-libdlb-demo
+        builder: [buildah, docker]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+      - run: make -e vendor
+      - name: Build image
+        env:
+          IMAGE_NAME: ${{ matrix.image }}
+          BUILDER_NAME: ${{ matrix.builder }}
+        run: |
+          make ${IMAGE_NAME} BUILDER=${BUILDER_NAME}

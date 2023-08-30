@@ -1,0 +1,39 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  tag_fix:
+    name: Prepare image tag
+    runs-on: ubuntu-22.04
+    outputs:
+      fixed_tag: ${{ steps.fix.outputs.tag }}
+    env:
+      TAGNAME: ${{ github.ref_name }}
+    steps:
+    - id: fix
+      # remove first character (v)
+      run: echo "tag=${TAGNAME:1}" >> "$GITHUB_OUTPUT"
+
+  trivy:
+    name: Trivy
+    uses: "./.github/workflows/lib-trivy.yaml"
+    with:
+      deployments: false
+      dockerfiles: false
+      export-csv: true
+
+  build:
+    name: Build & Publish
+    needs:
+      - trivy
+      - tag_fix
+    uses: "./.github/workflows/lib-publish.yaml"
+    secrets: inherit
+    with:
+      image_tag: ${{ needs.tag_fix.outputs.fixed_tag }}

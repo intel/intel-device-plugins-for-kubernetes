@@ -1,0 +1,71 @@
+name: validate
+on:
+  workflow_call:
+
+env:
+  K8S_VERSION: 1.27.1
+jobs:
+  docs:
+    name: Check docs are buildable
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-venv
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Set up doc directory
+      run: |
+        mkdir $HOME/output
+        touch $HOME/output/.nojekyll
+    - name: Build latest
+      run: |
+        GITHUB_SHA=$(git rev-parse HEAD)
+        export GITHUB_SHA
+        rm -rf _work/venv
+        make vhtml
+        mv _build/html/* $HOME/output/
+
+  golangci:
+    permissions:
+      contents: read  # for actions/checkout to fetch code
+      pull-requests: read  # for golangci/golangci-lint-action to fetch pull requests
+    name: lint
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+          check-latest: true
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.52.1
+          args: -v --timeout 5m
+
+  build:
+    name: Build and check device plugins
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+          check-latest: true
+      - name: Check Dockerfiles
+        run: make check-dockerfiles
+      - run: make go-mod-tidy
+      - run: make BUILDTAGS=kerneldrv
+      - run: make test BUILDTAGS=kerneldrv
+      - name: Install envtest tool and run envtest
+        run: |
+          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+          setup-envtest use ${K8S_VERSION}
+      - run: |
+          KUBEBUILDER_ASSETS=$(setup-envtest use -i -p path ${K8S_VERSION}) make envtest
+      - run: make check-github-actions
+      - name: Codecov report
+        run: bash <(curl -s https://codecov.io/bash)

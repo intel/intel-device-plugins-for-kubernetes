@@ -1,0 +1,61 @@
+name: publish
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        default: "devel"
+        required: false
+        type: string
+jobs:
+  image:
+    name: Build image
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        image:
+          - intel-fpga-admissionwebhook
+          - intel-fpga-initcontainer
+          - intel-gpu-initcontainer
+          - intel-gpu-plugin
+          - intel-fpga-plugin
+          - intel-qat-initcontainer
+          - intel-qat-plugin
+          - intel-qat-plugin-kerneldrv
+          - intel-deviceplugin-operator
+          - intel-sgx-admissionwebhook
+          - intel-sgx-plugin
+          - intel-sgx-initcontainer
+          - intel-dsa-plugin
+          - intel-iaa-plugin
+          - intel-idxd-config-initcontainer
+          - intel-dlb-plugin
+          - intel-dlb-initcontainer
+          - intel-xpumanager-sidecar
+
+          # # Demo images
+          - crypto-perf
+          - opae-nlb-demo
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+      - run: make -e vendor
+      - name: Build image
+        env:
+          IMAGE_NAME: ${{ matrix.image }}
+        run: |
+          REG=intel/ make ${IMAGE_NAME} BUILDER=docker
+      - name: Trivy scan for image
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: image
+          image-ref: intel/${{ matrix.image }}:${{ inputs.image_tag }}
+          exit-code: 1
+      - name: Test image base layer
+        run: IMG=intel/${{ matrix.image }}:${{ inputs.image_tag }} make test-image-base-layer BUILDER=docker
+      - name: Login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PASS }}
+      - name: Push
+        run: docker push intel/${{ matrix.image }}:${{ inputs.image_tag }}

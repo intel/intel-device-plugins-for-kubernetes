@@ -1,16 +1,6 @@
 name: e2e
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 4 * * *'
-  pull_request:
-    branches:
-      - main
-      - 'release-*'
-  push:
-    branches:
-      - main
-      - 'release-*'
+  workflow_call:
 
 permissions:
   contents: read
