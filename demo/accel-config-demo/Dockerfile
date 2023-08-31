@@ -18,9 +18,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ nasm make cmake patch autoconf automake libtool pkg-config git curl ca-certificates \
     libjson-c-dev uuid-dev zlib1g-dev libssl-dev
 
-ARG ACCEL_CONFIG_VERSION="4.0"
+ARG ACCEL_CONFIG_VERSION="4.1"
 ARG ACCEL_CONFIG_DOWNLOAD_URL="https://github.com/intel/idxd-config/archive/accel-config-v$ACCEL_CONFIG_VERSION.tar.gz"
-ARG ACCEL_CONFIG_SHA256="6d9bce40d797a87508ce5c5a5b71bb2bdc1cb544848925ed2c4c37b46a1252ce"
+ARG ACCEL_CONFIG_SHA256="26bed5f5fdef226ae90aebf296f1fa355c7a134aa321a468fbc5be894ff0b91b"
 
 RUN curl -fsSL "$ACCEL_CONFIG_DOWNLOAD_URL" -o accel-config.tar.gz && echo "$ACCEL_CONFIG_SHA256 accel-config.tar.gz" | sha256sum -c - && tar -xzf accel-config.tar.gz
 
