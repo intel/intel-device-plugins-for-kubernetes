@@ -42,6 +42,8 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
+	"strconv"
 
 	"golang.org/x/sys/unix"
 )
@@ -78,36 +80,36 @@ type genOptions struct {
 }
 
 func addSysfsDriTree(root string, opts *genOptions, i int) error {
-	card := cardBase + i
-	base := fmt.Sprintf("%s/class/drm/card%d", root, card)
+	card := fmt.Sprintf("card%d", cardBase+i)
+	base := filepath.Join(root, "class", "drm", card)
 
 	if err := os.MkdirAll(base, dirMode); err != nil {
 		return err
 	}
 	opts.dirs++
 
-	data := []byte(fmt.Sprintf("%d", opts.DevMemSize))
-	file := fmt.Sprintf("%s/lmem_total_bytes", base)
+	data := []byte(strconv.Itoa(opts.DevMemSize))
+	file := filepath.Join(base, "lmem_total_bytes")
 
 	if err := os.WriteFile(file, data, fileMode); err != nil {
 		return err
 	}
 	opts.files++
 
-	path := fmt.Sprintf("%s/device/drm/card%d", base, card)
+	path := filepath.Join(base, "device", "drm", card)
 	if err := os.MkdirAll(path, dirMode); err != nil {
 		return err
 	}
 	opts.dirs++
 
-	path = fmt.Sprintf("%s/device/drm/renderD%d", base, renderBase+i)
+	path = filepath.Join(base, "device", "drm", fmt.Sprintf("renderD%d", renderBase+i))
 	if err := os.Mkdir(path, dirMode); err != nil {
 		return err
 	}
 	opts.dirs++
 
 	data = []byte("0x8086")
-	file = fmt.Sprintf("%s/device/vendor", base)
+	file = filepath.Join(base, "device", "vendor")
 
 	if err := os.WriteFile(file, data, fileMode); err != nil {
 		return err
@@ -119,8 +121,8 @@ func addSysfsDriTree(root string, opts *genOptions, i int) error {
 		node = i / opts.DevsPerNode
 	}
 
-	data = []byte(fmt.Sprintf("%d", node))
-	file = fmt.Sprintf("%s/device/numa_node", base)
+	data = []byte(strconv.Itoa(node))
+	file = filepath.Join(base, "device", "numa_node")
 
 	if err := os.WriteFile(file, data, fileMode); err != nil {
 		return err
@@ -128,8 +130,8 @@ func addSysfsDriTree(root string, opts *genOptions, i int) error {
 	opts.files++
 
 	if opts.VfsPerPf > 0 && i%(opts.VfsPerPf+1) == 0 {
-		data = []byte(fmt.Sprintf("%d", opts.VfsPerPf))
-		file = fmt.Sprintf("%s/device/sriov_numvfs", base)
+		data = []byte(strconv.Itoa(opts.VfsPerPf))
+		file = filepath.Join(base, "device", "sriov_numvfs")
 
 		if err := os.WriteFile(file, data, fileMode); err != nil {
 			return err
@@ -138,7 +140,7 @@ func addSysfsDriTree(root string, opts *genOptions, i int) error {
 	}
 
 	for tile := 0; tile < opts.TilesPerDev; tile++ {
-		path := fmt.Sprintf("%s/gt/gt%d", base, tile)
+		path := filepath.Join(base, "gt", fmt.Sprintf("gt%d", tile))
 		if err := os.MkdirAll(path, dirMode); err != nil {
 			return err
 		}
@@ -148,24 +150,44 @@ func addSysfsDriTree(root string, opts *genOptions, i int) error {
 	return nil
 }
 
-func addDevfsDriTree(root string, opts *genOptions, i int) error {
-	base := fmt.Sprintf("%s/dri", root)
+func addSysfsBusTree(root string, opts *genOptions, i int) error {
+	pciName := fmt.Sprintf("0000:00:0%d.0", i)
+	base := filepath.Join(root, "bus", "pci", "drivers", "i915", pciName)
+
 	if err := os.MkdirAll(base, dirMode); err != nil {
 		return err
 	}
 	opts.dirs++
 
+	data := []byte("0x4905")
+	file := filepath.Join(base, "device")
+
+	if err := os.WriteFile(file, data, fileMode); err != nil {
+		return err
+	}
+	opts.files++
+
+	drm := filepath.Join(base, "drm")
+	if err := os.MkdirAll(drm, dirMode); err != nil {
+		return err
+	}
+	opts.dirs++
+
+	return addDeviceNodes(drm, opts, i)
+}
+
+func addDeviceNodes(base string, opts *genOptions, i int) error {
 	mode := uint32(fileMode | devNullType)
 	devid := int(unix.Mkdev(uint32(devNullMajor), uint32(devNullMinor)))
 
-	file := fmt.Sprintf("%s/card%d", base, cardBase+i)
+	file := filepath.Join(base, fmt.Sprintf("card%d", cardBase+i))
 	if err := unix.Mknod(file, mode, devid); err != nil {
 		return fmt.Errorf("NULL device (%d:%d) node creation failed for '%s': %w",
 			devNullMajor, devNullMinor, file, err)
 	}
 	opts.devs++
 
-	file = fmt.Sprintf("%s/renderD%d", base, renderBase+i)
+	file = filepath.Join(base, fmt.Sprintf("renderD%d", renderBase+i))
 	if err := unix.Mknod(file, mode, devid); err != nil {
 		return fmt.Errorf("NULL device (%d:%d) node creation failed for '%s': %w",
 			devNullMajor, devNullMinor, file, err)
@@ -175,14 +197,24 @@ func addDevfsDriTree(root string, opts *genOptions, i int) error {
 	return nil
 }
 
-func addDebugfsDriTree(root string, opts *genOptions, i int) error {
-	base := fmt.Sprintf("%s/kernel/debug/dri/%d", root, i)
+func addDevfsDriTree(root string, opts *genOptions, i int) error {
+	base := filepath.Join(root, "dri")
 	if err := os.MkdirAll(base, dirMode); err != nil {
 		return err
 	}
 	opts.dirs++
 
-	path := fmt.Sprintf("%s/i915_capabilities", base)
+	return addDeviceNodes(base, opts, i)
+}
+
+func addDebugfsDriTree(root string, opts *genOptions, i int) error {
+	base := filepath.Join(root, "kernel", "debug", "dri", strconv.Itoa(i))
+	if err := os.MkdirAll(base, dirMode); err != nil {
+		return err
+	}
+	opts.dirs++
+
+	path := filepath.Join(base, "i915_capabilities")
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, fileMode)
 
 	if err != nil {
@@ -212,8 +244,8 @@ func removeExistingDir(path, name string) {
 		return
 	}
 
-	if name == "sysfs" && len(entries) > 2 {
-		log.Fatalf("ERROR: >2 entries in '%s' - real sysfs?", path)
+	if name == "sysfs" && len(entries) > 3 {
+		log.Fatalf("ERROR: >3 entries in '%s' - real sysfs?", path)
 	}
 
 	if name == "devfs" && (entries[0].Name() != "dri" || len(entries) > 1) {
@@ -250,6 +282,10 @@ func generateDriFiles(opts genOptions) {
 
 		if err := addDevfsDriTree(devfsPath, &opts, i); err != nil {
 			log.Fatalf("ERROR: dev-%d devfs tree generation failed: %v", i, err)
+		}
+
+		if err := addSysfsBusTree(sysfsPath, &opts, i); err != nil {
+			log.Fatalf("ERROR: dev-%d sysfs bus tree generation failed: %v", i, err)
 		}
 	}
 	log.Printf("Done, created %d dirs, %d devices and %d files.", opts.dirs, opts.devs, opts.files)
