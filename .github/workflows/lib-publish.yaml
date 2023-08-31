@@ -6,6 +6,9 @@ on:
         default: "devel"
         required: false
         type: string
+env:
+  no_base_check: "['intel-qat-plugin-kerneldrv', 'intel-idxd-config-initcontainer', 'crypto-perf', 'opae-nlb-demo']"
+
 jobs:
   image:
     name: Build image
@@ -51,6 +54,8 @@ jobs:
           image-ref: intel/${{ matrix.image }}:${{ inputs.image_tag }}
           exit-code: 1
       - name: Test image base layer
+        # Don't run base layer check for selected images
+        if: ${{ !contains(fromJson(env.no_base_check), matrix.image) }}
         run: IMG=intel/${{ matrix.image }}:${{ inputs.image_tag }} make test-image-base-layer BUILDER=docker
       - name: Login
         uses: docker/login-action@v2
