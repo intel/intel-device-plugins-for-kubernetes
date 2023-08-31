@@ -6,7 +6,6 @@
 
 # CI and building
 .github/workflows/  @bart0sh @kad @mythi
-Jenkinsfile         @bart0sh @kad @mythi
 /scripts/           @bart0sh @kad @mythi
 
 # Binaries
