@@ -24,5 +24,9 @@ AVD-KSV-0047
 # device plugin operator requires access to daemonset creation etc.
 AVD-KSV-0048
 
+# HostPath present many security risks and as a security practice it is better to avoid critical host paths mounts.
+# Some plugins require access to various host paths
+AVD-KSV-0121
+
 # Device plugins do not use any CSIs
 ## CVE-2019-11255
