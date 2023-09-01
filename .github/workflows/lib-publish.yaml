@@ -24,7 +24,6 @@ jobs:
           - intel-fpga-plugin
           - intel-qat-initcontainer
           - intel-qat-plugin
-          - intel-qat-plugin-kerneldrv
           - intel-deviceplugin-operator
           - intel-sgx-admissionwebhook
           - intel-sgx-plugin
