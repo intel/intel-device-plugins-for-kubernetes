@@ -9,11 +9,6 @@ AVD-DS-0002
 # initcontainers require privileged access
 AVD-KSV-0017
 
-# Sharing the host’s network namespace permits processes in the pod to communicate with
-# processes bound to the host’s loopback adapter.
-# sgx single-node demo deployment uses hostNetwork: true to be able to use the default setting for PCCS URL from containers
-AVD-KSV-0009
-
 # Do not allow privilege escalation from node proxy
 # Check whether role permits privilege escalation from node proxy
 # gpu plugin in kubelet mode requires "nodes/proxy" resource access

@@ -10,5 +10,10 @@ configMapGenerator:
   - sgx_default_qcnl.conf
   name: sgx-attestation-conf
 patches:
-- path: add_hostnetwork.yaml
 - path: add_sgx_default_qcnl_conf.yaml
+- path: change_workingdir_and_command.json
+  target:
+    group: batch
+    kind: Job
+    name: intelsgx-demo-job
+    version: v1

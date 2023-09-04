@@ -15,7 +15,6 @@ spec:
       annotations:
         sgx.intel.com/quote-provider: "aesmd"
     spec:
-      hostNetwork: true
       containers:
       - name: aesmd
         image: intel/sgx-aesmd-demo:devel
