@@ -13,7 +13,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y python3-venv
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Set up doc directory
@@ -35,7 +35,7 @@ jobs:
     name: lint
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
@@ -50,7 +50,7 @@ jobs:
     name: Build and check device plugins
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
           go-version-file: go.mod

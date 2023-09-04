@@ -40,7 +40,7 @@ jobs:
           - dlb-libdlb-demo
         builder: [buildah, docker]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
       - run: make -e vendor
       - name: Build image
