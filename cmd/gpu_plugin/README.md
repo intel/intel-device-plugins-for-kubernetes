@@ -23,6 +23,7 @@ Table of Contents
               * [Fractional resources details](#fractional-resources-details)
     * [Verify Plugin Registration](#verify-plugin-registration)
 * [Testing and Demos](#testing-and-demos)
+* [Labels created by GPU plugin](#labels-created-by-gpu-plugin)
 * [Issues with media workloads on multi-GPU setups](#issues-with-media-workloads-on-multi-gpu-setups)
     * [Workaround for QSV and VA-API](#workaround-for-qsv-and-va-api)
 
@@ -339,6 +340,9 @@ The GPU plugin functionality can be verified by deploying an [OpenCL image](../.
       Warning  FailedScheduling  <unknown>  default-scheduler  0/1 nodes are available: 1 Insufficient gpu.intel.com/i915.
     ```
 
+## Labels created by GPU plugin
+
+If installed with NFD and started with resource-management, plugin will export a set of labels for the node. For detailed info, see [labeling documentation](./labels.md).
 
 ## Issues with media workloads on multi-GPU setups
 
