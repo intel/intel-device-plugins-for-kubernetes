@@ -24,6 +24,7 @@ BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 OLM_MANIFESTS = deployments/operator/manifests
+BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(TAG) $(BUNDLE_METADATA_OPTS) --kustomize-dir $(OLM_MANIFESTS) --output-dir . --use-image-digests
 BUNDLE_DIR = community-operators/operators/intel-device-plugins-operator/$(TAG)
 
 TESTDATA_DIR = pkg/topology/testdata
@@ -120,7 +121,7 @@ bundle:
 	rm -rf $(BUNDLE_DIR)
 	mkdir -p $(BUNDLE_DIR)
 	$(OPERATOR_SDK) generate kustomize manifests -q --input-dir $(OLM_MANIFESTS) --output-dir $(OLM_MANIFESTS) --apis-dir pkg/apis
-	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(TAG)|" | $(OPERATOR_SDK) generate bundle -q --overwrite --kustomize-dir $(OLM_MANIFESTS) --version $(TAG) $(BUNDLE_METADATA_OPTS) --output-dir .
+	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(TAG)|" | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	# Remove unneeded resources
 	rm manifests/*service.yaml
 	rm manifests/*clusterrole.yaml
