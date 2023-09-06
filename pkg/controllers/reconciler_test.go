@@ -60,7 +60,9 @@ func TestUpgrade(test *testing.T) {
 		},
 	}
 
-	for _, t := range tests {
+	for i := range tests {
+		t := tests[i]
+
 		upgrade := UpgradeImages(&t.image, &t.initimage)
 
 		if !(upgrade == t.upgrade && t.image == t.expectedImage && t.initimage == t.expectedInitimage) {
