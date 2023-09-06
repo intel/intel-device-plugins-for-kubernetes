@@ -337,7 +337,7 @@ func (rm *resourceManager) listPods() (*v1.PodList, error) {
 		for i := 0; i < kubeletAPIMaxRetries; i++ {
 			if podList, err := rm.listPodsFromKubelet(); err == nil {
 				return podList, nil
-			} else if errors.As(err, neterr); neterr.Timeout() {
+			} else if errors.As(err, &neterr) && neterr.Timeout() {
 				continue
 			}
 
