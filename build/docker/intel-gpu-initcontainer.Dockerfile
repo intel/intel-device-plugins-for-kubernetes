@@ -24,7 +24,7 @@
 ## (see build-image.sh).
 ## 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based.
 ## The RedHat build tool does not allow additional image build parameters.
-ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro:latest
+ARG FINAL_BASE=registry.access.redhat.com/ubi9-micro:latest
 ###
 ##
 ## GOLANG_BASE can be used to make the build reproducible by choosing an
