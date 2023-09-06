@@ -5,12 +5,14 @@ ARG ROOT=/install_root
 
 RUN apt-get update && apt-get --no-install-recommends -y install musl musl-tools musl-dev
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG FINAL_BASE=registry.access.redhat.com/ubi9-micro:latest
 RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz -o toybox.tar.gz \N
     && echo "$TOYBOX_SHA256 toybox.tar.gz" | sha256sum -c - \N
     && tar -xzf toybox.tar.gz \N
     && rm toybox.tar.gz \N
     && cd toybox-$TOYBOX_VERSION \N
-    && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \N
+    && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config-$(echo ${FINAL_BASE} | xargs basename -s :latest) LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT/usr/bin V=2 make toybox install_flat \N
+    && cd $ROOT && ln -fs usr/bin bin && cd - \N
     && install -D LICENSE $ROOT/licenses/toybox \N
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 ###
