@@ -24,7 +24,7 @@
 ## (see build-image.sh).
 ## 2) and the default FINAL_BASE is primarily used to build Redhat Certified Openshift Operator container images that must be UBI based.
 ## The RedHat build tool does not allow additional image build parameters.
-ARG FINAL_BASE=registry.access.redhat.com/ubi8-micro:latest
+ARG FINAL_BASE=registry.access.redhat.com/ubi9-micro:latest
 ###
 ##
 ## GOLANG_BASE can be used to make the build reproducible by choosing an
@@ -75,12 +75,14 @@ ARG TOYBOX_SHA256="3c31e235fe87e74e6c6cf7cd7299fcbffb0f4a4834dae607aa26bb4f15835
 ARG ROOT=/install_root
 RUN apt-get update && apt-get --no-install-recommends -y install musl musl-tools musl-dev
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG FINAL_BASE=registry.access.redhat.com/ubi9-micro:latest
 RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz -o toybox.tar.gz \
     && echo "$TOYBOX_SHA256 toybox.tar.gz" | sha256sum -c - \
     && tar -xzf toybox.tar.gz \
     && rm toybox.tar.gz \
     && cd toybox-$TOYBOX_VERSION \
-    && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT V=2 make toybox install \
+    && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config-$(echo ${FINAL_BASE} | xargs basename -s :latest) LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT/usr/bin V=2 make toybox install_flat \
+    && cd $ROOT && ln -fs usr/bin bin && cd - \
     && install -D LICENSE $ROOT/licenses/toybox \
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 ###

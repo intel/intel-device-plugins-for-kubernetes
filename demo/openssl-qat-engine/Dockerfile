@@ -1,8 +1,8 @@
 FROM ubuntu:22.04 as builder
 
-ARG QATLIB_VERSION="23.02.0"
+ARG QATLIB_VERSION="23.08.0"
 ARG QAT_ENGINE_VERSION="v1.2.0"
-ARG ASYNC_NGINX_VERSION="v0.5.0"
+ARG ASYNC_NGINX_VERSION="v0.5.1"
 ARG IPSEC_MB_VERSION="v1.4"
 ARG IPP_CRYPTO_VERSION="ippcp_2021.8"
 
@@ -72,7 +72,7 @@ RUN cd /asynch_mode_nginx && \
 FROM ubuntu:22.04
 
 COPY --from=builder /usr/bin/*_sample* /usr/bin/
-COPY --from=builder /usr/lib/libqat.so.3.0.3 /usr/lib/
+COPY --from=builder /usr/lib/libqat.so.4.0.0 /usr/lib/
 COPY --from=builder /usr/lib/libusdm.so.0.1.0 /usr/lib/
 COPY --from=builder /usr/lib64/libIPSec_MB.so.1 /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /usr/local/lib/libcrypto_mb.so.11.8 /usr/lib/x86_64-linux-gnu/
