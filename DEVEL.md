@@ -183,26 +183,99 @@ container images with the executables under test must be available in the
 cluster. If these two conditions are satisfied, run the tests with:
 
 ```bash
-$ go test -v ./test/e2e/...
-```
-
-In case you want to run only certain tests, e.g., QAT ones, run:
-
-```bash
-$ go test -v ./test/e2e/... -args -ginkgo.focus "QAT"
+# Run all e2e tests in this repository
+go test -v ./test/e2e/...
 ```
 
 If you need to specify paths to your custom `kubeconfig` containing
 embedded authentication info then add the `-kubeconfig` argument:
 
 ```bash
-$ go test -v ./test/e2e/... -args -kubeconfig /path/to/kubeconfig
+go test -v ./test/e2e/... -args -kubeconfig /path/to/kubeconfig
 ```
 
 The full list of available options can be obtained with:
 
 ```bash
-$ go test ./test/e2e/... -args -help
+go test ./test/e2e/... -args -help
+```
+
+In most cases, it would not be possible to run all E2E tests in one system.
+For running a subset of tests, there are labels that you can use to pick out specific parts.
+You can run the tests with:
+```bash
+# Run a subset of tests
+go test -v ./test/e2e/... -args -ginkgo.focus <labels in regex> -ginkgo.skip <labels in regex>
+```
+
+#### Table of Labels
+
+| Device | Mode             | Resource    | App                            |
+|:-------|:-----------------|:------------|:-------------------------------|
+| `dlb`  |-                 | `pf`, `vf`  | `libdlb`                       |
+| `dsa`  |-                 | `dedicated` | `accel-config`                 |
+| `fpga` | `af`, `region`   |             | `opae-nlb-demo`                |
+| `gpu`  |-                 | `i915`      | `busybox`, `tensorflow`        |
+| `iaa`  |-                 | `dedicated` | `accel-config`                 |
+| `qat`  | `dpdk`           | `dc`        | `openssl`                      |
+| `qat`  | `dpdk`           | `cy`        | `openssl`, `crypto-perf`       |
+| `qat`  | `dpdk`           | `generic`   | `crypto-perf`, `compress-perf` |
+| `qat`  | `kernel`         | `cy1_dc0`   | `busybox`                      |
+| `sgx`  |-                 |             | `sgx-sdk-demo`                 |
+
+#### Examples
+
+```bash
+# DLB for VF resource without any app running
+go test -v ./test/e2e/... -args -ginkgo.focus "Device:dlb.*Resource:vf.*App:noapp"
+
+# FPGA with af mode with opae-nlb-demo app running
+go test -v ./test/e2e/... -args -ginkgo.focus "Device:fpga.*Mode:af.*App:opae-nlb-demo"
+
+# GPU with running only tensorflow app
+go test -v ./test/e2e/... -args -ginkgo.focus "Device:gpu.*App:tensorflow"
+#or
+go test -v ./test/e2e/... -args -ginkgo.focus "Device:gpu" -ginkgo.skip "App:busybox"
+
+# QAT for qat4 cy resource with openssl app running
+go test -v ./test/e2e/... -args -ginkgo.focus "Device:qat.*Resource:cy.*App:openssl"
+
+# QAT with dpdk mode for qat2 generic resource with all apps running
+go test -v ./test/e2e/... -args -ginkgo.focus "Device:qat.*Resource:generic.*App:(crypto-perf|compress-perf)"
+
+# SGX without running sgx-sdk-demo app
+go test -v ./test/e2e/... -args -ginkgo.focus "Device:sgx" -ginkgo.skip "App:sgx-sdk-demo"
+
+# All of Sapphire Rapids device plugins
+go test -v ./test/e2e/... -args -ginkgo.focus "Device:(dlb|dsa|iaa|qat|sgx)"
+```
+
+## Predefined E2E Tests
+
+It is possible to run predefined e2e tests with:
+```
+make e2e-<device> [E2E_LEVEL={basic|full}] [FOCUS=<labels in regex>] [SKIP=<labels in regex>]
+```  
+
+| `E2E_LEVEL`   | Equivalent `FOCUS` or `SKIP` | Explanation                                                                                      |
+:-------------- |:---------------------------- |:------------------------------------------------------------------------------------------------ |
+| `basic`       | `FOCUS=App:noapp`            | `basic` does not run any app pod, but checks if the plugin works and the resources are available |
+| `full`        | `SKIP=App:noapp`             | `full` checks all resources, runs all apps except the spec kept for no app running               | 
+
+### Examples
+
+```bash
+# DLB for both of pf and vf resources with running libdlb app
+make e2e-dlb E2E_LEVEL=full
+
+# QAT for cy resource with running only openssl app
+make e2e-qat FOCUS=Resource:cy.*App:openssl
+
+# QAT for dc resource without running any app
+make e2e-qat E2E_LEVEL=basic FOCUS=Resource:dc
+
+# GPU without running tensorflow app
+make e2e-gpu E2E_LEVEL=full SKIP=tensorflow
 ```
 
 It is also possible to run the tests which don't depend on hardware
@@ -210,7 +283,7 @@ without a pre-configured Kubernetes cluster. Just make sure you have
 [Kind](https://kind.sigs.k8s.io/) installed on your host and run:
 
 ```
-$ make test-with-kind
+make test-with-kind
 ```
 
 ### Run Controller Tests with a Local Control Plane
