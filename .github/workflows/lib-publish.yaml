@@ -58,7 +58,7 @@ jobs:
         if: ${{ !contains(fromJson(env.no_base_check), matrix.image) }}
         run: IMG=intel/${{ matrix.image }}:${{ inputs.image_tag }} make test-image-base-layer BUILDER=docker
       - name: Login
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}
