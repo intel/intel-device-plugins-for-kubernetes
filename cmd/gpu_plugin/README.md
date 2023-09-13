@@ -24,6 +24,7 @@ Table of Contents
     * [Verify Plugin Registration](#verify-plugin-registration)
 * [Testing and Demos](#testing-and-demos)
 * [Labels created by GPU plugin](#labels-created-by-gpu-plugin)
+* [SR-IOV use with the plugin](#sr-iov-use-with-the-plugin)
 * [Issues with media workloads on multi-GPU setups](#issues-with-media-workloads-on-multi-gpu-setups)
     * [Workaround for QSV and VA-API](#workaround-for-qsv-and-va-api)
 
@@ -31,7 +32,7 @@ Table of Contents
 ## Introduction
 
 Intel GPU plugin facilitates Kubernetes workload offloading by providing access to
-discrete (including Intel® Data Center GPU Flex Series) and integrated Intel GPU devices
+discrete (including Intel® Data Center GPU Flex & Max Series) and integrated Intel GPU devices
 supported by the host kernel.
 
 Use cases include, but are not limited to:
@@ -343,6 +344,12 @@ The GPU plugin functionality can be verified by deploying an [OpenCL image](../.
 ## Labels created by GPU plugin
 
 If installed with NFD and started with resource-management, plugin will export a set of labels for the node. For detailed info, see [labeling documentation](./labels.md).
+
+## SR-IOV use with the plugin
+
+GPU plugin does __not__ setup SR-IOV. It has to be configured by the cluster admin.
+
+GPU plugin does however support provisioning Virtual Functions (VFs) to containers for a SR-IOV enabled GPU. When the plugin detects a GPU with SR-IOV VFs configured, it will only provision the VFs and leaves the PF device on the host.
 
 ## Issues with media workloads on multi-GPU setups
 
