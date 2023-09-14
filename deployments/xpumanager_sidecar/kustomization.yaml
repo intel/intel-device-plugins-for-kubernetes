@@ -1,6 +1,5 @@
-# XeLink topology information is only available from >= 1.x.y release
 resources:
-- https://raw.githubusercontent.com/intel/xpumanager/v1.2.0_golden/deployment/kubernetes/daemonset-intel-xpum.yaml
+- https://raw.githubusercontent.com/intel/xpumanager/V1.2.18/deployment/kubernetes/daemonset-intel-xpum.yaml
 namespace: monitoring
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
