@@ -31,7 +31,8 @@ type SgxDevicePluginSpec struct {
 	// Image is a container image with SGX device plugin executable.
 	Image string `json:"image,omitempty"`
 
-	// InitImage is a container image with tools (e.g., SGX NFD source hook) installed on each node.
+	// InitImage is a container image with tools (i.e., SGX NFD source hook) installed on each node.
+	// Recommendation is to leave this unset and prefer the SGX NodeFeatureRule instead.
 	InitImage string `json:"initImage,omitempty"`
 
 	// EnclaveLimit is a number of containers that can share the same SGX enclave device.
