@@ -54,6 +54,10 @@ func (r *QatDevicePlugin) Default() {
 	if len(r.Spec.Image) == 0 {
 		r.Spec.Image = "intel/intel-qat-plugin:" + qatMinVersion.String()
 	}
+
+	if len(r.Spec.InitImage) == 0 {
+		r.Spec.InitImage = "intel/intel-qat-initcontainer:" + qatMinVersion.String()
+	}
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-qatdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=qatdeviceplugins,versions=v1,name=vqatdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1

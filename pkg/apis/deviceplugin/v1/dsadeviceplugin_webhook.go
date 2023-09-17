@@ -54,6 +54,10 @@ func (r *DsaDevicePlugin) Default() {
 	if len(r.Spec.Image) == 0 {
 		r.Spec.Image = "intel/intel-dsa-plugin:" + dsaMinVersion.String()
 	}
+
+	if len(r.Spec.InitImage) == 0 {
+		r.Spec.InitImage = "intel/intel-idxd-config-initcontainer:" + dsaMinVersion.String()
+	}
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-dsadeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=dsadeviceplugins,versions=v1,name=vdsadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1

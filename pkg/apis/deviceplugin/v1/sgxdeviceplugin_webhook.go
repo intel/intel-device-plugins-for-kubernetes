@@ -54,6 +54,10 @@ func (r *SgxDevicePlugin) Default() {
 	if len(r.Spec.Image) == 0 {
 		r.Spec.Image = "intel/intel-sgx-plugin:" + sgxMinVersion.String()
 	}
+
+	if len(r.Spec.InitImage) == 0 {
+		r.Spec.InitImage = "intel/intel-sgx-initcontainer:" + sgxMinVersion.String()
+	}
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-sgxdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=sgxdeviceplugins,versions=v1,name=vsgxdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1

@@ -54,6 +54,10 @@ func (r *DlbDevicePlugin) Default() {
 	if len(r.Spec.Image) == 0 {
 		r.Spec.Image = "intel/intel-dlb-plugin:" + dlbMinVersion.String()
 	}
+
+	if len(r.Spec.InitImage) == 0 {
+		r.Spec.InitImage = "intel/intel-dlb-initcontainer:" + dlbMinVersion.String()
+	}
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-dlbdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=dlbdeviceplugins,versions=v1,name=vdlbdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
