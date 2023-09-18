@@ -227,8 +227,8 @@ take care of, which are explained below. For the RBAC-permissions, gRPC service 
 the flag enabling, it is recommended to use kustomization by running:
 
 ```bash
-# Start NFD with GPU related configuration changes
-$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/gpu?ref=<RELEASE_VERSION>'
+# Start NFD - if your cluster doesn't have NFD installed yet
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=<RELEASE_VERSION>'
 
 # Create NodeFeatureRules for detecting GPUs on nodes
 $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=<RELEASE_VERSION>'

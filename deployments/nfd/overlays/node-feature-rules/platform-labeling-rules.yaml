@@ -4,6 +4,17 @@ metadata:
   name: intel-gpu-platform-labeling
 spec:
   rules:
+  - extendedResources:
+      gpu.intel.com/millicores: "@local.label.gpu.intel.com/millicores"
+      gpu.intel.com/memory.max: "@local.label.gpu.intel.com/memory.max"
+      gpu.intel.com/tiles: "@local.label.gpu.intel.com/tiles"
+    matchFeatures:
+      - feature: local.label
+        matchExpressions:
+          gpu.intel.com/millicores: {op: Exists}
+          gpu.intel.com/memory.max: {op: Exists}
+          gpu.intel.com/tiles: {op: Exists}
+    name: intel.gpu.fractionalresources
   # generic rule for older and upcoming devices
   - labels:
     labelsTemplate: |
