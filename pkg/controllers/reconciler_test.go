@@ -15,6 +15,7 @@
 package controllers
 
 import (
+	"context"
 	"testing"
 )
 
@@ -63,7 +64,7 @@ func TestUpgrade(test *testing.T) {
 	for i := range tests {
 		t := tests[i]
 
-		upgrade := UpgradeImages(&t.image, &t.initimage)
+		upgrade := UpgradeImages(context.Background(), &t.image, &t.initimage)
 
 		if !(upgrade == t.upgrade && t.image == t.expectedImage && t.initimage == t.expectedInitimage) {
 			test.Errorf("expectedUpgrade: %v, received: %v", t.upgrade, upgrade)

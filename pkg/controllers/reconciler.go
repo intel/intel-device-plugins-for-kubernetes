@@ -169,7 +169,7 @@ func (r *reconciler) createObjects(ctx context.Context,
 	return result, nil
 }
 
-func UpgradeImages(image *string, initimage *string) (upgrade bool) {
+func UpgradeImages(ctx context.Context, image *string, initimage *string) (upgrade bool) {
 	for _, s := range []*string{image, initimage} {
 		if s == nil {
 			continue
@@ -181,6 +181,8 @@ func UpgradeImages(image *string, initimage *string) (upgrade bool) {
 			envVarValue := os.Getenv(strings.ReplaceAll(strings.ToUpper(filepath.Base(name)), "-", "_") + "_SHA")
 
 			if envVarValue != "" && *s != envVarValue {
+				log.FromContext(ctx).Info("env var for the image: " + name + " is already set; user input of the image is ignored")
+
 				*s = envVarValue
 				upgrade = true
 
