@@ -11,6 +11,7 @@
 # Binaries
 /cmd/               @mythi @bart0sh @tkatila
 /cmd/fpga_tool/     @bart0sh @kad @mythi
+/cmd/gpu_fakedev/   @tkatila @uniemimu @eero-t
 /cmd/gpu_plugin/    @tkatila @bart0sh @uniemimu
 /cmd/gpu_nfdhook/   @tkatila @bart0sh @uniemimu
 /cmd/qat_plugin/    @hj-johannes-lee @mythi
