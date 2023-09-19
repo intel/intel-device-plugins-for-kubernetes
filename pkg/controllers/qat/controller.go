@@ -72,7 +72,7 @@ func (c *controller) CreateEmptyObject() client.Object {
 
 func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
 	dp := obj.(*devicepluginv1.QatDevicePlugin)
-	return controllers.UpgradeImages(&dp.Spec.Image, &dp.Spec.InitImage)
+	return controllers.UpgradeImages(ctx, &dp.Spec.Image, &dp.Spec.InitImage)
 }
 
 func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client) (int, error) {

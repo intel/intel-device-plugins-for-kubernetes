@@ -64,7 +64,7 @@ type controller struct {
 
 func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
 	dp := obj.(*devicepluginv1.SgxDevicePlugin)
-	return controllers.UpgradeImages(&dp.Spec.Image, &dp.Spec.InitImage)
+	return controllers.UpgradeImages(ctx, &dp.Spec.Image, &dp.Spec.InitImage)
 }
 
 func (c *controller) CreateEmptyObject() client.Object {

@@ -17,6 +17,8 @@ package controllers
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -167,7 +169,7 @@ func (r *reconciler) createObjects(ctx context.Context,
 	return result, nil
 }
 
-func UpgradeImages(image *string, initimage *string) (upgrade bool) {
+func UpgradeImages(ctx context.Context, image *string, initimage *string) (upgrade bool) {
 	for _, s := range []*string{image, initimage} {
 		if s == nil {
 			continue
@@ -175,6 +177,18 @@ func UpgradeImages(image *string, initimage *string) (upgrade bool) {
 
 		if parts := strings.SplitN(*s, ":", 2); len(parts) == 2 && len(parts[0]) > 0 {
 			name, version := parts[0], parts[1]
+
+			envVarValue := os.Getenv(strings.ReplaceAll(strings.ToUpper(filepath.Base(name)), "-", "_") + "_SHA")
+
+			if envVarValue != "" && *s != envVarValue {
+				log.FromContext(ctx).Info("env var for the image: " + name + " is already set; user input of the image is ignored")
+
+				*s = envVarValue
+				upgrade = true
+
+				continue
+			}
+
 			if ver, err := versionutil.ParseSemantic(version); err == nil && ver.LessThan(ImageMinVersion) {
 				*s = name + ":" + ImageMinVersion.String()
 				upgrade = true
