@@ -7,6 +7,7 @@ Table of Contents
 * [Installation](#installation)
     * [Prerequisites](#prerequisites)
     * [Pre-built Images](#pre-built-images)
+    * [Automatic Provisioning](#automatic-provisioning)
     * [Verify Plugin Registration](#verify-plugin-registration)
 * [Demos and Testing](#demos-and-testing)
     * [DPDK QAT Demos](#dpdk-qat-demos)
@@ -30,11 +31,10 @@ Supported Devices include, but may not be limited to, the following:
 - [Intel&reg; Atom&trade; Processor C3000][2]
 - [Intel&reg; Communications Chipset 8925 to 8955 Series][3]
 
-The QAT device plugin provides access to QAT hardware accelerated cryptographic and compression features.
-Demonstrations are provided utilising [DPDK](https://doc.dpdk.org/) and [OpenSSL](https://www.openssl.org/).
+The QAT device plugin provides access to QAT hardware accelerated cryptographic and compression features
+through the SR-IOV virtual functions (VF). Demonstrations are provided utilising [DPDK](https://doc.dpdk.org/) and [OpenSSL](https://www.openssl.org/).
 
-[Kata Containers](https://katacontainers.io/) QAT integration is documented in the
-[Kata Containers documentation repository][6].
+QAT Kubernetes resources show up as `qat.intel.com/generic` on systems _before_ QAT Gen4 (4th Gen Xeon&reg;) and `qat.intel.com/[cy|dc]` on QAT Gen4.
 
 ## Modes and Configuration Options
 
@@ -43,9 +43,9 @@ The QAT plugin can take a number of command line arguments, summarised in the fo
 | Flag | Argument | Meaning |
 |:---- |:-------- |:------- |
 | -dpdk-driver | string | DPDK Device driver for configuring the QAT device (default: `vfio-pci`) |
-| -kernel-vf-drivers | string | Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC, C62x, C3xxx, 4xxx/401xx/402xx, C4xxx and D15xx (default: `c6xxvf,4xxxvf`) |
+| -kernel-vf-drivers | string | Comma separated list of the QuickAssist VFs to search and use in the system. Devices supported: DH895xCC, C62x, C3xxx, 4xxx/401xx/402xx, C4xxx and D15xx (default: `c6xxvf,4xxxvf`) |
 | -max-num-devices | int | maximum number of QAT devices to be provided to the QuickAssist device plugin (default: `64`) |
-| -mode | string | plugin mode which can be either `dpdk` or `kernel` (default: `dpdk`) |
+| -mode | string | Deprecated: plugin mode which can be either `dpdk` or `kernel` (default: `dpdk`).|
 | -allocation-policy | string | 2 possible values: balanced and packed. Balanced mode spreads allocated QAT VF resources balanced among QAT PF devices, and packed mode packs one QAT PF device full of QAT VF resources before allocating resources from the next QAT PF. (There is no default.) |
 
 The plugin also accepts a number of other arguments related to logging. Please use the `-h` option to see
@@ -63,14 +63,12 @@ vf drivers available in the [Linux Kernel](https://github.com/torvalds/linux/tre
 
 If the `-mode` parameter is set to `kernel`, no other parameter documented above are valid,
 except the `klog` logging related parameters.
-`kernel` mode implements resource allocation based on system configured [logical instances][7].
+`kernel` mode implements resource allocation based on system configured [logical instances][7] and
+it does not guarantee full device isolation between containers. Therefore, it's not recommended.
 
-> **Note**: `kernel` mode is excluded by default from all builds (including those hosted on the Docker hub),
+> **Note**: `-mode` parameter is deprecated and it is also not made available as an option to
+> the operator based deployment. Furthermore, `kernel` mode is excluded by default from all builds (including those hosted on the Docker hub),
 > by default. See the [Build the plugin image](#build-the-plugin-image) section for more details.
-
-The `kernel` mode does not guarantee full device isolation between containers
-and therefore it's not recommended. This mode will be deprecated and removed once `libqat`
-implements non-UIO based device access.
 
 ## Installation
 
@@ -89,7 +87,7 @@ The QAT plugin requires Linux Kernel VF QAT drivers to be available. These drive
 are available via two methods. One of them must be installed and enabled:
 
 - [Linux Kernel upstream drivers](https://github.com/torvalds/linux/tree/master/drivers/crypto/intel/qat)
-- [Intel QuickAssist Technology software for Linux][9]
+- [Intel QuickAssist Technology software for Linux][9] (**Note**: not applicable to QAT Gen4)
 
 The demonstrations have their own requirements, listed in their own specific sections.
 
@@ -120,7 +118,7 @@ $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes
 > socket creation and kubelet registration. Furthermore, the deployments `securityContext` must
 > be configured with appropriate `runAsUser/runAsGroup`.
 
-#### Automatic Provisioning
+### Automatic Provisioning
 
 There's a sample [qat initcontainer](https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-qat-initcontainer.Dockerfile). Regardless of device types, the script running inside the initcontainer enables QAT SR-IOV VFs.
 
@@ -151,7 +149,7 @@ When using the operator for deploying the plugin with provisioning config, use `
 There's also a possibility for a node specific congfiguration through passing a nodename via `NODE_NAME` into initcontainer's environment and passing a node specific profile (`qat-$NODE_NAME.conf`) via ConfigMap volume mount.
 
 
-#### Verify Plugin Registration
+### Verify Plugin Registration
 
 Verification of the plugin deployment and detection of QAT hardware can be confirmed by
 examining the resource allocations on the nodes:
