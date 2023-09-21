@@ -369,3 +369,4 @@ others:
 6. Plugin CRD validation tests implemented in [`test/envtest/`](test/envtest) and passing: `make envtest`.
 7. Plugin CRD controller implemented in [`pkg/controllers/`](pkg/controllers) and added to the manager in `cmd/operator/main.go`.
 8. Plugin documentation written `cmd/<plugin>/README.md` and optionally end to end demos created in [`demo`](demo).
+9. Plugin [`NodeFeatureRule`](deployments/nfd/overlays/node-feature-rules)s added for Node Feature Discovery labeling.

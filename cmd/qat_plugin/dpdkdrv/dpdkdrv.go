@@ -476,7 +476,7 @@ func (dp *DevicePlugin) isValidVfDeviceID(vfDevID string) bool {
 		}
 	}
 
-	klog.Warningf("device ID %s is not a QAT device or not enabled by kernelVfDrivers.", vfDevID)
+	klog.V(3).Infof("device ID %s is not a QAT device or not enabled by kernelVfDrivers.", vfDevID)
 
 	return false
 }

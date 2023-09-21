@@ -1,7 +1,7 @@
 FROM ubuntu:22.04 as builder
 
 ARG QATLIB_VERSION="23.08.0"
-ARG QAT_ENGINE_VERSION="v1.2.0"
+ARG QAT_ENGINE_VERSION="v1.4.0"
 ARG ASYNC_NGINX_VERSION="v0.5.1"
 ARG IPSEC_MB_VERSION="v1.4"
 ARG IPP_CRYPTO_VERSION="ippcp_2021.8"
@@ -48,7 +48,6 @@ RUN cd /intel-ipsec-mb && \
     make && make install LIB_INSTALL_DIR=/usr/lib64
 
 RUN cd /QAT_Engine && \
-    sed -i -e 's/GCM_IV_DATA_LEN/IMB_GCM_IV_DATA_LEN/g' qat_evp.c && \
     ./autogen.sh && \
     ./configure \
     --enable-qat_sw && \
