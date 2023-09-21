@@ -2,8 +2,6 @@ name: validate
 on:
   workflow_call:
 
-env:
-  K8S_VERSION: 1.27.1
 jobs:
   docs:
     name: Check docs are buildable
@@ -60,12 +58,26 @@ jobs:
       - run: make go-mod-tidy
       - run: make BUILDTAGS=kerneldrv
       - run: make test BUILDTAGS=kerneldrv
-      - name: Install envtest tool and run envtest
-        run: |
-          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-          setup-envtest use ${K8S_VERSION}
-      - run: |
-          KUBEBUILDER_ASSETS=$(setup-envtest use -i -p path ${K8S_VERSION}) make envtest
       - run: make check-github-actions
       - name: Codecov report
         run: bash <(curl -s https://codecov.io/bash)
+
+  envtest:
+    name: Test APIs using envtest
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        version:
+          - 1.26.x
+          - 1.27.x
+          - 1.28.x
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+      - name: Install envtest and k8s control plane
+        run: |
+          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+          setup-envtest use ${{ matrix.version }}
+      - name: Run envtest
+        run: |
+          KUBEBUILDER_ASSETS=$(setup-envtest use -i -p path ${{ matrix.version }}) make envtest
