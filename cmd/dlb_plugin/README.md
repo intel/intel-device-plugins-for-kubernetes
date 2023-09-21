@@ -26,8 +26,8 @@ If you configure SR-IOV/VF (virtual functions), continue the following configura
 
 Patch dpdk sources to work with DLB:
 ```bash
-$ wget -q https://fast.dpdk.org/rel/dpdk-21.11.tar.xz -O- | tar -Jx
-$ wget -q https://downloadmirror.intel.com/763709/dlb_linux_src_release8.0.0.txz -O- | tar -Jx
+$ wget -q https://fast.dpdk.org/rel/dpdk-22.11.2.tar.xz -O- | tar -Jx
+$ wget -q https://downloadmirror.intel.com/791459/dlb_linux_src_release8.5.2.txz -O- | tar -Jx
 $ cd ./dpdk-*/ && patch -p1 < ../dlb/dpdk/dpdk_dlb_*_diff.patch
 $ sed -i 's/270b,2710,2714/270b,2710,2711,2714/g' ./usertools/dpdk-devbind.py
 ```
