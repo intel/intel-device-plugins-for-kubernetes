@@ -40,7 +40,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("IAA plugin", describe)
+	ginkgo.Describe("IAA plugin [Device:iaa]", describe)
 }
 
 func describe() {
@@ -94,7 +94,7 @@ func describe() {
 		}
 	})
 
-	ginkgo.Context("When IAA resources are available", func() {
+	ginkgo.Context("When IAA resources are available [Resource:dedicated]", func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			ginkgo.By("checking if the resource is allocatable")
 			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "iaa.intel.com/wq-user-dedicated", 300*time.Second); err != nil {
@@ -102,12 +102,16 @@ func describe() {
 			}
 		})
 
-		ginkgo.It("deploys a demo app", func(ctx context.Context) {
+		ginkgo.It("deploys a demo app [App:accel-config]", func(ctx context.Context) {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 			ginkgo.By("waiting for the IAA demo to succeed")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, podName, f.Namespace.Name, 300*time.Second)
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
+		})
+
+		ginkgo.When("there is no app to run [App:noapp]", func() {
+			ginkgo.It("does nothing", func() {})
 		})
 	})
 }

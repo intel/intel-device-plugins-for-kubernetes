@@ -37,7 +37,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("QAT plugin in kernel mode", describeQatKernelPlugin)
+	ginkgo.Describe("QAT plugin in kernel mode [Device:qat] [Mode:kernel]", describeQatKernelPlugin)
 }
 
 func describeQatKernelPlugin() {
@@ -79,7 +79,7 @@ func describeQatKernelPlugin() {
 		}
 	})
 
-	ginkgo.Context("When QAT resources are available", func() {
+	ginkgo.Context("When QAT resources are available [Resource:cy1_dc0]", func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			ginkgo.By("checking if the resource is allocatable")
 			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "qat.intel.com/cy1_dc0", 30*time.Second); err != nil {
@@ -87,7 +87,7 @@ func describeQatKernelPlugin() {
 			}
 		})
 
-		ginkgo.It("deploys a pod requesting QAT resources", func(ctx context.Context) {
+		ginkgo.It("deploys a pod requesting QAT resources [App:busybox]", func(ctx context.Context) {
 			ginkgo.By("submitting a pod requesting QAT resources")
 			podSpec := &v1.Pod{
 				ObjectMeta: metav1.ObjectMeta{Name: "qatplugin-tester"},
@@ -113,6 +113,10 @@ func describeQatKernelPlugin() {
 
 			ginkgo.By("waiting the pod to finish successfully")
 			e2epod.NewPodClient(f).WaitForFinish(ctx, pod.ObjectMeta.Name, 60*time.Second)
+		})
+
+		ginkgo.When("there is no app to run [App:noapp]", func() {
+			ginkgo.It("does nothing", func() {})
 		})
 	})
 }
