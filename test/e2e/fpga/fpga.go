@@ -136,7 +136,7 @@ func runDevicePlugin(ctx context.Context, fmw *framework.Framework, pluginKustom
 
 func runTestCase(ctx context.Context, fmw *framework.Framework, pluginMode, podResource, cmd1, cmd2 string) {
 	resource := v1.ResourceName(podResource)
-	image := "intel/opae-nlb-demo:devel"
+	image := "intel/opae-nlb-demo:0.28.0"
 
 	ginkgo.By("submitting a pod requesting correct FPGA resources")
 

@@ -137,7 +137,7 @@ clean:
 
 ORG?=intel
 REG?=$(ORG)/
-TAG?=devel
+TAG?=0.28.0
 export TAG
 
 ifeq ($(E2E_LEVEL), $(filter $(E2E_LEVEL), full))

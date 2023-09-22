@@ -3,8 +3,8 @@ kind: IaaDevicePlugin
 metadata:
   name: iaadeviceplugin-sample
 spec:
-  image: intel/intel-iaa-plugin:0.27.1
-  initImage: intel/intel-idxd-config-initcontainer:0.27.1
+  image: intel/intel-iaa-plugin:0.28.0
+  initImage: intel/intel-idxd-config-initcontainer:0.28.0
   sharedDevNum: 10
   logLevel: 4
   nodeSelector:
