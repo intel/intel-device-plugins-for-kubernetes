@@ -7,8 +7,8 @@ This repository contains a framework for developing plugins for the Kubernetes
 [device plugins framework](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/),
 along with a number of device plugin implementations utilizing that framework.
 
-The [v0.27 release](https://github.com/intel/intel-device-plugins-for-kubernetes/releases/latest)
-is the latest feature release with its documentation available [here](https://intel.github.io/intel-device-plugins-for-kubernetes/0.27/).
+The [v0.28 release](https://github.com/intel/intel-device-plugins-for-kubernetes/releases/latest)
+is the latest feature release with its documentation available [here](https://intel.github.io/intel-device-plugins-for-kubernetes/0.28/).
 
 Table of Contents
 
@@ -266,9 +266,10 @@ matching Kubernetes versions are listed below:
 
 | Branch            | Kubernetes branch/version      | Status      |
 |:------------------|:-------------------------------|:------------|
+| release-0.28      | Kubernetes 1.28 branch v1.28.x | supported   |
 | release-0.27      | Kubernetes 1.27 branch v1.27.x | supported   |
 | release-0.26      | Kubernetes 1.26 branch v1.26.x | supported   |
-| release-0.25      | Kubernetes 1.25 branch v1.25.x | supported   |
+| release-0.25      | Kubernetes 1.25 branch v1.25.x | unsupported |
 | release-0.24      | Kubernetes 1.24 branch v1.24.x | unsupported |
 | release-0.23      | Kubernetes 1.23 branch v1.23.x | unsupported |
 | release-0.22      | Kubernetes 1.22 branch v1.22.x | unsupported |
