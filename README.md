@@ -17,7 +17,6 @@ Table of Contents
     * [GPU device plugin](#gpu-device-plugin)
     * [FPGA device plugin](#fpga-device-plugin)
     * [QAT device plugin](#qat-device-plugin)
-    * [VPU device plugin](#vpu-device-plugin)
     * [SGX device plugin](#sgx-device-plugin)
     * [DSA device plugin](#dsa-device-plugin)
     * [DLB device plugin](#dlb-device-plugin)
@@ -107,18 +106,6 @@ Source for the OpenSSL demo can be found in the [relevant subdirectory](demo/ope
 Details for integrating the QAT device plugin into [Kata Containers](https://katacontainers.io/)
 can be found in the
 [Kata Containers documentation repository](https://github.com/kata-containers/kata-containers/blob/main/docs/use-cases/using-Intel-QAT-and-kata.md).
-
-### VPU Device Plugin
-
-The [VPU device plugin](cmd/vpu_plugin/README.md) supports Intel VCAC-A card
-(https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/media-analytics-vcac-a-accelerator-card-by-celestica-datasheet.pdf)
-the card has:
-- 1 Intel Core i3-7100U processor
-- 12 MyriadX VPUs
-- 8GB DDR4 memory
-
-The demo subdirectory includes details of a OpenVINO deployment and use of the
-VPU plugin. Sources can be found in [openvino-demo](demo/ubuntu-demo-openvino).
 
 ### SGX Device Plugin
 
@@ -249,8 +236,6 @@ The summary of resources available via plugins in this repository is given in th
    * [crypto-perf-dpdk-pod-requesting-qat.yaml](deployments/qat_dpdk_app/base/crypto-perf-dpdk-pod-requesting-qat.yaml)
  * `sgx.intel.com`  : `epc`
    * [intelsgx-job.yaml](deployments/sgx_enclave_apps/base/intelsgx-job.yaml)
- * `vpu.intel.com`  : `hddl`
-   * [intelvpu-job.yaml](demo/intelvpu-job.yaml)
 
 ## Developers
 

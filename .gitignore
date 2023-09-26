@@ -19,7 +19,6 @@ cmd/qat_plugin/qat_plugin
 cmd/sgx_admissionwebhook/sgx_admissionwebhook
 cmd/sgx_plugin/sgx_plugin
 cmd/sgx_epchook/sgx_epchook
-cmd/vpu_plugin/vpu_plugin
 cmd/operator/operator
 
 deployments/fpga_admissionwebhook/base/intel-fpga-webhook-certs-secret
