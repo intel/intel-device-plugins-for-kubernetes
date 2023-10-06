@@ -31,8 +31,8 @@ TESTDATA_DIR = pkg/topology/testdata
 
 EXTRA_BUILD_ARGS += --build-arg GOLICENSES_VERSION=$(GOLICENSES_VERSION)
 
-pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e | grep -v envtest | grep -v vpu_plugin)
-cmds = $(shell ls --ignore=internal --ignore=vpu_plugin cmd)
+pkgs  = $(shell $(GO) list ./... | grep -v vendor | grep -v e2e | grep -v envtest)
+cmds = $(shell ls --ignore=internal cmd)
 
 all: build
 
@@ -233,12 +233,10 @@ null  :=
 space := $(null) #
 comma := ,
 images_json := $(subst $(space),$(comma),[$(addprefix ",$(addsuffix ",$(images) $(demos))]))
-skip_images_source := ubuntu-demo-openvino intel-vpu-plugin
-skip_images := $(subst $(space),$(comma),$(addprefix ",$(addsuffix ", $(skip_images_source))))
 
 check-github-actions:
 	@python3 -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin, Loader=yaml.SafeLoader), sys.stdout)' < .github/workflows/lib-build.yaml | \
-	jq -e '$(images_json) - [$(skip_images)] - .jobs.image.strategy.matrix.image == []' > /dev/null || \
+	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/lib-build.yaml"; exit 1)
 
 .PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture install-tools test-image-base-layer

@@ -16,4 +16,3 @@ Extensions
    ../cmd/qat_plugin/README.md
    ../cmd/sgx_plugin/README.md
    ../cmd/sgx_admissionwebhook/README.md
-   ../cmd/vpu_plugin/README.md
