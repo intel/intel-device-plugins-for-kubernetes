@@ -67,3 +67,4 @@ issues:
         # Until the testing package allows pinning variables disable scopelint
         # for tests. See https://github.com/kyoh86/scopelint/issues/4.
         - scopelint
+        - gocognit
