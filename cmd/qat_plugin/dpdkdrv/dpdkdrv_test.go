@@ -16,6 +16,7 @@ package dpdkdrv
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path"
 	"reflect"
@@ -162,15 +163,16 @@ func TestGetPreferredAllocation(t *testing.T) {
 
 func TestScan(t *testing.T) {
 	tcases := []struct {
-		name            string
-		dpdkDriver      string
-		dirs            []string
-		files           map[string][]byte
-		symlinks        map[string]string
-		kernelVfDrivers []string
-		expectedErr     bool
-		maxDevNum       int
-		expectedDevNum  int
+		name                 string
+		dpdkDriver           string
+		dirs                 []string
+		files                map[string][]byte
+		symlinks             map[string]string
+		kernelVfDrivers      []string
+		expectedErr          bool
+		maxDevNum            int
+		expectedDevNum       int
+		expectedUnhealthyNum int
 	}{
 		{
 			name: "No error returned for uninitialized device plugin",
@@ -519,7 +521,85 @@ func TestScan(t *testing.T) {
 			maxDevNum:      2,
 			expectedDevNum: 2,
 		},
+		{
+			name:            "vfio-pci DPDKdriver with no kernel bound driver and where vfdevID is equal to qatDevId (4941), heartbeat status bad",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: []string{"4xxxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/4xxx",
+				"sys/bus/pci/drivers/vfio-pci",
+				"sys/devices/pci0000:02/0000:02:00.0",
+				"sys/devices/pci0000:02/0000:02:00.0/qat",
+				"sys/kernel/debug/qat_4xxx_0000:02:00.0",
+				"sys/kernel/debug/qat_4xxx_0000:02:00.0/heartbeat",
+				"sys/bus/pci/devices/0000:02:01.0",
+			},
+			files: map[string][]byte{
+				"sys/devices/pci0000:02/0000:02:00.0/device":              []byte("0x4940"),
+				"sys/devices/pci0000:02/0000:02:00.0/qat/state":           []byte("up"),
+				"sys/devices/pci0000:02/0000:02:00.0/qat/cfg_services":    []byte("sym;asym"),
+				"sys/bus/pci/devices/0000:02:01.0/device":                 []byte("0x4941"),
+				"sys/kernel/debug/qat_4xxx_0000:02:00.0/heartbeat/status": []byte("-1"),
+			},
+			symlinks: map[string]string{
+				"sys/bus/pci/devices/0000:02:01.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:02:01.0/physfn":      "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/bus/pci/drivers/4xxx/0000:02:00.0":        "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0":             "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/devices/pci0000:02/0000:02:00.0/virtfn0":  "sys/bus/pci/devices/0000:02:01.0",
+			},
+			maxDevNum:            1,
+			expectedDevNum:       1,
+			expectedUnhealthyNum: 1,
+		},
+		{
+			name:            "vfio-pci DPDKdriver with no kernel bound driver and where vfdevID is equal to qatDevId (4941), heartbeat status good",
+			dpdkDriver:      "vfio-pci",
+			kernelVfDrivers: []string{"4xxxvf"},
+			dirs: []string{
+				"sys/bus/pci/drivers/4xxx",
+				"sys/bus/pci/drivers/vfio-pci",
+				"sys/devices/pci0000:02/0000:02:00.0",
+				"sys/devices/pci0000:02/0000:02:00.0/qat",
+				"sys/kernel/debug/qat_4xxx_0000:02:00.0",
+				"sys/kernel/debug/qat_4xxx_0000:02:00.0/heartbeat",
+				"sys/bus/pci/devices/0000:02:01.0",
+			},
+			files: map[string][]byte{
+				"sys/devices/pci0000:02/0000:02:00.0/device":              []byte("0x4940"),
+				"sys/devices/pci0000:02/0000:02:00.0/qat/state":           []byte("up"),
+				"sys/devices/pci0000:02/0000:02:00.0/qat/cfg_services":    []byte("sym;asym"),
+				"sys/bus/pci/devices/0000:02:01.0/device":                 []byte("0x4941"),
+				"sys/kernel/debug/qat_4xxx_0000:02:00.0/heartbeat/status": []byte("0"),
+			},
+			symlinks: map[string]string{
+				"sys/bus/pci/devices/0000:02:01.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:02:01.0/physfn":      "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/bus/pci/drivers/4xxx/0000:02:00.0":        "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/bus/pci/devices/0000:02:00.0":             "sys/devices/pci0000:02/0000:02:00.0",
+				"sys/devices/pci0000:02/0000:02:00.0/virtfn0":  "sys/bus/pci/devices/0000:02:01.0",
+			},
+			maxDevNum:            1,
+			expectedDevNum:       1,
+			expectedUnhealthyNum: 0,
+		},
 	}
+
+	countUnhealthyDevices := func(tree dpapi.DeviceTree) int {
+		unhealtyNum := 0
+
+		for _, v := range tree {
+			for _, vv := range v {
+				field := reflect.ValueOf(vv).FieldByName("state")
+				if fmt.Sprintf("%+v", field) == pluginapi.Unhealthy {
+					unhealtyNum = unhealtyNum + 1
+				}
+			}
+		}
+
+		return unhealtyNum
+	}
+
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
 			tmpdir, err := os.MkdirTemp("/tmp/", "qatplugin-TestScanPrivate-*")
@@ -552,12 +632,17 @@ func TestScan(t *testing.T) {
 			if !tt.expectedErr && err != nil {
 				t.Errorf("got unexpected error: %+v", err)
 			}
+
 			devNum := 0
 			for _, resource := range fN.tree {
 				devNum = devNum + len(resource)
 			}
 			if devNum != tt.expectedDevNum {
 				t.Errorf("expected %d, but got %d devices", tt.expectedDevNum, devNum)
+			}
+
+			if unhealtyNum := countUnhealthyDevices(fN.tree); unhealtyNum != tt.expectedUnhealthyNum {
+				t.Errorf("expected %d, but got %d unhealthy devices", tt.expectedUnhealthyNum, unhealtyNum)
 			}
 
 			if err = os.RemoveAll(tmpdir); err != nil {

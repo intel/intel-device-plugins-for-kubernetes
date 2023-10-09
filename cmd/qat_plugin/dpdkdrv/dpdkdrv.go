@@ -358,6 +358,22 @@ func (dp *DevicePlugin) getDpdkMounts(dpdkDeviceName string) []pluginapi.Mount {
 	}
 }
 
+// heartbeat is only supported on the 4xxx devices. Other devices return "unknown".
+func readDeviceHeartbeatStatus(pfDev string) string {
+	hbStatus := filepath.Join(filepath.Dir(filepath.Join(pfDev, "../../")), "kernel/debug",
+		fmt.Sprintf("qat_4xxx_%s/heartbeat/status", filepath.Base(pfDev)))
+
+	if _, err := os.Stat(hbStatus); err != nil {
+		return "unknown"
+	}
+
+	if data, err := os.ReadFile(hbStatus); err == nil && string(data) == "0" {
+		return "ok"
+	} else {
+		return "bad"
+	}
+}
+
 func readDeviceConfiguration(pfDev string) string {
 	qatState, err := os.ReadFile(filepath.Join(pfDev, "qat/state"))
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -393,10 +409,12 @@ func readDeviceConfiguration(pfDev string) string {
 	return devCfg.Section("GENERAL").Key("ServicesEnabled").String()
 }
 
-func getDeviceCapabilities(device string) (string, error) {
+func getDeviceCapabilitiesAndHealthiness(device string) (string, string, error) {
+	healthiness := pluginapi.Healthy
+
 	devID, err := getDeviceID(device)
 	if err != nil {
-		return "", errors.Wrapf(err, "cannot determine device capabilities")
+		return "", healthiness, errors.Wrapf(err, "cannot determine device capabilities")
 	}
 
 	devicesWithCapabilities := map[string]struct{}{
@@ -406,28 +424,33 @@ func getDeviceCapabilities(device string) (string, error) {
 	}
 
 	if _, ok := devicesWithCapabilities[devID]; !ok {
-		return defaultCapabilities, nil
+		return defaultCapabilities, healthiness, nil
 	}
 
 	pfDev, err := filepath.EvalSymlinks(filepath.Join(device, "physfn"))
 	if err != nil {
 		klog.Warningf("failed to get PF device ID for %s: %q", filepath.Base(device), err)
-		return defaultCapabilities, nil
+		return defaultCapabilities, healthiness, nil
+	}
+
+	hbStatus := readDeviceHeartbeatStatus(pfDev)
+	if hbStatus == "bad" {
+		healthiness = pluginapi.Unhealthy
 	}
 
 	switch readDeviceConfiguration(pfDev) {
 	case "sym;asym":
-		return "cy", nil
+		return "cy", healthiness, nil
 	case "asym;sym":
-		return "cy", nil
+		return "cy", healthiness, nil
 	case "dc":
-		return "dc", nil
+		return "dc", healthiness, nil
 	case "sym":
-		return "sym", nil
+		return "sym", healthiness, nil
 	case "asym":
-		return "asym", nil
+		return "asym", healthiness, nil
 	default:
-		return defaultCapabilities, nil
+		return defaultCapabilities, healthiness, nil
 	}
 }
 
@@ -605,19 +628,19 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 			return nil, err
 		}
 
-		cap, err := getDeviceCapabilities(vfDevice)
+		cap, healthiness, err := getDeviceCapabilitiesAndHealthiness(vfDevice)
 		if err != nil {
 			return nil, err
 		}
 
-		klog.V(1).Infof("Device %s with %s capabilities found", vfBdf, cap)
+		klog.V(1).Infof("Device %s with %s capabilities found (%s)", vfBdf, cap, healthiness)
 
 		n = n + 1
 		envs := map[string]string{
 			fmt.Sprintf("%s%d", envVarPrefix, n): vfBdf,
 		}
 
-		devinfo := dpapi.NewDeviceInfo(pluginapi.Healthy, dp.getDpdkDeviceSpecs(dpdkDeviceName), dp.getDpdkMounts(dpdkDeviceName), envs, nil)
+		devinfo := dpapi.NewDeviceInfo(healthiness, dp.getDpdkDeviceSpecs(dpdkDeviceName), dp.getDpdkMounts(dpdkDeviceName), envs, nil)
 
 		devTree.AddDevice(cap, vfBdf, devinfo)
 	}
