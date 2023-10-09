@@ -449,6 +449,14 @@ func getDeviceCapabilitiesAndHealthiness(device string) (string, string, error) 
 		return "sym", healthiness, nil
 	case "asym":
 		return "asym", healthiness, nil
+	case "asym;dc":
+		return "asym-dc", healthiness, nil
+	case "dc;asym":
+		return "asym-dc", healthiness, nil
+	case "sym;dc":
+		return "sym-dc", healthiness, nil
+	case "dc;sym":
+		return "sym-dc", healthiness, nil
 	default:
 		return defaultCapabilities, healthiness, nil
 	}
