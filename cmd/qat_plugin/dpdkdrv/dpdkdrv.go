@@ -457,6 +457,14 @@ func getDeviceCapabilities(device string) (string, error) {
 		return "sym", nil
 	case "asym":
 		return "asym", nil
+	case "asym;dc":
+		return "asym-dc", nil
+	case "dc;asym":
+		return "asym-dc", nil
+	case "sym;dc":
+		return "sym-dc", nil
+	case "dc;sym":
+		return "sym-dc", nil
 	default:
 		return defaultCapabilities, nil
 	}
