@@ -16,8 +16,7 @@ spec:
           gpu.intel.com/tiles: {op: Exists}
     name: intel.gpu.fractionalresources
   # generic rule for older and upcoming devices
-  - labels:
-    labelsTemplate: |
+  - labelsTemplate: |
       {{ range .pci.device }}gpu.intel.com/device-id.{{ .class }}-{{ .device }}.present=true
       {{ end }}
     matchFeatures:
@@ -33,8 +32,7 @@ spec:
             value:
             - "8086"
     name: intel.gpu.generic.deviceid
-  - labels:
-    labelsTemplate: gpu.intel.com/device-id.0300-{{ (index .pci.device 0).device }}.count={{ len .pci.device }}
+  - labelsTemplate: gpu.intel.com/device-id.0300-{{ (index .pci.device 0).device }}.count={{ len .pci.device }}
     matchFeatures:
       - feature: pci.device
         matchExpressions:
@@ -47,8 +45,7 @@ spec:
             value:
             - "8086"
     name: intel.gpu.generic.count.300
-  - labels:
-    labelsTemplate: gpu.intel.com/device-id.0380-{{ (index .pci.device 0).device }}.count={{ len .pci.device }}
+  - labelsTemplate: gpu.intel.com/device-id.0380-{{ (index .pci.device 0).device }}.count={{ len .pci.device }}
     matchFeatures:
       - feature: pci.device
         matchExpressions:
