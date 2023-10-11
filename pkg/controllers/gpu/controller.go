@@ -242,6 +242,41 @@ func removeVolumeMount(volumeMounts []v1.VolumeMount, name string) []v1.VolumeMo
 	return newVolumeMounts
 }
 
+func processInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.GpuDevicePlugin) bool {
+	initContainers := ds.Spec.Template.Spec.InitContainers
+
+	if dp.Spec.InitImage == "" {
+		if initContainers != nil {
+			ds.Spec.Template.Spec.InitContainers = nil
+			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "nfd-features")
+
+			return true
+		}
+	} else if len(initContainers) != 1 || initContainers[0].Image != dp.Spec.InitImage {
+		setInitContainer(&ds.Spec.Template.Spec, dp.Spec.InitImage)
+
+		return true
+	}
+
+	return false
+}
+
+func processNodeSelector(ds *apps.DaemonSet, dp *devicepluginv1.GpuDevicePlugin) bool {
+	if len(dp.Spec.NodeSelector) > 0 {
+		if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
+			ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector
+
+			return true
+		}
+	} else if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, defaultNodeSelector) {
+		ds.Spec.Template.Spec.NodeSelector = defaultNodeSelector
+
+		return true
+	}
+
+	return false
+}
+
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
 	dp := rawObj.(*devicepluginv1.GpuDevicePlugin)
 
@@ -250,24 +285,11 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		updated = true
 	}
 
-	if dp.Spec.InitImage == "" {
-		if ds.Spec.Template.Spec.InitContainers != nil {
-			ds.Spec.Template.Spec.InitContainers = nil
-			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "nfd-features")
-			updated = true
-		}
-	} else {
-		setInitContainer(&ds.Spec.Template.Spec, dp.Spec.InitImage)
+	if processInitContainer(ds, dp) {
 		updated = true
 	}
 
-	if len(dp.Spec.NodeSelector) > 0 {
-		if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, dp.Spec.NodeSelector) {
-			ds.Spec.Template.Spec.NodeSelector = dp.Spec.NodeSelector
-			updated = true
-		}
-	} else if !reflect.DeepEqual(ds.Spec.Template.Spec.NodeSelector, defaultNodeSelector) {
-		ds.Spec.Template.Spec.NodeSelector = defaultNodeSelector
+	if processNodeSelector(ds, dp) {
 		updated = true
 	}
 

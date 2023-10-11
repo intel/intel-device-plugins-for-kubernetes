@@ -111,7 +111,12 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
 	dp := rawObj.(*devicepluginv1.QatDevicePlugin)
 
-	if !reflect.DeepEqual(ds.ObjectMeta.Annotations, dp.ObjectMeta.Annotations) {
+	// Remove always incrementing annotation so it doesn't cause the next DeepEqual
+	// to return false every time.
+	dsAnnotations := ds.ObjectMeta.DeepCopy().Annotations
+	delete(dsAnnotations, "deprecated.daemonset.template.generation")
+
+	if !reflect.DeepEqual(dsAnnotations, dp.ObjectMeta.Annotations) {
 		pluginAnnotations := dp.ObjectMeta.DeepCopy().Annotations
 		ds.ObjectMeta.Annotations = pluginAnnotations
 		ds.Spec.Template.Annotations = pluginAnnotations
@@ -131,8 +136,12 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 			updated = true
 		}
 	} else {
-		setInitContainer(&ds.Spec.Template.Spec, dp.Spec)
-		updated = true
+		containers := ds.Spec.Template.Spec.InitContainers
+		if len(containers) != 1 || containers[0].Image != dp.Spec.InitImage {
+			setInitContainer(&ds.Spec.Template.Spec, dp.Spec)
+
+			updated = true
+		}
 	}
 
 	if len(dp.Spec.NodeSelector) > 0 {

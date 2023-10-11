@@ -218,9 +218,12 @@ func provisioningUpdate(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) 
 	found := false
 
 	for _, container := range ds.Spec.Template.Spec.InitContainers {
-		if container.Name == inicontainerName && container.Image != dp.Spec.InitImage {
+		if container.Name == inicontainerName {
+			if container.Image != dp.Spec.InitImage {
+				update = true
+			}
+
 			found = true
-			update = true
 
 			break
 		}

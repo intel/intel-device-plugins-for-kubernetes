@@ -219,9 +219,12 @@ func provisioningUpdate(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) 
 	found := false
 
 	for _, container := range ds.Spec.Template.Spec.InitContainers {
-		if container.Name == "intel-iaa-initcontainer" && container.Image != dp.Spec.InitImage {
+		if container.Name == "intel-iaa-initcontainer" {
+			if container.Image != dp.Spec.InitImage {
+				update = true
+			}
+
 			found = true
-			update = true
 
 			break
 		}
