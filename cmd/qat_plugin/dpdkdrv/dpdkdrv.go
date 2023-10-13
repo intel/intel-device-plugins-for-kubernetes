@@ -393,6 +393,37 @@ func readDeviceConfiguration(pfDev string) string {
 	return devCfg.Section("GENERAL").Key("ServicesEnabled").String()
 }
 
+func getDeviceHealthiness(device string, lookup map[string]string) string {
+	healthiness := pluginapi.Healthy
+
+	pfDev, err := filepath.EvalSymlinks(filepath.Join(device, "physfn"))
+	if err != nil {
+		klog.Warningf("failed to get PF device ID for %s: %q", filepath.Base(device), err)
+		return healthiness
+	}
+
+	// VFs share one PF, so all the VFs should return the same result.
+	if _, found := lookup[pfDev]; found {
+		return lookup[pfDev]
+	}
+
+	// Try to find the PF's heartbeat status. If unable to, return Healthy.
+	driver := getCurrentDriver(pfDev)
+
+	hbStatusFile := filepath.Join(filepath.Dir(filepath.Join(pfDev, "../../")), "kernel/debug",
+		fmt.Sprintf("qat_%s_%s/heartbeat/status", driver, filepath.Base(pfDev)))
+
+	// If status reads "-1", the device is considered bad:
+	// https://github.com/torvalds/linux/blob/v6.6-rc5/Documentation/ABI/testing/debugfs-driver-qat
+	if data, err := os.ReadFile(hbStatusFile); err == nil && string(data) == "-1" {
+		healthiness = pluginapi.Unhealthy
+	}
+
+	lookup[pfDev] = healthiness
+
+	return healthiness
+}
+
 func getDeviceCapabilities(device string) (string, error) {
 	devID, err := getDeviceID(device)
 	if err != nil {
@@ -426,6 +457,14 @@ func getDeviceCapabilities(device string) (string, error) {
 		return "sym", nil
 	case "asym":
 		return "asym", nil
+	case "asym;dc":
+		return "asym-dc", nil
+	case "dc;asym":
+		return "asym-dc", nil
+	case "sym;dc":
+		return "sym-dc", nil
+	case "dc;sym":
+		return "sym-dc", nil
 	default:
 		return defaultCapabilities, nil
 	}
@@ -583,6 +622,8 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 	devTree := dpapi.NewDeviceTree()
 	n := 0
 
+	pfHealthLookup := map[string]string{}
+
 	for _, vfDevice := range dp.getVfDevices() {
 		vfBdf := filepath.Base(vfDevice)
 
@@ -610,14 +651,16 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 			return nil, err
 		}
 
-		klog.V(1).Infof("Device %s with %s capabilities found", vfBdf, cap)
+		healthiness := getDeviceHealthiness(vfDevice, pfHealthLookup)
+
+		klog.V(1).Infof("Device %s with %s capabilities found (%s)", vfBdf, cap, healthiness)
 
 		n = n + 1
 		envs := map[string]string{
 			fmt.Sprintf("%s%d", envVarPrefix, n): vfBdf,
 		}
 
-		devinfo := dpapi.NewDeviceInfo(pluginapi.Healthy, dp.getDpdkDeviceSpecs(dpdkDeviceName), dp.getDpdkMounts(dpdkDeviceName), envs, nil)
+		devinfo := dpapi.NewDeviceInfo(healthiness, dp.getDpdkDeviceSpecs(dpdkDeviceName), dp.getDpdkMounts(dpdkDeviceName), envs, nil)
 
 		devTree.AddDevice(cap, vfBdf, devinfo)
 	}

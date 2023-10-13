@@ -132,7 +132,7 @@ In addition to the default configuration, you can add device-specific configurat
 
 | Device | Possible Configuration | How To Customize | Options | Notes |
 |:-------|:-----------------------|:-----------------|:--------|:------|
-| 4xxx, 401xx,402xx | [cfg_services](https://github.com/torvalds/linux/blob/42e66b1cc3a070671001f8a1e933a80818a192bf/Documentation/ABI/testing/sysfs-driver-qat) reports the configured services (crypto services or compression services) of the QAT device. | `ServicesEnabled=<value>` | compress:`dc`, crypto:`sym;asym` | Linux 6.0+ kernel is required. |
+| 4xxx, 401xx,402xx | [cfg_services](https://github.com/torvalds/linux/blob/v6.6-rc5/Documentation/ABI/testing/sysfs-driver-qat) reports the configured services (crypto services or compression services) of the QAT device. | `ServicesEnabled=<value>` | compress:`dc`, crypto:`sym;asym`, <br>crypto+compress:`asym;dc`,<br>crypto+compress:`sym;dc` | Linux 6.0+ kernel is required. |
 
 To create a provisioning `configMap`, run the following command before deploying initcontainer:
 
@@ -141,7 +141,7 @@ $ kubectl create configmap --namespace=inteldeviceplugins-system qat-config --fr
 ```
 or
 ```bash
-$ kubectl create configmap --namespace=inteldeviceplugins-system --from-literal "qat.conf=ServicesEnabled=<option>" qat-config 
+$ kubectl create configmap --namespace=inteldeviceplugins-system --from-literal "qat.conf=ServicesEnabled=<option>" qat-config
 ```
 
 When using the operator for deploying the plugin with provisioning config, use `provisioningConfig` field for the name of the ConfigMap, then the config is passed to initcontainer through the volume mount.

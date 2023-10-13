@@ -3,7 +3,7 @@
 NODE_NAME="${NODE_NAME:-}"
 ENABLED_QAT_PF_PCIIDS=${ENABLED_QAT_PF_PCIIDS:-37c8 4940 4942 4944}
 DEVS=$(for pf in $ENABLED_QAT_PF_PCIIDS; do lspci -n | grep -e "$pf" | grep -o -e "^\\S*"; done)
-SERVICES_LIST="sym;asym dc"
+SERVICES_LIST="sym asym sym;asym dc sym;dc asym;dc"
 QAT_4XXX_DEVICE_PCI_ID="0x4940"
 QAT_401XX_DEVICE_PCI_ID="0x4942"
 QAT_402XX_DEVICE_PCI_ID="0x4944"
