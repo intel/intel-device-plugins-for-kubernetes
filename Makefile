@@ -171,15 +171,6 @@ e2e-iaa:
 e2e-dlb:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:dlb.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
 
-terrascan:
-	@ls deployments/*/kustomization.yaml | while read f ; \
-	do \
-		echo "\n==== $$(basename $$(dirname $$f)) ====" ; \
-		terrascan scan -v --show-passed -d $$(dirname $$f) -i kustomize --severity high \
-		--skip-rules 'AC_K8S_0051,AC_K8S_0076,AC_K8S_0087' \
-		|| exit $$? ; \
-	done
-
 pre-pull:
 ifeq ($(TAG),devel)
 	@$(BUILDER) pull golang:1.21-bookworm
