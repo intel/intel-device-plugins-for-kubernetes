@@ -35,8 +35,9 @@ import (
 )
 
 const (
-	ownerKey         = ".metadata.controller.dsa"
-	inicontainerName = "intel-idxd-config-initcontainer"
+	ownerKey          = ".metadata.controller.dsa"
+	initcontainerName = "intel-idxd-config-initcontainer"
+	configVolumeName  = "intel-dsa-config-volume"
 )
 
 var defaultNodeSelector = deployments.DSAPluginDaemonSet().Spec.Template.Spec.NodeSelector
@@ -87,7 +88,7 @@ func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin)
 	newInitContainers := []v1.Container{}
 
 	for _, container := range ds.Spec.Template.Spec.InitContainers {
-		if container.Name == inicontainerName {
+		if container.Name == initcontainerName {
 			continue
 		}
 
@@ -98,7 +99,7 @@ func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin)
 	newVolumes := []v1.Volume{}
 
 	for _, volume := range ds.Spec.Template.Spec.Volumes {
-		if volume.Name == "intel-dsa-config-volume" || volume.Name == "sys-bus-dsa" || volume.Name == "sys-devices" || volume.Name == "scratch" {
+		if volume.Name == configVolumeName || volume.Name == "sys-bus-dsa" || volume.Name == "sys-devices" || volume.Name == "scratch" {
 			continue
 		}
 
@@ -114,7 +115,7 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 	ds.Spec.Template.Spec.InitContainers = append(ds.Spec.Template.Spec.InitContainers, v1.Container{
 		Image:           dp.Spec.InitImage,
 		ImagePullPolicy: "IfNotPresent",
-		Name:            inicontainerName,
+		Name:            initcontainerName,
 		Env: []v1.EnvVar{
 			{
 				Name: "NODE_NAME",
@@ -176,7 +177,7 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 
 	if dp.Spec.ProvisioningConfig != "" {
 		ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
-			Name: "intel-dsa-config-volume",
+			Name: configVolumeName,
 			VolumeSource: v1.VolumeSource{
 				ConfigMap: &v1.ConfigMapVolumeSource{
 					LocalObjectReference: v1.LocalObjectReference{Name: dp.Spec.ProvisioningConfig}},
@@ -184,9 +185,9 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 		})
 
 		for i, initcontainer := range ds.Spec.Template.Spec.InitContainers {
-			if initcontainer.Name == inicontainerName {
+			if initcontainer.Name == initcontainerName {
 				ds.Spec.Template.Spec.InitContainers[i].VolumeMounts = append(ds.Spec.Template.Spec.InitContainers[i].VolumeMounts, v1.VolumeMount{
-					Name:      "intel-dsa-config-volume",
+					Name:      configVolumeName,
 					MountPath: "/idxd-init/conf",
 				})
 			}
@@ -218,16 +219,19 @@ func provisioningUpdate(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) 
 	found := false
 
 	for _, container := range ds.Spec.Template.Spec.InitContainers {
-		if container.Name == inicontainerName && container.Image != dp.Spec.InitImage {
+		if container.Name == initcontainerName {
+			if container.Image != dp.Spec.InitImage {
+				update = true
+			}
+
 			found = true
-			update = true
 
 			break
 		}
 	}
 
 	for _, volume := range ds.Spec.Template.Spec.Volumes {
-		if volume.Name == "intel-dsa-config-volume" && volume.ConfigMap.Name != dp.Spec.ProvisioningConfig {
+		if volume.Name == configVolumeName && volume.ConfigMap.Name != dp.Spec.ProvisioningConfig {
 			update = true
 			break
 		}

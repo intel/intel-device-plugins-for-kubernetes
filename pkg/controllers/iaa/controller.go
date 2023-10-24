@@ -35,8 +35,9 @@ import (
 )
 
 const (
-	ownerKey         = ".metadata.controller.iaa"
-	inicontainerName = "intel-iaa-initcontainer"
+	ownerKey          = ".metadata.controller.iaa"
+	initcontainerName = "intel-iaa-initcontainer"
+	configVolumeName  = "intel-iaa-config-volume"
 )
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=iaadeviceplugins,verbs=get;list;watch;create;update;patch;delete
@@ -85,7 +86,7 @@ func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin)
 	newInitContainers := []v1.Container{}
 
 	for _, container := range ds.Spec.Template.Spec.InitContainers {
-		if container.Name == inicontainerName {
+		if container.Name == initcontainerName {
 			continue
 		}
 
@@ -97,7 +98,7 @@ func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin)
 	newVolumes := []v1.Volume{}
 
 	for _, volume := range ds.Spec.Template.Spec.Volumes {
-		if volume.Name == "intel-iaa-config-volume" || volume.Name == "sys-bus-dsa" || volume.Name == "sys-devices" || volume.Name == "scratch" {
+		if volume.Name == configVolumeName || volume.Name == "sys-bus-dsa" || volume.Name == "sys-devices" || volume.Name == "scratch" {
 			continue
 		}
 
@@ -113,7 +114,7 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 	ds.Spec.Template.Spec.InitContainers = append(ds.Spec.Template.Spec.InitContainers, v1.Container{
 		Image:           dp.Spec.InitImage,
 		ImagePullPolicy: "IfNotPresent",
-		Name:            inicontainerName,
+		Name:            initcontainerName,
 		Env: []v1.EnvVar{
 			{
 				Name: "NODE_NAME",
@@ -175,7 +176,7 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 
 	if dp.Spec.ProvisioningConfig != "" {
 		ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
-			Name: "intel-iaa-config-volume",
+			Name: configVolumeName,
 			VolumeSource: v1.VolumeSource{
 				ConfigMap: &v1.ConfigMapVolumeSource{
 					LocalObjectReference: v1.LocalObjectReference{Name: dp.Spec.ProvisioningConfig}},
@@ -183,9 +184,9 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 		})
 
 		for i, initcontainer := range ds.Spec.Template.Spec.InitContainers {
-			if initcontainer.Name == inicontainerName {
+			if initcontainer.Name == initcontainerName {
 				ds.Spec.Template.Spec.InitContainers[i].VolumeMounts = append(ds.Spec.Template.Spec.InitContainers[i].VolumeMounts, v1.VolumeMount{
-					Name:      "intel-iaa-config-volume",
+					Name:      configVolumeName,
 					MountPath: "/idxd-init/conf",
 				})
 			}
@@ -219,16 +220,19 @@ func provisioningUpdate(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) 
 	found := false
 
 	for _, container := range ds.Spec.Template.Spec.InitContainers {
-		if container.Name == "intel-iaa-initcontainer" && container.Image != dp.Spec.InitImage {
+		if container.Name == initcontainerName {
+			if container.Image != dp.Spec.InitImage {
+				update = true
+			}
+
 			found = true
-			update = true
 
 			break
 		}
 	}
 
 	for _, volume := range ds.Spec.Template.Spec.Volumes {
-		if volume.Name == "intel-iaa-config-volume" && volume.ConfigMap.Name != dp.Spec.ProvisioningConfig {
+		if volume.Name == configVolumeName && volume.ConfigMap.Name != dp.Spec.ProvisioningConfig {
 			update = true
 
 			break

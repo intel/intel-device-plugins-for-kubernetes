@@ -76,28 +76,28 @@ node1
 
 ## Testing and Demos
 
-We can test the plugin is working by deploying the provided example iaa-qpl-demo test image.
+We can test the plugin is working by deploying the provided example accel-config-demo test image.
 
 1. Build a Docker image with an accel-config tests:
 
     ```bash
-    $ make iaa-qpl-demo
+    $ make accel-config-demo
     ...
-    Successfully tagged intel/iaa-qpl-demo:devel
+    Successfully tagged intel/accel-config-demo:devel
     ```
 
 1. Create a pod running unit tests off the local Docker image:
 
     ```bash
-    $ kubectl apply -f ./demo/iaa-qpl-demo-pod.yaml
-    pod/iaa-qpl-demo created
+    $ kubectl apply -f ./demo/iaa-accel-config-demo-pod.yaml
+    pod/iaa-accel-config-demo created
     ```
 
 1. Wait until pod is completed:
 
     ```bash
-    $ kubectl get pods  |grep iaa-qpl-demo
-    iaa-qpl-demo    0/1     Completed   0          31m
+    $ kubectl get pods  |grep iaa-accel-config-demo
+    iaa-accel-config-demo    0/1     Completed   0          31m
 
     If the pod did not successfully launch, possibly because it could not obtain the IAA
     resource, it will be stuck in the `Pending` status:
@@ -105,16 +105,16 @@ We can test the plugin is working by deploying the provided example iaa-qpl-demo
     ```bash
     $ kubectl get pods
     NAME                      READY   STATUS    RESTARTS   AGE
-    iaa-qpl-demo              0/1     Pending   0          7s
+    iaa-accel-config-demo     0/1     Pending   0          7s
     ```
 
     This can be verified by checking the Events of the pod:
 
     ```bash
 
-    $ kubectl describe pod iaa-qpl-demo | grep -A3 Events:
+    $ kubectl describe pod iaa-accel-config-demo | grep -A3 Events:
     Events:
       Type     Reason            Age    From               Message
       ----     ------            ----   ----               -------
-      Warning  FailedScheduling  2m26s  default-scheduler  0/1 nodes are available: 1 Insufficient iaa.intel.com/wq-user-dedicated, 1 Insufficient iaa.intel.com/wq-user-shared.
+      Warning  FailedScheduling  2m26s  default-scheduler  0/1 nodes are available: 1 Insufficient iaa.intel.com/wq-user-dedicated.
     ```
