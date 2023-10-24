@@ -18,7 +18,6 @@
 /cmd/sgx_plugin/    @hj-johannes-lee @mythi
 /cmd/dsa_plugin/    @hj-johannes-lee @ozhuraki @mythi
 /cmd/iaa_plugin/    @hj-johannes-lee @ozhuraki @mythi
-/cmd/vpu_plugin/    @bart0sh @mythi
 /cmd/dlb_plugin/    @bart0sh @hj-johannes-lee
 /cmd/xpumanager_sidecar/   @tkatila @uniemimu
 

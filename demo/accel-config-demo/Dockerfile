@@ -42,7 +42,7 @@ RUN cd / && git clone --recurse-submodules --branch v1.1.0 --depth 1 https://git
     mv -v /usr/local/bin/tests /usr/local/bin/dml_tests && \
     mv -v /usr/local/bin/tests_mt /usr/local/bin/dml_tests_mt
 
-RUN cd / && git clone --recursive --depth 1 --branch v1.2.0 https://github.com/intel/qpl.git && \
+RUN cd / && git clone --recursive --depth 1 --branch v1.3.0 https://github.com/intel/qpl.git && \
     mkdir qpl/build && cd qpl/build && \
     cmake -DLOG_HW_INIT=ON .. && \
     make install
