@@ -105,6 +105,12 @@ repository. Thus the easiest way to deploy the plugin in your cluster is to run 
 $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/qat_plugin?ref=<RELEASE_VERSION>'
 ```
 
+NOTE: In case AppArmor kernel module is installed and enabled by default (Ubuntu, SUSE), use the customization overlay with AppArmor annnotations (otherwise plugin's daemonset will fail with bind/unbind errors):
+
+```bash
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/qat_plugin/overlays/apparmor_unconfined?ref=<RELEASE_VERSION>'
+```
+
 Where `<RELEASE_VERSION>` needs to be substituted with the desired [release tag](https://github.com/intel/intel-device-plugins-for-kubernetes/tags) or `main` to get `devel` images.
 
 An alternative kustomization for deploying the plugin is with the debug mode switched on:
