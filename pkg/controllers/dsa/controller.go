@@ -75,15 +75,6 @@ func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
 	return controllers.UpgradeImages(ctx, &dp.Spec.Image, &dp.Spec.InitImage)
 }
 
-func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client) (int, error) {
-	var list devicepluginv1.DsaDevicePluginList
-	if err := clnt.List(ctx, &list); err != nil {
-		return 0, err
-	}
-
-	return len(list.Items), nil
-}
-
 func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 	newInitContainers := []v1.Container{}
 
@@ -199,6 +190,8 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.DsaDevicePlugin)
 
 	daemonSet := deployments.DSAPluginDaemonSet()
+	daemonSet.Name = controllers.SuffixedName(daemonSet.Name, devicePlugin.Name)
+
 	if len(devicePlugin.Spec.NodeSelector) > 0 {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}

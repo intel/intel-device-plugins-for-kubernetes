@@ -37,8 +37,9 @@ import (
 )
 
 const (
-	ownerKey           = ".metadata.controller.gpu"
-	serviceAccountName = "gpu-manager-sa"
+	ownerKey             = ".metadata.controller.gpu"
+	serviceAccountPrefix = "gpu-manager-sa"
+	roleBindingPrefix    = "gpu-manager-rolebinding"
 )
 
 var defaultNodeSelector = deployments.GPUPluginDaemonSet().Spec.Template.Spec.NodeSelector
@@ -75,21 +76,12 @@ func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
 	return controllers.UpgradeImages(ctx, &dp.Spec.Image, &dp.Spec.InitImage)
 }
 
-func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client) (int, error) {
-	var list devicepluginv1.GpuDevicePluginList
-	if err := clnt.List(ctx, &list); err != nil {
-		return 0, err
-	}
-
-	return len(list.Items), nil
-}
-
 func (c *controller) NewServiceAccount(rawObj client.Object) *v1.ServiceAccount {
 	devicePlugin := rawObj.(*devicepluginv1.GpuDevicePlugin)
 	if devicePlugin.Spec.ResourceManager {
 		sa := v1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "gpu-manager-sa",
+				Name:      prefixedName(serviceAccountPrefix, devicePlugin.Name),
 				Namespace: c.ns,
 			},
 		}
@@ -105,13 +97,13 @@ func (c *controller) NewClusterRoleBinding(rawObj client.Object) *rbacv1.Cluster
 	if devicePlugin.Spec.ResourceManager {
 		rb := rbacv1.ClusterRoleBinding{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "gpu-manager-rolebinding",
+				Name:      prefixedName(roleBindingPrefix, devicePlugin.Name),
 				Namespace: c.ns,
 			},
 			Subjects: []rbacv1.Subject{
 				{
 					Kind:      "ServiceAccount",
-					Name:      "gpu-manager-sa",
+					Name:      prefixedName(serviceAccountPrefix, devicePlugin.Name),
 					Namespace: c.ns,
 				},
 			},
@@ -132,6 +124,8 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.GpuDevicePlugin)
 
 	daemonSet := deployments.GPUPluginDaemonSet()
+	daemonSet.Name = controllers.SuffixedName(daemonSet.Name, devicePlugin.Name)
+
 	if len(devicePlugin.Spec.NodeSelector) > 0 {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
@@ -149,7 +143,7 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 
 	// add service account if resource manager is enabled
 	if devicePlugin.Spec.ResourceManager {
-		daemonSet.Spec.Template.Spec.ServiceAccountName = serviceAccountName
+		daemonSet.Spec.Template.Spec.ServiceAccountName = prefixedName(serviceAccountPrefix, devicePlugin.Name)
 		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
 		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", false)
 		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "kubeletcrt", "/var/lib/kubelet/pki/kubelet.crt", v1.HostPathFileOrCreate)
@@ -330,7 +324,7 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 
 	newServiceAccountName := "default"
 	if dp.Spec.ResourceManager {
-		newServiceAccountName = serviceAccountName
+		newServiceAccountName = prefixedName(serviceAccountPrefix, dp.Name)
 	}
 
 	if ds.Spec.Template.Spec.ServiceAccountName != newServiceAccountName {

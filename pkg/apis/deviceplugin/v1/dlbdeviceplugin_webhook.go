@@ -15,7 +15,6 @@
 package v1
 
 import (
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -23,10 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
-)
-
-const (
-	dlbPluginKind = "DlbDevicePlugin"
 )
 
 var (
@@ -63,10 +58,6 @@ var _ webhook.Validator = &DlbDevicePlugin{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *DlbDevicePlugin) ValidateCreate() (admission.Warnings, error) {
 	dlbdevicepluginlog.Info("validate create", "name", r.Name)
-
-	if controllers.GetDevicePluginCount(dlbPluginKind) > 0 {
-		return nil, errors.Errorf("an instance of %q already exists in the cluster", dlbPluginKind)
-	}
 
 	return nil, r.validatePlugin()
 }

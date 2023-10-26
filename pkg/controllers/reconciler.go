@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
@@ -38,38 +37,8 @@ import (
 )
 
 var (
-	bKeeper         = &bookKeeper{}
 	ImageMinVersion = versionutil.MustParseSemantic("0.28.0")
 )
-
-func init() {
-	bKeeper.pluginCounter = make(map[string]int)
-}
-
-//nolint:govet
-type bookKeeper struct {
-	sync.Mutex
-	pluginCounter map[string]int
-}
-
-func (b *bookKeeper) set(pluginKind string, count int) {
-	b.Lock()
-	defer b.Unlock()
-
-	b.pluginCounter[pluginKind] = count
-}
-
-func (b *bookKeeper) count(pluginKind string) int {
-	b.Lock()
-	defer b.Unlock()
-
-	return b.pluginCounter[pluginKind]
-}
-
-// GetDevicePluginCount returns number of device plugin CRs registered.
-func GetDevicePluginCount(pluginKind string) int {
-	return bKeeper.count(pluginKind)
-}
 
 // +kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;delete
@@ -102,7 +71,6 @@ func (d *DefaultServiceAccountFactory) NewClusterRoleBinding(rawObj client.Objec
 type DevicePluginController interface {
 	ServiceAccountFactory
 	CreateEmptyObject() (devicePlugin client.Object)
-	GetTotalObjectCount(ctx context.Context, client client.Client) (count int, err error)
 	NewDaemonSet(devicePlugin client.Object) *apps.DaemonSet
 	UpdateDaemonSet(client.Object, *apps.DaemonSet) (updated bool)
 	UpdateStatus(client.Object, *apps.DaemonSet, []string) (updated bool, err error)
@@ -115,6 +83,11 @@ type reconciler struct {
 	scheme     *runtime.Scheme
 	pluginKind string
 	ownerKey   string
+}
+
+// Combine base and suffix with a dash
+func SuffixedName(base, suffix string) string {
+	return base + "-" + suffix
 }
 
 // fetchObjects returns the required objects for Reconcile.
@@ -211,11 +184,6 @@ func upgrade(ctx context.Context, r *reconciler, devicePlugin client.Object) {
 // Reconcile reconciles a device plugin object.
 func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
-
-	if err := r.updateBookKeeper(ctx); err != nil {
-		log.Error(err, "unable to total count of device plugins")
-		return ctrl.Result{}, err
-	}
 
 	childDaemonSets, childServiceAccounts, childClusterRoleBindings, err2 := r.fetchObjects(ctx, req, log)
 	if err2 != nil {
@@ -405,17 +373,6 @@ func SetupWithManager(mgr ctrl.Manager, controller DevicePluginController, apiGV
 		Owns(&rbacv1.ClusterRoleBinding{}).
 		Owns(&v1.ServiceAccount{}).
 		Complete(r)
-}
-
-func (r *reconciler) updateBookKeeper(ctx context.Context) error {
-	count, err := r.controller.GetTotalObjectCount(ctx, r)
-	if err != nil {
-		return err
-	}
-
-	bKeeper.set(r.pluginKind, count)
-
-	return nil
 }
 
 func (r *reconciler) createClusterRoleBinding(ctx context.Context, dp client.Object, log logr.Logger) (ctrl.Result, error) {

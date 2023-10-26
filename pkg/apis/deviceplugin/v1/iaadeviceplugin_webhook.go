@@ -25,10 +25,6 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
-const (
-	iaaPluginKind = "IaaDevicePlugin"
-)
-
 var (
 	// iaadevicepluginlog is for logging in this package.
 	iaadevicepluginlog = logf.Log.WithName("iaadeviceplugin-resource")
@@ -63,10 +59,6 @@ var _ webhook.Validator = &IaaDevicePlugin{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *IaaDevicePlugin) ValidateCreate() (admission.Warnings, error) {
 	iaadevicepluginlog.Info("validate create", "name", r.Name)
-
-	if controllers.GetDevicePluginCount(iaaPluginKind) > 0 {
-		return nil, errors.Errorf("an instance of %q already exists in the cluster", iaaPluginKind)
-	}
 
 	return nil, r.validatePlugin()
 }

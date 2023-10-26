@@ -15,7 +15,6 @@
 package v1
 
 import (
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -23,10 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
-)
-
-const (
-	fpgaPluginKind = "FpgaDevicePlugin"
 )
 
 var (
@@ -67,10 +62,6 @@ var _ webhook.Validator = &FpgaDevicePlugin{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *FpgaDevicePlugin) ValidateCreate() (admission.Warnings, error) {
 	fpgadevicepluginlog.Info("validate create", "name", r.Name)
-
-	if controllers.GetDevicePluginCount(fpgaPluginKind) > 0 {
-		return nil, errors.Errorf("an instance of %q already exists in the cluster", fpgaPluginKind)
-	}
 
 	return nil, r.validatePlugin()
 }

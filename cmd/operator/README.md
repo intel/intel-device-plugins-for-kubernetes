@@ -103,6 +103,8 @@ NAME                     DESIRED   READY   NODE SELECTOR   AGE
 gpudeviceplugin-sample   1         1                       5s
 ```
 
+**NOTE:** Intel Device Plugin Operator supports multiple custom resources per Kind (QAT, DSA, etc.). With multiple custom resources and different `nodeSelectors`, it is possible to customize device plugin configuration per node or per group of nodes. See also [known issues](#multiple-custom-resources).
+
 ## Upgrade
 
 The upgrade of the deployed plugins can be done by simply installing a new release of the operator.
@@ -134,6 +136,10 @@ that passes the desired device types to the operator using `--device`
 command line argument multiple times.
 
 ## Known issues
+
+### Multiple Custom Resources
+
+With multiple custom resources, `nodeSelector` has to be carefully set to avoid device plugin DaemonSet getting deployed multiple times on the same node, as operator does not check or prevent this. Multiple plugins managing same resource on a node can cause invalid behavior and/or duplicate device resources on node.
 
 ### Cluster behind a proxy
 

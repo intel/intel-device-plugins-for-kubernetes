@@ -45,7 +45,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: c.ns,
-			Name:      appLabel,
+			Name:      appLabel + "-" + devicePlugin.Name,
 			Labels: map[string]string{
 				"app": appLabel,
 			},
@@ -146,7 +146,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 
 	// add service account if resource manager is enabled
 	if devicePlugin.Spec.ResourceManager {
-		daemonSet.Spec.Template.Spec.ServiceAccountName = serviceAccountName
+		daemonSet.Spec.Template.Spec.ServiceAccountName = serviceAccountPrefix + "-" + devicePlugin.Name
 
 		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
 		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", false)
@@ -169,7 +169,7 @@ func (c *controller) updateDaemonSetExpected(rawObj client.Object, ds *apps.Daem
 	hadRM := strings.Contains(argString, "-resource-manager")
 
 	if !hadRM && dp.Spec.ResourceManager {
-		ds.Spec.Template.Spec.ServiceAccountName = "gpu-manager-sa"
+		ds.Spec.Template.Spec.ServiceAccountName = serviceAccountPrefix + "-" + dp.Name
 
 		addVolumeIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
 		addVolumeMountIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", false)
@@ -220,6 +220,7 @@ func TestNewDamonSetGPU(t *testing.T) {
 	for _, tc := range tcases {
 		plugin := &devicepluginv1.GpuDevicePlugin{}
 
+		plugin.Name = "new-gpu-cr-testing"
 		plugin.Spec.ResourceManager = tc.rm
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -252,10 +253,12 @@ func TestUpdateDamonSetGPU(t *testing.T) {
 
 	for _, tc := range tcases {
 		before := &devicepluginv1.GpuDevicePlugin{}
+		before.Name = "update-gpu-cr-testing"
 
 		before.Spec.ResourceManager = tc.rmInitially
 
 		after := &devicepluginv1.GpuDevicePlugin{}
+		after.Name = "update-gpu-cr-testing"
 
 		after.Spec.ResourceManager = !tc.rmInitially
 

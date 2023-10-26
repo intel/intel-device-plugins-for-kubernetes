@@ -45,7 +45,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: c.ns,
-			Name:      appLabel,
+			Name:      appLabel + "-" + devicePlugin.Name,
 			Labels: map[string]string{
 				"app": appLabel,
 			},
@@ -184,6 +184,7 @@ func TestNewDaemonSetFPGA(t *testing.T) {
 			InitImage: "intel/intel-fpga-initcontainer:devel",
 		},
 	}
+	plugin.Name = "testing"
 
 	expected := c.newDaemonSetExpected(plugin)
 	actual := c.NewDaemonSet(plugin)

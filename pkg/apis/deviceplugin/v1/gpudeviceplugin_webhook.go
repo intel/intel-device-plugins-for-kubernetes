@@ -25,10 +25,6 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
-const (
-	gpuPluginKind = "GpuDevicePlugin"
-)
-
 var (
 	// gpudevicepluginlog is for logging in this package.
 	gpudevicepluginlog = logf.Log.WithName("gpudeviceplugin-resource")
@@ -63,10 +59,6 @@ var _ webhook.Validator = &GpuDevicePlugin{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *GpuDevicePlugin) ValidateCreate() (admission.Warnings, error) {
 	gpudevicepluginlog.Info("validate create", "name", r.Name)
-
-	if controllers.GetDevicePluginCount(gpuPluginKind) > 0 {
-		return nil, errors.Errorf("an instance of %q already exists in the cluster", gpuPluginKind)
-	}
 
 	return nil, r.validatePlugin()
 }
