@@ -153,13 +153,13 @@ func (s *Mutator) Default(ctx context.Context, obj runtime.Object) error {
 		// Quote Generation Modes:
 		//
 		// in-process: A container has its own quote provider library library: In this mode,
-		// the container needs a handle to /dev/sgx/provision (sgx.intel.com/provision resource).
+		// the container needs a handle to /dev/sgx_provision (sgx.intel.com/provision resource).
 		// out-of-process: A container uses Intel aesmd. In this mode, the container must talk to
 		// aesmd over /var/run/aesmd/aesm.sock. aesmd can run either as a side-car or a DaemonSet
 		//
 		// Mode selection: The mode selection is done by setting sgx.intel.com/quote-provider annotation
 		// to a value that specifies the container name. If the annotation matches the container requesting
-		// SGX EPC resources, the webhook adds both /dev/sgx/provision and /dev/sgx/enclave resource requests.
+		// SGX EPC resources, the webhook adds both /dev/sgx_provision and /dev/sgx_enclave resource requests.
 		// Without sgx.intel.com/quote-provider annotation set, the container is not able to generate quotes
 		// for its enclaves. When pods set sgx.intel.com/quote-provider: "aesmd", Intel aesmd specific volume
 		// mounts are added. In both DaemonSet and sidecar deployment scenarios for aesmd, its container name
