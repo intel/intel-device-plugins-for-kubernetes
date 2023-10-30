@@ -45,7 +45,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: c.ns,
-			Name:      "intel-gpu-plugin",
+			Name:      appLabel,
 			Labels: map[string]string{
 				"app": appLabel,
 			},
