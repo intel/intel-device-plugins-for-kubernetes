@@ -35,6 +35,11 @@ type SgxDevicePluginSpec struct {
 	// Recommendation is to leave this unset and prefer the SGX NodeFeatureRule instead.
 	InitImage string `json:"initImage,omitempty"`
 
+	// NRIImage is a container image with SGX Node Resource Interface (NRI) plugin executable. Set
+	// this value if SGX EPC cgroups limits enforcement is wanted.
+	// TODO: is this a good name?
+	NRIImage string `json:"nriImage,omitempty"`
+
 	// Specialized nodes (e.g., with accelerators) can be Tainted to make sure unwanted pods are not scheduled on them. Tolerations can be set for the plugin pod to neutralize the Taint.
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 

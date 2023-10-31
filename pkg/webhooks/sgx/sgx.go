@@ -43,6 +43,7 @@ func (s *Mutator) SetupWebhookWithManager(mgr ctrl.Manager) error {
 }
 
 const (
+	epcLimitKey              = "epc-limit.nri.io/container"
 	namespace                = "sgx.intel.com"
 	encl                     = namespace + "/enclave"
 	epc                      = namespace + "/epc"
@@ -155,6 +156,8 @@ func (s *Mutator) Default(ctx context.Context, obj runtime.Object) error {
 		if !ok {
 			continue
 		}
+
+		pod.Annotations[fmt.Sprintf("%s.%s", epcLimitKey, container.Name)] = fmt.Sprintf("%d", epcSize)
 
 		totalEpc += epcSize
 
