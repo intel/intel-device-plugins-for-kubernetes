@@ -35,6 +35,11 @@ type SgxDevicePluginSpec struct {
 	// Recommendation is to leave this unset and prefer the SGX NodeFeatureRule instead.
 	InitImage string `json:"initImage,omitempty"`
 
+	// NRIImage is a container image with SGX Node Resource Interface (NRI) plugin executable. Set
+	// this value if SGX EPC cgroups limits enforcement is wanted.
+	// TODO: is this a good name?
+	NRIImage string `json:"nriImage,omitempty"`
+
 	// EnclaveLimit is a number of containers that can share the same SGX enclave device.
 	// +kubebuilder:validation:Minimum=1
 	EnclaveLimit int `json:"enclaveLimit,omitempty"`
