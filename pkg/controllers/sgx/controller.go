@@ -112,6 +112,27 @@ func setInitContainer(spec *v1.PodSpec, imageName string) {
 	addVolumeIfMissing(spec, "nfd-features", "/etc/kubernetes/node-feature-discovery/source.d/", v1.HostPathDirectoryOrCreate)
 }
 
+func setNRIContainer(spec *v1.PodSpec, imageName string) {
+	yes := true
+	no := false
+	spec.Containers = append(spec.Containers, v1.Container{
+		Name:            "nri-sgx-epc",
+		Image:           imageName,
+		ImagePullPolicy: "IfNotPresent",
+		SecurityContext: &v1.SecurityContext{
+			ReadOnlyRootFilesystem:   &yes,
+			AllowPrivilegeEscalation: &no,
+		},
+		VolumeMounts: []v1.VolumeMount{
+			{
+				Name:      "nrisockets",
+				MountPath: "/var/run/nri",
+			},
+		},
+	})
+	addVolumeIfMissing(spec, "nrisockets", "/var/run/nri", v1.HostPathDirectoryOrCreate)
+}
+
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.SgxDevicePlugin)
 
@@ -134,6 +155,10 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	// add the optional init container
 	if devicePlugin.Spec.InitImage != "" {
 		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
+	}
+	// add the optional NRI plugin container
+	if devicePlugin.Spec.NRIImage != "" {
+		setNRIContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.NRIImage)
 	}
 
 	return daemonSet
@@ -167,6 +192,26 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		}
 	} else {
 		setInitContainer(&ds.Spec.Template.Spec, dp.Spec.InitImage)
+
+		updated = true
+	}
+
+	// remove NRI plugin
+	if len(ds.Spec.Template.Spec.Containers) > 1 && dp.Spec.NRIImage == "" {
+		ds.Spec.Template.Spec.Containers = []v1.Container{ds.Spec.Template.Spec.Containers[0]}
+		ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "nrisockets")
+		updated = true
+	}
+
+	// update NRI plugin image
+	if len(ds.Spec.Template.Spec.Containers) > 1 && ds.Spec.Template.Spec.Containers[1].Image != dp.Spec.NRIImage {
+		ds.Spec.Template.Spec.Containers[1].Image = dp.Spec.NRIImage
+		updated = true
+	}
+
+	// add NRI plugin image
+	if len(ds.Spec.Template.Spec.Containers) == 1 && dp.Spec.NRIImage != "" {
+		setNRIContainer(&ds.Spec.Template.Spec, dp.Spec.NRIImage)
 
 		updated = true
 	}

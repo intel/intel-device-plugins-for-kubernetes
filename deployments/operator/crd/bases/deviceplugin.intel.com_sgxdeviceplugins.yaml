@@ -78,6 +78,12 @@ spec:
                 description: NodeSelector provides a simple way to constrain device
                   plugin pods to nodes with particular labels.
                 type: object
+              nriImage:
+                description: |-
+                  NRIImage is a container image with SGX Node Resource Interface (NRI) plugin executable. Set
+                  this value if SGX EPC cgroups limits enforcement is wanted.
+                  TODO: is this a good name?
+                type: string
               provisionLimit:
                 description: ProvisionLimit is a number of containers that can share
                   the same SGX provision device.
