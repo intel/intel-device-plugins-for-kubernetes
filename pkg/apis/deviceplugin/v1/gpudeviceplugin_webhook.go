@@ -15,9 +15,12 @@
 package v1
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -32,8 +35,12 @@ var (
 	gpuMinVersion = controllers.ImageMinVersion
 )
 
+var cli client.Client
+
 // SetupWebhookWithManager sets up a webhook for GpuDevicePlugin custom resources.
 func (r *GpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	cli = mgr.GetClient()
+
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -77,6 +84,30 @@ func (r *GpuDevicePlugin) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }
 
+func (r *GpuDevicePlugin) crossCheckResourceManagement() bool {
+	ctx := context.Background()
+	gpuCrs := GpuDevicePluginList{}
+
+	if err := cli.List(ctx, &gpuCrs); err != nil {
+		gpudevicepluginlog.Info("unable to list GPU CRs")
+
+		return false
+	}
+
+	for _, cr := range gpuCrs.Items {
+		// Ignore itself.
+		if cr.Name == r.Name {
+			continue
+		}
+
+		if cr.Spec.ResourceManager != r.Spec.ResourceManager {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (r *GpuDevicePlugin) validatePlugin() error {
 	if r.Spec.SharedDevNum == 1 && r.Spec.PreferredAllocationPolicy != "none" {
 		return errors.Errorf("PreferredAllocationPolicy is valid only when setting sharedDevNum > 1")
@@ -84,6 +115,10 @@ func (r *GpuDevicePlugin) validatePlugin() error {
 
 	if r.Spec.SharedDevNum == 1 && r.Spec.ResourceManager {
 		return errors.Errorf("resourceManager is valid only when setting sharedDevNum > 1")
+	}
+
+	if !r.crossCheckResourceManagement() {
+		return errors.Errorf("All GPU CRs must be with or without resource management")
 	}
 
 	return validatePluginImage(r.Spec.Image, "intel-gpu-plugin", gpuMinVersion)
