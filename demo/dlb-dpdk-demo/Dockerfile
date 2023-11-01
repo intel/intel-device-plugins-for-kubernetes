@@ -6,16 +6,16 @@ WORKDIR $DIR
 RUN apt-get update && apt-get install -y --no-install-recommends wget build-essential meson ninja-build python3-pyelftools libnuma-dev python3-pip
 
 # Download & unpack DLB tarball
-ARG DLB_TARBALL="dlb_linux_src_release_8.3.0.txz"
-ARG DLB_TARBALL_SHA256="ce2141f055e6ecca9a51ead30b0cd24a89af74afef0daa0440ae48b3f3cbc27d"
+ARG DLB_TARBALL="dlb_linux_src_release_8.5.2.txz"
+ARG DLB_TARBALL_SHA256="99b666e7ce948e20a91e8c2507ec972e10b35fcb1f2061247343dabfdf71d9dd"
 
-RUN wget https://downloadmirror.intel.com/776610/$DLB_TARBALL \
+RUN wget https://downloadmirror.intel.com/791459/$DLB_TARBALL \
     && echo "$DLB_TARBALL_SHA256 $DLB_TARBALL" | sha256sum -c - \
     && tar -Jxf $DLB_TARBALL --no-same-owner && rm $DLB_TARBALL
 
 # Download & unpack DPDK tarball
-ARG DPDK_TARBALL=dpdk-21.11.tar.xz
-ARG DPDK_TARBALL_SHA256="3246e3ed68ee2b369a5d8be2c06cf108a669e157f4d41c5bcbbb216bf5abd3a1"
+ARG DPDK_TARBALL=dpdk-22.11.2.tar.xz
+ARG DPDK_TARBALL_SHA256="af64bdda15087ff8d429894b9ea6cbbbb6ee7a932bdb344f82b0dc366379a2d4"
 
 RUN wget -q https://fast.dpdk.org/rel/$DPDK_TARBALL \
     && echo "$DPDK_TARBALL_SHA256 $DPDK_TARBALL" | sha256sum -c - \
