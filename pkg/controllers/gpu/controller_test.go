@@ -146,7 +146,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 
 	// add service account if resource manager is enabled
 	if devicePlugin.Spec.ResourceManager {
-		daemonSet.Spec.Template.Spec.ServiceAccountName = serviceAccountPrefix + "-" + devicePlugin.Name
+		daemonSet.Spec.Template.Spec.ServiceAccountName = serviceAccountName
 
 		addVolumeIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
 		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", false)
@@ -169,7 +169,7 @@ func (c *controller) updateDaemonSetExpected(rawObj client.Object, ds *apps.Daem
 	hadRM := strings.Contains(argString, "-resource-manager")
 
 	if !hadRM && dp.Spec.ResourceManager {
-		ds.Spec.Template.Spec.ServiceAccountName = serviceAccountPrefix + "-" + dp.Name
+		ds.Spec.Template.Spec.ServiceAccountName = serviceAccountName
 
 		addVolumeIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", v1.HostPathDirectory)
 		addVolumeMountIfMissing(&ds.Spec.Template.Spec, "podresources", "/var/lib/kubelet/pod-resources", false)
