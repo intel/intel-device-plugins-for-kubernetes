@@ -52,7 +52,7 @@ func TestFileGBSMethods(t *testing.T) {
 	interfaceUUID := "69528db6eb31577a8c3668f9faa081f6"
 	typeUUID := "d8424dc4a4a3c413f89e433683f9040b"
 
-	gbs, err := OpenGBS(filepath.Join("testdata/intel.com/fpga", interfaceUUID, typeUUID) + ".gbs")
+	gbs, err := OpenGBS(filepath.Join("testdata/intel.com/fpga", interfaceUUID, typeUUID) + fileExtensionGBS)
 	if err != nil {
 		t.Errorf("unexpected open error: %+v", err)
 		return
@@ -76,7 +76,7 @@ func TestFileGBSMethods(t *testing.T) {
 	}
 
 	installPath := gbs.InstallPath("")
-	if installPath != filepath.Join(interfaceUUID, typeUUID)+".gbs" {
+	if installPath != filepath.Join(interfaceUUID, typeUUID)+fileExtensionGBS {
 		t.Errorf("unexpected Install Path value: %s", installPath)
 	}
 

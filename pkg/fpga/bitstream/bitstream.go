@@ -24,9 +24,7 @@ import (
 // GetFPGABitstream scans bitstream storage and returns first found bitstream by region and afu id.
 func GetFPGABitstream(bitstreamDir, region, afu string) (File, error) {
 	bitstreamPath := ""
-	// Temporarily only support gbs bitstreams
-	// for _, ext := range []string{".gbs", ".aocx"} {
-	for _, ext := range []string{".gbs", ".aocx"} {
+	for _, ext := range []string{fileExtensionGBS, fileExtensionAOCX} {
 		bitstreamPath = filepath.Join(bitstreamDir, region, afu+ext)
 
 		_, err := os.Stat(bitstreamPath)
@@ -47,9 +45,9 @@ func GetFPGABitstream(bitstreamDir, region, afu string) (File, error) {
 // Open bitstream file, detecting type based on the filename extension.
 func Open(fname string) (File, error) {
 	switch filepath.Ext(fname) {
-	case ".gbs":
+	case fileExtensionGBS:
 		return OpenGBS(fname)
-	case ".aocx":
+	case fileExtensionAOCX:
 		return OpenAOCX(fname)
 	}
 
