@@ -300,7 +300,7 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 	}
 
 	if _, err := os.ReadDir(dp.bypathDir); err != nil {
-		klog.Warningf("failed to read by-path dir: $+v", err)
+		klog.Warningf("failed to read by-path dir: %+v", err)
 
 		dp.bypathFound = false
 	}
