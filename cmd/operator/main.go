@@ -25,7 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2/textlogger"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -108,7 +108,8 @@ func main() {
 		pm                    *patcher.Manager
 	)
 
-	ctrl.SetLogger(klogr.NewWithOptions(klogr.WithFormat(klogr.FormatKlog)))
+	tlConf := textlogger.NewConfig()
+	tlConf.AddFlags(flag.CommandLine)
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -118,6 +119,8 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Var(&devices, "devices", "Device(s) to set up.")
 	flag.Parse()
+
+	ctrl.SetLogger(textlogger.NewLogger(tlConf))
 
 	if len(devices) == 0 {
 		devices = supportedDevices

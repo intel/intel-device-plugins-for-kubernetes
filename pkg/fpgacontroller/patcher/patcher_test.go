@@ -15,7 +15,6 @@
 package patcher
 
 import (
-	"flag"
 	"reflect"
 	"testing"
 
@@ -25,11 +24,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga/v2"
+	"k8s.io/klog/v2/ktesting"
 )
-
-func init() {
-	_ = flag.Set("v", "4")
-}
 
 func checkExpectedError(t *testing.T, expectedErr bool, err error, testName string) {
 	t.Helper()
@@ -145,7 +141,8 @@ func TestPatcherStorageFunctions(t *testing.T) {
 
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
-			p := newPatcher(ctrl.Log.WithName("test"))
+			logger, _ := ktesting.NewTestContext(t)
+			p := newPatcher(logger)
 			for _, af := range tt.afsToAdd {
 				err := p.AddAf(af)
 				checkExpectedError(t, tt.expectedErr, err, tt.name)

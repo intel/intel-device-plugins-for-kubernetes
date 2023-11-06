@@ -15,7 +15,6 @@
 package patcher
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -24,19 +23,14 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/klog/v2/klogr"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga/v2"
+	"k8s.io/klog/v2/ktesting"
 )
 
-func init() {
-	ctrl.SetLogger(klogr.New())
-}
-
 func TestGetPatcher(t *testing.T) {
-	log := ctrl.Log.WithName("test")
+	log, _ := ktesting.NewTestContext(t)
 	namespace := "test"
 	tcases := []struct {
 		pm   *Manager
@@ -165,7 +159,7 @@ func TestMutate(t *testing.T) {
 
 	for _, tcase := range tcases {
 		t.Run(tcase.name, func(t *testing.T) {
-			log := ctrl.Log.WithName("test")
+			log, ctx := ktesting.NewTestContext(t)
 			p := newPatcher(log)
 			p.AddRegion(&fpgav2.FpgaRegion{
 				ObjectMeta: metav1.ObjectMeta{
@@ -177,7 +171,7 @@ func TestMutate(t *testing.T) {
 			})
 			pm := NewPatcherManager(log)
 			pm.patchers["default"] = p
-			resp := pm.GetPodMutator()(context.TODO(), webhook.AdmissionRequest{AdmissionRequest: tcase.ar})
+			resp := pm.GetPodMutator()(ctx, webhook.AdmissionRequest{AdmissionRequest: tcase.ar})
 
 			actualPatchOps := 0
 			if tcase.expectedAllowed != resp.Allowed {
