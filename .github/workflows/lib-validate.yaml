@@ -76,6 +76,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+          check-latest: true
       - name: Install envtest and k8s control plane
         run: |
           go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
