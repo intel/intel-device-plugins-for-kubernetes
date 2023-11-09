@@ -163,10 +163,10 @@ func fallback() uint64 {
 	return getEnvVarNumber(memoryOverrideEnv)
 }
 
-func (l *labeler) getMemoryAmount(gpuName string, numTiles uint64) uint64 {
+func GetMemoryAmount(sysfsDrmDir, gpuName string, numTiles uint64) uint64 {
 	reserved := getEnvVarNumber(memoryReservedEnv)
 
-	filePath := filepath.Join(l.sysfsDRMDir, gpuName, "lmem_total_bytes")
+	filePath := filepath.Join(sysfsDrmDir, gpuName, "lmem_total_bytes")
 
 	dat, err := os.ReadFile(filePath)
 	if err != nil {
@@ -183,9 +183,9 @@ func (l *labeler) getMemoryAmount(gpuName string, numTiles uint64) uint64 {
 	return totalPerTile*numTiles - reserved
 }
 
-// getTileCount reads the tile count.
-func (l *labeler) getTileCount(gpuName string) (numTiles uint64) {
-	filePath := filepath.Join(l.sysfsDRMDir, gpuName, "gt/gt*")
+// GetTileCount reads the tile count.
+func GetTileCount(sysfsDrmDir, gpuName string) (numTiles uint64) {
+	filePath := filepath.Join(sysfsDrmDir, gpuName, "gt/gt*")
 
 	files, _ := filepath.Glob(filePath)
 
@@ -196,9 +196,9 @@ func (l *labeler) getTileCount(gpuName string) (numTiles uint64) {
 	return uint64(len(files))
 }
 
-// getNumaNode reads the cards numa node.
-func (l *labeler) getNumaNode(gpuName string) int {
-	filePath := filepath.Join(l.sysfsDRMDir, gpuName, "device/numa_node")
+// GetNumaNode reads the cards numa node.
+func GetNumaNode(sysfsDrmDir, gpuName string) int {
+	filePath := filepath.Join(sysfsDrmDir, gpuName, "device/numa_node")
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
@@ -295,14 +295,14 @@ func (l *labeler) createLabels() error {
 			return errors.Wrap(err, "gpu name parsing error")
 		}
 
-		numTiles := l.getTileCount(gpuName)
+		numTiles := GetTileCount(l.sysfsDRMDir, gpuName)
 		tileCount += int(numTiles)
 
-		memoryAmount := l.getMemoryAmount(gpuName, numTiles)
+		memoryAmount := GetMemoryAmount(l.sysfsDRMDir, gpuName, numTiles)
 		gpuNumList = append(gpuNumList, gpuName[4:])
 
 		// get numa node of the GPU
-		numaNode := l.getNumaNode(gpuName)
+		numaNode := GetNumaNode(l.sysfsDRMDir, gpuName)
 
 		if numaNode >= 0 {
 			// and store the gpu under that node id
