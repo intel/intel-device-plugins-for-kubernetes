@@ -1,4 +1,7 @@
 ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
-ARG BUILDFLAGS="-ldflags=-w -s"
+ARG LDFLAGS="-ldflags=all=-w -s"
+ARG GOFLAGS=-trimpath
+ARG GCFLAGS="-gcflags=all=-spectre=all -N -l"
+ARG ASMFLAGS="-asmflags=all=-spectre=all"
 ARG GOLICENSES_VERSION
