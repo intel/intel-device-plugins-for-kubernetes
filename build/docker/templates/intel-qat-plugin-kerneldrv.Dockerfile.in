@@ -22,9 +22,9 @@ RUN mkdir -p /usr/src/qat \
     && echo "$QAT_DRIVER_SHA256 $QAT_DRIVER_RELEASE.tar.gz" | sha256sum -c - \
     && tar xf *.tar.gz \
     && cd /usr/src/qat/quickassist/utilities/adf_ctl \
-    && make KERNEL_SOURCE_DIR=/usr/src/qat/quickassist/qat \
+    && LDFLAGS= make KERNEL_SOURCE_DIR=/usr/src/qat/quickassist/qat \
     && install -D adf_ctl /install_root/usr/local/bin/adf_ctl
-RUN (cd cmd/$CMD && GO111MODULE=${GO111MODULE} CGO_ENABLED=1 go install -tags kerneldrv)
+RUN (cd cmd/$CMD && GOFLAGS=${GOFLAGS} GO111MODULE=${GO111MODULE} CGO_ENABLED=1 go install "${GCFLAGS}" "${ASMFLAGS}" "${LDFLAGS}" -tags kerneldrv)
 RUN chmod a+x /go/bin/$CMD \
     && install -D /go/bin/$CMD /install_root/usr/local/bin/intel_qat_device_plugin
 
