@@ -43,7 +43,7 @@ jobs:
             images: intel-qat-plugin intel-qat-initcontainer openssl-qat-engine
           - name: e2e-sgx
             runner: sgx
-            images: intel-sgx-plugin intel-sgx-initcontainer intel-sgx-admissionwebhook sgx-sdk-demo intel-deviceplugin-operator
+            images: intel-sgx-plugin intel-sgx-initcontainer intel-sgx-admissionwebhook sgx-sdk-demo intel-deviceplugin-operator stress-ng-gramine
 
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
