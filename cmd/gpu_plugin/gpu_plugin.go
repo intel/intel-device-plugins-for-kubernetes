@@ -403,6 +403,29 @@ func (dp *devicePlugin) isCompatibleDevice(name string) bool {
 	return true
 }
 
+func (dp *devicePlugin) devSpecForDrmFile(drmFile string) (devSpec pluginapi.DeviceSpec, devPath string, err error) {
+	if dp.controlDeviceReg.MatchString(drmFile) {
+		//Skipping possible drm control node
+		err = os.ErrInvalid
+
+		return
+	}
+
+	devPath = path.Join(dp.devfsDir, drmFile)
+	if _, err = os.Stat(devPath); err != nil {
+		return
+	}
+
+	// even querying metrics requires device to be writable
+	devSpec = pluginapi.DeviceSpec{
+		HostPath:      devPath,
+		ContainerPath: devPath,
+		Permissions:   "rw",
+	}
+
+	return
+}
+
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	files, err := os.ReadDir(dp.sysfsDir)
 	if err != nil {
@@ -413,6 +436,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 	devTree := dpapi.NewDeviceTree()
 	rmDevInfos := rm.NewDeviceInfoMap()
+	tileCounts := []uint64{}
 
 	for _, f := range files {
 		var nodes []pluginapi.DeviceSpec
@@ -429,23 +453,12 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		}
 
 		isPFwithVFs := pluginutils.IsSriovPFwithVFs(path.Join(dp.sysfsDir, f.Name()))
+		tileCounts = append(tileCounts, labeler.GetTileCount(dp.sysfsDir, f.Name()))
 
 		for _, drmFile := range drmFiles {
-			if dp.controlDeviceReg.MatchString(drmFile.Name()) {
-				//Skipping possible drm control node
+			devSpec, devPath, devSpecErr := dp.devSpecForDrmFile(drmFile.Name())
+			if devSpecErr != nil {
 				continue
-			}
-
-			devPath := path.Join(dp.devfsDir, drmFile.Name())
-			if _, err := os.Stat(devPath); err != nil {
-				continue
-			}
-
-			// even querying metrics requires device to be writable
-			devSpec := pluginapi.DeviceSpec{
-				HostPath:      devPath,
-				ContainerPath: devPath,
-				Permissions:   "rw",
 			}
 
 			if !isPFwithVFs {
@@ -487,6 +500,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 	if dp.resMan != nil {
 		dp.resMan.SetDevInfos(rmDevInfos)
+		dp.resMan.SetTileCountPerCard(tileCounts)
 	}
 
 	return devTree, nil

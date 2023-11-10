@@ -61,6 +61,9 @@ func (m *mockResourceManager) GetPreferredFractionalAllocation(*v1beta1.Preferre
 	return &v1beta1.PreferredAllocationResponse{}, &dpapi.UseDefaultMethodError{}
 }
 
+func (m *mockResourceManager) SetTileCountPerCard(counts []uint64) {
+}
+
 func createTestFiles(root string, devfsdirs, sysfsdirs []string, sysfsfiles map[string][]byte) (string, string, error) {
 	sysfs := path.Join(root, "sys")
 	devfs := path.Join(root, "dev")
