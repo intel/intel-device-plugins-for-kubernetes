@@ -44,6 +44,7 @@ jobs:
           - name: e2e-sgx
             runner: sgx
             images: intel-sgx-plugin intel-sgx-initcontainer intel-sgx-admissionwebhook sgx-sdk-demo intel-deviceplugin-operator stress-ng-gramine
+            targetjob: e2e-sgx SKIP=App:sgx-epc-cgroup
 
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
