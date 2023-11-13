@@ -71,15 +71,6 @@ func (c *controller) CreateEmptyObject() client.Object {
 	return &devicepluginv1.SgxDevicePlugin{}
 }
 
-func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client) (int, error) {
-	var list devicepluginv1.SgxDevicePluginList
-	if err := clnt.List(ctx, &list); err != nil {
-		return 0, err
-	}
-
-	return len(list.Items), nil
-}
-
 func addVolumeIfMissing(spec *v1.PodSpec, name, path string, hpType v1.HostPathType) {
 	for _, vol := range spec.Volumes {
 		if vol.Name == name {
@@ -125,6 +116,8 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.SgxDevicePlugin)
 
 	daemonSet := deployments.SGXPluginDaemonSet()
+	daemonSet.Name = controllers.SuffixedName(daemonSet.Name, devicePlugin.Name)
+
 	if len(devicePlugin.Spec.NodeSelector) > 0 {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}

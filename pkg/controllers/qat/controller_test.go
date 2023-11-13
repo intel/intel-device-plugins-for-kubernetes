@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
 const appLabel = "intel-qat-plugin"
@@ -45,7 +46,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: c.ns,
-			Name:      appLabel,
+			Name:      appLabel + "-" + devicePlugin.Name,
 			Labels: map[string]string{
 				"app": appLabel,
 			},
@@ -164,6 +165,8 @@ func TestNewDaemonSetQAT(t *testing.T) {
 	c := &controller{}
 
 	plugin := &devicepluginv1.QatDevicePlugin{}
+	plugin.Name = "testing"
+	plugin.Spec.InitImage = "intel/intel-qat-initcontainer:" + controllers.ImageMinVersion.String()
 	expected := c.newDaemonSetExpected(plugin)
 	actual := c.NewDaemonSet(plugin)
 

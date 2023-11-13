@@ -43,7 +43,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: c.ns,
-			Name:      appLabel,
+			Name:      appLabel + "-" + devicePlugin.Name,
 			Labels: map[string]string{
 				"app": appLabel,
 			},
@@ -160,6 +160,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 // equal to the expected daemonset.
 func TestNewDaemonSetIAA(t *testing.T) {
 	plugin := &devicepluginv1.IaaDevicePlugin{}
+	plugin.Name = "testing"
 	c := &controller{}
 
 	expected := c.newDaemonSetExpected(plugin)

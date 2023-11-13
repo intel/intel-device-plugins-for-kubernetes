@@ -25,10 +25,6 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
-const (
-	qatPluginKind = "QatDevicePlugin"
-)
-
 var (
 	// qatdevicepluginlog is for logging in this package.
 	qatdevicepluginlog = logf.Log.WithName("qatdeviceplugin-resource")
@@ -63,10 +59,6 @@ var _ webhook.Validator = &QatDevicePlugin{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *QatDevicePlugin) ValidateCreate() (admission.Warnings, error) {
 	qatdevicepluginlog.Info("validate create", "name", r.Name)
-
-	if controllers.GetDevicePluginCount(qatPluginKind) > 0 {
-		return nil, errors.Errorf("an instance of %q already exists in the cluster", qatPluginKind)
-	}
 
 	return nil, r.validatePlugin()
 }

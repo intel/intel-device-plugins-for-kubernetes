@@ -25,10 +25,6 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
-const (
-	dsaPluginKind = "DsaDevicePlugin"
-)
-
 var (
 	// dsadevicepluginlog is for logging in this package.
 	dsadevicepluginlog = logf.Log.WithName("dsadeviceplugin-resource")
@@ -63,10 +59,6 @@ var _ webhook.Validator = &DsaDevicePlugin{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (r *DsaDevicePlugin) ValidateCreate() (admission.Warnings, error) {
 	dsadevicepluginlog.Info("validate create", "name", r.Name)
-
-	if controllers.GetDevicePluginCount(dsaPluginKind) > 0 {
-		return nil, errors.Errorf("an instance of %q already exists in the cluster", dsaPluginKind)
-	}
 
 	return nil, r.validatePlugin()
 }

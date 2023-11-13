@@ -52,6 +52,8 @@ var _ = Describe("FpgaDevicePlugin Controller", func() {
 				Spec: spec,
 			}
 
+			expectedDsName := "intel-fpga-plugin-fpgadeviceplugin-test"
+
 			By("creating FpgaDevicePlugin successfully")
 			Expect(k8sClient.Create(context.Background(), toCreate)).Should(Succeed())
 			time.Sleep(time.Second * 5)
@@ -64,7 +66,8 @@ var _ = Describe("FpgaDevicePlugin Controller", func() {
 
 			By("checking DaemonSet is created successfully")
 			ds := &apps.DaemonSet{}
-			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-fpga-plugin"}, ds)
+			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
+			Expect(err).To(BeNil())
 			Expect(ds.Spec.Template.Spec.Containers[0].Image).To(Equal(spec.Image))
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(spec.InitImage))
@@ -92,7 +95,8 @@ var _ = Describe("FpgaDevicePlugin Controller", func() {
 			time.Sleep(interval)
 
 			By("checking DaemonSet is updated successfully")
-			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-fpga-plugin"}, ds)
+			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
+			Expect(err).To(BeNil())
 
 			expectArgs := []string{
 				"-v",
@@ -114,7 +118,8 @@ var _ = Describe("FpgaDevicePlugin Controller", func() {
 			time.Sleep(interval)
 
 			By("checking DaemonSet is updated with different values successfully")
-			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: "intel-fpga-plugin"}, ds)
+			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
+			Expect(err).To(BeNil())
 			time.Sleep(interval)
 
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(And(HaveLen(1), HaveKeyWithValue("kubernetes.io/arch", "amd64")))

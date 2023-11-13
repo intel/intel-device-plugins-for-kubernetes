@@ -39,6 +39,7 @@ import (
 const (
 	ownerKey           = ".metadata.controller.gpu"
 	serviceAccountName = "gpu-manager-sa"
+	roleBindingName    = "gpu-manager-rolebinding"
 )
 
 var defaultNodeSelector = deployments.GPUPluginDaemonSet().Spec.Template.Spec.NodeSelector
@@ -75,63 +76,62 @@ func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
 	return controllers.UpgradeImages(ctx, &dp.Spec.Image, &dp.Spec.InitImage)
 }
 
-func (c *controller) GetTotalObjectCount(ctx context.Context, clnt client.Client) (int, error) {
+func (c *controller) NewSharedServiceAccount() *v1.ServiceAccount {
+	return &v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceAccountName,
+			Namespace: c.ns,
+		},
+	}
+}
+
+func (c *controller) NewSharedClusterRoleBinding() *rbacv1.ClusterRoleBinding {
+	return &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      roleBindingName,
+			Namespace: c.ns,
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      serviceAccountName,
+				Namespace: c.ns,
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			Kind:     "ClusterRole",
+			Name:     "inteldeviceplugins-gpu-manager-role",
+			APIGroup: "rbac.authorization.k8s.io",
+		},
+	}
+}
+
+func (c *controller) PluginMayRequireSharedObjects() bool {
+	return true
+}
+
+func (c *controller) PluginRequiresSharedObjects(ctx context.Context, client client.Client) bool {
 	var list devicepluginv1.GpuDevicePluginList
-	if err := clnt.List(ctx, &list); err != nil {
-		return 0, err
+
+	if err := client.List(ctx, &list); err != nil {
+		return false
 	}
 
-	return len(list.Items), nil
-}
-
-func (c *controller) NewServiceAccount(rawObj client.Object) *v1.ServiceAccount {
-	devicePlugin := rawObj.(*devicepluginv1.GpuDevicePlugin)
-	if devicePlugin.Spec.ResourceManager {
-		sa := v1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "gpu-manager-sa",
-				Namespace: c.ns,
-			},
+	for _, cr := range list.Items {
+		if cr.Spec.ResourceManager {
+			return true
 		}
-
-		return &sa
 	}
 
-	return nil
-}
-
-func (c *controller) NewClusterRoleBinding(rawObj client.Object) *rbacv1.ClusterRoleBinding {
-	devicePlugin := rawObj.(*devicepluginv1.GpuDevicePlugin)
-	if devicePlugin.Spec.ResourceManager {
-		rb := rbacv1.ClusterRoleBinding{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "gpu-manager-rolebinding",
-				Namespace: c.ns,
-			},
-			Subjects: []rbacv1.Subject{
-				{
-					Kind:      "ServiceAccount",
-					Name:      "gpu-manager-sa",
-					Namespace: c.ns,
-				},
-			},
-			RoleRef: rbacv1.RoleRef{
-				Kind:     "ClusterRole",
-				Name:     "inteldeviceplugins-gpu-manager-role",
-				APIGroup: "rbac.authorization.k8s.io",
-			},
-		}
-
-		return &rb
-	}
-
-	return nil
+	return false
 }
 
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.GpuDevicePlugin)
 
 	daemonSet := deployments.GPUPluginDaemonSet()
+	daemonSet.Name = controllers.SuffixedName(daemonSet.Name, devicePlugin.Name)
+
 	if len(devicePlugin.Spec.NodeSelector) > 0 {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
