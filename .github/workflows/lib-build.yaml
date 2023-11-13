@@ -1,6 +1,11 @@
 name: build
+
 on:
   workflow_call:
+
+permissions:
+  contents: read
+
 jobs:
   image:
     name: Build image

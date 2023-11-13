@@ -19,6 +19,10 @@ on:
         required: false
         type: boolean
 
+permissions:
+  actions: read
+  contents: read
+
 jobs:
   trivy-scan-deployments:
     name: Scan deployments
@@ -69,6 +73,9 @@ jobs:
         severity: "UNKNOWN,MEDIUM,HIGH,CRITICAL"
 
   trivy-scan-vulns:
+    permissions:
+      security-events: write
+
     runs-on: ubuntu-22.04
     name: Scan vulnerabilities
     steps:
