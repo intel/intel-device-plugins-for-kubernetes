@@ -9,6 +9,9 @@ on:
 env:
   no_base_check: "['intel-qat-plugin-kerneldrv', 'intel-idxd-config-initcontainer', 'crypto-perf', 'opae-nlb-demo']"
 
+permissions:
+  contents: read
+
 jobs:
   image:
     name: Build image

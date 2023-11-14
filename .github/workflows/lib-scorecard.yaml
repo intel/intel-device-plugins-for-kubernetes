@@ -1,0 +1,33 @@
+name: "OSSF"
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  analysis:
+    name: Analysis
+    runs-on: ubuntu-22.04
+
+    permissions:
+      security-events: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: "Analyze project"
+        uses: ossf/scorecard-action@v2.3.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: "Upload results to security"
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: results.sarif
