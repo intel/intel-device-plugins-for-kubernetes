@@ -1,4 +1,4 @@
-// Copyright 2021-2022 Intel Corporation. All Rights Reserved.
+// Copyright 2021-2023 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"golang.org/x/sys/unix"
 )
@@ -61,6 +62,9 @@ const (
 	devNullMajor = 1
 	devNullMinor = 3
 	devNullType  = unix.S_IFCHR
+	// GPU connectivity.
+	maxK8sLabelSize = 63
+	fullyConnected  = "FULL"
 )
 
 var verbose bool
@@ -289,6 +293,86 @@ func generateDriFiles(opts genOptions) {
 		}
 	}
 	log.Printf("Done, created %d dirs, %d devices and %d files.", opts.dirs, opts.devs, opts.files)
+
+	makeXelinkSideCar(opts)
+}
+
+func makeXelinkSideCar(opts genOptions) {
+	topology := opts.Capabilities["connection-topology"]
+	gpus := opts.DevCount
+	tiles := opts.TilesPerDev
+	connections := opts.Capabilities["connections"]
+
+	if topology != fullyConnected {
+		saveSideCarFile(connections)
+	} else {
+		saveSideCarFile(buildConnectionList(gpus, tiles))
+	}
+
+	log.Printf("XELINK: generated xelink sidecar label file, using (GPUs: %d, Tiles: %d, Topology: %s)", gpus, tiles, topology)
+}
+
+func buildConnectionList(gpus, tiles int) string {
+	var nodes = make([]string, 0)
+
+	for mm := 0; mm < gpus; mm++ {
+		for nn := 0; nn < tiles; nn++ {
+			nodes = append(nodes, fmt.Sprintf("%d.%d", mm, nn))
+		}
+	}
+
+	var links = make(map[string]bool, 0)
+
+	var smap = make([]string, 0)
+
+	for _, from := range nodes {
+		for _, to := range nodes {
+			// no self links, TODO ignore in-gpu xelinks
+			if to == from {
+				continue
+			}
+
+			link := fmt.Sprintf("%s-%s", to, from)
+
+			reverselink := fmt.Sprintf("%s-%s", from, to)
+			if _, exists := links[reverselink]; !exists {
+				links[link] = true
+
+				smap = append(smap, link)
+			}
+		}
+	}
+
+	return strings.Join(smap, "_")
+}
+
+func saveSideCarFile(connections string) {
+	f, err := os.Create("xpum-sidecar-labels.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	// Write first line without Z prefix
+	line := fmt.Sprintf("xpumanager.intel.com/xe-links=%s", connections[:min(len(connections), maxK8sLabelSize)])
+	fmt.Println(line)
+
+	if _, err := f.WriteString(line + "\n"); err != nil {
+		panic(err)
+	}
+
+	index := 2
+
+	// Write next lines with Z prefix
+	for i := maxK8sLabelSize; i < len(connections); i += (maxK8sLabelSize - 1) {
+		line := fmt.Sprintf("xpumanager.intel.com/xe-links%d=Z%s", index, connections[i:min(len(connections), i+maxK8sLabelSize-1)])
+		fmt.Println(line)
+
+		if _, err := f.WriteString(line + "\n"); err != nil {
+			panic(err)
+		}
+		index++
+	}
 }
 
 // getOptions parses options from given JSON file, validates and returns them.
