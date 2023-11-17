@@ -62,7 +62,7 @@ const (
 	devNullMajor = 1
 	devNullMinor = 3
 	devNullType  = unix.S_IFCHR
-	// GPU connectivity
+	// GPU connectivity.
 	maxK8sLabelSize = 63
 	fullyConnected  = "FULL"
 )
@@ -308,6 +308,7 @@ func makeXelinkSideCar(opts genOptions) {
 	} else {
 		saveSideCarFile(buildConnectionList(gpus, tiles))
 	}
+
 	log.Printf("XELINK: generated xelink sidecar label file, using (GPUs: %d, Tiles: %d, Topology: %s)", gpus, tiles, topology)
 }
 
