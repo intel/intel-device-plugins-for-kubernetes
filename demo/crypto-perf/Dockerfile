@@ -5,17 +5,17 @@ WORKDIR $DIR
 
 RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
     /etc/apt/sources.list.d/deb-src.list
-RUN apt-get update && apt-get install -y --no-install-recommends wget build-essential meson ninja-build python3-pyelftools libnuma-dev python3-pip libssl-dev pkg-config dpkg-dev
+RUN apt-get update && apt-get install -y --no-install-recommends wget build-essential meson ninja-build python3-pyelftools libnuma-dev python3-pip pkg-config dpkg-dev libipsec-mb-dev
 
 # Download & unpack DPDK tarball
-ARG DPDK_TARBALL=dpdk-23.07-rc4.tar.xz
-ARG DPDK_TARBALL_SHA256="f16e25a8b1eeb7335fbd265a6d4f9cce512709436efc80f6422ee9cfdf2f32b9"
+ARG DPDK_TARBALL=dpdk-23.11-rc3.tar.xz
+ARG DPDK_TARBALL_SHA256="cacd8b6d796f9983479f8c5989830cb86705922f8d6a813d83ecb82034088993"
 
-ARG SOVERSION=23
 RUN wget -q https://git.dpdk.org/dpdk/snapshot/$DPDK_TARBALL \
     && echo "$DPDK_TARBALL_SHA256 $DPDK_TARBALL" | sha256sum -c - \
     && tar -xf $DPDK_TARBALL && rm $DPDK_TARBALL
 
+ARG SOVERSION=24
 RUN cd dpdk-* && meson setup \
     -Dplatform=generic \
     -Dcpu_instruction_set=westmere \
@@ -28,7 +28,7 @@ RUN cd dpdk-* && \
     install -D builddir/app/dpdk-test-crypto-perf /install_root/usr/bin/dpdk-test-crypto-perf && \
     install -D builddir/app/dpdk-test-compress-perf /install_root/usr/bin/dpdk-test-compress-perf && \
     install -d /install_root/usr/lib/x86_64-linux-gnu/ && \
-    for r in bus_pci eal kvargs hash security telemetry pci mbuf mempool ring net rcu ipsec cryptodev compressdev common_qat; do \
+    for r in log bus_pci eal kvargs hash security telemetry pci mbuf mempool ring net rcu ipsec cryptodev compressdev common_qat; do \
        install installdir/lib/x86_64-linux-gnu/librte_${r}.so.${SOVERSION} /install_root/usr/lib/x86_64-linux-gnu/; \
     done
 
@@ -38,7 +38,7 @@ RUN mkdir -p /install_root/licenses/dpdk && \
     apt-get source --download-only -y libatomic1 libnuma1
 
 FROM debian:sid-slim
-RUN apt-get update && apt-get install -y --no-install-recommends libssl3 libnuma1 libatomic1 && ldconfig -v
+RUN apt-get update && apt-get install -y --no-install-recommends libipsec-mb1 libnuma1 libatomic1 && ldconfig -v
 COPY --from=builder /install_root /
 COPY run-dpdk-test /usr/bin/
 
