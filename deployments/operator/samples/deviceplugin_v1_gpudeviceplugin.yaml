@@ -6,5 +6,6 @@ spec:
   image: intel/intel-gpu-plugin:0.28.0
   sharedDevNum: 10
   logLevel: 4
+  enableMonitoring: true
   nodeSelector:
     intel.feature.node.kubernetes.io/gpu: "true"
