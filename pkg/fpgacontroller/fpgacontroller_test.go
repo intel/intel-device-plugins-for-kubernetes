@@ -15,30 +15,25 @@
 package fpgacontroller
 
 import (
-	"context"
 	"errors"
 	"testing"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/klog/v2/klogr"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga/v2"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller/patcher"
+	"k8s.io/klog/v2/ktesting"
 )
 
 var (
 	errClient = errors.New("client error")
-	logger    = ctrl.Log.WithName("test")
 	scheme    = runtime.NewScheme()
 )
 
 func init() {
-	ctrl.SetLogger(klogr.New())
-
 	_ = fpgav2.AddToScheme(scheme)
 }
 
@@ -64,13 +59,13 @@ func TestAcceleratorFunctionReconcile(t *testing.T) {
 
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
+			logger, ctx := ktesting.NewTestContext(t)
 			reconciler := &AcceleratorFunctionReconciler{
 				Client: &mockClient{
 					getError: tt.getError,
 				},
 				PatcherManager: patcher.NewPatcherManager(logger),
 			}
-			ctx := log.IntoContext(context.Background(), logger)
 			_, err := reconciler.Reconcile(ctx, ctrl.Request{})
 			if err != nil && !tt.expectedErr {
 				t.Errorf("unexpected error: %+v", err)
@@ -85,10 +80,12 @@ func TestAcceleratorFunctionReconcile(t *testing.T) {
 func TestAcceleratorFunctionSetupWithManager(t *testing.T) {
 	r := &AcceleratorFunctionReconciler{}
 
+	logger, _ := ktesting.NewTestContext(t)
 	err := r.SetupWithManager(&mockManager{
 		scheme: scheme,
 		log:    logger,
 	})
+
 	if err != nil {
 		t.Errorf("unexpected error: %+v", err)
 	}
@@ -116,13 +113,13 @@ func TestFpgaRegionReconcile(t *testing.T) {
 
 	for _, tt := range tcases {
 		t.Run(tt.name, func(t *testing.T) {
+			logger, ctx := ktesting.NewTestContext(t)
 			reconciler := &FpgaRegionReconciler{
 				Client: &mockClient{
 					getError: tt.getError,
 				},
 				PatcherManager: patcher.NewPatcherManager(logger),
 			}
-			ctx := log.IntoContext(context.Background(), logger)
 			_, err := reconciler.Reconcile(ctx, ctrl.Request{})
 			if err != nil && !tt.expectedErr {
 				t.Errorf("unexpected error: %+v", err)
@@ -137,10 +134,12 @@ func TestFpgaRegionReconcile(t *testing.T) {
 func TestFpgaRegionSetupWithManager(t *testing.T) {
 	r := &FpgaRegionReconciler{}
 
+	logger, _ := ktesting.NewTestContext(t)
 	err := r.SetupWithManager(&mockManager{
 		scheme: scheme,
 		log:    logger,
 	})
+
 	if err != nil {
 		t.Errorf("unexpected error: %+v", err)
 	}

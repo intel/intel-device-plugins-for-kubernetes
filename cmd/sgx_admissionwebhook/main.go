@@ -16,12 +16,12 @@ package main
 
 import (
 	"crypto/tls"
+	"flag"
 	"os"
 
 	sgxwebhook "github.com/intel/intel-device-plugins-for-kubernetes/pkg/webhooks/sgx"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/klog/v2"
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2/textlogger"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -32,12 +32,11 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
-func init() {
-	klog.InitFlags(nil)
-}
-
 func main() {
-	ctrl.SetLogger(klogr.New())
+	tlConf := textlogger.NewConfig()
+	tlConf.AddFlags(flag.CommandLine)
+	flag.Parse()
+	ctrl.SetLogger(textlogger.NewLogger(tlConf))
 
 	tlsCfgFunc := func(cfg *tls.Config) {
 		cfg.MinVersion = tls.VersionTLS13

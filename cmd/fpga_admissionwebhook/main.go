@@ -20,8 +20,7 @@ import (
 	"os"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/klog/v2"
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2/textlogger"
 	ctrl "sigs.k8s.io/controller-runtime"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -38,8 +37,6 @@ var (
 )
 
 func init() {
-	klog.InitFlags(nil)
-
 	_ = fpgav2.AddToScheme(scheme)
 }
 
@@ -48,12 +45,14 @@ func main() {
 		enableLeaderElection bool
 	)
 
+	tlConf := textlogger.NewConfig()
+	tlConf.AddFlags(flag.CommandLine)
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
-	ctrl.SetLogger(klogr.New())
+	ctrl.SetLogger(textlogger.NewLogger(tlConf))
 
 	tlsCfgFunc := func(cfg *tls.Config) {
 		cfg.MinVersion = tls.VersionTLS13
