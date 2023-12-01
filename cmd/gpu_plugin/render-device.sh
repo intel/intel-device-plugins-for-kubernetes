@@ -73,14 +73,14 @@ for i in $(seq 128 255); do
 		vendor=$(cat "/sys/class/drm/renderD$i/device/vendor")
 		if [ "$vendor" = "$intel" ]; then
 			visible=$((visible+1))
-			if [ $visible -eq $required ]; then
+			if [ $visible -eq "$required" ]; then
 				break
 			fi
 		fi
 	fi
 done
 
-if [ $visible -ne $required ]; then
+if [ $visible -ne "$required" ]; then
 	usage "$visible Intel GPU(s) found, not $required as requested"
 fi
 device="/dev/dri/renderD$i"
@@ -91,7 +91,7 @@ if [ $# -eq 0 ]; then
 fi
 
 if [ $# -lt 2 ]; then
-	usage "media program and/or GPU selection option missing"
+	usage "media program and/or its GPU selection option missing"
 fi
 
 # run given media workload with GPU device name appended to end
