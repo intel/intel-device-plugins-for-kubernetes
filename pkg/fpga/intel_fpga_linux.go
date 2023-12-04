@@ -241,7 +241,7 @@ func (f *IntelFpgaFME) GetPortsNum() int {
 	}
 
 	n, err := strconv.ParseUint(f.PortsNum, 10, 32)
-	if err != nil {
+	if err != nil || n >= math.MaxInt {
 		return -1
 	}
 
