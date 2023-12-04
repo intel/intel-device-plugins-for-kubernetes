@@ -39,6 +39,7 @@ FROM ${GOLANG_BASE} as builder
 ARG DIR=/intel-device-plugins-for-kubernetes
 WORKDIR $DIR
 COPY . .
+RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE
 ARG TOYBOX_VERSION="0.8.10"
 ARG TOYBOX_SHA256="3c31e235fe87e74e6c6cf7cd7299fcbffb0f4a4834dae607aa26bb4f1583549a"
 ARG ROOT=/install_root
