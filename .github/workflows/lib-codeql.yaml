@@ -20,12 +20,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - uses: actions/setup-go@v4
+      with:
+        go-version-file: go.mod
+        check-latest: true
+
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
       with:
         languages: 'go'
 
-    - uses: actions/setup-go@v4
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
       with:
