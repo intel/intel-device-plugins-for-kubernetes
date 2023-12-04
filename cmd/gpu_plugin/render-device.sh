@@ -22,7 +22,7 @@
 # all distro base images.  The required tools, and the packages they
 # reside in Debian based distros, are:
 # - dash: 'sh' (minimal bourne shell)
-# - coreutils: 'seq', 'cat', 'echo'
+# - coreutils: 'seq', 'cat', 'echo', 'id'
 # - sed: 'sed'
 #
 # But they are also provided by 'busybox' and 'toybox' tool sets.
@@ -34,6 +34,9 @@ usage ()
 	echo "Provides (Intel GPU) render device name application can use, either"
 	echo "on standard output, or added to given command line. If device index"
 	echo "N is given, provides name of Nth available (Intel GPU) render device."
+	echo
+	echo "With no arguments, outputs Intel GPU render devices count from sysfs,"
+	echo "and how many of them are writable in devfs."
 	echo
 	echo "Usage:"
 	echo "  $name <device index>"
@@ -48,8 +51,29 @@ usage ()
 	exit 1
 }
 
+intel="0x8086"
 if [ $# -eq 0 ]; then
-	usage "no arguments given"
+	syscount=0
+	devcount=0
+	for i in $(seq 128 255); do
+		devfile="/dev/dri/renderD$i"
+		sysfile="/sys/class/drm/renderD$i/device/vendor"
+		if [ ! -r "$sysfile" ]; then
+			continue
+		fi
+		vendor=$(cat "$sysfile")
+		if [ "$vendor" != "$intel" ]; then
+			continue
+		fi
+		syscount=$((syscount+1))
+		if [ -w "$devfile" ]; then
+			devcount=$((devcount+1))
+		fi
+	done
+	echo "$syscount Intel GPU render device(s) listed in sysfs, $devcount writable one(s) in devfs:"
+	ls -l /dev/dri/
+	echo "User: $(id)"
+	exit 0
 fi
 
 # determine required GPU index
@@ -66,21 +90,20 @@ fi
 visible=0
 
 vendor=""
-intel="0x8086"
 # find host index "i" for Nth visible Intel GPU device
 for i in $(seq 128 255); do
 	if [ -w "/dev/dri/renderD$i" ]; then
 		vendor=$(cat "/sys/class/drm/renderD$i/device/vendor")
 		if [ "$vendor" = "$intel" ]; then
 			visible=$((visible+1))
-			if [ $visible -eq $required ]; then
+			if [ $visible -eq "$required" ]; then
 				break
 			fi
 		fi
 	fi
 done
 
-if [ $visible -ne $required ]; then
+if [ $visible -ne "$required" ]; then
 	usage "$visible Intel GPU(s) found, not $required as requested"
 fi
 device="/dev/dri/renderD$i"
@@ -91,7 +114,7 @@ if [ $# -eq 0 ]; then
 fi
 
 if [ $# -lt 2 ]; then
-	usage "media program and/or GPU selection option missing"
+	usage "media program and/or its GPU selection option missing"
 fi
 
 # run given media workload with GPU device name appended to end
