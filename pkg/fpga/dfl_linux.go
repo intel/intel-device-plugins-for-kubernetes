@@ -236,7 +236,7 @@ func (f *DflFME) GetPortsNum() int {
 	}
 
 	n, err := strconv.ParseUint(f.PortsNum, 10, 32)
-	if err != nil || n >= math.MaxInt {
+	if err != nil || n > math.MaxInt32 {
 		return -1
 	}
 

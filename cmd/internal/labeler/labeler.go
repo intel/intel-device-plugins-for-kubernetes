@@ -16,6 +16,7 @@ package labeler
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"os/signal"
 	"path"
@@ -205,9 +206,15 @@ func (l *labeler) getNumaNode(gpuName string) int {
 		return -1
 	}
 
-	numa, err := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 64)
+	numa, err := strconv.ParseInt(strings.TrimSpace(string(data)), 10, 32)
 	if err != nil {
 		klog.Warning("Can't convert numa_node: ", err)
+		return -1
+	}
+
+	if numa > math.MaxInt16 {
+		klog.Warning("Too large numa: ", numa)
+
 		return -1
 	}
 
@@ -305,7 +312,9 @@ func (l *labeler) createLabels() error {
 			numaMapping[numaNode] = numaList
 		}
 
-		l.labels.addNumericLabel(labelNamespace+"memory.max", int64(memoryAmount))
+		if memoryAmount < math.MaxInt64 {
+			l.labels.addNumericLabel(labelNamespace+"memory.max", int64(memoryAmount))
+		}
 	}
 
 	gpuCount := len(gpuNumList)
