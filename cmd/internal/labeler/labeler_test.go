@@ -520,6 +520,48 @@ func getTestCases() []testcase {
 				"gpu.intel.com/tiles":         "27",
 			},
 		},
+		{
+			sysfsdirs: []string{
+				"card1/device/drm/card1",
+				"card1/gt/gt0",
+			},
+			sysfsfiles: map[string][]byte{
+				"card1/device/vendor":    []byte("0x8086"),
+				"card1/lmem_total_bytes": []byte("8000"),
+				"card1/device/numa_node": []byte("2147483648"), // max int32 + 1
+			},
+			name:           "too large numa node",
+			memoryOverride: 16000000000,
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/millicores":  "1000",
+				"gpu.intel.com/memory.max":  "8000",
+				"gpu.intel.com/gpu-numbers": "1",
+				"gpu.intel.com/cards":       "card1",
+				"gpu.intel.com/tiles":       "1",
+			},
+		},
+		{
+			sysfsdirs: []string{
+				"card1/device/drm/card1",
+				"card1/gt/gt0",
+			},
+			sysfsfiles: map[string][]byte{
+				"card1/device/vendor":    []byte("0x8086"),
+				"card1/lmem_total_bytes": []byte("8000"),
+				"card1/device/numa_node": []byte("32768"), // max int16 + 1
+			},
+			name:           "too large numa node",
+			memoryOverride: 16000000000,
+			expectedRetval: nil,
+			expectedLabels: labelMap{
+				"gpu.intel.com/millicores":  "1000",
+				"gpu.intel.com/memory.max":  "8000",
+				"gpu.intel.com/gpu-numbers": "1",
+				"gpu.intel.com/cards":       "card1",
+				"gpu.intel.com/tiles":       "1",
+			},
+		},
 	}
 }
 
