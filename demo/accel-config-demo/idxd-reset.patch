@@ -1,26 +1,67 @@
-From 07e1137a71021dc02df98b942a260b70ff852ca5 Mon Sep 17 00:00:00 2001
-From: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
-Date: Tue, 3 May 2022 15:28:05 +0300
-Subject: [PATCH] idxd: Ignore reset device error
+From 1dad1f8ea349381a5a88fa83084534cc5765fcf2 Mon Sep 17 00:00:00 2001
+From: Ramesh Thomas <ramesh.thomas@intel.com>
+Date: Wed, 6 Dec 2023 18:41:05 -0500
+Subject: [PATCH] accel-config: Handle cmd_status initialization failure
+ without exiting
 
-Signed-off-by: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+cmd_status attribute is cleared by writing to it. This can fail in RO
+file systems. Save the initial cmd_status value after the clearing
+attempt. When checking cmd_status, treat cmd_status as invalid if
+initial cmd_status is not 0 and cmd_status did not change from initial
+cmd_status value.
+
+Signed-off-by: Ramesh Thomas <ramesh.thomas@intel.com>
+Reported-by: Oleg Zhurakivskyy <oleg.zhurakivskyy@intel.com>
+Reported-by: Mikko Ylinen <mikko.ylinen@intel.com>
 ---
- accfg/lib/libaccfg.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ accfg/lib/libaccfg.c | 23 ++++++++++++++++-------
+ 1 file changed, 16 insertions(+), 7 deletions(-)
 
 diff --git a/accfg/lib/libaccfg.c b/accfg/lib/libaccfg.c
-index be3be69..32eb71f 100644
+index 610c3bf..37fa1ac 100644
 --- a/accfg/lib/libaccfg.c
 +++ b/accfg/lib/libaccfg.c
-@@ -636,7 +636,7 @@ static void *add_device(void *parent, int id, const char *ctl_base,
+@@ -69,6 +69,8 @@ static unsigned int accfg_device_compl_size[] = {
+ #define ACCFG_CMD_STATUS_MAX	0x45
+ #define ACCFG_CMD_STATUS_ERROR	0x80010000
  
- 	rc = accfg_set_param(ctx, dfd, "cmd_status", "1", 1);
- 	/* older drivers don't support writing to cmd_status */
++static long init_cmd_status;
++
+ #define SCMD_STAT(x) (((x) & ~IDXD_SCMD_SOFTERR_MASK) >> \
+ 		IDXD_SCMD_SOFTERR_SHIFT)
+ 
+@@ -538,13 +540,13 @@ static void *add_device(void *parent, int id, const char *ctl_base,
+ 		return NULL;
+ 	}
+ 
+-	rc = accfg_set_param(ctx, dfd, "cmd_status", "1", 1);
+-	/* older drivers don't support writing to cmd_status */
 -	if (rc && rc != -EACCES) {
-+	if (rc && rc != -EACCES && rc != -EROFS) {
- 		err(ctx, "Failed resetting cmd status %d\n", rc);
- 		close(dfd);
- 		goto err_device;
--- 
-2.36.1
-
+-		err(ctx, "Failed resetting cmd status %d\n", rc);
+-		close(dfd);
+-		goto err_device;
+-	}
++	accfg_set_param(ctx, dfd, "cmd_status", "1", 1);
++	/*
++	 * Clearing could have failed due to RO file system. When checking
++	 * cmd_status, validate initial value = 0 or is different from new
++	 * value.
++	 */
++	init_cmd_status = accfg_get_param_long(ctx, dfd, "cmd_status");
+ 
+ 	device = calloc(1, sizeof(*device));
+ 	if (!device) {
+@@ -1429,6 +1431,13 @@ ACCFG_EXPORT unsigned int accfg_device_get_cmd_status(struct accfg_device *devic
+ 	if (errno == ERANGE || end_ptr == buf)
+ 		return ACCFG_CMD_STATUS_ERROR;
+ 
++	/*
++	 * If cmd_status initialization had failed, return error if new
++	 * cmd_status is same as initial cmd_status
++	 */
++	if (init_cmd_status != 0 && init_cmd_status == status)
++		return ACCFG_CMD_STATUS_ERROR;
++
+ 	return (unsigned int)status;
+ }
+ 
