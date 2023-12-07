@@ -16,4 +16,4 @@ FROM ${FINAL_BASE}
 COPY --from=builder /install_root /
 
 COPY demo/dlb-init.sh /usr/local/bin/
-ENTRYPOINT [ "/bin/bash", "/usr/local/bin/dlb-init.sh"]
+ENTRYPOINT ["/usr/local/bin/dlb-init.sh"]

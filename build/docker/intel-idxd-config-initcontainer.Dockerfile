@@ -21,4 +21,4 @@ COPY demo/dsa.conf /idxd-init/
 COPY demo/iaa.conf /idxd-init/
 RUN mkdir /idxd-init/scratch
 WORKDIR /idxd-init
-ENTRYPOINT ["bash", "/usr/local/bin/idxd-init.sh"]
+ENTRYPOINT ["/usr/local/bin/idxd-init.sh"]
