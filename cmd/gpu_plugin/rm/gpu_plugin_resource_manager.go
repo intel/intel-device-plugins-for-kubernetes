@@ -25,6 +25,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -43,7 +44,7 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 	podresourcesv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
 	"k8s.io/kubernetes/pkg/kubelet/apis/podresources"
-	"k8s.io/utils/strings/slices"
+	sslices "k8s.io/utils/strings/slices"
 )
 
 const (
@@ -52,6 +53,11 @@ const (
 	gasTileAnnotation = "gas-container-tiles"
 
 	levelZeroAffinityMaskEnvVar = "ZE_AFFINITY_MASK"
+	levelZeroHierarchyEnvVar    = "ZE_FLAT_DEVICE_HIERARCHY"
+
+	hierarchyModeComposite = "COMPOSITE"
+	hierarchyModeFlat      = "FLAT"
+	hierarchyModeCombined  = "COMBINED"
 
 	grpcAddress    = "unix:///var/lib/kubelet/pod-resources/kubelet.sock"
 	grpcBufferSize = 4 * 1024 * 1024
@@ -99,6 +105,7 @@ type ResourceManager interface {
 	CreateFractionalResourceResponse(*pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error)
 	GetPreferredFractionalAllocation(*pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error)
 	SetDevInfos(DeviceInfoMap)
+	SetTileCountPerCard(counts []uint64)
 }
 
 type containerAssignments struct {
@@ -124,6 +131,7 @@ type resourceManager struct {
 	mutex            sync.RWMutex // for devTree updates during scan
 	cleanupMutex     sync.RWMutex // for assignment details during cleanup
 	useKubelet       bool
+	tileCountPerCard uint64
 }
 
 // NewDeviceInfo creates a new DeviceInfo.
@@ -365,7 +373,7 @@ func (rm *resourceManager) listPodsOnNodeWithStates(states []string) map[string]
 
 	for i := range podList.Items {
 		phase := string(podList.Items[i].Status.Phase)
-		if slices.Contains(states, phase) {
+		if sslices.Contains(states, phase) {
 			key := getPodKey(&podList.Items[i])
 			pods[key] = &podList.Items[i]
 		}
@@ -470,7 +478,7 @@ func (rm *resourceManager) GetPreferredFractionalAllocation(request *pluginapi.P
 	pod := podCandidate.pod
 	containerIndex := podCandidate.allocatedContainerCount
 	cards := containerCards(pod, containerIndex)
-	affinityMask := containerTileAffinityMask(pod, containerIndex)
+	affinityMask := containerTileAffinityMask(pod, containerIndex, int(rm.tileCountPerCard))
 	podKey := getPodKey(pod)
 
 	creq := request.ContainerRequests[0]
@@ -743,6 +751,25 @@ func (rm *resourceManager) SetDevInfos(deviceInfos DeviceInfoMap) {
 	rm.deviceInfos = deviceInfos
 }
 
+func (rm *resourceManager) SetTileCountPerCard(counts []uint64) {
+	if len(counts) == 0 {
+		return
+	}
+
+	minCount := slices.Min(counts)
+	maxCount := slices.Max(counts)
+
+	if minCount != maxCount {
+		klog.Warningf("Node's GPUs are heterogenous (min: %d, max: %d tiles)", minCount, maxCount)
+
+		return
+	}
+
+	rm.mutex.Lock()
+	defer rm.mutex.Unlock()
+	rm.tileCountPerCard = maxCount
+}
+
 func (rm *resourceManager) createAllocateResponse(deviceIds []string, tileAffinityMask string) (*pluginapi.AllocateResponse, error) {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
@@ -835,7 +862,40 @@ func containerCards(pod *v1.Pod, gpuUsingContainerIndex int) []string {
 	return nil
 }
 
-func convertTileInfoToEnvMask(tileInfo string) string {
+// Guesses level zero hierarchy mode for the container. Defaults to the new "flat" mode
+// if no mode is set in the container's env variables.
+func guessLevelZeroHierarchyMode(pod *v1.Pod, containerIndex int) string {
+	klog.V(4).Infof("Checking pod %s envs", pod.Name)
+
+	if containerIndex < len(pod.Spec.Containers) {
+		c := pod.Spec.Containers[containerIndex]
+
+		if c.Env != nil {
+			for _, env := range c.Env {
+				if env.Name == levelZeroHierarchyEnvVar {
+					switch env.Value {
+					// Check that the value is valid.
+					case hierarchyModeComposite:
+						fallthrough
+					case hierarchyModeFlat:
+						fallthrough
+					case hierarchyModeCombined:
+						klog.V(4).Infof("Returning %s hierarchy", env.Value)
+						return env.Value
+					}
+
+					break
+				}
+			}
+		}
+	}
+
+	klog.V(4).Infof("Returning default %s hierarchy", hierarchyModeFlat)
+
+	return hierarchyModeFlat
+}
+
+func convertTileInfoToEnvMask(tileInfo string, tilesPerCard int, hierarchyMode string) string {
 	cards := strings.Split(tileInfo, ",")
 
 	tileIndices := make([]string, len(cards))
@@ -849,7 +909,7 @@ func convertTileInfoToEnvMask(tileInfo string) string {
 
 		tiles := strings.Split(cardTileSplit[1], "+")
 
-		var combos []string
+		var maskItems []string
 
 		for _, tile := range tiles {
 			if !strings.HasPrefix(tile, "gt") {
@@ -865,13 +925,22 @@ func convertTileInfoToEnvMask(tileInfo string) string {
 				return ""
 			}
 
-			levelZeroCardTileCombo :=
-				strconv.FormatInt(int64(i), 10) + "." +
-					strconv.FormatInt(tileNo, 10)
-			combos = append(combos, levelZeroCardTileCombo)
+			maskItem := ""
+			if hierarchyMode == hierarchyModeComposite {
+				maskItem =
+					strconv.FormatInt(int64(i), 10) + "." +
+						strconv.FormatInt(tileNo, 10)
+			} else {
+				// This handles both FLAT and COMBINED hierarchy.
+				devIndex := i*tilesPerCard + int(tileNo)
+
+				maskItem = strconv.FormatInt(int64(devIndex), 10)
+			}
+
+			maskItems = append(maskItems, maskItem)
 		}
 
-		tileIndices[i] = strings.Join(combos, ",")
+		tileIndices[i] = strings.Join(maskItems, ",")
 	}
 
 	return strings.Join(tileIndices, ",")
@@ -880,13 +949,15 @@ func convertTileInfoToEnvMask(tileInfo string) string {
 // containerTiles returns the tile indices to use for a single container.
 // Indices should be passed to level zero env variable to guide execution
 // gpuUsingContainerIndex 0 == first gpu-using container in the pod.
+// The affinity mask is not needed for 1-tile GPUs. With 1-tile GPUs normal
+// GPU exposing is enough to limit container's access to targeted devices.
 // annotation example:
 // gas-container-tiles=card0:gt0+gt1,card1:gt0|card2:gt1+gt2||card0:gt3.
-func containerTileAffinityMask(pod *v1.Pod, gpuUsingContainerIndex int) string {
+func containerTileAffinityMask(pod *v1.Pod, gpuUsingContainerIndex, tilesPerCard int) string {
 	fullAnnotation := pod.Annotations[gasTileAnnotation]
 	onlyDividers := strings.Count(fullAnnotation, "|") == len(fullAnnotation)
 
-	if fullAnnotation == "" || onlyDividers {
+	if fullAnnotation == "" || onlyDividers || tilesPerCard <= 1 {
 		return ""
 	}
 
@@ -895,13 +966,13 @@ func containerTileAffinityMask(pod *v1.Pod, gpuUsingContainerIndex int) string {
 
 	i := 0
 
-	for _, containerTileInfo := range tileLists {
+	for containerIndex, containerTileInfo := range tileLists {
 		if len(containerTileInfo) == 0 {
 			continue
 		}
 
 		if i == gpuUsingContainerIndex {
-			return convertTileInfoToEnvMask(containerTileInfo)
+			return convertTileInfoToEnvMask(containerTileInfo, tilesPerCard, guessLevelZeroHierarchyMode(pod, containerIndex))
 		}
 
 		i++

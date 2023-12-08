@@ -8,6 +8,5 @@ spec:
       containers:
       - name: intel-gpu-plugin
         args:
-        - "-shared-dev-num=300"
-        - "-resource-manager"
         - "-enable-monitoring"
+        - "-v=2"

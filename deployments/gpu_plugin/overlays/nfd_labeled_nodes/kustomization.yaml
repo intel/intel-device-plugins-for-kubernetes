@@ -2,3 +2,4 @@ resources:
   - ../../base
 patches:
   - path: add-nodeselector-intel-gpu.yaml
+  - path: add-args.yaml

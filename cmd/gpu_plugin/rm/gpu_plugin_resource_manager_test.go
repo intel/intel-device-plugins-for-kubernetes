@@ -419,6 +419,8 @@ func TestCreateFractionalResourceResponse(t *testing.T) {
 
 	for _, tCase := range testCases {
 		rm := newMockResourceManager(tCase.pods)
+		rm.SetTileCountPerCard([]uint64{1})
+
 		_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
 			ContainerRequests: tCase.prefContainerRequests,
 		})
@@ -468,6 +470,12 @@ func TestCreateFractionalResourceResponseWithOneCardTwoTiles(t *testing.T) {
 							"gpu.intel.com/i915": resource.MustParse("1"),
 						},
 					},
+					Env: []v1.EnvVar{
+						{
+							Name:  levelZeroHierarchyEnvVar,
+							Value: hierarchyModeComposite,
+						},
+					},
 				},
 			},
 		},
@@ -493,6 +501,7 @@ func TestCreateFractionalResourceResponseWithOneCardTwoTiles(t *testing.T) {
 	}
 
 	rm := newMockResourceManager(tCase.pods)
+	rm.SetTileCountPerCard([]uint64{2})
 
 	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
 		ContainerRequests: tCase.prefContainerRequests,
@@ -534,6 +543,12 @@ func TestCreateFractionalResourceResponseWithTwoCardsOneTile(t *testing.T) {
 							"gpu.intel.com/i915": resource.MustParse("2"),
 						},
 					},
+					Env: []v1.EnvVar{
+						{
+							Name:  levelZeroHierarchyEnvVar,
+							Value: hierarchyModeComposite,
+						},
+					},
 				},
 			},
 		},
@@ -559,6 +574,7 @@ func TestCreateFractionalResourceResponseWithTwoCardsOneTile(t *testing.T) {
 	}
 
 	rm := newMockResourceManager(tCase.pods)
+	rm.SetTileCountPerCard([]uint64{5})
 
 	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
 		ContainerRequests: tCase.prefContainerRequests,
@@ -605,6 +621,12 @@ func TestCreateFractionalResourceResponseWithThreeCardsTwoTiles(t *testing.T) {
 							"gpu.intel.com/i915": resource.MustParse("3"),
 						},
 					},
+					Env: []v1.EnvVar{
+						{
+							Name:  levelZeroHierarchyEnvVar,
+							Value: hierarchyModeComposite,
+						},
+					},
 				},
 			},
 		},
@@ -630,6 +652,7 @@ func TestCreateFractionalResourceResponseWithThreeCardsTwoTiles(t *testing.T) {
 	}
 
 	rm := newMockResourceManager(tCase.pods)
+	rm.SetTileCountPerCard([]uint64{5})
 
 	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
 		ContainerRequests: tCase.prefContainerRequests,
@@ -676,11 +699,23 @@ func TestCreateFractionalResourceResponseWithMultipleContainersTileEach(t *testi
 							"gpu.intel.com/i915": resource.MustParse("1"),
 						},
 					},
+					Env: []v1.EnvVar{
+						{
+							Name:  levelZeroHierarchyEnvVar,
+							Value: hierarchyModeComposite,
+						},
+					},
 				},
 				{
 					Resources: v1.ResourceRequirements{
 						Requests: v1.ResourceList{
 							"gpu.intel.com/i915": resource.MustParse("1"),
+						},
+					},
+					Env: []v1.EnvVar{
+						{
+							Name:  levelZeroHierarchyEnvVar,
+							Value: hierarchyModeComposite,
 						},
 					},
 				},
@@ -712,6 +747,7 @@ func TestCreateFractionalResourceResponseWithMultipleContainersTileEach(t *testi
 	}
 
 	rm := newMockResourceManager(tCase.pods)
+	rm.SetTileCountPerCard([]uint64{2})
 
 	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
 		ContainerRequests: properPrefContainerRequests,
@@ -738,26 +774,77 @@ func TestCreateFractionalResourceResponseWithMultipleContainersTileEach(t *testi
 
 func TestTileAnnotationParsing(t *testing.T) {
 	type parseTest struct {
-		line   string
-		result string
-		index  int
+		line         string
+		result       string
+		hierarchys   []string
+		index        int
+		tilesPerCard int
 	}
 
 	parseTests := []parseTest{
 		{
-			line:   "card1:gt1",
-			index:  0,
-			result: "0.1",
+			line:         "card1:gt1",
+			index:        0,
+			result:       "0.1",
+			hierarchys:   []string{"COMPOSITE"},
+			tilesPerCard: 2,
 		},
 		{
-			line:   "card1:gt1+gt2",
-			index:  0,
-			result: "0.1,0.2",
+			line:         "card1:gt0",
+			index:        0,
+			result:       "",
+			hierarchys:   []string{"COMPOSITE"},
+			tilesPerCard: 1,
 		},
 		{
-			line:   "card1:gt1+gt2,card2:gt0",
-			index:  0,
-			result: "0.1,0.2,1.0",
+			line:         "card1:gt1+gt2",
+			index:        0,
+			result:       "0.1,0.2",
+			hierarchys:   []string{"COMPOSITE"},
+			tilesPerCard: 3,
+		},
+		// Invalid hierarchy defaults to FLAT
+		{
+			line:         "card1:gt1+gt2,card2:gt0",
+			index:        0,
+			result:       "1,2,3",
+			hierarchys:   []string{"FOOBAR"},
+			tilesPerCard: 3,
+		},
+		{
+			line:         "card1:gt1+gt2,card2:gt0",
+			index:        0,
+			result:       "1,2,3",
+			hierarchys:   []string{"FLAT"},
+			tilesPerCard: 3,
+		},
+		{
+			line:         "||card1:gt1+gt2,card2:gt0",
+			index:        0,
+			result:       "1,2,3",
+			hierarchys:   []string{"", "", "FLAT"},
+			tilesPerCard: 3,
+		},
+		{
+			line:         "||||card1:gt3,card5:gt1",
+			index:        0,
+			result:       "3,9",
+			hierarchys:   []string{"", "", "", "", "FLAT"},
+			tilesPerCard: 8,
+		},
+		{
+			line:         "card1:gt1+gt2,card2:gt1",
+			index:        0,
+			result:       "1,2,4",
+			hierarchys:   []string{"COMBINED"},
+			tilesPerCard: 3,
+		},
+		{
+			line:         "card1:gt1,card2:gt1",
+			index:        0,
+			result:       "1,3",
+			hierarchys:   []string{"COMBINED"},
+			tilesPerCard: 2,
 		},
 		{
 			line:   "card1:gt1",
@@ -765,24 +852,31 @@ func TestTileAnnotationParsing(t *testing.T) {
 			result: "",
 		},
 		{
-			line:   "card1:gt1|card2:gt4",
-			index:  1,
-			result: "0.4",
+			line:         "card1:gt1|card2:gt4",
+			index:        1,
+			result:       "4",
+			tilesPerCard: 5,
 		},
 		{
-			line:   "card1:gt1|card2:gt4,card3:gt2",
-			index:  1,
-			result: "0.4,1.2",
+			line:         "card1:gt1|card2:gt4,card3:gt2",
+			index:        1,
+			result:       "0.4,1.2",
+			hierarchys:   []string{"COMPOSITE", "COMPOSITE"},
+			tilesPerCard: 5,
 		},
 		{
-			line:   "card1:gt1|card2:gt4,card3:gt2|card5:gt0",
-			index:  2,
-			result: "0.0",
+			line:         "card1:gt1|card2:gt4,card3:gt2|card5:gt0",
+			index:        2,
+			result:       "0.0",
+			hierarchys:   []string{"COMPOSITE", "COMPOSITE", "COMPOSITE"},
+			tilesPerCard: 5,
 		},
 		{
-			line:   "||card5:gt0,card6:gt4||",
-			index:  0,
-			result: "0.0,1.4",
+			line:         "||card5:gt0,card6:gt4||",
+			index:        0,
+			result:       "0.0,1.4",
+			hierarchys:   []string{"", "", "COMPOSITE"},
+			tilesPerCard: 5,
 		},
 		{
 			line:   "||card5:gt0,card6:gt4||",
@@ -815,14 +909,18 @@ func TestTileAnnotationParsing(t *testing.T) {
 			result: "",
 		},
 		{
-			line:   "card1:gt1||card2:gt4,card3:gt2",
-			index:  1,
-			result: "0.4,1.2",
+			line:         "card1:gt1||card2:gt4,card3:gt2",
+			index:        1,
+			result:       "0.4,1.2",
+			hierarchys:   []string{"", "", "COMPOSITE"},
+			tilesPerCard: 6,
 		},
 		{
-			line:   "|||card2:gt7",
-			index:  0,
-			result: "0.7",
+			line:         "|||card2:gt7",
+			index:        0,
+			result:       "0.7",
+			hierarchys:   []string{"", "", "", "COMPOSITE"},
+			tilesPerCard: 8,
 		},
 		{
 			line:   "card5",
@@ -831,7 +929,7 @@ func TestTileAnnotationParsing(t *testing.T) {
 		},
 	}
 
-	for _, pt := range parseTests {
+	for testIndex, pt := range parseTests {
 		pod := v1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
@@ -839,9 +937,25 @@ func TestTileAnnotationParsing(t *testing.T) {
 			},
 		}
 
-		ret := containerTileAffinityMask(&pod, pt.index)
+		if pt.hierarchys != nil {
+			// Create enough containers
+			pod.Spec.Containers = make([]v1.Container, 10)
 
-		expectTruef(ret == pt.result, t, pt.line, "resulting mask is wrong. correct: %v, got: %v", pt.result, ret)
+			for i := range pod.Spec.Containers {
+				if i < len(pt.hierarchys) {
+					pod.Spec.Containers[i].Env = []v1.EnvVar{
+						{
+							Name:  levelZeroHierarchyEnvVar,
+							Value: pt.hierarchys[i],
+						},
+					}
+				}
+			}
+		}
+
+		ret := containerTileAffinityMask(&pod, pt.index, max(1, pt.tilesPerCard))
+
+		expectTruef(ret == pt.result, t, pt.line, "resulting mask is wrong (test index=%d). correct: %v, got: %v", testIndex, pt.result, ret)
 	}
 }
 
