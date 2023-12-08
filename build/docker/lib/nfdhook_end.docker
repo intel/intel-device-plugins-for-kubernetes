@@ -3,4 +3,4 @@
 #define string(s) #s
 
 COPY --from=builder /install_root /
-ENTRYPOINT [ "/bin/sh", "-c", xstring(_ENTRYPOINT_) ]
+ENTRYPOINT [ "/usr/bin/sh", "-c", xstring(_ENTRYPOINT_) ]

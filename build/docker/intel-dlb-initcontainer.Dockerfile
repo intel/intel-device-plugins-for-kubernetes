@@ -51,7 +51,6 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && rm toybox.tar.gz \
     && cd toybox-$TOYBOX_VERSION \
     && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config-$(echo ${FINAL_BASE} | xargs basename -s :latest) LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT/usr/bin V=2 make toybox install_flat \
-    && cd $ROOT && ln -fs usr/bin bin && cd - \
     && install -D LICENSE $ROOT/licenses/toybox \
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 ###
@@ -61,4 +60,4 @@ LABEL version='devel'
 LABEL release='1'
 COPY --from=builder /install_root /
 COPY demo/dlb-init.sh /usr/local/bin/
-ENTRYPOINT [ "/bin/bash", "/usr/local/bin/dlb-init.sh"]
+ENTRYPOINT ["/usr/local/bin/dlb-init.sh"]

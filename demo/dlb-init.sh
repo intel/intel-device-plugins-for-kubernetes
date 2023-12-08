@@ -1,4 +1,6 @@
-#!/bin/sh -eu
+#!/usr/bin/env bash
+
+set -u
 
 enable_and_configure_vfs() {
   devpath=$1

@@ -51,7 +51,6 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && rm toybox.tar.gz \
     && cd toybox-$TOYBOX_VERSION \
     && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config-$(echo ${FINAL_BASE} | xargs basename -s :latest) LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT/usr/bin V=2 make toybox install_flat \
-    && cd $ROOT && ln -fs usr/bin bin && cd - \
     && install -D LICENSE $ROOT/licenses/toybox \
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 ###
@@ -65,4 +64,4 @@ LABEL description='Intel QAT initcontainer initializes devices'
 COPY --from=builder /install_root /
 COPY demo/qat-init.sh /usr/local/bin/
 WORKDIR /qat-init
-ENTRYPOINT [ "/bin/bash", "/usr/local/bin/qat-init.sh"]
+ENTRYPOINT ["/usr/local/bin/qat-init.sh"]
