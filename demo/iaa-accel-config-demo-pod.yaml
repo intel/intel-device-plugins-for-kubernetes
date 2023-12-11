@@ -8,7 +8,11 @@ spec:
   containers:
   - name: iaa-accel-config-demo
     image: intel/accel-config-demo:devel
-    command: [ "/bin/bash", "-c", "cd /test && /bin/bash -e ./iaa_user_test_runner.sh" ]
+    workingDir: "/usr/libexec/accel-config/test/"
+    command:
+      - "./iaa_user_test_runner.sh"
+    args:
+      - "--skip-config"
     imagePullPolicy: IfNotPresent
     resources:
       limits:
