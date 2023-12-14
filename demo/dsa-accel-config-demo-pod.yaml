@@ -9,6 +9,11 @@ spec:
   - name: dsa-accel-config-demo
     image: intel/accel-config-demo:devel
     imagePullPolicy: IfNotPresent
+    workingDir: "/usr/libexec/accel-config/test/"
+    command:
+      - "./dsa_user_test_runner.sh"
+    args:
+      - "--skip-config"
     resources:
       limits:
         dsa.intel.com/wq-user-dedicated: 1
