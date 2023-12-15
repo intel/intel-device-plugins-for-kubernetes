@@ -86,6 +86,15 @@ spec:
         - feature: kernel.loadedmodule
           matchExpressions:
             intel_qat: {op: Exists}
+      matchAny:
+        - matchFeatures:
+          - feature: kernel.loadedmodule
+            matchExpressions:
+              vfio_pci: {op: Exists}
+        - matchFeatures:
+          - feature: kernel.enabledmodule
+            matchExpressions:
+              vfio-pci: {op: Exists}
 
     - name: "intel.sgx"
       labels:
