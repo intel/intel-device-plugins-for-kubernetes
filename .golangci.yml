@@ -4,8 +4,6 @@ run:
     - kerneldrv
   max-issues-per-linter: 0
   max-same-issues: 0
-  skip-dirs:
-    - cmd/vpu_plugin
 
 linters:
   disable-all: true
@@ -66,7 +64,4 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
-        # Until the testing package allows pinning variables disable scopelint
-        # for tests. See https://github.com/kyoh86/scopelint/issues/4.
-        - scopelint
         - gocognit
