@@ -59,7 +59,7 @@ FROM ${FINAL_BASE}
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_gpu_fakedev"]
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version='0.29.0'
 LABEL release='1'
 LABEL name='intel-gpu-fakedev'
 LABEL summary='Fake device file generator for Intel® GPU plugin'

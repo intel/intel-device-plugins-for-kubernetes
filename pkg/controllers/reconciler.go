@@ -37,7 +37,7 @@ import (
 )
 
 var (
-	ImageMinVersion = versionutil.MustParseSemantic("0.28.0")
+	ImageMinVersion = versionutil.MustParseSemantic("0.29.0")
 )
 
 const (
