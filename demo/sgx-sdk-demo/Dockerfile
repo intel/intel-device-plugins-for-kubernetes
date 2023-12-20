@@ -44,12 +44,16 @@ RUN wget ${SGX_SDK_URL} \
  && echo "yes" | ./$SGX_SDK_INSTALLER \
  && rm $SGX_SDK_INSTALLER
 
-RUN git clone -b $DCAP_VERSION https://github.com/intel/SGXDataCenterAttestationPrimitives.git
-
 RUN cd sgxsdk/SampleCode/SampleEnclave \
     && . /opt/intel/sgxsdk/environment \
     && make \
     && cd -
+
+ARG DCAP_TARBALL_SHA256="ed96f583581be108f9370d7e97577664a704914a98f27a7e117a650651c13e56"
+
+RUN wget -q https://github.com/intel/SGXDataCenterAttestationPrimitives/archive/$DCAP_VERSION.tar.gz && \
+    echo "$DCAP_TARBALL_SHA256 $DCAP_VERSION.tar.gz" | sha256sum -c - && \
+    tar xzf $DCAP_VERSION.tar.gz && mv SGXDataCenterAttestationPrimitives* SGXDataCenterAttestationPrimitives
 
 RUN cd SGXDataCenterAttestationPrimitives/SampleCode/QuoteGenerationSample \
     && . /opt/intel/sgxsdk/environment \
