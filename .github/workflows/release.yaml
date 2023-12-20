@@ -23,10 +23,15 @@ jobs:
   trivy:
     name: Trivy
     uses: "./.github/workflows/lib-trivy.yaml"
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
     with:
       deployments: false
       dockerfiles: false
       export-csv: true
+      upload-to-github-security-tab: false
 
   build:
     name: Build & Publish
