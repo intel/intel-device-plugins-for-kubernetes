@@ -15,6 +15,7 @@
 ## limitations under the License.
 ###
 FROM debian:unstable-slim
+COPY ./LICENSE /licenses/intel-device-plugins-for-kubernetes/LICENSE
 RUN apt-get update && apt-get install -y --no-install-recommends accel-config jq && rm -rf /var/lib/apt/lists/\*
 COPY demo/idxd-init.sh /usr/local/bin/
 COPY demo/dsa.conf /idxd-init/

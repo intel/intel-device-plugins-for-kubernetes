@@ -7,6 +7,7 @@ ARG DIR=/intel-device-plugins-for-kubernetes
 WORKDIR $DIR
 COPY . .
 
+RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE
 #include "toybox_build.docker"
 
 FROM ${FINAL_BASE}

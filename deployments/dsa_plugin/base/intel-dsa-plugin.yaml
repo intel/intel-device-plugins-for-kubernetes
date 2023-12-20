@@ -21,7 +21,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-dsa-plugin:devel
+        image: intel/intel-dsa-plugin:0.29.0
         imagePullPolicy: IfNotPresent
         securityContext:
           seLinuxOptions:
