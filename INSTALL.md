@@ -44,9 +44,7 @@ NOTE: cert-manager install takes a while to complete.
 
 ```bash
 helm install nfd nfd/node-feature-discovery \
-  --namespace node-feature-discovery --create-namespace --version 0.12.1 \
-  --set 'master.extraLabelNs={gpu.intel.com,sgx.intel.com}' \
-  --set 'master.resourceLabels={gpu.intel.com/millicores,gpu.intel.com/memory.max,gpu.intel.com/tiles,sgx.intel.com/epc}'
+  --namespace node-feature-discovery --create-namespace --version 0.14.3
 ```
 
 ### Installing operator
