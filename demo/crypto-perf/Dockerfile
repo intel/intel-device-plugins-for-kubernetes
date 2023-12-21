@@ -8,8 +8,8 @@ RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
 RUN apt-get update && apt-get install -y --no-install-recommends wget build-essential meson ninja-build python3-pyelftools libnuma-dev python3-pip pkg-config dpkg-dev libipsec-mb-dev
 
 # Download & unpack DPDK tarball
-ARG DPDK_TARBALL=dpdk-23.11-rc3.tar.xz
-ARG DPDK_TARBALL_SHA256="cacd8b6d796f9983479f8c5989830cb86705922f8d6a813d83ecb82034088993"
+ARG DPDK_TARBALL=dpdk-23.11.tar.xz
+ARG DPDK_TARBALL_SHA256="64fa58fdfc9e9510e8e414e3bedd165bd3d4ca465a231b280323f83cd53fd865"
 
 RUN wget -q https://git.dpdk.org/dpdk/snapshot/$DPDK_TARBALL \
     && echo "$DPDK_TARBALL_SHA256 $DPDK_TARBALL" | sha256sum -c - \
