@@ -52,7 +52,7 @@ const (
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=nodes/proxy,verbs=get;list
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=create
-// +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,resourceNames=privileged,verbs=use
+// +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=use
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,resourceNames=d1c7b6d5.intel.com,verbs=get;update
 
 // SharedObjectsFactory provides functions for creating service account and cluster rule binding objects.
