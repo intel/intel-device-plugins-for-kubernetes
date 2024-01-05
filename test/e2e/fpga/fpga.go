@@ -123,7 +123,7 @@ func runDevicePlugin(ctx context.Context, fmw *framework.Framework, pluginKustom
 	ginkgo.By("deploying mappings")
 	e2ekubectl.RunKubectlOrDie(fmw.Namespace.Name, "apply", "-f", mappingsCollectionPath)
 
-	waitForPod(ctx, fmw, "intel-fpga-plugin")
+	waitForPluginAndWebhook(ctx, fmw)
 
 	resource := v1.ResourceName(nodeResource)
 
@@ -189,11 +189,11 @@ func createPod(ctx context.Context, fmw *framework.Framework, name string, resou
 	return pod
 }
 
-func waitForPod(ctx context.Context, fmw *framework.Framework, name string) {
-	ginkgo.By(fmt.Sprintf("waiting for %s availability", name))
+func waitForPluginAndWebhook(ctx context.Context, fmw *framework.Framework) {
+	ginkgo.By("waiting for intel-fpga-plugin availability")
 
 	podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, fmw.ClientSet, fmw.Namespace.Name,
-		labels.Set{"app": name}.AsSelector(), 1, 100*time.Second)
+		labels.Set{"app": "intel-fpga-plugin"}.AsSelector(), 1, 100*time.Second)
 	if err != nil {
 		e2edebug.DumpAllNamespaceInfo(ctx, fmw.ClientSet, fmw.Namespace.Name)
 		e2ekubectl.LogFailedContainers(ctx, fmw.ClientSet, fmw.Namespace.Name, framework.Logf)
@@ -205,4 +205,16 @@ func waitForPod(ctx context.Context, fmw *framework.Framework, name string) {
 	if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
 		framework.Failf("container filesystem info checks failed: %v", err)
 	}
+
+	ginkgo.By("waiting for webhook availability")
+
+	_, err = e2epod.WaitForPodsWithLabelRunningReady(ctx, fmw.ClientSet, fmw.Namespace.Name,
+		labels.Set{"control-plane": "controller-manager"}.AsSelector(), 1, 100*time.Second)
+	if err != nil {
+		e2edebug.DumpAllNamespaceInfo(ctx, fmw.ClientSet, fmw.Namespace.Name)
+		e2ekubectl.LogFailedContainers(ctx, fmw.ClientSet, fmw.Namespace.Name, framework.Logf)
+		framework.Failf("unable to wait for all pods to be running and ready: %v", err)
+	}
+
+	ginkgo.By("all pods found")
 }
