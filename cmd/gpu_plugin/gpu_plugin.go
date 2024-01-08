@@ -17,6 +17,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -32,7 +33,6 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/labeler"
-	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 )
 
@@ -47,12 +47,14 @@ const (
 	vendorString      = "0x8086"
 
 	// Device plugin settings.
-	namespace  = "gpu.intel.com"
-	deviceType = "i915"
+	namespace         = "gpu.intel.com"
+	deviceTypeI915    = "i915"
+	deviceTypeXe      = "xe"
+	deviceTypeDefault = deviceTypeI915
 
 	// telemetry resource settings.
-	monitorType = "i915_monitoring"
-	monitorID   = "all"
+	monitorSuffix = "_monitoring"
+	monitorID     = "all"
 
 	// Period of device scans.
 	scanPeriod = 5 * time.Second
@@ -66,6 +68,10 @@ type cliOptions struct {
 	sharedDevNum              int
 	enableMonitoring          bool
 	resourceManagement        bool
+}
+
+type rmWithMultipleDriversErr struct {
+	error
 }
 
 type preferredAllocationPolicyFunc func(*pluginapi.ContainerPreferredAllocationRequest) []string
@@ -283,7 +289,11 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 	if options.resourceManagement {
 		var err error
 
-		dp.resMan, err = rm.NewResourceManager(monitorID, namespace+"/"+deviceType)
+		dp.resMan, err = rm.NewResourceManager(monitorID,
+			[]string{
+				namespace + "/" + deviceTypeI915,
+				namespace + "/" + deviceTypeXe,
+			})
 		if err != nil {
 			klog.Errorf("Failed to create resource manager: %+v", err)
 			return nil
@@ -345,13 +355,20 @@ func (dp *devicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocatio
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
 
-	klog.V(1).Infof("GPU '%s' resource share count = %d", deviceType, dp.options.sharedDevNum)
+	klog.V(1).Infof("GPU (%s/%s) resource share count = %d", deviceTypeI915, deviceTypeXe, dp.options.sharedDevNum)
 
-	previousCount := map[string]int{deviceType: 0, monitorType: 0}
+	previousCount := map[string]int{
+		deviceTypeI915: 0, deviceTypeXe: 0,
+		deviceTypeXe + monitorSuffix:   0,
+		deviceTypeI915 + monitorSuffix: 0}
 
 	for {
 		devTree, err := dp.scan()
 		if err != nil {
+			if errors.Is(err, rmWithMultipleDriversErr{}) {
+				return err
+			}
+
 			klog.Warning("Failed to scan: ", err)
 		}
 
@@ -426,81 +443,116 @@ func (dp *devicePlugin) devSpecForDrmFile(drmFile string) (devSpec pluginapi.Dev
 	return
 }
 
+func (dp *devicePlugin) filterOutInvalidCards(files []fs.DirEntry) []fs.DirEntry {
+	filtered := []fs.DirEntry{}
+
+	for _, f := range files {
+		if !dp.isCompatibleDevice(f.Name()) {
+			continue
+		}
+
+		_, err := os.Stat(path.Join(dp.sysfsDir, f.Name(), "device/drm"))
+		if err != nil {
+			continue
+		}
+
+		filtered = append(filtered, f)
+	}
+
+	return filtered
+}
+
+func (dp *devicePlugin) createDeviceSpecsFromDrmFiles(cardPath string) []pluginapi.DeviceSpec {
+	specs := []pluginapi.DeviceSpec{}
+
+	drmFiles, _ := os.ReadDir(path.Join(cardPath, "device/drm"))
+
+	for _, drmFile := range drmFiles {
+		devSpec, devPath, devSpecErr := dp.devSpecForDrmFile(drmFile.Name())
+		if devSpecErr != nil {
+			continue
+		}
+
+		klog.V(4).Infof("Adding %s to GPU %s", devPath, filepath.Base(cardPath))
+
+		specs = append(specs, devSpec)
+	}
+
+	return specs
+}
+
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	files, err := os.ReadDir(dp.sysfsDir)
 	if err != nil {
 		return nil, errors.Wrap(err, "Can't read sysfs folder")
 	}
 
-	var monitor []pluginapi.DeviceSpec
+	monitor := make(map[string][]pluginapi.DeviceSpec, 0)
 
 	devTree := dpapi.NewDeviceTree()
 	rmDevInfos := rm.NewDeviceInfoMap()
-	tileCounts := []uint64{}
+	devProps := newDeviceProperties()
 
-	for _, f := range files {
-		var nodes []pluginapi.DeviceSpec
+	for _, f := range dp.filterOutInvalidCards(files) {
+		name := f.Name()
+		cardPath := path.Join(dp.sysfsDir, name)
 
-		if !dp.isCompatibleDevice(f.Name()) {
+		devProps.fetch(cardPath)
+
+		if devProps.isPfWithVfs {
 			continue
 		}
 
-		cardPath := path.Join(dp.sysfsDir, f.Name())
+		devSpecs := dp.createDeviceSpecsFromDrmFiles(cardPath)
 
-		drmFiles, err := os.ReadDir(path.Join(cardPath, "device/drm"))
-		if err != nil {
-			return nil, errors.Wrap(err, "Can't read device folder")
+		if len(devSpecs) == 0 {
+			continue
 		}
 
-		isPFwithVFs := pluginutils.IsSriovPFwithVFs(path.Join(dp.sysfsDir, f.Name()))
-		tileCounts = append(tileCounts, labeler.GetTileCount(dp.sysfsDir, f.Name()))
-
-		for _, drmFile := range drmFiles {
-			devSpec, devPath, devSpecErr := dp.devSpecForDrmFile(drmFile.Name())
-			if devSpecErr != nil {
-				continue
-			}
-
-			if !isPFwithVFs {
-				klog.V(4).Infof("Adding %s to GPU %s", devPath, f.Name())
-
-				nodes = append(nodes, devSpec)
-			}
-
-			if dp.options.enableMonitoring {
-				klog.V(4).Infof("Adding %s to GPU %s/%s", devPath, monitorType, monitorID)
-
-				monitor = append(monitor, devSpec)
-			}
+		mounts := []pluginapi.Mount{}
+		if dp.bypathFound {
+			mounts = dp.bypathMountsForPci(cardPath, name, dp.bypathDir)
 		}
 
-		if len(nodes) > 0 {
-			mounts := []pluginapi.Mount{}
-			if dp.bypathFound {
-				mounts = dp.bypathMountsForPci(cardPath, f.Name(), dp.bypathDir)
-			}
+		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devSpecs, mounts, nil, nil)
 
-			deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, mounts, nil, nil)
+		for i := 0; i < dp.options.sharedDevNum; i++ {
+			devID := fmt.Sprintf("%s-%d", name, i)
+			devTree.AddDevice(devProps.driver(), devID, deviceInfo)
 
-			for i := 0; i < dp.options.sharedDevNum; i++ {
-				devID := fmt.Sprintf("%s-%d", f.Name(), i)
-				// Currently only one device type (i915) is supported.
-				// TODO: check model ID to differentiate device models.
-				devTree.AddDevice(deviceType, devID, deviceInfo)
+			rmDevInfos[devID] = rm.NewDeviceInfo(devSpecs, mounts, nil)
+		}
 
-				rmDevInfos[devID] = rm.NewDeviceInfo(nodes, mounts, nil)
-			}
+		if dp.options.enableMonitoring {
+			res := devProps.monitorResource()
+			klog.V(4).Infof("For %s/%s, adding nodes: %+v", res, monitorID, devSpecs)
+
+			monitor[res] = append(monitor[res], devSpecs...)
 		}
 	}
-	// all Intel GPUs are under single monitoring resource
+
+	// all Intel GPUs are under single monitoring resource per KMD
 	if len(monitor) > 0 {
-		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, monitor, nil, nil, nil)
-		devTree.AddDevice(monitorType, monitorID, deviceInfo)
+		for resourceName, devices := range monitor {
+			deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devices, nil, nil, nil)
+			devTree.AddDevice(resourceName, monitorID, deviceInfo)
+		}
 	}
 
 	if dp.resMan != nil {
-		dp.resMan.SetDevInfos(rmDevInfos)
-		dp.resMan.SetTileCountPerCard(tileCounts)
+		if devProps.drmDriverCount() <= 1 {
+			dp.resMan.SetDevInfos(rmDevInfos)
+
+			if tileCount, err := devProps.maxTileCount(); err == nil {
+				dp.resMan.SetTileCountPerCard(tileCount)
+			}
+		} else {
+			klog.Warning("Plugin with RM doesn't support multiple DRM drivers:", devProps.drmDrivers)
+
+			err := rmWithMultipleDriversErr{}
+
+			return nil, err
+		}
 	}
 
 	return devTree, nil
@@ -521,7 +573,7 @@ func main() {
 	)
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
-	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable 'i915_monitoring' (= all GPUs) resource")
+	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable '*_monitoring' (= all GPUs) resource")
 	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
