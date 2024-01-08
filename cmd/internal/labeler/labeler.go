@@ -232,6 +232,19 @@ func (lm labelMap) addNumericLabel(labelName string, valueToAdd int64) {
 	lm[labelName] = strconv.FormatInt(value, 10)
 }
 
+// Stores a long string to labels so that it's possibly split into multiple
+// keys: foobar="<something very long>", foobar2="<equally long>", foobar3="The end."
+func (lm labelMap) addSplittableString(labelBase, fullValue string) {
+	splitList := pluginutils.SplitAtLastAlphaNum(fullValue, labelMaxLength, labelControlChar)
+
+	lm[labelBase] = splitList[0]
+
+	for i := 1; i < len(splitList); i++ {
+		nextLabel := labelBase + strconv.FormatInt(int64(i+1), 10)
+		lm[nextLabel] = splitList[i]
+	}
+}
+
 // this returns pci groups label value, groups separated by "_", gpus separated by ".".
 // Example for two groups with 4 gpus: "0.1.2.3_4.5.6.7".
 func (l *labeler) createPCIGroupLabel(gpuNumList []string) string {
@@ -327,24 +340,13 @@ func (l *labeler) createLabels() error {
 			strings.Join(gpuNameList, "."), labelMaxLength, labelControlChar)[0]
 
 		// add gpu num list label(s) (example: "0.1.2", which is short form of "card0.card1.card2")
-		allGPUs := strings.Join(gpuNumList, ".")
-		gpuNumLists := pluginutils.SplitAtLastAlphaNum(allGPUs, labelMaxLength, labelControlChar)
-
-		l.labels[labelNamespace+gpuNumListLabelName] = gpuNumLists[0]
-		for i := 1; i < len(gpuNumLists); i++ {
-			l.labels[labelNamespace+gpuNumListLabelName+strconv.FormatInt(int64(i+1), 10)] = gpuNumLists[i]
-		}
+		l.labels.addSplittableString(labelNamespace+gpuNumListLabelName, strings.Join(gpuNumList, "."))
 
 		if len(numaMapping) > 0 {
 			// add numa node mapping to labels: gpu.intel.com/numa-gpu-map="0-0.1.2.3_1-4.5.6.7"
 			numaMappingLabel := createNumaNodeMappingLabel(numaMapping)
 
-			numaMappingLabelList := pluginutils.SplitAtLastAlphaNum(numaMappingLabel, labelMaxLength, labelControlChar)
-
-			l.labels[labelNamespace+numaMappingName] = numaMappingLabelList[0]
-			for i := 1; i < len(numaMappingLabelList); i++ {
-				l.labels[labelNamespace+numaMappingName+strconv.FormatInt(int64(i+1), 10)] = numaMappingLabelList[i]
-			}
+			l.labels.addSplittableString(labelNamespace+numaMappingName, numaMappingLabel)
 		}
 
 		// all GPUs get default number of millicores (1000)
@@ -353,12 +355,7 @@ func (l *labeler) createLabels() error {
 		// aa pci-group label(s), (two group example: "1.2.3.4_5.6.7.8")
 		allPCIGroups := l.createPCIGroupLabel(gpuNumList)
 		if allPCIGroups != "" {
-			pciGroups := pluginutils.SplitAtLastAlphaNum(allPCIGroups, labelMaxLength, labelControlChar)
-
-			l.labels[labelNamespace+pciGroupLabelName] = pciGroups[0]
-			for i := 1; i < len(gpuNumLists); i++ {
-				l.labels[labelNamespace+pciGroupLabelName+strconv.FormatInt(int64(i+1), 10)] = pciGroups[i]
-			}
+			l.labels.addSplittableString(labelNamespace+pciGroupLabelName, allPCIGroups)
 		}
 	}
 
