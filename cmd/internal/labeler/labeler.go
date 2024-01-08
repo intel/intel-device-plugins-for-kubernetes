@@ -184,10 +184,16 @@ func GetMemoryAmount(sysfsDrmDir, gpuName string, numTiles uint64) uint64 {
 }
 
 // GetTileCount reads the tile count.
-func GetTileCount(sysfsDrmDir, gpuName string) (numTiles uint64) {
-	filePath := filepath.Join(sysfsDrmDir, gpuName, "gt/gt*")
+func GetTileCount(cardPath string) (numTiles uint64) {
+	files := []string{}
 
-	files, _ := filepath.Glob(filePath)
+	paths, _ := filepath.Glob(filepath.Join(cardPath, "gt/gt*")) // i915 driver
+	files = append(files, paths...)
+
+	paths, _ = filepath.Glob(filepath.Join(cardPath, "device/tile?")) // Xe driver
+	files = append(files, paths...)
+
+	klog.V(4).Info("tile files found:", files)
 
 	if len(files) == 0 {
 		return 1
@@ -308,7 +314,7 @@ func (l *labeler) createLabels() error {
 			return errors.Wrap(err, "gpu name parsing error")
 		}
 
-		numTiles := GetTileCount(l.sysfsDRMDir, gpuName)
+		numTiles := GetTileCount(filepath.Join(l.sysfsDRMDir, gpuName))
 		tileCount += int(numTiles)
 
 		memoryAmount := GetMemoryAmount(l.sysfsDRMDir, gpuName, numTiles)
