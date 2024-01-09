@@ -164,9 +164,16 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 func TestNewDaemonSetQAT(t *testing.T) {
 	c := &controller{}
 
-	plugin := &devicepluginv1.QatDevicePlugin{}
+	plugin := &devicepluginv1.QatDevicePlugin{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				"container.apparmor.security.beta.kubernetes.io/intel-qat-plugin": "runtime/default",
+			},
+		},
+	}
 	plugin.Name = "testing"
 	plugin.Spec.InitImage = "intel/intel-qat-initcontainer:" + controllers.ImageMinVersion.String()
+
 	expected := c.newDaemonSetExpected(plugin)
 	actual := c.NewDaemonSet(plugin)
 
