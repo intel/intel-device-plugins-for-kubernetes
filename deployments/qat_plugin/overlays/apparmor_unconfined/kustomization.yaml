@@ -1,4 +1,0 @@
-resources:
-  - ../../base
-commonAnnotations:
-  container.apparmor.security.beta.kubernetes.io/intel-qat-plugin: unconfined

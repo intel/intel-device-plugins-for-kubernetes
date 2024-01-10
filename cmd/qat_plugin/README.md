@@ -148,6 +148,11 @@ When using the operator for deploying the plugin with provisioning config, use `
 
 There's also a possibility for a node specific congfiguration through passing a nodename via `NODE_NAME` into initcontainer's environment and passing a node specific profile (`qat-$NODE_NAME.conf`) via ConfigMap volume mount.
 
+Existing DaemonSet annotations can be updated through CR annotations in [deviceplugin_v1_qatdeviceplugin.yaml](../../deployments/operator/samples/deviceplugin_v1_qatdeviceplugin.yaml).
+
+By default, the operator based deployment sets AppArmor policy to `"unconfined"` but this can be overridden by setting the AppArmor annotation to a new value in the CR annotations.
+
+For non-operator plugin deployments such annotations can be dropped with the kustomization if required.
 
 ### Verify Plugin Registration
 
