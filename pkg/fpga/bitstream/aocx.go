@@ -172,10 +172,11 @@ func parseFpgaBin(d []byte) (*FileGBS, error) {
 		return nil, err
 	}
 
-	if afuUUID := g.AcceleratorTypeUUID(); afuUUID != OpenCLUUID {
-		g.Close()
-		return nil, errors.Errorf("incorrect OpenCL BSP AFU UUID (%s)", afuUUID)
-	}
+	// TODO: update OpenCLUUIDs and check against them
+	// if afuUUID := g.AcceleratorTypeUUID(); afuUUID != OpenCLUUID {
+	// 	g.Close()
+	// 	return nil, errors.Errorf("incorrect OpenCL BSP AFU UUID (%s)", afuUUID)
+	// }
 
 	return g, nil
 }
