@@ -30,6 +30,7 @@ spec:
               fieldPath: spec.nodeName
         securityContext:
           allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
           capabilities:
             drop:
               - ALL

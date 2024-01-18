@@ -23,5 +23,5 @@ AVD-KSV-0048
 # Some plugins require access to various host paths
 AVD-KSV-0121
 
-# Device plugins do not use any CSIs
-## CVE-2019-11255
+# Ignore invalid "readOnlyRootFilesystem" detections
+AVD-KSV-0014

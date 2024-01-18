@@ -39,6 +39,9 @@ jobs:
         scan-ref: deployments/
         exit-code: 1
         severity: CRITICAL,HIGH
+        # When trivy-action starts supporting this, use it instead of .trivyaction
+        # https://github.com/aquasecurity/trivy-action/issues/284
+        #ignorefile: .trivyignore.yaml
 
   trivy-scan-dockerfiles:
     name: Scan Dockerfiles
