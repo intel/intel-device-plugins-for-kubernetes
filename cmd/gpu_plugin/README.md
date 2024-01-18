@@ -2,22 +2,24 @@
 
 Table of Contents
 
-* [Introduction](#introduction)
-* [Modes and Configuration Options](#modes-and-configuration-options)
-* [Operation modes for different workload types](#operation-modes-for-different-workload-types)
-* [Installing driver and firmware for Intel GPUs](#installing-driver-and-firmware-for-intel-gpus)
-* [Pre-built Images](#pre-built-images)
-* [Installation](#installation)
-    * [Install with NFD](#install-with-nfd)
-    * [Install with Operator](#install-with-operator)
-    * [Verify Plugin Registration](#verify-plugin-registration)
-* [Testing and Demos](#testing-and-demos)
-* [Notes](#notes)
-  * [Running GPU plugin as non-root](#running-gpu-plugin-as-non-root)
-  * [Labels created by GPU plugin](#labels-created-by-gpu-plugin)
-  * [SR-IOV use with the plugin](#sr-iov-use-with-the-plugin)
-  * [Issues with media workloads on multi-GPU setups](#issues-with-media-workloads-on-multi-gpu-setups)
-    * [Workaround for QSV and VA-API](#workaround-for-qsv-and-va-api)
+- [Intel GPU device plugin for Kubernetes](#intel-gpu-device-plugin-for-kubernetes)
+  - [Introduction](#introduction)
+  - [Modes and Configuration Options](#modes-and-configuration-options)
+  - [Operation modes for different workload types](#operation-modes-for-different-workload-types)
+  - [Installing driver and firmware for Intel GPUs](#installing-driver-and-firmware-for-intel-gpus)
+  - [Pre-built Images](#pre-built-images)
+  - [Installation](#installation)
+    - [Install with NFD](#install-with-nfd)
+    - [Install with Operator](#install-with-operator)
+    - [Install alongside with GPU Aware Scheduling](#install-alongside-with-gpu-aware-scheduling)
+    - [Verify Plugin Installation](#verify-plugin-installation)
+  - [Testing and Demos](#testing-and-demos)
+  - [Notes](#notes)
+    - [Running GPU plugin as non-root](#running-gpu-plugin-as-non-root)
+    - [Labels created by GPU plugin](#labels-created-by-gpu-plugin)
+    - [SR-IOV use with the plugin](#sr-iov-use-with-the-plugin)
+    - [Issues with media workloads on multi-GPU setups](#issues-with-media-workloads-on-multi-gpu-setups)
+      - [Workaround for QSV and VA-API](#workaround-for-qsv-and-va-api)
 
 ## Introduction
 
@@ -215,7 +217,7 @@ device file.
 
 As result, media applications using VA-API or QSV, fail to locate the
 correct GPU device file unless it is the first ("renderD128") one, or
-device file name is explictly specified with an application option.
+device file name is explicitly specified with an application option.
 
 Kubernetes device plugins expose only requested number of device
 files, and their naming matches host device file names (for several

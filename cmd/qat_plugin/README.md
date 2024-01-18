@@ -2,21 +2,22 @@
 
 Table of Contents
 
-* [Introduction](#introduction)
-* [Modes and Configuration Options](#modes-and-configuration-options)
-* [Installation](#installation)
-    * [Prerequisites](#prerequisites)
-    * [Pre-built Images](#pre-built-images)
-    * [Automatic Provisioning](#automatic-provisioning)
-    * [Verify Plugin Registration](#verify-plugin-registration)
-* [Demos and Testing](#demos-and-testing)
-    * [DPDK QAT Demos](#dpdk-qat-demos)
-        * [DPDK Prerequisites](#dpdk-prerequisites)
-        * [Deploy the pod](#deploy-the-pod)
-        * [Manual test run](#manual-test-run)
-        * [Automated test run](#automated-test-run)
-    * [OpenSSL QAT Demo](#openssl-qat-demo)
-* [Checking for Hardware](#checking-for-hardware)
+- [Intel QuickAssist Technology (QAT) device plugin for Kubernetes](#intel-quickassist-technology-qat-device-plugin-for-kubernetes)
+  - [Introduction](#introduction)
+  - [Modes and Configuration Options](#modes-and-configuration-options)
+  - [Installation](#installation)
+    - [Prerequisites](#prerequisites)
+    - [Pre-built Images](#pre-built-images)
+    - [Automatic Provisioning](#automatic-provisioning)
+    - [Verify Plugin Registration](#verify-plugin-registration)
+  - [Demos and Testing](#demos-and-testing)
+    - [DPDK QAT demos](#dpdk-qat-demos)
+      - [DPDK Prerequisites](#dpdk-prerequisites)
+      - [Deploy the pod](#deploy-the-pod)
+      - [Manual Test Run](#manual-test-run)
+      - [Automated Test Run](#automated-test-run)
+    - [OpenSSL QAT Demo](#openssl-qat-demo)
+  - [Checking for Hardware](#checking-for-hardware)
 
 ## Introduction
 
@@ -78,7 +79,7 @@ The component can be installed either using a DaemonSet or running 'by hand' on 
 
 ### Prerequisites
 
-The component has the same basic dependancies as the
+The component has the same basic dependencies as the
 [generic plugin framework dependencies](../../README.md#about).
 
 You will also need [appropriate hardware installed](#checking-for-hardware).
