@@ -78,7 +78,7 @@ The component can be installed either using a DaemonSet or running 'by hand' on 
 
 ### Prerequisites
 
-The component has the same basic dependancies as the
+The component has the same basic dependencies as the
 [generic plugin framework dependencies](../../README.md#about).
 
 You will also need [appropriate hardware installed](#checking-for-hardware).

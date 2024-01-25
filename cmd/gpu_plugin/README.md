@@ -215,7 +215,7 @@ device file.
 
 As result, media applications using VA-API or QSV, fail to locate the
 correct GPU device file unless it is the first ("renderD128") one, or
-device file name is explictly specified with an application option.
+device file name is explicitly specified with an application option.
 
 Kubernetes device plugins expose only requested number of device
 files, and their naming matches host device file names (for several
