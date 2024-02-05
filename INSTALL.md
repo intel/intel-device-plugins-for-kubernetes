@@ -44,7 +44,7 @@ NOTE: cert-manager install takes a while to complete.
 
 ```bash
 helm install nfd nfd/node-feature-discovery \
-  --namespace node-feature-discovery --create-namespace --version 0.14.3
+  --namespace node-feature-discovery --create-namespace --version 0.15.1
 ```
 
 ### Installing operator
