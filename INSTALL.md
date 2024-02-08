@@ -34,7 +34,7 @@ helm install --wait \
   cert-manager jetstack/cert-manager \
   --namespace cert-manager \
   --create-namespace \
-  --version v1.11.0 \
+  --version v1.13.3 \
   --set installCRDs=true
 ```
 
@@ -44,7 +44,7 @@ NOTE: cert-manager install takes a while to complete.
 
 ```bash
 helm install nfd nfd/node-feature-discovery \
-  --namespace node-feature-discovery --create-namespace --version 0.14.3
+  --namespace node-feature-discovery --create-namespace --version 0.15.1
 ```
 
 ### Installing operator
