@@ -8,10 +8,10 @@ BUILDTAGS ?= ""
 BUILDER ?= "docker"
 EXTRA_BUILD_ARGS ?= ""
 
-CERT_MANAGER_VERSION ?= v1.13.2
+CERT_MANAGER_VERSION ?= v1.14.2
 CONTROLLER_GEN_VERSION ?= v0.13.0
 GOLANGCI_LINT_VERSION ?= v1.55.2
-KIND_VERSION ?= v0.20.0
+KIND_VERSION ?= v0.21.0
 GOLICENSES_VERSION ?= v1.6.0
 # Default bundle image tag
 BUNDLE_IMG ?= intel-device-plugins-controller-bundle:$(TAG)
