@@ -8,10 +8,10 @@ BUILDTAGS ?= ""
 BUILDER ?= "docker"
 EXTRA_BUILD_ARGS ?= ""
 
-CERT_MANAGER_VERSION ?= v1.13.2
-CONTROLLER_GEN_VERSION ?= v0.13.0
+CERT_MANAGER_VERSION ?= v1.14.2
+CONTROLLER_GEN_VERSION ?= v0.14.0
 GOLANGCI_LINT_VERSION ?= v1.55.2
-KIND_VERSION ?= v0.20.0
+KIND_VERSION ?= v0.21.0
 GOLICENSES_VERSION ?= v1.6.0
 # Default bundle image tag
 BUNDLE_IMG ?= intel-device-plugins-controller-bundle:$(TAG)
@@ -173,7 +173,7 @@ e2e-dlb:
 
 pre-pull:
 ifeq ($(TAG),devel)
-	@$(BUILDER) pull golang:1.21-bookworm
+	@$(BUILDER) pull golang:1.22-bookworm
 	@$(BUILDER) pull debian:unstable-slim
 	@$(BUILDER) pull ubuntu:22.04
 endif

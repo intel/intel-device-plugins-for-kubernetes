@@ -1,6 +1,6 @@
 module github.com/intel/intel-device-plugins-for-kubernetes
 
-go 1.21.3
+go 1.22.0
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0
