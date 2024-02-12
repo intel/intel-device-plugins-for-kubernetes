@@ -9,6 +9,7 @@ Extensions
    ../cmd/fpga_crihook/README.md
    ../cmd/fpga_plugin/README.md
    ../cmd/fpga_tool/README.md
+   ../cmd/gpu_fakedev/README.md
    ../cmd/gpu_nfdhook/README.md
    ../cmd/gpu_plugin/README.md
    ../cmd/iaa_plugin/README.md
