@@ -37,6 +37,9 @@ type DsaDevicePluginSpec struct {
 	// ProvisioningConfig is a ConfigMap used to pass the DSA devices and workqueues configuration into idxd-config initcontainer.
 	ProvisioningConfig string `json:"provisioningConfig,omitempty"`
 
+	// Specialized nodes (e.g., with accelerators) can be Tainted to make sure unwanted pods are not scheduled on them. Tolerations can be set for the plugin pod to neutralize the Taint.
+	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+
 	// SharedDevNum is a number of containers that can share the same DSA device.
 	// +kubebuilder:validation:Minimum=1
 	SharedDevNum int `json:"sharedDevNum,omitempty"`
@@ -84,8 +87,8 @@ type DsaDevicePlugin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DsaDevicePluginSpec   `json:"spec,omitempty"`
 	Status DsaDevicePluginStatus `json:"status,omitempty"`
+	Spec   DsaDevicePluginSpec   `json:"spec,omitempty"`
 }
 
 // +kubebuilder:object:root=true

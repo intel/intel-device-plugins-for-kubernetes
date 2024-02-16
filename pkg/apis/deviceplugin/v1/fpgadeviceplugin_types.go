@@ -38,6 +38,9 @@ type FpgaDevicePluginSpec struct {
 	// +kubebuilder:validation:Enum=af;region;regiondevel
 	Mode string `json:"mode,omitempty"`
 
+	// Specialized nodes (e.g., with accelerators) can be Tainted to make sure unwanted pods are not scheduled on them. Tolerations can be set for the plugin pod to neutralize the Taint.
+	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+
 	// LogLevel sets the plugin's log level.
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`

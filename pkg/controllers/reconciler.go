@@ -19,6 +19,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -104,6 +105,18 @@ type reconciler struct {
 // Combine base and suffix with a dash.
 func SuffixedName(base, suffix string) string {
 	return base + "-" + suffix
+}
+
+func HasTolerationsChanged(before, after []v1.Toleration) bool {
+	if before == nil && after == nil {
+		return false
+	} else if before == nil && after != nil {
+		return true
+	} else if before != nil && after == nil {
+		return true
+	}
+
+	return !reflect.DeepEqual(before, after)
 }
 
 // fetchObjects returns the required objects for Reconcile.

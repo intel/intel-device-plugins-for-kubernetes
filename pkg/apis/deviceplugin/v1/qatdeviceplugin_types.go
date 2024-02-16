@@ -54,6 +54,9 @@ type QatDevicePluginSpec struct {
 	// KernelVfDrivers is a list of VF device drivers for the QuickAssist devices in the system.
 	KernelVfDrivers []KernelVfDriver `json:"kernelVfDrivers,omitempty"`
 
+	// Specialized nodes (e.g., with accelerators) can be Tainted to make sure unwanted pods are not scheduled on them. Tolerations can be set for the plugin pod to neutralize the Taint.
+	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+
 	// MaxNumDevices is a maximum number of QAT devices to be provided to the QuickAssist device plugin
 	// +kubebuilder:validation:Minimum=1
 	MaxNumDevices int `json:"maxNumDevices,omitempty"`

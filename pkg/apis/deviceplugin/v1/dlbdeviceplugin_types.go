@@ -34,6 +34,9 @@ type DlbDevicePluginSpec struct {
 	// InitImage is a container image with a script that initializes devices.
 	InitImage string `json:"initImage,omitempty"`
 
+	// Specialized nodes (e.g., with accelerators) can be Tainted to make sure unwanted pods are not scheduled on them. Tolerations can be set for the plugin pod to neutralize the Taint.
+	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
+
 	// LogLevel sets the plugin's log level.
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`
