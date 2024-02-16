@@ -16,6 +16,7 @@ Table of Contents
   * [Running GPU plugin as non-root](#running-gpu-plugin-as-non-root)
   * [Labels created by GPU plugin](#labels-created-by-gpu-plugin)
   * [SR-IOV use with the plugin](#sr-iov-use-with-the-plugin)
+  * [KMD and UMD](#kmd-and-umd)
   * [Issues with media workloads on multi-GPU setups](#issues-with-media-workloads-on-multi-gpu-setups)
     * [Workaround for QSV and VA-API](#workaround-for-qsv-and-va-api)
 
@@ -35,6 +36,18 @@ Use cases include, but are not limited to:
 For example containers with Intel media driver (and components using that), can offload
 video transcoding operations, and containers with the Intel OpenCL / oneAPI Level Zero
 backend libraries can offload compute operations to GPU.
+
+Intel GPU plugin may register four node resources to the Kubernetes cluster:
+| Resource | Description |
+|:---- |:-------- |
+| gpu.intel.com/i915 | GPU instance running legacy `i915` KMD |
+| gpu.intel.com/i915_monitoring | Monitoring resource for the legacy `i915` KMD devices |
+| gpu.intel.com/xe | GPU instance running new `xe` KMD |
+| gpu.intel.com/xe_monitoring | Monitoring resource for the new `xe` KMD devices |
+
+While GPU plugin basic operations support nodes having both (`i915` and `xe`) KMDs on the same node, its resource management (=GAS) does not, for that node needs to have only one of the KMDs present.
+
+For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 
 ## Modes and Configuration Options
 
@@ -204,6 +217,31 @@ If installed with NFD and started with resource-management, plugin will export a
 GPU plugin does __not__ setup SR-IOV. It has to be configured by the cluster admin.
 
 GPU plugin does however support provisioning Virtual Functions (VFs) to containers for a SR-IOV enabled GPU. When the plugin detects a GPU with SR-IOV VFs configured, it will only provision the VFs and leaves the PF device on the host.
+
+### KMD and UMD
+
+There are 3 different Kernel Mode Drivers (KMD) available: `i915 upstream`, `i915 backport` and `xe`:
+* `i915 upstream` is a vanilla driver that comes from the upstream kernel and is included in the common Linux distributions, like Ubuntu.
+* `i915 backport` is an [out-of-tree driver](https://github.com/intel-gpu/intel-gpu-i915-backports/) for older enterprise / LTS kernel versions, having better support for new HW before upstream kernel does. API it provides to user-space can differ from the eventual upstream version.
+* `xe` is a new KMD that is intended to support future GPUs. While it has [experimental support for latest current GPUs](https://docs.kernel.org/gpu/rfc/xe.html) (starting from Tigerlake), it will not support them officially.
+
+For optimal performance, the KMD should be paired with the same UMD variant. When creating a workload container, depending on the target hardware, the UMD packages should be selected approriately.
+
+| KMD | UMD packages | Support notes |
+|:---- |:-------- |:------- |
+| `i915 upstream` | Distro Repository | For Integrated GPUs. Newer Linux kernels will introduce support for Arc, Flex or Max series. |
+| `i915 backport` | [Intel Repository](https://dgpu-docs.intel.com/driver/installation.html#install-steps) | Best for Arc, Flex and Max series. Untested for Integrated GPUs. |
+| `xe` | Source code only | Experimental support for Arc, Flex and Max series. |
+
+> *NOTE*: Xe UMD is in active development and should be considered as experimental.
+
+Creating a workload that would support all the different KMDs is not currently possible. Below is a table that clarifies how each domain supports different KMDs.
+
+| Domain | i915 upstream | i915 backport | xe | Notes |
+|:---- |:-------- |:------- |:------- |:------- |
+| Compute | Default | [NEO_ENABLE_i915_PRELIM_DETECTION](https://github.com/intel/compute-runtime/blob/3341de7a0d5fddd2ea5f505b5d2ef5c13faa0681/CMakeLists.txt#L496-L502) | [NEO_ENABLE_XE_DRM_DETECTION](https://github.com/intel/compute-runtime/blob/3341de7a0d5fddd2ea5f505b5d2ef5c13faa0681/CMakeLists.txt#L504-L510) | All three KMDs can be supported at the same time. |
+| Media | Default | [ENABLE_PRODUCTION_KMD](https://github.com/intel/media-driver/blob/a66b076e83876fbfa9c9ab633ad9c5517f8d74fd/CMakeLists.txt#L58) | [ENABLE_XE_KMD](https://github.com/intel/media-driver/blob/a66b076e83876fbfa9c9ab633ad9c5517f8d74fd/media_driver/cmake/linux/media_feature_flags_linux.cmake#L187-L190) | Xe with upstream or backport i915, not all three. |
+| Graphics | Default | Unknown | [intel-xe-kmd](https://gitlab.freedesktop.org/mesa/mesa/-/blob/e9169881dbd1f72eab65a68c2b8e7643f74489b7/meson_options.txt#L708) | i915 and xe KMDs can be supported at the same time. |
 
 ### Issues with media workloads on multi-GPU setups
 
