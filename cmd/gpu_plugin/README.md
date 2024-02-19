@@ -53,7 +53,7 @@ For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 
 | Flag | Argument | Default | Meaning |
 |:---- |:-------- |:------- |:------- |
-| -enable-monitoring | - | disabled | Enable 'i915_monitoring' resource that provides access to all Intel GPU devices on the node |
+| -enable-monitoring | - | disabled | Enable '*_monitoring' resource that provides access to all Intel GPU devices on the node, [see use](./monitoring.md) |
 | -resource-manager | - | disabled | Enable fractional resource management, [see use](./fractional.md) |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
 | -allocation-policy | string | none | 3 possible values: balanced, packed, none. For shared-dev-num > 1: _balanced_ mode spreads workloads among GPU devices, _packed_ mode fills one GPU fully before moving to next, and _none_ selects first available device from kubelet. Default is _none_. Allocation policy does not have an effect when resource manager is enabled. |

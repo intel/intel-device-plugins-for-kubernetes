@@ -1,5 +1,5 @@
 resources:
-- https://raw.githubusercontent.com/intel/xpumanager/V1.2.18/deployment/kubernetes/daemonset-intel-xpum.yaml
+- https://github.com/intel/xpumanager/deployment/kubernetes/daemonset/base/?ref=V1.2.29
 namespace: monitoring
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
