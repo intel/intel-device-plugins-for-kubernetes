@@ -1,10 +1,10 @@
 FROM ubuntu:22.04 as builder
 
-ARG QATLIB_VERSION="23.11.0"
-ARG QAT_ENGINE_VERSION="v1.4.0"
+ARG QATLIB_VERSION="24.02.0"
+ARG QAT_ENGINE_VERSION="v1.5.0"
 ARG ASYNC_NGINX_VERSION="v0.5.1"
 ARG IPSEC_MB_VERSION="v1.5"
-ARG IPP_CRYPTO_VERSION="ippcp_2021.9.0"
+ARG IPP_CRYPTO_VERSION="ippcp_2021.11.0"
 
 RUN apt update && \
     env DEBIAN_FRONTEND=noninteractive apt install -y \
@@ -71,10 +71,10 @@ RUN cd /asynch_mode_nginx && \
 FROM ubuntu:22.04
 
 COPY --from=builder /usr/bin/*_sample* /usr/bin/
-COPY --from=builder /usr/lib/libqat.so.4.1.0 /usr/lib/
+COPY --from=builder /usr/lib/libqat.so.4.2.0 /usr/lib/
 COPY --from=builder /usr/lib/libusdm.so.0.1.0 /usr/lib/
 COPY --from=builder /usr/lib64/libIPSec_MB.so.1 /usr/lib/x86_64-linux-gnu/
-COPY --from=builder /usr/local/lib/libcrypto_mb.so.11.9 /usr/lib/x86_64-linux-gnu/
+COPY --from=builder /usr/local/lib/libcrypto_mb.so.11.12 /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /usr/lib/x86_64-linux-gnu/engines-3/qatengine.so /usr/lib/x86_64-linux-gnu/engines-3/qatengine.so
 COPY --from=builder /var/www/ /var/www/
 COPY --from=builder /usr/lib64/nginx/* /usr/lib64/nginx/
