@@ -22,6 +22,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/internal/containers"
@@ -33,6 +34,13 @@ var ErrObjectType = errors.New("invalid runtime object type")
 
 // Mutator annotates Pods.
 type Mutator struct{}
+
+func (s *Mutator) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewWebhookManagedBy(mgr).
+		For(&corev1.Pod{}).
+		WithDefaulter(s).
+		Complete()
+}
 
 const (
 	namespace                = "sgx.intel.com"

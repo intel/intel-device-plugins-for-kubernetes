@@ -20,10 +20,8 @@ import (
 	"os"
 
 	sgxwebhook "github.com/intel/intel-device-plugins-for-kubernetes/pkg/webhooks/sgx"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2/textlogger"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
@@ -59,10 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := builder.WebhookManagedBy(mgr).
-		For(&corev1.Pod{}).
-		WithDefaulter(&sgxwebhook.Mutator{}).
-		Complete(); err != nil {
+	if err := (&sgxwebhook.Mutator{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "Pod")
 		os.Exit(1)
 	}
