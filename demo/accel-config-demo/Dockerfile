@@ -14,9 +14,7 @@
 
 FROM debian:unstable-slim AS builder
 
-ARG ACCEL_CONFIG_VERSION="4.1.5-1"
-
-RUN apt-get update && apt-get install -y --no-install-recommends libaccel-config-dev=${ACCEL_CONFIG_VERSION} \
+RUN apt-get update && apt-get install -y --no-install-recommends libaccel-config-dev \
     gcc g++ nasm make cmake autoconf automake libtool pkg-config git ca-certificates uuid-dev
 
 RUN cd / && git clone --recurse-submodules --branch v1.1.1 --depth 1 https://github.com/intel/DML.git && \
@@ -33,10 +31,9 @@ RUN cd / && git clone --recursive --depth 1 --branch v1.3.1 https://github.com/i
 
 FROM debian:unstable-slim
 
-ARG ACCEL_CONFIG_VERSION="4.1.5-1"
-RUN apt-get update && apt-get install -y --no-install-recommends pciutils accel-config=${ACCEL_CONFIG_VERSION} accel-config-test=${ACCEL_CONFIG_VERSION} && rm -rf /var/lib/apt/lists/\*
+RUN apt-get update && apt-get install -y --no-install-recommends pciutils accel-config accel-config-test && rm -rf /var/lib/apt/lists/\*
 
-RUN sed -i -e '442,450d;502,515d' /usr/libexec/accel-config/test/iaa_user_test_runner.sh
+RUN sed -i -e '420,429d;480,489d' /usr/libexec/accel-config/test/iaa_user_test_runner.sh
 COPY --from=builder /usr/local /usr/local
 COPY --from=builder /qpl/build/examples /usr/local/bin/
 
