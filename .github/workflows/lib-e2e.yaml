@@ -42,6 +42,7 @@ jobs:
             runner: simics-spr
             images: intel-qat-plugin intel-qat-initcontainer openssl-qat-engine
           - name: e2e-sgx
+            targetjob: e2e-sgx FOCUS="|(SGX Admission)"
             runner: sgx
             images: intel-sgx-plugin intel-sgx-initcontainer intel-sgx-admissionwebhook sgx-sdk-demo intel-deviceplugin-operator
 
