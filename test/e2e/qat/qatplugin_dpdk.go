@@ -37,6 +37,7 @@ import (
 const (
 	qatPluginKustomizationYaml = "deployments/qat_plugin/overlays/e2e/kustomization.yaml"
 	compressTestYaml           = "deployments/qat_dpdk_app/test-compress1/kustomization.yaml"
+	compressTestGen4Yaml       = "deployments/qat_dpdk_app/test-compress1-gen4/kustomization.yaml"
 	cryptoTestYaml             = "deployments/qat_dpdk_app/test-crypto1/kustomization.yaml"
 	cryptoTestGen4Yaml         = "deployments/qat_dpdk_app/test-crypto1-gen4/kustomization.yaml"
 	demoPodContainerName       = "crypto-perf"
@@ -79,6 +80,11 @@ func describeQatDpdkPlugin() {
 	cryptoTestGen4YamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(cryptoTestGen4Yaml)
 	if errFailedToLocateRepoFile != nil {
 		framework.Failf("unable to locate %q: %v", cryptoTestGen4Yaml, errFailedToLocateRepoFile)
+	}
+
+	compressTestGen4YamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(compressTestGen4Yaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", compressTestGen4Yaml, errFailedToLocateRepoFile)
 	}
 
 	var dpPodName string
@@ -157,6 +163,15 @@ func describeQatDpdkPlugin() {
 
 		ginkgo.It("deploys a compress pod (openssl) requesting QAT resources [App:openssl]", func(ctx context.Context) {
 			runCpaSampleCode(ctx, f, compression, resourceName)
+		})
+
+		ginkgo.It("deploys a compress pod (dpdk compress-perf) requesting QAT resources [App:compress-perf]", func(ctx context.Context) {
+			ginkgo.By("submitting a compress pod requesting QAT resources")
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestGen4YamlPath))
+
+			ginkgo.By("waiting the compress pod to finish successfully")
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-compress-perf-tc1-gen4", f.Namespace.Name, 300*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-compress-perf-tc1-gen4", "compress-perf"))
 		})
 
 		ginkgo.When("there is no app to run [App:noapp]", func() {
