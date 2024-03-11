@@ -12,3 +12,4 @@ spec:
     targetPort: https
   selector:
     control-plane: controller-manager
+    manager: intel-deviceplugin-operator
