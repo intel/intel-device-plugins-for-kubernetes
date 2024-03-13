@@ -57,9 +57,23 @@ spec:
           matchExpressions:
             vendor: {op: In, value: ["8086"]}
             class: {op: In, value: ["0300", "0380"]}
-        - feature: kernel.loadedmodule
-          matchExpressions:
-            i915: {op: Exists}
+      matchAny:
+        - matchFeatures:
+          - feature: kernel.loadedmodule
+            matchExpressions:
+              i915: {op: Exists}
+        - matchFeatures:
+          - feature: kernel.enabledmodule
+            matchExpressions:
+              i915: {op: Exists}
+        - matchFeatures:
+          - feature: kernel.loadedmodule
+            matchExpressions:
+              xe: {op: Exists}
+        - matchFeatures:
+          - feature: kernel.enabledmodule
+            matchExpressions:
+              xe: {op: Exists}
 
     - name: "intel.iaa"
       labels:

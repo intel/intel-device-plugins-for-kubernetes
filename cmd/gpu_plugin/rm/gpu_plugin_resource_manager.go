@@ -25,7 +25,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -105,7 +104,7 @@ type ResourceManager interface {
 	CreateFractionalResourceResponse(*pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error)
 	GetPreferredFractionalAllocation(*pluginapi.PreferredAllocationRequest) (*pluginapi.PreferredAllocationResponse, error)
 	SetDevInfos(DeviceInfoMap)
-	SetTileCountPerCard(counts []uint64)
+	SetTileCountPerCard(count uint64)
 }
 
 type containerAssignments struct {
@@ -118,20 +117,20 @@ type podAssignmentDetails struct {
 }
 
 type resourceManager struct {
-	clientset        kubernetes.Interface
-	deviceInfos      DeviceInfoMap
-	prGetClientFunc  getClientFunc
-	assignments      map[string]podAssignmentDetails // pod name -> assignment details
-	nodeName         string
-	hostIP           string
-	skipID           string
-	fullResourceName string
-	retryTimeout     time.Duration
-	cleanupInterval  time.Duration
-	mutex            sync.RWMutex // for devTree updates during scan
-	cleanupMutex     sync.RWMutex // for assignment details during cleanup
-	useKubelet       bool
-	tileCountPerCard uint64
+	clientset         kubernetes.Interface
+	deviceInfos       DeviceInfoMap
+	prGetClientFunc   getClientFunc
+	assignments       map[string]podAssignmentDetails // pod name -> assignment details
+	nodeName          string
+	hostIP            string
+	skipID            string
+	fullResourceNames []string
+	retryTimeout      time.Duration
+	cleanupInterval   time.Duration
+	mutex             sync.RWMutex // for devTree updates during scan
+	cleanupMutex      sync.RWMutex // for assignment details during cleanup
+	useKubelet        bool
+	tileCountPerCard  uint64
 }
 
 // NewDeviceInfo creates a new DeviceInfo.
@@ -152,7 +151,7 @@ func NewDeviceInfoMap() DeviceInfoMap {
 }
 
 // NewResourceManager creates a new resource manager.
-func NewResourceManager(skipID, fullResourceName string) (ResourceManager, error) {
+func NewResourceManager(skipID string, fullResourceNames []string) (ResourceManager, error) {
 	clientset, err := getClientset()
 
 	if err != nil {
@@ -160,16 +159,16 @@ func NewResourceManager(skipID, fullResourceName string) (ResourceManager, error
 	}
 
 	rm := resourceManager{
-		nodeName:         os.Getenv("NODE_NAME"),
-		hostIP:           os.Getenv("HOST_IP"),
-		clientset:        clientset,
-		skipID:           skipID,
-		fullResourceName: fullResourceName,
-		prGetClientFunc:  podresources.GetV1Client,
-		assignments:      make(map[string]podAssignmentDetails),
-		retryTimeout:     1 * time.Second,
-		cleanupInterval:  20 * time.Minute,
-		useKubelet:       true,
+		nodeName:          os.Getenv("NODE_NAME"),
+		hostIP:            os.Getenv("HOST_IP"),
+		clientset:         clientset,
+		skipID:            skipID,
+		fullResourceNames: fullResourceNames,
+		prGetClientFunc:   podresources.GetV1Client,
+		assignments:       make(map[string]podAssignmentDetails),
+		retryTimeout:      1 * time.Second,
+		cleanupInterval:   20 * time.Minute,
+		useKubelet:        true,
 	}
 
 	klog.Info("GPU device plugin resource manager enabled")
@@ -684,7 +683,7 @@ func (rm *resourceManager) getNodePendingGPUPods() (map[string]*v1.Pod, error) {
 	pendingPods := rm.listPodsOnNodeWithStates([]string{string(v1.PodPending)})
 
 	for podName, pod := range pendingPods {
-		if numGPUUsingContainers(pod, rm.fullResourceName) == 0 {
+		if numGPUUsingContainers(pod, rm.fullResourceNames) == 0 {
 			delete(pendingPods, podName)
 		}
 	}
@@ -719,7 +718,7 @@ func (rm *resourceManager) findAllocationPodCandidates(pendingPods map[string]*v
 
 		for _, cont := range podRes.Containers {
 			for _, dev := range cont.Devices {
-				if dev.ResourceName == rm.fullResourceName {
+				if sslices.Contains(rm.fullResourceNames, dev.ResourceName) {
 					numContainersAllocated++
 					break
 				}
@@ -729,7 +728,7 @@ func (rm *resourceManager) findAllocationPodCandidates(pendingPods map[string]*v
 		key := getPodResourceKey(podRes)
 
 		if pod, pending := pendingPods[key]; pending {
-			allocationTargetNum := numGPUUsingContainers(pod, rm.fullResourceName)
+			allocationTargetNum := numGPUUsingContainers(pod, rm.fullResourceNames)
 			if numContainersAllocated < allocationTargetNum {
 				candidate := podCandidate{
 					pod:                     pod,
@@ -751,23 +750,10 @@ func (rm *resourceManager) SetDevInfos(deviceInfos DeviceInfoMap) {
 	rm.deviceInfos = deviceInfos
 }
 
-func (rm *resourceManager) SetTileCountPerCard(counts []uint64) {
-	if len(counts) == 0 {
-		return
-	}
-
-	minCount := slices.Min(counts)
-	maxCount := slices.Max(counts)
-
-	if minCount != maxCount {
-		klog.Warningf("Node's GPUs are heterogenous (min: %d, max: %d tiles)", minCount, maxCount)
-
-		return
-	}
-
+func (rm *resourceManager) SetTileCountPerCard(count uint64) {
 	rm.mutex.Lock()
 	defer rm.mutex.Unlock()
-	rm.tileCountPerCard = maxCount
+	rm.tileCountPerCard = count
 }
 
 func (rm *resourceManager) createAllocateResponse(deviceIds []string, tileAffinityMask string) (*pluginapi.AllocateResponse, error) {
@@ -818,13 +804,13 @@ func (rm *resourceManager) createAllocateResponse(deviceIds []string, tileAffini
 	return &allocateResponse, nil
 }
 
-func numGPUUsingContainers(pod *v1.Pod, fullResourceName string) int {
+func numGPUUsingContainers(pod *v1.Pod, fullResourceNames []string) int {
 	num := 0
 
 	for _, container := range pod.Spec.Containers {
 		for reqName, quantity := range container.Resources.Requests {
 			resourceName := reqName.String()
-			if resourceName == fullResourceName {
+			if sslices.Contains(fullResourceNames, resourceName) {
 				value, _ := quantity.AsInt64()
 				if value > 0 {
 					num++

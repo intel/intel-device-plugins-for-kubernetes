@@ -144,4 +144,57 @@ func describe() {
 			ginkgo.It("does nothing", func() {})
 		})
 	})
+
+	ginkgo.Context("When GPU resources are available [Resource:xe]", func() {
+		ginkgo.BeforeEach(func(ctx context.Context) {
+			ginkgo.By("checking if the resource is allocatable")
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "gpu.intel.com/xe", 30*time.Second); err != nil {
+				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+			}
+		})
+		ginkgo.It("checks availability of GPU resources [App:busybox]", func(ctx context.Context) {
+			ginkgo.By("submitting a pod requesting GPU resources")
+			podSpec := &v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Name: "gpuplugin-tester"},
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{
+						{
+							Args:    []string{"-c", "ls /dev/dri"},
+							Name:    containerName,
+							Image:   imageutils.GetE2EImage(imageutils.BusyBox),
+							Command: []string{"/bin/sh"},
+							Resources: v1.ResourceRequirements{
+								Requests: v1.ResourceList{"gpu.intel.com/xe": resource.MustParse("1")},
+								Limits:   v1.ResourceList{"gpu.intel.com/xe": resource.MustParse("1")},
+							},
+						},
+					},
+					RestartPolicy: v1.RestartPolicyNever,
+				},
+			}
+			pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx, podSpec, metav1.CreateOptions{})
+			framework.ExpectNoError(err, "pod Create API error")
+
+			ginkgo.By("waiting the pod to finish successfully")
+			e2epod.NewPodClient(f).WaitForSuccess(ctx, pod.ObjectMeta.Name, 60*time.Second)
+
+			ginkgo.By("checking log output")
+			log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, pod.Name, containerName)
+
+			if err != nil {
+				framework.Failf("unable to get log from pod: %v", err)
+			}
+
+			if !strings.Contains(log, "card") || !strings.Contains(log, "renderD") {
+				framework.Logf("log output: %s", log)
+				framework.Failf("device mounts not found from log")
+			}
+
+			framework.Logf("found card and renderD from the log")
+		})
+
+		ginkgo.When("there is no app to run [App:noapp]", func() {
+			ginkgo.It("does nothing", func() {})
+		})
+	})
 }

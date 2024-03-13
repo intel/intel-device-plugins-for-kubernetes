@@ -107,11 +107,11 @@ func newMockResourceManager(pods []v1.Pod) ResourceManager {
 		prGetClientFunc: func(string, time.Duration, int) (podresourcesv1.PodResourcesListerClient, *grpc.ClientConn, error) {
 			return &mockPodResources{pods: pods}, client, nil
 		},
-		skipID:           "all",
-		fullResourceName: "gpu.intel.com/i915",
-		assignments:      make(map[string]podAssignmentDetails),
-		retryTimeout:     1 * time.Millisecond,
-		useKubelet:       false,
+		skipID:            "all",
+		fullResourceNames: []string{"gpu.intel.com/i915", "gpu.intel.com/xe"},
+		assignments:       make(map[string]podAssignmentDetails),
+		retryTimeout:      1 * time.Millisecond,
+		useKubelet:        false,
 	}
 
 	deviceInfoMap := NewDeviceInfoMap()
@@ -150,7 +150,7 @@ type testCase struct {
 
 func TestNewResourceManager(t *testing.T) {
 	// normal clientset is unavailable inside the unit tests
-	_, err := NewResourceManager("foo", "bar")
+	_, err := NewResourceManager("foo", []string{"bar"})
 
 	if err == nil {
 		t.Errorf("unexpected success")
@@ -419,7 +419,7 @@ func TestCreateFractionalResourceResponse(t *testing.T) {
 
 	for _, tCase := range testCases {
 		rm := newMockResourceManager(tCase.pods)
-		rm.SetTileCountPerCard([]uint64{1})
+		rm.SetTileCountPerCard(uint64(1))
 
 		_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
 			ContainerRequests: tCase.prefContainerRequests,
@@ -501,7 +501,7 @@ func TestCreateFractionalResourceResponseWithOneCardTwoTiles(t *testing.T) {
 	}
 
 	rm := newMockResourceManager(tCase.pods)
-	rm.SetTileCountPerCard([]uint64{2})
+	rm.SetTileCountPerCard(uint64(2))
 
 	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
 		ContainerRequests: tCase.prefContainerRequests,
@@ -574,7 +574,7 @@ func TestCreateFractionalResourceResponseWithTwoCardsOneTile(t *testing.T) {
 	}
 
 	rm := newMockResourceManager(tCase.pods)
-	rm.SetTileCountPerCard([]uint64{5})
+	rm.SetTileCountPerCard(uint64(5))
 
 	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
 		ContainerRequests: tCase.prefContainerRequests,
@@ -652,7 +652,7 @@ func TestCreateFractionalResourceResponseWithThreeCardsTwoTiles(t *testing.T) {
 	}
 
 	rm := newMockResourceManager(tCase.pods)
-	rm.SetTileCountPerCard([]uint64{5})
+	rm.SetTileCountPerCard(uint64(5))
 
 	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
 		ContainerRequests: tCase.prefContainerRequests,
@@ -747,7 +747,7 @@ func TestCreateFractionalResourceResponseWithMultipleContainersTileEach(t *testi
 	}
 
 	rm := newMockResourceManager(tCase.pods)
-	rm.SetTileCountPerCard([]uint64{2})
+	rm.SetTileCountPerCard(uint64(2))
 
 	_, perr := rm.GetPreferredFractionalAllocation(&v1beta1.PreferredAllocationRequest{
 		ContainerRequests: properPrefContainerRequests,

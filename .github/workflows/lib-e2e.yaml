@@ -25,6 +25,7 @@ jobs:
           - name: e2e-gpu
             runner: gpu
             images: intel-gpu-plugin intel-gpu-initcontainer
+            targetJob: e2e-gpu SKIP=Resource:xe
           - name: e2e-iaa-spr
             targetjob: e2e-iaa
             runner: simics-spr

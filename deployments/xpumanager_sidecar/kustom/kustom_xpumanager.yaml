@@ -27,8 +27,3 @@ spec:
             - ALL
           readOnlyRootFilesystem: true
           runAsUser: 0
-      - name: xpumd
-        resources:
-          limits:
-            $patch: replace
-            gpu.intel.com/i915_monitoring: 1
