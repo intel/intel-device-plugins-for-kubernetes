@@ -43,6 +43,7 @@ jobs:
           - sgx-aesmd-demo
           - dlb-dpdk-demo
           - dlb-libdlb-demo
+          - stress-ng-gramine
         builder: [buildah, docker]
     steps:
       - uses: actions/checkout@v4

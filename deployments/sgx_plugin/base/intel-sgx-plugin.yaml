@@ -13,6 +13,7 @@ spec:
       labels:
         app: intel-sgx-plugin
     spec:
+      priorityClassName: system-node-critical
       automountServiceAccountToken: false
       containers:
       - name: intel-sgx-plugin
