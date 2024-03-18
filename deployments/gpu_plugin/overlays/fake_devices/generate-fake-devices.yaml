@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-gpu-plugin
+spec:
+  template:
+    spec:
+      volumes:
+      - name: fake-conf
+        configMap:
+          name: fakedev-config
+      initContainers:
+      - name: fakedev-generator
+        image: intel/intel-gpu-fakedev:devel
+        securityContext:
+          runAsUser: 0
+          readOnlyRootFilesystem: false
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - name: fake-conf
+          mountPath: /config
+          readOnly: true
+        # generate fake sysfs / devfs files for GPU plugin based on config
+        command: ["/generator", "-json", "/config/fakedev.json", "-verbose"]
