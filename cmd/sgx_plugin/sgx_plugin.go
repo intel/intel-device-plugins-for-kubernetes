@@ -71,29 +71,49 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	devTree := dpapi.NewDeviceTree()
 
 	// Assume that both /dev/sgx_enclave and /dev/sgx_provision must be present.
-	sgxEnclavePath := path.Join(dp.devfsDir, "sgx_enclave")
-	sgxProvisionPath := path.Join(dp.devfsDir, "sgx_provision")
+	// Include /dev/sgx/enclave and /dev/sgx/provision to support deployments with older psw
+	sgxEnclavePaths := []string{
+		path.Join(dp.devfsDir, "sgx_enclave"),
+		path.Join(dp.devfsDir, "sgx/enclave"),
+	}
+	sgxProvisionPaths := []string{
+		path.Join(dp.devfsDir, "sgx_provision"),
+		path.Join(dp.devfsDir, "sgx/provision"),
+	}
 
-	if _, err := os.Stat(sgxEnclavePath); err != nil {
+	if _, err := os.Stat(sgxEnclavePaths[0]); err != nil {
 		klog.Error("No SGX enclave file available: ", err)
 		return devTree, nil
 	}
 
-	if _, err := os.Stat(sgxProvisionPath); err != nil {
+	if _, err := os.Stat(sgxProvisionPaths[0]); err != nil {
 		klog.Error("No SGX provision file available: ", err)
 		return devTree, nil
 	}
 
+	//If kernel does not have the legacy symlinks, remove
+	if _, err := os.Stat(sgxEnclavePaths[1]); err != nil {
+		sgxEnclavePaths = sgxEnclavePaths[0:1]
+	}
+
+	if _, err := os.Stat(sgxProvisionPaths[1]); err != nil {
+		sgxEnclavePaths = sgxProvisionPaths[0:1]
+	}
+
 	for i := uint(0); i < dp.nEnclave; i++ {
-		devID := fmt.Sprintf("%s-%d", "sgx-enclave", i)
-		nodes := []pluginapi.DeviceSpec{{HostPath: sgxEnclavePath, ContainerPath: sgxEnclavePath, Permissions: "rw"}}
-		devTree.AddDevice(deviceTypeEnclave, devID, dpapi.NewDeviceInfoWithTopologyHints(pluginapi.Healthy, nodes, nil, nil, nil, nil))
+		for _, sgxEnclavePath := range sgxEnclavePaths {
+			devID := fmt.Sprintf("%s-%d", "sgx-enclave", i)
+			nodes := []pluginapi.DeviceSpec{{HostPath: sgxEnclavePath, ContainerPath: sgxEnclavePath, Permissions: "rw"}}
+			devTree.AddDevice(deviceTypeEnclave, devID, dpapi.NewDeviceInfoWithTopologyHints(pluginapi.Healthy, nodes, nil, nil, nil, nil))
+		}
 	}
 
 	for i := uint(0); i < dp.nProvision; i++ {
-		devID := fmt.Sprintf("%s-%d", "sgx-provision", i)
-		nodes := []pluginapi.DeviceSpec{{HostPath: sgxProvisionPath, ContainerPath: sgxProvisionPath, Permissions: "rw"}}
-		devTree.AddDevice(deviceTypeProvision, devID, dpapi.NewDeviceInfoWithTopologyHints(pluginapi.Healthy, nodes, nil, nil, nil, nil))
+		for _, sgxProvisionPath := range sgxProvisionPaths {
+			devID := fmt.Sprintf("%s-%d", "sgx-provision", i)
+			nodes := []pluginapi.DeviceSpec{{HostPath: sgxProvisionPath, ContainerPath: sgxProvisionPath, Permissions: "rw"}}
+			devTree.AddDevice(deviceTypeProvision, devID, dpapi.NewDeviceInfoWithTopologyHints(pluginapi.Healthy, nodes, nil, nil, nil, nil))
+		}
 	}
 
 	return devTree, nil
