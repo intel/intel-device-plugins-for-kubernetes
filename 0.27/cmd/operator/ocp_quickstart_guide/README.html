@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel® Device Plugins Operator for Red Hat OpenShift Container Platform &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Intel® Device Plugins Operator for Red Hat OpenShift Container Platform</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/cmd/operator/ocp_quickstart_guide/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-device-plugins-operator-for-red-hat-openshift-container-platform">
+<h1>Intel® Device Plugins Operator for Red Hat OpenShift Container Platform<a class="headerlink" href="#intel-device-plugins-operator-for-red-hat-openshift-container-platform" title="Permalink to this heading"></a></h1>
+<section id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#minimum-hardware-requirements">Minimum Hardware Requirements</a></p>
+<ul>
+<li><p><a class="reference external" href="#intel-sgx-enabled-server">Intel SGX Enabled Server</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#prerequisites">Prerequisites</a></p></li>
+<li><p><a class="reference external" href="#install-operator-using-openshift-web-console">Install Operator using OpenShift Web Console</a></p></li>
+<li><p><a class="reference external" href="#verify-operator-installation">Verify Operator installation</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#deploying-intel-device-plugins">Deploying Intel Device Plugins</a></p>
+<ul>
+<li><p><a class="reference external" href="#intel-sgx-device-plugin">Intel SGX Device Plugin</a></p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>The Intel Device Plugins Operator for OpenShift Container Platform is a collection of device plugins advertising Intel specific hardware resources to the kubelet. It provides a single point of control for Intel® Software Guard Extensions (Intel® SGX), Intel GPUs, Intel® QuickAccess Technology (Intel® QAT), Intel® Data Streaming Accelerator (Intel® DSA), and Intel® In-Memory Analytics Accelerator (Intel® IAA) devices to cluster administrators. The <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/releases/tag/v0.24.0"><code class="docutils literal notranslate"><span class="pre">v0.24.0</span></code></a> release of the operator only supports Intel SGX and Intel QAT device plugins. GPU, Intel DSA, Intel  IAA, and other device plugins will be supported in future releases.</p>
+</section>
+<section id="minimum-hardware-requirements">
+<h2>Minimum Hardware Requirements<a class="headerlink" href="#minimum-hardware-requirements" title="Permalink to this heading"></a></h2>
+<section id="intel-sgx-enabled-server">
+<h3>Intel SGX Enabled Server<a class="headerlink" href="#intel-sgx-enabled-server" title="Permalink to this heading"></a></h3>
+<ul class="simple">
+<li><p>Third Generation Intel® Xeon® Scalable Platform, code-named “Ice Lake” or later</p></li>
+<li><p>Configure BIOS using below details
+<img alt="SGX Server BIOS" src="../../../_images/SGX-BIOS.PNG" />
+[<strong>Note:</strong> The BIOS configuration shown above is just for the reference. Please contact your BIOS vendor for details]</p></li>
+</ul>
+</section>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading"></a></h3>
+<ul>
+<li><p>Make sure Red Hat OpenShift Cluster is ready to use and the developing machine is RHEL and <code class="docutils literal notranslate"><span class="pre">oc</span></code> command is installed and configured properly. Please note that the following operation is verified on Red Hat OpenShift Cluster 4.11 and working machine RHEL-8.6</p></li>
+<li><p>Install the <code class="docutils literal notranslate"><span class="pre">oc</span></code> command to your development machine</p></li>
+<li><p>Follow the <a class="reference external" href="https://docs.openshift.com/container-platform/4.11/hardware_enablement/psap-node-feature-discovery-operator.html">link</a> to install <strong>NFD operator</strong> (if it’s not already installed).<br /><strong>Note:</strong> Please only install the NFD operator and use steps below to create the NodeFeatureDiscovery instance.</p>
+<ul class="simple">
+<li><p>Create the NodeFeatureDiscovery instance</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ oc apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/v0.24.0/deployments/nfd/overlays/node-feature-discovery/node-feature-discovery-openshift.yaml
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Create the NodeFeatureRule instance</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ oc apply -f https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/v0.24.0/deployments/nfd/overlays/node-feature-rules/node-feature-rules-openshift.yaml
+</pre></div>
+</div>
+</li>
+<li><p>Deploy SELinux Policy for OCP 4.10 -<br />The SGX device plugin and Init container run as a label <code class="docutils literal notranslate"><span class="pre">container_device_plugin_t</span></code> and <code class="docutils literal notranslate"><span class="pre">container_device_plugin_init_t</span></code> respectively. This requires a custom SELinux policy to be deployed before the SGX plugin can be run. To deploy this policy, run</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ oc apply -f https://raw.githubusercontent.com/intel/user-container-selinux/main/policy-deployment.yaml
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+<section id="install-operator-using-openshift-web-console">
+<h3>Install Operator using OpenShift Web Console<a class="headerlink" href="#install-operator-using-openshift-web-console" title="Permalink to this heading"></a></h3>
+<ol class="simple">
+<li><p>In OpenShift web console navigate to <strong>Operator</strong> -&gt; <strong>OperatorHub</strong></p></li>
+<li><p>Search for <strong>Intel Device Plugins Operator -&gt;</strong> Click <strong>Install</strong></p></li>
+</ol>
+<img src="images/operator.PNG" width="300" height="200"></section>
+<section id="verify-operator-installation">
+<h3>Verify Operator installation<a class="headerlink" href="#verify-operator-installation" title="Permalink to this heading"></a></h3>
+<ol class="simple">
+<li><p>Go to <strong>Operator</strong> -&gt; <strong>Installed Operators</strong></p></li>
+<li><p>Verify the status of operator as <strong>Succeeded</strong></p></li>
+<li><p>Click <strong>Intel Device Plugins Operator</strong> to view the details<br /><img alt="Verify Operator" src="../../../_images/verify-operator.PNG" /></p></li>
+</ol>
+</section>
+</section>
+<section id="deploying-intel-device-plugins">
+<h2>Deploying Intel Device Plugins<a class="headerlink" href="#deploying-intel-device-plugins" title="Permalink to this heading"></a></h2>
+<section id="intel-sgx-device-plugin">
+<h3>Intel SGX Device Plugin<a class="headerlink" href="#intel-sgx-device-plugin" title="Permalink to this heading"></a></h3>
+<p>Follow the steps below to deploy Intel SGX Device Plugin Custom Resource</p>
+<ol class="simple">
+<li><p>Go to <strong>Operator</strong> -&gt; <strong>Installed Operators</strong></p></li>
+<li><p>Open <strong>Intel Device Plugins Operator</strong></p></li>
+<li><p>Navigate to tab <strong>Intel Software Guard Extensions Device Plugin</strong></p></li>
+<li><p>Click <strong>Create SgxDevicePlugin -&gt;</strong> set correct parameters -&gt; Click <strong>Create</strong>
+OR for any customizations, please select <code class="docutils literal notranslate"><span class="pre">YAML</span> <span class="pre">view</span></code> and edit details. Once done, click <strong>Create</strong></p></li>
+<li><p>Verify CR by checking the status of DaemonSet <strong><code class="docutils literal notranslate"><span class="pre">intel-sgx-plugin</span></code></strong></p></li>
+<li><p>Now <code class="docutils literal notranslate"><span class="pre">SgxDevicePlugin</span></code> is ready to deploy any workloads</p></li>
+</ol>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
