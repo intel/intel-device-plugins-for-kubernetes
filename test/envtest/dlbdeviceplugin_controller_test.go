@@ -22,6 +22,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	apps "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -72,6 +73,7 @@ var _ = Describe("DlbDevicePlugin Controller", func() {
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(spec.InitImage))
 			Expect(ds.Spec.Template.Spec.NodeSelector).To(Equal(spec.NodeSelector))
+			Expect(ds.Spec.Template.Spec.Tolerations).To(HaveLen(0))
 
 			By("updating DlbDevicePlugin successfully")
 			updatedImage := "updated-dlb-testimage"
@@ -120,6 +122,21 @@ var _ = Describe("DlbDevicePlugin Controller", func() {
 			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
 			Expect(err).To(BeNil())
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(And(HaveLen(1), HaveKeyWithValue("kubernetes.io/arch", "amd64")))
+
+			By("updating DlbDevicePlugin with tolerations")
+
+			tolerations := []corev1.Toleration{
+				{Key: "foo", Operator: "Equal", Value: "bar", Effect: "NoSchedule"},
+			}
+
+			fetched.Spec.Tolerations = tolerations
+			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
+			time.Sleep(interval)
+
+			By("checking DaemonSet is updated with tolerations")
+			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
+			Expect(err).To(BeNil())
+			Expect(ds.Spec.Template.Spec.Tolerations).To(Equal(tolerations))
 
 			By("deleting DlbDevicePlugin successfully")
 			Eventually(func() error {

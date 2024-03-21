@@ -136,6 +136,10 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
 
+	if devicePlugin.Spec.Tolerations != nil {
+		daemonSet.Spec.Template.Spec.Tolerations = devicePlugin.Spec.Tolerations
+	}
+
 	daemonSet.ObjectMeta.Namespace = c.ns
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
@@ -343,6 +347,11 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 			ds.Spec.Template.Spec.Containers[0].VolumeMounts = removeVolumeMount(ds.Spec.Template.Spec.Containers[0].VolumeMounts, "podresources")
 		}
 
+		updated = true
+	}
+
+	if controllers.HasTolerationsChanged(ds.Spec.Template.Spec.Tolerations, dp.Spec.Tolerations) {
+		ds.Spec.Template.Spec.Tolerations = dp.Spec.Tolerations
 		updated = true
 	}
 

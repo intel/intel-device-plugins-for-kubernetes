@@ -78,6 +78,7 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(spec.InitImage))
 			Expect(ds.Spec.Template.Spec.NodeSelector).To(Equal(spec.NodeSelector))
+			Expect(ds.Spec.Template.Spec.Tolerations).To(HaveLen(0))
 
 			By("copy annotations successfully")
 			Expect(&(fetched.Annotations) == &annotations).ShouldNot(BeTrue())
@@ -174,6 +175,21 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(0))
 			Expect(ds.Spec.Template.Spec.Volumes).ShouldNot(ContainElement(expectedVolume))
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(And(HaveLen(1), HaveKeyWithValue("kubernetes.io/arch", "amd64")))
+
+			By("updating QatDevicePlugin with tolerations")
+
+			tolerations := []v1.Toleration{
+				{Key: "foo", Operator: "Equal", Value: "bar", Effect: "NoSchedule"},
+			}
+
+			fetched.Spec.Tolerations = tolerations
+			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
+			time.Sleep(interval)
+
+			By("checking DaemonSet is updated with tolerations")
+			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
+			Expect(err).To(BeNil())
+			Expect(ds.Spec.Template.Spec.Tolerations).To(Equal(tolerations))
 
 			By("deleting QatDevicePlugin successfully")
 			Eventually(func() error {

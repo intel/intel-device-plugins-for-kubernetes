@@ -17,6 +17,8 @@ package controllers
 import (
 	"context"
 	"testing"
+
+	v1 "k8s.io/api/core/v1"
 )
 
 func TestUpgrade(test *testing.T) {
@@ -70,6 +72,76 @@ func TestUpgrade(test *testing.T) {
 			test.Errorf("expectedUpgrade: %v, received: %v", t.upgrade, upgrade)
 			test.Errorf("expectedImage: %s, received: %s", t.expectedImage, t.image)
 			test.Errorf("expectedInitimage: %s, received: %s", t.expectedInitimage, t.initimage)
+		}
+	}
+}
+
+func TestSuffixedName(test *testing.T) {
+	result := SuffixedName("name", "suffix")
+
+	if result != "name-suffix" {
+		test.Errorf("invalid suffixed name received: %v", result)
+	}
+}
+
+func TestHasTolerationsChanged(test *testing.T) {
+	tests := []struct {
+		desc    string
+		pre     []v1.Toleration
+		post    []v1.Toleration
+		changed bool
+	}{
+		{
+			desc:    "no tolerations",
+			pre:     nil,
+			post:    nil,
+			changed: false,
+		},
+		{
+			desc: "from tolerations to nothing",
+			pre: []v1.Toleration{
+				{Key: "foo", Value: "bar", Operator: "Equal", Effect: "NoSchedule"},
+			},
+			post:    nil,
+			changed: true,
+		},
+		{
+			desc: "from nothing to tolerations",
+			pre:  nil,
+			post: []v1.Toleration{
+				{Key: "foo", Value: "bar", Operator: "Equal", Effect: "NoSchedule"},
+			},
+			changed: true,
+		},
+		{
+			desc: "no changes",
+			pre: []v1.Toleration{
+				{Key: "foo", Value: "bar", Operator: "Equal", Effect: "NoSchedule"},
+			},
+			post: []v1.Toleration{
+				{Key: "foo", Value: "bar", Operator: "Equal", Effect: "NoSchedule"},
+			},
+			changed: false,
+		},
+		{
+			desc: "tolerations changed",
+			pre: []v1.Toleration{
+				{Key: "foo", Value: "bar", Operator: "Equal", Effect: "NoSchedule"},
+			},
+			post: []v1.Toleration{
+				{Key: "foo2", Value: "bar2", Operator: "Equal", Effect: "NoSchedule"},
+			},
+			changed: true,
+		},
+	}
+
+	for i := range tests {
+		t := tests[i]
+
+		changed := HasTolerationsChanged(t.pre, t.post)
+
+		if changed != t.changed {
+			test.Errorf("test: %s: expected: %v, received: %v", t.desc, t.changed, changed)
 		}
 	}
 }

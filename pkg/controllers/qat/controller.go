@@ -85,6 +85,10 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	daemonSet.Annotations = annotations
 	daemonSet.Spec.Template.Annotations = annotations
 
+	if devicePlugin.Spec.Tolerations != nil {
+		daemonSet.Spec.Template.Spec.Tolerations = devicePlugin.Spec.Tolerations
+	}
+
 	if len(devicePlugin.Spec.NodeSelector) > 0 {
 		daemonSet.Spec.Template.Spec.NodeSelector = devicePlugin.Spec.NodeSelector
 	}
@@ -146,6 +150,11 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 	newargs := getPodArgs(dp)
 	if strings.Join(ds.Spec.Template.Spec.Containers[0].Args, " ") != strings.Join(newargs, " ") {
 		ds.Spec.Template.Spec.Containers[0].Args = newargs
+		updated = true
+	}
+
+	if controllers.HasTolerationsChanged(ds.Spec.Template.Spec.Tolerations, dp.Spec.Tolerations) {
+		ds.Spec.Template.Spec.Tolerations = dp.Spec.Tolerations
 		updated = true
 	}
 
