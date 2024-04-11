@@ -217,7 +217,7 @@ go test -v ./test/e2e/... -args -ginkgo.focus <labels in regex> -ginkgo.skip <la
 | `fpga` | `af`, `region`   |             | `opae-nlb-demo`                |
 | `gpu`  |-                 | `i915`      | `busybox`, `tensorflow`        |
 | `iaa`  |-                 | `dedicated` | `accel-config`                 |
-| `qat`  | `dpdk`           | `dc`        | `openssl`                      |
+| `qat`  | `dpdk`           | `dc`        | `openssl`, `compress-perf`     |
 | `qat`  | `dpdk`           | `cy`        | `openssl`, `crypto-perf`       |
 | `qat`  | `kernel`         | `cy1_dc0`   | `busybox`                      |
 | `sgx`  |-                 |             | `sgx-sdk-demo`                 |
