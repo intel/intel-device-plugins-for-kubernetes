@@ -1,3 +1,0 @@
-[
-  {"op": "replace", "path": "/spec/containers/0/env/0/value", "value": "crypto"}
-]

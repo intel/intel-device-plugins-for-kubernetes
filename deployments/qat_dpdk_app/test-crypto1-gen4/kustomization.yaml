@@ -1,9 +1,0 @@
-nameSuffix: -gen4
-resources:
-- ../test-crypto1
-patches:
-- target:
-    version: v1
-    kind: Pod
-    name: qat-dpdk
-  path: tc1-gen4.yaml

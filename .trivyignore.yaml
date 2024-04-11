@@ -12,7 +12,6 @@ misconfigurations:
     paths:
       - dlb_plugin/overlays/dlb_initcontainer/dlb_initcontainer.yaml
       - dsa_plugin/overlays/dsa_initcontainer/dsa_initcontainer.yaml
-      - qat_dpdk_app/patches/crypto-perf/env_replace_testcmd.yaml
       - iaa_plugin/overlays/iaa_initcontainer/iaa_initcontainer.yaml
       - qat_plugin/base/intel-qat-kernel-plugin.yaml
       - qat_plugin/overlays/qat_initcontainer/qat_initcontainer.yaml
@@ -46,10 +45,7 @@ misconfigurations:
       - xpumanager_sidecar/kustom/kustom_xpumanager.yaml
       - operator/default/manager_auth_proxy_patch.yaml
       - operator/default/manager_webhook_patch.yaml
-      - qat_dpdk_app/patches/compress-perf/env_replace_testcmd.yaml
-      - qat_dpdk_app/patches/compress-perf/volume_add_configmap.yaml
       - qat_plugin/overlays/debug/add-args.yaml
       - qat_plugin/overlays/e2e/add-args.yaml
       - qat_plugin/overlays/debug/add-args.yaml
-      - qat_dpdk_app/patches/crypto-perf/env_replace_testcmd.yaml
       - sgx_admissionwebhook/base/manager_webhook_patch.yaml

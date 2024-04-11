@@ -219,7 +219,6 @@ go test -v ./test/e2e/... -args -ginkgo.focus <labels in regex> -ginkgo.skip <la
 | `iaa`  |-                 | `dedicated` | `accel-config`                 |
 | `qat`  | `dpdk`           | `dc`        | `openssl`                      |
 | `qat`  | `dpdk`           | `cy`        | `openssl`, `crypto-perf`       |
-| `qat`  | `dpdk`           | `generic`   | `crypto-perf`, `compress-perf` |
 | `qat`  | `kernel`         | `cy1_dc0`   | `busybox`                      |
 | `sgx`  |-                 |             | `sgx-sdk-demo`                 |
 
@@ -239,9 +238,6 @@ go test -v ./test/e2e/... -args -ginkgo.focus "Device:gpu" -ginkgo.skip "App:bus
 
 # QAT for qat4 cy resource with openssl app running
 go test -v ./test/e2e/... -args -ginkgo.focus "Device:qat.*Resource:cy.*App:openssl"
-
-# QAT with dpdk mode for qat2 generic resource with all apps running
-go test -v ./test/e2e/... -args -ginkgo.focus "Device:qat.*Resource:generic.*App:(crypto-perf|compress-perf)"
 
 # SGX without running sgx-sdk-demo app
 go test -v ./test/e2e/... -args -ginkgo.focus "Device:sgx" -ginkgo.skip "App:sgx-sdk-demo"

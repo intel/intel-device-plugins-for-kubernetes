@@ -1,0 +1,7 @@
+configMapGenerator:
+- files:
+  - file.txt
+  name: test-data
+
+resources:
+- compress-perf-dpdk-pod-requesting-qat-dc.yaml
