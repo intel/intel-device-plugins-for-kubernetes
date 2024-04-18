@@ -26,7 +26,7 @@ require (
 	k8s.io/kubernetes v1.30.0
 	k8s.io/pod-security-admission v0.0.0
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
-	sigs.k8s.io/controller-runtime v0.17.1-0.20240416095710-67b27f27e514
+	sigs.k8s.io/controller-runtime v0.17.3
 	sigs.k8s.io/yaml v1.4.0
 )
 
