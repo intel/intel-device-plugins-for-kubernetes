@@ -73,7 +73,7 @@ CONFIG_LS=y
 # CONFIG_RENICE is not set
 # CONFIG_RM is not set
 # CONFIG_RMDIR is not set
-# CONFIG_SED is not set
+CONFIG_SED=y
 # CONFIG_SLEEP is not set
 # CONFIG_SORT is not set
 # CONFIG_SORT_FLOAT is not set

@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-
 DEV="${DEVICE_TYPE:-dsa}"
 NODE_NAME="${NODE_NAME:-}"
 OPT=""
@@ -11,7 +9,7 @@ function cmd() {
 
     echo "$@"
 
-    "${@}"
+    "${@}" || exit 1
 }
 
 for i in $(accel-config list | jq -r '.[].dev' | grep ${OPT} "dsa"); do
@@ -28,7 +26,7 @@ for i in $(accel-config list --idle | jq -r '.[].dev' | grep ${OPT} "dsa" | sed 
 
     [ -f "conf/$DEV-$NODE_NAME.conf" ] && config="conf/$DEV-$NODE_NAME.conf"
 
-    sed "s/X/${i}/g" < "$config" > scratch/"$DEV${i}.conf"
+    sed "s/X/${i}/g" < "$config" > scratch/"$DEV${i}.conf" || exit 1
 
     cmd accel-config load-config -e -c scratch/"$DEV${i}.conf"
 
