@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # ToyBox version: KCONFIG_VERSION
-# Thu Dec  7 19:38:32 2023
+# Tue Apr 23 18:03:07 2024
 #
 # CONFIG_TOYBOX_ON_ANDROID is not set
 CONFIG_TOYBOX_FORK=y
@@ -35,6 +35,7 @@ CONFIG_ENV=y
 # CONFIG_FALSE is not set
 # CONFIG_FILE is not set
 # CONFIG_FIND is not set
+# CONFIG_FOLD is not set
 # CONFIG_GETCONF is not set
 CONFIG_GREP=y
 CONFIG_EGREP=y
@@ -86,10 +87,10 @@ CONFIG_TEST_GLUE=y
 # CONFIG_TIME is not set
 # CONFIG_TOUCH is not set
 # CONFIG_TRUE is not set
+# CONFIG_TSORT is not set
 # CONFIG_TTY is not set
 # CONFIG_ULIMIT is not set
 # CONFIG_ARCH is not set
-# CONFIG_LINUX32 is not set
 # CONFIG_UNAME is not set
 # CONFIG_UNIQ is not set
 # CONFIG_UNLINK is not set
@@ -110,6 +111,7 @@ CONFIG_TEST_GLUE=y
 # CONFIG_CHSH is not set
 # CONFIG_CROND is not set
 # CONFIG_CRONTAB is not set
+# CONFIG_CSPLIT is not set
 # CONFIG_DHCP is not set
 # CONFIG_DHCP6 is not set
 # CONFIG_DHCPD is not set
@@ -118,10 +120,8 @@ CONFIG_TEST_GLUE=y
 # CONFIG_DUMPLEASES is not set
 # CONFIG_EXPR is not set
 # CONFIG_FDISK is not set
-# CONFIG_FOLD is not set
 # CONFIG_FSCK is not set
 # CONFIG_GETFATTR is not set
-# CONFIG_GETOPT is not set
 # CONFIG_GETTY is not set
 # CONFIG_GITCOMPAT is not set
 # CONFIG_GITCLONE is not set
@@ -213,6 +213,7 @@ CONFIG_SH=y
 # CONFIG_FREERAMDISK is not set
 # CONFIG_FSFREEZE is not set
 # CONFIG_FSYNC is not set
+# CONFIG_GETOPT is not set
 # CONFIG_GPIODETECT is not set
 # CONFIG_GPIOFIND is not set
 # CONFIG_GPIOINFO is not set
@@ -230,6 +231,7 @@ CONFIG_SH=y
 # CONFIG_INSMOD is not set
 # CONFIG_IONICE is not set
 # CONFIG_IORENICE is not set
+# CONFIG_LINUX32 is not set
 # CONFIG_LOGIN is not set
 # CONFIG_LOSETUP is not set
 # CONFIG_LSATTR is not set
@@ -239,6 +241,7 @@ CONFIG_LSPCI=y
 # CONFIG_LSUSB is not set
 # CONFIG_MAKEDEVS is not set
 # CONFIG_MCOOKIE is not set
+# CONFIG_MEMEATER is not set
 # CONFIG_MIX is not set
 # CONFIG_MKPASSWD is not set
 # CONFIG_MKSWAP is not set
@@ -282,6 +285,7 @@ CONFIG_REALPATH=y
 # CONFIG_TASKSET is not set
 # CONFIG_TIMEOUT is not set
 # CONFIG_TRUNCATE is not set
+# CONFIG_TS is not set
 # CONFIG_UCLAMPSET is not set
 # CONFIG_UPTIME is not set
 # CONFIG_USLEEP is not set
@@ -382,6 +386,7 @@ CONFIG_TOYBOX_LSM_NONE=y
 # CONFIG_TOYBOX_FLOAT is not set
 # CONFIG_TOYBOX_HELP is not set
 # CONFIG_TOYBOX_HELP_DASHDASH is not set
+# CONFIG_TOYBOX_ZHELP is not set
 # CONFIG_TOYBOX_FREE is not set
 # CONFIG_TOYBOX_NORECURSE is not set
 # CONFIG_TOYBOX_DEBUG is not set
