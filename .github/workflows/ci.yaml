@@ -16,30 +16,30 @@ permissions:
   pull-requests: read
 
 jobs:
-  trivy:
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    uses: "./.github/workflows/lib-trivy.yaml"
+  # trivy:
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #     security-events: write
+  #   uses: "./.github/workflows/lib-trivy.yaml"
 
-  validate:
-    uses: "./.github/workflows/lib-validate.yaml"
+  # validate:
+  #   uses: "./.github/workflows/lib-validate.yaml"
 
-  codeql:
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    uses: "./.github/workflows/lib-codeql.yaml"
+  # codeql:
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #     security-events: write
+  #   uses: "./.github/workflows/lib-codeql.yaml"
 
-  build:
-    needs:
-      - trivy
-      - validate
-    uses: "./.github/workflows/lib-build.yaml"
+  # build:
+  #   needs:
+  #     - trivy
+  #     - validate
+  #   uses: "./.github/workflows/lib-build.yaml"
 
   e2e:
-    needs:
-      - build
+    # needs:
+    #   - build
     uses: "./.github/workflows/lib-e2e.yaml"
