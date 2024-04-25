@@ -11,47 +11,59 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: e2e-dsa-spr
-            targetjob: e2e-dsa
-            runner: simics-spr
-            images: intel-dsa-plugin intel-idxd-config-initcontainer accel-config-demo intel-deviceplugin-operator
           - name: e2e-dsa-gnr
             targetjob: e2e-dsa
             runner: simics-gnr
-            images: intel-dsa-plugin intel-idxd-config-initcontainer accel-config-demo intel-deviceplugin-operator
-          - name: e2e-fpga
-            runner: fpga
-            images: intel-fpga-plugin intel-fpga-initcontainer intel-fpga-admissionwebhook opae-nlb-demo
-          - name: e2e-gpu
-            runner: gpu
-            images: intel-gpu-plugin intel-gpu-initcontainer
-            targetJob: e2e-gpu SKIP=Resource:xe
-          - name: e2e-iaa-spr
-            targetjob: e2e-iaa
-            runner: simics-spr
-            images: intel-iaa-plugin intel-idxd-config-initcontainer accel-config-demo intel-deviceplugin-operator
+            images:
+              - intel-dsa-plugin
+              - intel-idxd-config-initcontainer
+              - accel-config-demo
+              - intel-deviceplugin-operator
           - name: e2e-iaa-gnr
             targetjob: e2e-iaa
             runner: simics-gnr
-            images: intel-iaa-plugin intel-idxd-config-initcontainer accel-config-demo intel-deviceplugin-operator
+            images:
+              - intel-iaa-plugin
+              - intel-idxd-config-initcontainer
+              - accel-config-demo
+              - intel-deviceplugin-operator
           - name: e2e-qat
             targetjob: e2e-qat FOCUS=Resource:generic
             runner: qat
-            images: intel-qat-plugin intel-qat-initcontainer crypto-perf
-          - name: e2e-qat4
-            targetjob: e2e-qat FOCUS="Mode:dpdk.*Resource:(cy|dc)" SKIP=App:crypto-perf
-            runner: simics-spr
-            images: intel-qat-plugin intel-qat-initcontainer openssl-qat-engine
-          - name: e2e-sgx
-            targetjob: e2e-sgx FOCUS="|(SGX Admission)"
-            runner: sgx
-            images: intel-sgx-plugin intel-sgx-initcontainer intel-sgx-admissionwebhook sgx-sdk-demo intel-deviceplugin-operator
+            images:
+              - intel-qat-plugin
+              - intel-qat-initcontainer
+              - crypto-perf
+          - name: e2e-fpga
+            runner: fpga
+            images:
+              - intel-fpga-plugin
+              - intel-fpga-initcontainer
+              - intel-fpga-admissionwebhook
+              - opae-nlb-demo
+          - name: e2e-spr
+            runner: spr
+            images:
+              - intel-qat-plugin
+              - intel-qat-initcontainer
+              - openssl-qat-engine
+              - intel-dsa-plugin
+              - intel-idxd-config-initcontainer
+              - accel-config-demo
+              - intel-deviceplugin-operator
+              - intel-iaa-plugin
+              - crypto-perf
+              - intel-gpu-plugin
+              - intel-sgx-plugin
+              - intel-sgx-initcontainer
+              - intel-sgx-admissionwebhook
+              - sgx-sdk-demo
 
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
     env:
       TARGET_JOB: ${{ matrix.targetjob || matrix.name }}
-      IMAGES: ${{ matrix.images }}
+      IMAGES: ${{ join(matrix.images, ' ') }}
 
     steps:
       - uses: actions/checkout@v4
