@@ -1,4 +1,4 @@
-FROM debian:sid-slim as builder
+FROM debian:stable-slim as builder
 
 ARG DIR=/dpdk-build
 WORKDIR $DIR
@@ -37,8 +37,32 @@ RUN mkdir -p /install_root/licenses/dpdk && \
     cd /install_root/licenses/dpdk && \
     apt-get source --download-only -y libatomic1 libnuma1
 
-FROM debian:sid-slim
-RUN apt-get update && apt-get install -y --no-install-recommends libipsec-mb1 libnuma1 libatomic1 && ldconfig -v
+ARG TOYBOX_VERSION="0.8.11"
+ARG TOYBOX_SHA256="83a3a88cbe1fa30f099c2f58295baef4637aaf988085aaea56e03aa29168175d"
+
+ARG ROOT=/install_root
+
+RUN apt-get update && apt-get --no-install-recommends -y install musl musl-tools musl-dev curl
+COPY toybox-config-static toybox-config-static
+RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz -o toybox.tar.gz \
+    && echo "$TOYBOX_SHA256 toybox.tar.gz" | sha256sum -c - \
+    && tar -xzf toybox.tar.gz \
+    && rm toybox.tar.gz \
+    && cd toybox-$TOYBOX_VERSION \
+    && KCONFIG_CONFIG=../toybox-config-static LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT/bin V=2 make toybox install_flat \
+    && install -D LICENSE $ROOT/licenses/toybox \
+    && cp -r /usr/share/doc/musl $ROOT/licenses/
+
+ARG LIBS="libnuma libatomic libtinfo libIPSec_MB"
+ARG LICENSES="libnuma1 libatomic1 libtinfo6 libipsec-mb1 gcc-12-base"
+RUN mkdir /tmp/libs && for l in ${LIBS}; do cp "/lib/x86_64-linux-gnu/${l}.so"* /tmp/libs/; done
+RUN mkdir /tmp/licenses && for l in ${LICENSES}; do cp -r "/usr/share/doc/${l}" /tmp/licenses/; done
+
+FROM gcr.io/distroless/cc
+
+COPY --from=builder /tmp/libs/ /lib/x86_64-linux-gnu/
+COPY --from=builder /tmp/licenses/ /usr/share/doc/
+
 COPY --from=builder /install_root /
 COPY run-dpdk-test /usr/bin/
 
