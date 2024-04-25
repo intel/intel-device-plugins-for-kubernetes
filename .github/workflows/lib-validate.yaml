@@ -41,7 +41,7 @@ jobs:
           go-version-file: go.mod
           check-latest: true
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v5
         with:
           version: v1.55.2
           args: -v --timeout 5m
