@@ -56,8 +56,8 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
     --save_path /install_root/licenses/$CMD/go-licenses ; \
     else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi
 ###
-ARG TOYBOX_VERSION="0.8.10"
-ARG TOYBOX_SHA256="3c31e235fe87e74e6c6cf7cd7299fcbffb0f4a4834dae607aa26bb4f1583549a"
+ARG TOYBOX_VERSION="0.8.11"
+ARG TOYBOX_SHA256="83a3a88cbe1fa30f099c2f58295baef4637aaf988085aaea56e03aa29168175d"
 ARG ROOT=/install_root
 RUN apt-get update && apt-get --no-install-recommends -y install musl musl-tools musl-dev
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
