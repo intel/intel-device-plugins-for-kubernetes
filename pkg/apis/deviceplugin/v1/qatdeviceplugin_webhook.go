@@ -92,7 +92,8 @@ func (r *QatDevicePlugin) validatePlugin() error {
 		// check if 4xxxvf is enabled
 		contains := false
 		devicesWithCapabilities := map[KernelVfDriver]struct{}{
-			"4xxxvf": {},
+			"4xxxvf":  {},
+			"420xxvf": {},
 		}
 
 		for _, kernelVfDriver := range r.Spec.KernelVfDrivers {
@@ -103,7 +104,7 @@ func (r *QatDevicePlugin) validatePlugin() error {
 		}
 
 		if !contains {
-			return errors.Errorf("ProvisioningConfig is available only for 4xxx devices")
+			return errors.Errorf("ProvisioningConfig is available only for 4xxx and 420xx devices")
 		}
 	}
 

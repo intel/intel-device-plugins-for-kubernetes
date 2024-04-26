@@ -66,6 +66,7 @@ var qatDeviceDriver = map[string]string{
 	"4941": "4xxxvf",
 	"4943": "4xxxvf",
 	"4945": "4xxxvf",
+	"4947": "420xxvf",
 	"37c9": "c6xxvf",
 	"6f55": "d15xxvf",
 }
@@ -382,7 +383,7 @@ func readDeviceConfiguration(pfDev string) string {
 	}
 
 	devCfgPath := filepath.Join(filepath.Dir(filepath.Join(pfDev, "../../")), "kernel/debug",
-		fmt.Sprintf("qat_4xxx_%s/dev_cfg", filepath.Base(pfDev)))
+		fmt.Sprintf("qat_%s_%s/dev_cfg", getCurrentDriver(pfDev), filepath.Base(pfDev)))
 
 	devCfg, err := ini.LoadSources(lOpts, devCfgPath)
 	if err != nil {
@@ -434,6 +435,7 @@ func getDeviceCapabilities(device string) (string, error) {
 		"4941": {}, // QAT Gen4 (4xxx) VF PCI ID
 		"4943": {}, // QAT Gen4 (401xx) VF PCI ID
 		"4945": {}, // QAT Gen4 (402xx) VF PCI ID
+		"4947": {}, // QAT Gen4 (420xx) VF PCI ID
 	}
 
 	if _, ok := devicesWithCapabilities[devID]; !ok {

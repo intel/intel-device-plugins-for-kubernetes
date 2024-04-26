@@ -43,7 +43,7 @@ The QAT plugin can take a number of command line arguments, summarised in the fo
 | Flag | Argument | Meaning |
 |:---- |:-------- |:------- |
 | -dpdk-driver | string | DPDK Device driver for configuring the QAT device (default: `vfio-pci`) |
-| -kernel-vf-drivers | string | Comma separated list of the QuickAssist VFs to search and use in the system. Devices supported: DH895xCC, C62x, C3xxx, 4xxx/401xx/402xx, C4xxx and D15xx (default: `c6xxvf,4xxxvf`) |
+| -kernel-vf-drivers | string | Comma separated list of the QuickAssist VFs to search and use in the system. Devices supported: DH895xCC, C62x, C3xxx, 4xxx/401xx/402xx, 420xx, C4xxx and D15xx (default: `c6xxvf,4xxxvf,420xxvf`) |
 | -max-num-devices | int | maximum number of QAT devices to be provided to the QuickAssist device plugin (default: `64`) |
 | -mode | string | Deprecated: plugin mode which can be either `dpdk` or `kernel` (default: `dpdk`).|
 | -allocation-policy | string | 2 possible values: balanced and packed. Balanced mode spreads allocated QAT VF resources balanced among QAT PF devices, and packed mode packs one QAT PF device full of QAT VF resources before allocating resources from the next QAT PF. (There is no default.) |
@@ -132,7 +132,7 @@ In addition to the default configuration, you can add device-specific configurat
 
 | Device | Possible Configuration | How To Customize | Options | Notes |
 |:-------|:-----------------------|:-----------------|:--------|:------|
-| 4xxx, 401xx,402xx | [cfg_services](https://github.com/torvalds/linux/blob/v6.6-rc5/Documentation/ABI/testing/sysfs-driver-qat) reports the configured services (crypto services or compression services) of the QAT device. | `ServicesEnabled=<value>` | compress:`dc`, crypto:`sym;asym`, <br>crypto+compress:`asym;dc`,<br>crypto+compress:`sym;dc` | Linux 6.0+ kernel is required. |
+| 4xxx, 401xx, 402xx, 420xx | [cfg_services](https://github.com/torvalds/linux/blob/v6.6-rc5/Documentation/ABI/testing/sysfs-driver-qat) reports the configured services (crypto services or compression services) of the QAT device. | `ServicesEnabled=<value>` | compress:`dc`, crypto:`sym;asym`, <br>crypto+compress:`asym;dc`,<br>crypto+compress:`sym;dc` | 4xxx/401xx/402xx: Linux 6.0+ kernel. 420xx: Linux 6.8+ kernel. |
 
 To create a provisioning `configMap`, run the following command before deploying initcontainer:
 
@@ -247,7 +247,7 @@ In order to utilise the QAT device plugin, QuickAssist SR-IOV virtual functions 
 You can verify this on your nodes by checking for the relevant PCI identifiers:
 
 ```bash
-for i in 0442 0443 18a1 37c9 6f55 19e3 4941 4943; do lspci -d 8086:$i; done
+for i in 0442 0443 18a1 37c9 6f55 19e3 4941 4943 4945 4947; do lspci -d 8086:$i; done
 ```
 
 [1]:https://www-ssl.intel.com/content/www/us/en/design/products-and-solutions/processors-and-chipsets/purley/intel-xeon-scalable-processors.html
