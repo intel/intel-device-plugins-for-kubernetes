@@ -27,6 +27,13 @@ jobs:
               - intel-idxd-config-initcontainer
               - accel-config-demo
               - intel-deviceplugin-operator
+          - name: e2e-qat-gnrd
+            targetjob: e2e-qat FOCUS="Mode:dpdk.*Resource:(cy|dc)" SKIP=App:crypto-perf
+            runner: simics-gnrd
+            images:
+              - intel-qat-plugin
+              - intel-qat-initcontainer
+              - openssl-qat-engine
           - name: e2e-qat
             targetjob: e2e-qat FOCUS=Resource:generic
             runner: qat
