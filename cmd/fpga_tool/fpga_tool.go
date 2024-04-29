@@ -159,6 +159,7 @@ func installBitstream(fname string, dryRun, force, quiet bool) (err error) {
 		return errors.Wrap(err, "can't create destination file")
 	}
 	defer dst.Close()
+
 	_, err = io.Copy(dst, src)
 
 	return err
@@ -170,6 +171,7 @@ func printBitstreamInfo(fname string, quiet bool) (err error) {
 		return
 	}
 	defer info.Close()
+
 	fmt.Printf("Bitstream file        : %q\n", fname)
 	fmt.Printf("Interface UUID        : %q\n", info.InterfaceUUID())
 	fmt.Printf("Accelerator Type UUID : %q\n", info.AcceleratorTypeUUID())

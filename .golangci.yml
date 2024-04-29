@@ -52,7 +52,7 @@ linters-settings:
   goconst:
     ignore-tests: true
   govet:
-    check-shadowing: true
+    shadow: true
     enable:
     - "fieldalignment"
   gocyclo:
@@ -65,3 +65,10 @@ issues:
     - path: _test\.go
       linters:
         - gocognit
+        - wsl
+    - path: test/e2e/
+      linters:
+        - wsl
+    - path: cmd/gpu_fakedev/
+      linters:
+        - wsl

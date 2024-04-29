@@ -193,6 +193,7 @@ func (xms *xpuManagerSidecar) GetTopologyFromXPUMMetrics(data []byte) (topologyI
 				value = *metric.Gauge.Value
 			} else if metric.Untyped != nil {
 				klog.V(5).Info("metric is of type untyped")
+
 				value = *metric.Untyped.Value
 			} else {
 				klog.Warningf("Unknown/unsupported metric type: %v", metric)

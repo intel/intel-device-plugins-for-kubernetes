@@ -118,6 +118,7 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		containers := ds.Spec.Template.Spec.InitContainers
 		if len(containers) != 1 || containers[0].Image != dp.Spec.InitImage {
 			setInitContainer(&ds.Spec.Template.Spec, dp.Spec)
+
 			updated = true
 		}
 	}

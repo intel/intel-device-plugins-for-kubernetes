@@ -839,6 +839,7 @@ func containerCards(pod *v1.Pod, gpuUsingContainerIndex int) []string {
 				klog.V(3).Infof("Cards for container nr %v in pod %v are %v", gpuUsingContainerIndex, getPodKey(pod), cards)
 				return cards
 			}
+
 			i++
 		}
 	}

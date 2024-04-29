@@ -167,6 +167,7 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		}
 	} else {
 		setInitContainer(&ds.Spec.Template.Spec, dp.Spec.InitImage)
+
 		updated = true
 	}
 
