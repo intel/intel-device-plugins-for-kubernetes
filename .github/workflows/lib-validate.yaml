@@ -61,8 +61,8 @@ jobs:
       - run: make BUILDTAGS=kerneldrv
       - run: make test BUILDTAGS=kerneldrv
       - run: make check-github-actions
-      - name: Codecov report
-        run: bash <(curl -s https://codecov.io/bash)
+      #- name: Codecov report
+      #  run: bash <(curl -s https://codecov.io/bash)
 
   envtest:
     name: Test APIs using envtest
