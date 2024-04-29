@@ -15,7 +15,6 @@ RUN wget -q https://git.dpdk.org/dpdk/snapshot/$DPDK_TARBALL \
     && echo "$DPDK_TARBALL_SHA256 $DPDK_TARBALL" | sha256sum -c - \
     && tar -xf $DPDK_TARBALL && rm $DPDK_TARBALL
 
-ARG SOVERSION=24
 RUN cd dpdk-* && meson setup \
     -Dplatform=generic \
     -Dcpu_instruction_set=westmere \
@@ -29,7 +28,7 @@ RUN cd dpdk-* && \
     install -D builddir/app/dpdk-test-compress-perf /install_root/usr/bin/dpdk-test-compress-perf && \
     install -d /install_root/usr/lib/x86_64-linux-gnu/ && \
     for r in log bus_pci eal kvargs hash security telemetry pci mbuf mempool ring net rcu ipsec cryptodev compressdev common_qat; do \
-       install installdir/lib/x86_64-linux-gnu/librte_${r}.so.${SOVERSION} /install_root/usr/lib/x86_64-linux-gnu/; \
+       install installdir/lib/x86_64-linux-gnu/librte_${r}.so* /install_root/usr/lib/x86_64-linux-gnu/; \
     done
 
 RUN mkdir -p /install_root/licenses/dpdk && \
