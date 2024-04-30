@@ -34,13 +34,6 @@ jobs:
               - intel-qat-plugin
               - intel-qat-initcontainer
               - openssl-qat-engine
-          - name: e2e-qat
-            targetjob: e2e-qat FOCUS=Resource:generic
-            runner: qat
-            images:
-              - intel-qat-plugin
-              - intel-qat-initcontainer
-              - crypto-perf
           - name: e2e-fpga
             runner: fpga
             images:
