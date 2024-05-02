@@ -81,6 +81,7 @@ spec:
                   - c3xxxvf
                   - d15xxvf
                   - 4xxxvf
+                  - 420xxvf
                   - c4xxxvf
                   type: string
                 type: array

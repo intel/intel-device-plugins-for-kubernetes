@@ -15,6 +15,7 @@ spec:
   kernelVfDrivers:
     - c6xxvf
     - 4xxxvf
+    - 420xxvf
   maxNumDevices: 1
   logLevel: 4
   nodeSelector:
