@@ -300,6 +300,7 @@ func indexDaemonSets(ctx context.Context, mgr ctrl.Manager, apiGVString, pluginK
 			// grab the DaemonSet object, extract the owner...
 			ds := rawObj.(*apps.DaemonSet)
 			owner := metav1.GetControllerOf(ds)
+
 			if owner == nil {
 				return nil
 			}
@@ -320,6 +321,7 @@ func indexPods(ctx context.Context, mgr ctrl.Manager, apiGVString, pluginKind, o
 			// grab the Pod object, extract the owner...
 			pod := rawObj.(*v1.Pod)
 			owner := metav1.GetControllerOf(pod)
+
 			if owner == nil {
 				return nil
 			}

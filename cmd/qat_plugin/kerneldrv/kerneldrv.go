@@ -104,6 +104,7 @@ func getDevTree(sysfs string, qatDevs []device, config map[string]section) (dpap
 				}
 				deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devs, nil, envs, nil)
 				devTree.AddDevice(devType, fmt.Sprintf("%s_%s_%d", sname, ep.id, i), deviceInfo)
+
 				uniqID++
 			}
 
@@ -216,6 +217,7 @@ func (dp *DevicePlugin) parseConfigs(devices []device) (map[string]section, erro
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse device config")
 		}
+
 		devNum++
 
 		for _, section := range config.Sections() {
