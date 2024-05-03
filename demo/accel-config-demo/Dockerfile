@@ -17,14 +17,14 @@ FROM debian:unstable-slim AS builder
 RUN apt-get update && apt-get install -y --no-install-recommends libaccel-config-dev \
     gcc g++ nasm make cmake autoconf automake libtool pkg-config git ca-certificates uuid-dev
 
-RUN cd / && git clone --recurse-submodules --branch v1.1.1 --depth 1 https://github.com/intel/DML.git && \
+RUN cd / && git clone --recurse-submodules --branch v1.1.2 --depth 1 https://github.com/intel/DML.git && \
     mkdir DML/build && cd DML/build && \
     cmake .. && \
     make install && \
     mv -v /usr/local/bin/tests /usr/local/bin/dml_tests && \
     mv -v /usr/local/bin/tests_mt /usr/local/bin/dml_tests_mt
 
-RUN cd / && git clone --recursive --depth 1 --branch v1.3.1 https://github.com/intel/qpl.git && \
+RUN cd / && git clone --recurse-submodules --depth 1 --branch v1.5.0 https://github.com/intel/qpl.git && \
     mkdir qpl/build && cd qpl/build && \
     cmake -DLOG_HW_INIT=ON .. && \
     make install
