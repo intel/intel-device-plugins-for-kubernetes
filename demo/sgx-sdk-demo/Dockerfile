@@ -23,7 +23,7 @@ RUN apt-get update && \
 # SGX SDK is installed in /opt/intel directory.
 WORKDIR /opt/intel
 
-ARG DCAP_VERSION=DCAP_1.19
+ARG DCAP_VERSION=DCAP_1.21
 
 RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main" | \
     tee -a /etc/apt/sources.list.d/intel-sgx.list \
@@ -37,7 +37,7 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://d
     libsgx-quote-ex-dev
 
 # Install SGX SDK
-ARG SGX_SDK_URL=https://download.01.org/intel-sgx/sgx-linux/2.22/distro/ubuntu22.04-server/sgx_linux_x64_sdk_2.22.100.3.bin
+ARG SGX_SDK_URL=https://download.01.org/intel-sgx/sgx-linux/2.24/distro/ubuntu22.04-server/sgx_linux_x64_sdk_2.24.100.3.bin
 RUN wget ${SGX_SDK_URL} \
  && export SGX_SDK_INSTALLER=$(basename $SGX_SDK_URL) \
  && chmod +x $SGX_SDK_INSTALLER \
@@ -49,7 +49,7 @@ RUN cd sgxsdk/SampleCode/SampleEnclave \
     && make \
     && cd -
 
-ARG DCAP_TARBALL_SHA256="ed96f583581be108f9370d7e97577664a704914a98f27a7e117a650651c13e56"
+ARG DCAP_TARBALL_SHA256="f0336fef8263b4c53664efb8486c021ca3d996817eb63b0671324a0acf706310"
 
 RUN wget -q https://github.com/intel/SGXDataCenterAttestationPrimitives/archive/$DCAP_VERSION.tar.gz && \
     echo "$DCAP_TARBALL_SHA256 $DCAP_VERSION.tar.gz" | sha256sum -c - && \
