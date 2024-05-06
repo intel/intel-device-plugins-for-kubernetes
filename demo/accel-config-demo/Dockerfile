@@ -31,7 +31,7 @@ RUN cd / && git clone --recurse-submodules --depth 1 --branch v1.5.0 https://git
 
 FROM debian:unstable-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends pciutils accel-config accel-config-test && rm -rf /var/lib/apt/lists/\*
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends pciutils accel-config accel-config-test kmod && rm -rf /var/lib/apt/lists/\*
 
 RUN sed -i -e '420,429d;480,489d' /usr/libexec/accel-config/test/iaa_user_test_runner.sh
 COPY --from=builder /usr/local /usr/local
