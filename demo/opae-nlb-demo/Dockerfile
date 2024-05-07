@@ -26,7 +26,7 @@ RUN cd /usr/src/opae/opae-sdk-${OPAE_RELEASE} && \
 
 FROM debian:unstable-slim
 
-RUN apt-get update && apt-get install --no-install-recommends -y libjson-c5
+RUN apt-get update && apt-get upgrade -y && apt-get install --no-install-recommends -y libjson-c5
 
 # Copy required nlb* utils and their dependencies to the final image
 COPY --from=builder /usr/src/opae/opae-sdk-*/build/bin/nlb* /usr/local/bin/
