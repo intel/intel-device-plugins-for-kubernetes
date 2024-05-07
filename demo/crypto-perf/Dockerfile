@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget build-esse
 ARG DPDK_TARBALL=dpdk-24.03.tar.xz
 ARG DPDK_TARBALL_SHA256="33ed973b3945af4f5923096ddca250b401dc80be3b5c6393b4e4fe43a1a6c2ad"
 
-RUN wget -q https://git.dpdk.org/dpdk/snapshot/$DPDK_TARBALL \
+RUN wget -q https://fast.dpdk.org/rel/$DPDK_TARBALL \
     && echo "$DPDK_TARBALL_SHA256 $DPDK_TARBALL" | sha256sum -c - \
     && tar -xf $DPDK_TARBALL && rm $DPDK_TARBALL
 
