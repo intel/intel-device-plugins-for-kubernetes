@@ -59,7 +59,7 @@ FROM ${FINAL_BASE}
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_dlb_device_plugin"]
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version='0.30.0'
 LABEL release='1'
 LABEL name='intel-dlb-plugin'
 LABEL summary='Intel® DLB device plugin for Kubernetes'

@@ -24,7 +24,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
-        image: intel/intel-gpu-plugin:devel
+        image: intel/intel-gpu-plugin:0.30.0
         imagePullPolicy: IfNotPresent
         securityContext:
           seLinuxOptions:

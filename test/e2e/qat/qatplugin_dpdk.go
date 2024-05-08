@@ -204,7 +204,7 @@ func runCpaSampleCode(ctx context.Context, f *framework.Framework, runTests int,
 			Containers: []v1.Container{
 				{
 					Name:            "openssl-qat-engine",
-					Image:           "intel/openssl-qat-engine:devel",
+					Image:           "intel/openssl-qat-engine:0.30.0",
 					ImagePullPolicy: "IfNotPresent",
 					Command:         []string{"cpa_sample_code", "runTests=" + strconv.Itoa(runTests), "signOfLife=1"},
 					SecurityContext: &v1.SecurityContext{
