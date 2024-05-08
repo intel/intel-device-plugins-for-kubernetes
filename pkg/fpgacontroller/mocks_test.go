@@ -103,7 +103,7 @@ func (m *mockManager) AddHealthzCheck(string, healthz.Checker) error {
 	return nil
 }
 
-func (m *mockManager) AddMetricsExtraHandler(string, http.Handler) error {
+func (m *mockManager) AddMetricsServerExtraHandler(string, http.Handler) error {
 	return nil
 }
 
