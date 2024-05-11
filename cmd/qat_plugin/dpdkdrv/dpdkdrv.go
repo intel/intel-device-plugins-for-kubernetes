@@ -662,7 +662,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 			fmt.Sprintf("%s%d", envVarPrefix, n): vfBdf,
 		}
 
-		devinfo := dpapi.NewDeviceInfo(healthiness, dp.getDpdkDeviceSpecs(dpdkDeviceName), dp.getDpdkMounts(dpdkDeviceName), envs, nil)
+		devinfo := dpapi.NewDeviceInfo(healthiness, dp.getDpdkDeviceSpecs(dpdkDeviceName), dp.getDpdkMounts(dpdkDeviceName), envs, nil, nil)
 
 		devTree.AddDevice(cap, vfBdf, devinfo)
 	}

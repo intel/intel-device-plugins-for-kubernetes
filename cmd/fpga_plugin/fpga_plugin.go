@@ -83,7 +83,7 @@ func getRegionDevelTree(devices []device) dpapi.DeviceTree {
 				Permissions:   "rw",
 			}
 
-			regionTree.AddDevice(devType, region.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil, nil))
+			regionTree.AddDevice(devType, region.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil, nil, nil))
 		}
 	}
 
@@ -112,7 +112,7 @@ func getRegionTree(devices []device) dpapi.DeviceTree {
 				}
 			}
 
-			regionTree.AddDevice(devType, region.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil, nil))
+			regionTree.AddDevice(devType, region.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil, nil, nil))
 		}
 	}
 
@@ -144,7 +144,7 @@ func getAfuTree(devices []device) dpapi.DeviceTree {
 						Permissions:   "rw",
 					},
 				}
-				afuTree.AddDevice(devType, afu.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil, nil))
+				afuTree.AddDevice(devType, afu.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil, nil, nil))
 			}
 		}
 	}
