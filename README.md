@@ -23,7 +23,7 @@ Table of Contents
     * [DLB device plugin](#dlb-device-plugin)
     * [IAA device plugin](#iaa-device-plugin)
 * [Device Plugins Operator](#device-plugins-operator)
-* [XeLink XPU-Manager sidecar](#xelink-xpu-manager-sidecar)
+* [XeLink XPU Manager sidecar](#xelink-xpu-manager-sidecar)
 * [Demos](#demos)
 * [Workload Authors](#workload-authors)
 * [Developers](#developers)
@@ -194,11 +194,11 @@ The [Device plugins operator README](cmd/operator/README.md) gives the installat
 
 The [Device plugins Operator for OpenShift](https://github.com/intel/intel-technology-enabling-for-openshift) gives the installation and usage details for the operator available on [Red Hat OpenShift Container Platform](https://catalog.redhat.com/software/operators/detail/61e9f2d7b9cdd99018fc5736).
 
-## XeLink XPU-Manager Sidecar
+## XeLink XPU Manager Sidecar
 
 To support interconnected GPUs in Kubernetes, XeLink sidecar is needed.
 
-The [XeLink XPU-Manager sidecar README](cmd/xpumanager_sidecar/README.md) gives information how the sidecar functions and how to use it.
+The [XeLink XPU Manager sidecar README](cmd/xpumanager_sidecar/README.md) gives information how the sidecar functions and how to use it.
 
 ## Demos
 
