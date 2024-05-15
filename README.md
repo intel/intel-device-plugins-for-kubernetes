@@ -8,8 +8,8 @@ This repository contains a framework for developing plugins for the Kubernetes
 [device plugins framework](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/),
 along with a number of device plugin implementations utilizing that framework.
 
-The [v0.29 release](https://github.com/intel/intel-device-plugins-for-kubernetes/releases/latest)
-is the latest feature release with its documentation available [here](https://intel.github.io/intel-device-plugins-for-kubernetes/0.29/).
+The [v0.30 release](https://github.com/intel/intel-device-plugins-for-kubernetes/releases/latest)
+is the latest feature release with its documentation available [here](https://intel.github.io/intel-device-plugins-for-kubernetes/0.30/).
 
 Table of Contents
 
@@ -23,7 +23,7 @@ Table of Contents
     * [DLB device plugin](#dlb-device-plugin)
     * [IAA device plugin](#iaa-device-plugin)
 * [Device Plugins Operator](#device-plugins-operator)
-* [XeLink XPU-Manager sidecar](#xelink-xpu-manager-sidecar)
+* [XeLink XPU Manager sidecar](#xelink-xpu-manager-sidecar)
 * [Demos](#demos)
 * [Workload Authors](#workload-authors)
 * [Developers](#developers)
@@ -194,11 +194,11 @@ The [Device plugins operator README](cmd/operator/README.md) gives the installat
 
 The [Device plugins Operator for OpenShift](https://github.com/intel/intel-technology-enabling-for-openshift) gives the installation and usage details for the operator available on [Red Hat OpenShift Container Platform](https://catalog.redhat.com/software/operators/detail/61e9f2d7b9cdd99018fc5736).
 
-## XeLink XPU-Manager Sidecar
+## XeLink XPU Manager Sidecar
 
 To support interconnected GPUs in Kubernetes, XeLink sidecar is needed.
 
-The [XeLink XPU-Manager sidecar README](cmd/xpumanager_sidecar/README.md) gives information how the sidecar functions and how to use it.
+The [XeLink XPU Manager sidecar README](cmd/xpumanager_sidecar/README.md) gives information how the sidecar functions and how to use it.
 
 ## Demos
 
@@ -252,9 +252,10 @@ matching Kubernetes versions are listed below:
 
 | Branch            | Kubernetes branch/version      | Status      |
 |:------------------|:-------------------------------|:------------|
+| release-0.30      | Kubernetes 1.30 branch v1.30.x | supported   |
 | release-0.29      | Kubernetes 1.29 branch v1.29.x | supported   |
 | release-0.28      | Kubernetes 1.28 branch v1.28.x | supported   |
-| release-0.27      | Kubernetes 1.27 branch v1.27.x | supported   |
+| release-0.27      | Kubernetes 1.27 branch v1.27.x | unsupported |
 | release-0.26      | Kubernetes 1.26 branch v1.26.x | unsupported |
 | release-0.25      | Kubernetes 1.25 branch v1.25.x | unsupported |
 | release-0.24      | Kubernetes 1.24 branch v1.24.x | unsupported |

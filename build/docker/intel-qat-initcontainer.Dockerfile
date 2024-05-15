@@ -57,7 +57,7 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
 ###
 FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version='0.30.0'
 LABEL release='1'
 LABEL name='intel-qat-initcontainer'
 LABEL summary='Intel® QAT initcontainer for Kubernetes'

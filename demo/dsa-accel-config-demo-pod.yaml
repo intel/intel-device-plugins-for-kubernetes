@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: dsa-accel-config-demo
-    image: intel/accel-config-demo:devel
+    image: intel/accel-config-demo:0.30.0
     imagePullPolicy: IfNotPresent
     workingDir: "/usr/libexec/accel-config/test/"
     command:
