@@ -1,0 +1,2 @@
+resources:
+- crypto-perf-dpdk-pod-requesting-qat-cy.yaml

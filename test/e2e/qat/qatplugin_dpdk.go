@@ -36,10 +36,8 @@ import (
 
 const (
 	qatPluginKustomizationYaml = "deployments/qat_plugin/overlays/e2e/kustomization.yaml"
-	compressTestYaml           = "deployments/qat_dpdk_app/test-compress1/kustomization.yaml"
-	cryptoTestYaml             = "deployments/qat_dpdk_app/test-crypto1/kustomization.yaml"
-	cryptoTestGen4Yaml         = "deployments/qat_dpdk_app/test-crypto1-gen4/kustomization.yaml"
-	demoPodContainerName       = "crypto-perf"
+	cryptoTestYaml             = "deployments/qat_dpdk_app/crypto-perf/crypto-perf-dpdk-pod-requesting-qat-cy.yaml"
+	compressTestYaml           = "deployments/qat_dpdk_app/compress-perf/compress-perf-dpdk-pod-requesting-qat-dc.yaml"
 )
 
 const (
@@ -66,19 +64,14 @@ func describeQatDpdkPlugin() {
 		framework.Failf("unable to locate %q: %v", qatPluginKustomizationYaml, errFailedToLocateRepoFile)
 	}
 
-	compressTestYamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(compressTestYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", compressTestYaml, errFailedToLocateRepoFile)
-	}
-
 	cryptoTestYamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(cryptoTestYaml)
 	if errFailedToLocateRepoFile != nil {
 		framework.Failf("unable to locate %q: %v", cryptoTestYaml, errFailedToLocateRepoFile)
 	}
 
-	cryptoTestGen4YamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(cryptoTestGen4Yaml)
+	compressTestYamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(compressTestYaml)
 	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", cryptoTestGen4Yaml, errFailedToLocateRepoFile)
+		framework.Failf("unable to locate %q: %v", compressTestYaml, errFailedToLocateRepoFile)
 	}
 
 	var dpPodName string
@@ -134,11 +127,11 @@ func describeQatDpdkPlugin() {
 
 		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources [App:crypto-perf]", func(ctx context.Context) {
 			ginkgo.By("submitting a crypto pod requesting QAT resources")
-			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestGen4YamlPath))
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
 			ginkgo.By("waiting the crypto pod to finish successfully")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-crypto-perf-tc1-gen4", f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-crypto-perf-tc1-gen4", "crypto-perf"))
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-crypto-perf", f.Namespace.Name, 300*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-crypto-perf", "crypto-perf"))
 		})
 
 		ginkgo.When("there is no app to run [App:noapp]", func() {
@@ -159,35 +152,13 @@ func describeQatDpdkPlugin() {
 			runCpaSampleCode(ctx, f, compression, resourceName)
 		})
 
-		ginkgo.When("there is no app to run [App:noapp]", func() {
-			ginkgo.It("does nothing", func() {})
-		})
-	})
-
-	ginkgo.Context("When QAT resources are available [Resource:generic]", func() {
-		ginkgo.BeforeEach(func() {
-			ginkgo.By("setting resourceName for generic resources")
-			resourceName = "qat.intel.com/generic"
-		})
-
-		ginkgo.It("deploys a crypto pod requesting QAT resources [App:crypto-perf]", func(ctx context.Context) {
-			ginkgo.By("submitting a crypto pod requesting QAT resources")
-			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
-
-			ginkgo.By("waiting the crypto pod to finish successfully")
-			demoPodName := "qat-dpdk-test-crypto-perf-tc1"
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, demoPodName, f.Namespace.Name, 60*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, demoPodName, demoPodContainerName))
-		})
-
-		ginkgo.It("deploys a compress pod requesting QAT resources [App:compress-perf]", func(ctx context.Context) {
+		ginkgo.It("deploys a compress pod (dpdk compress-perf) requesting QAT resources [App:compress-perf]", func(ctx context.Context) {
 			ginkgo.By("submitting a compress pod requesting QAT resources")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
 			ginkgo.By("waiting the compress pod to finish successfully")
-			demoPodName := "qat-dpdk-test-compress-perf-tc1"
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, demoPodName, f.Namespace.Name, 60*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, demoPodName, demoPodContainerName))
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-compress-perf", f.Namespace.Name, 300*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-compress-perf", "compress-perf"))
 		})
 
 		ginkgo.When("there is no app to run [App:noapp]", func() {

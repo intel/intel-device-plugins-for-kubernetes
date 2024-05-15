@@ -1,14 +1,17 @@
 kind: Pod
 apiVersion: v1
 metadata:
-  name: qat-dpdk
+  name: qat-dpdk-test-crypto-perf
 spec:
   containers:
   - name: crypto-perf
     image: intel/crypto-perf:devel
     imagePullPolicy: IfNotPresent
-    command: [ "/bin/bash", "-c", "--" ]
-    args: [ "while true; do sleep 300000; done;" ]
+    env:
+    - name: TESTCMD
+      value: "crypto"
+    - name: PTEST
+      value: "--ptest throughput --devtype crypto_qat --optype cipher-only --cipher-algo aes-cbc --cipher-op encrypt --cipher-key-sz 16 --total-ops 10000000 --burst-sz 32 --buffer-sz 64"
     volumeMounts:
     - mountPath: /dev/hugepages
       name: hugepage

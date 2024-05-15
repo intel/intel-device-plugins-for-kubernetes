@@ -1,5 +1,0 @@
-[
-  {"op": "remove", "path": "/spec/containers/0/args"},
-  {"op": "replace", "path": "/spec/containers/0/command", "value": ["/usr/bin/run-dpdk-test"]},
-  {"op": "add", "path": "/spec/containers/0/env", "value": [{"name": "TESTCMD", "value": "dummy"}, {"name": "PTEST", "value": "dummy"}]}
-]

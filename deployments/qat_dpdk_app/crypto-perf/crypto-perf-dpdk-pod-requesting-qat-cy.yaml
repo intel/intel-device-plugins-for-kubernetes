@@ -1,0 +1,44 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: qat-dpdk-test-crypto-perf
+spec:
+  containers:
+  - name: crypto-perf
+    image: intel/crypto-perf:devel
+    imagePullPolicy: IfNotPresent
+    env:
+    - name: TESTCMD
+      value: "crypto"
+    - name: PTEST
+      value: "--ptest throughput --devtype crypto_qat --optype cipher-only --cipher-algo aes-cbc --cipher-op encrypt --cipher-key-sz 16 --total-ops 10000000 --burst-sz 32 --buffer-sz 64"
+    volumeMounts:
+    - mountPath: /dev/hugepages
+      name: hugepage
+    - mountPath: /var/run/dpdk
+      name: dpdk-runtime
+    resources:
+      requests:
+        cpu: "3"
+        memory: "128Mi"
+        qat.intel.com/cy: '4'
+        hugepages-2Mi: "128Mi"
+      limits:
+        cpu: "3"
+        memory: "128Mi"
+        qat.intel.com/cy: '4'
+        hugepages-2Mi: "128Mi"
+    securityContext:
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        add:
+          ["IPC_LOCK"]
+  restartPolicy: Never
+  volumes:
+  - name: dpdk-runtime
+    emptyDir:
+      medium: Memory
+  - name: hugepage
+    emptyDir:
+      medium: HugePages

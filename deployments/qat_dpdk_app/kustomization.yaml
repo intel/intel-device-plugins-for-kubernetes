@@ -1,2 +1,3 @@
 resources:
-  - base
+  - compress-perf
+  - crypto-perf
