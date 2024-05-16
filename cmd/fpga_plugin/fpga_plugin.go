@@ -24,6 +24,7 @@ import (
 
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
+	cdispec "tags.cncf.io/container-device-interface/specs-go"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
@@ -50,6 +51,10 @@ const (
 
 	// Period of device scans.
 	scanPeriod = 5 * time.Second
+
+	// CDI hook attributes.
+	HookName = "prestart"
+	HookPath = "/opt/intel/fpga-sw/intel-fpga-crihook"
 )
 
 type newPortFunc func(fname string) (fpga.Port, error)
@@ -112,7 +117,14 @@ func getRegionTree(devices []device) dpapi.DeviceTree {
 				}
 			}
 
-			regionTree.AddDevice(devType, region.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil, nil, nil))
+			hooks := []*cdispec.Hook{
+				{
+					HookName: HookName,
+					Path:     HookPath,
+				},
+			}
+
+			regionTree.AddDevice(devType, region.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil, nil, hooks))
 		}
 	}
 
