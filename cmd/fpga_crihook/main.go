@@ -32,9 +32,6 @@ const (
 	configJSON             = "config.json"
 	fpgaRegionEnvPrefix    = "FPGA_REGION_"
 	fpgaAfuEnvPrefix       = "FPGA_AFU_"
-
-	annotationName  = "com.intel.fpga.mode"
-	annotationValue = "fpga.intel.com/region"
 )
 
 // Stdin defines structure for standard JSONed input of the OCI platform hook.
@@ -218,16 +215,6 @@ func getStdin(reader io.Reader) (*Stdin, error) {
 	err := decodeJSONStream(reader, &stdinJ)
 	if err != nil {
 		return nil, err
-	}
-
-	// Check if device plugin annotation is set
-	if stdinJ.Annotations.ComIntelFpgaMode == "" {
-		return nil, errors.Errorf("annotation %s is not set", annotationName)
-	}
-
-	// Check if device plugin annotation is set
-	if stdinJ.Annotations.ComIntelFpgaMode != annotationValue {
-		return nil, errors.Errorf("annotation %s has incorrect value '%s'", annotationName, stdinJ.Annotations.ComIntelFpgaMode)
 	}
 
 	if stdinJ.Bundle == "" {
