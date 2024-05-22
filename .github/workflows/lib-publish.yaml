@@ -39,8 +39,8 @@ jobs:
           - intel-xpumanager-sidecar
 
           # # Demo images
-          #- crypto-perf
-          #- opae-nlb-demo
+          - crypto-perf
+          - opae-nlb-demo
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
