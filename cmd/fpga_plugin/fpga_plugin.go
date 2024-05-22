@@ -53,7 +53,7 @@ const (
 	scanPeriod = 5 * time.Second
 
 	// CDI hook attributes.
-	HookName = "prestart"
+	HookName = "createRuntime"
 	HookPath = "/opt/intel/fpga-sw/intel-fpga-crihook"
 )
 

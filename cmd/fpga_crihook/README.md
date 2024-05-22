@@ -1,4 +1,4 @@
-# Intel FPGA CDI prestart hook for Kubernetes
+# Intel FPGA OCI createRuntime hook for Kubernetes
 
 Table of Contents
 
@@ -11,7 +11,7 @@ Table of Contents
 The FPGA CDI hook is one of the components used to add support for Intel FPGA
 devices to Kubernetes.
 
-The FPGA prestart hook is passed by the [FPGA device plugin](../fpga_plugin/README.md) as
+The FPGA OCI createRuntime hook is passed by the [FPGA device plugin](../fpga_plugin/README.md) as
 a CDI device attribute to the Kubelet and then to the CRI runtime.
 It performs discovery of the requested FPGA function bitstream and then programs FPGA devices
 based on the environment variables in the workload description.

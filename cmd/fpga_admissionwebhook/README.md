@@ -23,7 +23,7 @@ devices to Kubernetes.
 
 The FPGA admission controller webhook is responsible for performing mapping from user-friendly
 function IDs to the Interface ID and Bitstream ID that are required for FPGA programming by
-the [FPGA CDI prestart hook](../fpga_crihook/README.md).
+the [FPGA OCI createRuntime hook](../fpga_crihook/README.md).
 
 Mappings are stored in namespaced custom resource definition (CRD) objects, therefore the admission
 controller also performs access control, determining which bitstream can be used for which namespace.
@@ -31,7 +31,7 @@ More details can be found in the [Mappings](#mappings) section.
 
 The admission controller also keeps the user from bypassing namespaced mapping restrictions,
 by denying admission of any pods that are trying to use internal knowledge of InterfaceID or
-Bitstream ID environment variables used by the prestart hook.
+Bitstream ID environment variables used by the createRuntime hook.
 
 ## Dependencies
 
@@ -39,7 +39,7 @@ This component is one of a set of components that work together. You may also wa
 install the following:
 
 -   [FPGA device plugin](../fpga_plugin/README.md)
--   [FPGA CDI prestart hook](../fpga_crihook/README.md)
+-   [FPGA OCI createRuntime hook](../fpga_crihook/README.md)
 
 All components have the same basic dependencies as the
 [generic plugin framework dependencies](../../README.md#about)
@@ -129,7 +129,7 @@ The same mapping, but with its mode field set to `region`, would translate
 and the corresponding AF IDs are set in environment variables for the container.
 Though in this case the cluster administrator would probably want to rename
 the mapping `arria10.dcp1.2-nlb0-preprogrammed` to something like `arria10.dcp1.2-nlb0-orchestrated`
-to reflect its mode. The [FPGA CDI prestart hook](../fpga_crihook/README.md) then loads the requested
+to reflect its mode. The [FPGA OCI createRuntime hook](../fpga_crihook/README.md) then loads the requested
 bitstream to a region before the container is started.
 
 Mappings of resource names are configured with objects of `AcceleratorFunction` and
@@ -183,4 +183,4 @@ and they are applicable to pods created in the corresponding namespaces.
 
 ## Next steps
 
-Continue with [FPGA CDI prestart hook](../fpga_crihook/README.md).
+Continue with [FPGA OCI createRuntime hook](../fpga_crihook/README.md).

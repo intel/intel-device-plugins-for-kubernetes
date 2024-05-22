@@ -66,7 +66,7 @@ The FPGA plugin comes as three parts.
 
 - the [device plugin](#device-plugin)
 - the [admission controller](#admission-controller)
-- the [CDI prestart hook](#CDI-prestart-hook)
+- the [OCI createRuntime hook](#OCI-createRuntime-hook)
 
 Refer to each individual sub-components documentation for more details.
 Brief overviews of the sub-components are below.
@@ -88,9 +88,9 @@ is responsible for performing mapping from user-friendly function IDs to the
 Interface ID and Bitstream ID that are required for FPGA programming. It also
 implements access control by namespacing FPGA configuration information.
 
-#### CDI Prestart Hook
+#### OCI createRuntime Hook
 
-The [FPGA CDI prestart hook](cmd/fpga_crihook/README.md) performs discovery
+The [FPGA OCI createRuntime hook](cmd/fpga_crihook/README.md) performs discovery
 of the requested FPGA function bitstream and programs FPGA devices based on the
 environment variables in the workload description.
 

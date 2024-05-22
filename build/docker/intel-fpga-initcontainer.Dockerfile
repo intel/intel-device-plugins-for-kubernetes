@@ -87,6 +87,6 @@ LABEL version='devel'
 LABEL release='1'
 LABEL name='intel-fpga-initcontainer'
 LABEL summary='Intel® FPGA programming CDI hook for Kubernetes'
-LABEL description='The FPGA prestart CDI hook performs discovery of the requested FPGA function bitstream and programs FPGA devices based on the environment variables in the workload description'
+LABEL description='The FPGA OCI createRuntime hook performs discovery of the requested FPGA function bitstream and programs FPGA devices based on the environment variables in the workload description'
 COPY --from=builder /install_root /
 ENTRYPOINT [ "/usr/bin/sh", "-c", "cp -a /usr/local/fpga-sw/* /opt/intel/fpga-sw/" ]

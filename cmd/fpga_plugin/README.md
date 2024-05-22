@@ -47,7 +47,7 @@ Kubernetes:
     which can be used to dynamically convert logical resource names in pod specifications into actual FPGA
     resource names, as advertised by the device plugin.
 
-    The webhook can also set environment variables to instruct the CDI prestart hook to program the FPGA
+    The webhook can also set environment variables to instruct the OCI createRuntime hook to program the FPGA
     before launching the container.
 
     > **NOTE:** Installation of the [FPGA admission controller webhook](../fpga_admissionwebhook/README.md) can be skipped if the
@@ -55,10 +55,12 @@ Kubernetes:
     > since it integrates the controller's functionality.
     > However, [the mappings](../fpga_admissionwebhook/README.md#mappings-deployment) still must be deployed."
 
--   [FPGA CDI prestart hook](../fpga_crihook/README.md)
+-   [FPGA OCI createRuntime hook](../fpga_crihook/README.md)
 
-    A [CDI](https://github.com/cncf-tags/container-device-interface) prestart hook that, upon instruction from the FPGA admission
-    controller, programs the FPGA before the container is launched.
+    An [OCI](https://github.com/opencontainers/runtime-spec/blob/main/config.md#createRuntime-hooks) createRuntime hook that,
+    upon instruction from the FPGA admission controller, programs the FPGA before the container is launched.
+    The FPGA plugin uses [Container Device Interface](https://github.com/cncf-tags/container-device-interface) to pass the hook
+    to the Kubelet.
 
 The repository also contains an [FPGA helper tool](../fpga_tool/README.md) that may be useful during
 development, initial deployment and debugging.
@@ -102,13 +104,13 @@ major components:
 
 -   [FPGA device plugin](README.md) (this component)
 -   [FPGA admission controller webhook](../fpga_admissionwebhook/README.md)
--   [FPGA CDI prestart hook](../fpga_crihook/README.md)
+-   [FPGA OCI createRuntime hook](../fpga_crihook/README.md)
 
 The CDI hook is only *required* if `region` mode is being used, but is installed by default by the
 [FPGA plugin DaemonSet YAML](/deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml), and is benign
 in `af` mode.
 
-If using the `af` mode, and therefore *not* using the CDI prestart hook, any runtime can be used
+If using the `af` mode, and therefore *not* using the OCI createRuntime hook, any runtime can be used
 (that is, the CDI is not supported by all runtimes).
 
 The FPGA device plugin requires a Linux Kernel FPGA driver to be installed and enabled to
@@ -146,7 +148,7 @@ The following images are available on the Docker hub:
 
 - [The FPGA plugin](https://hub.docker.com/r/intel/intel-fpga-plugin)
 - [The FPGA admisson webhook](https://hub.docker.com/r/intel/intel-fpga-admissionwebhook)
-- [The FPGA CDI prestart hook (in the `initcontainer` image)](https://hub.docker.com/r/intel/intel-fpga-initcontainer)
+- [The FPGA OCI createRuntime hook (in the `initcontainer` image)](https://hub.docker.com/r/intel/intel-fpga-initcontainer)
 
 Depending on the FPGA mode, run either
 ```bash
@@ -206,7 +208,7 @@ $ kubectl annotate node <node_name> 'fpga.intel.com/device-plugin-mode=af'
 And restart the pods on the nodes.
 
 > **Note:** The FPGA plugin [DaemonSet YAML](/deployments/fpga_plugin/base/intel-fpga-plugin-daemonset.yaml)
-> also deploys the [FPGA CDI prestart hook](../fpga_crihook/README.md) `initcontainer` image, but it will be
+> also deploys the [FPGA OCI createRuntime hook](../fpga_crihook/README.md) `initcontainer` image, but it will be
 > benign (un-used) when running the FPGA plugin in `af` mode.
 
 #### Verify Plugin Registration
@@ -222,6 +224,6 @@ fpga.intel.com/region-ce48969398f05f33946d560708be108a:  1
 ```
 
 > **Note:** The FPGA plugin [DaemonSet YAML](/deployments/fpga_plugin/fpga_plugin.yaml)
-> also deploys the [FPGA CDI prestart hook](../fpga_crihook/README.md) `initcontainer` image as well. You may
+> also deploys the [FPGA OCI createRuntime hook](../fpga_crihook/README.md) `initcontainer` image as well. You may
 > also wish to build that image locally before deploying the FPGA plugin to avoid deploying
 > the Docker hub default image.
