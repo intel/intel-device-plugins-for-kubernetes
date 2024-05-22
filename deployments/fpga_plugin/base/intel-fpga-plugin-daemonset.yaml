@@ -24,8 +24,6 @@ spec:
         volumeMounts:
         - mountPath: /opt/intel/fpga-sw
           name: intel-fpga-sw
-        - mountPath: /etc/containers/oci/hooks.d
-          name: oci-hooks-config
       containers:
       - name: intel-fpga-plugin
         env:
@@ -50,6 +48,8 @@ spec:
           readOnly: true
         - name: kubeletsockets
           mountPath: /var/lib/kubelet/device-plugins
+        - name: cdidir
+          mountPath: /var/run/cdi
       volumes:
       - name: devfs
         hostPath:
@@ -64,9 +64,9 @@ spec:
         hostPath:
           path: /opt/intel/fpga-sw
           type: DirectoryOrCreate
-      - name: oci-hooks-config
+      - name: cdidir
         hostPath:
-          path: /etc/containers/oci/hooks.d
+          path: /var/run/cdi
           type: DirectoryOrCreate
       nodeSelector:
         kubernetes.io/arch: amd64

@@ -99,6 +99,10 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 									MountPath: "/var/lib/kubelet/device-plugins",
 									Name:      "kubeletsockets",
 								},
+								{
+									MountPath: "/var/run/cdi",
+									Name:      "cdidir",
+								},
 							},
 						},
 					},
@@ -115,10 +119,6 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 								{
 									MountPath: "/opt/intel/fpga-sw",
 									Name:      "intel-fpga-sw",
-								},
-								{
-									MountPath: "/etc/containers/oci/hooks.d",
-									Name:      "oci-hooks-config",
 								},
 							},
 						},
@@ -159,10 +159,10 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							},
 						},
 						{
-							Name: "oci-hooks-config",
+							Name: "cdidir",
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
-									Path: "/etc/containers/oci/hooks.d",
+									Path: "/var/run/cdi",
 									Type: &directoryOrCreate,
 								},
 							},
