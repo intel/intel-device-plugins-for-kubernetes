@@ -28,6 +28,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"k8s.io/klog/v2"
@@ -371,15 +372,9 @@ func watchFile(file string) error {
 }
 
 func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string) error {
-	ctx := context.Background()
-
-	conn, err := grpc.DialContext(ctx, kubeletSocket,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
-			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
-		}))
+	conn, err := grpc.NewClient(filepath.Join("unix://", kubeletSocket), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return errors.Wrap(err, "Cannot connect to kubelet service")
+		return errors.Wrap(err, "Cannot create a gRPC client")
 	}
 
 	defer conn.Close()
@@ -392,7 +387,7 @@ func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceNa
 		Options:      srv.getDevicePluginOptions(),
 	}
 
-	_, err = client.Register(ctx, reqt)
+	_, err = client.Register(context.Background(), reqt)
 	if err != nil {
 		return errors.Wrap(err, "Cannot register to kubelet service")
 	}
@@ -403,20 +398,33 @@ func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceNa
 // waitForServer checks if grpc server is alive
 // by making grpc blocking connection to the server socket.
 func waitForServer(socket string, timeout time.Duration) error {
+	conn, err := grpc.NewClient(filepath.Join("unix://", socket), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return errors.Wrap(err, "Cannot create a gRPC client")
+	}
+
+	defer conn.Close()
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, socket,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
-			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
-		}),
-	)
-	if conn != nil {
-		_ = conn.Close()
-	}
+	// A blocking dial blocks until the clientConn is ready. Based
+	// on grpc-go's DialContext() that moved to use NewClient() but
+	// marked DialContext() deprecated.
+	for {
+		state := conn.GetState()
+		if state == connectivity.Idle {
+			conn.Connect()
+		}
 
-	return errors.Wrapf(err, "Failed dial context at %s", socket)
+		if state == connectivity.Ready {
+			return nil
+		}
+
+		if !conn.WaitForStateChange(ctx, state) {
+			// ctx got timeout or canceled.
+			return errors.Wrapf(ctx.Err(), "Failed dial context at %s", socket)
+		}
+	}
 }

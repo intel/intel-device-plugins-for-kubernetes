@@ -21,6 +21,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"sync"
 	"testing"
@@ -111,7 +112,7 @@ func (k *kubeletStub) start() error {
 	return waitForServer(k.socket, 10*time.Second)
 }
 
-func TestRegisterWithKublet(t *testing.T) {
+func TestRegisterWithKubelet(t *testing.T) {
 	pluginSocket := path.Join(devicePluginPath, pluginEndpoint)
 
 	srv := newTestServer()
@@ -180,11 +181,8 @@ func TestSetupAndServe(t *testing.T) {
 
 	ctx := context.Background()
 
-	conn, err := grpc.DialContext(ctx, pluginSocket,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
-			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
-		}))
+	conn, err := grpc.NewClient(filepath.Join("unix://", pluginSocket),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to get connection: %+v", err)
 	}
@@ -231,12 +229,8 @@ func TestSetupAndServe(t *testing.T) {
 		time.Sleep(1 * time.Second)
 	}
 
-	conn, err = grpc.DialContext(ctx, pluginSocket,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
-			return (&net.Dialer{}).DialContext(ctx, "unix", addr)
-		}))
-
+	conn, err = grpc.NewClient(filepath.Join("unix://", pluginSocket),
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("Failed to get connection: %+v", err)
 	}
