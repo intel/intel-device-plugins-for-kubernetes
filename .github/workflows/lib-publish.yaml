@@ -42,8 +42,8 @@ jobs:
           - crypto-perf
           - opae-nlb-demo
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+      - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5
         with:
           go-version-file: go.mod
           check-latest: true
@@ -54,7 +54,7 @@ jobs:
         run: |
           REG=intel/ make ${IMAGE_NAME} BUILDER=docker
       - name: Trivy scan for image
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@fd25fed6972e341ff0007ddb61f77e88103953c2 # 0.21.0
         with:
           scan-type: image
           image-ref: intel/${{ matrix.image }}:${{ inputs.image_tag }}
@@ -64,7 +64,7 @@ jobs:
         if: ${{ !contains(fromJson(env.no_base_check), matrix.image) }}
         run: IMG=intel/${{ matrix.image }}:${{ inputs.image_tag }} make test-image-base-layer BUILDER=docker
       - name: Login
-        uses: docker/login-action@v3
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}

@@ -18,19 +18,18 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - uses: actions/setup-go@v5
+      uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+    - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5
       with:
         go-version-file: go.mod
         check-latest: true
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@71ace48453080e924b22589f0c397bedde464d78 # v3
       with:
         languages: 'go'
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@71ace48453080e924b22589f0c397bedde464d78 # v3
       with:
         category: "/language:go"
