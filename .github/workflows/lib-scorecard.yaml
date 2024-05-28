@@ -20,7 +20,7 @@ jobs:
         with:
           persist-credentials: false
       - name: "Analyze project"
-        uses: ossf/scorecard-action@e4c423540e964e15ccadc56558705ba15136265c # v2.3.3
+        uses: ossf/scorecard-action@dc50aa9510b46c811795eb24b2f1ba02a914e534 # v2.3.3
         with:
           results_file: results.sarif
           results_format: sarif
