@@ -19,6 +19,7 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/topology"
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
+	cdispec "tags.cncf.io/container-device-interface/specs-go"
 )
 
 // DeviceInfo contains information about device maintained by Device Plugin.
@@ -29,6 +30,9 @@ type DeviceInfo struct {
 	topology    *pluginapi.TopologyInfo
 	state       string
 	nodes       []pluginapi.DeviceSpec
+	// Hooks can be passed only through CDI
+	// https://github.com/kubernetes/enhancements/tree/master/keps/sig-node/4009-add-cdi-devices-to-device-plugin-api
+	hooks []*cdispec.Hook
 }
 
 // UseDefaultMethodError allows the plugin to request running the default
@@ -45,13 +49,14 @@ func init() {
 }
 
 // NewDeviceInfo makes DeviceInfo struct and adds topology information to it.
-func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string, annotations map[string]string) DeviceInfo {
+func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs, annotations map[string]string, hooks []*cdispec.Hook) DeviceInfo {
 	deviceInfo := DeviceInfo{
 		state:       state,
 		nodes:       nodes,
 		mounts:      mounts,
 		envs:        envs,
 		annotations: annotations,
+		hooks:       hooks,
 	}
 
 	devPaths := []string{}

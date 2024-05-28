@@ -66,13 +66,6 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
     --save_path /install_root/licenses/$CMD/go-licenses ; \
     else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi
 ###
-ARG SRC_DIR=/usr/local/fpga-sw
-ARG DST_DIR=/opt/intel/fpga-sw
-RUN echo "{\n\
-    \"hook\" : \"$DST_DIR/$CRI_HOOK\",\n\
-    \"stage\" : [ \"prestart\" ],\n\
-    \"annotation\": [ \"fpga.intel.com/region\" ]\n\
-}\n">>/install_root/$SRC_DIR/$CRI_HOOK.json
 ARG TOYBOX_VERSION="0.8.11"
 ARG TOYBOX_SHA256="83a3a88cbe1fa30f099c2f58295baef4637aaf988085aaea56e03aa29168175d"
 ARG ROOT=/install_root
@@ -93,7 +86,7 @@ LABEL vendor='Intel®'
 LABEL version='devel'
 LABEL release='1'
 LABEL name='intel-fpga-initcontainer'
-LABEL summary='Intel® FPGA programming CRI hook for Kubernetes'
-LABEL description='The FPGA prestart CRI-O hook performs discovery of the requested FPGA function bitstream and programs FPGA devices based on the environment variables in the workload description'
+LABEL summary='Intel® FPGA programming CDI hook for Kubernetes'
+LABEL description='The FPGA OCI createRuntime hook performs discovery of the requested FPGA function bitstream and programs FPGA devices based on the environment variables in the workload description'
 COPY --from=builder /install_root /
-ENTRYPOINT [ "/usr/bin/sh", "-c", "cp -a /usr/local/fpga-sw/* /opt/intel/fpga-sw/ && ln -sf /opt/intel/fpga-sw/intel-fpga-crihook.json /etc/containers/oci/hooks.d/" ]
+ENTRYPOINT [ "/usr/bin/sh", "-c", "cp -a /usr/local/fpga-sw/* /opt/intel/fpga-sw/" ]

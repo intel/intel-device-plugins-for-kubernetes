@@ -73,16 +73,6 @@ func TestGetStdin(t *testing.T) {
 			stdinJSON:   "stdin-incorrect-JSON.json",
 			expectedErr: true,
 		},
-		{
-			name:        "no annotations",
-			stdinJSON:   "stdin-no-annotations.json",
-			expectedErr: true,
-		},
-		{
-			name:        "annotation is not set",
-			stdinJSON:   "stdin-incorrect-intel-annotation.json",
-			expectedErr: true,
-		},
 	}
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -200,7 +200,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 		for i := 0; i < amount; i++ {
 			deviceType := fmt.Sprintf("wq-%s-%s", wqType, wqMode)
 			deviceID := fmt.Sprintf("%s-%s-%d", deviceType, wqName, i)
-			devTree.AddDevice(deviceType, deviceID, dpapi.NewDeviceInfo(pluginapi.Healthy, devNodes, nil, nil, nil))
+			devTree.AddDevice(deviceType, deviceID, dpapi.NewDeviceInfo(pluginapi.Healthy, devNodes, nil, nil, nil, nil))
 		}
 	}
 

@@ -23,6 +23,7 @@ import (
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpga"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
+	cdispec "tags.cncf.io/container-device-interface/specs-go"
 )
 
 func TestNewDevicePluginDFL(t *testing.T) {
@@ -139,7 +140,7 @@ func TestGetRegionDevelTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil))
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -158,7 +159,7 @@ func TestGetRegionDevelTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil))
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -177,7 +178,7 @@ func TestGetRegionDevelTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "region3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil))
+	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "region3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil, nil))
 
 	result := getRegionDevelTree(getDevicesDFL())
 	if !reflect.DeepEqual(result, expected) {
@@ -187,6 +188,12 @@ func TestGetRegionDevelTreeDFL(t *testing.T) {
 
 func TestGetRegionTreeDFL(t *testing.T) {
 	expected := dpapi.NewDeviceTree()
+	hooks := []*cdispec.Hook{
+		{
+			HookName: HookName,
+			Path:     HookPath,
+		},
+	}
 	nodes := []pluginapi.DeviceSpec{
 		{
 			HostPath:      "/dev/dfl-port.0",
@@ -194,7 +201,7 @@ func TestGetRegionTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil))
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, hooks))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -208,7 +215,7 @@ func TestGetRegionTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil))
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, hooks))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -222,7 +229,7 @@ func TestGetRegionTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "region3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil))
+	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "region3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil, hooks))
 
 	result := getRegionTree(getDevicesDFL())
 	if !reflect.DeepEqual(result, expected) {
@@ -239,7 +246,7 @@ func TestGetAfuTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice("af-ce4.d84.zkiWk5jwXzOUbVYHCL4QithCTcSko8QT-J5DNoP5BAs", "dfl-port.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil))
+	expected.AddDevice("af-ce4.d84.zkiWk5jwXzOUbVYHCL4QithCTcSko8QT-J5DNoP5BAs", "dfl-port.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -249,7 +256,7 @@ func TestGetAfuTreeDFL(t *testing.T) {
 		},
 	}
 
-	expected.AddDevice("af-ce4.d84.zkiWk5jwXzOUbVYHCL4QithCTcSko8QT-J5DNoP5BAs", "dfl-port.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil))
+	expected.AddDevice("af-ce4.d84.zkiWk5jwXzOUbVYHCL4QithCTcSko8QT-J5DNoP5BAs", "dfl-port.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -258,7 +265,7 @@ func TestGetAfuTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice("af-ce4.d84.zkiWk5jwXzOUbVYHCL4QithCTcSko8QT-J5DNoP5BAs", "dfl-port.2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil))
+	expected.AddDevice("af-ce4.d84.zkiWk5jwXzOUbVYHCL4QithCTcSko8QT-J5DNoP5BAs", "dfl-port.2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -267,7 +274,7 @@ func TestGetAfuTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice("af-fff.fff.__________________________________________8", "dfl-port.3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil))
+	expected.AddDevice("af-fff.fff.__________________________________________8", "dfl-port.3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil, nil))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -276,7 +283,7 @@ func TestGetAfuTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice("af-fff.fff.__________________________________________8", "dfl-port.4", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil))
+	expected.AddDevice("af-fff.fff.__________________________________________8", "dfl-port.4", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil, nil))
 
 	result := getAfuTree(getDevicesDFL())
 	if !reflect.DeepEqual(result, expected) {

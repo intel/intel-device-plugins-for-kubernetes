@@ -31,14 +31,14 @@
 		}
 	],
 	"hooks": {
-		"prestart": [
+		"createRuntime": [
 			{
 				"path": "/usr/local/bin/fpga_crihook",
 				"args": [
 					"/usr/local/bin/fpga_crihook"
 				],
 				"env": [
-					"stage=prestart"
+					"stage=createRuntime"
 				]
 			}
 		]

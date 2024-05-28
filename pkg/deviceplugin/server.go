@@ -16,6 +16,8 @@ package deviceplugin
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net"
 	"os"
 	"path"
@@ -30,6 +32,7 @@ import (
 
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
+	cdispec "tags.cncf.io/container-device-interface/specs-go"
 )
 
 type serverState int
@@ -39,6 +42,9 @@ const (
 	uninitialized serverState = iota
 	serving
 	terminating
+	CDIVersion = "0.5.0" // Kubernetes 1.27 / CRI-O 1.27 / Containerd 1.7 use this version.
+	CDIKind    = "intel.cdi.k8s.io/device"
+	CDIDir     = "/var/run/cdi"
 )
 
 // devicePluginServer maintains a gRPC server satisfying
@@ -129,6 +135,37 @@ func (srv *server) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.DeviceP
 	return nil
 }
 
+func generateCDIDevices(deviceID string, dev *DeviceInfo) ([]*pluginapi.CDIDevice, error) {
+	if len(dev.hooks) == 0 {
+		return nil, nil
+	}
+
+	spec := cdispec.Spec{
+		Version: CDIVersion,
+		Kind:    CDIKind,
+		Devices: []cdispec.Device{
+			{
+				Name: deviceID,
+				ContainerEdits: cdispec.ContainerEdits{
+					Hooks: dev.hooks,
+				},
+			},
+		},
+	}
+
+	jsonSpec, err := json.Marshal(spec)
+	if err != nil {
+		return nil, err
+	}
+
+	cdiFileName := path.Join(CDIDir, deviceID) + ".json"
+	if err = os.WriteFile(cdiFileName, jsonSpec, 0o600); err != nil {
+		return nil, err
+	}
+
+	return []*pluginapi.CDIDevice{{Name: fmt.Sprintf("%s=%s", CDIKind, deviceID)}}, nil
+}
+
 func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
 	if srv.allocate != nil {
 		response, err := srv.allocate(rqt)
@@ -145,6 +182,7 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 
 		cresp.Envs = map[string]string{}
 		cresp.Annotations = map[string]string{}
+		cresp.CDIDevices = []*pluginapi.CDIDevice{}
 
 		for _, id := range crqt.DevicesIDs {
 			dev, ok := srv.devices[id]
@@ -171,6 +209,13 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 			for key, value := range dev.annotations {
 				cresp.Annotations[key] = value
 			}
+
+			CDIDevices, err := generateCDIDevices(id, &dev)
+			if err != nil {
+				return nil, fmt.Errorf("device %s: cannot generate CDI device: %w", id, err)
+			}
+
+			cresp.CDIDevices = append(cresp.CDIDevices, CDIDevices...)
 		}
 
 		response.ContainerResponses = append(response.ContainerResponses, cresp)
