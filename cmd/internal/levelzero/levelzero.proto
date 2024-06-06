@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+option go_package = "gpu.levelzero";
+
+service Levelzero {
+  rpc GetDeviceHealth(DeviceId) returns (DeviceHealth) {}
+  rpc GetDeviceTemperature(DeviceId) returns (DeviceTemperature) {}
+  rpc GetIntelIndices(GetIntelIndicesMessage) returns (DeviceIndices) {}
+  rpc GetDeviceMemoryAmount(DeviceId) returns (DeviceMemoryAmount) {}
+}
+
+message GetIntelIndicesMessage {}
+
+message DeviceId {
+  string bdfAddress = 1;
+}
+
+message DeviceHealth {
+  bool memory_ok = 1;
+  bool bus_ok = 2;
+  bool soc_ok = 3;
+  Error error = 42;
+}
+
+message DeviceTemperature {
+  double global = 1;
+  double gpu = 2;
+  double memory = 3;
+  Error error = 42;
+}
+
+message DeviceIndices {
+  repeated uint32 indices = 1;
+  Error error = 42;
+}
+
+message DeviceMemoryAmount {
+  uint64 memory_size = 1;
+  Error error = 42;
+}
+
+message Error {
+  string description = 1;
+  uint32 errorcode = 2;
+}
