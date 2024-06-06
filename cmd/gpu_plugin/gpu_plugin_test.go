@@ -27,6 +27,7 @@ import (
 	"k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 	"k8s.io/utils/strings/slices"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	cdispec "tags.cncf.io/container-device-interface/specs-go"
@@ -41,6 +42,7 @@ type mockNotifier struct {
 	scanDone         chan bool
 	i915Count        int
 	xeCount          int
+	dxgCount         int
 	i915monitorCount int
 	xeMonitorCount   int
 }
@@ -50,6 +52,7 @@ func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.xeCount = len(newDeviceTree[deviceTypeXe])
 	n.xeMonitorCount = len(newDeviceTree[deviceTypeXe+monitorSuffix])
 	n.i915Count = len(newDeviceTree[deviceTypeI915])
+	n.dxgCount = len(newDeviceTree[deviceTypeDxg])
 	n.i915monitorCount = len(newDeviceTree[deviceTypeDefault+monitorSuffix])
 
 	n.scanDone <- true
@@ -72,18 +75,63 @@ func (m *mockResourceManager) SetTileCountPerCard(count uint64) {
 	m.tileCount = count
 }
 
+type mockL0Service struct {
+	indices []uint32
+	memSize uint64
+	healthy bool
+	fail    bool
+}
+
+func (m *mockL0Service) Run(keep bool) {
+}
+func (m *mockL0Service) Stop() {
+}
+func (m *mockL0Service) GetIntelIndices() ([]uint32, error) {
+	if m.fail {
+		return m.indices, errors.Errorf("error, error")
+	}
+
+	return m.indices, nil
+}
+func (m *mockL0Service) GetDeviceHealth(bdfAddress string) (levelzeroservice.DeviceHealth, error) {
+	if m.fail {
+		return levelzeroservice.DeviceHealth{}, errors.Errorf("error, error")
+	}
+
+	return levelzeroservice.DeviceHealth{Memory: m.healthy, Bus: m.healthy, SoC: m.healthy}, nil
+}
+func (m *mockL0Service) GetDeviceTemperature(bdfAddress string) (levelzeroservice.DeviceTemperature, error) {
+	if m.fail {
+		return levelzeroservice.DeviceTemperature{}, errors.Errorf("error, error")
+	}
+
+	return levelzeroservice.DeviceTemperature{Global: 35.0, GPU: 35.0, Memory: 35.0}, nil
+}
+func (m *mockL0Service) GetDeviceMemoryAmount(bdfAddress string) (uint64, error) {
+	if m.fail {
+		return m.memSize, errors.Errorf("error, error")
+	}
+
+	return m.memSize, nil
+}
+
 type TestCaseDetails struct {
-	name string
+	// possible mock l0 service
+	l0mock levelzeroservice.LevelzeroService
 	// test-case environment
-	sysfsdirs    []string
+	pciAddresses map[string]string
 	sysfsfiles   map[string][]byte
 	symlinkfiles map[string]string
+	name         string
+	sysfsdirs    []string
 	devfsdirs    []string
 	// how plugin should interpret it
 	options cliOptions
 	// what the result should be (i915)
 	expectedI915Devs     int
 	expectedI915Monitors int
+	// what the result should be (dxg)
+	expectedDxgDevs int
 	// what the result should be (xe)
 	expectedXeDevs     int
 	expectedXeMonitors int
@@ -96,6 +144,33 @@ func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
 	for _, devfsdir := range tc.devfsdirs {
 		if err := os.MkdirAll(path.Join(devfs, devfsdir), 0750); err != nil {
 			return "", "", errors.Wrap(err, "Failed to create fake device directory")
+		}
+	}
+
+	if err := os.MkdirAll(sysfs, 0750); err != nil {
+		return "", "", errors.Wrap(err, "Failed to create fake base sysfs directory")
+	}
+
+	if len(tc.pciAddresses) > 0 {
+		if err := os.MkdirAll(filepath.Join(sysfs, ".devices"), 0750); err != nil {
+			return "", "", errors.Wrap(err, "Failed to create fake pci address base")
+		}
+
+		for pci, card := range tc.pciAddresses {
+			fullPci := filepath.Join(sysfs, ".devices", pci)
+			cardPath := filepath.Join(sysfs, card)
+
+			if err := os.MkdirAll(fullPci, 0750); err != nil {
+				return "", "", errors.Wrap(err, "Failed to create fake pci address entry")
+			}
+
+			if err := os.MkdirAll(cardPath, 0750); err != nil {
+				return "", "", errors.Wrap(err, "Failed to create fake card entry")
+			}
+
+			if err := os.Symlink(fullPci, filepath.Join(sysfs, card, "device")); err != nil {
+				return "", "", errors.Wrap(err, "Failed to create fake pci address symlinks")
+			}
 		}
 	}
 
@@ -444,6 +519,176 @@ func TestScan(t *testing.T) {
 	}
 }
 
+func TestScanWithHealth(t *testing.T) {
+	tcases := []TestCaseDetails{
+		{
+			name:      "one device with no symlink",
+			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+			},
+			expectedI915Devs: 1,
+		},
+		{
+			name:         "one device with proper symlink",
+			pciAddresses: map[string]string{"0000:00:00.0": "card0"},
+			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+			},
+			expectedI915Devs: 1,
+			l0mock: &mockL0Service{
+				healthy: true,
+			},
+		},
+		{
+			name:         "one unhealthy device with proper symlink",
+			pciAddresses: map[string]string{"0000:00:00.0": "card0"},
+			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+			},
+			expectedI915Devs: 1,
+			l0mock: &mockL0Service{
+				healthy: false,
+			},
+		},
+		{
+			name:         "one device with proper symlink returns error",
+			pciAddresses: map[string]string{"0000:00:00.0": "card0"},
+			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+			},
+			expectedI915Devs: 1,
+			l0mock: &mockL0Service{
+				fail: true,
+			},
+		},
+	}
+
+	for _, tc := range tcases {
+		if tc.options.sharedDevNum == 0 {
+			tc.options.sharedDevNum = 1
+		}
+
+		t.Run(tc.name, func(t *testing.T) {
+			root, err := os.MkdirTemp("", "test_new_device_plugin")
+			if err != nil {
+				t.Fatalf("can't create temporary directory: %+v", err)
+			}
+
+			// dirs/files need to be removed for the next test
+			defer os.RemoveAll(root)
+
+			sysfs, devfs, err := createTestFiles(root, tc)
+			if err != nil {
+				t.Errorf("unexpected error: %+v", err)
+			}
+
+			plugin := newDevicePlugin(sysfs, devfs, tc.options)
+
+			plugin.levelzeroService = tc.l0mock
+
+			notifier := &mockNotifier{
+				scanDone: plugin.scanDone,
+			}
+
+			err = plugin.Scan(notifier)
+			// Scans in GPU plugin never fail
+			if err != nil {
+				t.Errorf("unexpected error: %+v", err)
+			}
+			if tc.expectedI915Devs != notifier.i915Count {
+				t.Errorf("Expected %d, discovered %d devices (i915)",
+					tc.expectedI915Devs, notifier.i915Count)
+			}
+			if tc.expectedI915Monitors != notifier.i915monitorCount {
+				t.Errorf("Expected %d, discovered %d monitors (i915)",
+					tc.expectedI915Monitors, notifier.i915monitorCount)
+			}
+		})
+	}
+}
+
+func TestScanWsl(t *testing.T) {
+	tcases := []TestCaseDetails{
+		{
+			name:            "one wsl device",
+			expectedDxgDevs: 1,
+			l0mock: &mockL0Service{
+				indices: []uint32{0},
+			},
+		},
+		{
+			name:            "four wsl device",
+			expectedDxgDevs: 4,
+			l0mock: &mockL0Service{
+				indices: []uint32{0, 1, 2, 3},
+			},
+		},
+	}
+
+	for _, tc := range tcases {
+		if tc.options.sharedDevNum == 0 {
+			tc.options.sharedDevNum = 1
+		}
+
+		t.Run(tc.name, func(t *testing.T) {
+			root, err := os.MkdirTemp("", "test_new_device_plugin")
+			if err != nil {
+				t.Fatalf("can't create temporary directory: %+v", err)
+			}
+
+			// dirs/files need to be removed for the next test
+			defer os.RemoveAll(root)
+
+			sysfs, devfs, err := createTestFiles(root, tc)
+			if err != nil {
+				t.Errorf("unexpected error: %+v", err)
+			}
+
+			plugin := newDevicePlugin(sysfs, devfs, tc.options)
+			plugin.options.wslScan = true
+			plugin.levelzeroService = tc.l0mock
+
+			notifier := &mockNotifier{
+				scanDone: plugin.scanDone,
+			}
+
+			err = plugin.Scan(notifier)
+			// Scans in GPU plugin never fail
+			if err != nil {
+				t.Errorf("unexpected error: %+v", err)
+			}
+			if tc.expectedDxgDevs != notifier.dxgCount {
+				t.Errorf("Expected %d, discovered %d devices (dxg)",
+					tc.expectedI915Devs, notifier.i915Count)
+			}
+		})
+	}
+}
+
 func TestScanFails(t *testing.T) {
 	tc := TestCaseDetails{
 		name:      "xe and i915 devices with rm will fail",
@@ -582,11 +827,11 @@ func createBypathTestFiles(t *testing.T, card, root, linkFile string, bypathFile
 	byPath := path.Join(root, "by-path")
 
 	if linkFile != "" {
-		if err := os.MkdirAll(filepath.Dir(devPath), os.ModePerm); err != nil {
+		if err := os.MkdirAll(filepath.Dir(devPath), 0700); err != nil {
 			t.Fatal("Couldn't create test dev dir", err)
 		}
 
-		if err := os.MkdirAll(filepath.Dir(drmPath), os.ModePerm); err != nil {
+		if err := os.MkdirAll(filepath.Dir(drmPath), 0700); err != nil {
 			t.Fatal("Couldn't create test drm dir", err)
 		}
 
@@ -600,7 +845,7 @@ func createBypathTestFiles(t *testing.T, card, root, linkFile string, bypathFile
 	}
 
 	if len(bypathFiles) > 0 {
-		if err := os.MkdirAll(byPath, os.ModePerm); err != nil {
+		if err := os.MkdirAll(byPath, 0700); err != nil {
 			t.Fatal("Mkdir failed:", byPath)
 		}
 

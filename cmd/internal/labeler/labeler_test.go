@@ -17,16 +17,45 @@ package labeler
 import (
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"strconv"
+	"syscall"
 	"testing"
+	"time"
 
+	"github.com/fsnotify/fsnotify"
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 )
 
 const (
 	sysfsDirectory = "/sys/"
 )
+
+type mockL0Service struct {
+	memSize uint64
+	fail    bool
+}
+
+func (m *mockL0Service) Run(bool) {
+}
+func (m *mockL0Service) GetIntelIndices() ([]uint32, error) {
+	return nil, nil
+}
+func (m *mockL0Service) GetDeviceHealth(bdfAddress string) (levelzeroservice.DeviceHealth, error) {
+	return levelzeroservice.DeviceHealth{}, nil
+}
+func (m *mockL0Service) GetDeviceTemperature(bdfAddress string) (levelzeroservice.DeviceTemperature, error) {
+	return levelzeroservice.DeviceTemperature{}, nil
+}
+func (m *mockL0Service) GetDeviceMemoryAmount(bdfAddress string) (uint64, error) {
+	if m.fail {
+		return m.memSize, os.ErrInvalid
+	}
+
+	return m.memSize, nil
+}
 
 type testcase struct {
 	capabilityFile map[string][]byte
@@ -579,7 +608,7 @@ func getTestCases() []testcase {
 	}
 }
 
-func (tc *testcase) createFiles(t *testing.T, sysfs, root string) {
+func (tc *testcase) createFiles(t *testing.T, sysfs string) {
 	for _, sysfsdir := range tc.sysfsdirs {
 		if err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0750); err != nil {
 			t.Fatalf("Failed to create fake sysfs directory: %+v", err)
@@ -645,7 +674,7 @@ func TestLabeling(t *testing.T) {
 			}
 			sysfs := path.Join(subroot, "pci0000:00/0000:00:1b.4", sysfsDirectory)
 
-			tc.createFiles(t, sysfs, subroot)
+			tc.createFiles(t, sysfs)
 
 			os.Setenv(memoryOverrideEnv, strconv.FormatUint(tc.memoryOverride, 10))
 			os.Setenv(memoryReservedEnv, strconv.FormatUint(tc.memoryReserved, 10))
@@ -662,4 +691,177 @@ func TestLabeling(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCreateAndRun(t *testing.T) {
+	root, err := os.MkdirTemp("", "test_new_device_plugin")
+	if err != nil {
+		t.Fatalf("can't create temporary directory: %+v", err)
+	}
+
+	defer os.RemoveAll(root)
+
+	tc := getTestCases()[0]
+
+	subroot, err := os.MkdirTemp(root, "tc")
+	if err != nil {
+		t.Fatalf("can't create temporary subroot directory: %+v", err)
+	}
+
+	t.Run("CreateAndPrintLabels", func(t *testing.T) {
+		err := os.MkdirAll(path.Join(subroot, "0"), 0750)
+		if err != nil {
+			t.Fatalf("couldn't create dir: %s", err.Error())
+		}
+		sysfs := path.Join(subroot, "pci0000:00/0000:00:1b.4", sysfsDirectory)
+
+		tc.createFiles(t, sysfs)
+
+		CreateAndPrintLabels(sysfs)
+	})
+
+	waitForFileOp := func(directory, file string, eventType fsnotify.Op, duration time.Duration) bool {
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer watcher.Close()
+
+		if err := watcher.Add(directory); err != nil {
+			t.Fatal(err)
+		}
+
+		timer := time.NewTimer(duration)
+
+		for {
+			select {
+			case event := <-watcher.Events:
+				if filepath.Base(event.Name) == file && event.Has(eventType) {
+					return true
+				}
+			case <-timer.C:
+				return false
+			}
+		}
+	}
+
+	t.Run("Run", func(t *testing.T) {
+		err := os.MkdirAll(path.Join(subroot, "0"), 0750)
+		if err != nil {
+			t.Fatalf("couldn't create dir: %s", err.Error())
+		}
+		sysfs := path.Join(subroot, "pci0000:00/0000:00:1b.4", sysfsDirectory)
+
+		tc.createFiles(t, sysfs)
+
+		c := make(chan bool, 1)
+
+		nfdLabelBase := "nfd-labelfile.txt"
+		nfdLabelFile := filepath.Join(root, nfdLabelBase)
+
+		go Run(sysfs, nfdLabelFile, time.Millisecond, c, nil, func() {})
+
+		// Wait for the labeling timeout to trigger
+		if !waitForFileOp(root, nfdLabelBase, fsnotify.Create, time.Second*2) {
+			t.Error("Run didn't create label file")
+		}
+
+		err = syscall.Kill(syscall.Getpid(), syscall.SIGHUP)
+		if err != nil {
+			t.Error("Calling Kill failed")
+		}
+
+		// Wait for the labeling timeout to trigger
+		if !waitForFileOp(root, nfdLabelBase, fsnotify.Remove, time.Second*2) {
+			t.Error("Run didn't remove label file")
+		}
+	})
+}
+
+func TestL0ServiceUse(t *testing.T) {
+	root, err := os.MkdirTemp("", "test_new_device_plugin")
+	if err != nil {
+		t.Fatalf("can't create temporary directory: %+v", err)
+	}
+
+	defer os.RemoveAll(root)
+
+	pciAddr := path.Join(root, "sys", ".devices", "0000:00:01.0")
+	cardPath := path.Join(root, "sys", "card0")
+
+	err = os.MkdirAll(pciAddr, 0750)
+	if err != nil {
+		t.Fatalf("couldn't create pci dir: %s", err.Error())
+	}
+
+	err = os.MkdirAll(cardPath, 0750)
+	if err != nil {
+		t.Fatalf("couldn't create card dir: %s", err.Error())
+	}
+
+	err = os.Symlink(pciAddr, filepath.Join(cardPath, "device"))
+	if err != nil {
+		t.Fatalf("couldn't create symlink: %s", err.Error())
+	}
+
+	err = os.WriteFile(filepath.Join(root, "sys/card0/device/vendor"), []byte("0x8086"), 0600)
+	if err != nil {
+		t.Fatalf("couldn't write vendor file: %s", err.Error())
+	}
+
+	err = os.MkdirAll(filepath.Join(root, "sys/card0/device/drm"), 0600)
+	if err != nil {
+		t.Fatalf("couldn't create card drm dir: %s", err.Error())
+	}
+
+	t.Run("fetch memory from l0 service", func(t *testing.T) {
+		labeler := newLabeler(filepath.Join(root, "sys"))
+		labeler.levelzero = &mockL0Service{
+			memSize: 12345678,
+		}
+		err = labeler.createLabels()
+
+		if err != nil {
+			t.Errorf("labeler didn't work with l0 service")
+		}
+
+		if labeler.labels["gpu.intel.com/memory.max"] != "12345678" {
+			t.Errorf("labeler didn't get memory amount from l0 service: %v", labeler.labels)
+		}
+	})
+
+	t.Run("memory fetch from l0 fails", func(t *testing.T) {
+		labeler := newLabeler(filepath.Join(root, "sys"))
+		labeler.levelzero = &mockL0Service{
+			memSize: 0,
+			fail:    true,
+		}
+
+		os.Setenv(memoryOverrideEnv, "87654321")
+		err = labeler.createLabels()
+
+		if err != nil {
+			t.Errorf("labeler didn't work with l0 service")
+		}
+
+		if labeler.labels["gpu.intel.com/memory.max"] != "87654321" {
+			t.Errorf("labeler got an invalid memory amount: %v", labeler.labels)
+		}
+	})
+
+	t.Run("memory fetch with nil l0 service", func(t *testing.T) {
+		labeler := newLabeler(filepath.Join(root, "sys"))
+		labeler.levelzero = nil
+
+		os.Setenv(memoryOverrideEnv, "87654321")
+		err = labeler.createLabels()
+
+		if err != nil {
+			t.Errorf("labeler didn't work with l0 service")
+		}
+
+		if labeler.labels["gpu.intel.com/memory.max"] != "87654321" {
+			t.Errorf("labeler got an invalid memory amount: %v", labeler.labels)
+		}
+	})
 }

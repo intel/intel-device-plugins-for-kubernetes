@@ -1,0 +1,9 @@
+resources:
+  - ../levelzero
+patches:
+  - path: wsl_mounts.yaml
+    target:
+      kind: DaemonSet
+  - path: wsl_args.yaml
+    target:
+      kind: DaemonSet

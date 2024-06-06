@@ -1,0 +1,9 @@
+resources:
+  - ../../base
+patches:
+  - path: l0-mounts.yaml
+    target:
+      kind: DaemonSet
+  - path: levelzero.yaml
+    target:
+      kind: DaemonSet

@@ -472,7 +472,7 @@ func TestCreateFractionalResourceResponseWithOneCardTwoTiles(t *testing.T) {
 					},
 					Env: []v1.EnvVar{
 						{
-							Name:  levelZeroHierarchyEnvVar,
+							Name:  levelzeroHierarchyEnvVar,
 							Value: hierarchyModeComposite,
 						},
 					},
@@ -522,8 +522,8 @@ func TestCreateFractionalResourceResponseWithOneCardTwoTiles(t *testing.T) {
 	// check response
 	expectTruef(len(resp.ContainerResponses) == 1, t, tCase.name, "wrong number of container responses, expected 1")
 	expectTruef(len(resp.ContainerResponses[0].Envs) == 2, t, tCase.name, "wrong number of env variables in container response, expected 2")
-	expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] != "", t, tCase.name, "l0 tile mask not set")
-	expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] == "0.0,0.1", t, tCase.name, "l0 affinity mask is incorrect")
+	expectTruef(resp.ContainerResponses[0].Envs[LevelzeroAffinityMaskEnvVar] != "", t, tCase.name, "l0 tile mask not set")
+	expectTruef(resp.ContainerResponses[0].Envs[LevelzeroAffinityMaskEnvVar] == "0.0,0.1", t, tCase.name, "l0 affinity mask is incorrect")
 	expectTruef(len(resp.ContainerResponses[0].Devices) == 1, t, tCase.name, "wrong number of devices, expected 1")
 }
 
@@ -545,7 +545,7 @@ func TestCreateFractionalResourceResponseWithTwoCardsOneTile(t *testing.T) {
 					},
 					Env: []v1.EnvVar{
 						{
-							Name:  levelZeroHierarchyEnvVar,
+							Name:  levelzeroHierarchyEnvVar,
 							Value: hierarchyModeComposite,
 						},
 					},
@@ -598,8 +598,8 @@ func TestCreateFractionalResourceResponseWithTwoCardsOneTile(t *testing.T) {
 		} else {
 			// check response
 			expectTruef(len(resp.ContainerResponses) == 1, t, tCase.name, "wrong number of container responses, expected 1")
-			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] != "", t, tCase.name, "l0 tile mask not set")
-			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] == "0.3,1.4", t, tCase.name, "l0 affinity mask is incorrect: ")
+			expectTruef(resp.ContainerResponses[0].Envs[LevelzeroAffinityMaskEnvVar] != "", t, tCase.name, "l0 tile mask not set")
+			expectTruef(resp.ContainerResponses[0].Envs[LevelzeroAffinityMaskEnvVar] == "0.3,1.4", t, tCase.name, "l0 affinity mask is incorrect: ")
 			expectTruef(len(resp.ContainerResponses[0].Devices) == 2, t, tCase.name, "wrong number of devices, expected 2")
 		}
 	}
@@ -623,7 +623,7 @@ func TestCreateFractionalResourceResponseWithThreeCardsTwoTiles(t *testing.T) {
 					},
 					Env: []v1.EnvVar{
 						{
-							Name:  levelZeroHierarchyEnvVar,
+							Name:  levelzeroHierarchyEnvVar,
 							Value: hierarchyModeComposite,
 						},
 					},
@@ -676,8 +676,8 @@ func TestCreateFractionalResourceResponseWithThreeCardsTwoTiles(t *testing.T) {
 		} else {
 			// check response
 			expectTruef(len(resp.ContainerResponses) == 1, t, tCase.name, "wrong number of container responses, expected 1")
-			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] != "", t, tCase.name, "l0 tile mask not set")
-			expectTruef(resp.ContainerResponses[0].Envs[levelZeroAffinityMaskEnvVar] == "0.0,0.1,1.2,1.3,2.3,2.4", t, tCase.name, "l0 affinity mask is incorrect: ")
+			expectTruef(resp.ContainerResponses[0].Envs[LevelzeroAffinityMaskEnvVar] != "", t, tCase.name, "l0 tile mask not set")
+			expectTruef(resp.ContainerResponses[0].Envs[LevelzeroAffinityMaskEnvVar] == "0.0,0.1,1.2,1.3,2.3,2.4", t, tCase.name, "l0 affinity mask is incorrect: ")
 			expectTruef(len(resp.ContainerResponses[0].Devices) == 3, t, tCase.name, "wrong number of devices, expected 3")
 		}
 	}
@@ -701,7 +701,7 @@ func TestCreateFractionalResourceResponseWithMultipleContainersTileEach(t *testi
 					},
 					Env: []v1.EnvVar{
 						{
-							Name:  levelZeroHierarchyEnvVar,
+							Name:  levelzeroHierarchyEnvVar,
 							Value: hierarchyModeComposite,
 						},
 					},
@@ -714,7 +714,7 @@ func TestCreateFractionalResourceResponseWithMultipleContainersTileEach(t *testi
 					},
 					Env: []v1.EnvVar{
 						{
-							Name:  levelZeroHierarchyEnvVar,
+							Name:  levelzeroHierarchyEnvVar,
 							Value: hierarchyModeComposite,
 						},
 					},
@@ -945,7 +945,7 @@ func TestTileAnnotationParsing(t *testing.T) {
 				if i < len(pt.hierarchys) {
 					pod.Spec.Containers[i].Env = []v1.EnvVar{
 						{
-							Name:  levelZeroHierarchyEnvVar,
+							Name:  levelzeroHierarchyEnvVar,
 							Value: pt.hierarchys[i],
 						},
 					}
