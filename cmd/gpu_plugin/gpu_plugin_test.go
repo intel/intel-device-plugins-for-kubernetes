@@ -41,6 +41,7 @@ type mockNotifier struct {
 	scanDone         chan bool
 	i915Count        int
 	xeCount          int
+	dxgCount         int
 	i915monitorCount int
 	xeMonitorCount   int
 }
@@ -50,6 +51,7 @@ func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.xeCount = len(newDeviceTree[deviceTypeXe])
 	n.xeMonitorCount = len(newDeviceTree[deviceTypeXe+monitorSuffix])
 	n.i915Count = len(newDeviceTree[deviceTypeI915])
+	n.dxgCount = len(newDeviceTree[deviceTypeDxg])
 	n.i915monitorCount = len(newDeviceTree[deviceTypeDefault+monitorSuffix])
 
 	n.scanDone <- true
@@ -120,6 +122,8 @@ type TestCaseDetails struct {
 	// what the result should be (i915)
 	expectedI915Devs     int
 	expectedI915Monitors int
+	// what the result should be (dxg)
+	expectedDxgDevs int
 	// what the result should be (xe)
 	expectedXeDevs     int
 	expectedXeMonitors int
@@ -614,6 +618,64 @@ func TestScanWithHealth(t *testing.T) {
 			if tc.expectedI915Monitors != notifier.i915monitorCount {
 				t.Errorf("Expected %d, discovered %d monitors (i915)",
 					tc.expectedI915Monitors, notifier.i915monitorCount)
+			}
+		})
+	}
+}
+
+func TestScanWsl(t *testing.T) {
+	tcases := []TestCaseDetails{
+		{
+			name:            "one wsl device",
+			expectedDxgDevs: 1,
+			l0mock: &mockL0Service{
+				indices: []uint32{0},
+			},
+		},
+		{
+			name:            "four wsl device",
+			expectedDxgDevs: 4,
+			l0mock: &mockL0Service{
+				indices: []uint32{0, 1, 2, 3},
+			},
+		},
+	}
+
+	for _, tc := range tcases {
+		if tc.options.sharedDevNum == 0 {
+			tc.options.sharedDevNum = 1
+		}
+
+		t.Run(tc.name, func(t *testing.T) {
+			root, err := os.MkdirTemp("", "test_new_device_plugin")
+			if err != nil {
+				t.Fatalf("can't create temporary directory: %+v", err)
+			}
+
+			// dirs/files need to be removed for the next test
+			defer os.RemoveAll(root)
+
+			sysfs, devfs, err := createTestFiles(root, tc)
+			if err != nil {
+				t.Errorf("unexpected error: %+v", err)
+			}
+
+			plugin := newDevicePlugin(sysfs, devfs, tc.options)
+			plugin.options.wslScan = true
+			plugin.levelzeroService = tc.l0mock
+
+			notifier := &mockNotifier{
+				scanDone: plugin.scanDone,
+			}
+
+			err = plugin.Scan(notifier)
+			// Scans in GPU plugin never fail
+			if err != nil {
+				t.Errorf("unexpected error: %+v", err)
+			}
+			if tc.expectedDxgDevs != notifier.dxgCount {
+				t.Errorf("Expected %d, discovered %d devices (dxg)",
+					tc.expectedI915Devs, notifier.i915Count)
 			}
 		})
 	}
