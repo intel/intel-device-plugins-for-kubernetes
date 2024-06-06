@@ -66,6 +66,7 @@ issues:
       linters:
         - gocognit
         - wsl
+        - gocyclo
     - path: test/e2e/
       linters:
         - wsl

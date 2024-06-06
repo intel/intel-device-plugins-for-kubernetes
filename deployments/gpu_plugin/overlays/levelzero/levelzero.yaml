@@ -1,0 +1,17 @@
+- op: add
+  path: /spec/template/spec/containers/-
+  value:
+    name: intel-gpu-levelzero
+    image: intel/intel-gpu-levelzero:devel
+    imagePullPolicy: IfNotPresent
+    args:
+      - "-v=2"
+    securityContext:
+      readOnlyRootFilesystem: true
+      privileged: true
+      capabilities:
+        drop:
+          - ALL
+    volumeMounts:
+    - name: levelzerosocket
+      mountPath: /var/lib/levelzero
