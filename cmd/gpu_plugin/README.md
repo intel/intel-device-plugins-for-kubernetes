@@ -18,6 +18,7 @@ Table of Contents
   * [SR-IOV use with the plugin](#sr-iov-use-with-the-plugin)
   * [CDI support](#cdi-support)
   * [KMD and UMD](#kmd-and-umd)
+  * [Health management](#health-management)
   * [Issues with media workloads on multi-GPU setups](#issues-with-media-workloads-on-multi-gpu-setups)
     * [Workaround for QSV and VA-API](#workaround-for-qsv-and-va-api)
 
@@ -56,6 +57,8 @@ For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 |:---- |:-------- |:------- |:------- |
 | -enable-monitoring | - | disabled | Enable '*_monitoring' resource that provides access to all Intel GPU devices on the node, [see use](./monitoring.md) |
 | -resource-manager | - | disabled | Enable fractional resource management, [see use](./fractional.md) |
+| -health-management | - | disabled | Enable health management by requesting data from oneAPI/Level-Zero interface. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. See [health management](#health-management) |
+| -wsl | - | disabled | Adapt plugin to run in the WSL environment. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
 | -allocation-policy | string | none | 3 possible values: balanced, packed, none. For shared-dev-num > 1: _balanced_ mode spreads workloads among GPU devices, _packed_ mode fills one GPU fully before moving to next, and _none_ selects first available device from kubelet. Default is _none_. Allocation policy does not have an effect when resource manager is enabled. |
 
@@ -256,6 +259,14 @@ Creating a workload that would support all the different KMDs is not currently p
 | Compute | Default | [NEO_ENABLE_i915_PRELIM_DETECTION](https://github.com/intel/compute-runtime/blob/3341de7a0d5fddd2ea5f505b5d2ef5c13faa0681/CMakeLists.txt#L496-L502) | [NEO_ENABLE_XE_DRM_DETECTION](https://github.com/intel/compute-runtime/blob/3341de7a0d5fddd2ea5f505b5d2ef5c13faa0681/CMakeLists.txt#L504-L510) | All three KMDs can be supported at the same time. |
 | Media | Default | [ENABLE_PRODUCTION_KMD](https://github.com/intel/media-driver/blob/a66b076e83876fbfa9c9ab633ad9c5517f8d74fd/CMakeLists.txt#L58) | [ENABLE_XE_KMD](https://github.com/intel/media-driver/blob/a66b076e83876fbfa9c9ab633ad9c5517f8d74fd/media_driver/cmake/linux/media_feature_flags_linux.cmake#L187-L190) | Xe with upstream or backport i915, not all three. |
 | Graphics | Default | Unknown | [intel-xe-kmd](https://gitlab.freedesktop.org/mesa/mesa/-/blob/e9169881dbd1f72eab65a68c2b8e7643f74489b7/meson_options.txt#L708) | i915 and xe KMDs can be supported at the same time. |
+
+### Health management
+
+Kubernetes Device Plugin API allows passing device's healthiness to Kubelet. By default GPU plugin reports all devices to be `Healthy`. If health management is enabled, GPU plugin retrieves health related data from oneAPI/Level-Zero interface via [GPU levelzero](../gpu_levelzero/). Depending on the data received, GPU plugin will report device to be `Unhealthy` if:
+1) Direct health indicators report issues: [memory](https://spec.oneapi.io/level-zero/latest/sysman/api.html#zes-mem-health-t) & [pci](https://spec.oneapi.io/level-zero/latest/sysman/api.html#zes-pci-link-status-t)
+1) Device temperature is over the limit
+
+Temperature limit can be provided via the command line argument, default is 100C.
 
 ### Issues with media workloads on multi-GPU setups
 
