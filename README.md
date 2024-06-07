@@ -24,6 +24,7 @@ Table of Contents
     * [IAA device plugin](#iaa-device-plugin)
 * [Device Plugins Operator](#device-plugins-operator)
 * [XeLink XPU Manager sidecar](#xelink-xpu-manager-sidecar)
+* [Intel GPU Level-Zero sidecar](#intel-gpu-levelzero)
 * [Demos](#demos)
 * [Workload Authors](#workload-authors)
 * [Developers](#developers)
@@ -200,6 +201,12 @@ The [Device plugins Operator for OpenShift](https://github.com/intel/intel-techn
 To support interconnected GPUs in Kubernetes, XeLink sidecar is needed.
 
 The [XeLink XPU Manager sidecar README](cmd/xpumanager_sidecar/README.md) gives information how the sidecar functions and how to use it.
+
+## Intel GPU Level-Zero sidecar
+
+Sidecar uses Level-Zero API to provide additional GPU information for the GPU plugin that it cannot get through sysfs interfaces.
+
+See [Intel GPU Level-Zero sidecar README](cmd/gpu_levelzero/README.md) for more details.
 
 ## Demos
 
