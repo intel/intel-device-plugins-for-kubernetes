@@ -106,8 +106,8 @@ initImage:
 
 dpdkDriver: vfio-pci
 kernelVfDrivers:
-  - c6xxvf
   - 4xxxvf
+  - 420xxvf
 maxNumDevices: 128
 logLevel: 4
 

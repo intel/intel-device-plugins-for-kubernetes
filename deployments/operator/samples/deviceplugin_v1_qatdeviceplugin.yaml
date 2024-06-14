@@ -13,7 +13,6 @@ spec:
   initImage: intel/intel-qat-initcontainer:0.30.0
   dpdkDriver: vfio-pci
   kernelVfDrivers:
-    - c6xxvf
     - 4xxxvf
     - 420xxvf
   maxNumDevices: 1
