@@ -16,7 +16,9 @@
 ###
 FROM debian:unstable-slim
 COPY ./LICENSE /licenses/intel-device-plugins-for-kubernetes/LICENSE
+RUN echo "deb-src http://deb.debian.org/debian unstable main" >> /etc/apt/sources.list.d/deb-src.list
 RUN apt-get update && apt-get install -y --no-install-recommends accel-config jq && rm -rf /var/lib/apt/lists/\*
+RUN cd /licenses/intel-device-plugins-for-kubernetes && apt-get source --download-only -y accel-config
 COPY demo/idxd-init.sh /usr/local/bin/
 COPY demo/dsa.conf /idxd-init/
 COPY demo/iaa.conf /idxd-init/
