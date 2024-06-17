@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel VPU device plugin for Kubernetes &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Demo" href="../../demo/readme.html" />
+    <link rel="prev" title="Intel SGX admission controller for Kubernetes" href="../sgx_admissionwebhook/README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../docs/extensions.html">Extensions</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../dlb_plugin/README.html">Intel DLB device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dsa_plugin/README.html">Intel DSA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_admissionwebhook/README.html">Intel FPGA admission controller for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_crihook/README.html">Intel FPGA prestart CRI-O webhook for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_plugin/README.html">Intel FPGA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_tool/README.html">Intel FPGA test tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_nfdhook/README.html">Intel GPU NFD hook</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_plugin/README.html">Intel GPU device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iaa_plugin/README.html">Intel IAA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../operator/README.html">Intel Device Plugins Operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../qat_plugin/README.html">Intel QuickAssist Technology (QAT) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_plugin/README.html">Intel Software Guard Extensions (SGX) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_admissionwebhook/README.html">Intel SGX admission controller for Kubernetes</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Intel VPU device plugin for Kubernetes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pre-built-images">Pre-built Images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#verify-plugin-registration">Verify Plugin Registration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#testing-and-demos">Testing and Demos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#build-a-docker-image-with-an-classification-example">Build a Docker image with an classification example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#create-a-job-running-unit-tests-off-the-local-docker-image">Create a job running unit tests off the local Docker image</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#review-the-job-logs">Review the job logs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../docs/extensions.html">Extensions</a></li>
+      <li class="breadcrumb-item active">Intel VPU device plugin for Kubernetes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/vpu_plugin/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-vpu-device-plugin-for-kubernetes">
+<h1>Intel VPU device plugin for Kubernetes<a class="headerlink" href="#intel-vpu-device-plugin-for-kubernetes" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#pre-built-images">Pre-built Images</a></p></li>
+<li><p><a class="reference external" href="#verify-plugin-registration">Verify Plugin Registration</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#testing-and-demos">Testing and Demos</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>The VPU device plugin supports below cards:</p>
+<p><a class="reference external" href="https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/media-analytics-vcac-a-accelerator-card-by-celestica-datasheet.pdf">Intel VCAC-A</a>.
+This card has:</p>
+<ul class="simple">
+<li><p>1 Intel Core i3-7100U processor</p></li>
+<li><p>12 MyriadX VPUs</p></li>
+<li><p>8GB DDR4 memory</p></li>
+<li><p>PCIe interface to Xeon E3/E5 server</p></li>
+</ul>
+<p><a class="reference external" href="https://software.intel.com/en-us/articles/introducing-the-iei-tank-aiot-developer-kit-and-mustang-v100-mx8-pcie-accelerator-card">Intel Mustang V100</a>.
+This card has:</p>
+<ul class="simple">
+<li><p>8 MyriadX VPUs</p></li>
+<li><p>PCIe interface to 6th+ Generation Core PC or Xeon E3/E5 server</p></li>
+</ul>
+<p><a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/movidius-vpu.html">Gen 3 Intel® Movidius™ VPU HDDL VE3</a>
+This card has:</p>
+<ul class="simple">
+<li><p>3 Intel® Movidius Gen 3 Intel® Movidius™ VPU SoCs</p></li>
+</ul>
+<p><a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/movidius-vpu.html">Intel® Movidius™ S VPU</a>
+This card has:</p>
+<ul class="simple">
+<li><p>6 Intel® Movidius Gen 3 Intel® Movidius™ VPU SoCs</p></li>
+</ul>
+<blockquote>
+<div><p><strong>Note:</strong> This device plugin need HDDL daemon service to be running either natively or from a container.
+To get VCAC-A or Mustang card running hddl, please refer to:
+https://github.com/OpenVisualCloud/Dockerfiles/blob/master/VCAC-A/script/setup_hddl.sh</p>
+</div></blockquote>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>The following sections detail how to use the VPU device plugin.</p>
+<section id="pre-built-images">
+<h3>Pre-built Images<a class="headerlink" href="#pre-built-images" title="Permalink to this heading"></a></h3>
+<p><a class="reference external" href="https://hub.docker.com/r/intel/intel-vpu-plugin">Pre-built images</a>
+of this component are available on the Docker hub. These images are automatically built and uploaded
+to the hub from the latest main branch of this repository.</p>
+<p>Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers in the format <code class="docutils literal notranslate"><span class="pre">x.y.z</span></code>, corresponding to the branches and releases in this
+repository. Thus the easiest way to deploy the plugin in your cluster is to run this command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/vpu_plugin?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+daemonset.apps/intel-vpu-plugin<span class="w"> </span>created
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;RELEASE_VERSION&gt;</span></code> needs to be substituted with the desired <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tags">release tag</a> or <code class="docutils literal notranslate"><span class="pre">main</span></code> to get <code class="docutils literal notranslate"><span class="pre">devel</span></code> images.</p>
+<p>For xlink device, deploy DaemonSet as</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span>https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/vpu_plugin/overlays/xlink
+daemonset.apps/intel-vpu-plugin<span class="w"> </span>created
+</pre></div>
+</div>
+<p>Nothing else is needed. See <a class="reference internal" href="../../DEVEL.html"><span class="doc">the development guide</span></a> for details if you want to deploy a customized version of the plugin.</p>
+<blockquote>
+<div><p><strong>Note</strong>: It is also possible to run the VPU device plugin using a non-root user. To do this,
+the nodes’ DAC rules must be configured to device plugin socket creation and kubelet registration.
+Furthermore, the deployments <code class="docutils literal notranslate"><span class="pre">securityContext</span></code> must be configured with appropriate <code class="docutils literal notranslate"><span class="pre">runAsUser/runAsGroup</span></code>.</p>
+</div></blockquote>
+</section>
+<section id="verify-plugin-registration">
+<h3>Verify Plugin Registration<a class="headerlink" href="#verify-plugin-registration" title="Permalink to this heading"></a></h3>
+<p>You can verify the plugin has been registered with the expected nodes by searching for the relevant
+resource allocation status on the nodes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-o<span class="o">=</span><span class="nv">jsonpath</span><span class="o">=</span><span class="s2">&quot;{range .items[*]}{.metadata.name}{&#39;\n&#39;}{&#39; hddl: &#39;}{.status.allocatable.vpu\.intel\.com/hddl}{&#39;\n&#39;}&quot;</span>
+vcaanode00
+<span class="w"> </span>hddl:<span class="w"> </span><span class="m">12</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="testing-and-demos">
+<h2>Testing and Demos<a class="headerlink" href="#testing-and-demos" title="Permalink to this heading"></a></h2>
+<p>We can test the plugin is working by deploying the provided example OpenVINO image with HDDL plugin enabled.</p>
+<section id="build-a-docker-image-with-an-classification-example">
+<h3>Build a Docker image with an classification example<a class="headerlink" href="#build-a-docker-image-with-an-classification-example" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="k">$(</span>go<span class="w"> </span>env<span class="w"> </span>GOPATH<span class="k">)</span>/src/github.com/intel/intel-device-plugins-for-kubernetes
+$<span class="w"> </span>make<span class="w"> </span>ubuntu-demo-openvino
+...
+Successfully<span class="w"> </span>tagged<span class="w"> </span>intel/ubuntu-demo-openvino:devel
+</pre></div>
+</div>
+</section>
+<section id="create-a-job-running-unit-tests-off-the-local-docker-image">
+<h3>Create a job running unit tests off the local Docker image<a class="headerlink" href="#create-a-job-running-unit-tests-off-the-local-docker-image" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="k">$(</span>go<span class="w"> </span>env<span class="w"> </span>GOPATH<span class="k">)</span>/src/github.com/intel/intel-device-plugins-for-kubernetes
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>demo/intelvpu-job.yaml
+job.batch/intelvpu-demo-job<span class="w"> </span>created
+</pre></div>
+</div>
+</section>
+<section id="review-the-job-logs">
+<h3>Review the job logs<a class="headerlink" href="#review-the-job-logs" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span><span class="p">|</span><span class="w"> </span>fgrep<span class="w"> </span>intelvpu
+<span class="c1"># substitute the &#39;xxxxx&#39; below for the pod name listed in the above</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>logs<span class="w"> </span>intelvpu-demo-job-xxxxx
++<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">HDDL_INSTALL_DIR</span><span class="o">=</span>/root/hddl
++<span class="w"> </span><span class="nv">HDDL_INSTALL_DIR</span><span class="o">=</span>/root/hddl
++<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span>/root/inference_engine_samples_build/intel64/Release/lib/
++<span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span>/root/inference_engine_samples_build/intel64/Release/lib/
++<span class="w"> </span>/root/inference_engine_samples_build/intel64/Release/classification_sample_async<span class="w"> </span>-m<span class="w"> </span>/root/openvino_models/ir/FP16/classification/squeezenet/1.1/caffe/squeezenet1.1.xml<span class="w"> </span>-i<span class="w"> </span>/root/car.png<span class="w"> </span>-d<span class="w"> </span>HDDL
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>InferenceEngine:
+<span class="w">    </span>API<span class="w"> </span>version<span class="w"> </span>............<span class="w"> </span><span class="m">2</span>.0
+<span class="w">    </span>Build<span class="w"> </span>..................<span class="w"> </span>custom_releases/2019/R2_f5827d4773ebbe727c9acac5f007f7d94dd4be4e
+<span class="w">    </span>Description<span class="w"> </span>.......<span class="w"> </span>API
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Parsing<span class="w"> </span>input<span class="w"> </span>parameters
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Parsing<span class="w"> </span>input<span class="w"> </span>parameters
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Files<span class="w"> </span>were<span class="w"> </span>added:<span class="w"> </span><span class="m">1</span>
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w">     </span>/root/car.png
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Creating<span class="w"> </span>Inference<span class="w"> </span>Engine
+<span class="w">    </span>HDDL
+<span class="w">    </span>HDDLPlugin<span class="w"> </span>version<span class="w"> </span>.........<span class="w"> </span><span class="m">2</span>.0
+<span class="w">    </span>Build<span class="w"> </span>...........<span class="w"> </span><span class="m">27579</span>
+
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Loading<span class="w"> </span>network<span class="w"> </span>files
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Preparing<span class="w"> </span>input<span class="w"> </span>blobs
+<span class="o">[</span><span class="w"> </span>WARNING<span class="w"> </span><span class="o">]</span><span class="w"> </span>Image<span class="w"> </span>is<span class="w"> </span>resized<span class="w"> </span>from<span class="w"> </span><span class="o">(</span><span class="m">787</span>,<span class="w"> </span><span class="m">259</span><span class="o">)</span><span class="w"> </span>to<span class="w"> </span><span class="o">(</span><span class="m">227</span>,<span class="w"> </span><span class="m">227</span><span class="o">)</span>
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Batch<span class="w"> </span>size<span class="w"> </span>is<span class="w"> </span><span class="m">1</span>
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Loading<span class="w"> </span>model<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>device
+<span class="o">[</span><span class="m">07</span>:49:01.0427<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>ServiceStarter.cpp:40<span class="o">]</span><span class="w"> </span>Info:<span class="w"> </span>Waiting<span class="w"> </span><span class="k">for</span><span class="w"> </span>HDDL<span class="w"> </span>Service<span class="w"> </span>getting<span class="w"> </span>ready<span class="w"> </span>...
+<span class="o">[</span><span class="m">07</span>:49:01.0428<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>ServiceStarter.cpp:45<span class="o">]</span><span class="w"> </span>Info:<span class="w"> </span>Found<span class="w"> </span>HDDL<span class="w"> </span>Service<span class="w"> </span>is<span class="w"> </span>running.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="m">07</span>:49:01.0429<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlClient.cpp:256<span class="o">]</span><span class="w"> </span>Hddl<span class="w"> </span>api<span class="w"> </span>version:<span class="w"> </span><span class="m">2</span>.2
+<span class="o">[</span>HDDLPlugin<span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="m">07</span>:49:01.0429<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlClient.cpp:259<span class="o">]</span><span class="w"> </span>Info:<span class="w"> </span>Create<span class="w"> </span>Dispatcher2.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="m">07</span>:49:01.0432<span class="o">][</span><span class="m">10</span><span class="o">]</span>I<span class="o">[</span>Dispatcher2.cpp:148<span class="o">]</span><span class="w"> </span>Info:<span class="w"> </span>SenderRoutine<span class="w"> </span>starts.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="m">07</span>:49:01.0432<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlClient.cpp:270<span class="o">]</span><span class="w"> </span>Info:<span class="w"> </span>RegisterClient<span class="w"> </span>HDDLPlugin.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="m">07</span>:49:01.0435<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlClient.cpp:275<span class="o">]</span><span class="w"> </span>Client<span class="w"> </span>Id:<span class="w"> </span><span class="m">3</span>
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Create<span class="w"> </span>infer<span class="w"> </span>request
+<span class="o">[</span>HDDLPlugin<span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="m">07</span>:49:01.7235<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlBlob.cpp:166<span class="o">]</span><span class="w"> </span>Info:<span class="w"> </span>HddlBlob<span class="w"> </span>initialize<span class="w"> </span>ion<span class="w"> </span>...
+<span class="o">[</span>HDDLPlugin<span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="m">07</span>:49:01.7237<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlBlob.cpp:176<span class="o">]</span><span class="w"> </span>Info:<span class="w"> </span>HddlBlob<span class="w"> </span>initialize<span class="w"> </span>ion<span class="w"> </span>successfully.
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Start<span class="w"> </span>inference<span class="w"> </span><span class="o">(</span><span class="m">10</span><span class="w"> </span>asynchronous<span class="w"> </span>executions<span class="o">)</span>
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Completed<span class="w"> </span><span class="m">1</span><span class="w"> </span>async<span class="w"> </span>request<span class="w"> </span>execution
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Completed<span class="w"> </span><span class="m">2</span><span class="w"> </span>async<span class="w"> </span>request<span class="w"> </span>execution
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Completed<span class="w"> </span><span class="m">3</span><span class="w"> </span>async<span class="w"> </span>request<span class="w"> </span>execution
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Completed<span class="w"> </span><span class="m">4</span><span class="w"> </span>async<span class="w"> </span>request<span class="w"> </span>execution
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Completed<span class="w"> </span><span class="m">5</span><span class="w"> </span>async<span class="w"> </span>request<span class="w"> </span>execution
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Completed<span class="w"> </span><span class="m">6</span><span class="w"> </span>async<span class="w"> </span>request<span class="w"> </span>execution
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Completed<span class="w"> </span><span class="m">7</span><span class="w"> </span>async<span class="w"> </span>request<span class="w"> </span>execution
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Completed<span class="w"> </span><span class="m">8</span><span class="w"> </span>async<span class="w"> </span>request<span class="w"> </span>execution
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Completed<span class="w"> </span><span class="m">9</span><span class="w"> </span>async<span class="w"> </span>request<span class="w"> </span>execution
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Completed<span class="w"> </span><span class="m">10</span><span class="w"> </span>async<span class="w"> </span>request<span class="w"> </span>execution
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Processing<span class="w"> </span>output<span class="w"> </span>blobs
+
+Top<span class="w"> </span><span class="m">10</span><span class="w"> </span>results:
+
+Image<span class="w"> </span>/root/car.png
+
+classid<span class="w"> </span>probability<span class="w"> </span>label
+-------<span class="w"> </span>-----------<span class="w"> </span>-----
+<span class="m">817</span><span class="w">     </span><span class="m">0</span>.8295898<span class="w">   </span>sports<span class="w"> </span>car,<span class="w"> </span>sport<span class="w"> </span>car
+<span class="m">511</span><span class="w">     </span><span class="m">0</span>.0961304<span class="w">   </span>convertible
+<span class="m">479</span><span class="w">     </span><span class="m">0</span>.0439453<span class="w">   </span>car<span class="w"> </span>wheel
+<span class="m">751</span><span class="w">     </span><span class="m">0</span>.0101318<span class="w">   </span>racer,<span class="w"> </span>race<span class="w"> </span>car,<span class="w"> </span>racing<span class="w"> </span>car
+<span class="m">436</span><span class="w">     </span><span class="m">0</span>.0074234<span class="w">   </span>beach<span class="w"> </span>wagon,<span class="w"> </span>station<span class="w"> </span>wagon,<span class="w"> </span>wagon,<span class="w"> </span>estate<span class="w"> </span>car,<span class="w"> </span>beach<span class="w"> </span>waggon,<span class="w"> </span>station<span class="w"> </span>waggon,<span class="w"> </span>waggon
+<span class="m">656</span><span class="w">     </span><span class="m">0</span>.0042267<span class="w">   </span>minivan
+<span class="m">586</span><span class="w">     </span><span class="m">0</span>.0029869<span class="w">   </span>half<span class="w"> </span>track
+<span class="m">717</span><span class="w">     </span><span class="m">0</span>.0018148<span class="w">   </span>pickup,<span class="w"> </span>pickup<span class="w"> </span>truck
+<span class="m">864</span><span class="w">     </span><span class="m">0</span>.0013924<span class="w">   </span>tow<span class="w"> </span>truck,<span class="w"> </span>tow<span class="w"> </span>car,<span class="w"> </span>wrecker
+<span class="m">581</span><span class="w">     </span><span class="m">0</span>.0006595<span class="w">   </span>grille,<span class="w"> </span>radiator<span class="w"> </span>grille
+
+<span class="o">[</span>HDDLPlugin<span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="m">07</span>:49:01.9231<span class="o">][</span><span class="m">11</span><span class="o">]</span>I<span class="o">[</span>Dispatcher2.cpp:212<span class="o">]</span><span class="w"> </span>Info:<span class="w"> </span>Listen<span class="w"> </span>Thread<span class="w"> </span>wake<span class="w"> </span>up<span class="w"> </span>and<span class="w"> </span>to<span class="w"> </span>exit.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="m">07</span>:49:01.9232<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>Dispatcher2.cpp:81<span class="o">]</span><span class="w"> </span>Info:<span class="w"> </span>Client<span class="w"> </span>dispatcher<span class="w"> </span>exit.
+<span class="o">[</span>HDDLPlugin<span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="m">07</span>:49:01.9235<span class="o">][</span><span class="m">6</span><span class="o">]</span>I<span class="o">[</span>HddlClient.cpp:203<span class="o">]</span><span class="w"> </span>Info:<span class="w"> </span>Hddl<span class="w"> </span>client<span class="w"> </span>unregistered.
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>Execution<span class="w"> </span>successful
+
+<span class="o">[</span><span class="w"> </span>INFO<span class="w"> </span><span class="o">]</span><span class="w"> </span>This<span class="w"> </span>sample<span class="w"> </span>is<span class="w"> </span>an<span class="w"> </span>API<span class="w"> </span>example,<span class="w"> </span><span class="k">for</span><span class="w"> </span>any<span class="w"> </span>performance<span class="w"> </span>measurements<span class="w"> </span>please<span class="w"> </span>use<span class="w"> </span>the<span class="w"> </span>dedicated<span class="w"> </span>benchmark_app<span class="w"> </span>tool
+</pre></div>
+</div>
+<p>If the pod did not successfully launch, possibly because it could not obtain the vpu HDDL
+resource, it will be stuck in the <code class="docutils literal notranslate"><span class="pre">Pending</span></code> status:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods
+NAME<span class="w">                      </span>READY<span class="w">   </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
+intelvpu-demo-job-xxxxx<span class="w">   </span><span class="m">0</span>/1<span class="w">     </span>Pending<span class="w">   </span><span class="m">0</span><span class="w">          </span>8s
+</pre></div>
+</div>
+<p>This can be verified by checking the Events of the pod:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>describe<span class="w"> </span>pod<span class="w"> </span>intelvpu-demo-job-xxxxx
+...
+Events:
+Type<span class="w">     </span>Reason<span class="w">            </span>Age<span class="w">        </span>From<span class="w">               </span>Message
+----<span class="w">     </span>------<span class="w">            </span>----<span class="w">       </span>----<span class="w">               </span>-------
+Warning<span class="w">  </span>FailedScheduling<span class="w">  </span>&lt;unknown&gt;<span class="w">  </span>default-scheduler<span class="w">  </span><span class="m">0</span>/1<span class="w"> </span>nodes<span class="w"> </span>are<span class="w"> </span>available:<span class="w"> </span><span class="m">1</span><span class="w"> </span>Insufficient<span class="w"> </span>vpu.intel.com/hddl.
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../sgx_admissionwebhook/README.html" class="btn btn-neutral float-left" title="Intel SGX admission controller for Kubernetes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../demo/readme.html" class="btn btn-neutral float-right" title="Demo" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

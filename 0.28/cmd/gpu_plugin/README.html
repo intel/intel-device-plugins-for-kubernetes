@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel GPU device plugin for Kubernetes &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Intel IAA device plugin for Kubernetes" href="../iaa_plugin/README.html" />
+    <link rel="prev" title="Intel GPU NFD hook" href="../gpu_nfdhook/README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../docs/extensions.html">Extensions</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../dlb_plugin/README.html">Intel DLB device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dsa_plugin/README.html">Intel DSA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_admissionwebhook/README.html">Intel FPGA admission controller for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_crihook/README.html">Intel FPGA prestart CRI-O webhook for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_plugin/README.html">Intel FPGA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_tool/README.html">Intel FPGA test tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_nfdhook/README.html">Intel GPU NFD hook</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Intel GPU device plugin for Kubernetes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#modes-and-configuration-options">Modes and Configuration Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#operation-modes-for-different-workload-types">Operation modes for different workload types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pre-built-images">Pre-built Images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#verify-plugin-registration">Verify Plugin Registration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#testing-and-demos">Testing and Demos</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#labels-created-by-gpu-plugin">Labels created by GPU plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sr-iov-use-with-the-plugin">SR-IOV use with the plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#issues-with-media-workloads-on-multi-gpu-setups">Issues with media workloads on multi-GPU setups</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#workaround-for-qsv-and-va-api">Workaround for QSV and VA-API</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../iaa_plugin/README.html">Intel IAA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../operator/README.html">Intel Device Plugins Operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../qat_plugin/README.html">Intel QuickAssist Technology (QAT) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_plugin/README.html">Intel Software Guard Extensions (SGX) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_admissionwebhook/README.html">Intel SGX admission controller for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vpu_plugin/README.html">Intel VPU device plugin for Kubernetes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../docs/extensions.html">Extensions</a></li>
+      <li class="breadcrumb-item active">Intel GPU device plugin for Kubernetes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/gpu_plugin/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-gpu-device-plugin-for-kubernetes">
+<h1>Intel GPU device plugin for Kubernetes<a class="headerlink" href="#intel-gpu-device-plugin-for-kubernetes" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#modes-and-configuration-options">Modes and Configuration Options</a></p></li>
+<li><p><a class="reference external" href="#operation-modes-for-different-workload-types">Operation modes for different workload types</a></p></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#prerequisites">Prerequisites</a></p>
+<ul>
+<li><p><a class="reference external" href="#drivers-for-discrete-gpus">Drivers for discrete GPUs</a></p>
+<ul>
+<li><p><a class="reference external" href="#kernel-driver">Kernel driver</a></p>
+<ul>
+<li><p><a class="reference external" href="#intel-dkms-packages">Intel DKMS packages</a></p></li>
+<li><p><a class="reference external" href="#upstream-kernel">Upstream kernel</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#gpu-version">GPU Version</a></p></li>
+<li><p><a class="reference external" href="#gpu-firmware">GPU Firmware</a></p></li>
+<li><p><a class="reference external" href="#user-space-drivers">User-space drivers</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#drivers-for-older-integrated-gpus">Drivers for older (integrated) GPUs</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#pre-built-images">Pre-built Images</a></p>
+<ul>
+<li><p><a class="reference external" href="#install-to-all-nodes">Install to all nodes</a></p></li>
+<li><p><a class="reference external" href="#install-to-nodes-with-intel-gpus-with-nfd">Install to nodes with Intel GPUs with NFD</a></p></li>
+<li><p><a class="reference external" href="#install-to-nodes-with-nfd-monitoring-and-shared-dev">Install to nodes with NFD, Monitoring and Shared-dev</a></p></li>
+<li><p><a class="reference external" href="#install-to-nodes-with-intel-gpus-with-fractional-resources">Install to nodes with Intel GPUs with Fractional resources</a></p>
+<ul>
+<li><p><a class="reference external" href="#fractional-resources-details">Fractional resources details</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#verify-plugin-registration">Verify Plugin Registration</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#testing-and-demos">Testing and Demos</a></p></li>
+<li><p><a class="reference external" href="#labels-created-by-gpu-plugin">Labels created by GPU plugin</a></p></li>
+<li><p><a class="reference external" href="#sr-iov-use-with-the-plugin">SR-IOV use with the plugin</a></p></li>
+<li><p><a class="reference external" href="#issues-with-media-workloads-on-multi-gpu-setups">Issues with media workloads on multi-GPU setups</a></p>
+<ul>
+<li><p><a class="reference external" href="#workaround-for-qsv-and-va-api">Workaround for QSV and VA-API</a></p></li>
+</ul>
+</li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Intel GPU plugin facilitates Kubernetes workload offloading by providing access to
+discrete (including Intel® Data Center GPU Flex &amp; Max Series) and integrated Intel GPU devices
+supported by the host kernel.</p>
+<p>Use cases include, but are not limited to:</p>
+<ul class="simple">
+<li><p>Media transcode</p></li>
+<li><p>Media analytics</p></li>
+<li><p>Cloud gaming</p></li>
+<li><p>High performance computing</p></li>
+<li><p>AI training and inference</p></li>
+</ul>
+<p>For example containers with Intel media driver (and components using that), can offload
+video transcoding operations, and containers with the Intel OpenCL / oneAPI Level Zero
+backend libraries can offload compute operations to GPU.</p>
+</section>
+<section id="modes-and-configuration-options">
+<h2>Modes and Configuration Options<a class="headerlink" href="#modes-and-configuration-options" title="Permalink to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Flag</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">-enable-monitoring</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">disabled</td>
+<td style="text-align: left;">Enable 'i915_monitoring' resource that provides access to all Intel GPU devices on the node</td>
+</tr>
+<tr>
+<td style="text-align: left;">-resource-manager</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">disabled</td>
+<td style="text-align: left;">Enable fractional resource management, <a href="#fractional-resources">see also dependencies</a></td>
+</tr>
+<tr>
+<td style="text-align: left;">-shared-dev-num</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Number of containers that can share the same GPU device</td>
+</tr>
+<tr>
+<td style="text-align: left;">-allocation-policy</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: left;">3 possible values: balanced, packed, none. For shared-dev-num &gt; 1: <em>balanced</em> mode spreads workloads among GPU devices, <em>packed</em> mode fills one GPU fully before moving to next, and <em>none</em> selects first available device from kubelet. Default is <em>none</em>. Allocation policy does not have an effect when resource manager is enabled.</td>
+</tr>
+</tbody>
+</table><p>The plugin also accepts a number of other arguments (common to all plugins) related to logging.
+Please use the -h option to see the complete list of logging related options.</p>
+</section>
+<section id="operation-modes-for-different-workload-types">
+<h2>Operation modes for different workload types<a class="headerlink" href="#operation-modes-for-different-workload-types" title="Permalink to this heading"></a></h2>
+<p>Intel GPU-plugin supports a few different operation modes. Depending on the workloads the cluster is running, some modes make more sense than others. Below is a table that explains the differences between the modes and suggests workload types for each mode. Mode selection applies to the whole GPU plugin deployment, so it is a cluster wide decision.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Mode</th>
+<th style="text-align: left;">Sharing</th>
+<th style="text-align: left;">Intended workloads</th>
+<th style="text-align: left;">Suitable for time critical workloads</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">shared-dev-num == 1</td>
+<td style="text-align: left;">No, 1 container per GPU</td>
+<td style="text-align: left;">Workloads using all GPU capacity, e.g. AI training</td>
+<td style="text-align: left;">Yes</td>
+</tr>
+<tr>
+<td style="text-align: left;">shared-dev-num &gt; 1</td>
+<td style="text-align: left;">Yes, &gt;1 containers per GPU</td>
+<td style="text-align: left;">(Batch) workloads using only part of GPU resources, e.g. inference, media transcode/analytics, or CPU bound GPU workloads</td>
+<td style="text-align: left;">No</td>
+</tr>
+<tr>
+<td style="text-align: left;">shared-dev-num &gt; 1 &amp;&amp; resource-management</td>
+<td style="text-align: left;">Yes and no, 1&gt;= containers per GPU</td>
+<td style="text-align: left;">Any. For best results, all workloads should declare their expected GPU resource usage (memory, millicores). Requires <a href="https://github.com/intel/platform-aware-scheduling/tree/master/gpu-aware-scheduling">GAS</a>. See also <a href="#fractional-resources-details">fractional use</a></td>
+<td style="text-align: left;">Yes. 1000 millicores = exclusive GPU usage. See note below.</td>
+</tr>
+</tbody>
+</table><blockquote>
+<div><p><strong>Note</strong>: Exclusive GPU usage with &gt;=1000 millicores requires that also <em>all other GPU containers</em> specify (non-zero) millicores resource usage.</p>
+</div></blockquote>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>The following sections detail how to obtain, build, deploy and test the GPU device plugin.</p>
+<p>Examples are provided showing how to deploy the plugin either using a DaemonSet or by hand on a per-node basis.</p>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading"></a></h3>
+<p>Access to a GPU device requires firmware, kernel and user-space
+drivers supporting it.  Firmware and kernel driver need to be on the
+host, user-space drivers in the GPU workload containers.</p>
+<p>Intel GPU devices supported by the current kernel can be listed with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ grep i915 /sys/class/drm/card?/device/uevent
+/sys/class/drm/card0/device/uevent:DRIVER=i915
+/sys/class/drm/card1/device/uevent:DRIVER=i915
+</pre></div>
+</div>
+<section id="drivers-for-discrete-gpus">
+<h4>Drivers for discrete GPUs<a class="headerlink" href="#drivers-for-discrete-gpus" title="Permalink to this heading"></a></h4>
+<blockquote>
+<div><p><strong>Note</strong>: Kernel (on host) and user-space drivers (in containers)
+should be installed from the same repository as there are some
+differences between DKMS and upstream GPU driver uAPI.</p>
+</div></blockquote>
+<section id="kernel-driver">
+<h5>Kernel driver<a class="headerlink" href="#kernel-driver" title="Permalink to this heading"></a></h5>
+<section id="intel-dkms-packages">
+<h6>Intel DKMS packages<a class="headerlink" href="#intel-dkms-packages" title="Permalink to this heading"></a></h6>
+<p><code class="docutils literal notranslate"><span class="pre">i915</span></code> GPU driver DKMS<a class="reference external" href="%5Bintel-gpu-i915-backports%5D(https://github.com/intel-gpu/intel-gpu-i915-backports).">^dkms</a> package is recommended for Intel
+discrete GPUs, until their support in upstream is complete.  DKMS
+package(s) can be installed from Intel package repositories for a
+subset of older kernel versions used in enterprise / LTS
+distributions:
+https://dgpu-docs.intel.com/installation-guides/index.html</p>
+</section>
+<section id="upstream-kernel">
+<h6>Upstream kernel<a class="headerlink" href="#upstream-kernel" title="Permalink to this heading"></a></h6>
+<p>Upstream Linux kernel 6.2 or newer is needed for Intel discrete GPU
+support.  For now, upstream kernel is still missing support for a few
+of the features available in DKMS kernels (e.g. Level-Zero Sysman API
+GPU error counters).</p>
+</section>
+</section>
+<section id="gpu-version">
+<h5>GPU Version<a class="headerlink" href="#gpu-version" title="Permalink to this heading"></a></h5>
+<p>PCI IDs for the Intel GPUs on given host can be listed with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ lspci | grep -e VGA -e Display | grep Intel
+88:00.0 Display controller: Intel Corporation Device 56c1 (rev 05)
+8d:00.0 Display controller: Intel Corporation Device 56c1 (rev 05)
+</pre></div>
+</div>
+<p>(<code class="docutils literal notranslate"><span class="pre">lspci</span></code> lists GPUs with display support as “VGA compatible controller”,
+and server GPUs without display support, as “Display controller”.)</p>
+<p>Mesa “Iris” 3D driver header provides a mapping between GPU PCI IDs and their Intel brand names:
+https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/include/pci_ids/iris_pci_ids.h</p>
+<section id="gpu-firmware">
+<h6>GPU Firmware<a class="headerlink" href="#gpu-firmware" title="Permalink to this heading"></a></h6>
+<p>If your kernel build does not find the correct firmware version for
+a given GPU from the host (see <code class="docutils literal notranslate"><span class="pre">dmesg</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">i915</span></code> output), latest
+firmware versions are available in upstream:
+https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/tree/i915</p>
+</section>
+</section>
+<section id="user-space-drivers">
+<h5>User-space drivers<a class="headerlink" href="#user-space-drivers" title="Permalink to this heading"></a></h5>
+<p>Until new enough user-space drivers (supporting also discrete GPUs)
+are available directly from distribution package repositories, they
+can be installed to containers from Intel package repositories. See:
+https://dgpu-docs.intel.com/installation-guides/index.html</p>
+<p>Example container is listed in <a class="reference external" href="#testing-and-demos">Testing and demos</a>.</p>
+<p>Validation status against <em>upstream</em> kernel is listed in the user-space drivers release notes:</p>
+<ul class="simple">
+<li><p>Media driver: https://github.com/intel/media-driver/releases</p></li>
+<li><p>Compute driver: https://github.com/intel/compute-runtime/releases</p></li>
+</ul>
+</section>
+</section>
+<section id="drivers-for-older-integrated-gpus">
+<h4>Drivers for older (integrated) GPUs<a class="headerlink" href="#drivers-for-older-integrated-gpus" title="Permalink to this heading"></a></h4>
+<p>For the older (integrated) GPUs, new enough firmware and kernel driver
+are typically included already with the host OS, and new enough
+user-space drivers (for the GPU containers) are in the host OS
+repositories.</p>
+</section>
+</section>
+<section id="pre-built-images">
+<h3>Pre-built Images<a class="headerlink" href="#pre-built-images" title="Permalink to this heading"></a></h3>
+<p><a class="reference external" href="https://hub.docker.com/r/intel/intel-gpu-plugin">Pre-built images</a>
+of this component are available on the Docker hub. These images are automatically built and uploaded
+to the hub from the latest main branch of this repository.</p>
+<p>Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers in the format <code class="docutils literal notranslate"><span class="pre">x.y.z</span></code>, corresponding to the branches and releases in this
+repository. Thus the easiest way to deploy the plugin in your cluster is to run this command</p>
+<blockquote>
+<div><p><strong>Note</strong>: Replace <code class="docutils literal notranslate"><span class="pre">&lt;RELEASE_VERSION&gt;</span></code> with the desired <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tags">release tag</a> or <code class="docutils literal notranslate"><span class="pre">main</span></code> to get <code class="docutils literal notranslate"><span class="pre">devel</span></code> images.</p>
+</div></blockquote>
+<blockquote>
+<div><p><strong>Note</strong>: Add <code class="docutils literal notranslate"><span class="pre">--dry-run=client</span> <span class="pre">-o</span> <span class="pre">yaml</span></code> to the <code class="docutils literal notranslate"><span class="pre">kubectl</span></code> commands below to visualize the yaml content being applied.</p>
+</div></blockquote>
+<p>See <a class="reference internal" href="../../DEVEL.html"><span class="doc">the development guide</span></a> for details if you want to deploy a customized version of the plugin.</p>
+<section id="install-to-all-nodes">
+<h4>Install to all nodes<a class="headerlink" href="#install-to-all-nodes" title="Permalink to this heading"></a></h4>
+<p>Simplest option to enable use of Intel GPUs in Kubernetes Pods.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="install-to-nodes-with-intel-gpus-with-nfd">
+<h4>Install to nodes with Intel GPUs with NFD<a class="headerlink" href="#install-to-nodes-with-intel-gpus-with-nfd" title="Permalink to this heading"></a></h4>
+<p>Deploying GPU plugin to only nodes that have Intel GPU attached. <a class="reference external" href="https://github.com/kubernetes-sigs/node-feature-discovery">Node Feature Discovery</a> is required to detect the presence of Intel GPUs.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start NFD - if your cluster doesn&#39;t have NFD installed yet</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+
+<span class="c1"># Create NodeFeatureRules for detecting GPUs on nodes</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+
+<span class="c1"># Create GPU plugin daemonset</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/nfd_labeled_nodes?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="install-to-nodes-with-nfd-monitoring-and-shared-dev">
+<h4>Install to nodes with NFD, Monitoring and Shared-dev<a class="headerlink" href="#install-to-nodes-with-nfd-monitoring-and-shared-dev" title="Permalink to this heading"></a></h4>
+<p>Same as above, but configures GPU plugin with logging, <a class="reference external" href="#modes-and-configuration-options">monitoring and shared-dev</a> features enabled. This option is useful when there is a desire to retrieve GPU metrics from nodes. For example with <a class="reference external" href="https://github.com/intel/xpumanager/">XPU-Manager</a> or <a class="reference external" href="https://github.com/collectd/collectd/tree/collectd-6.0">collectd</a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start NFD - if your cluster doesn&#39;t have NFD installed yet</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+
+<span class="c1"># Create NodeFeatureRules for detecting GPUs on nodes</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+
+<span class="c1"># Create GPU plugin daemonset</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/monitoring_shared-dev_nfd/?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="install-to-nodes-with-intel-gpus-with-fractional-resources">
+<h4>Install to nodes with Intel GPUs with Fractional resources<a class="headerlink" href="#install-to-nodes-with-intel-gpus-with-fractional-resources" title="Permalink to this heading"></a></h4>
+<p>With the experimental fractional resource feature you can use additional kubernetes extended
+resources, such as GPU memory, which can then be consumed by deployments. PODs will then only
+deploy to nodes where there are sufficient amounts of the extended resources for the containers.</p>
+<p>(For this to work properly, all GPUs in a given node should provide equal amount of resources
+i.e. heteregenous GPU nodes are not supported.)</p>
+<p>Enabling the fractional resource feature isn’t quite as simple as just enabling the related
+command line flag. The DaemonSet needs additional RBAC-permissions
+and access to the kubelet podresources gRPC service, plus there are other dependencies to
+take care of, which are explained below. For the RBAC-permissions, gRPC service access and
+the flag enabling, it is recommended to use kustomization by running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start NFD - if your cluster doesn&#39;t have NFD installed yet</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+
+<span class="c1"># Create NodeFeatureRules for detecting GPUs on nodes</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+
+<span class="c1"># Create GPU plugin daemonset</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/fractional_resources?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+</pre></div>
+</div>
+<section id="fractional-resources-details">
+<h5>Fractional resources details<a class="headerlink" href="#fractional-resources-details" title="Permalink to this heading"></a></h5>
+<p>Usage of these fractional GPU resources requires that the cluster has node
+extended resources with the name prefix <code class="docutils literal notranslate"><span class="pre">gpu.intel.com/</span></code>. Those can be created with NFD
+by running the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/5f305b4a96314c5486256baa330434ad48d147e3/cmd/gpu_nfdhook/">hook</a> installed by the plugin initcontainer. When fractional resources are
+enabled, the plugin lets a <a class="reference external" href="https://github.com/intel/platform-aware-scheduling/tree/master/gpu-aware-scheduling">scheduler extender</a>
+do card selection decisions based on resource availability and the amount of extended
+resources requested in the <a class="reference external" href="https://github.com/intel/platform-aware-scheduling/blob/master/gpu-aware-scheduling/docs/usage.md#pods">pod spec</a>.</p>
+<p>The scheduler extender then needs to annotate the pod objects with unique
+increasing numeric timestamps in the annotation <code class="docutils literal notranslate"><span class="pre">gas-ts</span></code> and container card selections in
+<code class="docutils literal notranslate"><span class="pre">gas-container-cards</span></code> annotation. The latter has container separator ‘<code class="docutils literal notranslate"><span class="pre">|</span></code>’ and card separator
+‘<code class="docutils literal notranslate"><span class="pre">,</span></code>’. Example for a pod with two containers and both containers getting two cards:
+<code class="docutils literal notranslate"><span class="pre">gas-container-cards:card0,card1|card2,card3</span></code>. Enabling the fractional-resource support
+in the plugin without running such an annotation adding scheduler extender in the cluster
+will only slow down GPU-deployments, so do not enable this feature unnecessarily.</p>
+<p>In multi-tile systems, containers can request individual tiles to improve GPU resource usage.
+Tiles targeted for containers are specified to pod via <code class="docutils literal notranslate"><span class="pre">gas-container-tiles</span></code> annotation where the the annotation
+value describes a set of card and tile combinations. For example in a two container pod, the annotation
+could be <code class="docutils literal notranslate"><span class="pre">gas-container-tiles:card0:gt0+gt1|card1:gt1,card2:gt0</span></code>. Similarly to <code class="docutils literal notranslate"><span class="pre">gas-container-cards</span></code>, the container
+details are split via <code class="docutils literal notranslate"><span class="pre">|</span></code>. In the example above, the first container gets tiles 0 and 1 from card 0,
+and the second container gets tile 1 from card 1 and tile 0 from card 2.</p>
+<blockquote>
+<div><p><strong>Note</strong>: It is also possible to run the GPU device plugin using a non-root user. To do this,
+the nodes’ DAC rules must be configured to device plugin socket creation and kubelet registration.
+Furthermore, the deployments <code class="docutils literal notranslate"><span class="pre">securityContext</span></code> must be configured with appropriate <code class="docutils literal notranslate"><span class="pre">runAsUser/runAsGroup</span></code>.</p>
+</div></blockquote>
+</section>
+</section>
+</section>
+<section id="verify-plugin-registration">
+<h3>Verify Plugin Registration<a class="headerlink" href="#verify-plugin-registration" title="Permalink to this heading"></a></h3>
+<p>You can verify the plugin has been registered with the expected nodes by searching for the relevant
+resource allocation status on the nodes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-o<span class="o">=</span><span class="nv">jsonpath</span><span class="o">=</span><span class="s2">&quot;{range .items[*]}{.metadata.name}{&#39;\n&#39;}{&#39; i915: &#39;}{.status.allocatable.gpu\.intel\.com/i915}{&#39;\n&#39;}&quot;</span>
+master
+<span class="w"> </span>i915:<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="testing-and-demos">
+<h2>Testing and Demos<a class="headerlink" href="#testing-and-demos" title="Permalink to this heading"></a></h2>
+<p>The GPU plugin functionality can be verified by deploying an <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/5f305b4a96314c5486256baa330434ad48d147e3/cmd/gpu_plugin/../../demo/intel-opencl-icd/">OpenCL image</a> which runs <code class="docutils literal notranslate"><span class="pre">clinfo</span></code> outputting the GPU capabilities (detected by driver installed to the image).</p>
+<ol>
+<li><p>Make the image available to the cluster:</p>
+<p>Build image:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>intel-opencl-icd
+</pre></div>
+</div>
+<p>Tag and push the <code class="docutils literal notranslate"><span class="pre">intel-opencl-icd</span></code> image to a repository available in the cluster. Then modify the <code class="docutils literal notranslate"><span class="pre">intelgpu-job.yaml</span></code>’s image location accordingly:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>docker<span class="w"> </span>tag<span class="w"> </span>intel/intel-opencl-icd:devel<span class="w"> </span>&lt;repository&gt;/intel/intel-opencl-icd:latest
+$<span class="w"> </span>docker<span class="w"> </span>push<span class="w"> </span>&lt;repository&gt;/intel/intel-opencl-icd:latest
+$<span class="w"> </span><span class="nv">$EDITOR</span><span class="w"> </span><span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/demo/intelgpu-job.yaml
+</pre></div>
+</div>
+<p>If you are running the demo on a single node cluster, and do not have your own registry, you can add image to node image cache instead. For example, to import docker image to containerd cache:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nv">IMAGE_NAME</span><span class="o">=</span>opencl-icd.tar
+$<span class="w"> </span>docker<span class="w"> </span>save<span class="w"> </span>-o<span class="w"> </span><span class="nv">$IMAGE_NAME</span><span class="w"> </span>intel/intel-opencl-icd:devel
+$<span class="w"> </span>ctr<span class="w"> </span>-n<span class="o">=</span>k8s.io<span class="w"> </span>images<span class="w"> </span>import<span class="w"> </span><span class="nv">$IMAGE_NAME</span>
+$<span class="w"> </span>rm<span class="w"> </span><span class="nv">$IMAGE_NAME</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create a job:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/demo/intelgpu-job.yaml
+job.batch/intelgpu-demo-job<span class="w"> </span>created
+</pre></div>
+</div>
+</li>
+<li><p>Review the job’s logs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span><span class="p">|</span><span class="w"> </span>fgrep<span class="w"> </span>intelgpu
+<span class="c1"># substitute the &#39;xxxxx&#39; below for the pod name listed in the above</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>logs<span class="w"> </span>intelgpu-demo-job-xxxxx
+&lt;log<span class="w"> </span>output&gt;
+</pre></div>
+</div>
+<p>If the pod did not successfully launch, possibly because it could not obtain
+the requested GPU resource, it will be stuck in the <code class="docutils literal notranslate"><span class="pre">Pending</span></code> status:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods
+NAME<span class="w">                      </span>READY<span class="w">   </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
+intelgpu-demo-job-xxxxx<span class="w">   </span><span class="m">0</span>/1<span class="w">     </span>Pending<span class="w">   </span><span class="m">0</span><span class="w">          </span>8s
+</pre></div>
+</div>
+<p>This can be verified by checking the Events of the pod:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>describe<span class="w"> </span>pod<span class="w"> </span>intelgpu-demo-job-xxxxx
+...
+Events:
+<span class="w">  </span>Type<span class="w">     </span>Reason<span class="w">            </span>Age<span class="w">        </span>From<span class="w">               </span>Message
+<span class="w">  </span>----<span class="w">     </span>------<span class="w">            </span>----<span class="w">       </span>----<span class="w">               </span>-------
+<span class="w">  </span>Warning<span class="w">  </span>FailedScheduling<span class="w">  </span>&lt;unknown&gt;<span class="w">  </span>default-scheduler<span class="w">  </span><span class="m">0</span>/1<span class="w"> </span>nodes<span class="w"> </span>are<span class="w"> </span>available:<span class="w"> </span><span class="m">1</span><span class="w"> </span>Insufficient<span class="w"> </span>gpu.intel.com/i915.
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="labels-created-by-gpu-plugin">
+<h2>Labels created by GPU plugin<a class="headerlink" href="#labels-created-by-gpu-plugin" title="Permalink to this heading"></a></h2>
+<p>If installed with NFD and started with resource-management, plugin will export a set of labels for the node. For detailed info, see <a class="reference internal" href="labels.html"><span class="doc">labeling documentation</span></a>.</p>
+</section>
+<section id="sr-iov-use-with-the-plugin">
+<h2>SR-IOV use with the plugin<a class="headerlink" href="#sr-iov-use-with-the-plugin" title="Permalink to this heading"></a></h2>
+<p>GPU plugin does <strong>not</strong> setup SR-IOV. It has to be configured by the cluster admin.</p>
+<p>GPU plugin does however support provisioning Virtual Functions (VFs) to containers for a SR-IOV enabled GPU. When the plugin detects a GPU with SR-IOV VFs configured, it will only provision the VFs and leaves the PF device on the host.</p>
+</section>
+<section id="issues-with-media-workloads-on-multi-gpu-setups">
+<h2>Issues with media workloads on multi-GPU setups<a class="headerlink" href="#issues-with-media-workloads-on-multi-gpu-setups" title="Permalink to this heading"></a></h2>
+<p>OneVPL media API, 3D and compute APIs provide device discovery
+functionality for applications and work fine in multi-GPU setups.
+VA-API and legacy QSV (MediaSDK) media APIs do not, and do not
+provide (e.g. environment variable) override for their <em>default</em>
+device file.</p>
+<p>As result, media applications using VA-API or QSV, fail to locate the
+correct GPU device file unless it is the first (”renderD128”) one, or
+device file name is explictly specified with an application option.</p>
+<p>Kubernetes device plugins expose only requested number of device
+files, and their naming matches host device file names (for several
+reasons unrelated to media).  Therefore, on multi-GPU hosts, the only
+GPU device file mapped to the media container can differ from
+“renderD128”, and media applications using VA-API or QSV need to be
+explicitly told which one to use.</p>
+<p>These options differ from application to application.  Relevant FFmpeg
+options are documented here:</p>
+<ul class="simple">
+<li><p>VA-API: https://trac.ffmpeg.org/wiki/Hardware/VAAPI</p></li>
+<li><p>QSV: https://github.com/Intel-Media-SDK/MediaSDK/wiki/FFmpeg-QSV-Multi-GPU-Selection-on-Linux</p></li>
+</ul>
+<section id="workaround-for-qsv-and-va-api">
+<h3>Workaround for QSV and VA-API<a class="headerlink" href="#workaround-for-qsv-and-va-api" title="Permalink to this heading"></a></h3>
+<p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/5f305b4a96314c5486256baa330434ad48d147e3/cmd/gpu_plugin/render-device.sh">Render device</a> shell script locates and outputs the
+correct device file name.  It can be added to the container and used
+to give device file name for the application.</p>
+<p>Use it either from another script invoking the application, or
+directly from the Pod YAML command line.  In latter case, it can be
+used either to add the device file name to the end of given command
+line, like this:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>command:<span class="w"> </span><span class="o">[</span><span class="s2">&quot;render-device.sh&quot;</span>,<span class="w"> </span><span class="s2">&quot;vainfo&quot;</span>,<span class="w"> </span><span class="s2">&quot;--display&quot;</span>,<span class="w"> </span><span class="s2">&quot;drm&quot;</span>,<span class="w"> </span><span class="s2">&quot;--device&quot;</span><span class="o">]</span>
+
+<span class="o">=</span>&gt;<span class="w"> </span>/usr/bin/vainfo<span class="w"> </span>--display<span class="w"> </span>drm<span class="w"> </span>--device<span class="w"> </span>/dev/dri/renderDXXX
+</pre></div>
+</div>
+<p>Or inline, like this:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>command:<span class="w"> </span><span class="o">[</span><span class="s2">&quot;/bin/sh&quot;</span>,<span class="w"> </span><span class="s2">&quot;-c&quot;</span>,
+<span class="w">          </span><span class="s2">&quot;vainfo --device </span><span class="k">$(</span>render-device.sh<span class="w"> </span><span class="m">1</span><span class="k">)</span><span class="s2"> --display drm&quot;</span>
+<span class="w">         </span><span class="o">]</span>
+</pre></div>
+</div>
+<p>If device file name is needed for multiple commands, one can use shell variable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>command:<span class="w"> </span><span class="o">[</span><span class="s2">&quot;/bin/sh&quot;</span>,<span class="w"> </span><span class="s2">&quot;-c&quot;</span>,
+<span class="w">          </span><span class="s2">&quot;dev=</span><span class="k">$(</span>render-device.sh<span class="w"> </span><span class="m">1</span><span class="k">)</span><span class="s2"> &amp;&amp; vainfo --device </span><span class="nv">$dev</span><span class="s2"> &amp;&amp; &lt;more commands&gt;&quot;</span>
+<span class="w">         </span><span class="o">]</span>
+</pre></div>
+</div>
+<p>With argument N, script outputs name of the Nth suitable GPU device
+file, which can be used when more than one GPU resource was requested.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../gpu_nfdhook/README.html" class="btn btn-neutral float-left" title="Intel GPU NFD hook" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../iaa_plugin/README.html" class="btn btn-neutral float-right" title="Intel IAA device plugin for Kubernetes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
