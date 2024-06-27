@@ -43,6 +43,8 @@ type PCIDevice struct {
 	BDF       string
 	Vendor    string
 	Device    string
+	SubVendor string
+	SubDevice string
 	Class     string
 	CPUs      string
 	NUMA      string
@@ -78,13 +80,15 @@ func NewPCIDevice(devPath string) (*PCIDevice, error) {
 	}
 
 	fileMap := map[string]*string{
-		"vendor":         &pci.Vendor,
-		"device":         &pci.Device,
-		"class":          &pci.Class,
-		"local_cpulist":  &pci.CPUs,
-		"numa_node":      &pci.NUMA,
-		"sriov_numvfs":   &pci.VFs,
-		"sriov_totalvfs": &pci.TotalVFs,
+		"vendor":           &pci.Vendor,
+		"device":           &pci.Device,
+		"subsystem_vendor": &pci.SubVendor,
+		"subsystem_device": &pci.SubDevice,
+		"class":            &pci.Class,
+		"local_cpulist":    &pci.CPUs,
+		"numa_node":        &pci.NUMA,
+		"sriov_numvfs":     &pci.VFs,
+		"sriov_totalvfs":   &pci.TotalVFs,
 	}
 
 	if err = readFilesInDirectory(fileMap, pci.SysFsPath); err != nil {
