@@ -54,7 +54,7 @@ jobs:
         run: |
           REG=intel/ make ${IMAGE_NAME} BUILDER=docker
       - name: Trivy scan for image
-        uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2 # 0.23.0
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
         with:
           scan-type: image
           image-ref: intel/${{ matrix.image }}:${{ inputs.image_tag }}
