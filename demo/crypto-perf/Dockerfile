@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget build-esse
 ARG DPDK_TARBALL=dpdk-24.03.tar.xz
 ARG DPDK_TARBALL_SHA256="33ed973b3945af4f5923096ddca250b401dc80be3b5c6393b4e4fe43a1a6c2ad"
 
-RUN wget -q https://fast.dpdk.org/rel/$DPDK_TARBALL \
+RUN umask 0000 && wget -q https://fast.dpdk.org/rel/$DPDK_TARBALL \
     && echo "$DPDK_TARBALL_SHA256 $DPDK_TARBALL" | sha256sum -c - \
-    && tar -xf $DPDK_TARBALL && rm $DPDK_TARBALL
+    && tar -xf $DPDK_TARBALL --no-same-permissions --no-same-owner && rm $DPDK_TARBALL
 
 ARG SOVERSION=24
 RUN cd dpdk-* && meson setup \

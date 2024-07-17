@@ -12,7 +12,7 @@ RUN mkdir -p /usr/src/opae && \
     cd /usr/src/opae && \
     curl -fsSL https://github.com/OFS/opae-sdk/archive/${OPAE_RELEASE}.tar.gz -o opae.tar.gz && \
     echo "$OPAE_SHA256 opae.tar.gz" | sha256sum -c - && \
-    tar -xzf opae.tar.gz && \
+    umask 0000 && tar -xzf opae.tar.gz --no-same-permissions --no-same-owner && \
     rm -f opae.tar.gz
 
 # Build OPAE
