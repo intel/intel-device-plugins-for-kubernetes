@@ -88,8 +88,8 @@ func setupFirstNode(ctx context.Context) []byte {
 	// cluster infrastructure pods that are being pulled or started can block
 	// test pods from running, and tests that ensure all pods are running and
 	// ready will fail).
-	if err = e2epod.WaitForPodsRunningReady(ctx, c, metav1.NamespaceSystem, int32(framework.TestContext.MinStartupPods),
-		int32(framework.TestContext.AllowedNotReadyNodes), timeouts.SystemPodsStartup); err != nil {
+	if err = e2epod.WaitForPodsRunningReady(ctx, c, metav1.NamespaceSystem, framework.TestContext.MinStartupPods,
+		timeouts.SystemPodsStartup); err != nil {
 		e2edebug.DumpAllNamespaceInfo(ctx, c, metav1.NamespaceSystem)
 		e2ekubectl.LogFailedContainers(ctx, c, metav1.NamespaceSystem, framework.Logf)
 		framework.Failf("Error waiting for all pods to be running and ready: %v", err)
@@ -111,7 +111,7 @@ func setupFirstNode(ctx context.Context) []byte {
 
 	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
 
-	if err = e2epod.WaitForPodsRunningReady(ctx, c, "node-feature-discovery", 2, 0,
+	if err = e2epod.WaitForPodsRunningReady(ctx, c, "node-feature-discovery", 2,
 		300*time.Second); err != nil {
 		framework.Failf("unable to wait for NFD pods to be running and ready: %v", err)
 	}
