@@ -23,6 +23,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/diff"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
@@ -38,6 +39,11 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	yes := true
 	no := false
 	charDevice := v1.HostPathCharDev
+	maxUnavailable := &intstr.IntOrString{}
+	maxUnavailable.IntVal = 1
+	maxSurge := &intstr.IntOrString{}
+	maxSurge.IntVal = 0
+
 	daemonSet := apps.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
@@ -54,6 +60,13 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": appLabel,
+				},
+			},
+			UpdateStrategy: apps.DaemonSetUpdateStrategy{
+				Type: "RollingUpdate",
+				RollingUpdate: &apps.RollingUpdateDaemonSet{
+					MaxUnavailable: maxUnavailable,
+					MaxSurge:       maxSurge,
 				},
 			},
 			Template: v1.PodTemplateSpec{
