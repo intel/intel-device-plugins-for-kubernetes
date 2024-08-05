@@ -17,6 +17,9 @@ spec:
     resources:
       limits:
         iaa.intel.com/wq-user-dedicated: 1
-        # In kernels 5.13-5.17, ENQCMD is disabled (is to be reinstated in 5.18)
         # iaa.intel.com/wq-user-shared: 1
+    securityContext:
+      capabilities:
+        add:
+          ["SYS_RAWIO"]
   restartPolicy: Never
