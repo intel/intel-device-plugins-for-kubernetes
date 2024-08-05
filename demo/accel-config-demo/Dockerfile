@@ -16,4 +16,4 @@ FROM debian:unstable-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends pciutils accel-config accel-config-test && rm -rf /var/lib/apt/lists/\*
 
-RUN sed -i -e '420,429d;480,489d' /usr/libexec/accel-config/test/iaa_user_test_runner.sh
+RUN sed -i -e '/(IAA_OPCODE_MASK_DECOMPRESS\|(IAA_OPCODE_MASK_TRANSL_FETCH/,+9d' /usr/libexec/accel-config/test/iaa_user_test_runner.sh
