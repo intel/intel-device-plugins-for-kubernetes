@@ -416,7 +416,7 @@ func getDeviceHealthiness(device string, lookup map[string]string) string {
 
 	// If status reads "-1", the device is considered bad:
 	// https://github.com/torvalds/linux/blob/v6.6-rc5/Documentation/ABI/testing/debugfs-driver-qat
-	if data, err := os.ReadFile(hbStatusFile); err == nil && string(data) == "-1" {
+	if data, err := os.ReadFile(hbStatusFile); err == nil && strings.Split(string(data), "\n")[0] == "-1" {
 		healthiness = pluginapi.Unhealthy
 	}
 
