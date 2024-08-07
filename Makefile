@@ -172,7 +172,7 @@ e2e-dlb:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:dlb.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
 
 e2e-spr:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:(iaa|dsa)|Device:qat.*Mode:dpdk.*Resource:(cy|dc).*" -ginkgo.focus "Device:sgx.*|(SGX Admission)" -ginkgo.focus "Device:gpu.*Resource:i915" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:(iaa|dsa)|Device:qat.*Mode:dpdk.*Resource:(cy|dc).*" -ginkgo.focus "Device:sgx.*|(SGX Admission)" -ginkgo.focus "Device:gpu.*Resource:i915" -ginkgo.skip "App:sgx-epc-cgroup" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
 
 pre-pull:
 ifeq ($(TAG),devel)

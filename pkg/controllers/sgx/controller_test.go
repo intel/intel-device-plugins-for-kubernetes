@@ -74,6 +74,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 					},
 				},
 				Spec: v1.PodSpec{
+					PriorityClassName:            "system-node-critical",
 					AutomountServiceAccountToken: &no,
 					Containers: []v1.Container{
 						{
