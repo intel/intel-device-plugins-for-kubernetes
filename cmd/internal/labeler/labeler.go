@@ -29,6 +29,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
@@ -59,6 +60,8 @@ type labeler struct {
 	gpuDeviceReg     *regexp.Regexp
 	controlDeviceReg *regexp.Regexp
 	labels           labelMap
+
+	levelzero levelzeroservice.LevelzeroService
 
 	sysfsDRMDir   string
 	labelsChanged bool
@@ -163,7 +166,7 @@ func fallback() uint64 {
 	return getEnvVarNumber(memoryOverrideEnv)
 }
 
-func GetMemoryAmount(sysfsDrmDir, gpuName string, numTiles uint64) uint64 {
+func legacyFallback(sysfsDrmDir, gpuName string, numTiles uint64) uint64 {
 	reserved := getEnvVarNumber(memoryReservedEnv)
 
 	filePath := filepath.Join(sysfsDrmDir, gpuName, "lmem_total_bytes")
@@ -181,6 +184,26 @@ func GetMemoryAmount(sysfsDrmDir, gpuName string, numTiles uint64) uint64 {
 	}
 
 	return totalPerTile*numTiles - reserved
+}
+
+func (l *labeler) GetMemoryAmount(sysfsDrmDir, gpuName string, numTiles uint64) uint64 {
+	link, err := os.Readlink(filepath.Join(sysfsDrmDir, gpuName, "device"))
+	if err != nil {
+		return legacyFallback(sysfsDrmDir, gpuName, numTiles)
+	}
+
+	amount := uint64(0)
+
+	if l.levelzero != nil {
+		amount, err = l.levelzero.GetDeviceMemoryAmount(filepath.Base(link))
+		if amount == 0 || err != nil {
+			return legacyFallback(sysfsDrmDir, gpuName, numTiles)
+		}
+	} else {
+		return legacyFallback(sysfsDrmDir, gpuName, numTiles)
+	}
+
+	return amount
 }
 
 // GetTileCount reads the tile count.
@@ -317,7 +340,7 @@ func (l *labeler) createLabels() error {
 		numTiles := GetTileCount(filepath.Join(l.sysfsDRMDir, gpuName))
 		tileCount += int(numTiles)
 
-		memoryAmount := GetMemoryAmount(l.sysfsDRMDir, gpuName, numTiles)
+		memoryAmount := l.GetMemoryAmount(l.sysfsDRMDir, gpuName, numTiles)
 		gpuNumList = append(gpuNumList, gpuName[4:])
 
 		// get numa node of the GPU
@@ -446,8 +469,10 @@ func CreateAndPrintLabels(sysfsDRMDir string) {
 
 // Gathers node's GPU labels on channel trigger or timeout, and write them to a file.
 // The created label file is deleted on exit (process dying).
-func Run(sysfsDrmDir, nfdFeatureFile string, updateInterval time.Duration, scanResources chan bool) {
+func Run(sysfsDrmDir, nfdFeatureFile string, updateInterval time.Duration, scanResources chan bool, levelzero levelzeroservice.LevelzeroService, exitFunc func()) {
 	l := newLabeler(sysfsDrmDir)
+
+	l.levelzero = levelzero
 
 	interruptChan := make(chan os.Signal, 1)
 	signal.Notify(interruptChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP, syscall.SIGQUIT)
@@ -499,6 +524,6 @@ Loop:
 
 	klog.V(1).Info("Stopping GPU labeler")
 
-	// Close the whole application
-	os.Exit(0)
+	// Call exitFunc that might exit the app
+	exitFunc()
 }

@@ -1,0 +1,10 @@
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    name: levelzerosocket
+    mountPath: /var/lib/levelzero
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: levelzerosocket
+    emptyDir: {}

@@ -39,7 +39,11 @@ func getFakeDevNodes(devDir, charDevDir, wqName string) ([]pluginapi.DeviceSpec,
 
 	var devNum, queueNum int
 
-	fmt.Sscanf(wqName, "wq%d.%d", &devNum, &queueNum)
+	_, err := fmt.Sscanf(wqName, "wq%d.%d", &devNum, &queueNum)
+	if err != nil {
+		return []pluginapi.DeviceSpec{}, err
+	}
+
 	charDevPath := path.Join(charDevDir, fmt.Sprintf("%d:%d", dsaMajor, devNum*10+queueNum))
 
 	return []pluginapi.DeviceSpec{

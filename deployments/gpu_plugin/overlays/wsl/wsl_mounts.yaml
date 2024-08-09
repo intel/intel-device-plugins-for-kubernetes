@@ -1,0 +1,24 @@
+- op: add
+  path: /spec/template/spec/containers/1/volumeMounts/-
+  value:
+    name: wsllib
+    mountPath: /usr/lib/wsl
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    name: devdxg
+    mountPath: /dev/dxg
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: wsllib
+    hostPath:
+      path: /usr/lib/wsl
+      type: DirectoryOrCreate
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: devdxg
+    hostPath:
+      path: /dev/dxg
+      type: CharDevice

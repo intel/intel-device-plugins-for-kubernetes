@@ -23,7 +23,6 @@ cmd/operator/operator
 
 deployments/fpga_admissionwebhook/base/intel-fpga-webhook-certs-secret
 
-*.h
 *.gbs.*
 *.aocx
 *.aocx.*

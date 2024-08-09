@@ -51,8 +51,8 @@ const (
 	gasCardAnnotation = "gas-container-cards"
 	gasTileAnnotation = "gas-container-tiles"
 
-	levelZeroAffinityMaskEnvVar = "ZE_AFFINITY_MASK"
-	levelZeroHierarchyEnvVar    = "ZE_FLAT_DEVICE_HIERARCHY"
+	LevelzeroAffinityMaskEnvVar = "ZE_AFFINITY_MASK"
+	levelzeroHierarchyEnvVar    = "ZE_FLAT_DEVICE_HIERARCHY"
 
 	hierarchyModeComposite = "COMPOSITE"
 	hierarchyModeFlat      = "FLAT"
@@ -796,7 +796,7 @@ func (rm *resourceManager) createAllocateResponse(deviceIds []string, tileAffini
 			cresp.Envs = make(map[string]string)
 		}
 
-		cresp.Envs[levelZeroAffinityMaskEnvVar] = tileAffinityMask
+		cresp.Envs[LevelzeroAffinityMaskEnvVar] = tileAffinityMask
 	}
 
 	allocateResponse.ContainerResponses = append(allocateResponse.ContainerResponses, &cresp)
@@ -851,7 +851,7 @@ func containerCards(pod *v1.Pod, gpuUsingContainerIndex int) []string {
 
 // Guesses level zero hierarchy mode for the container. Defaults to the new "flat" mode
 // if no mode is set in the container's env variables.
-func guessLevelZeroHierarchyMode(pod *v1.Pod, containerIndex int) string {
+func guessLevelzeroHierarchyMode(pod *v1.Pod, containerIndex int) string {
 	klog.V(4).Infof("Checking pod %s envs", pod.Name)
 
 	if containerIndex < len(pod.Spec.Containers) {
@@ -859,7 +859,7 @@ func guessLevelZeroHierarchyMode(pod *v1.Pod, containerIndex int) string {
 
 		if c.Env != nil {
 			for _, env := range c.Env {
-				if env.Name == levelZeroHierarchyEnvVar {
+				if env.Name == levelzeroHierarchyEnvVar {
 					switch env.Value {
 					// Check that the value is valid.
 					case hierarchyModeComposite:
@@ -959,7 +959,7 @@ func containerTileAffinityMask(pod *v1.Pod, gpuUsingContainerIndex, tilesPerCard
 		}
 
 		if i == gpuUsingContainerIndex {
-			return convertTileInfoToEnvMask(containerTileInfo, tilesPerCard, guessLevelZeroHierarchyMode(pod, containerIndex))
+			return convertTileInfoToEnvMask(containerTileInfo, tilesPerCard, guessLevelzeroHierarchyMode(pod, containerIndex))
 		}
 
 		i++

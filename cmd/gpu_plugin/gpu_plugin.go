@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,6 +32,7 @@ import (
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/labeler"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
@@ -39,6 +41,8 @@ import (
 const (
 	sysfsDrmDirectory = "/sys/class/drm"
 	devfsDriDirectory = "/dev/dri"
+	wslDxgPath        = "/dev/dxg"
+	wslLibPath        = "/usr/lib/wsl"
 	nfdFeatureDir     = "/etc/kubernetes/node-feature-discovery/features.d"
 	resourceFilename  = "intel-gpu-resources.txt"
 	gpuDeviceRE       = `^card[0-9]+$`
@@ -50,6 +54,7 @@ const (
 	namespace         = "gpu.intel.com"
 	deviceTypeI915    = "i915"
 	deviceTypeXe      = "xe"
+	deviceTypeDxg     = "dxg"
 	deviceTypeDefault = deviceTypeI915
 
 	// telemetry resource settings.
@@ -65,9 +70,11 @@ const (
 
 type cliOptions struct {
 	preferredAllocationPolicy string
+	levelzeroSocketPath       string
 	sharedDevNum              int
 	enableMonitoring          bool
 	resourceManagement        bool
+	wslScan                   bool
 }
 
 type rmWithMultipleDriversErr struct {
@@ -258,7 +265,8 @@ type devicePlugin struct {
 	scanDone      chan bool
 	scanResources chan bool
 
-	resMan rm.ResourceManager
+	resMan           rm.ResourceManager
+	levelzeroService levelzeroservice.LevelzeroService
 
 	sysfsDir  string
 	devfsDir  string
@@ -309,13 +317,42 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 		dp.policy = nonePolicy
 	}
 
-	if _, err := os.ReadDir(dp.bypathDir); err != nil {
-		klog.Warningf("failed to read by-path dir: %+v", err)
+	if !options.wslScan {
+		if _, err := os.ReadDir(dp.bypathDir); err != nil {
+			klog.Warningf("failed to read by-path dir: %+v", err)
 
-		dp.bypathFound = false
+			dp.bypathFound = false
+		}
 	}
 
 	return dp
+}
+
+func (dp *devicePlugin) healthStatusForCard(cardPath string) string {
+	if dp.levelzeroService == nil {
+		return pluginapi.Healthy
+	}
+
+	link, err := os.Readlink(filepath.Join(cardPath, "device"))
+	if err != nil {
+		klog.Warning("couldn't read device link for", cardPath)
+
+		return pluginapi.Healthy
+	}
+
+	memOk, busOk, err := dp.levelzeroService.GetDeviceHealth(filepath.Base(link))
+	// In case of any errors, deem the device healthy
+	if err != nil {
+		klog.Warningf("Device health retrieval failed: %v", err)
+
+		return pluginapi.Healthy
+	}
+
+	if memOk && busOk {
+		return pluginapi.Healthy
+	} else {
+		return pluginapi.Unhealthy
+	}
 }
 
 // Implement the PreferredAllocator interface.
@@ -353,6 +390,68 @@ func (dp *devicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocatio
 }
 
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
+	if dp.options.wslScan {
+		return dp.wslGpuScan(notifier)
+	} else {
+		return dp.sysFsGpuScan(notifier)
+	}
+}
+
+func (dp *devicePlugin) wslGpuScan(notifier dpapi.Notifier) error {
+	defer dp.scanTicker.Stop()
+
+	klog.V(1).Infof("GPU (%s) resource share count = %d", deviceTypeDxg, dp.options.sharedDevNum)
+
+	devSpecs := []pluginapi.DeviceSpec{
+		{
+			HostPath:      wslDxgPath,
+			ContainerPath: wslDxgPath,
+			Permissions:   "rw",
+		},
+	}
+
+	mounts := []pluginapi.Mount{
+		{
+			ContainerPath: wslLibPath,
+			HostPath:      wslLibPath,
+			ReadOnly:      true,
+		},
+	}
+
+	for {
+		indices, err := dp.levelzeroService.GetIntelIndices()
+		if err == nil {
+			klog.V(4).Info("Intel Level-Zero indices: ", indices)
+
+			devTree := dpapi.NewDeviceTree()
+
+			for _, index := range indices {
+				envs := map[string]string{
+					rm.LevelzeroAffinityMaskEnvVar: strconv.Itoa(int(index)),
+				}
+
+				deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devSpecs, mounts, envs, nil, nil)
+
+				for i := 0; i < dp.options.sharedDevNum; i++ {
+					devID := fmt.Sprintf("card%d-%d", index, i)
+					devTree.AddDevice(deviceTypeDxg, devID, deviceInfo)
+				}
+			}
+
+			notifier.Notify(devTree)
+		} else {
+			klog.Warning("Failed to get Intel indices from Level-Zero")
+		}
+
+		select {
+		case <-dp.scanDone:
+			return nil
+		case <-dp.scanTicker.C:
+		}
+	}
+}
+
+func (dp *devicePlugin) sysFsGpuScan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
 
 	klog.V(1).Infof("GPU (%s/%s) resource share count = %d", deviceTypeI915, deviceTypeXe, dp.options.sharedDevNum)
@@ -514,7 +613,11 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			mounts = dp.bypathMountsForPci(cardPath, name, dp.bypathDir)
 		}
 
-		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devSpecs, mounts, nil, nil, nil)
+		health := dp.healthStatusForCard(cardPath)
+
+		klog.V(4).Infof("%s is %s", cardPath, health)
+
+		deviceInfo := dpapi.NewDeviceInfo(health, devSpecs, mounts, nil, nil, nil)
 
 		for i := 0; i < dp.options.sharedDevNum; i++ {
 			devID := fmt.Sprintf("%s-%d", name, i)
@@ -575,8 +678,10 @@ func main() {
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable '*_monitoring' (= all GPUs) resource")
 	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
+	flag.BoolVar(&opts.wslScan, "wsl", false, "run plugin in WSL environment")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
+	flag.StringVar(&opts.levelzeroSocketPath, "levelzero-socket", "", "Socket path for service to retrieve data from Level-ero interface")
 	flag.Parse()
 
 	if opts.sharedDevNum < 1 {
@@ -599,6 +704,34 @@ func main() {
 
 	plugin := newDevicePlugin(prefix+sysfsDrmDirectory, prefix+devfsDriDirectory, opts)
 
+	if plugin.options.wslScan {
+		klog.Info("WSL mode requested")
+
+		if plugin.options.resourceManagement {
+			klog.Error("Resource management is not supported within WSL. Please disable resource management.")
+
+			os.Exit(1)
+		}
+
+		if plugin.options.enableMonitoring {
+			klog.Error("Monitoring is not supported within WSL. Please disable monitoring.")
+
+			os.Exit(1)
+		}
+
+		if plugin.options.levelzeroSocketPath == "" {
+			klog.Error("WSL requires Level-Zero service to operate. See README for help.")
+
+			os.Exit(1)
+		}
+	}
+
+	if plugin.options.levelzeroSocketPath != "" {
+		plugin.levelzeroService = levelzeroservice.NewLevelzero(plugin.options.levelzeroSocketPath)
+
+		go plugin.levelzeroService.Run(true)
+	}
+
 	if plugin.options.resourceManagement {
 		// Start labeler to export labels file for NFD.
 		nfdFeatureFile := path.Join(nfdFeatureDir, resourceFilename)
@@ -607,7 +740,10 @@ func main() {
 
 		// Labeler catches OS signals and calls os.Exit() after receiving any.
 		go labeler.Run(prefix+sysfsDrmDirectory, nfdFeatureFile,
-			labelerMaxInterval, plugin.scanResources)
+			labelerMaxInterval, plugin.scanResources, plugin.levelzeroService, func() {
+				// Exit the whole app when labeler exits
+				os.Exit(0)
+			})
 	}
 
 	manager := dpapi.NewManager(namespace, plugin)
