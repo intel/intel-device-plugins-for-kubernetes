@@ -18,6 +18,7 @@ jobs:
           - intel-gpu-fakedev
           - intel-gpu-initcontainer
           - intel-gpu-plugin
+          - intel-gpu-levelzero
           - intel-fpga-plugin
           - intel-qat-initcontainer
           - intel-qat-plugin
