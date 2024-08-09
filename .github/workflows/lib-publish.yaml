@@ -11,7 +11,7 @@ on:
         required: false
         type: string
 env:
-  no_base_check: "['intel-qat-plugin-kerneldrv', 'intel-idxd-config-initcontainer', 'crypto-perf', 'opae-nlb-demo']"
+  no_base_check: "['intel-qat-plugin-kerneldrv', 'intel-idxd-config-initcontainer', 'crypto-perf', 'opae-nlb-demo', 'intel-gpu-levelzero']"
 
 permissions:
   contents: read
@@ -48,6 +48,7 @@ jobs:
           - intel-fpga-initcontainer
           - intel-gpu-initcontainer
           - intel-gpu-plugin
+          #- intel-gpu-levelzero
           - intel-fpga-plugin
           - intel-qat-initcontainer
           - intel-qat-plugin
