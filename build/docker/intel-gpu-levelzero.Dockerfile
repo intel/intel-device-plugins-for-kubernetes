@@ -42,11 +42,13 @@ RUN if [ $ROCKYLINUX -eq 0 ]; then \
         wget -q https://github.com/intel/compute-runtime/releases/download/24.26.30049.6/libigdgmm12_22.3.20_amd64.deb && \
         wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero-devel_1.17.6+u22.04_amd64.deb && \
         wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero_1.17.6+u22.04_amd64.deb && \
-        dpkg --ignore-depends=intel-igc-core,intel-igc-opencl -i *.deb; \
+        dpkg --ignore-depends=intel-igc-core,intel-igc-opencl -i *.deb && rm *.deb \
+        rm -rf /var/lib/apt/lists/\*; \
     else \
         source /etc/os-release && dnf install -y gcc jq wget 'dnf-command(config-manager)' && \
         dnf config-manager --add-repo https://repositories.intel.com/gpu/rhel/${VERSION_ID}/lts/2350/unified/intel-gpu-${VERSION_ID}.repo && \
         dnf install -y intel-opencl level-zero level-zero-devel intel-level-zero-gpu intel-gmmlib intel-ocloc && \
+        dnf clean all && \
         LATEST_GO=$(curl --no-progress-meter https://go.dev/dl/?mode=json | jq ".[] | select(.version | startswith(\"go${CGO_VERSION}\")).version" | tr -d "\"") && \
         wget -q https://go.dev/dl/$LATEST_GO.linux-amd64.tar.gz -O - | tar -xz -C /usr/local && \
         cp -a /etc/OpenCL /usr/lib64/libocloc.so /usr/lib64/libze_intel_gpu.* /usr/lib64/libze_loader.* /usr/lib64/libigdgmm.* /runtime/ && \
