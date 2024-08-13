@@ -6,16 +6,24 @@ on:
         default: "devel"
         required: false
         type: string
+      registry:
+        default: "docker.io/intel"
+        required: false
+        type: string
 env:
   no_base_check: "['intel-qat-plugin-kerneldrv', 'intel-idxd-config-initcontainer', 'crypto-perf', 'opae-nlb-demo']"
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   image:
     name: Build image
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -52,21 +60,33 @@ jobs:
         env:
           IMAGE_NAME: ${{ matrix.image }}
         run: |
-          REG=intel/ make ${IMAGE_NAME} BUILDER=docker
+          ORG=${{ inputs.registry }} TAG=${{ inputs.image_tag }} make ${IMAGE_NAME} BUILDER=docker
       - name: Trivy scan for image
         uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
         with:
           scan-type: image
-          image-ref: intel/${{ matrix.image }}:${{ inputs.image_tag }}
+          image-ref: ${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }}
           exit-code: 1
       - name: Test image base layer
         # Don't run base layer check for selected images
         if: ${{ !contains(fromJson(env.no_base_check), matrix.image) }}
-        run: IMG=intel/${{ matrix.image }}:${{ inputs.image_tag }} make test-image-base-layer BUILDER=docker
+        run: IMG=${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }} make test-image-base-layer BUILDER=docker
       - name: Login
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}
       - name: Push
-        run: docker push intel/${{ matrix.image }}:${{ inputs.image_tag }}
+        run: docker push ${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }}
+      - name: Get image digest
+        if: ${{ inputs.image_tag != 'devel' }}
+        id: digest
+        run: |
+          echo "image_sha=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }})" >> $GITHUB_OUTPUT
+      - name: Install cosign
+        if: ${{ inputs.image_tag != 'devel' }}
+        uses: sigstore/cosign-installer@4959ce089c160fddf62f7b42464195ba1a56d382 #v3.6.0
+      - name: Keyless image sign
+        if: ${{ inputs.image_tag != 'devel' }}
+        run: |
+          cosign sign --yes ${{ steps.digest.outputs.image_sha }}
