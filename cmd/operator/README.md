@@ -62,6 +62,8 @@ deployments/operator/samples/deviceplugin_v1_dsadeviceplugin.yaml:    intel.feat
 
 ### Cert-Manager
 
+> **Note**: The default deployment for the Intel Device Plugin operator uses self-signed certificates. For a production cluster, the certificate issuer should be properly set and not use a self-signed method.
+
 The default operator deployment depends on [cert-manager](https://cert-manager.io/) running in the cluster.
 See installation instructions [here](https://cert-manager.io/docs/installation/kubectl/).
 

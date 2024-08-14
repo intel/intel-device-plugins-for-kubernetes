@@ -32,6 +32,8 @@ controller webhook plugin.
 The default webhook deployment depends on having [cert-manager](https://cert-manager.io/)
 installed. See its installation instructions [here](https://cert-manager.io/docs/installation/kubectl/).
 
+> **Note**: The default deployment for the Intel SGX webhook uses self-signed certificates. For a production cluster, the certificate issuer should be properly set and not use a self-signed method.
+
 Also if your cluster operates behind a corporate proxy make sure that the API
 server is configured not to send requests to cluster services through the
 proxy. You can check that with the following command:
