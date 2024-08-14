@@ -8,10 +8,10 @@ BUILDTAGS ?= ""
 BUILDER ?= "docker"
 EXTRA_BUILD_ARGS ?= ""
 
-CERT_MANAGER_VERSION ?= v1.14.2
+CERT_MANAGER_VERSION ?= v1.15.2
 CONTROLLER_GEN_VERSION ?= v0.14.0
 GOLANGCI_LINT_VERSION ?= v1.57.2
-KIND_VERSION ?= v0.21.0
+KIND_VERSION ?= v0.23.0
 GOLICENSES_VERSION ?= v1.6.0
 # Default bundle image tag
 BUNDLE_IMG ?= intel-device-plugins-controller-bundle:$(TAG)
@@ -75,7 +75,7 @@ test-with-kind: fixture intel-sgx-admissionwebhook intel-fpga-admissionwebhook i
 	kind load docker-image $(REG)intel-sgx-admissionwebhook:$(TAG)
 	kind load docker-image $(REG)intel-fpga-admissionwebhook:$(TAG)
 	kind load docker-image $(REG)intel-deviceplugin-operator:$(TAG)
-	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
+	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
 	# Test SGX Admission Webhook, FPGA Admission Webhook and Device Plugin Operator Manager's Webhook
 	$(GO) test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "SGX Admission"
 	$(GO) test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "FPGA Admission"
