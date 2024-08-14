@@ -10,7 +10,7 @@ permissions:
 jobs:
   analyze:
     name: Analysis
-    runs-on: 'ubuntu-22.04'
+    runs-on: ubuntu-24.04
     timeout-minutes: 360
 
     permissions:

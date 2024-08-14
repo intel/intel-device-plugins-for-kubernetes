@@ -20,7 +20,7 @@ TAG=${TAG:-devel}
 if [ -z "$BUILDER" -o "$BUILDER" = 'docker' -o "$BUILDER" = 'podman' ] ; then
     ${BUILDER} build --pull -t ${IMG}:${TAG} "$CWD/$DIR/"
 elif [ "$BUILDER" = 'buildah' ] ; then
-    BUILDAH_RUNTIME=runc buildah bud --pull-always -t ${IMG}:${TAG} "$CWD/$DIR/"
+    buildah bud --pull-always -t ${IMG}:${TAG} "$CWD/$DIR/"
 else
     (>&2 echo "Unknown builder $BUILDER")
     exit 1

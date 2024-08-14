@@ -10,7 +10,7 @@ permissions:
 jobs:
   tag_fix:
     name: Prepare image tag
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       fixed_tag: ${{ steps.fix.outputs.tag }}
     env:
