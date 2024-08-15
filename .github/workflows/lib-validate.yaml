@@ -8,7 +8,7 @@ permissions:
 jobs:
   docs:
     name: Check docs are buildable
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Install dependencies
       run: |
@@ -32,7 +32,7 @@ jobs:
     permissions:
       pull-requests: read # for golangci/golangci-lint-action to fetch pull requests
     name: lint
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5
@@ -46,7 +46,7 @@ jobs:
           args: -v --timeout 5m
   build:
     name: Build and check device plugins
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5
@@ -63,7 +63,7 @@ jobs:
       #  run: bash <(curl -s https://codecov.io/bash)
   envtest:
     name: Test APIs using envtest
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         version:
