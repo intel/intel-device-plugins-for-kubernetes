@@ -53,6 +53,7 @@ const (
 	scanPeriod = 5 * time.Second
 
 	// CDI hook attributes.
+	CDIClass = "fpga"
 	HookName = "createRuntime"
 	HookPath = "/opt/intel/fpga-sw/intel-fpga-crihook"
 )
@@ -109,6 +110,24 @@ func getRegionTree(devices []device) dpapi.DeviceTree {
 			devType := fmt.Sprintf("%s-%s", regionMode, region.interfaceID)
 			devNodes := make([]pluginapi.DeviceSpec, len(region.afus))
 
+			cdiSpec := &cdispec.Spec{
+				Version: dpapi.CDIVersion,
+				Kind:    dpapi.CDIVendor + "/" + CDIClass,
+				Devices: []cdispec.Device{
+					{
+						Name: region.id,
+						ContainerEdits: cdispec.ContainerEdits{
+							Hooks: []*cdispec.Hook{
+								{
+									HookName: HookName,
+									Path:     HookPath,
+								},
+							},
+						},
+					},
+				},
+			}
+
 			for num, afu := range region.afus {
 				devNodes[num] = pluginapi.DeviceSpec{
 					HostPath:      afu.devNode,
@@ -117,14 +136,7 @@ func getRegionTree(devices []device) dpapi.DeviceTree {
 				}
 			}
 
-			hooks := []*cdispec.Hook{
-				{
-					HookName: HookName,
-					Path:     HookPath,
-				},
-			}
-
-			regionTree.AddDevice(devType, region.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil, nil, hooks))
+			regionTree.AddDevice(devType, region.id, dpapi.NewDeviceInfo(health, devNodes, nil, nil, nil, cdiSpec))
 		}
 	}
 

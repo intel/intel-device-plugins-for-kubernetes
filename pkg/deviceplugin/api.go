@@ -28,11 +28,10 @@ type DeviceInfo struct {
 	envs        map[string]string
 	annotations map[string]string
 	topology    *pluginapi.TopologyInfo
-	state       string
-	nodes       []pluginapi.DeviceSpec
-	// Hooks can be passed only through CDI
 	// https://github.com/kubernetes/enhancements/tree/master/keps/sig-node/4009-add-cdi-devices-to-device-plugin-api
-	hooks []*cdispec.Hook
+	cdiSpec *cdispec.Spec
+	state   string
+	nodes   []pluginapi.DeviceSpec
 }
 
 // UseDefaultMethodError allows the plugin to request running the default
@@ -49,14 +48,14 @@ func init() {
 }
 
 // NewDeviceInfo makes DeviceInfo struct and adds topology information to it.
-func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs, annotations map[string]string, hooks []*cdispec.Hook) DeviceInfo {
+func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs, annotations map[string]string, cdiSpec *cdispec.Spec) DeviceInfo {
 	deviceInfo := DeviceInfo{
 		state:       state,
 		nodes:       nodes,
 		mounts:      mounts,
 		envs:        envs,
 		annotations: annotations,
-		hooks:       hooks,
+		cdiSpec:     cdiSpec,
 	}
 
 	devPaths := []string{}
@@ -77,7 +76,7 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 
 // NewDeviceInfoWithTopologyHints makes DeviceInfo struct with topology information provided to it.
 func NewDeviceInfoWithTopologyHints(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs map[string]string,
-	annotations map[string]string, topology *pluginapi.TopologyInfo) DeviceInfo {
+	annotations map[string]string, topology *pluginapi.TopologyInfo, cdiSpec *cdispec.Spec) DeviceInfo {
 	return DeviceInfo{
 		state:       state,
 		nodes:       nodes,
@@ -85,6 +84,7 @@ func NewDeviceInfoWithTopologyHints(state string, nodes []pluginapi.DeviceSpec, 
 		envs:        envs,
 		annotations: annotations,
 		topology:    topology,
+		cdiSpec:     cdiSpec,
 	}
 }
 
@@ -100,6 +100,19 @@ func NewDeviceTree() DeviceTree {
 func (tree DeviceTree) AddDevice(devType, id string, info DeviceInfo) {
 	if _, present := tree[devType]; !present {
 		tree[devType] = make(map[string]DeviceInfo)
+	}
+
+	if info.cdiSpec != nil {
+		devLength := len(info.cdiSpec.Devices)
+		if devLength == 0 {
+			klog.Warning("No CDI devices defined in spec, removing spec")
+
+			info.cdiSpec = nil
+		} else if devLength > 1 {
+			klog.Warning("Including more than one CDI device per spec is not supported, using first")
+
+			info.cdiSpec.Devices = info.cdiSpec.Devices[:1]
+		}
 	}
 
 	tree[devType][id] = info

@@ -168,12 +168,6 @@ func TestGetRegionDevelTreeOPAE(t *testing.T) {
 
 func TestGetRegionTreeOPAE(t *testing.T) {
 	expected := dpapi.NewDeviceTree()
-	hooks := []*cdispec.Hook{
-		{
-			HookName: HookName,
-			Path:     HookPath,
-		},
-	}
 	nodes := []pluginapi.DeviceSpec{
 		{
 			HostPath:      "/dev/intel-fpga-port.0",
@@ -181,7 +175,24 @@ func TestGetRegionTreeOPAE(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, hooks))
+	cdiSpec := &cdispec.Spec{
+		Version: dpapi.CDIVersion,
+		Kind:    dpapi.CDIVendor + "/fpga",
+		Devices: []cdispec.Device{
+			{
+				Name: "intel-fpga-fme.0",
+				ContainerEdits: cdispec.ContainerEdits{
+					Hooks: []*cdispec.Hook{
+						{
+							HookName: HookName,
+							Path:     HookPath,
+						},
+					},
+				},
+			},
+		},
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.0", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, cdiSpec))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -190,7 +201,24 @@ func TestGetRegionTreeOPAE(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, hooks))
+	cdiSpec = &cdispec.Spec{
+		Version: dpapi.CDIVersion,
+		Kind:    dpapi.CDIVendor + "/fpga",
+		Devices: []cdispec.Device{
+			{
+				Name: "intel-fpga-fme.1",
+				ContainerEdits: cdispec.ContainerEdits{
+					Hooks: []*cdispec.Hook{
+						{
+							HookName: HookName,
+							Path:     HookPath,
+						},
+					},
+				},
+			},
+		},
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "intel-fpga-fme.1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, cdiSpec))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -199,7 +227,24 @@ func TestGetRegionTreeOPAE(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "intel-fpga-fme.2", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil, hooks))
+	cdiSpec = &cdispec.Spec{
+		Version: dpapi.CDIVersion,
+		Kind:    dpapi.CDIVendor + "/fpga",
+		Devices: []cdispec.Device{
+			{
+				Name: "intel-fpga-fme.2",
+				ContainerEdits: cdispec.ContainerEdits{
+					Hooks: []*cdispec.Hook{
+						{
+							HookName: HookName,
+							Path:     HookPath,
+						},
+					},
+				},
+			},
+		},
+	}
+	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "intel-fpga-fme.2", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil, cdiSpec))
 
 	result := getRegionTree(getDevicesOPAE())
 	if !reflect.DeepEqual(result, expected) {

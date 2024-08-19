@@ -16,12 +16,12 @@ package deviceplugin
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -30,10 +30,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
+	"tags.cncf.io/container-device-interface/pkg/cdi"
+	cdispec "tags.cncf.io/container-device-interface/specs-go"
 
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
-	cdispec "tags.cncf.io/container-device-interface/specs-go"
 )
 
 type serverState int
@@ -43,9 +44,10 @@ const (
 	uninitialized serverState = iota
 	serving
 	terminating
+
 	CDIVersion = "0.5.0" // Kubernetes 1.27 / CRI-O 1.27 / Containerd 1.7 use this version.
-	CDIKind    = "intel.cdi.k8s.io/device"
 	CDIDir     = "/var/run/cdi"
+	CDIVendor  = "intel.cdi.k8s.io"
 )
 
 // devicePluginServer maintains a gRPC server satisfying
@@ -67,6 +69,7 @@ type server struct {
 	preStartContainer      preStartContainerFunc
 	getPreferredAllocation getPreferredAllocationFunc
 	devType                string
+	cdiDir                 string
 	state                  serverState
 	stateMutex             sync.Mutex
 }
@@ -86,6 +89,7 @@ func newServer(devType string,
 		preStartContainer:      preStartContainer,
 		getPreferredAllocation: getPreferredAllocation,
 		state:                  uninitialized,
+		cdiDir:                 CDIDir,
 	}
 }
 
@@ -136,37 +140,6 @@ func (srv *server) ListAndWatch(empty *pluginapi.Empty, stream pluginapi.DeviceP
 	return nil
 }
 
-func generateCDIDevices(deviceID string, dev *DeviceInfo) ([]*pluginapi.CDIDevice, error) {
-	if len(dev.hooks) == 0 {
-		return nil, nil
-	}
-
-	spec := cdispec.Spec{
-		Version: CDIVersion,
-		Kind:    CDIKind,
-		Devices: []cdispec.Device{
-			{
-				Name: deviceID,
-				ContainerEdits: cdispec.ContainerEdits{
-					Hooks: dev.hooks,
-				},
-			},
-		},
-	}
-
-	jsonSpec, err := json.Marshal(spec)
-	if err != nil {
-		return nil, err
-	}
-
-	cdiFileName := path.Join(CDIDir, deviceID) + ".json"
-	if err = os.WriteFile(cdiFileName, jsonSpec, 0o600); err != nil {
-		return nil, err
-	}
-
-	return []*pluginapi.CDIDevice{{Name: fmt.Sprintf("%s=%s", CDIKind, deviceID)}}, nil
-}
-
 func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
 	if srv.allocate != nil {
 		response, err := srv.allocate(rqt)
@@ -211,12 +184,9 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 				cresp.Annotations[key] = value
 			}
 
-			CDIDevices, err := generateCDIDevices(id, &dev)
-			if err != nil {
-				return nil, fmt.Errorf("device %s: cannot generate CDI device: %w", id, err)
+			if names, err := writeCdiSpecToFilesystem(dev.cdiSpec, srv.cdiDir); err == nil {
+				cresp.CDIDevices = append(cresp.CDIDevices, names...)
 			}
-
-			cresp.CDIDevices = append(cresp.CDIDevices, CDIDevices...)
 		}
 
 		response.ContainerResponses = append(response.ContainerResponses, cresp)
@@ -427,4 +397,49 @@ func waitForServer(socket string, timeout time.Duration) error {
 			return errors.Wrapf(ctx.Err(), "Failed dial context at %s", socket)
 		}
 	}
+}
+
+// Writes CDI spec to filesystem if not found from the CDI cache.
+// Returns a list of CDI device names.
+func writeCdiSpecToFilesystem(spec *cdispec.Spec, cdiDir string) ([]*pluginapi.CDIDevice, error) {
+	names := []*pluginapi.CDIDevice{}
+
+	if spec == nil {
+		return names, nil
+	}
+
+	cache, err := cdi.NewCache(cdi.WithAutoRefresh(false), cdi.WithSpecDirs(cdiDir))
+	if err != nil {
+		return nil, err
+	}
+
+	// It's expected to have one device per spec
+	if len(spec.Devices) != 1 {
+		return nil, os.ErrNotExist
+	}
+
+	deviceName := spec.Devices[0].Name
+	fqName := fmt.Sprintf("%s=%s", spec.Kind, deviceName)
+
+	names = append(names, &pluginapi.CDIDevice{Name: fqName})
+
+	// The device is found in the cache.
+	if cache.GetDevice(fqName) != nil {
+		return names, nil
+	}
+
+	// Generate filename with '/' and '=' replaced with '-'.
+	specFileName := fmt.Sprintf("%s-%s.yaml", strings.ReplaceAll(spec.Kind, "/", "-"), deviceName)
+
+	// Write spec to filesystem.
+	if err := cache.WriteSpec(spec, specFileName); err != nil {
+		return nil, err
+	}
+
+	// Fix access issues due to: https://github.com/cncf-tags/container-device-interface/issues/224
+	if err := os.Chmod(filepath.Join(cdiDir, specFileName), 0o644); err != nil {
+		return nil, err
+	}
+
+	return names, nil
 }
