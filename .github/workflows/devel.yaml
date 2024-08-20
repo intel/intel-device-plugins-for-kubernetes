@@ -48,6 +48,9 @@ jobs:
 
   # devel image push
   publish:
+    permissions:
+      contents: read
+      id-token: write
     needs:
       - e2e
       - build

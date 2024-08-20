@@ -31,6 +31,7 @@ Table of Contents
     * [Supported Kubernetes versions](#supported-kubernetes-versions)
     * [Release procedures](#release-procedures)
 * [Pre-built plugin images](#pre-built-plugin-images)
+    * [Signed container images](#signed-container-images)
 * [License](#license)
 * [Helm charts](#helm-charts)
 
@@ -290,6 +291,12 @@ the branches and releases in this repository.
 **Note:** the default deployment files and operators are configured with
 [imagePullPolicy](https://kubernetes.io/docs/concepts/containers/images/#updating-images)
 ```IfNotPresent``` and can be changed with ```scripts/set-image-pull-policy.sh```.
+
+### Signed container images
+
+Starting from 0.31 release, the images (`0.31.0` etc., not `devel`) are signed with keyless signing using `cosign`. The signing proof is stored in [rekor.sigstore.dev](https://rekor.sigstore.dev) in an append-only transparency log. The signature is also stored within the dockerhub.
+
+To verify the signing in Kubernetes, one can use [policy managers](https://docs.sigstore.dev/policy-controller/overview/) with [keyless authorities](https://docs.sigstore.dev/policy-controller/overview/#configuring-keyless-authorities).
 
 ## License
 
