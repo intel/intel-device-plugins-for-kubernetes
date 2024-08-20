@@ -39,6 +39,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 
 	yes := true
 	no := false
+	directoryOrCreate := v1.HostPathDirectoryOrCreate
 	maxUnavailable := intstr.FromInt(1)
 	maxSurge := intstr.FromInt(0)
 
@@ -120,6 +121,10 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 									Name:      "kubeletsockets",
 									MountPath: "/var/lib/kubelet/device-plugins",
 								},
+								{
+									Name:      "cdipath",
+									MountPath: "/var/run/cdi",
+								},
 							},
 						},
 					},
@@ -146,6 +151,15 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
 									Path: "/var/lib/kubelet/device-plugins",
+								},
+							},
+						},
+						{
+							Name: "cdipath",
+							VolumeSource: v1.VolumeSource{
+								HostPath: &v1.HostPathVolumeSource{
+									Path: "/var/run/cdi",
+									Type: &directoryOrCreate,
 								},
 							},
 						},

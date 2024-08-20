@@ -29,6 +29,7 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	cdispec "tags.cncf.io/container-device-interface/specs-go"
 )
 
 func init() {
@@ -402,14 +403,14 @@ func TestScan(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root, err := os.MkdirTemp("", "test_new_device_plugin")
 			if err != nil {
-				t.Fatalf("can't create temporary directory: %+v", err)
+				t.Fatalf("Can't create temporary directory: %+v", err)
 			}
 			// dirs/files need to be removed for the next test
 			defer os.RemoveAll(root)
 
 			sysfs, devfs, err := createTestFiles(root, tc)
 			if err != nil {
-				t.Errorf("unexpected error: %+v", err)
+				t.Errorf("Unexpected error: %+v", err)
 			}
 
 			plugin := newDevicePlugin(sysfs, devfs, tc.options)
@@ -421,7 +422,7 @@ func TestScan(t *testing.T) {
 			err = plugin.Scan(notifier)
 			// Scans in GPU plugin never fail
 			if err != nil {
-				t.Errorf("unexpected error: %+v", err)
+				t.Errorf("Unexpected error: %+v", err)
 			}
 			if tc.expectedI915Devs != notifier.i915Count {
 				t.Errorf("Expected %d, discovered %d devices (i915)",
@@ -464,14 +465,14 @@ func TestScanFails(t *testing.T) {
 	t.Run(tc.name, func(t *testing.T) {
 		root, err := os.MkdirTemp("", "test_new_device_plugin")
 		if err != nil {
-			t.Fatalf("can't create temporary directory: %+v", err)
+			t.Fatalf("Can't create temporary directory: %+v", err)
 		}
 		// dirs/files need to be removed for the next test
 		defer os.RemoveAll(root)
 
 		sysfs, devfs, err := createTestFiles(root, tc)
 		if err != nil {
-			t.Errorf("unexpected error: %+v", err)
+			t.Errorf("Unexpected error: %+v", err)
 		}
 
 		plugin := newDevicePlugin(sysfs, devfs, tc.options)
@@ -484,7 +485,7 @@ func TestScanFails(t *testing.T) {
 
 		err = plugin.Scan(notifier)
 		if err == nil {
-			t.Error("unexpected nil error")
+			t.Error("Unexpected nil error")
 		}
 	})
 }
@@ -544,14 +545,14 @@ func TestScanWithRmAndTiles(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root, err := os.MkdirTemp("", "test_new_device_plugin")
 			if err != nil {
-				t.Fatalf("can't create temporary directory: %+v", err)
+				t.Fatalf("Can't create temporary directory: %+v", err)
 			}
 			// dirs/files need to be removed for the next test
 			defer os.RemoveAll(root)
 
 			sysfs, devfs, err := createTestFiles(root, tc)
 			if err != nil {
-				t.Errorf("unexpected error: %+v", err)
+				t.Errorf("Unexpected error: %+v", err)
 			}
 
 			plugin := newDevicePlugin(sysfs, devfs, tc.options)
@@ -565,10 +566,10 @@ func TestScanWithRmAndTiles(t *testing.T) {
 
 			err = plugin.Scan(notifier)
 			if err != nil {
-				t.Error("unexpected error")
+				t.Error("Unexpected error")
 			}
 			if rm.tileCount != expectedTileCounts[i] {
-				t.Error("unexpected tilecount for RM")
+				t.Error("Unexpected tilecount for RM")
 			}
 		})
 	}
@@ -618,6 +619,7 @@ func TestBypath(t *testing.T) {
 		desc        string
 		linkpath    string
 		bypathFiles []string
+		pciAddrOk   bool
 		mountCount  int
 	}
 
@@ -628,36 +630,42 @@ func TestBypath(t *testing.T) {
 			"card with two by-path files",
 			"00.10.2/00.334.302/0.0.1.00/0000:0f:05.0/drm/" + cardName,
 			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render"},
+			true,
 			2,
 		},
 		{
 			"different by-path files",
 			"00.10.2/00.334.302/0.0.1.00/0000:ff:05.0/drm/" + cardName,
 			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render"},
+			true,
 			0,
 		},
 		{
 			"invalid pci address",
 			"00.10.2/00.334.302/0.0.1.00/000:ff:05.1/drm/" + cardName,
 			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render"},
+			false,
 			0,
 		},
 		{
 			"symlink without card",
 			"00.10.2/00.334.302/0.0.1.00/0000:0f:05.0/drm",
 			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render"},
+			false,
 			0,
 		},
 		{
 			"no symlink",
 			"",
 			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render"},
+			false,
 			0,
 		},
 		{
 			"no by-path files",
 			"00.10.2/00.334.302/0.0.1.00/0000:0f:05.0/drm/" + cardName,
 			[]string{},
+			true,
 			0,
 		},
 	}
@@ -665,7 +673,7 @@ func TestBypath(t *testing.T) {
 	for _, td := range tds {
 		root, err := os.MkdirTemp("", "test_bypath_mounting")
 		if err != nil {
-			t.Fatalf("can't create temporary directory: %+v", err)
+			t.Fatalf("Can't create temporary directory: %+v", err)
 		}
 		// dirs/files need to be removed for the next test
 		defer os.RemoveAll(root)
@@ -674,7 +682,17 @@ func TestBypath(t *testing.T) {
 
 		drmPath, byPath := createBypathTestFiles(t, cardName, root, td.linkpath, td.bypathFiles)
 
-		mounts := plugin.bypathMountsForPci(drmPath, cardName, byPath)
+		pciAddr, pciErr := plugin.pciAddressForCard(drmPath, cardName)
+
+		if pciErr != nil && td.pciAddrOk {
+			t.Errorf("%s: failed to retrieve pci address when it should have", td.desc)
+		}
+
+		if pciErr != nil {
+			continue
+		}
+
+		mounts := plugin.bypathMountsForPci(pciAddr, byPath)
 
 		if len(mounts) != td.mountCount {
 			t.Errorf("%s: Wrong number of mounts %d vs. %d", td.desc, len(mounts), td.mountCount)
@@ -694,5 +712,255 @@ func TestBypath(t *testing.T) {
 				t.Errorf("%s: hostpath is incorrect: %s", td.desc, mount.HostPath)
 			}
 		}
+	}
+}
+
+func TestPciDeviceForCard(t *testing.T) {
+	root, err := os.MkdirTemp("", "test_pci_device_for_card")
+	if err != nil {
+		t.Fatalf("Can't create temporary directory: %+v", err)
+	}
+	// dirs/files need to be removed for the next test
+	defer os.RemoveAll(root)
+
+	sysfs := path.Join(root, "sys")
+
+	cardPath := filepath.Join(sysfs, "class", "drm", "card0")
+	cardDevicePath := filepath.Join(cardPath, "device")
+
+	if err := os.MkdirAll(cardDevicePath, 0750); err != nil {
+		t.Fatalf("Card device path creation failed: %+v", err)
+	}
+
+	data := "0x5959"
+
+	err = os.WriteFile(filepath.Join(cardDevicePath, "device"), []byte(data), 0o600)
+	if err != nil {
+		t.Fatalf("Device id write failed: %+v", err)
+	}
+
+	id, err := pciDeviceIDForCard(cardPath)
+
+	if err != nil {
+		t.Errorf("Failed to get device id for card: %+v", err)
+	}
+
+	if id != data {
+		t.Errorf("Wrong id received %s vs %s", id, data)
+	}
+
+	// Check bad device
+
+	cardPath = filepath.Join(sysfs, "class", "drm", "card1")
+	cardDevicePath = filepath.Join(cardPath, "device")
+
+	if err := os.MkdirAll(cardDevicePath, 0750); err != nil {
+		t.Fatalf("Card device path creation failed: %+v", err)
+	}
+
+	err = os.WriteFile(filepath.Join(cardDevicePath, "devicebad"), []byte(data), 0o600)
+	if err != nil {
+		t.Fatalf("Device id write failed: %+v", err)
+	}
+
+	id, err = pciDeviceIDForCard(cardPath)
+
+	if err == nil {
+		t.Errorf("ID received when it shouldn't be possible: %s", id)
+	}
+}
+
+type symlinkItem struct {
+	old string
+	new string
+}
+
+func createSymlinks(t *testing.T, base string, links []symlinkItem) {
+	for _, link := range links {
+		linkOld := filepath.Join(base, link.old)
+		linkNew := filepath.Join(base, link.new)
+
+		if _, err := os.Stat(linkOld); err != nil {
+			if err := os.MkdirAll(linkOld, 0o750); err != nil && !errors.Is(err, os.ErrExist) {
+				t.Fatalf("Failed to create symlink base dir: %+v", err)
+			}
+		}
+
+		d := filepath.Dir(linkNew)
+		if err := os.MkdirAll(d, 0o750); err != nil {
+			t.Fatal("Failed to create symlink new dir", err)
+		}
+
+		if err := os.Symlink(linkOld, linkNew); err != nil {
+			t.Fatal("Failed to create symlink from old to new", err)
+		}
+	}
+}
+
+func createFiles(t *testing.T, base string, files map[string][]byte) {
+	for file, content := range files {
+		fp := filepath.Join(base, file)
+		dir := filepath.Dir(fp)
+
+		if err := os.MkdirAll(dir, 0o750); err != nil {
+			t.Fatal("Failed to create dev directories", err)
+		}
+
+		if err := os.WriteFile(fp, content, 0o600); err != nil {
+			t.Fatal("Failed to create dev file", err)
+		}
+	}
+}
+
+func createDirs(t *testing.T, base string, dirs []string) {
+	for _, dir := range dirs {
+		if err := os.MkdirAll(filepath.Join(base, dir), 0o750); err != nil {
+			t.Fatal("Failed to create sysfs directories", err)
+		}
+	}
+}
+
+func TestCDIDeviceInclusion(t *testing.T) {
+	root, err := os.MkdirTemp("", "test_cdidevice")
+	if err != nil {
+		t.Fatalf("Can't create temporary directory: %+v", err)
+	}
+	// dirs/files need to be removed for the next test
+	defer os.RemoveAll(root)
+
+	sysfs := path.Join(root, "sys")
+	devfs := path.Join(root, "dev")
+
+	sysfslinks := []symlinkItem{
+		{"/0042:01:02.0", "/class/drm/card0"},
+		{"/0042:01:05.0", "/class/drm/card1"},
+		{"driver/i915", "/class/drm/card0/device/driver"},
+		{"driver/xe", "/class/drm/card1/device/driver"},
+	}
+
+	devfslinks := []symlinkItem{
+		{"/dri/card0", "/dri/by-path/pci-0042:01:02.0-card"},
+		{"/dri/renderD128", "/dri/by-path/pci-0042:01:02.0-render"},
+		{"/dri/card1", "/dri/by-path/pci-0042:01:05.0-card"},
+		{"/dri/renderD129", "/dri/by-path/pci-0042:01:05.0-render"},
+	}
+
+	sysfsDirs := []string{
+		"class/drm/card0/device/drm/card0",
+		"class/drm/card0/device/drm/renderD128",
+		"class/drm/card1/device/drm/card1",
+		"class/drm/card1/device/drm/renderD129",
+	}
+
+	sysfsFiles := map[string][]byte{
+		"class/drm/card0/device/device": []byte("0x9a49"),
+		"class/drm/card0/device/vendor": []byte("0x8086"),
+		"class/drm/card1/device/device": []byte("0x9a48"),
+		"class/drm/card1/device/vendor": []byte("0x8086"),
+	}
+
+	devfsfiles := map[string][]byte{
+		"/dri/card0":      []byte("1"),
+		"/dri/renderD128": []byte("1"),
+		"/dri/card1":      []byte("1"),
+		"/dri/renderD129": []byte("1"),
+	}
+
+	createSymlinks(t, sysfs, sysfslinks)
+	createFiles(t, devfs, devfsfiles)
+	createFiles(t, sysfs, sysfsFiles)
+	createDirs(t, sysfs, sysfsDirs)
+	createSymlinks(t, devfs, devfslinks)
+
+	plugin := newDevicePlugin(sysfs+"/class/drm", devfs+"/dri", cliOptions{sharedDevNum: 1})
+	plugin.bypathFound = true
+
+	tree, err := plugin.scan()
+
+	if err != nil {
+		t.Error("Failed to get device id for card")
+	}
+
+	refTree := dpapi.NewDeviceTree()
+	refTree.AddDevice("i915", "card0-0", dpapi.NewDeviceInfo("Healthy", []v1beta1.DeviceSpec{
+		{ContainerPath: devfs + "/dri/card0", HostPath: devfs + "/dri/card0", Permissions: "rw"},
+		{ContainerPath: devfs + "/dri/renderD128", HostPath: devfs + "/dri/renderD128", Permissions: "rw"},
+	}, []v1beta1.Mount{
+		{ContainerPath: devfs + "/dri/by-path/pci-0042:01:02.0-card", HostPath: devfs + "/dri/by-path/pci-0042:01:02.0-card", ReadOnly: true},
+		{ContainerPath: devfs + "/dri/by-path/pci-0042:01:02.0-render", HostPath: devfs + "/dri/by-path/pci-0042:01:02.0-render", ReadOnly: true},
+	}, nil, nil, &cdispec.Spec{
+		Version: dpapi.CDIVersion,
+		Kind:    dpapi.CDIVendor + "/gpu",
+		Devices: []cdispec.Device{
+			{
+				Name: "card0",
+				ContainerEdits: cdispec.ContainerEdits{
+					DeviceNodes: []*cdispec.DeviceNode{
+						{Path: devfs + "/dri/card0", HostPath: devfs + "/dri/card0", Permissions: "rw"},
+						{Path: devfs + "/dri/renderD128", HostPath: devfs + "/dri/renderD128", Permissions: "rw"},
+					},
+					Mounts: []*cdispec.Mount{
+						{
+							HostPath:      devfs + "/dri/by-path/pci-0042:01:02.0-card",
+							ContainerPath: devfs + "/dri/by-path/pci-0042:01:02.0-card",
+							Options:       []string{"bind", "ro"},
+							Type:          "none",
+						},
+						{
+							HostPath:      devfs + "/dri/by-path/pci-0042:01:02.0-render",
+							ContainerPath: devfs + "/dri/by-path/pci-0042:01:02.0-render",
+							Options:       []string{"bind", "ro"},
+							Type:          "none",
+						},
+					},
+				},
+			},
+		},
+	}))
+	refTree.AddDevice("xe", "card1-0", dpapi.NewDeviceInfo("Healthy", []v1beta1.DeviceSpec{
+		{ContainerPath: devfs + "/dri/card1", HostPath: devfs + "/dri/card1", Permissions: "rw"},
+		{ContainerPath: devfs + "/dri/renderD129", HostPath: devfs + "/dri/renderD129", Permissions: "rw"},
+	}, []v1beta1.Mount{
+		{ContainerPath: devfs + "/dri/by-path/pci-0042:01:05.0-card", HostPath: devfs + "/dri/by-path/pci-0042:01:05.0-card", ReadOnly: true},
+		{ContainerPath: devfs + "/dri/by-path/pci-0042:01:05.0-render", HostPath: devfs + "/dri/by-path/pci-0042:01:05.0-render", ReadOnly: true},
+	}, nil, nil, &cdispec.Spec{
+		Version: dpapi.CDIVersion,
+		Kind:    dpapi.CDIVendor + "/gpu",
+		Devices: []cdispec.Device{
+			{
+				Name: "card1",
+				ContainerEdits: cdispec.ContainerEdits{
+					DeviceNodes: []*cdispec.DeviceNode{
+						{Path: devfs + "/dri/card1", HostPath: devfs + "/dri/card1", Permissions: "rw"},
+						{Path: devfs + "/dri/renderD129", HostPath: devfs + "/dri/renderD129", Permissions: "rw"},
+					},
+					Mounts: []*cdispec.Mount{
+						{
+							HostPath:      devfs + "/dri/by-path/pci-0042:01:05.0-card",
+							ContainerPath: devfs + "/dri/by-path/pci-0042:01:05.0-card",
+							Options:       []string{"bind", "ro"},
+							Type:          "none",
+						},
+						{
+							HostPath:      devfs + "/dri/by-path/pci-0042:01:05.0-render",
+							ContainerPath: devfs + "/dri/by-path/pci-0042:01:05.0-render",
+							Options:       []string{"bind", "ro"},
+							Type:          "none",
+						},
+					},
+				},
+			},
+		},
+	}))
+
+	if !reflect.DeepEqual(tree, refTree) {
+		t.Error("Received device tree isn't expected\n", tree, "\n", refTree)
+	}
+
+	if tree.DeviceTypeCount("i915") != 1 {
+		t.Error("Invalid count for device (i915)")
+	}
+	if tree.DeviceTypeCount("xe") != 1 {
+		t.Error("Invalid count for device (xe)")
 	}
 }

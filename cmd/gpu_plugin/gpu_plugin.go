@@ -34,6 +34,7 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/labeler"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	cdispec "tags.cncf.io/container-device-interface/specs-go"
 )
 
 const (
@@ -202,13 +203,10 @@ func packedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
 	return deviceIds
 }
 
-// Returns a slice of by-path Mounts for a cardPath&Name.
-// by-path files are searched from the given bypathDir.
-// In the by-path dir, any files that start with "pci-<pci addr>" will be added to mounts.
-func (dp *devicePlugin) bypathMountsForPci(cardPath, cardName, bypathDir string) []pluginapi.Mount {
+func (dp *devicePlugin) pciAddressForCard(cardPath, cardName string) (string, error) {
 	linkPath, err := os.Readlink(cardPath)
 	if err != nil {
-		return nil
+		return "", err
 	}
 
 	// Fetches the pci address for a drm card by reading the
@@ -220,9 +218,27 @@ func (dp *devicePlugin) bypathMountsForPci(cardPath, cardName, bypathDir string)
 	if !dp.pciAddressReg.MatchString(pciAddress) {
 		klog.Warningf("Invalid pci address for %s: %s", cardPath, pciAddress)
 
-		return nil
+		return "", os.ErrInvalid
 	}
 
+	return pciAddress, nil
+}
+
+func pciDeviceIDForCard(cardPath string) (string, error) {
+	idPath := filepath.Join(cardPath, "device", "device")
+
+	idBytes, err := os.ReadFile(idPath)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Split(string(idBytes), "\n")[0], nil
+}
+
+// Returns a slice of by-path Mounts for a pciAddress.
+// by-path files are searched from the given bypathDir.
+// In the by-path dir, any files that start with "pci-<pci addr>" will be added to mounts.
+func (dp *devicePlugin) bypathMountsForPci(pciAddress, bypathDir string) []pluginapi.Mount {
 	files, err := os.ReadDir(bypathDir)
 	if err != nil {
 		klog.Warningf("Failed to read by-path directory: %+v", err)
@@ -481,6 +497,45 @@ func (dp *devicePlugin) createDeviceSpecsFromDrmFiles(cardPath string) []plugina
 	return specs
 }
 
+func (dp *devicePlugin) createMountsAndCDIDevices(cardPath, name string, devSpecs []pluginapi.DeviceSpec) ([]pluginapi.Mount, *cdispec.Spec) {
+	mounts := []pluginapi.Mount{}
+
+	if dp.bypathFound {
+		if pciAddr, pciErr := dp.pciAddressForCard(cardPath, name); pciErr == nil {
+			mounts = dp.bypathMountsForPci(pciAddr, dp.bypathDir)
+		}
+	}
+
+	spec := &cdispec.Spec{
+		Version: dpapi.CDIVersion,
+		Kind:    dpapi.CDIVendor + "/gpu",
+		Devices: make([]cdispec.Device, 1),
+	}
+
+	spec.Devices[0].Name = name
+
+	cedits := &spec.Devices[0].ContainerEdits
+
+	for _, dspec := range devSpecs {
+		cedits.DeviceNodes = append(cedits.DeviceNodes, &cdispec.DeviceNode{
+			HostPath:    dspec.HostPath,
+			Path:        dspec.ContainerPath,
+			Permissions: dspec.Permissions,
+		})
+	}
+
+	for _, mount := range mounts {
+		cedits.Mounts = append(cedits.Mounts, &cdispec.Mount{
+			HostPath:      mount.HostPath,
+			ContainerPath: mount.ContainerPath,
+			Type:          "none",
+			Options:       []string{"bind", "ro"},
+		})
+	}
+
+	return mounts, spec
+}
+
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	files, err := os.ReadDir(dp.sysfsDir)
 	if err != nil {
@@ -509,12 +564,9 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 			continue
 		}
 
-		mounts := []pluginapi.Mount{}
-		if dp.bypathFound {
-			mounts = dp.bypathMountsForPci(cardPath, name, dp.bypathDir)
-		}
+		mounts, cdiDevices := dp.createMountsAndCDIDevices(cardPath, name, devSpecs)
 
-		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devSpecs, mounts, nil, nil, nil)
+		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devSpecs, mounts, nil, nil, cdiDevices)
 
 		for i := 0; i < dp.options.sharedDevNum; i++ {
 			devID := fmt.Sprintf("%s-%d", name, i)
