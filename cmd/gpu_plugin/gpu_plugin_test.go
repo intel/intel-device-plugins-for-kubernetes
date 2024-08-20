@@ -153,7 +153,7 @@ func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
 
 	if len(tc.pciAddresses) > 0 {
 		if err := os.MkdirAll(filepath.Join(sysfs, ".devices"), 0750); err != nil {
-			return "", "", errors.Wrap(err, "Failed to create fake pci address base")
+			return "", "", errors.Wrap(err, "Failed to create fake PCI address base")
 		}
 
 		for pci, card := range tc.pciAddresses {
@@ -161,7 +161,7 @@ func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
 			cardPath := filepath.Join(sysfs, card)
 
 			if err := os.MkdirAll(fullPci, 0750); err != nil {
-				return "", "", errors.Wrap(err, "Failed to create fake pci address entry")
+				return "", "", errors.Wrap(err, "Failed to create fake PCI address entry")
 			}
 
 			if err := os.MkdirAll(cardPath, 0750); err != nil {
@@ -169,7 +169,7 @@ func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
 			}
 
 			if err := os.Symlink(fullPci, filepath.Join(sysfs, card, "device")); err != nil {
-				return "", "", errors.Wrap(err, "Failed to create fake pci address symlinks")
+				return "", "", errors.Wrap(err, "Failed to create fake PCI address symlinks")
 			}
 		}
 	}
@@ -840,7 +840,7 @@ func createBypathTestFiles(t *testing.T, card, root, linkFile string, bypathFile
 		}
 
 		if err := os.Symlink(devPath, drmPath); err != nil {
-			t.Fatal("Couldn't create symlink between pci path and sysfs drm path")
+			t.Fatal("Couldn't create symlink between PCI path and sysfs drm path")
 		}
 	}
 
@@ -886,7 +886,7 @@ func TestBypath(t *testing.T) {
 			0,
 		},
 		{
-			"invalid pci address",
+			"invalid PCI address",
 			"00.10.2/00.334.302/0.0.1.00/000:ff:05.1/drm/" + cardName,
 			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render"},
 			false,
