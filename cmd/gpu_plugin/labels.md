@@ -57,7 +57,7 @@ The `numa-gpu-map` label is a list of numa to gpu mapping items separated by `_`
 
 ### PCI-groups (optional)
 
-GPUs which share the same pci paths under `/sys/devices/pci*` can be grouped into a label. GPU nums are separated by '`.`' and
+GPUs which share the same PCI paths under `/sys/devices/pci*` can be grouped into a label. GPU nums are separated by '`.`' and
 groups are separated by '`_`'. The label is created only if environment variable named `GPU_PCI_GROUPING_LEVEL` has a value greater
 than zero. GPUs are considered to belong to the same group, if as many identical folder names are found for the GPUs, as is the value
 of the environment variable. Counting starts from the folder name which starts with `pci`.
@@ -70,7 +70,7 @@ name | type | description|
 |`gpu.intel.com/pci-groups`| string | list of pci-groups separated by '`_`'. GPU numbers in the groups are separated by '`.`'. The numbers correspond to device file numbers for the primary nodes of given GPUs in kernel DRI subsystem, listed as `/dev/dri/card<num>` in devfs, and `/sys/class/drm/card<num>` in sysfs.
 
 If the value of the `pci-groups` label would not fit into the 63 character length limit, you will also get labels `pci-groups2`,
-`pci-groups3`... until all the pci groups have been labeled.
+`pci-groups3`... until all the PCI groups have been labeled.
 
 ### Limitations
 

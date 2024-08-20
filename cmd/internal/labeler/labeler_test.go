@@ -791,7 +791,7 @@ func TestL0ServiceUse(t *testing.T) {
 
 	err = os.MkdirAll(pciAddr, 0750)
 	if err != nil {
-		t.Fatalf("couldn't create pci dir: %s", err.Error())
+		t.Fatalf("couldn't create PCI dir: %s", err.Error())
 	}
 
 	err = os.MkdirAll(cardPath, 0750)

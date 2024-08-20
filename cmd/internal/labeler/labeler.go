@@ -274,7 +274,7 @@ func (lm labelMap) addSplittableString(labelBase, fullValue string) {
 	}
 }
 
-// this returns pci groups label value, groups separated by "_", gpus separated by ".".
+// this returns PCI groups label value, groups separated by "_", gpus separated by ".".
 // Example for two groups with 4 gpus: "0.1.2.3_4.5.6.7".
 func (l *labeler) createPCIGroupLabel(gpuNumList []string) string {
 	pciGroups := map[string][]string{}

@@ -218,14 +218,14 @@ func (dp *devicePlugin) pciAddressForCard(cardPath, cardName string) (string, er
 		return "", err
 	}
 
-	// Fetches the pci address for a drm card by reading the
+	// Fetches the PCI address for a drm card by reading the
 	// symbolic link that the /sys/class/drm/cardX points to.
 	// ../../devices/pci0000:00/0000:00:02.0/drm/card
 	// -------------------------^^^^^^^^^^^^---------.
 	pciAddress := filepath.Base(strings.TrimSuffix(linkPath, filepath.Join("drm", cardName)))
 
 	if !dp.pciAddressReg.MatchString(pciAddress) {
-		klog.Warningf("Invalid pci address for %s: %s", cardPath, pciAddress)
+		klog.Warningf("Invalid PCI address for %s: %s", cardPath, pciAddress)
 
 		return "", os.ErrInvalid
 	}
