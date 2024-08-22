@@ -12,12 +12,12 @@ linters:
     - bodyclose
     - dogsled
     - errcheck
-    - exportloopref
+    - copyloopvar
     - gocognit
     - goconst
     - gocyclo
     - godot
-    - goerr113
+    - err113
     - gofmt
     - goimports
     - gomodguard
@@ -62,6 +62,9 @@ linters-settings:
 
 issues:
   exclude-rules:
+    - linters:
+        - gosec
+      text: "G115"
     - path: _test\.go
       linters:
         - gocognit
