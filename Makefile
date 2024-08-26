@@ -176,7 +176,7 @@ e2e-spr:
 
 pre-pull:
 ifeq ($(TAG),devel)
-	@$(BUILDER) pull golang:1.22-bookworm
+	@$(BUILDER) pull golang:1.23-bookworm
 	@$(BUILDER) pull debian:unstable-slim
 	@$(BUILDER) pull ubuntu:22.04
 endif
