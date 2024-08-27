@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"flag"
 	"fmt"
 	"io"
@@ -61,12 +62,12 @@ type xpuManagerSidecar struct {
 	dstFilePath             string
 	labelNamespace          string
 	url                     string
+	certFile                string
 	interval                uint64
 	startDelay              uint64
 	xpumPort                uint64
 	laneCount               uint64
 	allowSubdevicelessLinks bool
-	useHTTPS                bool
 }
 
 func (e *invalidEntryErr) Error() string {
@@ -78,12 +79,30 @@ func (xms *xpuManagerSidecar) getMetricsDataFromXPUM() []byte {
 		Timeout: 5 * time.Second,
 	}
 
-	if xms.useHTTPS {
-		customTransport := http.DefaultTransport.(*http.Transport).Clone()
-		//#nosec
-		customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	if len(xms.certFile) > 0 {
+		cert, err := os.ReadFile(xms.certFile)
+		if err != nil {
+			klog.Warning("Failed to read cert: ", err)
 
-		client.Transport = customTransport
+			return nil
+		}
+
+		certPool := x509.NewCertPool()
+		if !certPool.AppendCertsFromPEM(cert) {
+			klog.Warning("Adding server cert to pool failed")
+
+			return nil
+		}
+
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+				RootCAs:    certPool,
+				ServerName: "127.0.0.1",
+			},
+		}
+
+		client.Transport = tr
 	}
 
 	ctx := context.Background()
@@ -380,7 +399,7 @@ func main() {
 	flag.Uint64Var(&xms.laneCount, "lane-count", 4, "minimum lane count for xelink")
 	flag.StringVar(&xms.labelNamespace, "label-namespace", "gpu.intel.com", "namespace for the labels")
 	flag.BoolVar(&xms.allowSubdevicelessLinks, "allow-subdeviceless-links", false, "allow xelinks that are not tied to subdevices (=1 tile GPUs)")
-	flag.BoolVar(&xms.useHTTPS, "use-https", false, "Use HTTPS protocol to connect to xpumanager")
+	flag.StringVar(&xms.certFile, "cert", "", "Use HTTPS and verify server's endpoint")
 	klog.InitFlags(nil)
 
 	flag.Parse()
@@ -390,7 +409,8 @@ func main() {
 	}
 
 	protocol := "http"
-	if xms.useHTTPS {
+
+	if len(xms.certFile) > 0 {
 		protocol = "https"
 	}
 

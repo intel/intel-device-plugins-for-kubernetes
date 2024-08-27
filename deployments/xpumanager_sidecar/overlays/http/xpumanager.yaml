@@ -14,7 +14,7 @@ spec:
       containers:
       - name: xelink-sidecar
         image: intel/intel-xpumanager-sidecar:devel
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         args:
           - -v=2
         volumeMounts:
