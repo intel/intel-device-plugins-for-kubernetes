@@ -23,7 +23,7 @@ Intel GPUs can be interconnected via an XeLink. In some workloads it is benefici
 | -startup-delay | int | 10 | Startup delay before the first topology fetching (seconds, >= 0) |
 | -label-namespace | string | gpu.intel.com | Namespace or prefix for the labels. i.e. **gpu.intel.com**/xe-links |
 | -allow-subdeviceless-links | bool | false | Include xelinks also for devices that do not have subdevices |
-| -use-https | bool | false | Use HTTPS protocol when connecting to XPU Manager |
+| -cert | string | "" | Use HTTPS and verify server's endpoint |
 
 The sidecar also accepts a number of other arguments. Please use the -h option to see the complete list of options.
 
@@ -50,7 +50,7 @@ See [the development guide](../../DEVEL.md) for details if you want to deploy a 
 Install XPU Manager daemonset with the XeLink sidecar
 
 ```bash
-$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/xpumanager_sidecar?ref=<RELEASE_VERSION>'
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/xpumanager_sidecar/overlays/http?ref=<RELEASE_VERSION>'
 ```
 
 Please see XPU Manager Kubernetes files for additional info on [installation](https://github.com/intel/xpumanager/tree/master/deployment/kubernetes).
@@ -60,7 +60,7 @@ Please see XPU Manager Kubernetes files for additional info on [installation](ht
 Use patch to add sidecar into the XPU Manager daemonset.
 
 ```bash
-$ kubectl patch daemonsets.apps intel-xpumanager --patch-file 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/xpumanager_sidecar/kustom/kustom_xpumanager.yaml?ref=<RELEASE_VERSION>'
+$ kubectl patch daemonsets.apps intel-xpumanager --patch-file 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/xpumanager_sidecar/overlays/http/xpumanager.yaml?ref=<RELEASE_VERSION>'
 ```
 
 NOTE: The sidecar patch will remove other resources from the XPU Manager container. If your XPU Manager daemonset is using, for example, the smarter device manager resources, those will be removed.
@@ -76,7 +76,25 @@ master,0.0-1.0_0.1-1.1
 
 ### Use HTTPS with XPU Manager
 
-XPU Manager can be configured to use HTTPS on the metrics interface. For the gunicorn sidecar, cert and key files have to be added to the command:
+There is an alternative deployment that uses HTTPS instead of HTTP. The reference deployment requires `cert-manager` to provide a certificate for TLS. To deploy:
+
+```bash
+$ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/xpumanager_sidecar/overlays/cert-manager?ref=<RELEASE_VERSION>'
+```
+
+The deployment requests a certificate and key from `cert-manager`. They are then provided to the gunicorn container as secrets and are used in the HTTPS interface. The sidecar container uses the same certificate to verify the server.
+
+> *NOTE*: The HTTPS deployment uses self-signed certificates. For production use, the certificates should be properly set up.
+
+<details>
+<summary>Enabling HTTPS manually</summary>
+
+If one doesn't want to use `cert-manager`, the same can be achieved manually by creating certificates with openssl and then adding it to the deployment. The steps are roughly:
+1) Create a certificate with [openssl](https://www.linode.com/docs/guides/create-a-self-signed-tls-certificate/)
+1) Create a secret from the [certificate & key](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_secret_tls/).
+1) Change the deployment:
+
+* Add certificate and key to gunicorn container:
 ```
       - command:
         - gunicorn
@@ -87,8 +105,7 @@ XPU Manager can be configured to use HTTPS on the metrics interface. For the gun
         - xpum_rest_main:main()
 ```
 
-The gunicorn container will also need the tls.crt and tls.key files within the container. For example:
-
+* Add secret mounting to the Pod:
 ```
     containers:
       - name: python-exporter
@@ -101,44 +118,19 @@ The gunicorn container will also need the tls.crt and tls.key files within the c
       secret:
         defaultMode: 420
         secretName: xpum-server-cert
+ ```
+
+* Add use-https and cert to sidecar
 ```
-
-In this case, the secret providing the certificate and key is called `xpum-server-cert`.
-
-The certificate and key can be [added manually to a secret](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_secret_tls/). Another way to achieve a secret is to leverage [cert-manager](https://cert-manager.io/).
-
-<details>
-<summary>Example for the Cert-manager objects</summary>
-
-Cert-manager will create a self-signed certificate and the private key, and store them into a secret called `xpum-server-cert`.
-
-```
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: selfsigned-issuer
-spec:
-  selfSigned: {}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: serving-cert
-spec:
-  dnsNames:
-  - xpum.svc
-  - xpum.svc.cluster.local
-  issuerRef:
-    kind: Issuer
-    name: selfsigned-issuer
-  secretName: xpum-server-cert
+        name: xelink-sidecar
+        volumeMounts:
+        - mountPath: /certs
+          name: certs
+          readOnly: true
+        args:
+...
+          - --cert=/certs/tls.crt
+...
 ```
 
 </details>
-
-For the XPU Manager sidecar, `use-https` has to be added to the arguments. Then the sidecar will leverage HTTPS with the connection to the metrics interface.
-```
-        args:
-          - -v=2
-          - -use-https
-```

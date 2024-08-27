@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: intel-xpumanager
+  name: intel-xpumanager
+spec:
+  template:
+    spec:
+      volumes:
+        - name: features-d
+          hostPath:
+            path: "/etc/kubernetes/node-feature-discovery/features.d/"
+        - name: xpum-cert
+          secret:
+            secretName: xpum-server-cert
+      containers:
+      - name: python-exporter
+        volumeMounts:
+        - name: xpum-cert
+          mountPath: "/cert"
+        command:
+          - gunicorn
+          - --bind
+          - 0.0.0.0:29999
+          - --worker-connections
+          - "64"
+          - --worker-class
+          - gthread
+          - --workers
+          - "1"
+          - --threads
+          - "4"
+          - --keyfile=/cert/tls.key
+          - --certfile=/cert/tls.crt
+          - xpum_rest_main:main()
+        startupProbe:
+          httpGet:
+            scheme: HTTPS
+        livenessProbe:
+          httpGet:
+            scheme: HTTPS
+      - name: xelink-sidecar
+        image: intel/intel-xpumanager-sidecar:devel
+        imagePullPolicy: IfNotPresent
+        args:
+          - -v=2
+          - --cert=/cert/tls.crt
+        volumeMounts:
+        - name: features-d
+          mountPath: "/etc/kubernetes/node-feature-discovery/features.d/"
+        - name: xpum-cert
+          mountPath: "/cert"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsUser: 0

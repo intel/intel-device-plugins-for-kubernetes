@@ -1,0 +1,2 @@
+resources:
+- https://github.com/intel/xpumanager/deployment/kubernetes/daemonset/base/?ref=V1.2.38

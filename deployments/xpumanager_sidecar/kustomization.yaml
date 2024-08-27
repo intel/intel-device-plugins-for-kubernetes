@@ -1,7 +1,0 @@
-resources:
-- https://github.com/intel/xpumanager/deployment/kubernetes/daemonset/base/?ref=V1.2.29
-namespace: monitoring
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-patches:
-- path: kustom/kustom_xpumanager.yaml
