@@ -38,7 +38,10 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	devicePlugin := rawObj.(*devicepluginv1.QatDevicePlugin)
 	yes := true
 	no := false
-	pluginAnnotations := devicePlugin.ObjectMeta.DeepCopy().Annotations
+	pluginAnnotations := map[string]string{"container.apparmor.security.beta.kubernetes.io/intel-qat-plugin": "unconfined"}
+	for annotation, value := range devicePlugin.ObjectMeta.DeepCopy().Annotations {
+		pluginAnnotations[annotation] = value
+	}
 	maxUnavailable := intstr.FromInt(1)
 	maxSurge := intstr.FromInt(0)
 
@@ -186,6 +189,15 @@ func TestNewDaemonSetQAT(t *testing.T) {
 
 	expected := c.newDaemonSetExpected(plugin)
 	actual := c.NewDaemonSet(plugin)
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("expected and actuall daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+	}
+
+	plugin.ObjectMeta.Annotations = map[string]string{}
+
+	expected = c.newDaemonSetExpected(plugin)
+	actual = c.NewDaemonSet(plugin)
 
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("expected and actuall daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))

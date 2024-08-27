@@ -82,8 +82,11 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 
 	daemonSet := deployments.QATPluginDaemonSet()
 	daemonSet.Name = controllers.SuffixedName(daemonSet.Name, devicePlugin.Name)
-	daemonSet.Annotations = annotations
-	daemonSet.Spec.Template.Annotations = annotations
+
+	for annotation, value := range annotations {
+		daemonSet.Annotations[annotation] = value
+		daemonSet.Spec.Template.Annotations[annotation] = value
+	}
 
 	if devicePlugin.Spec.Tolerations != nil {
 		daemonSet.Spec.Template.Spec.Tolerations = devicePlugin.Spec.Tolerations
