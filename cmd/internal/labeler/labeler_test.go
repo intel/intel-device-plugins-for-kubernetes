@@ -638,7 +638,6 @@ func TestLabeling(t *testing.T) {
 			t.Fatalf("can't create temporary subroot directory: %+v", err)
 		}
 
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			err := os.MkdirAll(path.Join(subroot, "0"), 0750)
 			if err != nil {

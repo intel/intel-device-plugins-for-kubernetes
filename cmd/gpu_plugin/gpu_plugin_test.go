@@ -589,7 +589,7 @@ func createBypathTestFiles(t *testing.T, card, root, linkFile string, bypathFile
 			t.Fatal("Couldn't create test drm dir", err)
 		}
 
-		if err := os.WriteFile(devPath, []byte{0}, os.ModePerm); err != nil {
+		if err := os.WriteFile(devPath, []byte{0}, 0o600); err != nil {
 			t.Fatal("Couldn't create card file", err)
 		}
 
@@ -604,7 +604,7 @@ func createBypathTestFiles(t *testing.T, card, root, linkFile string, bypathFile
 		}
 
 		for _, f := range bypathFiles {
-			if err := os.WriteFile(path.Join(byPath, f), []byte{1}, os.ModePerm); err != nil {
+			if err := os.WriteFile(path.Join(byPath, f), []byte{1}, 0o600); err != nil {
 				t.Fatal("WriteFile failed:", path.Join(byPath, f))
 			}
 		}

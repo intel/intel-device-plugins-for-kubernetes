@@ -10,7 +10,7 @@ EXTRA_BUILD_ARGS ?= ""
 
 CERT_MANAGER_VERSION ?= v1.15.2
 CONTROLLER_GEN_VERSION ?= v0.16.1
-GOLANGCI_LINT_VERSION ?= v1.57.2
+GOLANGCI_LINT_VERSION ?= v1.60.3
 KIND_VERSION ?= v0.23.0
 GOLICENSES_VERSION ?= v1.6.0
 # Default bundle image tag
@@ -176,7 +176,7 @@ e2e-spr:
 
 pre-pull:
 ifeq ($(TAG),devel)
-	@$(BUILDER) pull golang:1.22-bookworm
+	@$(BUILDER) pull golang:1.23-bookworm
 	@$(BUILDER) pull debian:unstable-slim
 	@$(BUILDER) pull ubuntu:22.04
 endif
