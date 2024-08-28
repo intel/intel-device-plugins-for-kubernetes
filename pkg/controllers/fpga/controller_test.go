@@ -21,6 +21,7 @@ import (
 
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/diff"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -94,6 +95,16 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 								AllowPrivilegeEscalation: &no,
 							},
 							TerminationMessagePath: "/tmp/termination-log",
+							Resources: v1.ResourceRequirements{
+								Limits: v1.ResourceList{
+									v1.ResourceCPU:    resource.MustParse("160m"),
+									v1.ResourceMemory: resource.MustParse("60Mi"),
+								},
+								Requests: v1.ResourceList{
+									v1.ResourceCPU:    resource.MustParse("80m"),
+									v1.ResourceMemory: resource.MustParse("30Mi"),
+								},
+							},
 							VolumeMounts: []v1.VolumeMount{
 								{
 									MountPath: "/dev",

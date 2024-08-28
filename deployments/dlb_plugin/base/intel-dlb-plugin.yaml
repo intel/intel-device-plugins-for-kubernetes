@@ -32,6 +32,13 @@ spec:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
         terminationMessagePath: /tmp/termination-log          
+        resources:
+          requests:
+            memory: "15Mi"
+            cpu: 40m
+          limits:
+            memory: "30Mi"
+            cpu: 100m
         volumeMounts:
         - name: devfs
           mountPath: /dev
