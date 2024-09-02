@@ -82,13 +82,13 @@ func describe() {
 	ginkgo.Context("When SGX resources are available", func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			ginkgo.By("checking if the resource is allocatable")
-			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/epc", 150*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/epc", 150*time.Second, utils.WaitForPositiveResource); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable epc resource: %v", err)
 			}
-			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/enclave", 30*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/enclave", 30*time.Second, utils.WaitForPositiveResource); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable enclave resource: %v", err)
 			}
-			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/provision", 30*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "sgx.intel.com/provision", 30*time.Second, utils.WaitForPositiveResource); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable provision resource: %v", err)
 			}
 		})

@@ -129,7 +129,7 @@ func runDevicePlugin(ctx context.Context, fmw *framework.Framework, pluginKustom
 
 	ginkgo.By("checking if the resource is allocatable")
 
-	if err = utils.WaitForNodesWithResource(ctx, fmw.ClientSet, resource, 30*time.Second); err != nil {
+	if err = utils.WaitForNodesWithResource(ctx, fmw.ClientSet, resource, 30*time.Second, utils.WaitForPositiveResource); err != nil {
 		framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 	}
 }

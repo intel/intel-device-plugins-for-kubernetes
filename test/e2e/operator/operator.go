@@ -89,7 +89,7 @@ func testPluginWithOperator(deviceName string, resourceNames []v1.ResourceName, 
 	}
 
 	for _, resourceName := range resourceNames {
-		if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, timeout); err != nil {
+		if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, timeout, utils.WaitForPositiveResource); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
 	}
