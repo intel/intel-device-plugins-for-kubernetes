@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	cdispec "tags.cncf.io/container-device-interface/specs-go"
 
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
@@ -259,19 +260,22 @@ func TestStop(t *testing.T) {
 }
 
 func TestAllocate(t *testing.T) {
-	rqt := &pluginapi.AllocateRequest{
-		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
-			{
-				DevicesIDs: []string{"dev1"},
-			},
-		},
-	}
 	srv := newTestServer()
+
+	tmpRoot, err := os.MkdirTemp("", "server-allocate")
+	if err != nil {
+		t.Fatal("couldn't create temporary dir", err)
+	}
+
+	defer os.RemoveAll(tmpRoot)
+
+	srv.cdiDir = tmpRoot
 
 	tcases := []struct {
 		devices           map[string]DeviceInfo
 		postAllocate      func(*pluginapi.AllocateResponse) error
 		name              string
+		checkCdiFiles     []string
 		expectedAllocated int
 		expectedErr       bool
 	}{
@@ -349,6 +353,162 @@ func TestAllocate(t *testing.T) {
 			expectedAllocated: 2,
 		},
 		{
+			name: "Allocate healthy device with CDI device",
+			devices: map[string]DeviceInfo{
+				"dev1": {
+					state: pluginapi.Healthy,
+					nodes: []pluginapi.DeviceSpec{
+						{
+							HostPath:      "/dev/dev1",
+							ContainerPath: "/dev/dev1",
+							Permissions:   "rw",
+						},
+					},
+					cdiSpec: &cdispec.Spec{
+						Kind:    "intel.com/foo",
+						Version: "0.5.0",
+						Devices: []cdispec.Device{
+							{
+								Name: "dev1",
+								ContainerEdits: cdispec.ContainerEdits{
+									Hooks: []*cdispec.Hook{
+										{
+											HookName: "createRuntime",
+											Path:     "/bin/my-hook",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			checkCdiFiles:     []string{filepath.Join(tmpRoot, "intel.com-foo-dev1.yaml")},
+			expectedAllocated: 1,
+		},
+		{
+			name: "Allocate healthy devices with CDI devices",
+			devices: map[string]DeviceInfo{
+				"dev1": {
+					state: pluginapi.Healthy,
+					nodes: []pluginapi.DeviceSpec{
+						{
+							HostPath:      "/dev/dev1",
+							ContainerPath: "/dev/dev1",
+							Permissions:   "rw",
+						},
+					},
+					cdiSpec: &cdispec.Spec{
+						Kind:    "intel.com/foo",
+						Version: "0.5.0",
+						Devices: []cdispec.Device{
+							{
+								Name: "dev2",
+								ContainerEdits: cdispec.ContainerEdits{
+									Hooks: []*cdispec.Hook{
+										{
+											HookName: "createRuntime",
+											Path:     "/bin/my-hook",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				"dev2": {
+					state: pluginapi.Healthy,
+					nodes: []pluginapi.DeviceSpec{
+						{
+							HostPath:      "/dev/dev2",
+							ContainerPath: "/dev/dev2",
+							Permissions:   "rw",
+						},
+					},
+					cdiSpec: &cdispec.Spec{
+						Kind:    "intel.com/bar",
+						Version: "0.5.0",
+						Devices: []cdispec.Device{
+							{
+								Name: "dev2",
+								ContainerEdits: cdispec.ContainerEdits{
+									Hooks: []*cdispec.Hook{
+										{
+											HookName: "createRuntime",
+											Path:     "/bin/my-hook",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			checkCdiFiles:     []string{filepath.Join(tmpRoot, "intel.com-foo-dev1.yaml"), filepath.Join(tmpRoot, "intel.com-bar-dev2.yaml")},
+			expectedAllocated: 2,
+		},
+		{
+			name: "Allocate two healthy devices with one CDI device",
+			devices: map[string]DeviceInfo{
+				"dev1": {
+					state: pluginapi.Healthy,
+					nodes: []pluginapi.DeviceSpec{
+						{
+							HostPath:      "/dev/dev1",
+							ContainerPath: "/dev/dev1",
+							Permissions:   "rw",
+						},
+					},
+					cdiSpec: &cdispec.Spec{
+						Kind:    "intel.com/foo",
+						Version: "0.5.0",
+						Devices: []cdispec.Device{
+							{
+								Name: "dev",
+								ContainerEdits: cdispec.ContainerEdits{
+									Hooks: []*cdispec.Hook{
+										{
+											HookName: "createRuntime",
+											Path:     "/bin/my-hook",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				"dev2": {
+					state: pluginapi.Healthy,
+					nodes: []pluginapi.DeviceSpec{
+						{
+							HostPath:      "/dev/dev2",
+							ContainerPath: "/dev/dev2",
+							Permissions:   "rw",
+						},
+					},
+					cdiSpec: &cdispec.Spec{
+						Kind:    "intel.com/foo",
+						Version: "0.5.0",
+						Devices: []cdispec.Device{
+							{
+								Name: "dev",
+								ContainerEdits: cdispec.ContainerEdits{
+									Hooks: []*cdispec.Hook{
+										{
+											HookName: "createRuntime",
+											Path:     "/bin/my-hook",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			checkCdiFiles:     []string{filepath.Join(tmpRoot, "intel.com-foo-dev.yaml")},
+			expectedAllocated: 2,
+		},
+		{
 			name: "Allocate healthy device with failing postAllocate hook",
 			devices: map[string]DeviceInfo{
 				"dev1": {
@@ -370,6 +530,21 @@ func TestAllocate(t *testing.T) {
 	}
 
 	for _, tt := range tcases {
+		rqt := &pluginapi.AllocateRequest{
+			ContainerRequests: []*pluginapi.ContainerAllocateRequest{
+				{DevicesIDs: []string{"dev-1"}},
+			},
+		}
+
+		if len(tt.devices) > 0 {
+			devNames := []string{}
+			for devName := range tt.devices {
+				devNames = append(devNames, devName)
+			}
+
+			rqt.ContainerRequests[0].DevicesIDs = devNames
+		}
+
 		srv.devices = tt.devices
 		srv.postAllocate = tt.postAllocate
 		resp, err := srv.Allocate(context.Background(), rqt)
@@ -391,6 +566,22 @@ func TestAllocate(t *testing.T) {
 		if tt.expectedAllocated > 1 {
 			if reflect.DeepEqual(resp.ContainerResponses[0].Devices[0], resp.ContainerResponses[0].Devices[1]) {
 				t.Errorf("Test case '%s': got equal dev nodes in the same response", tt.name)
+			}
+		}
+		if len(tt.checkCdiFiles) > 0 {
+			for _, cdiFile := range tt.checkCdiFiles {
+				stat, err := os.Stat(cdiFile)
+				if err != nil {
+					t.Errorf("Test case '%s': couldn't find cdi spec for device (%s)", tt.name, cdiFile)
+				}
+
+				if stat.Mode() != 0o644 {
+					t.Errorf("Test case '%s': wrong mode set for the cdi spec file (%s)", tt.name, cdiFile)
+				}
+			}
+
+			if len(resp.ContainerResponses[0].CDIDevices) == 0 {
+				t.Errorf("Test case '%s': no cdi devices in allocate response", tt.name)
 			}
 		}
 	}

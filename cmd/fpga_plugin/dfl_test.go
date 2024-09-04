@@ -188,12 +188,6 @@ func TestGetRegionDevelTreeDFL(t *testing.T) {
 
 func TestGetRegionTreeDFL(t *testing.T) {
 	expected := dpapi.NewDeviceTree()
-	hooks := []*cdispec.Hook{
-		{
-			HookName: HookName,
-			Path:     HookPath,
-		},
-	}
 	nodes := []pluginapi.DeviceSpec{
 		{
 			HostPath:      "/dev/dfl-port.0",
@@ -201,7 +195,24 @@ func TestGetRegionTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, hooks))
+	cdiSpec := &cdispec.Spec{
+		Version: dpapi.CDIVersion,
+		Kind:    dpapi.CDIVendor + "/fpga",
+		Devices: []cdispec.Device{
+			{
+				Name: "region1",
+				ContainerEdits: cdispec.ContainerEdits{
+					Hooks: []*cdispec.Hook{
+						{
+							HookName: HookName,
+							Path:     HookPath,
+						},
+					},
+				},
+			},
+		},
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region1", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, cdiSpec))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -215,7 +226,24 @@ func TestGetRegionTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, hooks))
+	cdiSpec = &cdispec.Spec{
+		Version: dpapi.CDIVersion,
+		Kind:    dpapi.CDIVendor + "/fpga",
+		Devices: []cdispec.Device{
+			{
+				Name: "region2",
+				ContainerEdits: cdispec.ContainerEdits{
+					Hooks: []*cdispec.Hook{
+						{
+							HookName: HookName,
+							Path:     HookPath,
+						},
+					},
+				},
+			},
+		},
+	}
+	expected.AddDevice(regionMode+"-ce48969398f05f33946d560708be108a", "region2", dpapi.NewDeviceInfo(pluginapi.Healthy, nodes, nil, nil, nil, cdiSpec))
 
 	nodes = []pluginapi.DeviceSpec{
 		{
@@ -229,7 +257,24 @@ func TestGetRegionTreeDFL(t *testing.T) {
 			Permissions:   "rw",
 		},
 	}
-	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "region3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil, hooks))
+	cdiSpec = &cdispec.Spec{
+		Version: dpapi.CDIVersion,
+		Kind:    dpapi.CDIVendor + "/fpga",
+		Devices: []cdispec.Device{
+			{
+				Name: "region3",
+				ContainerEdits: cdispec.ContainerEdits{
+					Hooks: []*cdispec.Hook{
+						{
+							HookName: HookName,
+							Path:     HookPath,
+						},
+					},
+				},
+			},
+		},
+	}
+	expected.AddDevice(regionMode+"-"+unhealthyInterfaceID, "region3", dpapi.NewDeviceInfo(pluginapi.Unhealthy, nodes, nil, nil, nil, cdiSpec))
 
 	result := getRegionTree(getDevicesDFL())
 	if !reflect.DeepEqual(result, expected) {
