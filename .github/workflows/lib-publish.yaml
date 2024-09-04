@@ -18,8 +18,24 @@ permissions:
   id-token: write
 
 jobs:
+  av_database:
+    name: Download AV database
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install clamav and update databases
+        run: |
+          sudo apt-get update -y
+          sudo apt-get -y --no-install-recommends install clamav ca-certificates
+          sudo systemctl stop clamav-freshclam.service
+          sudo freshclam
+      - name: Cache clamav databases
+        uses: actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: /var/lib/clamav
+          key: clamav-${{ github.run_id }}
   image:
     name: Build image
+    needs: av_database
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -67,6 +83,26 @@ jobs:
           scan-type: image
           image-ref: ${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }}
           exit-code: 1
+      - name: Prepare cache directory
+        run: |
+          sudo mkdir -p /var/lib/clamav
+          sudo chmod a+rwx /var/lib/clamav
+      - name: Retrieve AV database
+        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: /var/lib/clamav
+          key: clamav-${{ github.run_id }}
+      - name: Malware scan
+        env:
+          FULL_IMAGE: ${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }}
+          IMG_FILE: ${{ matrix.image }}-${{ inputs.image_tag }}.tar
+        run: |
+          sudo apt-get update -y
+          sudo apt-get -y --no-install-recommends install clamav ca-certificates
+          sudo systemctl stop clamav-freshclam.service
+          sudo freshclam
+          docker save $FULL_IMAGE -o $IMG_FILE
+          clamscan $IMG_FILE
       - name: Test image base layer
         # Don't run base layer check for selected images
         if: ${{ !contains(fromJson(env.no_base_check), matrix.image) }}
