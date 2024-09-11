@@ -52,9 +52,20 @@ func GetPodLogs(ctx context.Context, f *framework.Framework, podName, containerN
 	return fmt.Sprintf("log output of the container %s in the pod %s:%s", containerName, podName, log)
 }
 
-// WaitForNodesWithResource waits for nodes to have positive allocatable resource.
-func WaitForNodesWithResource(ctx context.Context, c clientset.Interface, res v1.ResourceName, timeout time.Duration) error {
-	framework.Logf("Waiting up to %s for any positive allocatable resource %q", timeout, res)
+type WaitForResourceFunc func(resourceCount int) bool
+
+func WaitForPositiveResource(resourceCount int) bool {
+	return resourceCount > 0
+}
+
+func WaitForZeroResource(resourceCount int) bool {
+	return resourceCount == 0
+}
+
+// WaitForNodesWithResource waits for node's resources to change.
+// Depending on the waitOperation, function waits for positive resource count or a zero resource count.
+func WaitForNodesWithResource(ctx context.Context, c clientset.Interface, res v1.ResourceName, timeout time.Duration, waitForResourceFunc WaitForResourceFunc) error {
+	framework.Logf("Waiting up to %s for allocatable resource %q", timeout, res)
 
 	start := time.Now()
 
@@ -73,7 +84,8 @@ func WaitForNodesWithResource(ctx context.Context, c clientset.Interface, res v1
 					}
 				}
 				framework.Logf("Found %d of %q. Elapsed: %s", resNum, res, time.Since(start))
-				if resNum > 0 {
+
+				if waitForResourceFunc(resNum) {
 					return true, nil
 				}
 			}

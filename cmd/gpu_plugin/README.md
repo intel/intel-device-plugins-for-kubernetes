@@ -16,6 +16,7 @@ Table of Contents
   * [Running GPU plugin as non-root](#running-gpu-plugin-as-non-root)
   * [Labels created by GPU plugin](#labels-created-by-gpu-plugin)
   * [SR-IOV use with the plugin](#sr-iov-use-with-the-plugin)
+  * [CDI support](#cdi-support)
   * [KMD and UMD](#kmd-and-umd)
   * [Issues with media workloads on multi-GPU setups](#issues-with-media-workloads-on-multi-gpu-setups)
     * [Workaround for QSV and VA-API](#workaround-for-qsv-and-va-api)
@@ -217,6 +218,19 @@ If installed with NFD and started with resource-management, plugin will export a
 GPU plugin does __not__ setup SR-IOV. It has to be configured by the cluster admin.
 
 GPU plugin does however support provisioning Virtual Functions (VFs) to containers for a SR-IOV enabled GPU. When the plugin detects a GPU with SR-IOV VFs configured, it will only provision the VFs and leaves the PF device on the host.
+
+### CDI support
+
+GPU plugin supports [CDI](https://github.com/container-orchestrated-devices/container-device-interface) to provide device details to the container. It does not yet provide any benefits compared to the traditional Kubernetes Device Plugin API. The CDI device specs will improve in the future with features that are not possible with the Device Plugin API.
+
+To enable CDI support, container runtime has to support it. The support varies depending on the versions:
+* CRI-O supports CDI by default v1.24.0 onwards.
+* Containerd supports CDI from 1.7.0 onwards. 2.0.0 release will enable it by default.
+* Docker supports CDI from v25 onwards.
+
+Kubernetes CDI support is included since 1.28 release. In 1.28 it needs to be enabled via `DevicePluginCDIDevices` feature gate. From 1.29 onwards the feature is enabled by default.
+
+> *NOTE*: To use CDI outside of Kubernetes, for example with Docker or Podman, CDI specs can be generated with the [Intel CDI specs generator](https://github.com/intel/intel-resource-drivers-for-kubernetes/releases/tag/specs-generator-v0.1.0).
 
 ### KMD and UMD
 

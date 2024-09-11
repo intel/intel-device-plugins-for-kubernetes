@@ -73,6 +73,8 @@ issues:
     - path: test/e2e/
       linters:
         - wsl
+        - gocognit
+        - gocyclo
     - path: cmd/gpu_fakedev/
       linters:
         - wsl

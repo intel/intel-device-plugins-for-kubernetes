@@ -82,7 +82,7 @@ func describeQatKernelPlugin() {
 	ginkgo.Context("When QAT resources are available [Resource:cy1_dc0]", func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			ginkgo.By("checking if the resource is allocatable")
-			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "qat.intel.com/cy1_dc0", 30*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "qat.intel.com/cy1_dc0", 30*time.Second, utils.WaitForPositiveResource); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 			}
 		})

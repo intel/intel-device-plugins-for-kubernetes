@@ -84,7 +84,7 @@ func describe() {
 	ginkgo.Context("When PF resources are available [Resource:pf]", func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			resource := v1.ResourceName("dlb.intel.com/pf")
-			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resource, 30*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resource, 30*time.Second, utils.WaitForPositiveResource); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource %s: %v", resource, err)
 			}
 		})
@@ -101,7 +101,7 @@ func describe() {
 	ginkgo.Context("When VF resources are available [Resource:vf]", func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			resource := v1.ResourceName("dlb.intel.com/vf")
-			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resource, 30*time.Second); err != nil {
+			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resource, 30*time.Second, utils.WaitForPositiveResource); err != nil {
 				framework.Failf("unable to wait for nodes to have positive allocatable resource %s: %v", resource, err)
 			}
 		})
