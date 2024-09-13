@@ -186,6 +186,8 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 
 			if names, err := writeCdiSpecToFilesystem(dev.cdiSpec, srv.cdiDir); err == nil {
 				cresp.CDIDevices = append(cresp.CDIDevices, names...)
+			} else {
+				klog.Errorf("CDI spec write failed: %+v", err)
 			}
 		}
 
