@@ -38,10 +38,10 @@ ARG GOLANG_BASE=golang:1.23-bookworm
 FROM ${GOLANG_BASE} as builder
 ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
-ARG LDFLAGS="-ldflags=all=-w -s"
-ARG GOFLAGS=-trimpath
-ARG GCFLAGS="-gcflags=all=-spectre=all -N -l"
-ARG ASMFLAGS="-asmflags=all=-spectre=all"
+ARG LDFLAGS="all=-w -s"
+ARG GOFLAGS="-trimpath"
+ARG GCFLAGS="all=-spectre=all -N -l"
+ARG ASMFLAGS="all=-spectre=all"
 ARG GOLICENSES_VERSION
 ARG EP=/usr/local/bin/intel_sgx_device_plugin
 ARG CMD=qat_plugin
@@ -51,7 +51,7 @@ ARG QAT_DRIVER_RELEASE="qat1.7.l.4.14.0-00031"
 ARG QAT_DRIVER_SHA256="a68dfaea4308e0bb5f350b7528f1a076a0c6ba3ec577d60d99dc42c49307b76e"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir -p /usr/src/qat && cd /usr/src/qat && wget -q https://downloadmirror.intel.com/30178/eng/$QAT_DRIVER_RELEASE.tar.gz     && echo "$QAT_DRIVER_SHA256 $QAT_DRIVER_RELEASE.tar.gz" | sha256sum -c -     && tar xf *.tar.gz     && cd /usr/src/qat/quickassist/utilities/adf_ctl     && LDFLAGS= make KERNEL_SOURCE_DIR=/usr/src/qat/quickassist/qat     && install -D adf_ctl /install_root/usr/local/bin/adf_ctl
-RUN (cd cmd/$CMD && GOFLAGS=${GOFLAGS} GO111MODULE=${GO111MODULE} CGO_ENABLED=1 go install "${GCFLAGS}" "${ASMFLAGS}" "${LDFLAGS}" -tags kerneldrv)
+RUN (cd cmd/$CMD && GOFLAGS=${GOFLAGS} GO111MODULE=${GO111MODULE} CGO_ENABLED=1 go install -gcflags="${GCFLAGS}" -asmflags="${ASMFLAGS}" -ldflags="${LDFLAGS}" -tags kerneldrv)
 RUN chmod a+x /go/bin/$CMD && install -D /go/bin/$CMD /install_root/usr/local/bin/intel_qat_device_plugin
 RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && if [ ! -d "licenses/$CMD" ] ; then \

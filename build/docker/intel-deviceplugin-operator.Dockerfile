@@ -39,16 +39,16 @@ ARG GOLANG_BASE=golang:1.23-bookworm
 FROM ${GOLANG_BASE} as builder
 ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
-ARG LDFLAGS="-ldflags=all=-w -s"
-ARG GOFLAGS=-trimpath
-ARG GCFLAGS="-gcflags=all=-spectre=all -N -l"
-ARG ASMFLAGS="-asmflags=all=-spectre=all"
+ARG LDFLAGS="all=-w -s"
+ARG GOFLAGS="-trimpath"
+ARG GCFLAGS="all=-spectre=all -N -l"
+ARG ASMFLAGS="all=-spectre=all"
 ARG GOLICENSES_VERSION
 ARG EP=/usr/local/bin/intel_deviceplugin_operator
 ARG CMD
 WORKDIR ${DIR}
 COPY . .
-RUN (cd cmd/${CMD}; GO111MODULE=${GO111MODULE} GOFLAGS=${GOFLAGS} CGO_ENABLED=0 go install "${GCFLAGS}" "${ASMFLAGS}" "${LDFLAGS}") && install -D /go/bin/${CMD} /install_root${EP}
+RUN (cd cmd/${CMD}; GO111MODULE=${GO111MODULE} GOFLAGS=${GOFLAGS} CGO_ENABLED=0 go install -gcflags="${GCFLAGS}" -asmflags="${ASMFLAGS}" -ldflags="${LDFLAGS}") && install -D /go/bin/${CMD} /install_root${EP}
 RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && if [ ! -d "licenses/$CMD" ] ; then \
     GO111MODULE=on go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
