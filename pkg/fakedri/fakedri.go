@@ -49,17 +49,17 @@ import (
 )
 
 const (
-	DirMode    = 0775
-	FileMode   = 0644
-	CardBase   = 0
-	RenderBase = 128
-	MaxDevs    = 128
-	SysfsPath  = "sys"
-	DevfsPath  = "dev"
-	Mib        = 1024.0 * 1024.0
-	DevNullMajor = 1
-	DevNullMinor = 3
-	DevNullType  = unix.S_IFCHR
+	DirMode         = 0775
+	FileMode        = 0644
+	CardBase        = 0
+	RenderBase      = 128
+	MaxDevs         = 128
+	SysfsPath       = "sys"
+	DevfsPath       = "dev"
+	Mib             = 1024.0 * 1024.0
+	DevNullMajor    = 1
+	DevNullMinor    = 3
+	DevNullType     = unix.S_IFCHR
 	MaxK8sLabelSize = 63
 	FullyConnected  = "FULL"
 )
@@ -86,6 +86,7 @@ func addSysfsDriTree(root string, opts *GenOptions, i int) error {
 	if err := os.MkdirAll(base, DirMode); err != nil {
 		return err
 	}
+
 	opts.dirs++
 
 	data := []byte(strconv.Itoa(opts.DevMemSize))
@@ -94,18 +95,21 @@ func addSysfsDriTree(root string, opts *GenOptions, i int) error {
 	if err := os.WriteFile(file, data, FileMode); err != nil {
 		return err
 	}
+
 	opts.files++
 
 	path := filepath.Join(base, "device", "drm", card)
 	if err := os.MkdirAll(path, DirMode); err != nil {
 		return err
 	}
+
 	opts.dirs++
 
 	path = filepath.Join(base, "device", "drm", fmt.Sprintf("renderD%d", RenderBase+i))
 	if err := os.Mkdir(path, DirMode); err != nil {
 		return err
 	}
+
 	opts.dirs++
 
 	data = []byte("0x8086")
@@ -114,6 +118,7 @@ func addSysfsDriTree(root string, opts *GenOptions, i int) error {
 	if err := os.WriteFile(file, data, FileMode); err != nil {
 		return err
 	}
+
 	opts.files++
 
 	node := 0
@@ -127,6 +132,7 @@ func addSysfsDriTree(root string, opts *GenOptions, i int) error {
 	if err := os.WriteFile(file, data, FileMode); err != nil {
 		return err
 	}
+
 	opts.files++
 
 	if opts.VfsPerPf > 0 && i%(opts.VfsPerPf+1) == 0 {
@@ -136,6 +142,7 @@ func addSysfsDriTree(root string, opts *GenOptions, i int) error {
 		if err := os.WriteFile(file, data, FileMode); err != nil {
 			return err
 		}
+
 		opts.files++
 	}
 
@@ -144,6 +151,7 @@ func addSysfsDriTree(root string, opts *GenOptions, i int) error {
 		if err := os.MkdirAll(path, DirMode); err != nil {
 			return err
 		}
+
 		opts.dirs++
 	}
 
@@ -157,6 +165,7 @@ func addSysfsBusTree(root string, opts *GenOptions, i int) error {
 	if err := os.MkdirAll(base, DirMode); err != nil {
 		return err
 	}
+
 	opts.dirs++
 
 	data := []byte("0x4905")
@@ -165,12 +174,14 @@ func addSysfsBusTree(root string, opts *GenOptions, i int) error {
 	if err := os.WriteFile(file, data, FileMode); err != nil {
 		return err
 	}
+
 	opts.files++
 
 	drm := filepath.Join(base, "drm")
 	if err := os.MkdirAll(drm, DirMode); err != nil {
 		return err
 	}
+
 	opts.dirs++
 
 	return addDeviceNodes(drm, opts, i)
@@ -185,6 +196,7 @@ func addDeviceNodes(base string, opts *GenOptions, i int) error {
 		return fmt.Errorf("NULL device (%d:%d) node creation failed for '%s': %w",
 			DevNullMajor, DevNullMinor, file, err)
 	}
+
 	opts.devs++
 
 	file = filepath.Join(base, fmt.Sprintf("renderD%d", RenderBase+i))
@@ -192,6 +204,7 @@ func addDeviceNodes(base string, opts *GenOptions, i int) error {
 		return fmt.Errorf("NULL device (%d:%d) node creation failed for '%s': %w",
 			DevNullMajor, DevNullMinor, file, err)
 	}
+
 	opts.devs++
 
 	return nil
@@ -202,6 +215,7 @@ func addDevfsDriTree(root string, opts *GenOptions, i int) error {
 	if err := os.MkdirAll(base, DirMode); err != nil {
 		return err
 	}
+
 	opts.dirs++
 
 	return addDeviceNodes(base, opts, i)
@@ -212,6 +226,7 @@ func addDebugfsDriTree(root string, opts *GenOptions, i int) error {
 	if err := os.MkdirAll(base, DirMode); err != nil {
 		return err
 	}
+
 	opts.dirs++
 
 	path := filepath.Join(base, "i915_capabilities")
@@ -220,7 +235,9 @@ func addDebugfsDriTree(root string, opts *GenOptions, i int) error {
 	if err != nil {
 		return err
 	}
+
 	defer f.Close()
+
 	opts.files++
 
 	for key, value := range opts.Capabilities {
@@ -286,6 +303,7 @@ func GenerateDriFiles(opts GenOptions) {
 			log.Fatalf("ERROR: dev-%d sysfs bus tree generation failed: %v", i, err)
 		}
 	}
+
 	log.Printf("Done, created %d dirs, %d devices and %d files.", opts.dirs, opts.devs, opts.files)
 
 	makeXelinkSideCar(opts)
@@ -362,6 +380,7 @@ func saveSideCarFile(connections string) {
 		if _, err := f.WriteString(line + "\n"); err != nil {
 			panic(err)
 		}
+
 		index++
 	}
 }

@@ -35,21 +35,22 @@
 package main
 
 import (
-    "flag"
-    "log"
-    "github.com/intel/intel-device-plugins-for-kubernetes/pkg/fakedri"
+	"flag"
+	"log"
+
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fakedri"
 )
 
 func main() {
-    var name string
-    flag.StringVar(&name, "json", "", "JSON spec for fake device sysfs, debugfs and devfs content")
-    flag.BoolVar(&fakedri.Verbose, "verbose", false, "More verbose output")
-    flag.Parse()
+	var name string
+	flag.StringVar(&name, "json", "", "JSON spec for fake device sysfs, debugfs and devfs content")
+	flag.BoolVar(&fakedri.Verbose, "verbose", false, "More verbose output")
+	flag.Parse()
 
-    if name == "" {
-        log.Fatal("ERROR: no fake device spec provided")
-    }
+	if name == "" {
+		log.Fatal("ERROR: no fake device spec provided")
+	}
 
-    options := fakedri.GetOptions(name)
-    fakedri.GenerateDriFiles(options)
+	options := fakedri.GetOptions(name)
+	fakedri.GenerateDriFiles(options)
 }
