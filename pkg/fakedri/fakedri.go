@@ -470,3 +470,44 @@ func GetOptions(name string) GenOptions {
 
 	return opts
 }
+
+func GetOptionsBySpec(data string) GenOptions {
+	if data == "" {
+		log.Fatal("ERROR: no fake device spec provided")
+	}
+
+	if Verbose {
+		log.Printf("Using fake device spec: %v\n", data)
+	}
+
+	var opts GenOptions
+	if err := json.Unmarshal([]byte(data), &opts); err != nil {
+		log.Fatalf("ERROR: Unmarshaling JSON spec '%s' failed: %v", data, err)
+	}
+
+	if opts.DevCount < 1 || opts.DevCount > MaxDevs {
+		log.Fatalf("ERROR: invalid device count: 1 <= %d <= %d", opts.DevCount, MaxDevs)
+	}
+
+	if opts.VfsPerPf > 0 {
+		if opts.TilesPerDev > 0 || opts.DevsPerNode > 0 {
+			log.Fatalf("ERROR: SR-IOV VFs (%d) with device tiles (%d) or Numa nodes (%d) is unsupported for faking",
+				opts.VfsPerPf, opts.TilesPerDev, opts.DevsPerNode)
+		}
+
+		if opts.DevCount%(opts.VfsPerPf+1) != 0 {
+			log.Fatalf("ERROR: %d devices cannot be evenly split to between set of 1 SR-IOV PF + %d VFs",
+				opts.DevCount, opts.VfsPerPf)
+		}
+	}
+
+	if opts.DevsPerNode > opts.DevCount {
+		log.Fatalf("ERROR: DevsPerNode (%d) > DevCount (%d)", opts.DevsPerNode, opts.DevCount)
+	}
+
+	if opts.DevMemSize%Mib != 0 {
+		log.Fatalf("ERROR: Invalid memory size (%f MiB), not even MiB", float64(opts.DevMemSize)/Mib)
+	}
+
+	return opts
+}

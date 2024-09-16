@@ -15,14 +15,27 @@
 package main
 
 import (
+	"os"
+
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/labeler"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fakedri"
 )
 
-const (
+var (
 	sysfsDirectory    = "/host-sys"
 	sysfsDRMDirectory = sysfsDirectory + "/class/drm"
 )
 
 func main() {
+	fakedriSpec := os.Getenv("FAKEDRI_SPEC")
+	// Check if fakedriSpec is empty, and if so use system sysfs
+	if fakedriSpec != "" {
+		options := fakedri.GetOptionsBySpec(fakedriSpec)
+		fakedri.GenerateDriFiles(options)
+
+		sysfsDirectory = "sys"
+		sysfsDRMDirectory = sysfsDirectory + "/class/drm"
+	}
+
 	labeler.CreateAndPrintLabels(sysfsDRMDirectory)
 }

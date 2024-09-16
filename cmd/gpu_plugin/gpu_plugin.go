@@ -625,9 +625,8 @@ func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi
 
 func main() {
 	var (
-		prefix   string
-		opts     cliOptions
-		specName string
+		prefix string
+		opts   cliOptions
 	)
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
@@ -635,13 +634,12 @@ func main() {
 	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
-	flag.StringVar(&specName, "fakedri", "", "JSON spec for fakedri device sysfs, debugfs and devfs content")
-	flag.BoolVar(&fakedri.Verbose, "verbose", false, "More verbose output for fakedri")
 	flag.Parse()
 
-	if specName != "" {
-		klog.V(1).Infof("Using fakedri device spec provided %s", specName)
-		options := fakedri.GetOptions(specName)
+	fakedriSpec := os.Getenv("FAKEDRI_SPEC")
+	// Check if fakedriSpec is empty, and if so use system sysfs
+	if fakedriSpec != "" {
+		options := fakedri.GetOptionsBySpec(fakedriSpec)
 		fakedri.GenerateDriFiles(options)
 
 		sysfsDrmDirectory = "sys/class/drm"
