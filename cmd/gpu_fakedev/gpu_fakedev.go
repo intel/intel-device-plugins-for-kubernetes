@@ -36,21 +36,27 @@ package main
 
 import (
 	"flag"
-	"log"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fakedri"
+
+	"k8s.io/klog/v2"
 )
 
 func main() {
-	var name string
-	flag.StringVar(&name, "json", "", "JSON spec for fake device sysfs, debugfs and devfs content")
-	flag.BoolVar(&fakedri.Verbose, "verbose", false, "More verbose output")
+	name := flag.String("json", "", "JSON spec for fake device sysfs, debugfs and devfs content")
+	verbose := flag.Bool("verbose", false, "More verbose output")
+
+	// Initialize klog flags for verbosity
+	klog.InitFlags(nil)
+
 	flag.Parse()
 
-	if name == "" {
-		log.Fatal("ERROR: no fake device spec provided")
+	fakedri.Verbose = *verbose
+
+	if *name == "" {
+		klog.Error("ERROR: no fake device spec provided")
 	}
 
-	options := fakedri.GetOptions(name)
+	options := fakedri.GetOptions(*name)
 	fakedri.GenerateDriFiles(options)
 }
