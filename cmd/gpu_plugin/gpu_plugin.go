@@ -31,21 +31,26 @@ import (
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fakedri"
+
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/labeler"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	cdispec "tags.cncf.io/container-device-interface/specs-go"
 )
 
-const (
+var (
 	sysfsDrmDirectory = "/sys/class/drm"
 	devfsDriDirectory = "/dev/dri"
-	nfdFeatureDir     = "/etc/kubernetes/node-feature-discovery/features.d"
-	resourceFilename  = "intel-gpu-resources.txt"
-	gpuDeviceRE       = `^card[0-9]+$`
-	controlDeviceRE   = `^controlD[0-9]+$`
-	pciAddressRE      = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
-	vendorString      = "0x8086"
+)
+
+const (
+	nfdFeatureDir    = "/etc/kubernetes/node-feature-discovery/features.d"
+	resourceFilename = "intel-gpu-resources.txt"
+	gpuDeviceRE      = `^card[0-9]+$`
+	controlDeviceRE  = `^controlD[0-9]+$`
+	pciAddressRE     = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
+	vendorString     = "0x8086"
 
 	// Device plugin settings.
 	namespace         = "gpu.intel.com"
@@ -620,8 +625,9 @@ func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi
 
 func main() {
 	var (
-		prefix string
-		opts   cliOptions
+		prefix   string
+		opts     cliOptions
+		specName string
 	)
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
@@ -629,7 +635,18 @@ func main() {
 	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
+	flag.StringVar(&specName, "json", "", "JSON spec for fake device sysfs, debugfs and devfs content")
+	flag.BoolVar(&fakedri.Verbose, "verbose", false, "More verbose output")
 	flag.Parse()
+
+	if specName != "" {
+		klog.V(1).Infof("Using fakedri device spec provided %s", specName)
+		options := fakedri.GetOptions(specName)
+		fakedri.GenerateDriFiles(options)
+
+		sysfsDrmDirectory = "sys/class/drm"
+		devfsDriDirectory = "dev/dri"
+	}
 
 	if opts.sharedDevNum < 1 {
 		klog.Error("The number of containers sharing the same GPU must greater than zero")
