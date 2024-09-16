@@ -4,6 +4,7 @@
         "TilesPerDev": 2,
         "DevsPerNode": 2,
 	"DevMemSize": 4294967296,
+        "Driver": "i915",
 	"Capabilities": {
 		"platform": "fake_PVC",
                 "connections": "",

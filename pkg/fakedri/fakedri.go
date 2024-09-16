@@ -67,16 +67,20 @@ const (
 var Verbose bool
 
 type GenOptions struct {
-	Capabilities map[string]string
-	Info         string
-	DevCount     int
-	TilesPerDev  int
-	DevMemSize   int
-	DevsPerNode  int
-	VfsPerPf     int
-	files        int
-	dirs         int
-	devs         int
+	Capabilities map[string]string // map (pointer)
+	Info         string            // string (pointer)
+	Driver       string            // string (pointer)
+
+	DevCount    int // int (non-pointer, 8 bytes on 64-bit systems)
+	TilesPerDev int // int
+	DevMemSize  int // int
+	DevsPerNode int // int
+	VfsPerPf    int // int
+
+	files int // int (private fields)
+	dirs  int // int
+	devs  int // int
+	symls int // int
 }
 
 func addSysfsDriTree(root string, opts *GenOptions, i int) error {
@@ -111,6 +115,14 @@ func addSysfsDriTree(root string, opts *GenOptions, i int) error {
 	}
 
 	opts.dirs++
+
+	file = filepath.Join(base, "device", "driver")
+	if err := os.Symlink(fmt.Sprintf("../../../../bus/pci/drivers/%s", opts.Driver), file); err != nil {
+		return fmt.Errorf("symlink creation failed '%s': %w",
+			file, err)
+	}
+
+	opts.symls++
 
 	data = []byte("0x8086")
 	file = filepath.Join(base, "device", "vendor")
@@ -160,7 +172,7 @@ func addSysfsDriTree(root string, opts *GenOptions, i int) error {
 
 func addSysfsBusTree(root string, opts *GenOptions, i int) error {
 	pciName := fmt.Sprintf("0000:00:0%d.0", i)
-	base := filepath.Join(root, "bus", "pci", "drivers", "i915", pciName)
+	base := filepath.Join(root, "bus", "pci", "drivers", opts.Driver, pciName)
 
 	if err := os.MkdirAll(base, DirMode); err != nil {
 		return err
@@ -210,15 +222,43 @@ func addDeviceNodes(base string, opts *GenOptions, i int) error {
 	return nil
 }
 
+func addDeviceSymlinks(base string, opts *GenOptions, i int) error {
+	target := filepath.Join(base, fmt.Sprintf("by-path/pci-0000:%02d:02.0-card", i))
+	if err := os.Symlink(fmt.Sprintf("../card%d", CardBase+i), target); err != nil {
+		return fmt.Errorf("symlink creation failed '%s': %w",
+			target, err)
+	}
+
+	opts.symls++
+
+	target = filepath.Join(base, fmt.Sprintf("by-path/pci-0000:%02d:02.0-render", i))
+	if err := os.Symlink(fmt.Sprintf("../renderD%d", RenderBase+i), target); err != nil {
+		return fmt.Errorf("symlink creation failed '%s': %w",
+			target, err)
+	}
+
+	opts.symls++
+
+	return nil
+}
+
 func addDevfsDriTree(root string, opts *GenOptions, i int) error {
 	base := filepath.Join(root, "dri")
 	if err := os.MkdirAll(base, DirMode); err != nil {
 		return err
 	}
 
+	if err := os.MkdirAll(filepath.Join(root, "dri/by-path"), DirMode); err != nil {
+		return err
+	}
+
 	opts.dirs++
 
-	return addDeviceNodes(base, opts, i)
+	if err := addDeviceNodes(base, opts, i); err != nil {
+		return err
+	}
+
+	return addDeviceSymlinks(base, opts, i)
 }
 
 func addDebugfsDriTree(root string, opts *GenOptions, i int) error {
@@ -287,24 +327,24 @@ func GenerateDriFiles(opts GenOptions) {
 
 	opts.dirs, opts.files = 0, 0
 	for i := 0; i < opts.DevCount; i++ {
-		if err := addSysfsDriTree(SysfsPath, &opts, i); err != nil {
-			log.Fatalf("ERROR: dev-%d sysfs tree generation failed: %v", i, err)
+		if err := addSysfsBusTree(SysfsPath, &opts, i); err != nil {
+			log.Fatalf("ERROR: dev-%d sysfs bus tree generation failed: %v", i, err)
 		}
 
-		if err := addDebugfsDriTree(SysfsPath, &opts, i); err != nil {
-			log.Fatalf("ERROR: dev-%d debugfs tree generation failed: %v", i, err)
+		if err := addSysfsDriTree(SysfsPath, &opts, i); err != nil {
+			log.Fatalf("ERROR: dev-%d sysfs tree generation failed: %v", i, err)
 		}
 
 		if err := addDevfsDriTree(DevfsPath, &opts, i); err != nil {
 			log.Fatalf("ERROR: dev-%d devfs tree generation failed: %v", i, err)
 		}
 
-		if err := addSysfsBusTree(SysfsPath, &opts, i); err != nil {
-			log.Fatalf("ERROR: dev-%d sysfs bus tree generation failed: %v", i, err)
+		if err := addDebugfsDriTree(SysfsPath, &opts, i); err != nil {
+			log.Fatalf("ERROR: dev-%d debugfs tree generation failed: %v", i, err)
 		}
 	}
 
-	log.Printf("Done, created %d dirs, %d devices and %d files.", opts.dirs, opts.devs, opts.files)
+	log.Printf("Done, created %d dirs, %d devices, %d files and %d symlinks.", opts.dirs, opts.devs, opts.files, opts.symls)
 
 	makeXelinkSideCar(opts)
 }
