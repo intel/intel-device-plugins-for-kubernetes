@@ -46,6 +46,8 @@ import (
 	"strings"
 
 	"golang.org/x/sys/unix"
+
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -54,8 +56,8 @@ const (
 	CardBase        = 0
 	RenderBase      = 128
 	MaxDevs         = 128
-	SysfsPath       = "sys"
-	DevfsPath       = "dev"
+	SysfsPath       = "/tmp/sys"
+	DevfsPath       = "/tmp/dev"
 	Mib             = 1024.0 * 1024.0
 	DevNullMajor    = 1
 	DevNullMinor    = 3
@@ -81,6 +83,33 @@ type GenOptions struct {
 	dirs  int // int
 	devs  int // int
 	symls int // int
+}
+
+// genOptionsWithTags represents the struct for our YAML data.
+type genOptionsWithTags struct {
+	Capabilities map[string]string `yaml:"Capabilities"`
+	Info         string            `yaml:"Info"`
+	Driver       string            `yaml:"Driver"`
+	DevCount     int               `yaml:"DevCount"`
+	TilesPerDev  int               `yaml:"TilesPerDev"`
+	DevMemSize   int               `yaml:"DevMemSize"`
+	DevsPerNode  int               `yaml:"DevsPerNode"`
+	VfsPerPf     int               `yaml:"VfsPerPf"`
+}
+
+// Function to transform from GenOptionsWithTags to GenOptions.
+func convertToGenOptions(withTags genOptionsWithTags) GenOptions {
+	return GenOptions{
+		Capabilities: withTags.Capabilities,
+		Info:         withTags.Info,
+		Driver:       withTags.Driver,
+		DevCount:     withTags.DevCount,
+		TilesPerDev:  withTags.TilesPerDev,
+		DevMemSize:   withTags.DevMemSize,
+		DevsPerNode:  withTags.DevsPerNode,
+		VfsPerPf:     withTags.VfsPerPf,
+		// Private fields are not copied
+	}
 }
 
 func addSysfsDriTree(root string, opts *GenOptions, i int) error {
@@ -325,7 +354,7 @@ func GenerateDriFiles(opts GenOptions) {
 	log.Printf("Generating fake DRI device(s) sysfs, debugfs and devfs content under '%s' & '%s'",
 		SysfsPath, DevfsPath)
 
-	opts.dirs, opts.files = 0, 0
+	opts.dirs, opts.files, opts.devs, opts.symls = 0, 0, 0, 0
 	for i := 0; i < opts.DevCount; i++ {
 		if err := addSysfsBusTree(SysfsPath, &opts, i); err != nil {
 			log.Fatalf("ERROR: dev-%d sysfs bus tree generation failed: %v", i, err)
@@ -355,10 +384,12 @@ func makeXelinkSideCar(opts GenOptions) {
 	tiles := opts.TilesPerDev
 	connections := opts.Capabilities["connections"]
 
-	if topology != FullyConnected {
+	if topology == FullyConnected {
+		saveSideCarFile(buildConnectionList(gpus, tiles))
+	} else if connections != "" {
 		saveSideCarFile(connections)
 	} else {
-		saveSideCarFile(buildConnectionList(gpus, tiles))
+		return
 	}
 
 	log.Printf("XELINK: generated xelink sidecar label file, using (GPUs: %d, Tiles: %d, Topology: %s)", gpus, tiles, topology)
@@ -398,7 +429,7 @@ func buildConnectionList(gpus, tiles int) string {
 }
 
 func saveSideCarFile(connections string) {
-	f, err := os.Create("xpum-sidecar-labels.txt")
+	f, err := os.CreateTemp("/tmp", "/xpum-sidecar-labels.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -425,25 +456,7 @@ func saveSideCarFile(connections string) {
 	}
 }
 
-func GetOptions(name string) GenOptions {
-	if name == "" {
-		log.Fatal("ERROR: no fake device spec provided")
-	}
-
-	data, err := os.ReadFile(name)
-	if err != nil {
-		log.Fatalf("ERROR: reading JSON spec file '%s' failed: %v", name, err)
-	}
-
-	if Verbose {
-		log.Printf("Using fake device spec: %v\n", string(data))
-	}
-
-	var opts GenOptions
-	if err = json.Unmarshal(data, &opts); err != nil {
-		log.Fatalf("ERROR: Unmarshaling JSON spec file '%s' failed: %v", name, err)
-	}
-
+func MakeOptions(opts GenOptions) GenOptions {
 	if opts.DevCount < 1 || opts.DevCount > MaxDevs {
 		log.Fatalf("ERROR: invalid device count: 1 <= %d <= %d", opts.DevCount, MaxDevs)
 	}
@@ -471,43 +484,41 @@ func GetOptions(name string) GenOptions {
 	return opts
 }
 
+func GetOptions(name string) GenOptions {
+	if name == "" {
+		log.Fatal("ERROR: no fake device spec provided")
+	}
+
+	data, err := os.ReadFile(name)
+	if err != nil {
+		log.Fatalf("ERROR: reading JSON spec file '%s' failed: %v", name, err)
+	}
+
+	if Verbose {
+		log.Printf("Using fake device JSON spec: %v\n", string(data))
+	}
+
+	var opts GenOptions
+	if err = json.Unmarshal(data, &opts); err != nil {
+		log.Fatalf("ERROR: Unmarshaling JSON spec file '%s' failed: %v", name, err)
+	}
+
+	return MakeOptions(opts)
+}
+
 func GetOptionsBySpec(data string) GenOptions {
 	if data == "" {
 		log.Fatal("ERROR: no fake device spec provided")
 	}
 
 	if Verbose {
-		log.Printf("Using fake device spec: %v\n", data)
+		log.Printf("Using fake device YAML spec: %v\n", data)
 	}
 
-	var opts GenOptions
-	if err := json.Unmarshal([]byte(data), &opts); err != nil {
-		log.Fatalf("ERROR: Unmarshaling JSON spec '%s' failed: %v", data, err)
+	var opts genOptionsWithTags
+	if err := yaml.Unmarshal([]byte(data), &opts); err != nil {
+		log.Fatalf("ERROR: Unmarshaling YAML spec '%s' failed: %v", data, err)
 	}
 
-	if opts.DevCount < 1 || opts.DevCount > MaxDevs {
-		log.Fatalf("ERROR: invalid device count: 1 <= %d <= %d", opts.DevCount, MaxDevs)
-	}
-
-	if opts.VfsPerPf > 0 {
-		if opts.TilesPerDev > 0 || opts.DevsPerNode > 0 {
-			log.Fatalf("ERROR: SR-IOV VFs (%d) with device tiles (%d) or Numa nodes (%d) is unsupported for faking",
-				opts.VfsPerPf, opts.TilesPerDev, opts.DevsPerNode)
-		}
-
-		if opts.DevCount%(opts.VfsPerPf+1) != 0 {
-			log.Fatalf("ERROR: %d devices cannot be evenly split to between set of 1 SR-IOV PF + %d VFs",
-				opts.DevCount, opts.VfsPerPf)
-		}
-	}
-
-	if opts.DevsPerNode > opts.DevCount {
-		log.Fatalf("ERROR: DevsPerNode (%d) > DevCount (%d)", opts.DevsPerNode, opts.DevCount)
-	}
-
-	if opts.DevMemSize%Mib != 0 {
-		log.Fatalf("ERROR: Invalid memory size (%f MiB), not even MiB", float64(opts.DevMemSize)/Mib)
-	}
-
-	return opts
+	return MakeOptions(convertToGenOptions(opts))
 }

@@ -642,8 +642,8 @@ func main() {
 		options := fakedri.GetOptionsBySpec(fakedriSpec)
 		fakedri.GenerateDriFiles(options)
 
-		sysfsDrmDirectory = "sys/class/drm"
-		devfsDriDirectory = "dev/dri"
+		sysfsDrmDirectory = "/tmp/sys/class/drm"
+		devfsDriDirectory = "/tmp/dev/dri"
 	}
 
 	if opts.sharedDevNum < 1 {
