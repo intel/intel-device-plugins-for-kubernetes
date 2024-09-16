@@ -39,8 +39,8 @@ spec:
           #    Driver: "i915"
           #    Capabilities:
           #      platform: "fake_DG1"
-                #connections: ""
-                #connection-topology: "FULL"
+          #      connections: ""
+          #      connection-topology: "FULL"
         image: intel/intel-gpu-plugin:devel
         imagePullPolicy: IfNotPresent
         securityContext:
