@@ -635,8 +635,8 @@ func main() {
 	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
-	flag.StringVar(&specName, "json", "", "JSON spec for fake device sysfs, debugfs and devfs content")
-	flag.BoolVar(&fakedri.Verbose, "verbose", false, "More verbose output")
+	flag.StringVar(&specName, "fakedri", "", "JSON spec for fakedri device sysfs, debugfs and devfs content")
+	flag.BoolVar(&fakedri.Verbose, "verbose", false, "More verbose output for fakedri")
 	flag.Parse()
 
 	if specName != "" {
