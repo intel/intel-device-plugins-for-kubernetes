@@ -42,7 +42,7 @@ spec:
                 #connections: ""
                 #connection-topology: "FULL"
         image: intel/intel-gpu-plugin:devel
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           seLinuxOptions:
             type: "container_device_plugin_t"
