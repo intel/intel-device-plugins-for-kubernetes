@@ -29,18 +29,6 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
-          #- name: FAKEDRI_SPEC
-          #  value: |
-          #    Info: "8x 4 GiB DG1 [Iris Xe MAX Graphics] GPUs"
-          #    DevCount: 8
-          #    TilesPerDev: 1
-          #    DevsPerNode: 1
-          #    DevMemSize: 4294967296
-          #    Driver: "i915"
-          #    Capabilities:
-          #      platform: "fake_DG1"
-          #      connections: ""
-          #      connection-topology: "FULL"
         image: intel/intel-gpu-plugin:devel
         imagePullPolicy: IfNotPresent
         securityContext:
@@ -59,8 +47,6 @@ spec:
           mountPath: /var/lib/kubelet/device-plugins
         - name: cdipath
           mountPath: /var/run/cdi
-        - name: tmp
-          mountPath: /tmp
       volumes:
       - name: devfs
         hostPath:
@@ -74,10 +60,6 @@ spec:
       - name: cdipath
         hostPath:
           path: /var/run/cdi
-          type: DirectoryOrCreate
-      - name: tmp
-        hostPath:
-          path: /tmp
           type: DirectoryOrCreate
       nodeSelector:
         kubernetes.io/arch: amd64

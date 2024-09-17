@@ -431,8 +431,7 @@ func buildConnectionList(gpus, tiles int) string {
 
 func saveSideCarFile(connections string) {
 	// Get user-specific temp directory
-	tmpDir := os.TempDir()
-	filePath := filepath.Join(tmpDir, "xpum-sidecar-labels.txt")
+	filePath := filepath.Join("/etc/kubernetes/node-feature-discovery/features.d", "xpum-sidecar-labels.txt")
 
 	// Safely create file in the temp directory
 	f, err := os.Create(filePath)
