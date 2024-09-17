@@ -66,6 +66,24 @@ enable_sriov() {
   done
 }
 
+
+enable_auto_reset() {
+  for dev in $DEVS; do
+    DEVPATH="/sys/bus/pci/devices/0000:$dev"
+    AUTORESET="$DEVPATH/qat/auto_reset"
+    if ! test -w "$AUTORESET"; then
+      echo "warning: $AUTORESET is not found or not writable. Check if QAT driver module is loaded. Skipping..."
+      return
+    fi
+    if [ "$(cat "$AUTORESET")" == "on" ]; then
+      echo "$DEVPATH's auto reset is already on"
+    else
+      echo "on" > "$AUTORESET" && echo "$DEVPATH's auto reset has been enabled"
+    fi
+  done
+}
+
 check_config
 sysfs_config
 enable_sriov
+enable_auto_reset
