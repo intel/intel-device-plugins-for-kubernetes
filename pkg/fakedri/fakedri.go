@@ -73,6 +73,8 @@ type GenOptions struct {
 	Capabilities map[string]string // map (pointer)
 	Info         string            // string (pointer)
 	Driver       string            // string (pointer)
+	Mode         string            // string (pointer)
+	Path         string            // string (pointer)
 
 	DevCount    int // int (non-pointer, 8 bytes on 64-bit systems)
 	TilesPerDev int // int
@@ -91,6 +93,8 @@ type genOptionsWithTags struct {
 	Capabilities map[string]string `yaml:"Capabilities"`
 	Info         string            `yaml:"Info"`
 	Driver       string            `yaml:"Driver"`
+	Mode         string            `yaml:"Mode"`
+	Path         string            `yaml:"Path"`
 	DevCount     int               `yaml:"DevCount"`
 	TilesPerDev  int               `yaml:"TilesPerDev"`
 	DevMemSize   int               `yaml:"DevMemSize"`
@@ -104,6 +108,8 @@ func convertToGenOptions(withTags genOptionsWithTags) GenOptions {
 		Capabilities: withTags.Capabilities,
 		Info:         withTags.Info,
 		Driver:       withTags.Driver,
+		Mode:         withTags.Mode,
+		Path:         withTags.Path,
 		DevCount:     withTags.DevCount,
 		TilesPerDev:  withTags.TilesPerDev,
 		DevMemSize:   withTags.DevMemSize,

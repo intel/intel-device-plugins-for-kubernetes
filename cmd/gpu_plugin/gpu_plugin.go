@@ -42,6 +42,7 @@ import (
 var (
 	sysfsDrmDirectory = "/sys/class/drm"
 	devfsDriDirectory = "/dev/dri"
+	prefix            = ""
 )
 
 const (
@@ -71,6 +72,7 @@ const (
 
 type cliOptions struct {
 	preferredAllocationPolicy string
+	fakedriSpec               string
 	sharedDevNum              int
 	enableMonitoring          bool
 	resourceManagement        bool
@@ -571,7 +573,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		mounts, cdiDevices := dp.createMountsAndCDIDevices(cardPath, name, devSpecs)
 
-		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devSpecs, mounts, nil, nil, cdiDevices)
+		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devSpecs, mounts, nil, nil, cdiDevices, prefix+"/dev")
 
 		for i := 0; i < dp.options.sharedDevNum; i++ {
 			devID := fmt.Sprintf("%s-%d", name, i)
@@ -625,8 +627,7 @@ func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi
 
 func main() {
 	var (
-		prefix string
-		opts   cliOptions
+		opts cliOptions
 	)
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
@@ -634,16 +635,21 @@ func main() {
 	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
+	flag.StringVar(&opts.fakedriSpec, "fakedri-spec", "", "pass fakedri specification in Yaml format")
 	flag.Parse()
 
-	fakedriSpec := os.Getenv("FAKEDRI_SPEC")
-	// Check if fakedriSpec is empty, and if so use system sysfs
+	fakedriSpec := opts.fakedriSpec
+	if fakedriSpec == "" {
+		fakedriSpec = os.Getenv("FAKEDRI_SPEC")
+	}
+
 	if fakedriSpec != "" {
 		options := fakedri.GetOptionsBySpec(fakedriSpec)
-		fakedri.GenerateDriFiles(options)
+		if options.Mode == "" || options.Mode == "yaml" {
+			fakedri.GenerateDriFiles(options)
+		}
 
-		sysfsDrmDirectory = "/tmp/sys/class/drm"
-		devfsDriDirectory = "/tmp/dev/dri"
+		prefix = options.Path
 	}
 
 	if opts.sharedDevNum < 1 {

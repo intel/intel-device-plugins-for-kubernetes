@@ -17,12 +17,13 @@ spec:
         # FAKEDRI_SPEC simulates an Intel DG1 GPU with specific hardware specs for testing.
         - name: FAKEDRI_SPEC
           value: |
+            Path: "/tmp"
             Info: "8x 4 GiB DG1 [Iris Xe MAX Graphics] GPUs"  # Describes the fake GPU model
             DevCount: 8  # The number of fake GPUs being simulated (8 devices)
             TilesPerDev: 1  # Number of tiles per fake GPU (1 tile per device)
             DevsPerNode: 1  # Number of GPUs per node (1 GPU per numa node)
             DevMemSize: 4294967296  # Memory size per GPU in bytes (4 GiB = 4294967296 bytes)
-            Driver: "i915"  # The GPU driver to use for the fake device (i915, used for Intel GPUs)
+            Driver: "i915"  # The GPU driver to use for the fake device (xe, used for Intel DG1 GPUs)
             Capabilities:  # List of capabilities that the fake GPU supports
               platform: "fake_DG1"  # Fake platform name (simulates the DG1 platform)
               connections: ""  # Placeholder for GPU connections (manual connections for xe-link)
