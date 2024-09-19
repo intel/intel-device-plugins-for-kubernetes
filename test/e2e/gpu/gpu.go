@@ -38,7 +38,8 @@ import (
 const (
 	kustomizationYaml   = "deployments/gpu_plugin/kustomization.yaml"
 	monitoringYaml      = "deployments/gpu_plugin/overlays/monitoring_shared-dev_nfd/kustomization.yaml"
-	rmEnabledYaml       = "deployments/gpu_plugin/overlays/fractional_resources//kustomization.yaml"
+	rmEnabledYaml       = "deployments/gpu_plugin/overlays/fractional_resources/kustomization.yaml"
+	healthMgmtYaml      = "deployments/gpu_plugin/overlays/health/kustomization.yaml"
 	nfdRulesYaml        = "deployments/nfd/overlays/node-feature-rules/kustomization.yaml"
 	containerName       = "testcontainer"
 	tfKustomizationYaml = "deployments/gpu_tensorflow_test/kustomization.yaml"
@@ -96,6 +97,11 @@ func describe() {
 	resourceManagerPath, errFailedToLocateRepoFile := utils.LocateRepoFile(rmEnabledYaml)
 	if errFailedToLocateRepoFile != nil {
 		framework.Failf("unable to locate %q: %v", rmEnabledYaml, errFailedToLocateRepoFile)
+	}
+
+	healthMgmtPath, errFailedToLocateRepoFile := utils.LocateRepoFile(healthMgmtYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", healthMgmtYaml, errFailedToLocateRepoFile)
 	}
 
 	ginkgo.Context("When GPU plugin is deployed [Resource:i915]", func() {
@@ -191,6 +197,12 @@ func describe() {
 				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "gpu.intel.com/i915_monitoring", 30*time.Second, utils.WaitForPositiveResource); err != nil {
 					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 				}
+			})
+		})
+
+		ginkgo.Context("When [Deployment:healthManagement] deployment is applied [Resource:i915]", func() {
+			ginkgo.It("check if i915 resources is available", func(ctx context.Context) {
+				createPluginAndVerifyExistence(f, ctx, healthMgmtPath, "gpu.intel.com/i915")
 			})
 		})
 
