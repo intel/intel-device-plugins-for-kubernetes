@@ -55,6 +55,7 @@ jobs:
               - intel-iaa-plugin
               - crypto-perf
               - intel-gpu-plugin
+              - intel-gpu-levelzero
               - intel-sgx-plugin
               - intel-sgx-initcontainer
               - intel-sgx-admissionwebhook
