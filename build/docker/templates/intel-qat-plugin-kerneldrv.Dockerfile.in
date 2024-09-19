@@ -24,7 +24,7 @@ RUN mkdir -p /usr/src/qat \
     && cd /usr/src/qat/quickassist/utilities/adf_ctl \
     && LDFLAGS= make KERNEL_SOURCE_DIR=/usr/src/qat/quickassist/qat \
     && install -D adf_ctl /install_root/usr/local/bin/adf_ctl
-RUN (cd cmd/$CMD && GOFLAGS=${GOFLAGS} GO111MODULE=${GO111MODULE} CGO_ENABLED=1 go install "${GCFLAGS}" "${ASMFLAGS}" "${LDFLAGS}" -tags kerneldrv)
+RUN (cd cmd/$CMD && GOFLAGS=${GOFLAGS} GO111MODULE=${GO111MODULE} CGO_ENABLED=1 go install -gcflags="${GCFLAGS}" -asmflags="${ASMFLAGS}" -ldflags="${LDFLAGS}" -tags kerneldrv)
 RUN chmod a+x /go/bin/$CMD \
     && install -D /go/bin/$CMD /install_root/usr/local/bin/intel_qat_device_plugin
 
