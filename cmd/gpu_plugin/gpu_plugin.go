@@ -32,6 +32,7 @@ import (
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fakedri"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/labeler"
@@ -41,8 +42,6 @@ import (
 )
 
 const (
-	sysfsDrmDirectory = "/sys/class/drm"
-	devfsDriDirectory = "/dev/dri"
 	wslDxgPath        = "/dev/dxg"
 	wslLibPath        = "/usr/lib/wsl"
 	nfdFeatureDir     = "/etc/kubernetes/node-feature-discovery/features.d"
@@ -70,8 +69,15 @@ const (
 	labelerMaxInterval = 5 * 60 * time.Second
 )
 
+var (
+	sysfsDrmDirectory = "/sys/class/drm"
+	devfsDriDirectory = "/dev/dri"
+	prefix            = ""
+)
+
 type cliOptions struct {
 	preferredAllocationPolicy string
+	fakedriSpec               string
 	sharedDevNum              int
 	temperatureLimit          int
 	enableMonitoring          bool
@@ -710,9 +716,9 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		mounts, cdiDevices := dp.createMountsAndCDIDevices(cardPath, name, devSpecs)
 
-		health := dp.healthStatusForCard(cardPath)
+                health := dp.healthStatusForCard(cardPath)
 
-		deviceInfo := dpapi.NewDeviceInfo(health, devSpecs, mounts, nil, nil, cdiDevices)
+		deviceInfo := dpapi.NewDeviceInfo(health, devSpecs, mounts, nil, nil, cdiDevices, prefix+"/dev")
 
 		for i := 0; i < dp.options.sharedDevNum; i++ {
 			devID := fmt.Sprintf("%s-%d", name, i)
@@ -766,8 +772,7 @@ func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi
 
 func main() {
 	var (
-		prefix string
-		opts   cliOptions
+		opts cliOptions
 	)
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
@@ -778,7 +783,22 @@ func main() {
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.IntVar(&opts.temperatureLimit, "temp-limit", 100, "temperature limit at which device is marked unhealthy")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
+	flag.StringVar(&opts.fakedriSpec, "fakedri-spec", "", "pass fakedri specification in Yaml format")
 	flag.Parse()
+
+	fakedriSpec := opts.fakedriSpec
+	if fakedriSpec == "" {
+		fakedriSpec = os.Getenv("FAKEDRI_SPEC")
+	}
+
+	if fakedriSpec != "" {
+		options := fakedri.GetOptionsBySpec(fakedriSpec)
+		if options.Mode == "" || options.Mode == "yaml" {
+			fakedri.GenerateDriFiles(options)
+		}
+
+		prefix = options.Path
+	}
 
 	if opts.sharedDevNum < 1 {
 		klog.Error("The number of containers sharing the same GPU must greater than zero")

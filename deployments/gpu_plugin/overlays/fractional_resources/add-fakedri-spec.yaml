@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-gpu-plugin
+spec:
+  template:
+    spec:
+      containers:
+      - name: intel-gpu-plugin
+        # All args must be here as K8s won't merge args other option is to use env variable FAKEDRI_SPEC which can patch freely
+        args:
+        - "-shared-dev-num=300"
+        - "-resource-manager"
+        - "-enable-monitoring"
+        # The --fakedri-spec argument simulates an Intel DG1 GPU with specific hardware specs for testing.
+        - |
+          --fakedri-spec=Info: "8x 4 GiB DG1 [Iris Xe MAX Graphics] GPUs"
+          Path: "/tmp" # Must be same as mounts and volumes
+          DevCount: 8
+          TilesPerDev: 1
+          DevsPerNode: 1
+          DevMemSize: 4294967296
+          Driver: "i915"
+          Capabilities:
+            platform: "fake_DG1"
+            connections: ""
+            connection-topology: "FULL"
+        volumeMounts:
+          - name: tmp
+            mountPath: /tmp  # The container's /tmp directory is mapped to the host's /tmp directory
+      volumes:
+      - name: tmp
+        hostPath:
+          path: /tmp  # Mount the host's /tmp directory inside the container
+          type: DirectoryOrCreate  # Create the directory if it does not already exist

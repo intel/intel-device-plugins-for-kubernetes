@@ -18,7 +18,7 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/labeler"
 )
 
-const (
+var (
 	sysfsDirectory    = "/host-sys"
 	sysfsDRMDirectory = sysfsDirectory + "/class/drm"
 )
