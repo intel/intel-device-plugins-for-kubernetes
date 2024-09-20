@@ -113,6 +113,9 @@ static ze_result_t enumerate_zes_devices(void)
     }
 
     zes_handles = calloc(count, sizeof(zes_device_handle_t));
+    if (zes_handles == NULL) {
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
 
     res = zesDeviceGet(handle, &count, zes_handles);
     if (res != ZE_RESULT_SUCCESS) {
