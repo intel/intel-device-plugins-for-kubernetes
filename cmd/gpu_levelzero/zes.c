@@ -358,7 +358,7 @@ bool zes_device_bus_is_healthy(char* bdf_address, uint32_t* error)
 double zes_device_temp_max(char* bdf_address, char* sensor, uint32_t* error)
 {
     if (getenv("UNITTEST") != NULL) {
-        return -999.0;
+        return TEMP_ERROR_RET_VAL;
     }
 
     uint32_t requestedType = 0;
@@ -371,7 +371,7 @@ double zes_device_temp_max(char* bdf_address, char* sensor, uint32_t* error)
     } else {
         *error = ZE_RESULT_ERROR_INVALID_ARGUMENT;
 
-        return -999.0;
+        return TEMP_ERROR_RET_VAL;
     }
 
     print_log(LOG_DEBUG, "Fetch %s temperature for %s\n", sensor, bdf_address);
@@ -381,7 +381,7 @@ double zes_device_temp_max(char* bdf_address, char* sensor, uint32_t* error)
         if (res != ZE_RESULT_SUCCESS) {
             *error = res;
 
-            return -999.0;
+            return TEMP_ERROR_RET_VAL;
         }
     }
 
@@ -389,7 +389,7 @@ double zes_device_temp_max(char* bdf_address, char* sensor, uint32_t* error)
     if (handle == 0) {
         *error = ZE_RESULT_ERROR_UNKNOWN;
 
-        return -999.0;
+        return TEMP_ERROR_RET_VAL;
     }
 
     uint32_t count = 0;
@@ -397,7 +397,7 @@ double zes_device_temp_max(char* bdf_address, char* sensor, uint32_t* error)
     if (res != ZE_RESULT_SUCCESS || count == 0) {
         *error = res;
 
-        return -999.0;
+        return TEMP_ERROR_RET_VAL;
     }
 
     zes_temp_handle_t tempHandles[count];
@@ -405,7 +405,7 @@ double zes_device_temp_max(char* bdf_address, char* sensor, uint32_t* error)
     if (res != ZE_RESULT_SUCCESS) {
         *error = res;
 
-        return -999.0;
+        return TEMP_ERROR_RET_VAL;
     }
 
     for (uint32_t i = 0; i < count; ++i) {
@@ -415,7 +415,7 @@ double zes_device_temp_max(char* bdf_address, char* sensor, uint32_t* error)
         if (res != ZE_RESULT_SUCCESS) {
             *error = res;
 
-            return -999.0;
+            return TEMP_ERROR_RET_VAL;
         }
 
         if (props.type != requestedType) {
@@ -427,7 +427,7 @@ double zes_device_temp_max(char* bdf_address, char* sensor, uint32_t* error)
         if (res != ZE_RESULT_SUCCESS) {
             *error = res;
 
-            return -999.0;
+            return TEMP_ERROR_RET_VAL;
         }
 
         print_log(LOG_DEBUG, "> Temperature: %.1f\n", tempCelsius);
@@ -437,5 +437,5 @@ double zes_device_temp_max(char* bdf_address, char* sensor, uint32_t* error)
 
     *error = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
-    return -999.0;
+    return TEMP_ERROR_RET_VAL;
 }
