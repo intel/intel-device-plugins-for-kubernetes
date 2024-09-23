@@ -36,6 +36,7 @@ package main
 
 import (
 	"flag"
+	"os"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fakedri"
 
@@ -54,6 +55,11 @@ func main() {
 		klog.Error("ERROR: no fake device spec provided")
 	}
 
-	options := fakedri.GetOptions(*name)
+	data, err := os.ReadFile(*name)
+	if err != nil {
+		klog.Fatalf("Reading JSON spec file '%s' failed: %v", *name, err)
+	}
+
+	options := fakedri.GetOptionsByJSON(string(data))
 	fakedri.GenerateDriFiles(options)
 }

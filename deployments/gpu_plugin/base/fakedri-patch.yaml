@@ -23,7 +23,7 @@ spec:
             TilesPerDev: 1  # Number of tiles per fake GPU (1 tile per device)
             DevsPerNode: 1  # Number of GPUs per node (1 GPU per numa node)
             DevMemSize: 4294967296  # Memory size per GPU in bytes (4 GiB = 4294967296 bytes)
-            Driver: "i915"  # The GPU driver to use for the fake device (For iGPUs use i915 driver, xe is used for Intel GPUs like ARC etc.)
+            Driver: "i915"  # The GPU driver to use for the fake device (For iGPUs use i915 driver, xe is used in future GPUs starting from LunarLake)
             Capabilities:  # List of capabilities that the fake GPU supports
               platform: "fake_ARC"  # Fake platform name (simulates the ARC platform)
               connections: ""  # Placeholder for GPU connections (manual connections for xe-link)

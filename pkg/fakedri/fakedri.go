@@ -67,54 +67,25 @@ const (
 	fullyConnected  = "FULL"
 )
 
-type GenOptions struct {
-	Capabilities map[string]string // map (pointer)
-	Info         string            // string (pointer)
-	Driver       string            // string (pointer)
-	Mode         string            // string (pointer)
-	Path         string            // string (pointer)
-
-	DevCount    int // int (non-pointer, 8 bytes on 64-bit systems)
-	TilesPerDev int // int
-	DevMemSize  int // int
-	DevsPerNode int // int
-	VfsPerPf    int // int
-
-	files int // int (private fields)
-	dirs  int // int
-	devs  int // int
-	symls int // int
-}
-
 // genOptionsWithTags represents the struct for our YAML data.
-type genOptionsWithTags struct {
-	Capabilities map[string]string `yaml:"Capabilities"`
-	Info         string            `yaml:"Info"`
-	Driver       string            `yaml:"Driver"`
-	Mode         string            `yaml:"Mode"`
-	Path         string            `yaml:"Path"`
-	DevCount     int               `yaml:"DevCount"`
-	TilesPerDev  int               `yaml:"TilesPerDev"`
-	DevMemSize   int               `yaml:"DevMemSize"`
-	DevsPerNode  int               `yaml:"DevsPerNode"`
-	VfsPerPf     int               `yaml:"VfsPerPf"`
-}
+type GenOptions struct {
+	Capabilities  map[string]string `yaml:"Capabilities"` // Device capabilities mapping for NFD hook
+	Info          string            `yaml:"Info"`         // Verbal config description
+	Driver        string            `yaml:"Driver"`       // Driver name (i915, xe)
+	Mode          string            `yaml:"Mode"`         // Mode of operation (future use with different generation modes)
+	Path          string            `yaml:"Path"`         // Path to fake device folder
+	NfdFeatureDir string            `yaml:"NfdDir"`       // NFD directory
+	DevCount      int               `yaml:"DevCount"`     // How many devices to fake
+	TilesPerDev   int               `yaml:"TilesPerDev"`  // Per-device tile count
+	DevMemSize    int               `yaml:"DevMemSize"`   // Available per-device device-local memory, in bytes
+	DevsPerNode   int               `yaml:"DevsPerNode"`  // How many devices per Numa node
+	VfsPerPf      int               `yaml:"VfsPerPf"`     // How many SR-IOV VFs per PF
 
-// Function to transform from GenOptionsWithTags to GenOptions.
-func convertToGenOptions(withTags genOptionsWithTags) GenOptions {
-	return GenOptions{
-		Capabilities: withTags.Capabilities,
-		Info:         withTags.Info,
-		Driver:       withTags.Driver,
-		Mode:         withTags.Mode,
-		Path:         withTags.Path,
-		DevCount:     withTags.DevCount,
-		TilesPerDev:  withTags.TilesPerDev,
-		DevMemSize:   withTags.DevMemSize,
-		DevsPerNode:  withTags.DevsPerNode,
-		VfsPerPf:     withTags.VfsPerPf,
-		// Private fields are not copied
-	}
+	// fields for counting what was generated
+	files int
+	dirs  int
+	devs  int
+	symls int
 }
 
 func addSysfsDriTree(root string, opts *GenOptions, i int) error {
@@ -314,6 +285,7 @@ func addDebugfsDriTree(root string, opts *GenOptions, i int) error {
 
 	opts.files++
 
+	// keys are in random order which provides extra testing for NFD label parsing code
 	for key, value := range opts.Capabilities {
 		line := fmt.Sprintf("%s: %s\n", key, value)
 		if _, err = f.WriteString(line); err != nil {
@@ -366,7 +338,7 @@ func GenerateDriFiles(opts GenOptions) {
 		}
 
 		if err := addSysfsDriTree(sysfsPath, &opts, i); err != nil {
-			klog.Fatalf("Dev-%d sysfs tree generation failed: %v", i, err)
+			klog.Fatalf("Dev-%d sysfs dri tree generation failed: %v", i, err)
 		}
 
 		if err := addDevfsDriTree(devfsPath, &opts, i); err != nil {
@@ -390,9 +362,9 @@ func makeXelinkSideCar(opts GenOptions) {
 	connections := opts.Capabilities["connections"]
 
 	if topology == fullyConnected {
-		saveSideCarFile(buildConnectionList(gpus, tiles))
+		saveSideCarFile(opts, buildConnectionList(gpus, tiles))
 	} else if connections != "" {
-		saveSideCarFile(connections)
+		saveSideCarFile(opts, connections)
 	} else {
 		return
 	}
@@ -433,14 +405,13 @@ func buildConnectionList(gpus, tiles int) string {
 	return strings.Join(smap, "_")
 }
 
-func saveSideCarFile(connections string) {
-	// Get user-specific temp directory
-	filePath := filepath.Join("/etc/kubernetes/node-feature-discovery/features.d", "xpum-sidecar-labels.txt")
+func saveSideCarFile(opts GenOptions, connections string) {
+	// Kubernets directory
+	xfile := filepath.Join(opts.NfdFeatureDir, "xpum-sidecar-labels.txt")
 
-	// Safely create file in the temp directory
-	f, err := os.Create(filePath)
+	f, err := os.Create(xfile)
 	if err != nil {
-		klog.Fatalf("Failed to create file: %v", err)
+		klog.V(1).Infof("XELINK: created xelink sidecar label file '%s'", xfile)
 	}
 	defer f.Close()
 
@@ -465,7 +436,7 @@ func saveSideCarFile(connections string) {
 	}
 }
 
-func MakeOptions(opts GenOptions) GenOptions {
+func verifyOptions(opts GenOptions) GenOptions {
 	if opts.DevCount < 1 || opts.DevCount > maxDevs {
 		klog.Fatalf("Invalid device count: 1 <= %d <= %d", opts.DevCount, maxDevs)
 	}
@@ -493,37 +464,32 @@ func MakeOptions(opts GenOptions) GenOptions {
 	return opts
 }
 
-func GetOptions(name string) GenOptions {
-	if name == "" {
+func GetOptionsByJSON(data string) GenOptions {
+	if data == "" {
 		klog.Fatalf("No fake device spec provided")
 	}
 
-	data, err := os.ReadFile(name)
-	if err != nil {
-		klog.Fatalf("Reading JSON spec file '%s' failed: %v", name, err)
-	}
-
-	klog.V(1).Infof("Using fake device JSON spec: %v\n", string(data))
+	klog.V(1).Infof("Using fake device JSON spec: %v\n", data)
 
 	var opts GenOptions
-	if err = json.Unmarshal(data, &opts); err != nil {
-		klog.Fatalf("Unmarshaling JSON spec file '%s' failed: %v", name, err)
+	if err := json.Unmarshal([]byte(data), &opts); err != nil {
+		klog.Fatalf("Unmarshaling JSON spec '%s' failed: %v", data, err)
 	}
 
-	return MakeOptions(opts)
+	return verifyOptions(opts)
 }
 
-func GetOptionsBySpec(data string) GenOptions {
+func GetOptionsByYAML(data string) GenOptions {
 	if data == "" {
 		klog.Fatalf("No fake device spec provided")
 	}
 
 	klog.V(1).Infof("Using fake device YAML spec: %v\n", data)
 
-	var opts genOptionsWithTags
+	var opts GenOptions
 	if err := yaml.Unmarshal([]byte(data), &opts); err != nil {
 		klog.Fatalf("Unmarshaling YAML spec '%s' failed: %v", data, err)
 	}
 
-	return MakeOptions(convertToGenOptions(opts))
+	return verifyOptions(opts)
 }

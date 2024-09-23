@@ -33,3 +33,4 @@ spec:
         hostPath:
           path: /tmp  # Mount the host's /tmp directory inside the container
           type: DirectoryOrCreate  # Create the directory if it does not already exist
+

@@ -32,24 +32,24 @@ import (
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fakedri"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/labeler"
 	gpulevelzero "github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/levelzero"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fakedri"
 	cdispec "tags.cncf.io/container-device-interface/specs-go"
 )
 
 const (
-	wslDxgPath        = "/dev/dxg"
-	wslLibPath        = "/usr/lib/wsl"
-	nfdFeatureDir     = "/etc/kubernetes/node-feature-discovery/features.d"
-	resourceFilename  = "intel-gpu-resources.txt"
-	gpuDeviceRE       = `^card[0-9]+$`
-	controlDeviceRE   = `^controlD[0-9]+$`
-	pciAddressRE      = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
-	vendorString      = "0x8086"
+	wslDxgPath       = "/dev/dxg"
+	wslLibPath       = "/usr/lib/wsl"
+	nfdFeatureDir    = "/etc/kubernetes/node-feature-discovery/features.d"
+	resourceFilename = "intel-gpu-resources.txt"
+	gpuDeviceRE      = `^card[0-9]+$`
+	controlDeviceRE  = `^controlD[0-9]+$`
+	pciAddressRE     = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
+	vendorString     = "0x8086"
 
 	// Device plugin settings.
 	namespace         = "gpu.intel.com"
@@ -716,7 +716,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		mounts, cdiDevices := dp.createMountsAndCDIDevices(cardPath, name, devSpecs)
 
-                health := dp.healthStatusForCard(cardPath)
+		health := dp.healthStatusForCard(cardPath)
 
 		deviceInfo := dpapi.NewDeviceInfo(health, devSpecs, mounts, nil, nil, cdiDevices, prefix+"/dev")
 
@@ -770,11 +770,10 @@ func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi
 	return nil, &dpapi.UseDefaultMethodError{}
 }
 
-func main() {
-	var (
-		opts cliOptions
-	)
+func parseAndValidateOptions() cliOptions {
+	var opts cliOptions
 
+	// Flag and options parsing
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable '*_monitoring' (= all GPUs) resource")
 	flag.BoolVar(&opts.resourceManagement, "resource-manager", false, "fractional GPU resource management")
@@ -786,82 +785,100 @@ func main() {
 	flag.StringVar(&opts.fakedriSpec, "fakedri-spec", "", "pass fakedri specification in Yaml format")
 	flag.Parse()
 
+	// Handle fakedriSpec or environment variable
 	fakedriSpec := opts.fakedriSpec
 	if fakedriSpec == "" {
 		fakedriSpec = os.Getenv("FAKEDRI_SPEC")
 	}
 
+	// If fakedriSpec is set, handle it
 	if fakedriSpec != "" {
-		options := fakedri.GetOptionsBySpec(fakedriSpec)
+		options := fakedri.GetOptionsByYAML(fakedriSpec)
 		if options.Mode == "" || options.Mode == "yaml" {
+			options.NfdFeatureDir = nfdFeatureDir
 			fakedri.GenerateDriFiles(options)
 		}
 
 		prefix = options.Path
 	}
 
+	// Input validation
 	if opts.sharedDevNum < 1 {
-		klog.Error("The number of containers sharing the same GPU must greater than zero")
-		os.Exit(1)
+		klog.Fatal("The number of containers sharing the same GPU must be greater than zero")
 	}
 
 	if opts.sharedDevNum == 1 && opts.resourceManagement {
-		klog.Error("Trying to use fractional resources with shared-dev-num 1 is pointless")
-		os.Exit(1)
+		klog.Fatal("Trying to use fractional resources with shared-dev-num 1 is pointless")
 	}
 
-	var str = opts.preferredAllocationPolicy
-	if !(str == "balanced" || str == "packed" || str == "none") {
-		klog.Error("invalid value for preferredAllocationPolicy, the valid values: balanced, packed, none")
-		os.Exit(1)
+	// Validate preferred allocation policy
+	if !(opts.preferredAllocationPolicy == "balanced" || opts.preferredAllocationPolicy == "packed" || opts.preferredAllocationPolicy == "none") {
+		klog.Fatal("Invalid value for preferredAllocationPolicy. Valid values: balanced, packed, none")
 	}
 
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
 
-	plugin := newDevicePlugin(prefix+sysfsDrmDirectory, prefix+devfsDriDirectory, opts)
+	return opts
+}
 
+func checkWSLMode(plugin *devicePlugin) {
+	// WSL mode validation and feature handling
 	if plugin.options.wslScan {
 		klog.Info("WSL mode requested")
 
 		if plugin.options.resourceManagement {
-			klog.Error("Resource management is not supported within WSL. Please disable resource management.")
-
-			os.Exit(1)
+			klog.Fatal("Resource management is not supported within WSL. Please disable resource management.")
 		}
 
 		if plugin.options.enableMonitoring {
-			klog.Error("Monitoring is not supported within WSL. Please disable monitoring.")
-
-			os.Exit(1)
+			klog.Fatal("Monitoring is not supported within WSL. Please disable monitoring.")
 		}
 
 		if plugin.options.healthManagement {
-			klog.Error("Health management is not supported within WSL. Please disable health management.")
-
-			os.Exit(1)
+			klog.Fatal("Health management is not supported within WSL. Please disable health management.")
 		}
 	}
+}
 
+func initializeServices(plugin *devicePlugin) {
 	if plugin.options.healthManagement || plugin.options.wslScan {
 		plugin.levelzeroService = levelzeroservice.NewLevelzero(gpulevelzero.DefaultUnixSocketPath)
-
 		go plugin.levelzeroService.Run(true)
 	}
+}
 
+func handleResourceManagement(plugin *devicePlugin) {
 	if plugin.options.resourceManagement {
-		// Start labeler to export labels file for NFD.
+		// Start labeler to export labels file for NFD
 		nfdFeatureFile := path.Join(nfdFeatureDir, resourceFilename)
-
 		klog.V(2).Infof("NFD feature file location: %s", nfdFeatureFile)
 
-		// Labeler catches OS signals and calls os.Exit() after receiving any.
+		// Labeler catches OS signals and calls os.Exit() after receiving any
 		go labeler.Run(prefix+sysfsDrmDirectory, nfdFeatureFile,
 			labelerMaxInterval, plugin.scanResources, plugin.levelzeroService, func() {
 				// Exit the whole app when labeler exits
 				os.Exit(0)
 			})
 	}
+}
 
+func main() {
+	// Parse command-line options and validate them
+	opts := parseAndValidateOptions()
+
+	// Create the device plugin
+	plugin := newDevicePlugin(prefix+sysfsDrmDirectory, prefix+devfsDriDirectory, opts)
+
+	// Handle WSL mode and exit if not supported
+	checkWSLMode(plugin)
+
+	// Initialize health management or WSL scan service if needed
+	initializeServices(plugin)
+
+	// Handle resource management if enabled
+	handleResourceManagement(plugin)
+
+	// Start the manager to run the plugin
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
 }

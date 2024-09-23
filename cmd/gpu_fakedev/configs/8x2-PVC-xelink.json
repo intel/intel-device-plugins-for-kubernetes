@@ -1,13 +1,15 @@
 {
-	"Info": "8x 4 GiB PVC [Ponte Vecchio] GPUs",
-	"DevCount": 8,
+        "Info": "8x 4 GiB PVC [Ponte Vecchio] GPUs",
+        "DevCount": 8,
         "TilesPerDev": 2,
         "DevsPerNode": 2,
-	"DevMemSize": 4294967296,
+        "DevMemSize": 4294967296,
         "Driver": "i915",
-	"Capabilities": {
-		"platform": "fake_PVC",
-                "connections": "",
-                "connection-topology": "FULL"
-	}
+        "Path": "/tmp",
+        "NfdDir": "/tmp",
+        "Capabilities": {
+            "platform": "fake_PVC",
+            "connections": "",
+            "connection-topology": "FULL"
+        }
 }
