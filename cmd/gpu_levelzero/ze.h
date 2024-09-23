@@ -18,6 +18,7 @@
 #include <stdbool.h>
 
 #define VENDOR_ID_INTEL 0x8086
+#define TEMP_ERROR_RET_VAL -999.0
 
 void zes_set_verbosity(const int level);
 
