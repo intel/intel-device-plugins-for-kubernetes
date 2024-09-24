@@ -16,7 +16,3 @@ patches:
   - path: add-nodeselector-intel-gpu.yaml
     target:
       kind: DaemonSet
-  #- path: add-fakedri-spec.yaml  # Apply the fakedri-spec patch
-  #  target:
-  #    kind: DaemonSet
-  #    name: intel-gpu-plugin

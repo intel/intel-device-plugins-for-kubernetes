@@ -314,7 +314,7 @@ func removeExistingDir(path, name string) {
 		klog.Fatalf(">1 entries in '%s', or '%s' != 'dri' - real devfs?", path, entries[0].Name())
 	}
 
-	klog.Warningf("Removing already existing fake %s path '%s'", name, path)
+	klog.V(1).Infof("Removing already existing fake %s path '%s'", name, path)
 
 	if err = os.RemoveAll(path); err != nil {
 		klog.Fatalf("Removing existing %s in '%s' failed: %v", name, path, err)
@@ -328,7 +328,7 @@ func GenerateDriFiles(opts GenOptions) {
 
 	removeExistingDir(devfsPath, "devfs")
 	removeExistingDir(sysfsPath, "sysfs")
-	klog.V(1).Infof("Generating fake DRI device(s) sysfs, debugfs and devfs content under '%s' & '%s'",
+	klog.Infof("Generating fake DRI device(s) sysfs, debugfs and devfs content under '%s' & '%s'",
 		sysfsPath, devfsPath)
 
 	opts.dirs, opts.files, opts.devs, opts.symls = 0, 0, 0, 0
@@ -411,7 +411,9 @@ func saveSideCarFile(opts GenOptions, connections string) {
 
 	f, err := os.Create(xfile)
 	if err != nil {
-		klog.V(1).Infof("XELINK: created xelink sidecar label file '%s'", xfile)
+		klog.Warningf("XELINK: creation of the xelink sidecar label file '%s' failed!", xfile)
+	} else {
+		klog.V(1).Infof("XELINK: created the xelink sidecar label file '%s'", xfile)
 	}
 	defer f.Close()
 

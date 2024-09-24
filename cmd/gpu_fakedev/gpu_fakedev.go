@@ -61,5 +61,6 @@ func main() {
 	}
 
 	options := fakedri.GetOptionsByJSON(string(data))
+	options.NfdFeatureDir = options.Path
 	fakedri.GenerateDriFiles(options)
 }

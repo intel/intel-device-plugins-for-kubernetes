@@ -6,7 +6,6 @@
         "DevMemSize": 4294967296,
         "Driver": "i915",
         "Path": "/tmp",
-        "NfdDir": "/tmp",
         "Capabilities": {
             "platform": "fake_PVC",
             "connections": "",
