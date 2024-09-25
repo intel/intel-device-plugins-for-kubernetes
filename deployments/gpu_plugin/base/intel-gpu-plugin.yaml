@@ -36,6 +36,13 @@ spec:
             type: "container_device_plugin_t"
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
+        resources:
+          requests:
+            memory: "45Mi"
+            cpu: 40m
+          limits:
+            memory: "90Mi"
+            cpu: 100m
         volumeMounts:
         - name: devfs
           mountPath: /dev/dri
