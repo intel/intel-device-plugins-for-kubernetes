@@ -131,6 +131,7 @@ In addition to the default configuration, you can add device-specific configurat
 | Device | Possible Configuration | How To Customize | Options | Notes |
 |:-------|:-----------------------|:-----------------|:--------|:------|
 | 4xxx, 401xx, 402xx, 420xx | [cfg_services](https://github.com/torvalds/linux/blob/v6.6-rc5/Documentation/ABI/testing/sysfs-driver-qat) reports the configured services (crypto services or compression services) of the QAT device. | `ServicesEnabled=<value>` | compress:`dc`, crypto:`sym;asym`, <br>crypto+compress:`asym;dc`,<br>crypto+compress:`sym;dc` | 4xxx/401xx/402xx: Linux 6.0+ kernel. 420xx: Linux 6.8+ kernel. |
+| 4xxx, 401xx, 402xx, 420xx | [auto_reset](https://github.com/torvalds/linux/blob/a38297e3fb012ddfa7ce0321a7e5a8daeb1872b6/Documentation/ABI/testing/sysfs-driver-qat#L145) reports the setting of the QAT device's automatic error recovery functionality. | `AutoresetEnabled=<value>` | `on`, `off`, | Linux 6.8+ kernel. |
 
 To create a provisioning `configMap`, run the following command before deploying initcontainer:
 
