@@ -48,7 +48,7 @@ jobs:
           - intel-fpga-initcontainer
           - intel-gpu-initcontainer
           - intel-gpu-plugin
-          #- intel-gpu-levelzero
+          - intel-gpu-levelzero
           - intel-fpga-plugin
           - intel-qat-initcontainer
           - intel-qat-plugin
