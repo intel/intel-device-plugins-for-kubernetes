@@ -59,7 +59,7 @@ FROM ${FINAL_BASE}
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_xpumanager_sidecar"]
 LABEL vendor='Intel®'
-LABEL version='devel'
+LABEL version='0.31.0'
 LABEL release='1'
 LABEL name='intel-xpumanager-sidecar'
 LABEL summary='Intel® xpumanager sidecar'
