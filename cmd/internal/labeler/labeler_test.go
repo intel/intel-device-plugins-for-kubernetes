@@ -773,7 +773,11 @@ func TestCreateAndRun(t *testing.T) {
 
 		// Wait for the labeling timeout to trigger
 		if !waitForFileOp(root, nfdLabelBase, fsnotify.Remove, time.Second*2) {
-			t.Error("Run didn't remove label file")
+			// It's possible that removal happened before we started waiting.
+			// Only fail the test if the file still exists.
+			if _, err := os.Stat(nfdLabelFile); err == nil {
+				t.Error("Run didn't remove label file")
+			}
 		}
 	})
 }
