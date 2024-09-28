@@ -77,7 +77,6 @@ var (
 
 type cliOptions struct {
 	preferredAllocationPolicy string
-	fakedriSpec               string
 	sharedDevNum              int
 	temperatureLimit          int
 	enableMonitoring          bool
@@ -782,14 +781,10 @@ func parseAndValidateOptions() cliOptions {
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.IntVar(&opts.temperatureLimit, "temp-limit", 100, "temperature limit at which device is marked unhealthy")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
-	flag.StringVar(&opts.fakedriSpec, "fakedri-spec", "", "pass fakedri specification in Yaml format")
 	flag.Parse()
 
 	// Handle fakedriSpec or environment variable
-	fakedriSpec := opts.fakedriSpec
-	if fakedriSpec == "" {
-		fakedriSpec = os.Getenv("FAKEDRI_SPEC")
-	}
+	fakedriSpec := os.Getenv("FAKEDRI_SPEC")
 
 	// If fakedriSpec is set, handle it
 	if fakedriSpec != "" {

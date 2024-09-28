@@ -69,17 +69,17 @@ const (
 
 // genOptionsWithTags represents the struct for our YAML data.
 type GenOptions struct {
-	Capabilities  map[string]string `yaml:"Capabilities"` // Device capabilities mapping for NFD hook
-	Info          string            `yaml:"Info"`         // Verbal config description
-	Driver        string            `yaml:"Driver"`       // Driver name (i915, xe)
-	Mode          string            `yaml:"Mode"`         // Mode of operation (future use with different generation modes)
-	Path          string            `yaml:"Path"`         // Path to fake device folder
-	NfdFeatureDir string            `yaml:"NfdDir"`       // NFD directory
-	DevCount      int               `yaml:"DevCount"`     // How many devices to fake
-	TilesPerDev   int               `yaml:"TilesPerDev"`  // Per-device tile count
-	DevMemSize    int               `yaml:"DevMemSize"`   // Available per-device device-local memory, in bytes
-	DevsPerNode   int               `yaml:"DevsPerNode"`  // How many devices per Numa node
-	VfsPerPf      int               `yaml:"VfsPerPf"`     // How many SR-IOV VFs per PF
+	Capabilities    map[string]string `yaml:"Capabilities"`    // Device capabilities mapping for NFD hook
+	Info            string            `yaml:"Info"`            // Verbal config description
+	Driver          string            `yaml:"Driver"`          // Driver name (i915, xe)
+	Mode            string            `yaml:"Mode"`            // Mode of operation (future use with different generation modes)
+	Path            string            `yaml:"Path"`            // Path to fake device folder
+	NfdFeatureDir   string            `yaml:"NfdDir"`          // NFD directory
+	DevCount        int               `yaml:"DevCount"`        // How many devices to fake
+	TilesPerDev     int               `yaml:"TilesPerDev"`     // Per-device tile count
+	DevMemSize      int               `yaml:"DevMemSize"`      // Available per-device device-local memory, in bytes
+	DevsPerNumaNode int               `yaml:"DevsPerNumaNode"` // How many devices per Numa node
+	VfsPerPf        int               `yaml:"VfsPerPf"`        // How many SR-IOV VFs per PF
 
 	// fields for counting what was generated
 	files int
@@ -139,8 +139,8 @@ func addSysfsDriTree(root string, opts *GenOptions, i int) error {
 	opts.files++
 
 	node := 0
-	if opts.DevsPerNode > 0 {
-		node = i / opts.DevsPerNode
+	if opts.DevsPerNumaNode > 0 {
+		node = i / opts.DevsPerNumaNode
 	}
 
 	data = []byte(strconv.Itoa(node))
@@ -444,9 +444,9 @@ func verifyOptions(opts GenOptions) GenOptions {
 	}
 
 	if opts.VfsPerPf > 0 {
-		if opts.TilesPerDev > 0 || opts.DevsPerNode > 0 {
+		if opts.TilesPerDev > 0 || opts.DevsPerNumaNode > 0 {
 			klog.Fatalf("SR-IOV VFs (%d) with device tiles (%d) or Numa nodes (%d) is unsupported for faking",
-				opts.VfsPerPf, opts.TilesPerDev, opts.DevsPerNode)
+				opts.VfsPerPf, opts.TilesPerDev, opts.DevsPerNumaNode)
 		}
 
 		if opts.DevCount%(opts.VfsPerPf+1) != 0 {
@@ -455,8 +455,8 @@ func verifyOptions(opts GenOptions) GenOptions {
 		}
 	}
 
-	if opts.DevsPerNode > opts.DevCount {
-		klog.Fatalf("DevsPerNode (%d) > DevCount (%d)", opts.DevsPerNode, opts.DevCount)
+	if opts.DevsPerNumaNode > opts.DevCount {
+		klog.Fatalf("DevsPerNumaNode (%d) > DevCount (%d)", opts.DevsPerNumaNode, opts.DevCount)
 	}
 
 	if opts.DevMemSize%mib != 0 {
