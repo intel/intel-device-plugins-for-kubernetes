@@ -134,6 +134,7 @@ data:
                 "block_on_fault":1,
                 "type":"user",
                 "name":"appX0",
+                "driver_name":"user",
                 "threshold":15
               }
             ],
@@ -159,6 +160,7 @@ data:
                 "block_on_fault":1,
                 "type":"user",
                 "name":"appX1",
+                "driver_name":"user",
                 "threshold":15
               }
             ],
@@ -184,6 +186,7 @@ data:
                 "block_on_fault":1,
                 "type":"user",
                 "name":"appX2",
+                "driver_name":"user",
                 "threshold":15
               }
             ],
@@ -209,6 +212,7 @@ data:
                 "block_on_fault":1,
                 "type":"user",
                 "name":"appX3",
+                "driver_name":"user",
                 "threshold":15
               }
             ],

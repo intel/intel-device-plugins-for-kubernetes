@@ -32,6 +32,8 @@ $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes
 $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/fractional_resources?ref=<RELEASE_VERSION>'
 ```
 
+> **NOTE:** The yaml deployment above does not support deployment to non-default namespace. The ClusterRoleBinding object has a hardcoded namespace and does not respect the target namespace. If you would like to deploy to a custom namespace, you will need to either modify the [yaml file](../../deployments/gpu_plugin/overlays/fractional_resources/gpu-manager-rolebinding.yaml) or deploy using the Operator.
+
 ### With Device Plugin Operator
 
 Install the Device Plugin Operator according to the [install](../operator/README.md#installation) instructions. When applying the [GPU plugin Custom Resource](../../deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml) (CR), set `resourceManager` option to `true`. The Operator will install all the required RBAC objects and service accounts.

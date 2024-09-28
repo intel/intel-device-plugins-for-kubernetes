@@ -22,6 +22,7 @@ import (
 
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/diff"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -105,6 +106,16 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 								},
 								ReadOnlyRootFilesystem:   &yes,
 								AllowPrivilegeEscalation: &no,
+							},
+							Resources: v1.ResourceRequirements{
+								Limits: v1.ResourceList{
+									v1.ResourceCPU:    resource.MustParse("100m"),
+									v1.ResourceMemory: resource.MustParse("90Mi"),
+								},
+								Requests: v1.ResourceList{
+									v1.ResourceCPU:    resource.MustParse("40m"),
+									v1.ResourceMemory: resource.MustParse("45Mi"),
+								},
 							},
 							VolumeMounts: []v1.VolumeMount{
 								{
