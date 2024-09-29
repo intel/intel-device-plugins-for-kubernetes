@@ -2,7 +2,7 @@
 	"Info": "2x 4 tile 4 GiB PVC [Ponte Vecchio] GPUs",
 	"DevCount": 2,
         "TilesPerDev": 4,
-        "DevsPerNode": 1,
+        "DevsPerNumaNode": 1,
 	"DevMemSize": 4294967296,
         "Driver": "i915",
         "Path": "/tmp",

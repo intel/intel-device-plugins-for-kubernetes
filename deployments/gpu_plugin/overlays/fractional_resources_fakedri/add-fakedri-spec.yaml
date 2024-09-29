@@ -14,7 +14,7 @@ spec:
             Path: "/tmp" # Same as mounts and volumes
             DevCount: 8
             TilesPerDev: 1
-            DevsPerNode: 1
+            DevsPerNumaNode: 1
             DevMemSize: 4294967296
             Driver: "i915"
             Capabilities:
