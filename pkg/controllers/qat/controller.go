@@ -78,12 +78,8 @@ func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
 func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 	devicePlugin := rawObj.(*devicepluginv1.QatDevicePlugin)
 
-	annotations := devicePlugin.ObjectMeta.DeepCopy().Annotations
-
 	daemonSet := deployments.QATPluginDaemonSet()
 	daemonSet.Name = controllers.SuffixedName(daemonSet.Name, devicePlugin.Name)
-	daemonSet.Annotations = annotations
-	daemonSet.Spec.Template.Annotations = annotations
 
 	if devicePlugin.Spec.Tolerations != nil {
 		daemonSet.Spec.Template.Spec.Tolerations = devicePlugin.Spec.Tolerations
@@ -106,15 +102,6 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
 	dp := rawObj.(*devicepluginv1.QatDevicePlugin)
-
-	// Update only existing daemonset annotations
-	for k, v := range ds.ObjectMeta.Annotations {
-		if v2, ok := dp.ObjectMeta.Annotations[k]; ok && v2 != v {
-			ds.ObjectMeta.Annotations[k] = v2
-			ds.Spec.Template.Annotations[k] = v2
-			updated = true
-		}
-	}
 
 	if ds.Spec.Template.Spec.Containers[0].Image != dp.Spec.Image {
 		ds.Spec.Template.Spec.Containers[0].Image = dp.Spec.Image

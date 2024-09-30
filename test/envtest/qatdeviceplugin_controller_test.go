@@ -46,14 +46,9 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 				Name: "qatdeviceplugin-test",
 			}
 
-			annotations := map[string]string{
-				"container.apparmor.security.beta.kubernetes.io/intel-qat-plugin": "unconfined",
-			}
-
 			toCreate := &devicepluginv1.QatDevicePlugin{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:        key.Name,
-					Annotations: annotations,
+					Name: key.Name,
 				},
 				Spec: spec,
 			}
@@ -79,20 +74,6 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(spec.InitImage))
 			Expect(ds.Spec.Template.Spec.NodeSelector).To(Equal(spec.NodeSelector))
 			Expect(ds.Spec.Template.Spec.Tolerations).To(HaveLen(0))
-
-			By("copy annotations successfully")
-			Expect(&(fetched.Annotations) == &annotations).ShouldNot(BeTrue())
-			Eventually(fetched.Annotations).Should(Equal(annotations))
-
-			By("updating annotations successfully")
-			updatedAnnotations := map[string]string{"key": "value"}
-			fetched.Annotations = updatedAnnotations
-			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
-			updated := &devicepluginv1.QatDevicePlugin{}
-			Eventually(func() map[string]string {
-				_ = k8sClient.Get(context.Background(), key, updated)
-				return updated.Annotations
-			}, timeout, interval).Should(Equal(updatedAnnotations))
 
 			By("updating QatDevicePlugin successfully")
 			updatedImage := "updated-qat-testimage"
