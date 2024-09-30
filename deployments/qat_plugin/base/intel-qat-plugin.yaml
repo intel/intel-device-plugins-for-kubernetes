@@ -4,8 +4,6 @@ metadata:
   name: intel-qat-plugin
   labels:
     app: intel-qat-plugin
-  annotations:
-    container.apparmor.security.beta.kubernetes.io/intel-qat-plugin: unconfined
 spec:
   selector:
     matchLabels:
@@ -19,8 +17,6 @@ spec:
     metadata:
       labels:
         app: intel-qat-plugin
-      annotations:
-        container.apparmor.security.beta.kubernetes.io/intel-qat-plugin: unconfined
     spec:
       automountServiceAccountToken: false
       containers:
