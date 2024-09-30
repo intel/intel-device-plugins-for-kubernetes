@@ -1,0 +1,5 @@
+resources:
+  - "https://github.com/google/cadvisor/deploy/kubernetes/base?ref=master"
+  - service.yaml
+patches:
+  - path: misc-metrics.yaml

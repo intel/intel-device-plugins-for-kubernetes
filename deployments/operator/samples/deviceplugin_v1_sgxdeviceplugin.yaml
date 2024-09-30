@@ -4,6 +4,7 @@ metadata:
   name: sgxdeviceplugin-sample
 spec:
   image: intel/intel-sgx-plugin:0.30.0
+  nriImage: ghcr.io/containers/nri-plugins/nri-sgx-epc:v0.7.1
   enclaveLimit: 110
   provisionLimit: 110
   logLevel: 4
