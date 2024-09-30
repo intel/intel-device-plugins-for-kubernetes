@@ -57,8 +57,8 @@ const (
 	cardBase        = 0
 	renderBase      = 128
 	maxDevs         = 128
-	sysfsPath       = "/tmp/sys"
-	devfsPath       = "/tmp/dev"
+	sysfsPath       = "/sys"
+	devfsPath       = "/dev"
 	mib             = 1024.0 * 1024.0
 	devNullMajor    = 1
 	devNullMinor    = 3
@@ -306,12 +306,14 @@ func removeExistingDir(path, name string) {
 		return
 	}
 
-	if name == "sysfs" && len(entries) > 3 {
-		klog.Fatalf(">3 entries in '%s' - real sysfs?", path)
+	// This should not be too tight as then node could got blocked just putting entries in to folder
+	if name == "sysfs" && len(entries) > 5 {
+		klog.Fatalf("too many entries in '%s' - real sysfs?", path)
 	}
 
-	if name == "devfs" && (entries[0].Name() != "dri" || len(entries) > 1) {
-		klog.Fatalf(">1 entries in '%s', or '%s' != 'dri' - real devfs?", path, entries[0].Name())
+	// This should not be too tight as then node could got blocked just putting entries in to folder
+	if name == "devfs" && (len(entries) > 5) {
+		klog.Fatalf("too many entries in '%s', or '%s' != 'dri' - real devfs?", path, entries[0].Name())
 	}
 
 	klog.V(1).Infof("Removing already existing fake %s path '%s'", name, path)
@@ -325,6 +327,9 @@ func GenerateDriFiles(opts GenOptions) {
 	if opts.Info != "" {
 		klog.V(1).Infof("Config: '%s'", opts.Info)
 	}
+
+	sysfsPath := opts.Path + sysfsPath
+	devfsPath := opts.Path + devfsPath
 
 	removeExistingDir(devfsPath, "devfs")
 	removeExistingDir(sysfsPath, "sysfs")
@@ -405,25 +410,36 @@ func buildConnectionList(gpus, tiles int) string {
 	return strings.Join(smap, "_")
 }
 
+// saveSideCarFile saves the sidecar labels to a file.
 func saveSideCarFile(opts GenOptions, connections string) {
-	// Kubernets directory
+	// Check if the directory exists; if not, use the current directory.
+	if opts.NfdFeatureDir == "" || !isDirExists(opts.NfdFeatureDir) {
+		klog.Warningf("XELINK: Directory '%s' does not exist. Using current directory.", opts.NfdFeatureDir)
+		opts.NfdFeatureDir = "." // Use current directory
+	}
+
+	// Kubernetes directory for storing the sidecar labels
 	xfile := filepath.Join(opts.NfdFeatureDir, "xpum-sidecar-labels.txt")
 
+	// Create the file
 	f, err := os.Create(xfile)
 	if err != nil {
-		klog.Warningf("XELINK: creation of the xelink sidecar label file '%s' failed!", xfile)
-	} else {
-		klog.V(1).Infof("XELINK: created the xelink sidecar label file '%s'", xfile)
+		klog.Warningf("XELINK: creation of the xelink sidecar label file '%s' failed: %v", xfile, err)
+		return
 	}
 	defer f.Close()
 
+	klog.V(1).Infof("XELINK: created the xelink sidecar label file '%s'", xfile)
+
+	// Write the main part of the connections string to the file
 	line := fmt.Sprintf("xpumanager.intel.com/xe-links=%s", connections[:min(len(connections), maxK8sLabelSize)])
 	klog.V(1).Info(line)
 
 	if _, err := f.WriteString(line + "\n"); err != nil {
-		panic(err)
+		klog.Fatalf("XELINK: failed to write to the file '%s': %v", xfile, err)
 	}
 
+	// Additional lines for strings longer than maxK8sLabelSize
 	index := 2
 
 	for i := maxK8sLabelSize; i < len(connections); i += (maxK8sLabelSize - 1) {
@@ -431,11 +447,23 @@ func saveSideCarFile(opts GenOptions, connections string) {
 		klog.V(1).Info(line)
 
 		if _, err := f.WriteString(line + "\n"); err != nil {
-			panic(err)
+			klog.Fatalf("XELINK: failed to write to the file '%s': %v", xfile, err)
 		}
 
 		index++
 	}
+
+	klog.Infof("XELINK: successfully wrote all labels to '%s'", xfile)
+}
+
+// isDirExists checks if a directory exists at the given path.
+func isDirExists(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+
+	return info.IsDir()
 }
 
 func verifyOptions(opts GenOptions) GenOptions {

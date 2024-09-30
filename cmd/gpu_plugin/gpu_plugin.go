@@ -717,7 +717,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		health := dp.healthStatusForCard(cardPath)
 
-		deviceInfo := dpapi.NewDeviceInfo(health, devSpecs, mounts, nil, nil, cdiDevices, prefix+"/dev")
+		deviceInfo := dpapi.NewDeviceInfo(health, devSpecs, mounts, nil, nil, cdiDevices)
 
 		for i := 0; i < dp.options.sharedDevNum; i++ {
 			devID := fmt.Sprintf("%s-%d", name, i)

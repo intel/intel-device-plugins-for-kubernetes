@@ -48,7 +48,7 @@ func init() {
 }
 
 // NewDeviceInfo makes DeviceInfo struct and adds topology information to it.
-func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs, annotations map[string]string, cdiSpec *cdispec.Spec, devPaths ...string) DeviceInfo {
+func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginapi.Mount, envs, annotations map[string]string, cdiSpec *cdispec.Spec) DeviceInfo {
 	deviceInfo := DeviceInfo{
 		state:       state,
 		nodes:       nodes,
@@ -58,20 +58,14 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 		cdiSpec:     cdiSpec,
 	}
 
-	var devPathsComputed []string
+	devPaths := []string{}
 
-	// If devPaths are provided, use them; otherwise, generate from nodes
-	if len(devPaths) > 0 && devPaths[0] != "" {
-		devPathsComputed = devPaths
-	} else {
-		devPathsComputed = []string{}
-		for _, node := range nodes {
-			devPathsComputed = append(devPathsComputed, node.HostPath)
-		}
+	for _, node := range nodes {
+		devPaths = append(devPaths, node.HostPath)
 	}
 
 	// Get topology information based on devPaths
-	topologyInfo, err := topology.GetTopologyInfo(devPathsComputed)
+	topologyInfo, err := topology.GetTopologyInfo(devPaths)
 	if err == nil {
 		deviceInfo.topology = topologyInfo
 	} else {
