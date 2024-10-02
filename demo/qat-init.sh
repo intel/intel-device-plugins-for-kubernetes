@@ -12,8 +12,8 @@ SERVICES_ENABLED="NONE"
 SERVICES_ENABLED_FOUND="FALSE"
 
 check_config() {
-  [ -f "conf/qat.conf" ] && SERVICES_ENABLED=$(cut -d= -f 2 conf/qat.conf | grep '\S')
-  [ -f "conf/qat-$NODE_NAME.conf" ] && SERVICES_ENABLED=$(cut -d= -f 2 conf/qat-$NODE_NAME.conf | grep '\S')
+  [ -f "conf/qat.conf" ] && SERVICES_ENABLED=$(grep "^ServicesEnabled=" conf/qat.conf | cut -d= -f 2 | grep '\S')
+  [ -f "conf/qat-$NODE_NAME.conf" ] && SERVICES_ENABLED=$(grep "^ServicesEnabled=" conf/qat-"$NODE_NAME".conf | cut -d= -f 2 | grep '\S')
 
   if [ "$SERVICES_ENABLED" != "NONE" ]; then
     SERVICES_ENABLED_FOUND="FALSE"
