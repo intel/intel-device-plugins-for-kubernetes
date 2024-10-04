@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-gpu-plugin
+spec:
+  template:
+    spec:
+      containers:
+      - name: intel-gpu-plugin
+        env:
+        # FAKEDRI_SPEC simulates an Intel GPU with specific hardware specs for testing.
+        - name: FAKEDRI_SPEC
+          value: |
+            Path: "/tmp" # Same as mounts and volumes
+            DevCount: 8
+            TilesPerDev: 1
+            DevsPerNumaNode: 1
+            DevMemSize: 4294967296
+            Driver: "i915"
+            Capabilities:
+              platform: "fake_GPU"
+              connections: ""
+              connection-topology: "FULL"
+        volumeMounts:
+          - name: tmp
+            mountPath: /tmp  # The container's /tmp directory is mapped to the host's /tmp directory
+      volumes:
+      - name: tmp
+        hostPath:
+          path: /tmp  # Mount the host's /tmp directory inside the container
+          type: DirectoryOrCreate  # Create the directory if it does not already exist
+
