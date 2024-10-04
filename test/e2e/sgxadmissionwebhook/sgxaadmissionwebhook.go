@@ -37,7 +37,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("SGX Admission Webhook", describe)
+	ginkgo.Describe("SGX Admission Webhook", ginkgo.Label("Device:sgx"), ginkgo.Label("Admission Webhook"), describe)
 }
 
 func describe() {
