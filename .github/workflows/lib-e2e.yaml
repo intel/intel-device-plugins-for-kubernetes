@@ -28,7 +28,7 @@ jobs:
               - accel-config-demo
               - intel-deviceplugin-operator
           - name: e2e-qat-gnrd
-            targetjob: e2e-qat FOCUS="Mode:dpdk.*Resource:(cy|dc)" SKIP="App:(crypto-perf|compress-perf)"
+            targetjob: e2e-qat FOCUS="Mode:dpdk" SKIP="(App:(crypto-perf|compress-perf)|Functionality)"
             runner: simics-gnrd
             images:
               - intel-qat-plugin
@@ -68,7 +68,7 @@ jobs:
       IMAGES: ${{ join(matrix.images, ' ') }}
 
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4
         with:
           fetch-depth: 0
       - name: Describe test environment

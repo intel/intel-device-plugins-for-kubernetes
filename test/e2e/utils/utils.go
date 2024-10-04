@@ -365,3 +365,19 @@ func Kubectl(ns string, cmd string, opt string, file string) {
 	msg := e2ekubectl.RunKubectlOrDie(ns, cmd, opt, path)
 	framework.Logf("%s", msg)
 }
+
+func FindNodeAndResourceCapacity(f *framework.Framework, ctx context.Context, resourceName string) (string, int64) {
+	nodelist, err := f.ClientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		framework.Failf("failed to list Nodes: %v", err)
+	}
+
+	// we have at least one node with resource capacity
+	for _, item := range nodelist.Items {
+		if q, ok := item.Status.Allocatable[v1.ResourceName(resourceName)]; ok && q.Value() > 0 {
+			return item.Name, q.Value()
+		}
+	}
+
+	return "", 0
+}

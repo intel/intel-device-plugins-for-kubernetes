@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: Checkout
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4
     - name: Run Trivy in config mode for deployments
       uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
       with:
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: Checkout
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4
     - name: Run Trivy in config mode for dockerfiles
       uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
       with:
@@ -62,7 +62,7 @@ jobs:
     name: Scan licenses
     steps:
     - name: Checkout
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4
     - name: Run Trivy in fs mode
       uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
       with:
@@ -79,7 +79,7 @@ jobs:
     name: Scan vulnerabilities
     steps:
     - name: Checkout
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4
     - name: Run Trivy in fs mode
       continue-on-error: true
       uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
@@ -110,7 +110,7 @@ jobs:
         output: trivy-report.sarif
     - name: Upload sarif report to GitHub Security tab
       if: ${{ inputs.upload-to-github-security-tab }}
-      uses: github/codeql-action/upload-sarif@294a9d92911152fe08befb9ec03e240add280cb3 # v3
+      uses: github/codeql-action/upload-sarif@461ef6c76dfe95d5c364de2f431ddbd31a417628 # v3
       with:
         sarif_file: trivy-report.sarif
     - name: Convert report to csv
