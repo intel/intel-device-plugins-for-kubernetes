@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
 	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
+	e2ejob "k8s.io/kubernetes/test/e2e/framework/job"
 	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	admissionapi "k8s.io/pod-security-admission/api"
@@ -38,6 +39,8 @@ const (
 	qatPluginKustomizationYaml = "deployments/qat_plugin/overlays/e2e/kustomization.yaml"
 	cryptoTestYaml             = "deployments/qat_dpdk_app/crypto-perf/crypto-perf-dpdk-pod-requesting-qat-cy.yaml"
 	compressTestYaml           = "deployments/qat_dpdk_app/compress-perf/compress-perf-dpdk-pod-requesting-qat-dc.yaml"
+	cyResource                 = "qat.intel.com/cy"
+	dcResource                 = "qat.intel.com/dc"
 )
 
 const (
@@ -111,14 +114,14 @@ func describeQatDpdkPlugin() {
 		}
 	})
 
-	ginkgo.Context("When QAT resources are available with crypto (cy) services enabled [Resource:cy]", func() {
+	ginkgo.Context("When QAT resources are continuously available with crypto (cy) services enabled [Resource:cy]", func() {
 		// This BeforeEach runs even before the JustBeforeEach above.
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("creating a configMap before plugin gets deployed")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "--from-literal", "qat.conf=ServicesEnabled=sym;asym", "qat-config")
 
 			ginkgo.By("setting resourceName for cy services")
-			resourceName = "qat.intel.com/cy"
+			resourceName = cyResource
 		})
 
 		ginkgo.It("deploys a crypto pod (openssl) requesting QAT resources [App:openssl]", func(ctx context.Context) {
@@ -139,13 +142,13 @@ func describeQatDpdkPlugin() {
 		})
 	})
 
-	ginkgo.Context("When QAT resources are available with compress (dc) services enabled [Resource:dc]", func() {
+	ginkgo.Context("When QAT resources are continuously available with compress (dc) services enabled [Resource:dc]", func() {
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("creating a configMap before plugin gets deployed")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "--from-literal", "qat.conf=ServicesEnabled=dc", "qat-config")
 
 			ginkgo.By("setting resourceName for dc services")
-			resourceName = "qat.intel.com/dc"
+			resourceName = dcResource
 		})
 
 		ginkgo.It("deploys a compress pod (openssl) requesting QAT resources [App:openssl]", func(ctx context.Context) {
@@ -163,6 +166,54 @@ func describeQatDpdkPlugin() {
 
 		ginkgo.When("there is no app to run [App:noapp]", func() {
 			ginkgo.It("does nothing", func() {})
+		})
+	})
+
+	ginkgo.Context("When a QAT device goes unresponsive", func() {
+		ginkgo.When("QAT's auto-reset is off", func() {
+			ginkgo.BeforeEach(func() {
+				ginkgo.By("creating a configMap before plugin gets deployed")
+				e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "--from-literal", "qat.conf=$'ServiceEnabled=dc\nAutoresetEnabled=off", "qat-config")
+
+				ginkgo.By("setting resourceName for dc services")
+				resourceName = dcResource
+			})
+
+			ginkgo.It("checks if unhealthy status is reported [Functionality:heartbeat]", func(ctx context.Context) {
+				injectError(ctx, f, resourceName)
+
+				ginkgo.By("waiting node resources become zero")
+				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 30*time.Second, utils.WaitForZeroResource); err != nil {
+					framework.Failf("unable to wait for nodes to have no resource: %v", err)
+				}
+			})
+		})
+
+		ginkgo.When("QAT's autoreset is on", func() {
+			ginkgo.BeforeEach(func() {
+				ginkgo.By("creating a configMap before plugin gets deployed")
+				e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "--from-literal", "qat.conf=$'ServiceEnabled=dc\nAutoresetEnabled=on", "qat-config")
+
+				ginkgo.By("setting resourceName for dc services")
+				resourceName = dcResource
+			})
+
+			ginkgo.It("checks if an injected error gets solved [Functionality:auto-reset]", func(ctx context.Context) {
+				injectError(ctx, f, resourceName)
+
+				ginkgo.By("seeing if there is zero resource")
+				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 30*time.Second, utils.WaitForZeroResource); err != nil {
+					framework.Failf("unable to wait for nodes to have no resource: %v", err)
+				}
+
+				ginkgo.By("seeing if there is positive allocatable resource")
+				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 300*time.Second, utils.WaitForPositiveResource); err != nil {
+					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
+				}
+
+				ginkgo.By("checking if openssl pod runs successfully")
+				runCpaSampleCode(ctx, f, compression, resourceName)
+			})
 		})
 	})
 }
@@ -198,4 +249,40 @@ func runCpaSampleCode(ctx context.Context, f *framework.Framework, runTests int,
 
 	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
 	gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+}
+
+func injectError(ctx context.Context, f *framework.Framework, resourceName v1.ResourceName) {
+	nodeName, _ := utils.FindNodeAndResourceCapacity(f, ctx, resourceName.String())
+	if nodeName == "" {
+		framework.Failf("failed to find a node that has the resource: %s", resourceName)
+	}
+	yes := true
+
+	job := e2ejob.NewTestJobOnNode("success", "qat-inject-error", v1.RestartPolicyNever, 1, 1, nil, 0, nodeName)
+	job.Spec.Template.Spec.Containers[0].Command = []string{
+		"/bin/sh",
+		"-c",
+		"find /sys/kernel/debug/qat_*/heartbeat/ -name inject_error -exec sh -c 'echo 1 > {}' \\;",
+	}
+	job.Spec.Template.Spec.Containers[0].VolumeMounts = []v1.VolumeMount{{
+		Name:      "debugfs",
+		MountPath: "/sys/kernel/debug/",
+	}}
+	job.Spec.Template.Spec.Volumes = []v1.Volume{{
+		Name: "debugfs",
+		VolumeSource: v1.VolumeSource{
+			HostPath: &v1.HostPathVolumeSource{
+				Path: "/sys/kernel/debug/",
+			},
+		},
+	}}
+	job.Spec.Template.Spec.Containers[0].SecurityContext = &v1.SecurityContext{
+		Privileged: &yes,
+	}
+
+	job, err := e2ejob.CreateJob(ctx, f.ClientSet, f.Namespace.Name, job)
+	framework.ExpectNoError(err, "failed to create job in namespace: %s", f.Namespace.Name)
+
+	err = e2ejob.WaitForJobComplete(ctx, f.ClientSet, f.Namespace.Name, job.Name, nil, 1)
+	framework.ExpectNoError(err, "failed to ensure job completion in namespace: %s", f.Namespace.Name)
 }
