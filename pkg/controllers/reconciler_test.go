@@ -16,6 +16,9 @@ package controllers
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
@@ -26,7 +29,10 @@ func TestUpgrade(test *testing.T) {
 	initimage := "intel/intel-idxd-config-initcontainer"
 	version := ":" + ImageMinVersion.String()
 	prevVersion := ":" + ImageMinVersion.WithMinor(ImageMinVersion.Minor()-1).String()
+	sha256 := "updatedrandomsha25642f7ad000a58eecc24ee7b75825227dfe28f23f556f62"
+	preSha256 := "randomsha25642f7ad000a58eecc24ee7b75825227dfe28f23f556f62ec10f55"
 	tests := []struct {
+		envVars           map[string]string
 		image             string
 		initimage         string
 		expectedImage     string
@@ -61,10 +67,23 @@ func TestUpgrade(test *testing.T) {
 			expectedInitimage: initimage,
 			upgrade:           false,
 		},
+		{
+			envVars: map[string]string{strings.ReplaceAll(strings.ToUpper(filepath.Base(image)), "-", "_") + "_SHA": image + "@sha256:" + sha256,
+				strings.ReplaceAll(strings.ToUpper(filepath.Base(initimage)), "-", "_") + "_SHA": initimage + "@sha256:" + sha256},
+			image:             image + "@sha256:" + preSha256,
+			expectedImage:     image + "@sha256:" + sha256,
+			initimage:         initimage + "@sha256:" + preSha256,
+			expectedInitimage: initimage + "@sha256:" + sha256,
+			upgrade:           true,
+		},
 	}
 
 	for i := range tests {
 		t := tests[i]
+
+		for key, value := range t.envVars {
+			os.Setenv(key, value)
+		}
 
 		upgrade := UpgradeImages(context.Background(), &t.image, &t.initimage)
 
