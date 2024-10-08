@@ -2,10 +2,10 @@
 # Syntax and details are here: https://help.github.com/articles/about-codeowners/
 #
 # Global code ownership, fallback
-*                   @kad @mythi @bart0sh @tkatila
+*                   @footprint-it-solutions/teams/engineering
 
 # CI and building
-.github/workflows/  @bart0sh @kad @mythi @tkatila @footprint-it-solutions/teams/engineering
+.github/workflows/  @footprint-it-solutions/teams/engineering
 /scripts/           @bart0sh @kad @mythi
 
 # Binaries
