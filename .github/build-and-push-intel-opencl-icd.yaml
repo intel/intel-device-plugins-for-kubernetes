@@ -1,0 +1,75 @@
+---
+name: Build and push Intel OpenCL ICD
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read  # Required for actions/checkout
+  id-token: write # Required for requesting the JWT to authenticate with AWS
+
+jobs:
+  build:
+    environment: sbx
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Collect git metadata
+        id: git_metadata
+        run: |
+          # Short SHA for the head of the PR
+          PR_HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          echo "pr_head_sha_short=${PR_HEAD_SHA:0:7}" >> $GITHUB_OUTPUT
+          # Short SHA for the merge
+          echo "merge_sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure AWS credentials (sbx)
+        id: aws-login-sbx
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: eu-west-2
+          role-to-assume: ${{ vars.AWS_IAM_ROLE_ARN }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          output-credentials: true
+
+      - name: Login to Amazon ECR (sbx)
+        id: login-ecr-sbx
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ steps.login-ecr-sbx.outputs.registry }}/intel/intel-opencl-icd
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ steps.git_metadata.outputs.sha_short }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
