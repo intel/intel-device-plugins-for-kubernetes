@@ -141,38 +141,37 @@ TAG?=devel
 export TAG
 
 ifeq ($(E2E_LEVEL), $(filter $(E2E_LEVEL), full))
-  GENERATED_SKIP_OPT=-ginkgo.skip "App:noapp"
+  DEFAULT_LABEL_FILTER="!App:noapp"
 else ifeq ($(E2E_LEVEL),basic)
-  ADDITIONAL_FOCUS_REGEX=App:noapp
+  DEFAULT_LABEL_FILTER="App:noapp"
 else
   $(error Unsupported E2E_LEVEL value: $(E2E_LEVEL). Possible options: full, basic)
 endif
-GENERATED_SKIP_OPT += $(if $(SKIP),-ginkgo.skip "$(SKIP)")
-ADDITIONAL_FOCUS_REGEX := $(if $(FOCUS),$(FOCUS).*$(ADDITIONAL_FOCUS_REGEX),$(ADDITIONAL_FOCUS_REGEX))
+LABEL_FILTER := $(if $(LABEL_FILTER),$(LABEL_FILTER),$(DEFAULT_LABEL_FILTER))
 
 e2e-fpga:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:fpga.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.label-filter "Device:fpga && $(LABEL_FILTER)" -delete-namespace-on-failure=false
 
 e2e-qat:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:qat.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.label-filter "Device:qat && $(LABEL_FILTER)" -delete-namespace-on-failure=false
 
 e2e-sgx:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:sgx.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.label-filter "Device:sgx && $(LABEL_FILTER)" -delete-namespace-on-failure=false
 
 e2e-gpu:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:gpu.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.label-filter "Device:gpu && $(LABEL_FILTER)" -delete-namespace-on-failure=false
 
 e2e-dsa:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:dsa.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.label-filter "Device:dsa && $(LABEL_FILTER)" -delete-namespace-on-failure=false
 
 e2e-iaa:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:iaa.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.label-filter "Device:iaa && $(LABEL_FILTER)" -delete-namespace-on-failure=false
 
 e2e-dlb:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:dlb.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.label-filter "Device:dlb && $(LABEL_FILTER)" -delete-namespace-on-failure=false
 
 e2e-spr:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:(iaa|dsa)|Device:qat.*Mode:dpdk.*Resource:(cy|dc).*" -ginkgo.focus "Device:sgx.*|(SGX Admission)" -ginkgo.focus "Device:gpu.*Resource:i915" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.label-filter "(/Device:(dsa|iaa|sgx)/ || (Device:qat && Mode:dpdk && !/Functionality:.+/) || (Device:gpu && Resource:i915)) && $(LABEL_FILTER)" -delete-namespace-on-failure=false
 
 pre-pull:
 ifeq ($(TAG),devel)
