@@ -160,7 +160,7 @@ func UpgradeImages(ctx context.Context, image *string, initimage *string) (upgra
 		}
 
 		if parts := strings.SplitN(*s, ":", 2); len(parts) == 2 && len(parts[0]) > 0 {
-			name, version := parts[0], parts[1]
+			name, version := strings.TrimSuffix(parts[0], "@sha256"), parts[1]
 
 			envVarValue := os.Getenv(strings.ReplaceAll(strings.ToUpper(filepath.Base(name)), "-", "_") + "_SHA")
 
