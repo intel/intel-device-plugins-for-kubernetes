@@ -122,7 +122,7 @@ jobs:
           echo "image_sha=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }})" >> $GITHUB_OUTPUT
       - name: Install cosign
         if: ${{ inputs.image_tag != 'devel' }}
-        uses: sigstore/cosign-installer@4959ce089c160fddf62f7b42464195ba1a56d382 #v3.6.0
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da #v3.7.0
       - name: Keyless image sign
         if: ${{ inputs.image_tag != 'devel' }}
         run: |
