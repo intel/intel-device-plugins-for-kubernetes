@@ -39,7 +39,6 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	devicePlugin := rawObj.(*devicepluginv1.QatDevicePlugin)
 	yes := true
 	no := false
-	pluginAnnotations := devicePlugin.ObjectMeta.DeepCopy().Annotations
 	maxUnavailable := intstr.FromInt(1)
 	maxSurge := intstr.FromInt(0)
 
@@ -54,7 +53,6 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 			Labels: map[string]string{
 				"app": appLabel,
 			},
-			Annotations: pluginAnnotations,
 		},
 		Spec: apps.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
@@ -74,7 +72,6 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 					Labels: map[string]string{
 						"app": appLabel,
 					},
-					Annotations: pluginAnnotations,
 				},
 				Spec: v1.PodSpec{
 					AutomountServiceAccountToken: &no,
@@ -95,6 +92,9 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							Image:           devicePlugin.Spec.Image,
 							ImagePullPolicy: "IfNotPresent",
 							SecurityContext: &v1.SecurityContext{
+								AppArmorProfile: &v1.AppArmorProfile{
+									Type: "Unconfined",
+								},
 								SELinuxOptions: &v1.SELinuxOptions{
 									Type: "container_device_plugin_t",
 								},
