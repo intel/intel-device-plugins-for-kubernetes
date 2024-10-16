@@ -16,6 +16,7 @@ package controllers
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
@@ -27,6 +28,7 @@ func TestUpgrade(test *testing.T) {
 	version := ":" + ImageMinVersion.String()
 	prevVersion := ":" + ImageMinVersion.WithMinor(ImageMinVersion.Minor()-1).String()
 	tests := []struct {
+		envVars           map[string]string
 		image             string
 		initimage         string
 		expectedImage     string
@@ -61,10 +63,36 @@ func TestUpgrade(test *testing.T) {
 			expectedInitimage: initimage,
 			upgrade:           false,
 		},
+		{
+			envVars: map[string]string{
+				"INTEL_DSA_PLUGIN_SHA":                "intel/intel-dsa-plugin@sha256:000000000000000000000000000000000000000000000000000000000000000b",
+				"INTEL_IDXD_CONFIG_INITCONTAINER_SHA": "intel/intel-idxd-config-initcontainer@sha256:000000000000000000000000000000000000000000000000000000000000000b",
+			},
+			image:             image + "@sha256:000000000000000000000000000000000000000000000000000000000000000a",
+			expectedImage:     image + "@sha256:000000000000000000000000000000000000000000000000000000000000000b",
+			initimage:         initimage + "@sha256:000000000000000000000000000000000000000000000000000000000000000a",
+			expectedInitimage: initimage + "@sha256:000000000000000000000000000000000000000000000000000000000000000b",
+			upgrade:           true,
+		},
+		{
+			envVars: map[string]string{
+				"INTEL_DSA_PLUGIN_SHA":                "intel/intel-dsa-plugin@sha256:000000000000000000000000000000000000000000000000000000000000000a",
+				"INTEL_IDXD_CONFIG_INITCONTAINER_SHA": "intel/intel-idxd-config-initcontainer@sha256:000000000000000000000000000000000000000000000000000000000000000a",
+			},
+			image:             image + "@sha256:000000000000000000000000000000000000000000000000000000000000000a",
+			expectedImage:     image + "@sha256:000000000000000000000000000000000000000000000000000000000000000a",
+			initimage:         initimage + "@sha256:000000000000000000000000000000000000000000000000000000000000000a",
+			expectedInitimage: initimage + "@sha256:000000000000000000000000000000000000000000000000000000000000000a",
+			upgrade:           false,
+		},
 	}
 
 	for i := range tests {
 		t := tests[i]
+
+		for key, value := range t.envVars {
+			os.Setenv(key, value)
+		}
 
 		upgrade := UpgradeImages(context.Background(), &t.image, &t.initimage)
 
@@ -72,6 +100,10 @@ func TestUpgrade(test *testing.T) {
 			test.Errorf("expectedUpgrade: %v, received: %v", t.upgrade, upgrade)
 			test.Errorf("expectedImage: %s, received: %s", t.expectedImage, t.image)
 			test.Errorf("expectedInitimage: %s, received: %s", t.expectedInitimage, t.initimage)
+		}
+
+		for key := range t.envVars {
+			os.Unsetenv(key)
 		}
 	}
 }
