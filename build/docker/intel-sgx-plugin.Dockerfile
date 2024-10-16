@@ -59,7 +59,7 @@ FROM ${FINAL_BASE}
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_sgx_device_plugin"]
 LABEL vendor='Intel®'
-LABEL version='0.31.0'
+LABEL version='0.31.1'
 LABEL release='1'
 LABEL name='intel-sgx-plugin'
 LABEL summary='Intel® SGX device plugin for Kubernetes'

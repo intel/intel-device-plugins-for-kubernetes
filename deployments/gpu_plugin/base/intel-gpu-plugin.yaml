@@ -29,7 +29,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
-        image: intel/intel-gpu-plugin:0.31.0
+        image: intel/intel-gpu-plugin:0.31.1
         imagePullPolicy: IfNotPresent
         securityContext:
           seLinuxOptions:

@@ -202,7 +202,7 @@ func TestNewDaemonSetFPGA(t *testing.T) {
 
 	plugin := &devicepluginv1.FpgaDevicePlugin{
 		Spec: devicepluginv1.FpgaDevicePluginSpec{
-			InitImage: "intel/intel-fpga-initcontainer:0.31.0",
+			InitImage: "intel/intel-fpga-initcontainer:0.31.1",
 		},
 	}
 	plugin.Name = "testing"

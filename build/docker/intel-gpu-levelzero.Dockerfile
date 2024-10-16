@@ -84,7 +84,7 @@ RUN if [ $ROCKYLINUX -eq 0 ]; then \
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_gpu_levelzero"]
 LABEL vendor='Intel®'
-LABEL version='0.31.0'
+LABEL version='0.31.1'
 LABEL release='1'
 LABEL name='intel-gpu-levelzero'
 LABEL summary='Intel® GPU levelzero for Kubernetes'
