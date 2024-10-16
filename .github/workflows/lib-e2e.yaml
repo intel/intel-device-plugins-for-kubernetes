@@ -28,7 +28,7 @@ jobs:
               - accel-config-demo
               - intel-deviceplugin-operator
           - name: e2e-qat-gnrd
-            targetjob: e2e-qat FOCUS="Mode:dpdk" SKIP="(App:(crypto-perf|compress-perf)|Functionality)"
+            targetjob: e2e-qat LABEL_FILTER="Mode:dpdk && !/App:(crypto-perf|compress-perf|noapp)/ && !/Functionality:.+/"
             runner: simics-gnrd
             images:
               - intel-qat-plugin
@@ -42,7 +42,7 @@ jobs:
               - intel-fpga-admissionwebhook
               - opae-nlb-demo
           - name: e2e-spr
-            targetjob: e2e-spr SKIP="App:compress-perf"
+            targetjob: e2e-spr LABEL_FILTER="!App:compress-perf && !App:noapp"
             runner: spr
             images:
               - intel-qat-plugin

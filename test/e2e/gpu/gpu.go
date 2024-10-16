@@ -48,7 +48,7 @@ const (
 
 func init() {
 	// This needs to be Ordered because only one GPU plugin can function on the node at once.
-	ginkgo.Describe("GPU plugin [Device:gpu]", describe, ginkgo.Ordered)
+	ginkgo.Describe("GPU plugin", ginkgo.Label("Device:gpu"), describe, ginkgo.Ordered)
 }
 
 func createPluginAndVerifyExistence(f *framework.Framework, ctx context.Context, kustomizationPath, baseResource string) {
@@ -104,7 +104,7 @@ func describe() {
 		framework.Failf("unable to locate %q: %v", healthMgmtYaml, errFailedToLocateRepoFile)
 	}
 
-	ginkgo.Context("When GPU plugin is deployed [Resource:i915]", func() {
+	ginkgo.Context("When GPU plugin is deployed", ginkgo.Label("Resource:i915"), func() {
 		ginkgo.AfterEach(func(ctx context.Context) {
 			framework.Logf("Removing gpu-plugin manually")
 
@@ -118,7 +118,7 @@ func describe() {
 			}
 		})
 
-		ginkgo.It("checks availability of GPU resources [App:busybox]", func(ctx context.Context) {
+		ginkgo.It("checks availability of GPU resources", ginkgo.Label("App:busybox"), func(ctx context.Context) {
 			createPluginAndVerifyExistence(f, ctx, vanillaPath, "gpu.intel.com/i915")
 
 			podListFunc := framework.ListObjects(f.ClientSet.CoreV1().Pods(f.Namespace.Name).List, metav1.ListOptions{})
@@ -189,7 +189,7 @@ func describe() {
 			framework.Logf("found card and renderD from the log")
 		})
 
-		ginkgo.Context("When [Deployment:monitoring] deployment is applied [Resource:i915]", func() {
+		ginkgo.Context("When [Deployment:monitoring] deployment is applied", ginkgo.Label("Resource:i915"), func() {
 			ginkgo.It("check if monitoring resource is available", func(ctx context.Context) {
 				createPluginAndVerifyExistence(f, ctx, monitoringPath, "gpu.intel.com/i915")
 
@@ -200,13 +200,13 @@ func describe() {
 			})
 		})
 
-		ginkgo.Context("When [Deployment:healthManagement] deployment is applied [Resource:i915]", func() {
+		ginkgo.Context("When [Deployment:healthManagement] deployment is applied", ginkgo.Label("Resource:i915"), func() {
 			ginkgo.It("check if i915 resources is available", func(ctx context.Context) {
 				createPluginAndVerifyExistence(f, ctx, healthMgmtPath, "gpu.intel.com/i915")
 			})
 		})
 
-		ginkgo.Context("When [Deployment:resourceManager] deployment is applied [Resource:i915]", func() {
+		ginkgo.Context("When [Deployment:resourceManager] deployment is applied", ginkgo.Label("Resource:i915"), func() {
 			ginkgo.It("check if i915 resources is available", func(ctx context.Context) {
 				e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(nfdRulesPath))
 
@@ -227,7 +227,7 @@ func describe() {
 			})
 		})
 
-		ginkgo.It("run a small workload on the GPU [App:tensorflow]", func(ctx context.Context) {
+		ginkgo.It("run a small workload on the GPU", ginkgo.Label("App:tensorflow"), func(ctx context.Context) {
 			createPluginAndVerifyExistence(f, ctx, vanillaPath, "gpu.intel.com/i915")
 
 			kustomYaml, err := utils.LocateRepoFile(tfKustomizationYaml)
@@ -247,13 +247,13 @@ func describe() {
 			framework.Logf("tensorflow execution succeeded!")
 		})
 
-		ginkgo.When("there is no app to run [App:noapp]", func() {
+		ginkgo.When("there is no app to run", ginkgo.Label("App:noapp"), func() {
 			ginkgo.It("does nothing", func() {})
 		})
 	})
 
-	ginkgo.Context("When GPU resources are available [Resource:xe]", func() {
-		ginkgo.It("checks availability of GPU resources [App:busybox]", func(ctx context.Context) {
+	ginkgo.Context("When GPU resources are available", ginkgo.Label("Resource:xe"), func() {
+		ginkgo.It("checks availability of GPU resources", ginkgo.Label("App:busybox"), func(ctx context.Context) {
 			createPluginAndVerifyExistence(f, ctx, vanillaPath, "gpu.intel.com/xe")
 
 			ginkgo.By("submitting a pod requesting GPU resources")
@@ -296,7 +296,7 @@ func describe() {
 			framework.Logf("found card and renderD from the log")
 		})
 
-		ginkgo.When("there is no app to run [App:noapp]", func() {
+		ginkgo.When("there is no app to run", ginkgo.Label("App:noapp"), func() {
 			ginkgo.It("does nothing", func() {})
 		})
 	})
