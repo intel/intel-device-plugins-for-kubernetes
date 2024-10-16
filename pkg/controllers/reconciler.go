@@ -38,7 +38,7 @@ import (
 )
 
 var (
-	ImageMinVersion = versionutil.MustParseSemantic("0.31.0")
+	ImageMinVersion = versionutil.MustParseSemantic("0.31.1")
 )
 
 const (
@@ -158,10 +158,13 @@ func UpgradeImages(ctx context.Context, image *string, initimage *string) (upgra
 		if s == nil {
 			continue
 		}
-
+		// e.g. intel-dsa-plugin@sha256:hash -> [intel-dsa-plugin@sha256, hash]
 		if parts := strings.SplitN(*s, ":", 2); len(parts) == 2 && len(parts[0]) > 0 {
-			name, version := parts[0], parts[1]
+			// e.g. [intel-dsa-plugin@sha256, hash] -> [intel-dsa-plugin, hash]
+			name, version := strings.TrimSuffix(parts[0], "@sha256"), parts[1]
 
+			// e.g. intel-dsa-plugin -> INTEL_DSA_PLUGIN_SHA
+			// and get the value of the env var INTEL_DSA_PLUGIN_SHA
 			envVarValue := os.Getenv(strings.ReplaceAll(strings.ToUpper(filepath.Base(name)), "-", "_") + "_SHA")
 
 			if envVarValue != "" && *s != envVarValue {

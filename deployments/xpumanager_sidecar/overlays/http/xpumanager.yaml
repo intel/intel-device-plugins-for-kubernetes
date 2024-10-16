@@ -13,7 +13,7 @@ spec:
             path: "/etc/kubernetes/node-feature-discovery/features.d/"
       containers:
       - name: xelink-sidecar
-        image: intel/intel-xpumanager-sidecar:0.31.0
+        image: intel/intel-xpumanager-sidecar:0.31.1
         imagePullPolicy: IfNotPresent
         args:
           - -v=2
