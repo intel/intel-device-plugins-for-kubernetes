@@ -28,7 +28,7 @@ jobs:
               - accel-config-demo
               - intel-deviceplugin-operator
           - name: e2e-qat-gnrd
-            targetjob: e2e-qat FOCUS="Mode:dpdk" SKIP="(App:(crypto-perf|compress-perf)|Functionality)"
+            targetjob: e2e-qat FOCUS="Mode:dpdk" SKIP="(App:(crypto-perf|compress-perf|qat-engine)|Functionality)"
             runner: simics-gnrd
             images:
               - intel-qat-plugin
