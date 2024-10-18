@@ -40,7 +40,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("IAA plugin [Device:iaa]", describe)
+	ginkgo.Describe("IAA plugin", ginkgo.Label("Device:iaa"), describe)
 }
 
 func describe() {
@@ -94,7 +94,7 @@ func describe() {
 		}
 	})
 
-	ginkgo.Context("When IAA resources are available [Resource:dedicated]", func() {
+	ginkgo.Context("When IAA resources are available", ginkgo.Label("Resource:dedicated"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			ginkgo.By("checking if the resource is allocatable")
 			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "iaa.intel.com/wq-user-dedicated", 300*time.Second, utils.WaitForPositiveResource); err != nil {
@@ -102,7 +102,7 @@ func describe() {
 			}
 		})
 
-		ginkgo.It("deploys a demo app [App:accel-config]", func(ctx context.Context) {
+		ginkgo.It("deploys a demo app", ginkgo.Label("App:accel-config"), func(ctx context.Context) {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 			ginkgo.By("waiting for the IAA demo to succeed")
@@ -110,7 +110,7 @@ func describe() {
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
 		})
 
-		ginkgo.When("there is no app to run [App:noapp]", func() {
+		ginkgo.When("there is no app to run", ginkgo.Label("App:noapp"), func() {
 			ginkgo.It("does nothing", func() {})
 		})
 	})
