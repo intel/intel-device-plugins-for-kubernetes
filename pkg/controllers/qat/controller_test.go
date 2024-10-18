@@ -39,7 +39,6 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	devicePlugin := rawObj.(*devicepluginv1.QatDevicePlugin)
 	yes := true
 	no := false
-	pluginAnnotations := devicePlugin.ObjectMeta.DeepCopy().Annotations
 	maxUnavailable := intstr.FromInt(1)
 	maxSurge := intstr.FromInt(0)
 
@@ -54,7 +53,6 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 			Labels: map[string]string{
 				"app": appLabel,
 			},
-			Annotations: pluginAnnotations,
 		},
 		Spec: apps.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
@@ -74,7 +72,6 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 					Labels: map[string]string{
 						"app": appLabel,
 					},
-					Annotations: pluginAnnotations,
 				},
 				Spec: v1.PodSpec{
 					AutomountServiceAccountToken: &no,
@@ -185,13 +182,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 func TestNewDaemonSetQAT(t *testing.T) {
 	c := &controller{}
 
-	plugin := &devicepluginv1.QatDevicePlugin{
-		ObjectMeta: metav1.ObjectMeta{
-			Annotations: map[string]string{
-				"container.apparmor.security.beta.kubernetes.io/intel-qat-plugin": "runtime/default",
-			},
-		},
-	}
+	plugin := &devicepluginv1.QatDevicePlugin{}
 	plugin.Name = "testing"
 	plugin.Spec.InitImage = "intel/intel-qat-initcontainer:" + controllers.ImageMinVersion.String()
 
