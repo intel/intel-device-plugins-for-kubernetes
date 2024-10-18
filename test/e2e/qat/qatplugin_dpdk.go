@@ -101,7 +101,7 @@ func describeQatDpdkPlugin() {
 		}
 
 		ginkgo.By("checking if the resource is allocatable")
-		if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 30*time.Second, utils.WaitForPositiveResource); err != nil {
+		if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 60*time.Second, utils.WaitForPositiveResource); err != nil {
 			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
 		}
 	})
@@ -135,6 +135,10 @@ func describeQatDpdkPlugin() {
 			ginkgo.By("waiting the crypto pod to finish successfully")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-crypto-perf", f.Namespace.Name, 300*time.Second)
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-crypto-perf", "crypto-perf"))
+		})
+
+		ginkgo.It("deploys a crypto pod (qat-engine testapp) [App:qat-engine]", func(ctx context.Context) {
+			runQatEngineTestApp(ctx, f, resourceName)
 		})
 
 		ginkgo.When("there is no app to run [App:noapp]", func() {
@@ -246,6 +250,39 @@ func runCpaSampleCode(ctx context.Context, f *framework.Framework, runTests int,
 	framework.ExpectNoError(err, "pod Create API error")
 
 	ginkgo.By("waiting the cpa_sample_code pod for the resource" + resourceName.String() + "to finish successfully")
+
+	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
+	gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+}
+
+func runQatEngineTestApp(ctx context.Context, f *framework.Framework, resourceName v1.ResourceName) {
+	ginkgo.By("submitting a pod requesting QAT" + resourceName.String() + "resources")
+	podSpec := &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "openssl-qat-engine"},
+		Spec: v1.PodSpec{
+			Containers: []v1.Container{
+				{
+					Name:            "openssl-qat-engine",
+					Image:           "intel/openssl-qat-engine:devel",
+					ImagePullPolicy: "IfNotPresent",
+					Command:         []string{"testapp", "-engine", "qathwtest", "-async_jobs", "1", "-c", "1", "-n", "1", "-nc", "1", "-v", "-hw_algo", "0x0029"},
+					SecurityContext: &v1.SecurityContext{
+						Capabilities: &v1.Capabilities{
+							Add: []v1.Capability{"IPC_LOCK"}},
+					},
+					Resources: v1.ResourceRequirements{
+						Requests: v1.ResourceList{resourceName: resource.MustParse("1")},
+						Limits:   v1.ResourceList{resourceName: resource.MustParse("1")},
+					},
+				},
+			},
+			RestartPolicy: v1.RestartPolicyNever,
+		},
+	}
+	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx, podSpec, metav1.CreateOptions{})
+	framework.ExpectNoError(err, "pod Create API error")
+
+	ginkgo.By("waiting the qat-engine's testapp pod for the resource" + resourceName.String() + "to finish successfully")
 
 	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
 	gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
