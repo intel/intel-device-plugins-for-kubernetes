@@ -79,7 +79,7 @@ jobs:
         run: |
           ORG=${{ inputs.registry }} TAG=${{ inputs.image_tag }} make ${IMAGE_NAME} BUILDER=docker
       - name: Trivy scan for image
-        uses: aquasecurity/trivy-action@5681af892cd0f4997658e2bacc62bd0a894cf564 # 0.27.0
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # 0.28.0
         with:
           scan-type: image
           image-ref: ${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }}
