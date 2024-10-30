@@ -125,7 +125,16 @@ func describeQatDpdkPlugin() {
 		})
 
 		ginkgo.It("deploys a crypto pod (openssl) requesting QAT resources [App:openssl]", func(ctx context.Context) {
-			runCpaSampleCode(ctx, f, symmetric, resourceName)
+			command := []string{
+				"cpa_sample_code",
+				"runTests=" + strconv.Itoa(symmetric),
+				"signOfLife=1",
+			}
+			pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
+
+			ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 		})
 
 		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources [App:crypto-perf]", func(ctx context.Context) {
@@ -135,6 +144,24 @@ func describeQatDpdkPlugin() {
 			ginkgo.By("waiting the crypto pod to finish successfully")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-crypto-perf", f.Namespace.Name, 300*time.Second)
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-crypto-perf", "crypto-perf"))
+		})
+
+		ginkgo.It("deploys a crypto pod (qat-engine testapp) [App:qat-engine]", func(ctx context.Context) {
+			command := []string{
+				"testapp",
+				"-engine", "qathwtest",
+				"-async_jobs", "1",
+				"-c", "1",
+				"-n", "1",
+				"-nc", "1",
+				"-v",
+				"-hw_algo", "0x0029",
+			}
+			pod := createPod(ctx, f, "qat-engine-testapp", resourceName, "intel/openssl-qat-engine:devel", command)
+
+			ginkgo.By("waiting the qat-engine-testapp pod for the resource " + resourceName.String() + " to finish successfully")
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 		})
 
 		ginkgo.When("there is no app to run [App:noapp]", func() {
@@ -152,7 +179,16 @@ func describeQatDpdkPlugin() {
 		})
 
 		ginkgo.It("deploys a compress pod (openssl) requesting QAT resources [App:openssl]", func(ctx context.Context) {
-			runCpaSampleCode(ctx, f, compression, resourceName)
+			command := []string{
+				"cpa_sample_code",
+				"runTests=" + strconv.Itoa(compression),
+				"signOfLife=1",
+			}
+			pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
+
+			ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 		})
 
 		ginkgo.It("deploys a compress pod (dpdk compress-perf) requesting QAT resources [App:compress-perf]", func(ctx context.Context) {
@@ -212,23 +248,31 @@ func describeQatDpdkPlugin() {
 				}
 
 				ginkgo.By("checking if openssl pod runs successfully")
-				runCpaSampleCode(ctx, f, compression, resourceName)
+				command := []string{
+					"cpa_sample_code",
+					"runTests=" + strconv.Itoa(compression),
+					"signOfLife=1",
+				}
+				pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
+
+				ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
+				err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
+				gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 			})
 		})
 	})
 }
 
-func runCpaSampleCode(ctx context.Context, f *framework.Framework, runTests int, resourceName v1.ResourceName) {
-	ginkgo.By("submitting a pod requesting QAT" + resourceName.String() + "resources")
+func createPod(ctx context.Context, f *framework.Framework, name string, resourceName v1.ResourceName, image string, command []string) *v1.Pod {
 	podSpec := &v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{Name: "openssl-qat-engine"},
+		ObjectMeta: metav1.ObjectMeta{Name: name},
 		Spec: v1.PodSpec{
 			Containers: []v1.Container{
 				{
-					Name:            "openssl-qat-engine",
-					Image:           "intel/openssl-qat-engine:devel",
+					Name:            name,
+					Image:           image,
 					ImagePullPolicy: "IfNotPresent",
-					Command:         []string{"cpa_sample_code", "runTests=" + strconv.Itoa(runTests), "signOfLife=1"},
+					Command:         command,
 					SecurityContext: &v1.SecurityContext{
 						Capabilities: &v1.Capabilities{
 							Add: []v1.Capability{"IPC_LOCK"}},
@@ -242,13 +286,11 @@ func runCpaSampleCode(ctx context.Context, f *framework.Framework, runTests int,
 			RestartPolicy: v1.RestartPolicyNever,
 		},
 	}
+
 	pod, err := f.ClientSet.CoreV1().Pods(f.Namespace.Name).Create(ctx, podSpec, metav1.CreateOptions{})
 	framework.ExpectNoError(err, "pod Create API error")
 
-	ginkgo.By("waiting the cpa_sample_code pod for the resource" + resourceName.String() + "to finish successfully")
-
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-	gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+	return pod
 }
 
 func injectError(ctx context.Context, f *framework.Framework, resourceName v1.ResourceName) {
