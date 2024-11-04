@@ -187,30 +187,9 @@ func newDevicePlugin(pciDriverDir, pciDeviceDir string, maxDevices int, kernelVf
 	}
 }
 
-func (dp *DevicePlugin) setupDeviceIDs() error {
-	for devID, driver := range qatDeviceDriver {
-		for _, enabledDriver := range dp.kernelVfDrivers {
-			if driver != enabledDriver {
-				continue
-			}
-
-			err := writeToDriver(filepath.Join(dp.pciDriverDir, dp.dpdkDriver, "new_id"), vendorPrefix+devID)
-			if err != nil && !errors.Is(err, os.ErrExist) {
-				return errors.WithMessagef(err, "failed to set device ID %s for %s. Driver module not loaded?", devID, dp.dpdkDriver)
-			}
-		}
-	}
-
-	return nil
-}
-
 // Scan implements Scanner interface for vfio based QAT plugin.
 func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
-
-	if err := dp.setupDeviceIDs(); err != nil {
-		return err
-	}
 
 	for {
 		devTree, err := dp.scan()
