@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 as builder
+FROM ubuntu:20.04 AS builder
 
 ARG DIR=/dpdk-build
 WORKDIR $DIR

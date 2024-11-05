@@ -24,7 +24,7 @@ ARG ROCKYLINUX=1
 ARG BUILD_BASE=rockylinux:9
 ARG FINAL_BASE_DYN=registry.access.redhat.com/ubi9/ubi-minimal:9.3
 ###
-FROM ${BUILD_BASE} as builder
+FROM ${BUILD_BASE} AS builder
 ARG DIR=/intel-device-plugins-for-kubernetes
 ENV CGO_CFLAGS="-pipe -fno-plt"
 ENV CGO_LDFLAGS="-fstack-protector-strong -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now,-z,noexecstack,-z,defs,-s,-w"

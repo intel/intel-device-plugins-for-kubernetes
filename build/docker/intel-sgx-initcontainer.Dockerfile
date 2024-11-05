@@ -35,7 +35,7 @@ ARG FINAL_BASE=registry.access.redhat.com/ubi9-micro:latest
 ## The main branch defaults to using the latest Golang base image.
 ARG GOLANG_BASE=golang:1.23-bookworm
 ###
-FROM ${GOLANG_BASE} as builder
+FROM ${GOLANG_BASE} AS builder
 ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
 ARG LDFLAGS="all=-w -s"

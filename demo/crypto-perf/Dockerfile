@@ -1,4 +1,4 @@
-FROM debian:sid-slim as builder
+FROM debian:sid-slim AS builder
 
 ARG DIR=/dpdk-build
 WORKDIR $DIR
