@@ -1,7 +1,7 @@
 #include "final_base.docker"
 #include "golang_base.docker"
 
-FROM ${GOLANG_BASE} as builder
+FROM ${GOLANG_BASE} AS builder
 
 #include "default_args.docker"
 
