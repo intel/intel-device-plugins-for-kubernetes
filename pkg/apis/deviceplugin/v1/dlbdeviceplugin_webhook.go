@@ -15,73 +15,35 @@
 package v1
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
-)
-
-var (
-	// dlbdevicepluginlog is for logging in this package.
-	dlbdevicepluginlog = logf.Log.WithName("dlbdeviceplugin-resource")
-
-	dlbMinVersion = controllers.ImageMinVersion
 )
 
 // SetupWebhookWithManager sets up a webhook for DlbDevicePlugin custom resources.
 func (r *DlbDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(&commonDevicePluginDefaulter{
+			defaultImage: "intel/intel-dlb-plugin:" + controllers.ImageMinVersion.String(),
+		}).
+		WithValidator(&commonDevicePluginValidator{
+			expectedImage:     "intel-dlb-plugin",
+			expectedInitImage: "intel-dlb-initimage",
+			expectedVersion:   *controllers.ImageMinVersion,
+		}).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-dlbdeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=dlbdeviceplugins,verbs=create;update,versions=v1,name=mdlbdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
-
-var _ webhook.Defaulter = &DlbDevicePlugin{}
-
-// Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *DlbDevicePlugin) Default() {
-	dlbdevicepluginlog.Info("default", "name", r.Name)
-
-	if len(r.Spec.Image) == 0 {
-		r.Spec.Image = "intel/intel-dlb-plugin:" + dlbMinVersion.String()
-	}
-}
-
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-dlbdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=dlbdeviceplugins,versions=v1,name=vdlbdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-var _ webhook.Validator = &DlbDevicePlugin{}
-
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *DlbDevicePlugin) ValidateCreate() (admission.Warnings, error) {
-	dlbdevicepluginlog.Info("validate create", "name", r.Name)
-
-	return nil, r.validatePlugin()
-}
-
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *DlbDevicePlugin) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	dlbdevicepluginlog.Info("validate update", "name", r.Name)
-
-	return nil, r.validatePlugin()
-}
-
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *DlbDevicePlugin) ValidateDelete() (admission.Warnings, error) {
-	dlbdevicepluginlog.Info("validate delete", "name", r.Name)
-
-	return nil, nil
-}
-
-func (r *DlbDevicePlugin) validatePlugin() error {
+func (r *DlbDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
 	if r.Spec.InitImage != "" {
-		if err := validatePluginImage(r.Spec.InitImage, "intel-dlb-initcontainer", dlbMinVersion); err != nil {
+		if err := validatePluginImage(r.Spec.InitImage, ref.expectedInitImage, &ref.expectedVersion); err != nil {
 			return err
 		}
 	}
 
-	return validatePluginImage(r.Spec.Image, "intel-dlb-plugin", dlbMinVersion)
+	return validatePluginImage(r.Spec.Image, ref.expectedImage, &ref.expectedVersion)
 }

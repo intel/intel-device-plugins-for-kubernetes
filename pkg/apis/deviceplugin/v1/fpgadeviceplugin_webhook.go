@@ -15,75 +15,33 @@
 package v1
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
-)
-
-var (
-	// fpgadevicepluginlog is for logging in this package.
-	fpgadevicepluginlog = logf.Log.WithName("fpgadeviceplugin-resource")
-
-	fpgaMinVersion = controllers.ImageMinVersion
 )
 
 // SetupWebhookWithManager sets up a webhook for FpgaDevicePlugin custom resources.
 func (r *FpgaDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(&commonDevicePluginDefaulter{
+			defaultImage: "intel/intel-fpga-plugin:" + controllers.ImageMinVersion.String(),
+		}).
+		WithValidator(&commonDevicePluginValidator{
+			expectedImage:     "intel-fpga-plugin",
+			expectedInitImage: "intel-fpga-initimage",
+			expectedVersion:   *controllers.ImageMinVersion,
+		}).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-fpgadeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=fpgadeviceplugins,verbs=create;update,versions=v1,name=mfpgadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
-
-var _ webhook.Defaulter = &FpgaDevicePlugin{}
-
-// Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *FpgaDevicePlugin) Default() {
-	fpgadevicepluginlog.Info("default", "name", r.Name)
-
-	if len(r.Spec.Image) == 0 {
-		r.Spec.Image = "intel/intel-fpga-plugin:" + fpgaMinVersion.String()
-	}
-
-	if len(r.Spec.InitImage) == 0 {
-		r.Spec.InitImage = "intel/intel-fpga-initcontainer:" + fpgaMinVersion.String()
-	}
-}
-
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-fpgadeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=fpgadeviceplugins,versions=v1,name=vfpgadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-var _ webhook.Validator = &FpgaDevicePlugin{}
-
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *FpgaDevicePlugin) ValidateCreate() (admission.Warnings, error) {
-	fpgadevicepluginlog.Info("validate create", "name", r.Name)
-
-	return nil, r.validatePlugin()
-}
-
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *FpgaDevicePlugin) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	fpgadevicepluginlog.Info("validate update", "name", r.Name)
-
-	return nil, r.validatePlugin()
-}
-
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *FpgaDevicePlugin) ValidateDelete() (admission.Warnings, error) {
-	fpgadevicepluginlog.Info("validate delete", "name", r.Name)
-
-	return nil, nil
-}
-
-func (r *FpgaDevicePlugin) validatePlugin() error {
-	if err := validatePluginImage(r.Spec.Image, "intel-fpga-plugin", fpgaMinVersion); err != nil {
+func (r *FpgaDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
+	if err := validatePluginImage(r.Spec.Image, ref.expectedImage, &ref.expectedVersion); err != nil {
 		return err
 	}
 
-	return validatePluginImage(r.Spec.InitImage, "intel-fpga-initcontainer", fpgaMinVersion)
+	return validatePluginImage(r.Spec.InitImage, ref.expectedInitImage, &ref.expectedVersion)
 }
