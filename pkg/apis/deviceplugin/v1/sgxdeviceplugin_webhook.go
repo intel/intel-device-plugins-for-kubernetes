@@ -15,69 +15,31 @@
 package v1
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
-)
-
-var (
-	// sgxdevicepluginlog is for logging in this package.
-	sgxdevicepluginlog = logf.Log.WithName("sgxdeviceplugin-resource")
-
-	sgxMinVersion = controllers.ImageMinVersion
 )
 
 // SetupWebhookWithManager sets up a webhook for SgxDevicePlugin custom resources.
 func (r *SgxDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(&commonDevicePluginDefaulter{
+			defaultImage: "intel/intel-sgx-plugin:" + controllers.ImageMinVersion.String(),
+		}).
+		WithValidator(&commonDevicePluginValidator{
+			expectedImage:     "intel-sgx-plugin",
+			expectedInitImage: "intel-sgx-initcontainer",
+			expectedVersion:   *controllers.ImageMinVersion,
+		}).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-sgxdeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=sgxdeviceplugins,verbs=create;update,versions=v1,name=msgxdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1,reinvocationPolicy=IfNeeded
-
-var _ webhook.Defaulter = &SgxDevicePlugin{}
-
-// Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *SgxDevicePlugin) Default() {
-	sgxdevicepluginlog.Info("default", "name", r.Name)
-
-	if len(r.Spec.Image) == 0 {
-		r.Spec.Image = "intel/intel-sgx-plugin:" + sgxMinVersion.String()
-	}
-}
-
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-sgxdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=sgxdeviceplugins,versions=v1,name=vsgxdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-var _ webhook.Validator = &SgxDevicePlugin{}
-
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SgxDevicePlugin) ValidateCreate() (admission.Warnings, error) {
-	sgxdevicepluginlog.Info("validate create", "name", r.Name)
-
-	return nil, r.validatePlugin()
-}
-
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SgxDevicePlugin) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	sgxdevicepluginlog.Info("validate update", "name", r.Name)
-
-	return nil, r.validatePlugin()
-}
-
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *SgxDevicePlugin) ValidateDelete() (admission.Warnings, error) {
-	sgxdevicepluginlog.Info("validate delete", "name", r.Name)
-
-	return nil, nil
-}
-
-func (r *SgxDevicePlugin) validatePlugin() error {
-	if err := validatePluginImage(r.Spec.Image, "intel-sgx-plugin", sgxMinVersion); err != nil {
+func (r *SgxDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
+	if err := validatePluginImage(r.Spec.Image, ref.expectedImage, &ref.expectedVersion); err != nil {
 		return err
 	}
 
@@ -85,5 +47,5 @@ func (r *SgxDevicePlugin) validatePlugin() error {
 		return nil
 	}
 
-	return validatePluginImage(r.Spec.InitImage, "intel-sgx-initcontainer", sgxMinVersion)
+	return validatePluginImage(r.Spec.InitImage, ref.expectedInitImage, &ref.expectedVersion)
 }
