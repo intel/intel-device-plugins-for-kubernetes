@@ -24,6 +24,10 @@ jobs:
         go-version-file: go.mod
         check-latest: true
 
+    - name: install levelzero dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libze1 libze-dev
     - name: Initialize CodeQL
       uses: github/codeql-action/init@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3
       with:
