@@ -58,11 +58,13 @@ func (s *server) GetDeviceHealth(c context.Context, deviceid *levelzero.DeviceId
 	cBdfAddress := C.CString(deviceid.BdfAddress)
 
 	memHealth := bool(C.zes_device_memory_is_healthy(cBdfAddress, (*C.uint32_t)(unsafe.Pointer(&errorVal))))
+
 	if errorVal != 0 {
 		klog.Warningf("device memory health read returned an error: 0x%X", errorVal)
 	}
 
 	busHealth := bool(C.zes_device_bus_is_healthy(cBdfAddress, (*C.uint32_t)(unsafe.Pointer(&errorVal))))
+
 	if errorVal != 0 {
 		klog.Warningf("device bus health read returned an error: 0x%X", errorVal)
 	}
@@ -93,16 +95,19 @@ func (s *server) GetDeviceTemperature(c context.Context, deviceid *levelzero.Dev
 	cBdfAddress := C.CString(deviceid.BdfAddress)
 
 	globalTemp := float64(C.zes_device_temp_max(cBdfAddress, C.CString("global"), (*C.uint32_t)(unsafe.Pointer(&errorVal))))
+
 	if errorVal != 0 {
 		klog.Warningf("global temperature read returned an error: 0x%X", errorVal)
 	}
 
 	gpuTemp := float64(C.zes_device_temp_max(cBdfAddress, C.CString("gpu"), (*C.uint32_t)(unsafe.Pointer(&errorVal))))
+
 	if errorVal != 0 {
 		klog.Warningf("gpu temperature read returned an error: 0x%X", errorVal)
 	}
 
 	memTemp := float64(C.zes_device_temp_max(cBdfAddress, C.CString("memory"), (*C.uint32_t)(unsafe.Pointer(&errorVal))))
+
 	if errorVal != 0 {
 		klog.Warningf("memory temperature read returned an error: 0x%X", errorVal)
 	}
