@@ -38,7 +38,7 @@ RUN mkdir -p /install_root/licenses/dpdk && \
     apt-get source --download-only -y libatomic1 libnuma1
 
 FROM debian:sid-slim
-RUN apt-get update && apt-get install -y --no-install-recommends libipsec-mb1 libnuma1 libatomic1 && ldconfig -v
+RUN apt-get update && apt-get install -y --no-install-recommends libipsec-mb2 libnuma1 libatomic1 && ldconfig -v
 COPY --from=builder /install_root /
 COPY run-dpdk-test /usr/bin/
 
