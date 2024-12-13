@@ -1,0 +1,37 @@
+name: Trivy vuln scan to Github Security
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  trivy-scan-vulns:
+    permissions:
+      security-events: write
+    runs-on: ubuntu-24.04
+    name: Scan vulnerabilities
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+    - name: Run Trivy in fs mode
+      # Don't fail in case of vulnerabilities, report them in the next step
+      continue-on-error: true
+      uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # 0.29.0
+      with:
+        scan-type: fs
+        scan-ref: .
+        exit-code: 1
+        list-all-pkgs: true
+        format: sarif
+        output: trivy-report.sarif
+    - name: Upload sarif report to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@aa578102511db1f4524ed59b8cc2bae4f6e88195 # v3
+      with:
+        sarif_file: trivy-report.sarif
