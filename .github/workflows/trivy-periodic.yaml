@@ -6,15 +6,12 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
-  security-events: write
-  actions: read
-
 jobs:
   trivy-scan-vulns:
     permissions:
+      contents: read
       security-events: write
+      actions: read
     runs-on: ubuntu-24.04
     name: Scan vulnerabilities
     steps:
