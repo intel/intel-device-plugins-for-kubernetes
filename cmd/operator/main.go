@@ -27,6 +27,7 @@ import (
 	"k8s.io/klog/v2/textlogger"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -97,12 +98,45 @@ func contains(arr []string, val string) bool {
 	return false
 }
 
+func createTLSCfgs(enableHTTP2 bool) []func(*tls.Config) {
+	tlsCfgFuncs := []func(*tls.Config){
+		func(cfg *tls.Config) {
+			cfg.MinVersion = tls.VersionTLS12
+			cfg.MaxVersion = tls.VersionTLS12
+			cfg.CipherSuites = []uint16{
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			}
+		},
+	}
+
+	// if the enable-http2 flag is false (the default), http/2 should be disabled
+	// due to its vulnerabilities. More specifically, disabling http/2 will
+	// prevent from being vulnerable to the HTTP/2 Stream Cancellation and
+	// Rapid Reset CVEs. For more information see:
+	// - https://github.com/advisories/GHSA-qppj-fm5r-hxr3
+	// - https://github.com/advisories/GHSA-4374-p667-p6c8
+	disableHTTP2 := func(cfg *tls.Config) {
+		setupLog.Info("disabling http/2")
+
+		cfg.NextProtos = []string{"http/1.1"}
+	}
+
+	if !enableHTTP2 {
+		tlsCfgFuncs = append(tlsCfgFuncs, disableHTTP2)
+	}
+
+	return tlsCfgFuncs
+}
+
 func main() {
 	var (
 		metricsAddr           string
 		probeAddr             string
 		devicePluginNamespace string
 		enableLeaderElection  bool
+		enableHTTP2           bool
+		secureMetrics         bool
 		pm                    *patcher.Manager
 	)
 
@@ -115,6 +149,10 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&secureMetrics, "metrics-secure", false,
+		"Enable role based authentication/authorization for the metrics endpoint")
+	flag.BoolVar(&enableHTTP2, "enable-http2", false,
+		"Enable HTTP/2 for the metrics and webhook servers")
 	flag.Var(&devices, "devices", "Device(s) to set up.")
 	flag.Parse()
 
@@ -134,27 +172,33 @@ func main() {
 		"sgx":  sgx.SetupReconciler,
 	}
 
-	tlsCfgFunc := func(cfg *tls.Config) {
-		cfg.MinVersion = tls.VersionTLS12
-		cfg.MaxVersion = tls.VersionTLS12
-		cfg.CipherSuites = []uint16{
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-		}
+	tlsCfgFuncs := createTLSCfgs(enableHTTP2)
+
+	webhookServer := webhook.NewServer(webhook.Options{
+		TLSOpts: tlsCfgFuncs,
+	})
+
+	// Metrics endpoint is enabled in 'deployments/operator/default/kustomization.yaml'. The Metrics options configure the server.
+	// More info:
+	// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.1/pkg/metrics/server
+	// - https://book.kubebuilder.io/reference/metrics.html
+	metricsServerOptions := metricsserver.Options{
+		BindAddress:   metricsAddr,
+		SecureServing: secureMetrics,
+		TLSOpts:       tlsCfgFuncs,
 	}
 
-	webhookOptions := webhook.Options{
-		Port: 9443,
-		TLSOpts: []func(*tls.Config){
-			tlsCfgFunc,
-		},
+	if secureMetrics {
+		// More info:
+		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.1/pkg/metrics/filters#WithAuthenticationAndAuthorization
+		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
-		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
+		Metrics:                metricsServerOptions,
 		Logger:                 ctrl.Log.WithName("intel-device-plugins-manager"),
-		WebhookServer:          webhook.NewServer(webhookOptions),
+		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "d1c7b6d5.intel.com",
