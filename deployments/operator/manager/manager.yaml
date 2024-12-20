@@ -30,6 +30,9 @@ spec:
       - image: docker.io/intel/intel-deviceplugin-operator:devel
         imagePullPolicy: IfNotPresent
         name: manager
+        args:
+          - "--health-probe-bind-address=:8081"
+          - "--leader-elect"
         livenessProbe:
           httpGet:
             path: /healthz
