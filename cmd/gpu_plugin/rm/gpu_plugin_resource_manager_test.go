@@ -27,41 +27,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
 	"k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 	podresourcesv1 "k8s.io/kubelet/pkg/apis/podresources/v1"
 )
-
-// mockClient implements enough of k8s API for the resource manager tests.
-type mockClient struct {
-	fake.Clientset
-	mockCoreV1
-}
-
-func (m *mockClient) CoreV1() corev1.CoreV1Interface {
-	return m
-}
-
-type mockCoreV1 struct {
-	fakecorev1.FakeCoreV1
-	mockPods
-}
-
-func (m *mockCoreV1) Pods(namespace string) corev1.PodInterface {
-	return m
-}
-
-type mockPods struct {
-	fakecorev1.FakePods
-	pods []v1.Pod
-}
-
-func (m *mockPods) List(ctx context.Context, opts metav1.ListOptions) (*v1.PodList, error) {
-	return &v1.PodList{
-		Items: m.pods,
-	}, nil
-}
 
 type mockPodResources struct {
 	pods []v1.Pod
@@ -99,8 +67,15 @@ func newMockResourceManager(pods []v1.Pod) ResourceManager {
 		os.Exit(1)
 	}
 
-	mc := &mockClient{}
-	mc.mockCoreV1.mockPods.pods = pods
+	mc := fake.NewClientset()
+
+	for _, p := range pods {
+		_, err = mc.CoreV1().Pods(p.Namespace).Create(context.Background(), &p, metav1.CreateOptions{})
+		if err != nil {
+			fmt.Printf("failed to Create Pod: %v\n", err)
+		}
+	}
+
 	rm := resourceManager{
 		clientset: mc,
 		nodeName:  "TestNode",
