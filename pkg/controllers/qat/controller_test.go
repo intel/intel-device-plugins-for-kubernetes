@@ -100,6 +100,8 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 								},
 								ReadOnlyRootFilesystem:   &yes,
 								AllowPrivilegeEscalation: &no,
+								Capabilities:             &v1.Capabilities{Drop: []v1.Capability{"ALL"}},
+								SeccompProfile:           &v1.SeccompProfile{Type: v1.SeccompProfileTypeRuntimeDefault},
 							},
 							Resources: v1.ResourceRequirements{
 								Limits: v1.ResourceList{

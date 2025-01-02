@@ -91,8 +91,13 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							ImagePullPolicy: "IfNotPresent",
 							Name:            appLabel,
 							SecurityContext: &v1.SecurityContext{
+								SELinuxOptions: &v1.SELinuxOptions{
+									Type: "container_device_plugin_t",
+								},
 								ReadOnlyRootFilesystem:   &yes,
 								AllowPrivilegeEscalation: &no,
+								Capabilities:             &v1.Capabilities{Drop: []v1.Capability{"ALL"}},
+								SeccompProfile:           &v1.SeccompProfile{Type: v1.SeccompProfileTypeRuntimeDefault},
 							},
 							TerminationMessagePath: "/tmp/termination-log",
 							Resources: v1.ResourceRequirements{

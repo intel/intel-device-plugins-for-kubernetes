@@ -31,7 +31,12 @@ spec:
         securityContext:
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
-        terminationMessagePath: /tmp/termination-log          
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        terminationMessagePath: /tmp/termination-log
         resources:
           requests:
             memory: "15Mi"
