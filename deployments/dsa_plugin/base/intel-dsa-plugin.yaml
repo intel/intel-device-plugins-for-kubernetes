@@ -33,6 +33,11 @@ spec:
             type: "container_device_plugin_t"
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
         resources:
           requests:
             memory: "25Mi"

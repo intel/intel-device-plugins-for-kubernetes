@@ -6,6 +6,13 @@
     imagePullPolicy: IfNotPresent
     args:
       - "-v=2"
+    resources:
+      requests:
+        cpu: 25m
+        memory: 50Mi
+      limits:
+        cpu: 50m
+        memory: 100Mi
     securityContext:
       readOnlyRootFilesystem: true
       privileged: true
