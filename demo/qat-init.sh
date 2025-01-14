@@ -58,10 +58,32 @@ enable_sriov() {
     echo "error: $NUMVFS is not found or not writable. Check if QAT driver module is loaded"
     exit 1
   fi
+  if ! test -d /sys/bus/pci/drivers/vfio-pci; then
+    echo "error: vfio-pci driver needed by QAT VFs must be loaded"
+    exit 1
+  fi
   if [ "$(cat "$NUMVFS")" -ne 0 ]; then
     echo "$DEVPATH already configured"
   else
     tee "$NUMVFS" < "$DEVPATH/sriov_totalvfs"
+    VFDEVS=$(realpath -L "$DEVPATH"/virtfn*)
+    for vfdev in $VFDEVS; do
+      BSF=$(basename "$vfdev")
+      VF_DEV="/sys/bus/pci/devices/$BSF"
+      if test -e "$VF_DEV/driver"; then
+        P=$(realpath -L "$VF_DEV/driver")
+        VF_DRIVER=$(basename "$P")
+      else
+        VF_DRIVER=""
+      fi
+      if [ "$VF_DRIVER" != "vfio-pci" ]; then
+        if [ "$VF_DRIVER" ]; then
+          echo -n "$BSF" > /sys/bus/pci/drivers/"$VF_DRIVER"/unbind
+        fi
+        echo -n vfio-pci > /sys/bus/pci/devices/"$BSF"/driver_override
+        echo -n "$BSF" > /sys/bus/pci/drivers/vfio-pci/bind
+      fi
+    done
   fi
   done
 }

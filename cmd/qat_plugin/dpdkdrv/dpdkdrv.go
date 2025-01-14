@@ -629,6 +629,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 	for _, vfDevice := range dp.getVfDevices() {
 		vfBdf := filepath.Base(vfDevice)
 
+		// TODO(mythi): can be dropped in a later release since the same is already done in qat-init.sh.
 		if drv := getCurrentDriver(vfDevice); drv != dp.dpdkDriver {
 			if drv != "" {
 				err := writeToDriver(filepath.Join(dp.pciDriverDir, drv, "unbind"), vfBdf)
