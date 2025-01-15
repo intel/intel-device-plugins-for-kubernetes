@@ -64,6 +64,13 @@ func describe() {
 	fmw := framework.NewDefaultFramework("fpgaplugin-e2e")
 	fmw.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
+	// Delete namespace manually after Contexts. Without this, two plugins can run at the same time
+	// and the latter plugin will fail to run.
+	// A better way would be to delete the deployment, but it's constructed inside runDevicePlugin.
+	ginkgo.AfterEach(func(ctx context.Context) {
+		fmw.DeleteNamespace(ctx, fmw.Namespace.Name)
+	})
+
 	ginkgo.Context("When FPGA plugin is running in region mode [Mode:region]", func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			runDevicePlugin(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, arria10NodeResource, "region")
