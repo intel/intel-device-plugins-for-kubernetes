@@ -2,12 +2,6 @@ apiVersion: deviceplugin.intel.com/v1
 kind: QatDevicePlugin
 metadata:
   name: qatdeviceplugin-sample
-  # example apparmor annotation
-  # see more details here:
-  #  - https://kubernetes.io/docs/tutorials/clusters/apparmor/#securing-a-pod
-  #  - https://github.com/intel/intel-device-plugins-for-kubernetes/issues/381
-  # annotations:
-  #   container.apparmor.security.beta.kubernetes.io/intel-qat-plugin: unconfined
 spec:
   image: intel/intel-qat-plugin:0.31.1
   initImage: intel/intel-qat-initcontainer:0.31.1
