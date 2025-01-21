@@ -25,3 +25,7 @@ AVD-KSV-0121
 
 # Ignore invalid "readOnlyRootFilesystem" detections
 AVD-KSV-0014
+
+# Trivy invalidly detects securityContext issues from yaml
+# files that are patch files
+AVD-KSV-0118
