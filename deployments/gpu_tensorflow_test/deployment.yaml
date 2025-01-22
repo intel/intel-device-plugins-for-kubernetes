@@ -6,7 +6,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: testcontainer
-    image: intel/intel-extension-for-tensorflow:latest
+    image: intel/intel-extension-for-tensorflow:0.32.0
     imagePullPolicy: IfNotPresent
     securityContext:
       allowPrivilegeEscalation: false

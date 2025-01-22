@@ -130,7 +130,7 @@ func describeQatDpdkPlugin() {
 				"runTests=" + strconv.Itoa(symmetric),
 				"signOfLife=1",
 			}
-			pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
+			pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:0.32.0", command)
 
 			ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
@@ -157,7 +157,7 @@ func describeQatDpdkPlugin() {
 				"-v",
 				"-hw_algo", "0x0029",
 			}
-			pod := createPod(ctx, f, "qat-engine-testapp", resourceName, "intel/openssl-qat-engine:devel", command)
+			pod := createPod(ctx, f, "qat-engine-testapp", resourceName, "intel/openssl-qat-engine:0.32.0", command)
 
 			ginkgo.By("waiting the qat-engine-testapp pod for the resource " + resourceName.String() + " to finish successfully")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
@@ -184,7 +184,7 @@ func describeQatDpdkPlugin() {
 				"runTests=" + strconv.Itoa(compression),
 				"signOfLife=1",
 			}
-			pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
+			pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:0.32.0", command)
 
 			ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
@@ -253,7 +253,7 @@ func describeQatDpdkPlugin() {
 					"runTests=" + strconv.Itoa(compression),
 					"signOfLife=1",
 				}
-				pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
+				pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:0.32.0", command)
 
 				ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
 				err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
