@@ -56,7 +56,7 @@ For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 | Flag | Argument | Default | Meaning |
 |:---- |:-------- |:------- |:------- |
 | -enable-monitoring | - | disabled | Enable '*_monitoring' resource that provides access to all Intel GPU devices on the node, [see use](./monitoring.md) |
-| -resource-manager | - | disabled | Enable fractional resource management, [see use](./fractional.md) |
+| -resource-manager | - | disabled | Deprecated. Enable fractional resource management, [see use](./fractional.md) |
 | -health-management | - | disabled | Enable health management by requesting data from oneAPI/Level-Zero interface. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. See [health management](#health-management) |
 | -wsl | - | disabled | Adapt plugin to run in the WSL environment. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
@@ -122,7 +122,7 @@ $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes
 
 GPU plugin can be installed with the Intel Device Plugin Operator. It allows configuring GPU plugin's parameters without kustomizing the deployment files. The general installation is described in the [install documentation](../operator/README.md#installation). For configuring the GPU Custom Resource (CR), see the [configuration options](#modes-and-configuration-options) and [operation modes](#operation-modes-for-different-workload-types).
 
-### Install alongside with GPU Aware Scheduling
+### Install alongside with GPU Aware Scheduling (deprecated)
 
 GPU plugin can be installed alongside with GPU Aware Scheduling (GAS). It allows scheduling Pods which e.g. request only partial use of a GPU. The installation is described in [fractional resources](./fractional.md) page.
 
