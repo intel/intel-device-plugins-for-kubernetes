@@ -1,6 +1,6 @@
 # GPU plugin with GPU Aware Scheduling (deprecated)
 
-This is a deprecated feature. It is recommended to instead use the newer [DRA resource driver](https://github.com/intel/intel-resource-drivers-for-kubernetes) to achieve fractional GPU resource allocating.
+This is a deprecated feature. In Kubernetes v1.32+, [DRA GPU resource driver](https://github.com/intel/intel-resource-drivers-for-kubernetes/blob/main/doc/gpu/README.md) can be used for fractional GPU resource allocating instead.
 
 Installing the GPU plugin with [GPU Aware Scheduling](https://github.com/intel/platform-aware-scheduling/tree/master/gpu-aware-scheduling) (GAS) enables containers to request partial (fractional) GPU resources. For example, a Pod's container can request GPU's millicores or memory and use only a fraction of the GPU. The remaining resources could be leveraged by another container.
 
