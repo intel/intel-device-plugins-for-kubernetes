@@ -194,4 +194,9 @@ spec:
           - "5695"
           - "56b1"
           - "56b0"
+          - "56a2"
+          - "56ba"
+          - "56bc"
+          - "56bd"
+          - "56bb"
     name: intel.gpu.a.series
