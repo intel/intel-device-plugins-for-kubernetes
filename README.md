@@ -9,7 +9,7 @@ This repository contains a framework for developing plugins for the Kubernetes
 along with a number of device plugin implementations utilizing that framework.
 
 The [v0.32.0 release](https://github.com/intel/intel-device-plugins-for-kubernetes/releases/latest)
-is the latest feature release with its documentation available [here](https://intel.github.io/intel-device-plugins-for-kubernetes/0.33/).
+is the latest feature release with its documentation available [here](https://intel.github.io/intel-device-plugins-for-kubernetes/0.32/).
 
 Table of Contents
 
