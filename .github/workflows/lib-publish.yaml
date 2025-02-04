@@ -44,12 +44,9 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - intel-fpga-admissionwebhook
-          - intel-fpga-initcontainer
           - intel-gpu-initcontainer
           - intel-gpu-plugin
           - intel-gpu-levelzero
-          - intel-fpga-plugin
           - intel-qat-initcontainer
           - intel-qat-plugin
           - intel-deviceplugin-operator
@@ -59,8 +56,6 @@ jobs:
           - intel-dsa-plugin
           - intel-iaa-plugin
           - intel-idxd-config-initcontainer
-          - intel-dlb-plugin
-          - intel-dlb-initcontainer
           - intel-xpumanager-sidecar
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
