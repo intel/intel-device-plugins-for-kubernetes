@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dpdk
+spec:
+  restartPolicy: Never
+  containers:
+    - name: dpdk
+      image: intel/dsa-dpdk-dmadevtest:devel
+      securityContext:
+        capabilities:
+          add: ["SYS_RAWIO"]
+      volumeMounts:
+        - mountPath: /mnt/hugepage
+          name: hugepage
+      resources:
+        requests:
+          hugepages-2Mi: 64Mi
+          memory: 128Mi
+          dsa.intel.com/wq-user-dedicated: 1
+        limits:
+          hugepages-2Mi: 64Mi
+          memory: 128Mi
+          dsa.intel.com/wq-user-dedicated: 1
+  volumes:
+  - name: hugepage
+    emptyDir:
+      medium: HugePages

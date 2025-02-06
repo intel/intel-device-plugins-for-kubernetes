@@ -12,7 +12,7 @@ jobs:
       matrix:
         include:
           - name: e2e-dsa-gnr
-            targetjob: e2e-dsa
+            targetjob: e2e-dsa SKIP="(App:dpdk-test)"
             runner: simics-gnr
             images:
               - intel-dsa-plugin
@@ -44,6 +44,7 @@ jobs:
               - intel-dsa-plugin
               - intel-idxd-config-initcontainer
               - accel-config-demo
+              - dsa-dpdk-dmadevtest
               - intel-deviceplugin-operator
               - intel-iaa-plugin
               - crypto-perf

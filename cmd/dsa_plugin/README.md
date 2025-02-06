@@ -7,6 +7,7 @@ Table of Contents
     * [Pre-built Images](#pre-built-images)
     * [Verify Plugin Registration](#verify-plugin-registration)
 * [Testing and Demos](#testing-and-demos)
+    * [DPDK application](#dpdk-application)
 
 ## Introduction
 
@@ -133,3 +134,24 @@ We can test the plugin is working by deploying the provided example accel-config
       ----     ------            ----   ----               -------
       Warning  FailedScheduling  2m26s  default-scheduler  0/1 nodes are available: 1 Insufficient dsa.intel.com/wq-user-dedicated, 1 Insufficient dsa.intel.com/wq-user-shared.
     ```
+### DPDK application
+
+DPDK use requires a couple of changes for the DSA configuration. The workqueue mode has to be `dedicated` and the name has to have a prefix of `dpdk_`.
+
+e.g.
+```
+{
+  "dev":"wqX.0",
+  "mode":"dedicated",
+  "size":16,
+  "group_id":0,
+  "priority":10,
+  "block_on_fault":1,
+  "type":"user",
+  "name":"dpdk_X0",
+  "driver_name":"user",
+  "threshold":15
+}
+```
+
+For testing DPDK, one can use the test container in the [demo directory](../../demo/dsa-dpdk-dmadevtest/) and its deployment [file](../../demo/dsa-dpdk-dmadevtest.yaml).

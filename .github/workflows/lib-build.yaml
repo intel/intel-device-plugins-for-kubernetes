@@ -35,6 +35,7 @@ jobs:
           - openssl-qat-engine
           - sgx-sdk-demo
           - sgx-aesmd-demo
+          - dsa-dpdk-dmadevtest
         builder: [buildah, docker]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4

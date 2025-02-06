@@ -235,6 +235,7 @@ The summary of resources available via plugins in this repository is given in th
    * [dlb-libdlb-demo-pod.yaml](demo/dlb-libdlb-demo-pod.yaml)
  * `dsa.intel.com`  : `wq-user-[shared or dedicated]`
    * [dsa-accel-config-demo-pod.yaml](demo/dsa-accel-config-demo-pod.yaml)
+   * [dsa-dpdk-dmadevtest.yaml](demo/dsa-dpdk-dmadevtest.yaml)
  * `fpga.intel.com` : custom, see [mappings](cmd/fpga_admissionwebhook/README.md#mappings)
    * [intelfpga-job.yaml](demo/intelfpga-job.yaml)
  * `gpu.intel.com`  : `i915`, `i915_monitoring`, `xe` or `xe_monitoring`

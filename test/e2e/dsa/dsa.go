@@ -36,7 +36,9 @@ const (
 	kustomizationYaml = "deployments/dsa_plugin/overlays/dsa_initcontainer/dsa_initcontainer.yaml"
 	configmapYaml     = "demo/dsa.conf"
 	demoYaml          = "demo/dsa-accel-config-demo-pod.yaml"
+	dpdkDemoYaml      = "demo/dsa-dpdk-dmadevtest.yaml"
 	podName           = "dsa-accel-config-demo"
+	dpdkPodName       = "dpdk"
 )
 
 func init() {
@@ -60,6 +62,11 @@ func describe() {
 	demoPath, errFailedToLocateRepoFile := utils.LocateRepoFile(demoYaml)
 	if errFailedToLocateRepoFile != nil {
 		framework.Failf("unable to locate %q: %v", demoYaml, errFailedToLocateRepoFile)
+	}
+
+	demoDpdkPath, errFailedToLocateRepoFile := utils.LocateRepoFile(dpdkDemoYaml)
+	if errFailedToLocateRepoFile != nil {
+		framework.Failf("unable to locate %q: %v", dpdkDemoYaml, errFailedToLocateRepoFile)
 	}
 
 	var dpPodName string
@@ -108,6 +115,14 @@ func describe() {
 			ginkgo.By("waiting for the DSA demo to succeed")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, podName, f.Namespace.Name, 200*time.Second)
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
+		})
+
+		ginkgo.It("deploys a demo app [App:dpdk-test]", func(ctx context.Context) {
+			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoDpdkPath)
+
+			ginkgo.By("waiting for the DSA DPDK demo to succeed")
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkPodName, f.Namespace.Name, 200*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, dpdkPodName, dpdkPodName))
 		})
 
 		ginkgo.When("there is no app to run [App:noapp]", func() {
