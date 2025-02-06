@@ -150,9 +150,6 @@ endif
 GENERATED_SKIP_OPT += $(if $(SKIP),-ginkgo.skip "$(SKIP)")
 ADDITIONAL_FOCUS_REGEX := $(if $(FOCUS),$(FOCUS).*$(ADDITIONAL_FOCUS_REGEX),$(ADDITIONAL_FOCUS_REGEX))
 
-e2e-fpga:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:fpga.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
-
 e2e-qat:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:qat.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
 
@@ -168,9 +165,6 @@ e2e-dsa:
 e2e-iaa:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:iaa.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
 
-e2e-dlb:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:dlb.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
-
 e2e-spr:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:(iaa|dsa)|Device:qat.*Mode:dpdk.*Resource:(cy|dc).*" -ginkgo.focus "Device:sgx.*|(SGX Admission)" -ginkgo.focus "Device:gpu.*Resource:i915" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
 
@@ -183,7 +177,7 @@ endif
 
 dockerlib = build/docker/lib
 dockertemplates = build/docker/templates
-images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in)
+images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in | grep -v -e dlb -e fpga -e kerneldrv)
 dockerfiles = $(shell basename -s .in -a $(dockertemplates)/*.Dockerfile.in | xargs -I"{}" echo build/docker/{})
 
 test-image-base-layer:
@@ -213,7 +207,7 @@ $(images): $(dockerfiles)
 
 images: $(images)
 
-demos = $(shell basename -a demo/*/)
+demos = $(shell basename -a demo/*/ | grep -v -e dlb -e opae-nlb-demo)
 
 $(demos):
 	@cd demo/ && ./build-image.sh $(REG)$@ $(BUILDER)
