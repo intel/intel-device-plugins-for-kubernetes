@@ -973,7 +973,7 @@ func TestPciDeviceForCard(t *testing.T) {
 	cardPath := filepath.Join(sysfs, "class", "drm", "card0")
 	cardDevicePath := filepath.Join(cardPath, "device")
 
-	if err := os.MkdirAll(cardDevicePath, 0750); err != nil {
+	if err = os.MkdirAll(cardDevicePath, 0750); err != nil {
 		t.Fatalf("Card device path creation failed: %+v", err)
 	}
 
@@ -999,7 +999,7 @@ func TestPciDeviceForCard(t *testing.T) {
 	cardPath = filepath.Join(sysfs, "class", "drm", "card1")
 	cardDevicePath = filepath.Join(cardPath, "device")
 
-	if err := os.MkdirAll(cardDevicePath, 0750); err != nil {
+	if err = os.MkdirAll(cardDevicePath, 0750); err != nil {
 		t.Fatalf("Card device path creation failed: %+v", err)
 	}
 

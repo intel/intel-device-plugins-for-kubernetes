@@ -2,8 +2,6 @@ run:
   tests: true
   build-tags:
     - kerneldrv
-  max-issues-per-linter: 0
-  max-same-issues: 0
 
 linters:
   disable-all: true
@@ -47,14 +45,12 @@ linters-settings:
         disabled: true
   gofmt:
     simplify: true
-  golint:
-    min-confidence: 0.9
   goconst:
     ignore-tests: true
   govet:
-    shadow: true
     enable:
     - "fieldalignment"
+    - "shadow"
   gocyclo:
     min-complexity: 15
   gocognit:
