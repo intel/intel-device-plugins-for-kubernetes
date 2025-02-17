@@ -35,7 +35,7 @@ ENV LDFLAGS="all=-linkmode=external -s -w"
 ARG GOLICENSES_VERSION
 ARG CMD
 ARG ROCKYLINUX
-ARG CGO_VERSION=1.23
+ARG CGO_VERSION=1.24
 RUN mkdir /runtime
 RUN if [ $ROCKYLINUX -eq 0 ]; then \
         apt-get update && apt-get install --no-install-recommends -y wget libc6-dev ca-certificates ocl-icd-libopencl1 && \
