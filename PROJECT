@@ -1,5 +1,5 @@
 domain: intel.com
-layout: go.kubebuilder.io/v2
+layout: go.kubebuilder.io/v4
 multigroup: true
 projectName: intel-device-plugins-operator
 repo: github.com/intel/intel-device-plugins-for-kubernetes
