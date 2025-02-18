@@ -11,7 +11,7 @@ metadata:
       serve the installation and lifecycle management of Intel device plugins for
       Kubernetes.
     operators.operatorframework.io/builder: operator-sdk-v1.25.0
-    operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
     repository: https://github.com/intel/intel-device-plugins-for-kubernetes
   name: intel-device-plugins-operator.v0.25.0
   namespace: placeholder
