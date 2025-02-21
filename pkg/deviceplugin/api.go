@@ -64,6 +64,7 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 		devPaths = append(devPaths, node.HostPath)
 	}
 
+	// Get topology information based on devPaths
 	topologyInfo, err := topology.GetTopologyInfo(devPaths)
 	if err == nil {
 		deviceInfo.topology = topologyInfo
