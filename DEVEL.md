@@ -127,8 +127,10 @@ There are few useful steps when working with changes to Device Plugins CRDs and 
 ### Publish a New Version of the Intel Device Plugins Operator to operatorhub.io
 
 Check if the fields mentioned below in the [base CSV manifest file](deployments/operator/manifests/bases/intel-device-plugins-operator.clusterserviceversion.yaml) have the correct values. If not, fix them manually (operator-sdk does not support updating these fields in any other way).
+- spec.maturity
 - spec.version
 - spec.replaces
+- metadata.annotations.capabilities
 - metadata.annotations.containerImage
 - metadata.annotations.createdAT
 
@@ -141,7 +143,7 @@ $ git clone https://github.com/<GitHub Username>/community-operators
 
 Generate bundle and build bundle image:
 ```
-$ make bundle TAG=0.X.Y CHANNELS=alpha DEFAULT_CHANNEL=alpha
+$ make bundle TAG=0.X.Y CHANNELS=stable DEFAULT_CHANNEL=stable
 $ make bundle-build
 ```
 
