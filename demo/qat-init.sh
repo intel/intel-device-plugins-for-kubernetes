@@ -30,7 +30,7 @@ check_config() {
 sysfs_config() {
   if [ "$SERVICES_ENABLED_FOUND" = "TRUE" ]; then
     for dev in $DEVS; do
-      DEVPATH="/sys/bus/pci/devices/0000:$dev"
+      DEVPATH=$(realpath /sys/bus/pci/devices/????:"$dev")
       PCI_DEV=$(cat "$DEVPATH"/device 2> /dev/null)
       if [ "$PCI_DEV" != "$QAT_4XXX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_401XX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_402XX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_420XX_DEVICE_PCI_ID" ]; then
         continue
@@ -52,7 +52,7 @@ sysfs_config() {
 
 enable_sriov() {
   for dev in $DEVS; do
-  DEVPATH="/sys/bus/pci/devices/0000:$dev"
+  DEVPATH=$(realpath /sys/bus/pci/devices/????:"$dev")
   NUMVFS="$DEVPATH/sriov_numvfs"
   if ! test -w "$NUMVFS"; then
     echo "error: $NUMVFS is not found or not writable. Check if QAT driver module is loaded"
