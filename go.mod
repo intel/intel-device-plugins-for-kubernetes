@@ -12,7 +12,7 @@ require (
 	github.com/onsi/gomega v1.36.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_model v0.6.1
-	github.com/prometheus/common v0.62.0
+	github.com/prometheus/common v0.63.0
 	golang.org/x/sys v0.31.0
 	golang.org/x/text v0.23.0
 	google.golang.org/grpc v1.71.0
