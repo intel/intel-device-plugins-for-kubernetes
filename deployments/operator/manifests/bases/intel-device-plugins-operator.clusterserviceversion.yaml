@@ -3,7 +3,7 @@ kind: ClusterServiceVersion
 metadata:
   annotations:
     alm-examples: '[]'
-    capabilities: Seamless Upgrades
+    capabilities: Full Lifecycle
     categories: Drivers and plugins
     containerImage: docker.io/intel/intel-deviceplugin-operator:0.25.0
     createdAt: "2022-11-09"
@@ -11,7 +11,7 @@ metadata:
       serve the installation and lifecycle management of Intel device plugins for
       Kubernetes.
     operators.operatorframework.io/builder: operator-sdk-v1.25.0
-    operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
     repository: https://github.com/intel/intel-device-plugins-for-kubernetes
   name: intel-device-plugins-operator.v0.25.0
   namespace: placeholder
@@ -117,7 +117,7 @@ spec:
     name: Hyeongju Lee
   - email: mikko.ylinen@intel.com
     name: Mikko Ylinen
-  maturity: alpha
+  maturity: stable
   minKubeVersion: 1.21.0
   provider:
     name: Intel® Corporation

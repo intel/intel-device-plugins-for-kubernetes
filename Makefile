@@ -126,7 +126,7 @@ bundle:
 	rm manifests/*service.yaml
 	rm manifests/*clusterrole.yaml
 	# Put generated files in a directory
-	mv manifests metadata tests bundle.Dockerfile $(BUNDLE_DIR)
+	mv manifests metadata bundle.Dockerfile $(BUNDLE_DIR)
 	$(OPERATOR_SDK) bundle validate $(BUNDLE_DIR)/
 
 bundle-build:
