@@ -15,3 +15,8 @@ updates:
       # Check for updates to GitHub Actions every week on Sunday
       interval: "weekly"
       day: "sunday"
+    groups:
+      # Group PRs
+      github-actions:
+        patterns:
+          - "*"
