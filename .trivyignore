@@ -29,3 +29,7 @@ AVD-KSV-0014
 # Trivy invalidly detects securityContext issues from yaml
 # files that are patch files
 AVD-KSV-0118
+
+# Ignore GitRepo volume vulnerability as we don't use it and it might not
+# receive a fix due to being a deprecated feature.
+CVE-2025-1767
