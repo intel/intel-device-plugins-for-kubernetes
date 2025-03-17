@@ -44,7 +44,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libze1 libze-dev
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@2226d7cb06a077cd73e56eedd38eecad18e5d837 # v6
+        uses: golangci/golangci-lint-action@4696ba8babb6127d732c3c6dde519db15edab9ea # v6
         with:
           version: v1.64.5
           args: -v --timeout 5m

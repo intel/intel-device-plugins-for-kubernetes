@@ -22,7 +22,7 @@ jobs:
     - name: Run Trivy in fs mode
       # Don't fail in case of vulnerabilities, report them in the next step
       continue-on-error: true
-      uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # 0.29.0
+      uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5 # 0.30.0
       with:
         scan-type: fs
         scan-ref: .

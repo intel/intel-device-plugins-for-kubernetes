@@ -70,7 +70,7 @@ jobs:
         run: |
           ORG=${{ inputs.registry }} TAG=${{ inputs.image_tag }} make ${IMAGE_NAME} BUILDER=docker
       - name: Trivy scan for image
-        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # 0.29.0
+        uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5 # 0.30.0
         with:
           scan-type: image
           image-ref: ${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }}
@@ -100,7 +100,7 @@ jobs:
         if: ${{ !contains(fromJson(env.no_base_check), matrix.image) }}
         run: IMG=${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }} make test-image-base-layer BUILDER=docker
       - name: Login
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}
