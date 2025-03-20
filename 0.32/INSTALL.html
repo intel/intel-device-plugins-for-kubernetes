@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installing device plugins to cluster &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installing device plugins to cluster</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/INSTALL.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installing-device-plugins-to-cluster">
+<h1>Installing device plugins to cluster<a class="headerlink" href="#installing-device-plugins-to-cluster" title="Permalink to this heading"></a></h1>
+<section id="install-device-plugins-via-a-daemonset">
+<h2>Install device plugins via a DaemonSet<a class="headerlink" href="#install-device-plugins-via-a-daemonset" title="Permalink to this heading"></a></h2>
+<p>Each plugin can be installed via a DaemonSet. The install changes slightly based on the desired plugin. See install instructions per <a class="reference external" href="README.html#plugins">plugin</a>.</p>
+<p>Installing plugins via DaemonSets deployes them to the <code class="docutils literal notranslate"><span class="pre">default</span></code> (or currently active) namespace. Use kubectl’s <code class="docutils literal notranslate"><span class="pre">--namespace</span></code> argument to change the deployment namespace.</p>
+</section>
+<section id="install-device-plugins-via-device-plugin-operator">
+<h2>Install device plugins via device plugin operator<a class="headerlink" href="#install-device-plugins-via-device-plugin-operator" title="Permalink to this heading"></a></h2>
+<p>A more advanced install method is via device plugin operator. Operator configures plugin deployments based on the supplied device plugin CRDs (Custom Resource Definitions). See installation instructions in the <a class="reference external" href="cmd/operator/README.html#installation">operator README</a>.</p>
+<p>Operator installs device plugins to the same namespace where the operator itself is deployed. The default operator namespace is <code class="docutils literal notranslate"><span class="pre">inteldeviceplugins-system</span></code>.</p>
+</section>
+<section id="install-with-helm-charts">
+<h2>Install with HELM charts<a class="headerlink" href="#install-with-helm-charts" title="Permalink to this heading"></a></h2>
+<p>Device plugins can also be installed to a cluster using the device plugin <a class="reference external" href="https://github.com/intel/helm-charts/tree/main/charts/device-plugin-operator">operator Helm chart</a> (depending on cert-manager and NFD). Individual plugin projects are under https://github.com/intel/helm-charts/tree/main/charts/.</p>
+<p>These steps will install device plugin operator and plugins under <code class="docutils literal notranslate"><span class="pre">inteldeviceplugins-system</span></code> namespace. It’s possible to change the target namespace by changing the <code class="docutils literal notranslate"><span class="pre">--namespace</span></code> value in the helm install command.</p>
+<section id="installing-helm-repositories">
+<h3>Installing HELM repositories<a class="headerlink" href="#installing-helm-repositories" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>jetstack<span class="w"> </span>https://charts.jetstack.io<span class="w"> </span><span class="c1"># for cert-manager</span>
+helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>nfd<span class="w"> </span>https://kubernetes-sigs.github.io/node-feature-discovery/charts<span class="w"> </span><span class="c1"># for NFD</span>
+helm<span class="w"> </span>repo<span class="w"> </span>add<span class="w"> </span>intel<span class="w"> </span>https://intel.github.io/helm-charts/<span class="w"> </span><span class="c1"># for device-plugin-operator and plugins</span>
+helm<span class="w"> </span>repo<span class="w"> </span>update
+</pre></div>
+</div>
+</section>
+<section id="installing-cert-manager">
+<h3>Installing cert-manager<a class="headerlink" href="#installing-cert-manager" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>helm<span class="w"> </span>install<span class="w"> </span>--wait<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>cert-manager<span class="w"> </span>jetstack/cert-manager<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--namespace<span class="w"> </span>cert-manager<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--create-namespace<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--version<span class="w"> </span>v1.15.2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span><span class="nv">installCRDs</span><span class="o">=</span><span class="nb">true</span>
+</pre></div>
+</div>
+<p>NOTE: cert-manager install takes a while to complete.</p>
+</section>
+<section id="installing-nfd">
+<h3>Installing NFD<a class="headerlink" href="#installing-nfd" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>helm<span class="w"> </span>install<span class="w"> </span>nfd<span class="w"> </span>nfd/node-feature-discovery<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--namespace<span class="w"> </span>node-feature-discovery<span class="w"> </span>--create-namespace<span class="w"> </span>--version<span class="w"> </span><span class="m">0</span>.16.4
+</pre></div>
+</div>
+</section>
+<section id="installing-operator">
+<h3>Installing operator<a class="headerlink" href="#installing-operator" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>helm<span class="w"> </span>install<span class="w"> </span>dp-operator<span class="w"> </span>intel/intel-device-plugins-operator<span class="w"> </span>--namespace<span class="w"> </span>inteldeviceplugins-system<span class="w"> </span>--create-namespace
+</pre></div>
+</div>
+</section>
+<section id="installing-specific-plugins">
+<h3>Installing specific plugins<a class="headerlink" href="#installing-specific-plugins" title="Permalink to this heading"></a></h3>
+<p>Replace PLUGIN with the desired plugin name. At least the following plugins are supported: <strong>gpu, sgx, qat, dlb, dsa &amp; iaa</strong>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>helm<span class="w"> </span>install<span class="w"> </span>&lt;PLUGIN&gt;<span class="w"> </span>intel/intel-device-plugins-&lt;PLUGIN&gt;<span class="w"> </span>--namespace<span class="w"> </span>inteldeviceplugins-system<span class="w"> </span>--create-namespace<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span><span class="nv">nodeFeatureRule</span><span class="o">=</span><span class="nb">true</span>
+</pre></div>
+</div>
+</section>
+<section id="listing-available-versions">
+<h3>Listing available versions<a class="headerlink" href="#listing-available-versions" title="Permalink to this heading"></a></h3>
+<p>Use helm’s search functionality to list available versions.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>helm<span class="w"> </span>search<span class="w"> </span>repo<span class="w"> </span>intel/intel-device-plugins-operator<span class="w"> </span>--versions
+helm<span class="w"> </span>search<span class="w"> </span>repo<span class="w"> </span>intel/intel-device-plugins-&lt;plugin&gt;<span class="w"> </span>--versions
+</pre></div>
+</div>
+<p>For example, operator chart versions with development versions included.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>helm<span class="w"> </span>search<span class="w"> </span>repo<span class="w"> </span>intel/intel-device-plugins-operator<span class="w"> </span>--versions<span class="w"> </span>--devel
+NAME<span class="w">                               	</span>CHART<span class="w"> </span>VERSION<span class="w">	</span>APP<span class="w"> </span>VERSION<span class="w">	</span>DESCRIPTION
+intel/intel-device-plugins-operator<span class="w">	</span><span class="m">0</span>.26.0<span class="w">       	</span><span class="m">0</span>.26.0<span class="w">     	</span>A<span class="w"> </span>Helm<span class="w"> </span>chart<span class="w"> </span><span class="k">for</span><span class="w"> </span>Intel<span class="w"> </span>Device<span class="w"> </span>Plugins<span class="w"> </span>Operator<span class="w"> </span>...
+intel/intel-device-plugins-operator<span class="w">	</span><span class="m">0</span>.25.1<span class="w">       	</span><span class="m">0</span>.25.1<span class="w">     	</span>A<span class="w"> </span>Helm<span class="w"> </span>chart<span class="w"> </span><span class="k">for</span><span class="w"> </span>Intel<span class="w"> </span>Device<span class="w"> </span>Plugins<span class="w"> </span>Operator<span class="w"> </span>...
+intel/intel-device-plugins-operator<span class="w">	</span><span class="m">0</span>.25.1-helm.0<span class="w">	</span><span class="m">0</span>.25.0<span class="w">     	</span>A<span class="w"> </span>Helm<span class="w"> </span>chart<span class="w"> </span><span class="k">for</span><span class="w"> </span>Intel<span class="w"> </span>Device<span class="w"> </span>Plugins<span class="w"> </span>Operator<span class="w"> </span>...
+intel/intel-device-plugins-operator<span class="w">	</span><span class="m">0</span>.25.0<span class="w">       	</span><span class="m">0</span>.25.0<span class="w">     	</span>A<span class="w"> </span>Helm<span class="w"> </span>chart<span class="w"> </span><span class="k">for</span><span class="w"> </span>Intel<span class="w"> </span>Device<span class="w"> </span>Plugins<span class="w"> </span>Operator<span class="w"> </span>...
+intel/intel-device-plugins-operator<span class="w">	</span><span class="m">0</span>.24.1<span class="w">       	</span><span class="m">0</span>.24.1<span class="w">     	</span>A<span class="w"> </span>Helm<span class="w"> </span>chart<span class="w"> </span><span class="k">for</span><span class="w"> </span>Intel<span class="w"> </span>Device<span class="w"> </span>Plugins<span class="w"> </span>Operator<span class="w"> </span>...
+intel/intel-device-plugins-operator<span class="w">	</span><span class="m">0</span>.24.1-helm.0<span class="w">	</span><span class="m">0</span>.24.0<span class="w">     	</span>A<span class="w"> </span>Helm<span class="w"> </span>chart<span class="w"> </span><span class="k">for</span><span class="w"> </span>Intel<span class="w"> </span>Device<span class="w"> </span>Plugins<span class="w"> </span>Operator<span class="w"> </span>...
+intel/intel-device-plugins-operator<span class="w">	</span><span class="m">0</span>.24.0<span class="w">       	</span><span class="m">0</span>.24.0<span class="w">     	</span>A<span class="w"> </span>Helm<span class="w"> </span>chart<span class="w"> </span><span class="k">for</span><span class="w"> </span>Intel<span class="w"> </span>Device<span class="w"> </span>Plugins<span class="w"> </span>Operator<span class="w"> </span>...
+</pre></div>
+</div>
+</section>
+<section id="customizing-plugins">
+<h3>Customizing plugins<a class="headerlink" href="#customizing-plugins" title="Permalink to this heading"></a></h3>
+<p>To customize plugin features, see the available chart values:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>helm<span class="w"> </span>show<span class="w"> </span>values<span class="w"> </span>intel/intel-device-plugins-&lt;PLUGIN&gt;
+</pre></div>
+</div>
+<p>For example, qat plugin has these values:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>helm<span class="w"> </span>show<span class="w"> </span>values<span class="w"> </span>intel/intel-device-plugins-qat
+name:<span class="w"> </span>qatdeviceplugin-sample
+
+image:
+<span class="w">  </span>hub:<span class="w"> </span>intel
+<span class="w">  </span>tag:<span class="w"> </span><span class="s2">&quot;&quot;</span>
+
+initImage:
+<span class="w">  </span>hub:<span class="w"> </span>intel
+<span class="w">  </span>tag:<span class="w"> </span><span class="s2">&quot;&quot;</span>
+
+dpdkDriver:<span class="w"> </span>vfio-pci
+kernelVfDrivers:
+<span class="w">  </span>-<span class="w"> </span>4xxxvf
+<span class="w">  </span>-<span class="w"> </span>420xxvf
+maxNumDevices:<span class="w"> </span><span class="m">128</span>
+logLevel:<span class="w"> </span><span class="m">4</span>
+
+nodeSelector:
+<span class="w">  </span>intel.feature.node.kubernetes.io/qat:<span class="w"> </span><span class="s1">&#39;true&#39;</span>
+
+nodeFeatureRule:<span class="w"> </span><span class="nb">true</span>
+</pre></div>
+</div>
+</section>
+<section id="uninstall">
+<h3>Uninstall<a class="headerlink" href="#uninstall" title="Permalink to this heading"></a></h3>
+<p>Uninstall each installed component with <code class="docutils literal notranslate"><span class="pre">helm</span> <span class="pre">uninstall</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># repeat first step as many times as there are plugins installed</span>
+helm<span class="w"> </span>uninstall<span class="w"> </span>-n<span class="w"> </span>inteldeviceplugins-system<span class="w"> </span>&lt;PLUGIN&gt;
+helm<span class="w"> </span>uninstall<span class="w"> </span>-n<span class="w"> </span>inteldeviceplugins-system<span class="w"> </span>dp-operator
+helm<span class="w"> </span>uninstall<span class="w"> </span>-n<span class="w"> </span>node-feature-discovery<span class="w"> </span>nfd
+helm<span class="w"> </span>uninstall<span class="w"> </span>-n<span class="w"> </span>cert-manager<span class="w"> </span>cert-manager
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
