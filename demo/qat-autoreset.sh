@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 NODE_NAME="${NODE_NAME:-}"
 ENABLED_QAT_PF_PCIIDS=${ENABLED_QAT_PF_PCIIDS:-37c8 4940 4942 4944 4946}
-DEVS=$(for pf in $ENABLED_QAT_PF_PCIIDS; do lspci -n | grep -e "$pf" | grep -o -e "^\\S*"; done)
 
 AUTORESET_ENABLED="NONE"
 AUTORESET_ENABLED_FOUND="FALSE"
 AUTORESET_OPTIONS_LIST="on off"
+
+DEVS=""
+for DEV in $(realpath /sys/bus/pci/devices/*); do
+  for PF in $ENABLED_QAT_PF_PCIIDS; do
+    if grep -q "$PF" "$DEV"/device; then
+      DEVS="$DEV $DEVS"
+    fi
+  done
+done
 
 check_config() {
   [ -f "conf/qat.conf" ] && AUTORESET_ENABLED=$(grep "^AutoresetEnabled=" conf/qat.conf | cut -d= -f 2 | grep '\S')
@@ -25,9 +33,8 @@ check_config() {
 
 enable_auto_reset() {
   if [ "$AUTORESET_ENABLED_FOUND" = "TRUE" ]; then
-    for dev in $DEVS; do
-      devpath="/sys/bus/pci/devices/0000:$dev"
-      autoreset_path="$devpath/qat/auto_reset"
+    for devpath in $DEVS; do
+      autoreset_path="$devpath"/qat/auto_reset
       if ! test -w "$autoreset_path"; then
         echo "error: $autoreset_path is not found or not writable. Check if QAT driver module is loaded. Skipping..."
         exit 1
