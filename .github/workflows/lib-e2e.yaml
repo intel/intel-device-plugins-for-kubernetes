@@ -12,20 +12,18 @@ jobs:
       matrix:
         include:
           - name: e2e-dsa-gnr
-            targetjob: e2e-dsa
+            targetjob: e2e-dsa SKIP="(App:(dpdk-test|accel-config))"
             runner: simics-gnr
             images:
               - intel-dsa-plugin
               - intel-idxd-config-initcontainer
-              - accel-config-demo
               - intel-deviceplugin-operator
           - name: e2e-iaa-gnr
-            targetjob: e2e-iaa
+            targetjob: e2e-iaa SKIP="(App:accel-config)"
             runner: simics-gnr
             images:
               - intel-iaa-plugin
               - intel-idxd-config-initcontainer
-              - accel-config-demo
               - intel-deviceplugin-operator
           - name: e2e-qat-gnrd
             targetjob: e2e-qat FOCUS="Mode:dpdk" SKIP="(App:(crypto-perf|compress-perf|qat-engine)|Functionality)"
