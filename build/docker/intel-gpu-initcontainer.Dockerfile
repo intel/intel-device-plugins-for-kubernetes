@@ -74,6 +74,7 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
 FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
 LABEL version='0.32.0'
+LABEL maintainer="Intel®"
 LABEL release='1'
 LABEL name='intel-gpu-initcontainer'
 LABEL summary='Intel® GPU NFD hook for Kubernetes'

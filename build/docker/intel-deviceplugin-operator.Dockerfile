@@ -60,6 +60,7 @@ COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_deviceplugin_operator"]
 LABEL vendor='Intel®'
 LABEL version='0.32.0'
+LABEL maintainer="Intel®"
 LABEL release='1'
 LABEL name='intel-deviceplugin-operator'
 LABEL summary='Intel® device plugin operator for Kubernetes'
