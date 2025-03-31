@@ -12,10 +12,10 @@ spec:
     spec:
       restartPolicy: Never
       containers:
-        - name: intelgpu-demo-job
+        - name: intelgpu-demo-job-1
           image: intel/intel-opencl-icd:devel
           imagePullPolicy: IfNotPresent
-          command: [ "clinfo" ]
+          command: ["sh", "-c", "clinfo | grep 'Number of devices'"]
           resources:
             limits:
-              gpu.intel.com/i915: 1
+              gpu.intel.com/dxg: 1
