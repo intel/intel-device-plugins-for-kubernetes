@@ -84,6 +84,7 @@ RUN if [ $ROCKYLINUX -eq 0 ]; then \
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_gpu_levelzero"]
 LABEL vendor='Intel®'
+LABEL maintainer="Intel®"
 LABEL version='devel'
 LABEL release='1'
 LABEL name='intel-gpu-levelzero'

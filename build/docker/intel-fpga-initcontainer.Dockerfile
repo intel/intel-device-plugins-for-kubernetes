@@ -83,6 +83,7 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
 ###
 FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
+LABEL maintainer="Intel®"
 LABEL version='devel'
 LABEL release='1'
 LABEL name='intel-fpga-initcontainer'

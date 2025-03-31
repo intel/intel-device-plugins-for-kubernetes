@@ -1,3 +1,4 @@
 LABEL vendor='Intel®'
+LABEL maintainer="Intel®"
 LABEL version='devel'
 LABEL release='1'
