@@ -1,28 +1,25 @@
+version: "2"
 run:
-  tests: true
   build-tags:
     - kerneldrv
-
+  tests: true
 linters:
-  disable-all: true
+  default: none
   enable:
     - asciicheck
     - bodyclose
-    - dogsled
-    - errcheck
     - copyloopvar
+    - dogsled
+    - err113
+    - errcheck
     - gocognit
     - goconst
     - gocyclo
     - godot
-    - err113
-    - gofmt
-    - goimports
     - gomodguard
-    - gosimple
+    - goprintffuncname
     - gosec
     - govet
-    - goprintffuncname
     - ineffassign
     - misspell
     - nakedret
@@ -31,46 +28,67 @@ linters:
     - prealloc
     - revive
     - staticcheck
-    - stylecheck
-    - typecheck
     - unconvert
     - unused
     - whitespace
     - wsl
-
-linters-settings:
-  revive:
+  settings:
+    gocognit:
+      min-complexity: 31
+    gocyclo:
+      min-complexity: 15
+    govet:
+      enable:
+        - fieldalignment
+        - shadow
+    revive:
+      rules:
+        - name: unused-parameter
+          disabled: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      - name: unused-parameter
-        disabled: true
-  gofmt:
-    simplify: true
-  goconst:
-    ignore-tests: true
-  govet:
-    enable:
-    - "fieldalignment"
-    - "shadow"
-  gocyclo:
-    min-complexity: 15
-  gocognit:
-    min-complexity: 31
-
-issues:
-  exclude-rules:
-    - linters:
-        - gosec
-      text: "G115"
-    - path: _test\.go
-      linters:
-        - gocognit
-        - wsl
-        - gocyclo
-    - path: test/e2e/
-      linters:
-        - wsl
-        - gocognit
-        - gocyclo
-    - path: cmd/gpu_fakedev/
-      linters:
-        - wsl
+      - linters:
+          - staticcheck
+        text: QF100(1|4|8)
+      - linters:
+          - gosec
+        text: G115
+      - linters:
+          - gocognit
+          - gocyclo
+          - wsl
+        path: _test\.go
+      - linters:
+          - gocognit
+          - gocyclo
+          - wsl
+        path: test/e2e/
+      - linters:
+          - wsl
+        path: cmd/gpu_fakedev/
+      - linters:
+          - goconst
+        path: (.+)_test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
