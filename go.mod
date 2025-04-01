@@ -1,7 +1,6 @@
 module github.com/intel/intel-device-plugins-for-kubernetes
 
 go 1.24.0
-
 require (
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-ini/ini v1.67.0
@@ -15,7 +14,7 @@ require (
 	github.com/prometheus/common v0.63.0
 	golang.org/x/sys v0.31.0
 	golang.org/x/text v0.23.0
-	google.golang.org/grpc v1.71.0
+	google.golang.org/grpc v1.71.1
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.32.2
