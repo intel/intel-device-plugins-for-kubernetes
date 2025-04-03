@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-gpu-plugin
+spec:
+  template:
+    spec:
+      containers:
+      - name: intel-gpu-nfd
+        # convert generated sysfs content to NFD feature labels file
+        image: intel/intel-gpu-initcontainer:devel
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ "ALL" ]
+        volumeMounts:
+        - name: nfd-features
+          mountPath: /nfd
+          readOnly: false
+        workingDir: /usr/local/bin/gpu-sw
+        # needed until GPU plugin drops NFD hook usage due to:
+        # https://github.com/kubernetes-sigs/node-feature-discovery/issues/856
+        command: ["sh", "-c", "while true; do ./intel-gpu-nfdhook | tee /nfd/fake-gpu; sleep 99999; done"]
+      volumes:
+      - name: nfd-features
+        hostPath:
+          path: /etc/kubernetes/node-feature-discovery/features.d/
+          type: DirectoryOrCreate
