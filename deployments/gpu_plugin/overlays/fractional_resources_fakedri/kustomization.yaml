@@ -1,0 +1,8 @@
+resources:
+  - ../fractional_resources
+
+patches:
+  - path: add-fakedri-spec.yaml   # The patch file that adds the environment variables
+    target:
+      kind: DaemonSet
+      name: intel-gpu-plugin
