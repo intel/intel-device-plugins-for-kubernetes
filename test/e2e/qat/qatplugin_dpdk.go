@@ -23,6 +23,7 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -325,6 +326,6 @@ func injectError(ctx context.Context, f *framework.Framework, resourceName v1.Re
 	job, err := e2ejob.CreateJob(ctx, f.ClientSet, f.Namespace.Name, job)
 	framework.ExpectNoError(err, "failed to create job in namespace: %s", f.Namespace.Name)
 
-	err = e2ejob.WaitForJobComplete(ctx, f.ClientSet, f.Namespace.Name, job.Name, nil, 1)
+	err = e2ejob.WaitForJobComplete(ctx, f.ClientSet, f.Namespace.Name, job.Name, batchv1.JobReasonCompletionsReached, 1)
 	framework.ExpectNoError(err, "failed to ensure job completion in namespace: %s", f.Namespace.Name)
 }
