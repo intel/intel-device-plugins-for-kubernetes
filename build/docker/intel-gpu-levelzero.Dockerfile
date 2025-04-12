@@ -83,10 +83,11 @@ RUN if [ $ROCKYLINUX -eq 0 ]; then \
     fi
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_gpu_levelzero"]
-LABEL vendor='Intel®'
-LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL org.opencontainers.image.vendor='Intel®'
+LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
+LABEL org.opencontainers.image.authors="Intel®"
+LABEL org.opencontainers.image.version='devel'
 LABEL release='1'
 LABEL name='intel-gpu-levelzero'
-LABEL summary='Intel® GPU levelzero for Kubernetes'
-LABEL description='The GPU levelzero container provides access to Levelzero API for the Intel GPU plugin'
+LABEL org.opencontainers.image.title='Intel® GPU levelzero for Kubernetes'
+LABEL org.opencontainers.image.description='The GPU levelzero container provides access to Levelzero API for the Intel GPU plugin'

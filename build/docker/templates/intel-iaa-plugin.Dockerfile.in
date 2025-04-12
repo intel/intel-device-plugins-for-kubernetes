@@ -4,5 +4,5 @@ ARG CMD=iaa_plugin
 #include "default_plugin.docker"
 
 LABEL name='intel-iaa-plugin'
-LABEL summary='Intel® IAA device plugin for Kubernetes'
-LABEL description='The IAA device plugin supports acceleration using the Intel Analytics accelerator(IAA)'
+LABEL org.opencontainers.image.title='Intel® IAA device plugin for Kubernetes'
+LABEL org.opencontainers.image.description='The IAA device plugin supports acceleration using the Intel Analytics accelerator(IAA)'

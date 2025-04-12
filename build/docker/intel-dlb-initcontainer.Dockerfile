@@ -56,9 +56,10 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 ###
 FROM ${FINAL_BASE}
-LABEL vendor='Intel®'
-LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL org.opencontainers.image.vendor='Intel®'
+LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
+LABEL org.opencontainers.image.authors="Intel®"
+LABEL org.opencontainers.image.version='devel'
 LABEL release='1'
 COPY --from=builder /install_root /
 COPY demo/dlb-init.sh /usr/local/bin/

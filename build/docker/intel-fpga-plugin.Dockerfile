@@ -58,10 +58,11 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
 FROM ${FINAL_BASE}
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_fpga_device_plugin"]
-LABEL vendor='Intel®'
-LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL org.opencontainers.image.vendor='Intel®'
+LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
+LABEL org.opencontainers.image.authors="Intel®"
+LABEL org.opencontainers.image.version='devel'
 LABEL release='1'
 LABEL name='intel-fpga-plugin'
-LABEL summary='Intel® FPGA device plugin for Kubernetes'
-LABEL description='The FPGA device plugin is responsible for discovering and reporting FPGA devices to kubelet'
+LABEL org.opencontainers.image.title='Intel® FPGA device plugin for Kubernetes'
+LABEL org.opencontainers.image.description='The FPGA device plugin is responsible for discovering and reporting FPGA devices to kubelet'

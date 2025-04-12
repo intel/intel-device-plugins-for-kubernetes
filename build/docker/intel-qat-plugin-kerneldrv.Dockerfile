@@ -59,12 +59,13 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
     --save_path /install_root/licenses/$CMD/go-licenses ; \
     else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi
 FROM debian:unstable-slim
-LABEL vendor='Intel®'
-LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL org.opencontainers.image.vendor='Intel®'
+LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
+LABEL org.opencontainers.image.authors="Intel®"
+LABEL org.opencontainers.image.version='devel'
 LABEL release='1'
 LABEL name='intel-qat-plugin-kerneldrv'
-LABEL summary='Intel® QAT device plugin kerneldrv for Kubernetes'
+LABEL org.opencontainers.image.title='Intel® QAT device plugin kerneldrv for Kubernetes'
 COPY --from=builder /install_root /
 ENV PATH=/usr/local/bin
 ENTRYPOINT ["/usr/local/bin/intel_qat_device_plugin"]

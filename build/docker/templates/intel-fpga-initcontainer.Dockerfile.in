@@ -21,8 +21,8 @@ FROM ${FINAL_BASE}
 #include "default_labels.docker"
 
 LABEL name='intel-fpga-initcontainer'
-LABEL summary='Intel® FPGA programming CDI hook for Kubernetes'
-LABEL description='The FPGA OCI createRuntime hook performs discovery of the requested FPGA function bitstream and programs FPGA devices based on the environment variables in the workload description'
+LABEL org.opencontainers.image.title='Intel® FPGA programming CDI hook for Kubernetes'
+LABEL org.opencontainers.image.description='The FPGA OCI createRuntime hook performs discovery of the requested FPGA function bitstream and programs FPGA devices based on the environment variables in the workload description'
 
 COPY --from=builder /install_root /
 

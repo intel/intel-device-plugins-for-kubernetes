@@ -58,10 +58,11 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
 FROM ${FINAL_BASE}
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_qat_device_plugin"]
-LABEL vendor='Intel®'
-LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL org.opencontainers.image.vendor='Intel®'
+LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
+LABEL org.opencontainers.image.authors="Intel®"
+LABEL org.opencontainers.image.version='devel'
 LABEL release='1'
 LABEL name='intel-qat-plugin'
-LABEL summary='Intel® QAT device plugin for Kubernetes'
-LABEL description='The QAT plugin supports device plugin for Intel QAT adapters, and includes code showing deployment via DPDK'
+LABEL org.opencontainers.image.title='Intel® QAT device plugin for Kubernetes'
+LABEL org.opencontainers.image.description='The QAT plugin supports device plugin for Intel QAT adapters, and includes code showing deployment via DPDK'

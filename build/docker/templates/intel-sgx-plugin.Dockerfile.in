@@ -4,5 +4,5 @@ ARG CMD=sgx_plugin
 #include "default_plugin.docker"
 
 LABEL name='intel-sgx-plugin'
-LABEL summary='Intel® SGX device plugin for Kubernetes'
-LABEL description='The SGX device plugin is responsible for discovering and reporting SGX device nodes to kubelet'
+LABEL org.opencontainers.image.title='Intel® SGX device plugin for Kubernetes'
+LABEL org.opencontainers.image.description='The SGX device plugin is responsible for discovering and reporting SGX device nodes to kubelet'

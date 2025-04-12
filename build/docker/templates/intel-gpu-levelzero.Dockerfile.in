@@ -83,5 +83,5 @@ RUN if [ $ROCKYLINUX -eq 0 ]; then \N
 #include "default_labels.docker"
 
 LABEL name='intel-gpu-levelzero'
-LABEL summary='Intel® GPU levelzero for Kubernetes'
-LABEL description='The GPU levelzero container provides access to Levelzero API for the Intel GPU plugin'
+LABEL org.opencontainers.image.title='Intel® GPU levelzero for Kubernetes'
+LABEL org.opencontainers.image.description='The GPU levelzero container provides access to Levelzero API for the Intel GPU plugin'

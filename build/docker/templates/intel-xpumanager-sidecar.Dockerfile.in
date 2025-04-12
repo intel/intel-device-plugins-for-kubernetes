@@ -4,5 +4,5 @@ ARG CMD=xpumanager_sidecar
 #include "default_plugin.docker"
 
 LABEL name='intel-xpumanager-sidecar'
-LABEL summary='Intel® xpumanager sidecar'
-LABEL description='The xpumanager sidecar creates NFD labels from xpumanager topology information'
+LABEL org.opencontainers.image.title='Intel® xpumanager sidecar'
+LABEL org.opencontainers.image.description='The xpumanager sidecar creates NFD labels from xpumanager topology information'

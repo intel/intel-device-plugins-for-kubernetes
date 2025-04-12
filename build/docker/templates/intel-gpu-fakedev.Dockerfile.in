@@ -4,5 +4,5 @@ ARG CMD=gpu_fakedev
 #include "default_plugin.docker"
 
 LABEL name='intel-gpu-fakedev'
-LABEL summary='Fake device file generator for Intel® GPU plugin'
-LABEL description='Fake device file generator provides fake sysfs+devfs content for Intel GPU plugin from its initcontainer, for scalability testing'
+LABEL org.opencontainers.image.title='Fake device file generator for Intel® GPU plugin'
+LABEL org.opencontainers.image.description='Fake device file generator provides fake sysfs+devfs content for Intel GPU plugin from its initcontainer, for scalability testing'
