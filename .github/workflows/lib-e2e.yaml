@@ -34,13 +34,6 @@ jobs:
               - intel-qat-plugin
               - intel-qat-initcontainer
               - openssl-qat-engine
-          - name: e2e-fpga
-            runner: fpga
-            images:
-              - intel-fpga-plugin
-              - intel-fpga-initcontainer
-              - intel-fpga-admissionwebhook
-              - opae-nlb-demo
           - name: e2e-spr
             targetjob: e2e-spr SKIP="App:compress-perf"
             runner: spr
