@@ -60,6 +60,7 @@ COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_fpga_device_plugin"]
 LABEL vendor='Intel®'
 LABEL version='0.32.0'
+LABEL maintainer="Intel®"
 LABEL release='1'
 LABEL name='intel-fpga-plugin'
 LABEL summary='Intel® FPGA device plugin for Kubernetes'

@@ -2,7 +2,6 @@
 # This script is based on qatlib's qat_init.sh
 NODE_NAME="${NODE_NAME:-}"
 ENABLED_QAT_PF_PCIIDS=${ENABLED_QAT_PF_PCIIDS:-37c8 4940 4942 4944 4946}
-DEVS=$(for pf in $ENABLED_QAT_PF_PCIIDS; do lspci -n | grep -e "$pf" | grep -o -e "^\\S*"; done)
 SERVICES_LIST="sym asym sym;asym dc sym;dc asym;dc"
 QAT_4XXX_DEVICE_PCI_ID="0x4940"
 QAT_401XX_DEVICE_PCI_ID="0x4942"
@@ -10,6 +9,15 @@ QAT_402XX_DEVICE_PCI_ID="0x4944"
 QAT_420XX_DEVICE_PCI_ID="0x4946"
 SERVICES_ENABLED="NONE"
 SERVICES_ENABLED_FOUND="FALSE"
+
+DEVS=""
+for DEV in $(realpath /sys/bus/pci/devices/*); do
+  for PF in $ENABLED_QAT_PF_PCIIDS; do
+    if grep -q "$PF" "$DEV"/device; then
+      DEVS="$DEV $DEVS"
+    fi
+  done
+done
 
 check_config() {
   [ -f "conf/qat.conf" ] && SERVICES_ENABLED=$(grep "^ServicesEnabled=" conf/qat.conf | cut -d= -f 2 | grep '\S')
@@ -29,8 +37,7 @@ check_config() {
 
 sysfs_config() {
   if [ "$SERVICES_ENABLED_FOUND" = "TRUE" ]; then
-    for dev in $DEVS; do
-      DEVPATH="/sys/bus/pci/devices/0000:$dev"
+    for DEVPATH in $DEVS; do
       PCI_DEV=$(cat "$DEVPATH"/device 2> /dev/null)
       if [ "$PCI_DEV" != "$QAT_4XXX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_401XX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_402XX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_420XX_DEVICE_PCI_ID" ]; then
         continue
@@ -45,15 +52,14 @@ sysfs_config() {
         echo "$SERVICES_ENABLED" > "$DEVPATH"/qat/cfg_services
         CURRENT_SERVICES=$(cat "$DEVPATH"/qat/cfg_services)
       fi
-      echo "Device $dev configured with services: $CURRENT_SERVICES"
+      echo "Device $DEVPATH configured with services: $CURRENT_SERVICES"
     done
   fi
 }
 
 enable_sriov() {
-  for dev in $DEVS; do
-  DEVPATH="/sys/bus/pci/devices/0000:$dev"
-  NUMVFS="$DEVPATH/sriov_numvfs"
+  for DEVPATH in $DEVS; do
+  NUMVFS="$DEVPATH"/sriov_numvfs
   if ! test -w "$NUMVFS"; then
     echo "error: $NUMVFS is not found or not writable. Check if QAT driver module is loaded"
     exit 1
@@ -65,7 +71,7 @@ enable_sriov() {
   if [ "$(cat "$NUMVFS")" -ne 0 ]; then
     echo "$DEVPATH already configured"
   else
-    tee "$NUMVFS" < "$DEVPATH/sriov_totalvfs"
+    tee "$NUMVFS" < "$DEVPATH"/sriov_totalvfs
     VFDEVS=$(realpath -L "$DEVPATH"/virtfn*)
     for vfdev in $VFDEVS; do
       BSF=$(basename "$vfdev")

@@ -61,6 +61,7 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
 FROM debian:unstable-slim
 LABEL vendor='Intel®'
 LABEL version='0.32.0'
+LABEL maintainer="Intel®"
 LABEL release='1'
 LABEL name='intel-qat-plugin-kerneldrv'
 LABEL summary='Intel® QAT device plugin kerneldrv for Kubernetes'

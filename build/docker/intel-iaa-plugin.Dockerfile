@@ -60,6 +60,7 @@ COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_iaa_device_plugin"]
 LABEL vendor='Intel®'
 LABEL version='0.32.0'
+LABEL maintainer="Intel®"
 LABEL release='1'
 LABEL name='intel-iaa-plugin'
 LABEL summary='Intel® IAA device plugin for Kubernetes'
