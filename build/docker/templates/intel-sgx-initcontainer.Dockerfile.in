@@ -18,7 +18,7 @@ FROM ${FINAL_BASE}
 #include "default_labels.docker"
 
 LABEL name='intel-sgx-initcontainer'
-LABEL summary='Intel® SGX NFD hook for Kubernetes'
-LABEL description='The SGX EPC memory available on each node is registered as a Kubernetes extended resource using node-feature-discovery (NFD). A custom NFD source hook is installed as part of SGX device plugin operator deployment and NFD is configured to register the SGX EPC memory extended resource reported by the hook'
+LABEL org.opencontainers.image.title='Intel® SGX NFD hook for Kubernetes'
+LABEL org.opencontainers.image.description='The SGX EPC memory available on each node is registered as a Kubernetes extended resource using node-feature-discovery (NFD). A custom NFD source hook is installed as part of SGX device plugin operator deployment and NFD is configured to register the SGX EPC memory extended resource reported by the hook'
 
 #include "nfdhook_end.docker"

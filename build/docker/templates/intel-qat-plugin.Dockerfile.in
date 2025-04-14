@@ -4,5 +4,5 @@ ARG CMD=qat_plugin
 #include "default_plugin.docker"
 
 LABEL name='intel-qat-plugin'
-LABEL summary='Intel® QAT device plugin for Kubernetes'
-LABEL description='The QAT plugin supports device plugin for Intel QAT adapters, and includes code showing deployment via DPDK'
+LABEL org.opencontainers.image.title='Intel® QAT device plugin for Kubernetes'
+LABEL org.opencontainers.image.description='The QAT plugin supports device plugin for Intel QAT adapters, and includes code showing deployment via DPDK'

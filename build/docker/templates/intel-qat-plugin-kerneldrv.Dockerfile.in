@@ -36,7 +36,7 @@ FROM debian:unstable-slim
 #include "default_labels.docker"
 
 LABEL name='intel-qat-plugin-kerneldrv'
-LABEL summary='Intel® QAT device plugin kerneldrv for Kubernetes'
+LABEL org.opencontainers.image.title='Intel® QAT device plugin kerneldrv for Kubernetes'
 
 COPY --from=builder /install_root /
 ENV PATH=/usr/local/bin

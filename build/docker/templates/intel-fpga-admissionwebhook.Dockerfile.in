@@ -4,5 +4,5 @@ ARG CMD=fpga_admissionwebhook
 #include "default_plugin.docker"
 
 LABEL name='intel-fpga-admissionwebhook'
-LABEL summary='Intel® FPGA admission controller webhook for Kubernetes'
-LABEL description='The FPGA admission controller webhook is responsible for performing mapping from user-friendly function IDs to the Interface ID and Bitstream ID that are required for FPGA programming. It also implements access control by namespacing FPGA configuration information'
+LABEL org.opencontainers.image.title='Intel® FPGA admission controller webhook for Kubernetes'
+LABEL org.opencontainers.image.description='The FPGA admission controller webhook is responsible for performing mapping from user-friendly function IDs to the Interface ID and Bitstream ID that are required for FPGA programming. It also implements access control by namespacing FPGA configuration information'

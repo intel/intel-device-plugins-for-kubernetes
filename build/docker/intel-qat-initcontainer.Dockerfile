@@ -56,13 +56,14 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 ###
 FROM ${FINAL_BASE}
-LABEL vendor='Intel®'
-LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL org.opencontainers.image.vendor='Intel®'
+LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
+LABEL org.opencontainers.image.authors="Intel®"
+LABEL org.opencontainers.image.version='devel'
 LABEL release='1'
 LABEL name='intel-qat-initcontainer'
-LABEL summary='Intel® QAT initcontainer for Kubernetes'
-LABEL description='Intel QAT initcontainer initializes devices'
+LABEL org.opencontainers.image.title='Intel® QAT initcontainer for Kubernetes'
+LABEL org.opencontainers.image.description='Intel QAT initcontainer initializes devices'
 COPY --from=builder /install_root /
 COPY demo/qat-init.sh /usr/local/bin/
 COPY demo/qat-autoreset.sh /usr/local/bin/

@@ -4,5 +4,5 @@ ARG CMD=dlb_plugin
 #include "default_plugin.docker"
 
 LABEL name='intel-dlb-plugin'
-LABEL summary='Intel® DLB device plugin for Kubernetes'
-LABEL description='The DLB device plugin supports Intel Dynamic Load Balancer accelerator(DLB)'
+LABEL org.opencontainers.image.title='Intel® DLB device plugin for Kubernetes'
+LABEL org.opencontainers.image.description='The DLB device plugin supports Intel Dynamic Load Balancer accelerator(DLB)'

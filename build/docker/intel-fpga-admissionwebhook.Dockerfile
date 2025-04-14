@@ -58,10 +58,11 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
 FROM ${FINAL_BASE}
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_fpga_admissionwebhook"]
-LABEL vendor='Intel®'
-LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL org.opencontainers.image.vendor='Intel®'
+LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
+LABEL org.opencontainers.image.authors="Intel®"
+LABEL org.opencontainers.image.version='devel'
 LABEL release='1'
 LABEL name='intel-fpga-admissionwebhook'
-LABEL summary='Intel® FPGA admission controller webhook for Kubernetes'
-LABEL description='The FPGA admission controller webhook is responsible for performing mapping from user-friendly function IDs to the Interface ID and Bitstream ID that are required for FPGA programming. It also implements access control by namespacing FPGA configuration information'
+LABEL org.opencontainers.image.title='Intel® FPGA admission controller webhook for Kubernetes'
+LABEL org.opencontainers.image.description='The FPGA admission controller webhook is responsible for performing mapping from user-friendly function IDs to the Interface ID and Bitstream ID that are required for FPGA programming. It also implements access control by namespacing FPGA configuration information'

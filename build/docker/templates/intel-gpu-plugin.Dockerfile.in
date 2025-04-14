@@ -4,5 +4,5 @@ ARG CMD=gpu_plugin
 #include "default_plugin.docker"
 
 LABEL name='intel-gpu-plugin'
-LABEL summary='Intel® GPU device plugin for Kubernetes'
-LABEL description='The GPU device plugin provides access to Intel discrete (Xe) and integrated GPU HW device files'
+LABEL org.opencontainers.image.title='Intel® GPU device plugin for Kubernetes'
+LABEL org.opencontainers.image.description='The GPU device plugin provides access to Intel discrete (Xe) and integrated GPU HW device files'

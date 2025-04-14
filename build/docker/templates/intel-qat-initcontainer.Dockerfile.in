@@ -15,8 +15,8 @@ FROM ${FINAL_BASE}
 #include "default_labels.docker"
 
 LABEL name='intel-qat-initcontainer'
-LABEL summary='Intel® QAT initcontainer for Kubernetes'
-LABEL description='Intel QAT initcontainer initializes devices'
+LABEL org.opencontainers.image.title='Intel® QAT initcontainer for Kubernetes'
+LABEL org.opencontainers.image.description='Intel QAT initcontainer initializes devices'
 
 COPY --from=builder /install_root /
 

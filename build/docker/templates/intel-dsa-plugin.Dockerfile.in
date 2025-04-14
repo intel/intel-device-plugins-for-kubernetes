@@ -4,5 +4,5 @@ ARG CMD=dsa_plugin
 #include "default_plugin.docker"
 
 LABEL name='intel-dsa-plugin'
-LABEL summary='Intel® DSA device plugin for Kubernetes'
-LABEL description='The DSA device plugin supports acceleration using the Intel Data Streaming accelerator(DSA)'
+LABEL org.opencontainers.image.title='Intel® DSA device plugin for Kubernetes'
+LABEL org.opencontainers.image.description='The DSA device plugin supports acceleration using the Intel Data Streaming accelerator(DSA)'

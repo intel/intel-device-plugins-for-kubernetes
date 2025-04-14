@@ -82,12 +82,13 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
     && cp -r /usr/share/doc/musl $ROOT/licenses/
 ###
 FROM ${FINAL_BASE}
-LABEL vendor='Intel®'
-LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL org.opencontainers.image.vendor='Intel®'
+LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
+LABEL org.opencontainers.image.authors="Intel®"
+LABEL org.opencontainers.image.version='devel'
 LABEL release='1'
 LABEL name='intel-fpga-initcontainer'
-LABEL summary='Intel® FPGA programming CDI hook for Kubernetes'
-LABEL description='The FPGA OCI createRuntime hook performs discovery of the requested FPGA function bitstream and programs FPGA devices based on the environment variables in the workload description'
+LABEL org.opencontainers.image.title='Intel® FPGA programming CDI hook for Kubernetes'
+LABEL org.opencontainers.image.description='The FPGA OCI createRuntime hook performs discovery of the requested FPGA function bitstream and programs FPGA devices based on the environment variables in the workload description'
 COPY --from=builder /install_root /
 ENTRYPOINT [ "/usr/bin/sh", "-c", "cp -a /usr/local/fpga-sw/* /opt/intel/fpga-sw/" ]
