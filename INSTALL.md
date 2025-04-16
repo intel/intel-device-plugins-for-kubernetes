@@ -1,5 +1,16 @@
 # Installing device plugins to cluster
 
+## Pod security admission
+
+In Kubernetes clusters where [Pod Security admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/) is enabled, device plugins deployed directly from the [deployments](deployments/) will fail to get scheduled to the cluster. Device plugins require access to the underlying host via [hostpaths](https://kubernetes.io/docs/concepts/storage/volumes/#hostpath), and hostpath use is reserved for privileged Pods. If the plugins are deployed from the `deployments` directory, the target namespace will require these labels:
+```
+pod-security.kubernetes.io/enforce: privileged
+pod-security.kubernetes.io/audit: privileged
+pod-security.kubernetes.io/warn: privileged
+```
+
+Since the 0.32.1 release the Device Plugin Operator sets the required admission labels automatically in its deployment. The device plugins deployed via the operator are scheduled to the same namespace as the operator, and do not then need any other configuration.
+
 ## Install device plugins via a DaemonSet
 
 Each plugin can be installed via a DaemonSet. The install changes slightly based on the desired plugin. See install instructions per [plugin](README.md#plugins).

@@ -4,6 +4,9 @@ metadata:
   labels:
     control-plane: controller-manager
     manager: intel-deviceplugin-operator
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
   name: system
 ---
 apiVersion: apps/v1
