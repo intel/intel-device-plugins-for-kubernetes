@@ -55,9 +55,10 @@ RUN (cd cmd/$CMD && GOFLAGS=${GOFLAGS} GO111MODULE=${GO111MODULE} CGO_ENABLED=1 
 RUN chmod a+x /go/bin/$CMD && install -D /go/bin/$CMD /install_root/usr/local/bin/intel_qat_device_plugin
 RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && if [ ! -d "licenses/$CMD" ] ; then \
-    GO111MODULE=on go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
+    GO111MODULE=on GOROOT=$(go env GOROOT) go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
     --save_path /install_root/licenses/$CMD/go-licenses ; \
-    else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi
+    else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi && \
+    echo "Verifying installed licenses" && test -e /install_root/licenses/$CMD/go-licenses
 FROM debian:unstable-slim
 LABEL vendor='Intel®'
 LABEL version='0.32.0'
