@@ -66,9 +66,10 @@ RUN export PATH=$PATH:/usr/local/go/bin/ && cd cmd/${CMD} && \
 RUN [ $ROCKYLINUX -eq 0 ] && install -D /go/bin/${CMD} /install_root${EP} || install -D /root/go/bin/${CMD} /install_root${EP}
 RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && if [ ! -d "licenses/$CMD" ] ; then \
-    GO111MODULE=on go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
+    GO111MODULE=on GOROOT=$(go env GOROOT) go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
     --save_path /install_root/licenses/$CMD/go-licenses ; \
-    else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi
+    else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi && \
+    echo "Verifying installed licenses" && test -e /install_root/licenses/$CMD/go-licenses
 FROM ${FINAL_BASE_DYN}
 ARG CMD
 ARG ROCKYLINUX
