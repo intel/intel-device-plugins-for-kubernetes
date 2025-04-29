@@ -61,6 +61,7 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
     echo "Verifying installed licenses" && test -e /install_root/licenses/$CMD/go-licenses
 FROM debian:unstable-slim
 LABEL vendor='Intel®'
+LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
 LABEL maintainer="Intel®"
 LABEL version='devel'
 LABEL release='1'

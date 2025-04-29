@@ -85,6 +85,7 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
 ###
 FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
+LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
 LABEL maintainer="Intel®"
 LABEL version='devel'
 LABEL release='1'
