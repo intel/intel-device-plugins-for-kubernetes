@@ -61,7 +61,7 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
     echo "Verifying installed licenses" && test -e /install_root/licenses/$CMD/go-licenses
 FROM debian:unstable-slim
 LABEL vendor='Intel®'
-LABEL version='0.32.0'
+LABEL version='0.32.1'
 LABEL maintainer="Intel®"
 LABEL release='1'
 LABEL name='intel-qat-plugin-kerneldrv'
