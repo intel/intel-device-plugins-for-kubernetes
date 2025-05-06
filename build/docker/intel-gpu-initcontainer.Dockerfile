@@ -52,12 +52,13 @@ COPY . .
 RUN (cd cmd/${CMD}; GO111MODULE=${GO111MODULE} GOFLAGS=${GOFLAGS} CGO_ENABLED=0 go install -gcflags="${GCFLAGS}" -asmflags="${ASMFLAGS}" -ldflags="${LDFLAGS}") && install -D /go/bin/${CMD} /install_root${EP}
 RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && if [ ! -d "licenses/$CMD" ] ; then \
-    GO111MODULE=on go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
+    GO111MODULE=on GOROOT=$(go env GOROOT) go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
     --save_path /install_root/licenses/$CMD/go-licenses ; \
-    else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi
+    else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi && \
+    echo "Verifying installed licenses" && test -e /install_root/licenses/$CMD/go-licenses
 ###
-ARG TOYBOX_VERSION="0.8.11"
-ARG TOYBOX_SHA256="83a3a88cbe1fa30f099c2f58295baef4637aaf988085aaea56e03aa29168175d"
+ARG TOYBOX_VERSION="0.8.12"
+ARG TOYBOX_SHA256="3c529d93923dde67d048e7bcbd5d1bc0dd1ad09362269e2415f5f2eaab349b5b"
 ARG ROOT=/install_root
 RUN apt-get update && apt-get --no-install-recommends -y install musl musl-tools musl-dev
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -73,7 +74,8 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
 ###
 FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
-LABEL version='0.32.0'
+LABEL version='0.32.1'
+LABEL maintainer="Intel®"
 LABEL release='1'
 LABEL name='intel-gpu-initcontainer'
 LABEL summary='Intel® GPU NFD hook for Kubernetes'

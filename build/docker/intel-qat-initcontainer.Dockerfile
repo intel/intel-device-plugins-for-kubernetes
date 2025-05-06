@@ -40,8 +40,8 @@ ARG DIR=/intel-device-plugins-for-kubernetes
 WORKDIR $DIR
 COPY . .
 RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE
-ARG TOYBOX_VERSION="0.8.11"
-ARG TOYBOX_SHA256="83a3a88cbe1fa30f099c2f58295baef4637aaf988085aaea56e03aa29168175d"
+ARG TOYBOX_VERSION="0.8.12"
+ARG TOYBOX_SHA256="3c529d93923dde67d048e7bcbd5d1bc0dd1ad09362269e2415f5f2eaab349b5b"
 ARG ROOT=/install_root
 RUN apt-get update && apt-get --no-install-recommends -y install musl musl-tools musl-dev
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -57,7 +57,8 @@ RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION
 ###
 FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
-LABEL version='0.32.0'
+LABEL version='0.32.1'
+LABEL maintainer="Intel®"
 LABEL release='1'
 LABEL name='intel-qat-initcontainer'
 LABEL summary='Intel® QAT initcontainer for Kubernetes'

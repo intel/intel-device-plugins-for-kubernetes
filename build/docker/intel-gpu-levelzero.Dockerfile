@@ -24,7 +24,9 @@ ARG ROCKYLINUX=1
 ARG BUILD_BASE=rockylinux:9
 ARG FINAL_BASE_DYN=registry.access.redhat.com/ubi9/ubi-minimal:9.3
 ###
-FROM ${BUILD_BASE} AS builder
+## Use the BUILD_BASE when either the a) golang-bookworm is updated to a newer glibc
+## or b) the intel-igc-core libraries are fixed to not to demand a newer glibc
+FROM ${FINAL_BASE_DYN} AS builder
 ARG DIR=/intel-device-plugins-for-kubernetes
 ENV CGO_CFLAGS="-pipe -fno-plt"
 ENV CGO_LDFLAGS="-fstack-protector-strong -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now,-z,noexecstack,-z,defs,-s,-w"
@@ -38,14 +40,18 @@ ARG ROCKYLINUX
 ARG CGO_VERSION=1.23
 RUN mkdir /runtime
 RUN if [ $ROCKYLINUX -eq 0 ]; then \
-        apt-get update && apt-get install --no-install-recommends -y wget libc6-dev ca-certificates ocl-icd-libopencl1 && \
+        apt-get update && apt-get install --no-install-recommends -y wget jq curl libc6-dev ocl-icd-libopencl1 gcc ca-certificates && \
+        LATEST_GO=$(curl --no-progress-meter https://go.dev/dl/?mode=json | jq ".[] | select(.version | startswith(\"go${CGO_VERSION}\")).version" | tr -d "\"") && \
+        wget -q https://go.dev/dl/$LATEST_GO.linux-amd64.tar.gz -O - | tar -xz -C /usr/local && \
         cd /runtime && \
-        wget -q https://github.com/intel/compute-runtime/releases/download/24.26.30049.6/intel-level-zero-gpu_1.3.30049.6_amd64.deb && \
-        wget -q https://github.com/intel/compute-runtime/releases/download/24.26.30049.6/intel-opencl-icd_24.26.30049.6_amd64.deb && \
-        wget -q https://github.com/intel/compute-runtime/releases/download/24.26.30049.6/libigdgmm12_22.3.20_amd64.deb && \
-        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero-devel_1.17.6+u22.04_amd64.deb && \
-        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.17.6/level-zero_1.17.6+u22.04_amd64.deb && \
-        dpkg --ignore-depends=intel-igc-core,intel-igc-opencl -i *.deb && \
+        wget -q https://github.com/intel/compute-runtime/releases/download/25.09.32961.7/intel-level-zero-gpu_1.6.32961.7_amd64.deb && \
+        wget -q https://github.com/intel/compute-runtime/releases/download/25.09.32961.7/intel-opencl-icd_25.09.32961.7_amd64.deb && \
+        wget -q https://github.com/intel/compute-runtime/releases/download/25.09.32961.7/libigdgmm12_22.6.0_amd64.deb && \
+        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.20.2/level-zero-devel_1.20.2+u22.04_amd64.deb && \
+        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.20.2/level-zero_1.20.2+u22.04_amd64.deb && \
+        wget -q https://github.com/intel/intel-graphics-compiler/releases/download/v2.8.3/intel-igc-core-2_2.8.3+18762_amd64.deb && \
+        wget -q https://github.com/intel/intel-graphics-compiler/releases/download/v2.8.3/intel-igc-opencl-2_2.8.3+18762_amd64.deb && \
+        dpkg -i *.deb && \
         rm -rf /var/lib/apt/lists/\*; \
     else \
         source /etc/os-release && dnf install -y gcc jq wget 'dnf-command(config-manager)' && \
@@ -61,14 +67,17 @@ ARG EP=/usr/local/bin/intel_gpu_levelzero
 ARG CMD
 WORKDIR ${DIR}
 COPY . .
-RUN export PATH=$PATH:/usr/local/go/bin/ && cd cmd/${CMD} && \
+## Apply for the build phase as well as the license copy below the build.
+ENV PATH=$PATH:/usr/local/go/bin/
+RUN cd cmd/${CMD} && \
     GO111MODULE=on CGO_ENABLED=1 go install $CGOFLAGS --gcflags="$GCFLAGS" --asmflags="$ASMFLAGS" --ldflags="$LDFLAGS"
 RUN [ $ROCKYLINUX -eq 0 ] && install -D /go/bin/${CMD} /install_root${EP} || install -D /root/go/bin/${CMD} /install_root${EP}
 RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-kubernetes/LICENSE \
     && if [ ! -d "licenses/$CMD" ] ; then \
-    GO111MODULE=on go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
+    GO111MODULE=on GOROOT=$(go env GOROOT) go run github.com/google/go-licenses@${GOLICENSES_VERSION} save "./cmd/$CMD" \
     --save_path /install_root/licenses/$CMD/go-licenses ; \
-    else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi
+    else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi && \
+    echo "Verifying installed licenses" && test -e /install_root/licenses/$CMD/go-licenses
 FROM ${FINAL_BASE_DYN}
 ARG CMD
 ARG ROCKYLINUX
@@ -76,7 +85,7 @@ COPY --from=builder /runtime /runtime
 RUN if [ $ROCKYLINUX -eq 0 ]; then \
         apt-get update && apt-get install --no-install-recommends -y ocl-icd-libopencl1 && \
         rm /runtime/level-zero-devel_*.deb && \
-        cd /runtime && dpkg --ignore-depends=intel-igc-core,intel-igc-opencl -i *.deb && rm -rf /runtime && \
+        cd /runtime && dpkg -i *.deb && rm -rf /runtime && \
         rm "/lib/x86_64-linux-gnu/libze_validation"* && rm "/lib/x86_64-linux-gnu/libze_tracing_layer"*; \
     else \
         cp -a /runtime//*.so* /usr/lib64/ && cp -a /runtime/OpenCL /etc/ && cp -a /runtime/licenses/* /usr/share/licenses/; \
@@ -84,7 +93,8 @@ RUN if [ $ROCKYLINUX -eq 0 ]; then \
 COPY --from=builder /install_root /
 ENTRYPOINT ["/usr/local/bin/intel_gpu_levelzero"]
 LABEL vendor='Intel®'
-LABEL version='0.32.0'
+LABEL version='0.32.1'
+LABEL maintainer="Intel®"
 LABEL release='1'
 LABEL name='intel-gpu-levelzero'
 LABEL summary='Intel® GPU levelzero for Kubernetes'

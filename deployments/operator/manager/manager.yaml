@@ -4,6 +4,9 @@ metadata:
   labels:
     control-plane: controller-manager
     manager: intel-deviceplugin-operator
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/warn: privileged
   name: system
 ---
 apiVersion: apps/v1
@@ -27,7 +30,7 @@ spec:
         manager: intel-deviceplugin-operator
     spec:
       containers:
-      - image: docker.io/intel/intel-deviceplugin-operator:0.32.0
+      - image: docker.io/intel/intel-deviceplugin-operator:0.32.1
         imagePullPolicy: IfNotPresent
         name: manager
         args:
