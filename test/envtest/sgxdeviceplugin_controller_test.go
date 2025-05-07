@@ -39,6 +39,7 @@ var _ = Describe("SgxDevicePlugin Controller", func() {
 			spec := devicepluginv1.SgxDevicePluginSpec{
 				Image:        "sgx-testimage",
 				InitImage:    "sgx-testinitimage",
+				NRIImage:     "sgx-testnriimage",
 				NodeSelector: map[string]string{"sgx-nodeselector": "true"},
 			}
 
@@ -78,6 +79,7 @@ var _ = Describe("SgxDevicePlugin Controller", func() {
 			By("updating SgxDevicePlugin successfully")
 			updatedImage := "updated-sgx-testimage"
 			updatedInitImage := "updated-sgx-testinitimage"
+			updatedNRIImage := "updated-sgx-testnriimage"
 			updatedLogLevel := 2
 			updatedEnclaveLimit := 2
 			updatedProvisionLimit := 2
@@ -85,6 +87,7 @@ var _ = Describe("SgxDevicePlugin Controller", func() {
 
 			fetched.Spec.Image = updatedImage
 			fetched.Spec.InitImage = updatedInitImage
+			fetched.Spec.NRIImage = updatedNRIImage
 			fetched.Spec.LogLevel = updatedLogLevel
 			fetched.Spec.EnclaveLimit = updatedEnclaveLimit
 			fetched.Spec.ProvisionLimit = updatedProvisionLimit
@@ -114,13 +117,17 @@ var _ = Describe("SgxDevicePlugin Controller", func() {
 			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(ConsistOf(expectArgs))
 			Expect(ds.Spec.Template.Spec.Containers[0].Image).Should(Equal(updatedImage))
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
+			Expect(ds.Spec.Template.Spec.Containers).To(HaveLen(2))
+			Expect(ds.Spec.Template.Spec.Containers[1].Image).Should(Equal(updatedNRIImage))
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(updatedInitImage))
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(Equal(updatedNodeSelector))
 
 			By("updating SgxDevicePlugin with different values successfully")
 			updatedInitImage = ""
+			updatedNRIImage = ""
 			updatedNodeSelector = map[string]string{}
 			fetched.Spec.InitImage = updatedInitImage
+			fetched.Spec.NRIImage = updatedNRIImage
 			fetched.Spec.NodeSelector = updatedNodeSelector
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
@@ -130,6 +137,7 @@ var _ = Describe("SgxDevicePlugin Controller", func() {
 			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
 			Expect(err).To(BeNil())
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(0))
+			Expect(ds.Spec.Template.Spec.Containers).To(HaveLen(1))
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(And(HaveLen(1), HaveKeyWithValue("kubernetes.io/arch", "amd64")))
 
 			By("updating SgxDevicePlugin with tolerations")
