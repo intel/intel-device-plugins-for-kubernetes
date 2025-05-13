@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-sgx-plugin
+spec:
+  template:
+    spec:
+      containers:
+      - name: nri-sgx-epc
+        image: ghcr.io/containers/nri-plugins/nri-sgx-epc:unstable
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: nrisockets
+          mountPath: /var/run/nri
+      volumes:
+      - name: nrisockets
+        hostPath:
+          path: /var/run/nri
