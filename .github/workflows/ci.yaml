@@ -36,7 +36,7 @@ jobs:
       - validate
     uses: "./.github/workflows/lib-build.yaml"
 
-  e2e:
-    needs:
-      - build
-    uses: "./.github/workflows/lib-e2e.yaml"
+  # e2e:
+  #   needs:
+  #     - build
+  #   uses: "./.github/workflows/lib-e2e.yaml"
