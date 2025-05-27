@@ -54,38 +54,32 @@ var _ admission.CustomValidator = &commonDevicePluginValidator{}
 func (r *commonDevicePluginDefaulter) Default(ctx context.Context, obj runtime.Object) error {
 	logf.FromContext(ctx).Info("default")
 
+	setDefaultImageIfNeeded := func(image *string) {
+		if len(*image) == 0 {
+			*image = r.defaultImage
+		}
+	}
+
 	// type switches can have only one type in a case so the same repeats for
 	// all xDevicePlugin types.
 	// TODO: implement receivers if more complex logic is needed.
 	switch v := obj.(type) {
 	case *DlbDevicePlugin:
-		if len(v.Spec.Image) == 0 {
-			v.Spec.Image = r.defaultImage
-		}
+		setDefaultImageIfNeeded(&v.Spec.Image)
 	case *DsaDevicePlugin:
-		if len(v.Spec.Image) == 0 {
-			v.Spec.Image = r.defaultImage
-		}
+		setDefaultImageIfNeeded(&v.Spec.Image)
 	case *FpgaDevicePlugin:
-		if len(v.Spec.Image) == 0 {
-			v.Spec.Image = r.defaultImage
-		}
+		setDefaultImageIfNeeded(&v.Spec.Image)
 	case *GpuDevicePlugin:
-		if len(v.Spec.Image) == 0 {
-			v.Spec.Image = r.defaultImage
-		}
+		setDefaultImageIfNeeded(&v.Spec.Image)
 	case *IaaDevicePlugin:
-		if len(v.Spec.Image) == 0 {
-			v.Spec.Image = r.defaultImage
-		}
+		setDefaultImageIfNeeded(&v.Spec.Image)
 	case *QatDevicePlugin:
-		if len(v.Spec.Image) == 0 {
-			v.Spec.Image = r.defaultImage
-		}
+		setDefaultImageIfNeeded(&v.Spec.Image)
 	case *SgxDevicePlugin:
-		if len(v.Spec.Image) == 0 {
-			v.Spec.Image = r.defaultImage
-		}
+		setDefaultImageIfNeeded(&v.Spec.Image)
+	case *NpuDevicePlugin:
+		setDefaultImageIfNeeded(&v.Spec.Image)
 	default:
 		return fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, obj)
 	}
@@ -112,6 +106,8 @@ func (r *commonDevicePluginValidator) ValidateCreate(ctx context.Context, obj ru
 		return nil, v.validatePlugin(r)
 	case *SgxDevicePlugin:
 		return nil, v.validatePlugin(r)
+	case *NpuDevicePlugin:
+		return nil, v.validatePlugin(r)
 	default:
 		return nil, fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, obj)
 	}
@@ -135,6 +131,8 @@ func (r *commonDevicePluginValidator) ValidateUpdate(ctx context.Context, _ runt
 	case *QatDevicePlugin:
 		return nil, v.validatePlugin(r)
 	case *SgxDevicePlugin:
+		return nil, v.validatePlugin(r)
+	case *NpuDevicePlugin:
 		return nil, v.validatePlugin(r)
 	default:
 		return nil, fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, newObj)

@@ -1,0 +1,241 @@
+// Copyright 2025 Intel Corporation. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package npu contains NPU specific reconciliation logic.
+package npu
+
+import (
+	"reflect"
+	"testing"
+
+	apps "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/diff"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
+)
+
+const appLabel = "intel-npu-plugin"
+
+// newDaemonSetExpected creates plugin daemonset
+// it's copied from the original controller code (before the usage of go:embed).
+func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet {
+	devicePlugin := rawObj.(*devicepluginv1.NpuDevicePlugin)
+
+	yes := true
+	no := false
+	maxUnavailable := intstr.FromInt(1)
+	maxSurge := intstr.FromInt(0)
+
+	daemonSet := apps.DaemonSet{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "DaemonSet",
+			APIVersion: "apps/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: c.args.Namespace,
+			Name:      appLabel + "-" + devicePlugin.Name,
+			Labels: map[string]string{
+				"app": appLabel,
+			},
+		},
+		Spec: apps.DaemonSetSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": appLabel,
+				},
+			},
+			UpdateStrategy: apps.DaemonSetUpdateStrategy{
+				Type: "RollingUpdate",
+				RollingUpdate: &apps.RollingUpdateDaemonSet{
+					MaxUnavailable: &maxUnavailable,
+					MaxSurge:       &maxSurge,
+				},
+			},
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": appLabel,
+					},
+				},
+				Spec: v1.PodSpec{
+					Containers: []v1.Container{
+						{
+							Name: appLabel,
+							Env: []v1.EnvVar{
+								{
+									Name: "NODE_NAME",
+									ValueFrom: &v1.EnvVarSource{
+										FieldRef: &v1.ObjectFieldSelector{
+											FieldPath: "spec.nodeName",
+										},
+									},
+								},
+							},
+							Args:            getPodArgs(devicePlugin),
+							Image:           devicePlugin.Spec.Image,
+							ImagePullPolicy: "IfNotPresent",
+							SecurityContext: &v1.SecurityContext{
+								SELinuxOptions: &v1.SELinuxOptions{
+									Type: "container_device_plugin_t",
+								},
+								ReadOnlyRootFilesystem:   &yes,
+								AllowPrivilegeEscalation: &no,
+								Capabilities:             &v1.Capabilities{Drop: []v1.Capability{"ALL"}},
+								SeccompProfile:           &v1.SeccompProfile{Type: v1.SeccompProfileTypeRuntimeDefault},
+							},
+							Resources: v1.ResourceRequirements{
+								Limits: v1.ResourceList{
+									v1.ResourceCPU:    resource.MustParse("100m"),
+									v1.ResourceMemory: resource.MustParse("90Mi"),
+								},
+								Requests: v1.ResourceList{
+									v1.ResourceCPU:    resource.MustParse("40m"),
+									v1.ResourceMemory: resource.MustParse("45Mi"),
+								},
+							},
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      "devfs",
+									MountPath: "/dev/accel",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "sysfsaccel",
+									MountPath: "/sys/class/accel",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "kubeletsockets",
+									MountPath: "/var/lib/kubelet/device-plugins",
+								},
+							},
+						},
+					},
+					NodeSelector: map[string]string{"kubernetes.io/arch": "amd64"},
+					Volumes: []v1.Volume{
+						{
+							Name: "devfs",
+							VolumeSource: v1.VolumeSource{
+								HostPath: &v1.HostPathVolumeSource{
+									Path: "/dev/accel",
+								},
+							},
+						},
+						{
+							Name: "sysfsaccel",
+							VolumeSource: v1.VolumeSource{
+								HostPath: &v1.HostPathVolumeSource{
+									Path: "/sys/class/accel",
+								},
+							},
+						},
+						{
+							Name: "kubeletsockets",
+							VolumeSource: v1.VolumeSource{
+								HostPath: &v1.HostPathVolumeSource{
+									Path: "/var/lib/kubelet/device-plugins",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return &daemonSet
+}
+
+func (c *controller) updateDaemonSetExpected(rawObj client.Object, ds *apps.DaemonSet) {
+	dp := rawObj.(*devicepluginv1.NpuDevicePlugin)
+
+	ds.Spec.Template.Spec.Containers[0].Args = getPodArgs(dp)
+}
+
+// Test that NPU daemonsets created by using go:embed
+// are equal to the expected daemonsets.
+func TestNewDamonSetNPU(t *testing.T) {
+	tcases := []struct {
+		name string
+	}{
+		{
+			"plugin",
+		},
+	}
+
+	c := &controller{}
+
+	for _, tc := range tcases {
+		plugin := &devicepluginv1.NpuDevicePlugin{}
+
+		plugin.Name = "new-npu-cr-testing"
+
+		t.Run(tc.name, func(t *testing.T) {
+			expected := c.newDaemonSetExpected(plugin)
+			actual := c.NewDaemonSet(plugin)
+
+			if !reflect.DeepEqual(expected, actual) {
+				t.Errorf("expected and actuall daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+			}
+		})
+	}
+}
+
+func TestUpdateDamonSetNPU(t *testing.T) {
+	tcases := []struct {
+		name         string
+		sharedBefore int
+		sharedAfter  int
+	}{
+		{"plugin from 1 to 5 shared-dev-num", 1, 5},
+	}
+
+	c := &controller{}
+
+	for _, tc := range tcases {
+		before := &devicepluginv1.NpuDevicePlugin{}
+		before.Name = "update-npu-cr-testing"
+
+		before.Spec.SharedDevNum = tc.sharedBefore
+
+		after := &devicepluginv1.NpuDevicePlugin{}
+		after.Name = "update-npu-cr-testing"
+
+		after.Spec.SharedDevNum = tc.sharedAfter
+
+		t.Run(tc.name, func(t *testing.T) {
+			expected := c.newDaemonSetExpected(before)
+			actual := c.NewDaemonSet(before)
+
+			if !reflect.DeepEqual(expected, actual) {
+				t.Errorf("expected and actual daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+			}
+
+			updated := c.UpdateDaemonSet(after, actual)
+			if updated == false {
+				t.Error("daemonset didn't update while it should have")
+			}
+			c.updateDaemonSetExpected(after, expected)
+
+			if !reflect.DeepEqual(expected, actual) {
+				t.Errorf("updated expected and actual daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+			}
+		})
+	}
+}

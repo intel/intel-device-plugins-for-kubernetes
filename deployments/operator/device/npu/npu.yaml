@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: intel-deviceplugins-controller-manager
+  namespace: inteldeviceplugins-system
+spec:
+  template:
+    spec:
+      containers:
+      - args:
+        - --metrics-bind-address=127.0.0.1:8080
+        - --leader-elect
+        - --devices=npu
+        name: manager

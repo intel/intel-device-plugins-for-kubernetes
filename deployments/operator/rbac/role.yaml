@@ -47,6 +47,7 @@ rules:
   - fpgadeviceplugins
   - gpudeviceplugins
   - iaadeviceplugins
+  - npudeviceplugins
   - qatdeviceplugins
   - sgxdeviceplugins
   verbs:
@@ -65,6 +66,7 @@ rules:
   - fpgadeviceplugins/finalizers
   - gpudeviceplugins/finalizers
   - iaadeviceplugins/finalizers
+  - npudeviceplugins/finalizers
   - qatdeviceplugins/finalizers
   - sgxdeviceplugins/finalizers
   verbs:
@@ -77,6 +79,7 @@ rules:
   - fpgadeviceplugins/status
   - gpudeviceplugins/status
   - iaadeviceplugins/status
+  - npudeviceplugins/status
   - qatdeviceplugins/status
   - sgxdeviceplugins/status
   verbs:
