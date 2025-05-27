@@ -1,0 +1,7 @@
+resources:
+ - ../../default
+
+patches:
+- path: npu.yaml
+  target:
+    kind: Deployment

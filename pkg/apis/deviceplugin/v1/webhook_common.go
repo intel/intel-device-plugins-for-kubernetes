@@ -51,6 +51,8 @@ type commonDevicePluginValidator struct {
 var _ admission.CustomValidator = &commonDevicePluginValidator{}
 
 // Default implements admission.CustomDefaulter so a webhook will be registered for the type.
+//
+//nolint:gocyclo
 func (r *commonDevicePluginDefaulter) Default(ctx context.Context, obj runtime.Object) error {
 	logf.FromContext(ctx).Info("default")
 
@@ -86,6 +88,10 @@ func (r *commonDevicePluginDefaulter) Default(ctx context.Context, obj runtime.O
 		if len(v.Spec.Image) == 0 {
 			v.Spec.Image = r.defaultImage
 		}
+	case *NpuDevicePlugin:
+		if len(v.Spec.Image) == 0 {
+			v.Spec.Image = r.defaultImage
+		}
 	default:
 		return fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, obj)
 	}
@@ -112,6 +118,8 @@ func (r *commonDevicePluginValidator) ValidateCreate(ctx context.Context, obj ru
 		return nil, v.validatePlugin(r)
 	case *SgxDevicePlugin:
 		return nil, v.validatePlugin(r)
+	case *NpuDevicePlugin:
+		return nil, v.validatePlugin(r)
 	default:
 		return nil, fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, obj)
 	}
@@ -135,6 +143,8 @@ func (r *commonDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj
 	case *QatDevicePlugin:
 		return nil, v.validatePlugin(r)
 	case *SgxDevicePlugin:
+		return nil, v.validatePlugin(r)
+	case *NpuDevicePlugin:
 		return nil, v.validatePlugin(r)
 	default:
 		return nil, fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, oldObj)

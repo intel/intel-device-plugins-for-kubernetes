@@ -9,6 +9,7 @@ resources:
 - bases/deviceplugin.intel.com_dsadeviceplugins.yaml
 - bases/deviceplugin.intel.com_iaadeviceplugins.yaml
 - bases/deviceplugin.intel.com_dlbdeviceplugins.yaml
+- bases/deviceplugin.intel.com_npudeviceplugins.yaml
 - bases/fpga.intel.com_acceleratorfunctions.yaml
 - bases/fpga.intel.com_fpgaregions.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
