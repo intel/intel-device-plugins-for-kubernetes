@@ -126,3 +126,25 @@ spec:
         - feature: kernel.config
           matchExpressions:
             X86_SGX: {op: Exists}
+
+    - name: "intel.npu"
+      labels:
+        "intel.feature.node.kubernetes.io/npu": "true"
+      matchFeatures:
+        - feature: pci.device
+          matchExpressions:
+            vendor: {op: In, value: ["8086"]}
+            class: {op: In, value: ["1200"]}
+            device: {
+              op: In,
+              value: ["7e4c","643e","ad1d","7d1d"]
+            }
+      matchAny:
+        - matchFeatures:
+          - feature: kernel.loadedmodule
+            matchExpressions:
+              intel_vpu: {op: Exists}
+        - matchFeatures:
+          - feature: kernel.enabledmodule
+            matchExpressions:
+              intel_vpu: {op: Exists}
