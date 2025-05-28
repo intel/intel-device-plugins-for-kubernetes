@@ -1,0 +1,5 @@
+resources:
+  - ../../base
+patches:
+  - path: add-nodeselector-intel-npu.yaml
+  - path: add-args.yaml

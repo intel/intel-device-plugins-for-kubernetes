@@ -1,0 +1,10 @@
+apiVersion: deviceplugin.intel.com/v1
+kind: NpuDevicePlugin
+metadata:
+  name: npudeviceplugin-sample
+spec:
+  image: intel/intel-npu-plugin:0.32.0
+  sharedDevNum: 1
+  logLevel: 4
+  nodeSelector:
+    intel.feature.node.kubernetes.io/npu: "true"

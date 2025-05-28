@@ -71,6 +71,13 @@ func SGXPluginDaemonSet() *apps.DaemonSet {
 	return getDaemonset(contentSGX).DeepCopy()
 }
 
+//go:embed npu_plugin/base/*plugin*.yaml
+var contentNPU []byte
+
+func NPUPluginDaemonSet() *apps.DaemonSet {
+	return getDaemonset(contentNPU).DeepCopy()
+}
+
 // getDaemonset unmarshalls yaml content into a DaemonSet object.
 func getDaemonset(content []byte) *apps.DaemonSet {
 	var result apps.DaemonSet
