@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-ini/ini v1.67.0
-	github.com/go-logr/logr v1.4.2
+	github.com/go-logr/logr v1.4.3
 	github.com/google/go-cmp v0.7.0
 	github.com/klauspost/cpuid/v2 v2.2.10
 	github.com/onsi/ginkgo/v2 v2.23.4
