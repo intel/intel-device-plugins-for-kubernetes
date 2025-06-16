@@ -49,13 +49,13 @@ var defaultNodeSelector = deployments.GPUPluginDaemonSet().Spec.Template.Spec.No
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for GpuDevicePlugin objects.
-func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error {
-	c := &controller{scheme: mgr.GetScheme(), ns: namespace}
+func SetupReconciler(mgr ctrl.Manager, args controllers.ControllerOptions) error {
+	c := &controller{scheme: mgr.GetScheme(), args: args}
 	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "GpuDevicePlugin", ownerKey); err != nil {
 		return err
 	}
 
-	if withWebhook {
+	if args.WithWebhook {
 		return (&devicepluginv1.GpuDevicePlugin{}).SetupWebhookWithManager(mgr)
 	}
 
@@ -64,7 +64,7 @@ func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error
 
 type controller struct {
 	scheme *runtime.Scheme
-	ns     string
+	args   controllers.ControllerOptions
 }
 
 func (c *controller) CreateEmptyObject() client.Object {
@@ -80,7 +80,7 @@ func (c *controller) NewSharedServiceAccount() *v1.ServiceAccount {
 	return &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceAccountName,
-			Namespace: c.ns,
+			Namespace: c.args.Namespace,
 		},
 	}
 }
@@ -89,13 +89,13 @@ func (c *controller) NewSharedClusterRoleBinding() *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      roleBindingName,
-			Namespace: c.ns,
+			Namespace: c.args.Namespace,
 		},
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
 				Name:      serviceAccountName,
-				Namespace: c.ns,
+				Namespace: c.args.Namespace,
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
@@ -140,9 +140,15 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 		daemonSet.Spec.Template.Spec.Tolerations = devicePlugin.Spec.Tolerations
 	}
 
-	daemonSet.ObjectMeta.Namespace = c.ns
+	daemonSet.ObjectMeta.Namespace = c.args.Namespace
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
+
+	if len(c.args.ImagePullSecretName) > 0 {
+		daemonSet.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{
+			{Name: c.args.ImagePullSecretName},
+		}
+	}
 
 	if devicePlugin.Spec.InitImage == "" {
 		daemonSet.Spec.Template.Spec.InitContainers = nil

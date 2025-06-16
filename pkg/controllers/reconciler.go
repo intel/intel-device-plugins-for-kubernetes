@@ -94,6 +94,12 @@ type DevicePluginController interface {
 	Upgrade(ctx context.Context, obj client.Object) (upgrade bool)
 }
 
+type ControllerOptions struct {
+	Namespace           string
+	ImagePullSecretName string
+	WithWebhook         bool
+}
+
 type reconciler struct {
 	controller DevicePluginController
 	client.Client

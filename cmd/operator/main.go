@@ -34,6 +34,7 @@ import (
 
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga/v2"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dlb"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dsa"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
@@ -61,7 +62,7 @@ func init() {
 	// +kubebuilder:scaffold:scheme
 }
 
-type devicePluginControllerAndWebhook map[string](func(ctrl.Manager, string, bool) error)
+type devicePluginControllerAndWebhook map[string](func(ctrl.Manager, controllers.ControllerOptions) error)
 
 type flagList []string
 
@@ -208,15 +209,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	ns := os.Getenv("DEVICEPLUGIN_NAMESPACE")
-	if ns == "" {
-		ns = devicePluginNamespace
+	cargs := controllers.ControllerOptions{WithWebhook: true}
+
+	cargs.Namespace = os.Getenv("DEVICEPLUGIN_NAMESPACE")
+	if cargs.Namespace == "" {
+		cargs.Namespace = devicePluginNamespace
 	}
 
-	withWebhook := true
+	cargs.ImagePullSecretName = os.Getenv("DEVICEPLUGIN_SECRET")
 
 	for _, device := range devices {
-		if err = setupControllerAndWebhook[device](mgr, ns, withWebhook); err != nil {
+		if err = setupControllerAndWebhook[device](mgr, cargs); err != nil {
 			setupLog.Error(err, "unable to initialize controller", "controller", device)
 			os.Exit(1)
 		}

@@ -42,13 +42,13 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	maxUnavailable := intstr.FromInt(1)
 	maxSurge := intstr.FromInt(0)
 
-	return &apps.DaemonSet{
+	ds := &apps.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
 			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: c.ns,
+			Namespace: c.args.Namespace,
 			Name:      appLabel + "-" + devicePlugin.Name,
 			Labels: map[string]string{
 				"app": appLabel,
@@ -198,6 +198,14 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 			},
 		},
 	}
+
+	if len(c.args.ImagePullSecretName) > 0 {
+		ds.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{
+			{Name: c.args.ImagePullSecretName},
+		}
+	}
+
+	return ds
 }
 
 // Test that FPGA daemonset created by using go:embed is
@@ -217,5 +225,13 @@ func TestNewDaemonSetFPGA(t *testing.T) {
 
 	if !reflect.DeepEqual(expected, actual) {
 		t.Errorf("expected and actuall daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+	}
+
+	c.args.ImagePullSecretName = "mysecret"
+
+	expected = c.newDaemonSetExpected(plugin)
+	actual = c.NewDaemonSet(plugin)
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("expected and actual daemonsets with secret differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
 	}
 }
