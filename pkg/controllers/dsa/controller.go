@@ -47,13 +47,13 @@ var defaultNodeSelector = deployments.DSAPluginDaemonSet().Spec.Template.Spec.No
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for DsaDevicePlugin objects.
-func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error {
-	c := &controller{scheme: mgr.GetScheme(), ns: namespace}
+func SetupReconciler(mgr ctrl.Manager, args controllers.ControllerOptions) error {
+	c := &controller{scheme: mgr.GetScheme(), args: args}
 	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "DsaDevicePlugin", ownerKey); err != nil {
 		return err
 	}
 
-	if withWebhook {
+	if args.WithWebhook {
 		return (&devicepluginv1.DsaDevicePlugin{}).SetupWebhookWithManager(mgr)
 	}
 
@@ -63,7 +63,7 @@ func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error
 type controller struct {
 	controllers.DefaultServiceAccountFactory
 	scheme *runtime.Scheme
-	ns     string
+	args   controllers.ControllerOptions
 }
 
 func (c *controller) CreateEmptyObject() client.Object {
@@ -200,12 +200,18 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 		daemonSet.Spec.Template.Spec.Tolerations = devicePlugin.Spec.Tolerations
 	}
 
-	daemonSet.ObjectMeta.Namespace = c.ns
+	daemonSet.ObjectMeta.Namespace = c.args.Namespace
 	daemonSet.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	daemonSet.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
 
 	if devicePlugin.Spec.InitImage != "" {
 		addInitContainer(daemonSet, devicePlugin)
+	}
+
+	if len(c.args.ImagePullSecretName) > 0 {
+		daemonSet.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{
+			{Name: c.args.ImagePullSecretName},
+		}
 	}
 
 	return daemonSet

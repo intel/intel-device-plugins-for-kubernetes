@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
 const appLabel = "intel-gpu-plugin"
@@ -50,7 +51,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: c.ns,
+			Namespace: c.args.Namespace,
 			Name:      appLabel + "-" + devicePlugin.Name,
 			Labels: map[string]string{
 				"app": appLabel,
@@ -196,6 +197,12 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 		addVolumeMountIfMissing(&daemonSet.Spec.Template.Spec, "sysfsdevices", "/sys/devices", true)
 	}
 
+	if len(c.args.ImagePullSecretName) > 0 {
+		daemonSet.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{
+			{Name: c.args.ImagePullSecretName},
+		}
+	}
+
 	return &daemonSet
 }
 
@@ -269,6 +276,24 @@ func TestNewDamonSetGPU(t *testing.T) {
 				t.Errorf("expected and actuall daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
 			}
 		})
+	}
+}
+
+func TestNewDamonSetGPUWithSecret(t *testing.T) {
+	c := &controller{
+		args: controllers.ControllerOptions{
+			ImagePullSecretName: "mysecret",
+		},
+	}
+
+	plugin := &devicepluginv1.GpuDevicePlugin{}
+	plugin.Name = "new-gpu-cr-testing"
+
+	expected := c.newDaemonSetExpected(plugin)
+	actual := c.NewDaemonSet(plugin)
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("expected and actual daemonsets with secret differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
 	}
 }
 

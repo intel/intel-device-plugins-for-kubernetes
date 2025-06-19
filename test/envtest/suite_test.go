@@ -113,21 +113,21 @@ func up() {
 	k8sManager, managerErr := ctrl.NewManager(cfg, ctrl.Options{Scheme: scheme.Scheme, Metrics: metricsserver.Options{BindAddress: "0"}, Controller: config.Controller{SkipNameValidation: &yes}})
 	Expect(managerErr).To(BeNil())
 
-	withWebhook := true
+	args := ctr.ControllerOptions{Namespace: ns, WithWebhook: false}
 
-	Expect(dlbctr.SetupReconciler(k8sManager, ns, !withWebhook)).To(BeNil())
+	Expect(dlbctr.SetupReconciler(k8sManager, args)).To(BeNil())
 
-	Expect(dsactr.SetupReconciler(k8sManager, ns, !withWebhook)).To(BeNil())
+	Expect(dsactr.SetupReconciler(k8sManager, args)).To(BeNil())
 
-	Expect(fpgactr.SetupReconciler(k8sManager, ns, !withWebhook)).To(BeNil())
+	Expect(fpgactr.SetupReconciler(k8sManager, args)).To(BeNil())
 
-	Expect(gpuctr.SetupReconciler(k8sManager, ns, !withWebhook)).To(BeNil())
+	Expect(gpuctr.SetupReconciler(k8sManager, args)).To(BeNil())
 
-	Expect(iaactr.SetupReconciler(k8sManager, ns, !withWebhook)).To(BeNil())
+	Expect(iaactr.SetupReconciler(k8sManager, args)).To(BeNil())
 
-	Expect(qatctr.SetupReconciler(k8sManager, ns, !withWebhook)).To(BeNil())
+	Expect(qatctr.SetupReconciler(k8sManager, args)).To(BeNil())
 
-	Expect(sgxctr.SetupReconciler(k8sManager, ns, !withWebhook)).To(BeNil())
+	Expect(sgxctr.SetupReconciler(k8sManager, args)).To(BeNil())
 
 	ctx, cancel = context.WithCancel(context.TODO())
 

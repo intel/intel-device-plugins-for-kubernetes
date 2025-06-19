@@ -43,13 +43,13 @@ var defaultNodeSelector map[string]string = deployments.DLBPluginDaemonSet().Spe
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dlbdeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for DlbDevicePlugin objects.
-func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error {
-	c := &controller{scheme: mgr.GetScheme(), ns: namespace}
+func SetupReconciler(mgr ctrl.Manager, args controllers.ControllerOptions) error {
+	c := &controller{scheme: mgr.GetScheme(), args: args}
 	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "DlbDevicePlugin", ownerKey); err != nil {
 		return err
 	}
 
-	if withWebhook {
+	if args.WithWebhook {
 		return (&devicepluginv1.DlbDevicePlugin{}).SetupWebhookWithManager(mgr)
 	}
 
@@ -59,7 +59,7 @@ func SetupReconciler(mgr ctrl.Manager, namespace string, withWebhook bool) error
 type controller struct {
 	controllers.DefaultServiceAccountFactory
 	scheme *runtime.Scheme
-	ns     string
+	args   controllers.ControllerOptions
 }
 
 func (c *controller) CreateEmptyObject() client.Object {
@@ -92,7 +92,13 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 		setInitContainer(&ds.Spec.Template.Spec, devicePlugin.Spec)
 	}
 
-	ds.ObjectMeta.Namespace = c.ns
+	ds.ObjectMeta.Namespace = c.args.Namespace
+
+	if len(c.args.ImagePullSecretName) > 0 {
+		ds.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{
+			{Name: c.args.ImagePullSecretName},
+		}
+	}
 
 	ds.Spec.Template.Spec.Containers[0].Args = getPodArgs(devicePlugin)
 	ds.Spec.Template.Spec.Containers[0].Image = devicePlugin.Spec.Image
