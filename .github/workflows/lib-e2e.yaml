@@ -12,21 +12,16 @@ jobs:
       matrix:
         include:
           - name: e2e-spr
-            targetjob: e2e-spr SKIP="App:compress-perf"
+            targetjob: e2e-spr
             runner: spr
+            skip: App:compress-perf
             images:
               - intel-qat-plugin
               - intel-qat-initcontainer
               - openssl-qat-engine
-              - intel-dsa-plugin
-              - intel-idxd-config-initcontainer
               - accel-config-demo
-              - dsa-dpdk-dmadevtest
               - intel-deviceplugin-operator
-              - intel-iaa-plugin
               - crypto-perf
-              - intel-gpu-plugin
-              - intel-gpu-levelzero
               - intel-sgx-plugin
               - intel-sgx-initcontainer
               - intel-sgx-admissionwebhook
@@ -37,6 +32,7 @@ jobs:
     env:
       TARGET_JOB: ${{ matrix.targetjob || matrix.name }}
       IMAGES: ${{ join(matrix.images, ' ') }}
+      SKIP: ${{ matrix.skip || '' }}
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
@@ -50,9 +46,5 @@ jobs:
           echo "SHA: ${{ github.sha }}"
           echo "Images: $IMAGES"
           echo "Target job: $TARGET_JOB"
-      - name: Wait for ready state
-        run: ../../../../bmetal/actions-bmetal-runstage.sh waitready
-      - name: Prepare test environment
-        run: ../../../../bmetal/actions-bmetal-runstage.sh prepare
-      - name: Run tests
-        run: ../../../../bmetal/actions-bmetal-runstage.sh test
+      - name: Run e2e tests
+        run: ./test/e2e/scripts/run.sh
