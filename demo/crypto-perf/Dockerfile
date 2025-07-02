@@ -19,6 +19,7 @@ ARG SOVERSION=24
 RUN cd dpdk-* && meson setup \
     -Dplatform=generic \
     -Dcpu_instruction_set=westmere \
+    -Dmax_lcores=256 \
     "-Denable_drivers=common/qat,compress/qat,crypto/qat" \
     "-Denable_apps=test-crypto-perf,test-compress-perf" \
     --prefix $(pwd)/installdir \
