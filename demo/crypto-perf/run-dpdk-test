@@ -3,6 +3,31 @@
 # expect $TESTCMD, $PTEST, and $QAT* are set
 set -u
 
+# input is a list of cpu cores, e.g. "2,3,5-6"
+# output is a list of incides in this format: 0@2,1@3,2@5,2@6
+function cpulist2indices() {
+	local cpulist="$1"
+	local output=""
+	local i=0
+	local cpus=(${cpulist//,/ })
+
+	for cpu in "${cpus[@]}"; do
+		if [[ "$cpu" == *-* ]]; then
+			local range=(${cpu//-/ })
+			for ((j=range[0]; j<=range[1]; j++)); do
+
+				output="$output${i}@${j},"
+				((i++))
+			done
+		else
+			output="$output${i}@${cpu},"
+			((i++))
+		fi
+	done
+
+	echo "${output%,}"  # remove trailing comma
+}
+
 if [ "${TESTCMD}" != "crypto" ] && [ "${TESTCMD}" != "compress" ]; then
 	echo "run-dpdk-test: TESTCMD must be either crypto or compress"
 	exit 1
@@ -19,7 +44,8 @@ if [ -d "${CGROUP_PATH}"/cpuset ]; then
 fi
 
 LCORE=$(cat "${CGROUP_PATH}"/cpuset.cpus)
+LCORE=$(cpulist2indices $LCORE)
 
-EAL="--no-telemetry -l ${LCORE} ${PCI_ALLOWLIST}"
+EAL="--no-telemetry --lcores ${LCORE} ${PCI_ALLOWLIST}"
 
 dpdk-test-"${TESTCMD}"-perf ${EAL} -- ${PTEST} \
