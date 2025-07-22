@@ -69,6 +69,7 @@ func describe() {
 
 		ginkgo.By("checking the pod total EPC size annotation is correctly set")
 		gomega.Expect(pod.Annotations["sgx.intel.com/epc"]).To(gomega.Equal("1Mi"))
+		gomega.Expect(pod.Annotations["epc-limit.nri.io/container.test"]).To(gomega.Equal("1048576"))
 	})
 	ginkgo.It("mutates created pods when the container contains the quote generation libraries", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")
@@ -79,6 +80,7 @@ func describe() {
 
 		ginkgo.By("checking the pod total EPC size annotation is correctly set")
 		gomega.Expect(pod.Annotations["sgx.intel.com/epc"]).To(gomega.Equal("1Mi"))
+		gomega.Expect(pod.Annotations["epc-limit.nri.io/container.test"]).To(gomega.Equal("1048576"))
 	})
 	ginkgo.It("mutates created pods when the container uses aesmd from a side-car container to generate quotes", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")
@@ -93,6 +95,8 @@ func describe() {
 		gomega.Expect(pod.Spec.Containers[0].Env[0].Value).To(gomega.Equal("1"))
 		ginkgo.By("checking the pod total EPC size annotation is correctly set")
 		gomega.Expect(pod.Annotations["sgx.intel.com/epc"]).To(gomega.Equal("2Mi"))
+		gomega.Expect(pod.Annotations["epc-limit.nri.io/container.test"]).To(gomega.Equal("1048576"))
+		gomega.Expect(pod.Annotations["epc-limit.nri.io/container.aesmd"]).To(gomega.Equal("1048576"))
 	})
 	ginkgo.It("mutates created pods where one container uses host/daemonset aesmd to generate quotes", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")
@@ -106,6 +110,7 @@ func describe() {
 		gomega.Expect(pod.Spec.Containers[0].Env[0].Value).To(gomega.Equal("1"))
 		ginkgo.By("checking the pod total EPC size annotation is correctly set")
 		gomega.Expect(pod.Annotations["sgx.intel.com/epc"]).To(gomega.Equal("1Mi"))
+		gomega.Expect(pod.Annotations["epc-limit.nri.io/container.test"]).To(gomega.Equal("1048576"))
 	})
 	ginkgo.It("mutates created pods where three containers use host/daemonset aesmd to generate quotes", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")
@@ -125,6 +130,9 @@ func describe() {
 		gomega.Expect(pod.Spec.Containers[2].Env[0].Value).To(gomega.Equal("1"))
 		ginkgo.By("checking the pod total EPC size annotation is correctly set")
 		gomega.Expect(pod.Annotations["sgx.intel.com/epc"]).To(gomega.Equal("3Mi"))
+		gomega.Expect(pod.Annotations["epc-limit.nri.io/container.test1"]).To(gomega.Equal("1048576"))
+		gomega.Expect(pod.Annotations["epc-limit.nri.io/container.test2"]).To(gomega.Equal("1048576"))
+		gomega.Expect(pod.Annotations["epc-limit.nri.io/container.test3"]).To(gomega.Equal("1048576"))
 	})
 	ginkgo.It("checks that Volumes and VolumeMounts are created only once", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")

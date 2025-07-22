@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cadvisor
+  namespace: cadvisor
+spec:
+  template:
+    spec:
+      nodeSelector:
+        intel.feature.node.kubernetes.io/sgx: 'true'
+      containers:
+        - name: cadvisor
+          image: docker.io/library/cadvisor:4af2b9b9
+          command: [
+            "/usr/bin/cadvisor",
+            "-enable_metrics", "misc",
+            "-logtostderr"
+          ]

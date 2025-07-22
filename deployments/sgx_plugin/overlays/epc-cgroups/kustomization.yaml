@@ -1,0 +1,7 @@
+resources:
+  - ../../base
+
+patches:
+- path: nri_plugin_patch.yaml
+  target:
+    name: intel-sgx-plugin
