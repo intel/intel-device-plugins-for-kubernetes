@@ -40,6 +40,7 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/iaa"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/npu"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/qat"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/sgx"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller"
@@ -66,7 +67,7 @@ type devicePluginControllerAndWebhook map[string](func(ctrl.Manager, controllers
 
 type flagList []string
 
-var supportedDevices = flagList{"dsa", "dlb", "fpga", "gpu", "iaa", "qat", "sgx"}
+var supportedDevices = flagList{"dsa", "dlb", "fpga", "gpu", "iaa", "qat", "sgx", "npu"}
 var devices flagList
 
 func (flag *flagList) String() string {
@@ -171,6 +172,7 @@ func main() {
 		"iaa":  iaa.SetupReconciler,
 		"qat":  qat.SetupReconciler,
 		"sgx":  sgx.SetupReconciler,
+		"npu":  npu.SetupReconciler,
 	}
 
 	tlsCfgFuncs := createTLSCfgs(enableHTTP2)
