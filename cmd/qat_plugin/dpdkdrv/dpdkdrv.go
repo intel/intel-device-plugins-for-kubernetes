@@ -66,6 +66,7 @@ var qatDeviceDriver = map[string]string{
 	"4943": "4xxxvf",
 	"4945": "4xxxvf",
 	"4947": "420xxvf",
+	"4949": "6xxxvf",
 	"37c9": "c6xxvf",
 	"6f55": "d15xxvf",
 }
@@ -352,7 +353,7 @@ func readDeviceConfiguration(pfDev string) string {
 		}
 
 		if err2 == nil && len(qatCfgServices) != 0 {
-			return strings.TrimSpace(string(qatCfgServices))
+			return strings.Join(strings.SplitN(strings.TrimSpace(string(qatCfgServices)), ";", 3), "-")
 		}
 	}
 
@@ -392,8 +393,7 @@ func getDeviceHealthiness(device string, lookup map[string]string) string {
 	hbStatusFile := filepath.Join(filepath.Dir(filepath.Join(pfDev, "../../")), "kernel/debug",
 		fmt.Sprintf("qat_%s_%s/heartbeat/status", driver, filepath.Base(pfDev)))
 
-	// If status reads "-1", the device is considered bad:
-	// https://github.com/torvalds/linux/blob/v6.6-rc5/Documentation/ABI/testing/debugfs-driver-qat
+	// If status reads "-1", the device is considered bad.
 	if data, err := os.ReadFile(hbStatusFile); err == nil && strings.Split(string(data), "\n")[0] == "-1" {
 		healthiness = pluginapi.Unhealthy
 	}
@@ -414,6 +414,7 @@ func getDeviceCapabilities(device string) (string, error) {
 		"4943": {}, // QAT Gen4 (401xx) VF PCI ID
 		"4945": {}, // QAT Gen4 (402xx) VF PCI ID
 		"4947": {}, // QAT Gen4 (420xx) VF PCI ID
+		"4949": {}, // QAT Gen6 (6xxx) VF PCI ID
 	}
 
 	if _, ok := devicesWithCapabilities[devID]; !ok {
@@ -426,27 +427,14 @@ func getDeviceCapabilities(device string) (string, error) {
 		return defaultCapabilities, nil
 	}
 
-	switch readDeviceConfiguration(pfDev) {
-	case "sym;asym":
+	services := readDeviceConfiguration(pfDev)
+	switch services {
+	case "sym-asym":
+		fallthrough
+	case "asym-sym":
 		return "cy", nil
-	case "asym;sym":
-		return "cy", nil
-	case "dc":
-		return "dc", nil
-	case "sym":
-		return "sym", nil
-	case "asym":
-		return "asym", nil
-	case "asym;dc":
-		return "asym-dc", nil
-	case "dc;asym":
-		return "asym-dc", nil
-	case "sym;dc":
-		return "sym-dc", nil
-	case "dc;sym":
-		return "sym-dc", nil
 	default:
-		return defaultCapabilities, nil
+		return services, nil
 	}
 }
 

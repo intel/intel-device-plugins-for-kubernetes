@@ -21,7 +21,7 @@ import (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// +kubebuilder:validation:Enum={"dh895xccvf","c6xxvf","c3xxxvf","d15xxvf","4xxxvf", "420xxvf", "c4xxxvf"}
+// +kubebuilder:validation:Enum={"dh895xccvf","c6xxvf","c3xxxvf","d15xxvf","4xxxvf", "420xxvf", "c4xxxvf", "6xxxvf"}
 
 // KernelVfDriver is a VF device driver for QuickAssist devices.
 type KernelVfDriver string

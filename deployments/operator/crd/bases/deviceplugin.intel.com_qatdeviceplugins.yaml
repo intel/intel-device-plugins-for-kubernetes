@@ -83,6 +83,7 @@ spec:
                   - 4xxxvf
                   - 420xxvf
                   - c4xxxvf
+                  - 6xxxvf
                   type: string
                 type: array
               logLevel:
