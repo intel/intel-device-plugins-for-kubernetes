@@ -32,7 +32,7 @@ Supported Devices include, but may not be limited to, the following:
 The QAT device plugin provides access to QAT hardware accelerated cryptographic and compression features
 through the SR-IOV virtual functions (VF). Demonstrations are provided utilising [DPDK](https://doc.dpdk.org/) and [OpenSSL](https://www.openssl.org/).
 
-QAT Kubernetes resources show up as `qat.intel.com/generic` on systems _before_ QAT Gen4 (4th Gen Xeon&reg;) and `qat.intel.com/[cy|dc]` on QAT Gen4.
+QAT Kubernetes resources show up as `qat.intel.com/generic` on systems _before_ QAT Gen4 (4th Gen Xeon&reg;) and `qat.intel.com/[<configured services>]` on QAT Gen4+.
 
 ## Modes and Configuration Options
 
@@ -120,8 +120,10 @@ In addition to the default configuration, you can add device-specific configurat
 
 | Device | Possible Configuration | How To Customize | Options | Notes |
 |:-------|:-----------------------|:-----------------|:--------|:------|
-| 4xxx, 401xx, 402xx, 420xx | [cfg_services](https://github.com/torvalds/linux/blob/v6.6-rc5/Documentation/ABI/testing/sysfs-driver-qat) reports the configured services (crypto services or compression services) of the QAT device. | `ServicesEnabled=<value>` | compress:`dc`, crypto:`sym;asym`, <br>crypto+compress:`asym;dc`,<br>crypto+compress:`sym;dc` | 4xxx/401xx/402xx: Linux 6.0+ kernel. 420xx: Linux 6.8+ kernel. |
-| 4xxx, 401xx, 402xx, 420xx | [auto_reset](https://github.com/torvalds/linux/blob/a38297e3fb012ddfa7ce0321a7e5a8daeb1872b6/Documentation/ABI/testing/sysfs-driver-qat#L145) reports the setting of the QAT device's automatic error recovery functionality. | `AutoresetEnabled=<value>` | `on`, `off`, | Linux 6.8+ kernel. |
+| 4xxx, 401xx, 402xx, 420xx, 6xxx | [cfg_services](https://github.com/torvalds/linux/blob/v6.16/Documentation/ABI/testing/sysfs-driver-qat) reports the configured services (crypto services or compression services) of the QAT device. | `ServicesEnabled=<value>` | Available services: compress:`dc`, de-compress: `decomp`, (`6xxx` only), dc chaining feature: `dcc`, symmetric crypto: `sym`, asymmetric crypto: `asym`,  | 4xxx/401xx/402xx: Linux 6.0+, 420xx: Linux 6.8+, 6xxx Linux 6.16. |
+| 4xxx, 401xx, 402xx, 420xx, 6xxx | [auto_reset](https://github.com/torvalds/linux/blob/v6.16/Documentation/ABI/testing/sysfs-driver-qat#L145) reports the setting of the QAT device's automatic error recovery functionality. | `AutoresetEnabled=<value>` | `on`, `off`, | 4xxx/401xx/402xx/420xx: Linux 6.8+, 6xxx: Linux 6.16+ |
+
+**Note:** Service combinations are permitted for all services except `dcc`. On QAT Gen4 devices (`qat_4xxx` driver) a maximum of two services can be combined and on QAT Gen6 devices (`qat_6xxx` driver) a maximum of three services can be combined. The order of services is not significant. For instance, `sym;asym` is functionally equivalent to `asym;sym`.
 
 To create a provisioning `configMap`, run the following command before deploying initcontainer:
 
@@ -215,7 +217,7 @@ In order to utilise the QAT device plugin, QuickAssist SR-IOV virtual functions 
 You can verify this on your nodes by checking for the relevant PCI identifiers:
 
 ```bash
-for i in 0442 0443 18a1 37c9 6f55 19e3 4941 4943 4945 4947; do lspci -d 8086:$i; done
+for i in 0442 0443 18a1 37c9 6f55 19e3 4941 4943 4945 4947 4949; do lspci -d 8086:$i; done
 ```
 
 [1]:https://www-ssl.intel.com/content/www/us/en/design/products-and-solutions/processors-and-chipsets/purley/intel-xeon-scalable-processors.html

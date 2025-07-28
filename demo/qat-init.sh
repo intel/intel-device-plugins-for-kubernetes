@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # This script is based on qatlib's qat_init.sh
 NODE_NAME="${NODE_NAME:-}"
-ENABLED_QAT_PF_PCIIDS=${ENABLED_QAT_PF_PCIIDS:-37c8 4940 4942 4944 4946}
-SERVICES_LIST="sym asym sym;asym dc sym;dc asym;dc"
+ENABLED_QAT_PF_PCIIDS=${ENABLED_QAT_PF_PCIIDS:-37c8 4940 4942 4944 4946 4948}
+# TODO: check against qatlib
+SERVICES_LIST="sym asym sym;asym dc sym;dc asym;dc dcc decomp asym;sym;dc asym;sym;decomp"
 QAT_4XXX_DEVICE_PCI_ID="0x4940"
 QAT_401XX_DEVICE_PCI_ID="0x4942"
 QAT_402XX_DEVICE_PCI_ID="0x4944"
 QAT_420XX_DEVICE_PCI_ID="0x4946"
+QAT_6XXX_DEVICE_PCI_ID="0x4948"
 SERVICES_ENABLED="NONE"
 SERVICES_ENABLED_FOUND="FALSE"
 
@@ -39,7 +41,7 @@ sysfs_config() {
   if [ "$SERVICES_ENABLED_FOUND" = "TRUE" ]; then
     for DEVPATH in $DEVS; do
       PCI_DEV=$(cat "$DEVPATH"/device 2> /dev/null)
-      if [ "$PCI_DEV" != "$QAT_4XXX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_401XX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_402XX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_420XX_DEVICE_PCI_ID" ]; then
+      if [ "$PCI_DEV" != "$QAT_4XXX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_401XX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_402XX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_420XX_DEVICE_PCI_ID" ] && [ "$PCI_DEV" != "$QAT_6XXX_DEVICE_PCI_ID" ]; then
         continue
       fi
 
