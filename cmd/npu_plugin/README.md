@@ -103,5 +103,43 @@ master
 
 ## Testing and Demos
 
-TODO
+The NPU plugin functionality can be verified by deploying a [npu-plugin-demo](../../demo/intel-npu-demo/) image which runs tests with the Intel NPU.
 
+1. Make the image available to the cluster:
+
+    Build image:
+
+    ```bash
+    $ make intel-npu-demo
+    ```
+
+    Tag and push the `intel-npu-demo` image to a repository available in the cluster. Then modify the [intel-npu-workload.yaml's](../../demo/intel-npu-workload.yaml) image location accordingly:
+
+    ```bash
+    $ docker tag intel/intel-npu-demo:devel <repository>/intel/intel-npu-demo:latest
+    $ docker push <repository>/intel/intel-npu-demo:latest
+    $ $EDITOR ${INTEL_DEVICE_PLUGINS_SRC}/demo/intel-npu-workload.yaml
+    ```
+
+    If you are running the demo on a single node cluster, and do not have your own registry, you can add image to node image cache instead. For example, to import docker image to containerd cache:
+
+    ```bash
+    $ docker save intel/intel-npu-demo:devel | ctr -n k8s.io images import -
+    ```
+    Running `ctr` may require the use of `sudo`.
+
+1. Create a job:
+
+    ```bash
+    $ kubectl apply -f ${INTEL_DEVICE_PLUGINS_SRC}/demo/intel-npu-workload.yaml
+    job.batch/npu-workload created
+    ```
+
+1. Review the job's logs:
+
+    ```bash
+    $ kubectl get pods | fgrep npu-workload
+    # substitute the 'xxxxx' below for the pod name listed above
+    $ kubectl logs npu-workload-xxxxx
+    <log output>
+    ```
