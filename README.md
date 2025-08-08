@@ -196,12 +196,6 @@ The [Device plugins operator README](cmd/operator/README.md) gives the installat
 
 The [Device plugins Operator for OpenShift](https://github.com/intel/intel-technology-enabling-for-openshift) gives the installation and usage details for the operator available on [Red Hat OpenShift Container Platform](https://catalog.redhat.com/software/operators/detail/61e9f2d7b9cdd99018fc5736).
 
-## XeLink XPU Manager Sidecar
-
-To support interconnected GPUs in Kubernetes, XeLink sidecar is needed.
-
-The [XeLink XPU Manager sidecar README](cmd/xpumanager_sidecar/README.md) gives information how the sidecar functions and how to use it.
-
 ## Intel GPU Level-Zero sidecar
 
 Sidecar uses Level-Zero API to provide additional GPU information for the GPU plugin that it cannot get through sysfs interfaces.

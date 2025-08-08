@@ -26,7 +26,6 @@ jobs:
           - intel-dsa-plugin
           - intel-iaa-plugin
           - intel-idxd-config-initcontainer
-          - intel-xpumanager-sidecar
 
           # # Demo images
           - crypto-perf
