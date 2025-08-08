@@ -16,14 +16,20 @@ package v1
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
+var pciIDRegex regexp.Regexp
+
 // SetupWebhookWithManager sets up a webhook for GpuDevicePlugin custom resources.
 func (r *GpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	pciIDRegex = *regexp.MustCompile(`^0x[0-9a-f]{4}$`)
+
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		WithDefaulter(&commonDevicePluginDefaulter{
@@ -42,6 +48,34 @@ func (r *GpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 func (r *GpuDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
 	if r.Spec.SharedDevNum == 1 && r.Spec.PreferredAllocationPolicy != "none" {
 		return fmt.Errorf("%w: PreferredAllocationPolicy is valid only when setting sharedDevNum > 1", errValidation)
+	}
+
+	if r.Spec.AllowIDs != "" {
+		for id := range strings.SplitSeq(r.Spec.AllowIDs, ",") {
+			if id == "" {
+				return fmt.Errorf("%w: Empty PCI Device ID in AllowIDs", errValidation)
+			}
+
+			if !pciIDRegex.MatchString(id) {
+				return fmt.Errorf("%w: Invalid PCI Device ID: %s", errValidation, id)
+			}
+		}
+	}
+
+	if r.Spec.DenyIDs != "" {
+		for id := range strings.SplitSeq(r.Spec.DenyIDs, ",") {
+			if id == "" {
+				return fmt.Errorf("%w: Empty PCI Device ID in DenyIDs", errValidation)
+			}
+
+			if !pciIDRegex.MatchString(id) {
+				return fmt.Errorf("%w: Invalid PCI Device ID: %s", errValidation, id)
+			}
+		}
+	}
+
+	if len(r.Spec.AllowIDs) > 0 && len(r.Spec.DenyIDs) > 0 {
+		return fmt.Errorf("%w: AllowIDs and DenyIDs cannot be used together", errValidation)
 	}
 
 	return validatePluginImage(r.Spec.Image, ref.expectedImage, &ref.expectedVersion)

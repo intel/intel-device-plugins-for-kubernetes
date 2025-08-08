@@ -362,6 +362,93 @@ func TestScan(t *testing.T) {
 			expectedI915Monitors: 1,
 		},
 		{
+			name:      "two devices with only one allowed",
+			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64", "card1/device/drm/card1"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/device": []byte("0x1234"),
+				"card1/device/vendor": []byte("0x8086"),
+				"card1/device/device": []byte("0x9876"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/xe",
+				"card1/device/driver": "drivers/i915",
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+				"card1",
+				"by-path/pci-0000:00:01.0-card",
+				"by-path/pci-0000:00:01.0-render",
+			},
+			options:              cliOptions{enableMonitoring: true, allowIDs: "0x1234"},
+			expectedXeDevs:       1,
+			expectedXeMonitors:   1,
+			expectedI915Devs:     0,
+			expectedI915Monitors: 0,
+		},
+		{
+			name:      "three devices with two allowed",
+			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64", "card1/device/drm/card1", "card2/device/drm/card2"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/device": []byte("0x1234"),
+				"card1/device/vendor": []byte("0x8086"),
+				"card1/device/device": []byte("0x9876"),
+				"card2/device/vendor": []byte("0x8086"),
+				"card2/device/device": []byte("0x0101"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/xe",
+				"card1/device/driver": "drivers/i915",
+				"card2/device/driver": "drivers/i915",
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+				"card1",
+				"by-path/pci-0000:00:01.0-card",
+				"by-path/pci-0000:00:01.0-render",
+				"card2",
+				"by-path/pci-0000:00:02.0-card",
+				"by-path/pci-0000:00:02.0-render",
+			},
+			options:              cliOptions{enableMonitoring: true, allowIDs: "0x1234,0x9876"},
+			expectedXeDevs:       1,
+			expectedXeMonitors:   1,
+			expectedI915Devs:     1,
+			expectedI915Monitors: 1,
+		},
+		{
+			name:      "two devices with one denied",
+			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64", "card1/device/drm/card1"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/device": []byte("0x1234"),
+				"card1/device/vendor": []byte("0x8086"),
+				"card1/device/device": []byte("0x9876"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/xe",
+				"card1/device/driver": "drivers/i915",
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+				"card1",
+				"by-path/pci-0000:00:01.0-card",
+				"by-path/pci-0000:00:01.0-render",
+			},
+			options:              cliOptions{enableMonitoring: true, denyIDs: "0x1234"},
+			expectedXeDevs:       0,
+			expectedXeMonitors:   0,
+			expectedI915Devs:     1,
+			expectedI915Monitors: 1,
+		},
+		{
 			name:      "sriov-1-pf-no-vfs + monitoring",
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
@@ -1046,5 +1133,63 @@ func TestCDIDeviceInclusion(t *testing.T) {
 	}
 	if tree.DeviceTypeCount("xe") != 1 {
 		t.Error("Invalid count for device (xe)")
+	}
+}
+
+func TestParsePCIDeviceIDs(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		wantError bool
+	}{
+		{
+			name:      "valid single ID",
+			input:     "0x1234",
+			wantError: false,
+		},
+		{
+			name:      "valid multiple IDs",
+			input:     "0x1234,0x5678,0x9abc",
+			wantError: false,
+		},
+		{
+			name:      "valid IDs with spaces",
+			input:     " 0x1234 , 0x5678 ",
+			wantError: false,
+		},
+		{
+			name:      "empty string",
+			input:     "",
+			wantError: true,
+		},
+		{
+			name:      "invalid ID format",
+			input:     "0x1234,abcd",
+			wantError: true,
+		},
+		{
+			name:      "invalid hex length",
+			input:     "0x123,0x5678",
+			wantError: true,
+		},
+		{
+			name:      "extra comma",
+			input:     "0x1234,",
+			wantError: true,
+		},
+		{
+			name:      "capita hex",
+			input:     "0xAA12,",
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validatePCIDeviceIDs(tt.input)
+			if (err != nil) != tt.wantError {
+				t.Errorf("parsePCIDeviceIDs() error = %v, wantError %v", err, tt.wantError)
+			}
+		})
 	}
 }
