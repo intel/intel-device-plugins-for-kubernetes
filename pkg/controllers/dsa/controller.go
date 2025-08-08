@@ -61,7 +61,6 @@ func SetupReconciler(mgr ctrl.Manager, args controllers.ControllerOptions) error
 }
 
 type controller struct {
-	controllers.DefaultServiceAccountFactory
 	scheme *runtime.Scheme
 	args   controllers.ControllerOptions
 }

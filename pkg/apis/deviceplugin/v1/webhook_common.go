@@ -103,7 +103,7 @@ func (r *commonDevicePluginValidator) ValidateCreate(ctx context.Context, obj ru
 	case *DsaDevicePlugin:
 		return nil, v.validatePlugin(r)
 	case *GpuDevicePlugin:
-		return nil, v.validatePlugin(ctx, r)
+		return nil, v.validatePlugin(r)
 	case *FpgaDevicePlugin:
 		return nil, v.validatePlugin(r)
 	case *IaaDevicePlugin:
@@ -127,7 +127,7 @@ func (r *commonDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj
 	case *DsaDevicePlugin:
 		return nil, v.validatePlugin(r)
 	case *GpuDevicePlugin:
-		return nil, v.validatePlugin(ctx, r)
+		return nil, v.validatePlugin(r)
 	case *FpgaDevicePlugin:
 		return nil, v.validatePlugin(r)
 	case *IaaDevicePlugin:

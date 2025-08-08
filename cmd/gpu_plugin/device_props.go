@@ -15,34 +15,21 @@
 package main
 
 import (
-	"slices"
-
-	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/labeler"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 	"k8s.io/klog/v2"
 )
 
 type DeviceProperties struct {
 	currentDriver string
-	drmDrivers    map[string]bool
-	tileCounts    []uint64
 	isPfWithVfs   bool
 }
 
-type invalidTileCountErr struct {
-	error
-}
-
 func newDeviceProperties() *DeviceProperties {
-	return &DeviceProperties{
-		drmDrivers: make(map[string]bool),
-	}
+	return &DeviceProperties{}
 }
 
 func (d *DeviceProperties) fetch(cardPath string) {
 	d.isPfWithVfs = pluginutils.IsSriovPFwithVFs(cardPath)
-
-	d.tileCounts = append(d.tileCounts, labeler.GetTileCount(cardPath))
 
 	driverName, err := pluginutils.ReadDeviceDriver(cardPath)
 	if err != nil {
@@ -52,11 +39,6 @@ func (d *DeviceProperties) fetch(cardPath string) {
 	}
 
 	d.currentDriver = driverName
-	d.drmDrivers[d.currentDriver] = true
-}
-
-func (d *DeviceProperties) drmDriverCount() int {
-	return len(d.drmDrivers)
 }
 
 func (d *DeviceProperties) driver() string {
@@ -65,21 +47,4 @@ func (d *DeviceProperties) driver() string {
 
 func (d *DeviceProperties) monitorResource() string {
 	return d.currentDriver + monitorSuffix
-}
-
-func (d *DeviceProperties) maxTileCount() (uint64, error) {
-	if len(d.tileCounts) == 0 {
-		return 0, invalidTileCountErr{}
-	}
-
-	minCount := slices.Min(d.tileCounts)
-	maxCount := slices.Max(d.tileCounts)
-
-	if minCount != maxCount {
-		klog.Warningf("Node's GPUs are heterogenous (min: %d, max: %d tiles)", minCount, maxCount)
-
-		return 0, invalidTileCountErr{}
-	}
-
-	return maxCount, nil
 }
