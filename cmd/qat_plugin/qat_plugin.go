@@ -19,10 +19,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
-
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/qat_plugin/dpdkdrv"
-	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/qat_plugin/kerneldrv"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	"k8s.io/klog/v2"
 )
@@ -37,29 +34,19 @@ func main() {
 		err    error
 	)
 
-	mode := flag.String("mode", "dpdk", "plugin mode which can be either dpdk (default) or kernel")
-
 	dpdkDriver := flag.String("dpdk-driver", "vfio-pci", "DPDK Device driver for configuring the QAT device")
 	kernelVfDrivers := flag.String("kernel-vf-drivers", "4xxxvf,420xxvf", "Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC, C62x, C3xxx, C4xxx, 4xxx, 420xxx, and D15xx")
 	preferredAllocationPolicy := flag.String("allocation-policy", "", "Modes of allocating QAT devices: balanced and packed")
 	maxNumDevices := flag.Int("max-num-devices", 64, "maximum number of QAT devices to be provided to the QuickAssist device plugin")
 	flag.Parse()
 
-	switch *mode {
-	case "dpdk":
-		plugin, err = dpdkdrv.NewDevicePlugin(*maxNumDevices, *kernelVfDrivers, *dpdkDriver, *preferredAllocationPolicy)
-	case "kernel":
-		plugin = kerneldrv.NewDevicePlugin()
-	default:
-		err = errors.Errorf("Unknown mode: %s", *mode)
-	}
-
+	plugin, err = dpdkdrv.NewDevicePlugin(*maxNumDevices, *kernelVfDrivers, *dpdkDriver, *preferredAllocationPolicy)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
-	klog.V(1).Infof("QAT device plugin started in '%s' mode", *mode)
+	klog.V(1).Infof("QAT device plugin started")
 
 	manager := deviceplugin.NewManager(namespace, plugin)
 

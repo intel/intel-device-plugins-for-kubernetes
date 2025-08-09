@@ -177,7 +177,7 @@ endif
 
 dockerlib = build/docker/lib
 dockertemplates = build/docker/templates
-images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in | grep -v -e dlb -e fpga -e kerneldrv -e xpumanager-sidecar)
+images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in | grep -v -e dlb -e fpga -e xpumanager-sidecar)
 dockerfiles = $(shell basename -s .in -a $(dockertemplates)/*.Dockerfile.in | xargs -I"{}" echo build/docker/{})
 
 test-image-base-layer:
