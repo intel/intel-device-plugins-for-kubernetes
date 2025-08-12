@@ -38,7 +38,6 @@ import (
 const (
 	kustomizationYaml   = "deployments/gpu_plugin/kustomization.yaml"
 	monitoringYaml      = "deployments/gpu_plugin/overlays/monitoring_shared-dev_nfd/kustomization.yaml"
-	rmEnabledYaml       = "deployments/gpu_plugin/overlays/fractional_resources/kustomization.yaml"
 	healthMgmtYaml      = "deployments/gpu_plugin/overlays/health/kustomization.yaml"
 	nfdRulesYaml        = "deployments/nfd/overlays/node-feature-rules/kustomization.yaml"
 	containerName       = "testcontainer"
@@ -87,16 +86,6 @@ func describe() {
 	monitoringPath, errFailedToLocateRepoFile := utils.LocateRepoFile(monitoringYaml)
 	if errFailedToLocateRepoFile != nil {
 		framework.Failf("unable to locate %q: %v", monitoringYaml, errFailedToLocateRepoFile)
-	}
-
-	nfdRulesPath, errFailedToLocateRepoFile := utils.LocateRepoFile(nfdRulesYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", nfdRulesYaml, errFailedToLocateRepoFile)
-	}
-
-	resourceManagerPath, errFailedToLocateRepoFile := utils.LocateRepoFile(rmEnabledYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", rmEnabledYaml, errFailedToLocateRepoFile)
 	}
 
 	healthMgmtPath, errFailedToLocateRepoFile := utils.LocateRepoFile(healthMgmtYaml)
@@ -203,27 +192,6 @@ func describe() {
 		ginkgo.Context("When [Deployment:healthManagement] deployment is applied [Resource:i915]", func() {
 			ginkgo.It("check if i915 resources is available", func(ctx context.Context) {
 				createPluginAndVerifyExistence(f, ctx, healthMgmtPath, "gpu.intel.com/i915")
-			})
-		})
-
-		ginkgo.Context("When [Deployment:resourceManager] deployment is applied [Resource:i915]", func() {
-			ginkgo.It("check if i915 resources is available", func(ctx context.Context) {
-				e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(nfdRulesPath))
-
-				createPluginAndVerifyExistence(f, ctx, resourceManagerPath, "gpu.intel.com/i915")
-
-				// To speed up extended resource detection, let's restart NFD worker
-				e2ekubectl.RunKubectlOrDie("node-feature-discovery", "rollout", "restart", "daemonset", "nfd-worker")
-
-				ginkgo.By("checking if the millicores resource is allocatable")
-				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "gpu.intel.com/millicores", 30*time.Second, utils.WaitForPositiveResource); err != nil {
-					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-				}
-
-				ginkgo.By("checking if the tiles resource is allocatable")
-				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "gpu.intel.com/tiles", 30*time.Second, utils.WaitForPositiveResource); err != nil {
-					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-				}
 			})
 		})
 

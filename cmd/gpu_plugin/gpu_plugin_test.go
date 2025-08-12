@@ -28,7 +28,6 @@ import (
 	"k8s.io/utils/strings/slices"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
-	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/rm"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	cdispec "tags.cncf.io/container-device-interface/specs-go"
 )
@@ -56,23 +55,6 @@ func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.i915monitorCount = len(newDeviceTree[deviceTypeDefault+monitorSuffix])
 
 	n.scanDone <- true
-}
-
-type mockResourceManager struct {
-	tileCount uint64
-}
-
-func (m *mockResourceManager) CreateFractionalResourceResponse(*v1beta1.AllocateRequest) (*v1beta1.AllocateResponse, error) {
-	return &v1beta1.AllocateResponse{}, &dpapi.UseDefaultMethodError{}
-}
-func (m *mockResourceManager) SetDevInfos(rm.DeviceInfoMap) {}
-
-func (m *mockResourceManager) GetPreferredFractionalAllocation(*v1beta1.PreferredAllocationRequest) (*v1beta1.PreferredAllocationResponse, error) {
-	return &v1beta1.PreferredAllocationResponse{}, &dpapi.UseDefaultMethodError{}
-}
-
-func (m *mockResourceManager) SetTileCountPerCard(count uint64) {
-	m.tileCount = count
 }
 
 type mockL0Service struct {
@@ -203,12 +185,8 @@ func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
 }
 
 func TestNewDevicePlugin(t *testing.T) {
-	if newDevicePlugin("", "", cliOptions{sharedDevNum: 2, resourceManagement: false}) == nil {
+	if newDevicePlugin("", "", cliOptions{sharedDevNum: 2}) == nil {
 		t.Error("Failed to create plugin")
-	}
-
-	if newDevicePlugin("", "", cliOptions{sharedDevNum: 2, resourceManagement: true}) != nil {
-		t.Error("Unexpectedly managed to create resource management enabled plugin inside unit tests")
 	}
 }
 
@@ -240,7 +218,7 @@ func TestGetPreferredAllocation(t *testing.T) {
 		},
 	}
 
-	plugin := newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "none"})
+	plugin := newDevicePlugin("", "", cliOptions{sharedDevNum: 5, preferredAllocationPolicy: "none"})
 	response, _ := plugin.GetPreferredAllocation(rqt)
 
 	sort.Strings(response.ContainerResponses[0].DeviceIDs)
@@ -249,28 +227,28 @@ func TestGetPreferredAllocation(t *testing.T) {
 		t.Error("Unexpected return value for none preferred allocation", response.ContainerResponses[0].DeviceIDs)
 	}
 
-	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "balanced"})
+	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, preferredAllocationPolicy: "balanced"})
 	response, _ = plugin.GetPreferredAllocation(rqt)
 
 	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-0", "card1-0", "card2-0", "card3-0"}) {
 		t.Error("Unexpected return value for balanced preferred allocation", response.ContainerResponses[0].DeviceIDs)
 	}
 
-	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "packed"})
+	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, preferredAllocationPolicy: "packed"})
 	response, _ = plugin.GetPreferredAllocation(rqt)
 
 	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-0", "card0-1", "card0-2", "card0-3"}) {
 		t.Error("Unexpected return value for packed preferred allocation", response.ContainerResponses[0].DeviceIDs)
 	}
 
-	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "none"})
+	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, preferredAllocationPolicy: "none"})
 	response, _ = plugin.GetPreferredAllocation(rqtErr)
 
 	if response != nil {
 		t.Error("Fail to handle the input error that req.AllocationSize is greater than len(req.AvailableDeviceIDs).")
 	}
 
-	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, resourceManagement: false, preferredAllocationPolicy: "none"})
+	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, preferredAllocationPolicy: "none"})
 	response, _ = plugin.GetPreferredAllocation(rqtNotEnough)
 
 	sort.Strings(response.ContainerResponses[0].DeviceIDs)
@@ -282,17 +260,9 @@ func TestGetPreferredAllocation(t *testing.T) {
 }
 
 func TestAllocate(t *testing.T) {
-	plugin := newDevicePlugin("", "", cliOptions{sharedDevNum: 2, resourceManagement: false})
+	plugin := newDevicePlugin("", "", cliOptions{sharedDevNum: 2})
 
 	_, err := plugin.Allocate(&v1beta1.AllocateRequest{})
-	if _, ok := err.(*dpapi.UseDefaultMethodError); !ok {
-		t.Errorf("Unexpected return value: %+v", err)
-	}
-
-	// mock the rm
-	plugin.resMan = &mockResourceManager{}
-
-	_, err = plugin.Allocate(&v1beta1.AllocateRequest{})
 	if _, ok := err.(*dpapi.UseDefaultMethodError); !ok {
 		t.Errorf("Unexpected return value: %+v", err)
 	}
@@ -684,137 +654,6 @@ func TestScanWsl(t *testing.T) {
 			if tc.expectedDxgDevs != notifier.dxgCount {
 				t.Errorf("Expected %d, discovered %d devices (dxg)",
 					tc.expectedI915Devs, notifier.i915Count)
-			}
-		})
-	}
-}
-
-func TestScanFails(t *testing.T) {
-	tc := TestCaseDetails{
-		name:      "xe and i915 devices with rm will fail",
-		sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64", "card1/device/drm/card1"},
-		sysfsfiles: map[string][]byte{
-			"card0/device/vendor": []byte("0x8086"),
-			"card1/device/vendor": []byte("0x8086"),
-		},
-		symlinkfiles: map[string]string{
-			"card0/device/driver": "drivers/xe",
-			"card1/device/driver": "drivers/i915",
-		},
-		devfsdirs: []string{
-			"card0",
-			"card1",
-		},
-	}
-
-	t.Run(tc.name, func(t *testing.T) {
-		root, err := os.MkdirTemp("", "test_new_device_plugin")
-		if err != nil {
-			t.Fatalf("Can't create temporary directory: %+v", err)
-		}
-		// dirs/files need to be removed for the next test
-		defer os.RemoveAll(root)
-
-		sysfs, devfs, err := createTestFiles(root, tc)
-		if err != nil {
-			t.Errorf("Unexpected error: %+v", err)
-		}
-
-		plugin := newDevicePlugin(sysfs, devfs, tc.options)
-
-		plugin.resMan = &mockResourceManager{}
-
-		notifier := &mockNotifier{
-			scanDone: plugin.scanDone,
-		}
-
-		err = plugin.Scan(notifier)
-		if err == nil {
-			t.Error("Unexpected nil error")
-		}
-	})
-}
-
-func TestScanWithRmAndTiles(t *testing.T) {
-	tcs := []TestCaseDetails{
-		{
-			name: "two tile xe devices with rm enabled - homogeneous",
-			sysfsdirs: []string{
-				"card0/device/drm/card0",
-				"card1/device/drm/card1",
-				"card0/device/tile0/gt0",
-				"card0/device/tile1/gt1",
-				"card1/device/tile0/gt0",
-				"card1/device/tile1/gt1",
-			},
-			sysfsfiles: map[string][]byte{
-				"card0/device/vendor": []byte("0x8086"),
-				"card1/device/vendor": []byte("0x8086"),
-			},
-			symlinkfiles: map[string]string{
-				"card0/device/driver": "drivers/xe",
-				"card1/device/driver": "drivers/xe",
-			},
-			devfsdirs: []string{
-				"card0",
-				"card1",
-			},
-		},
-		{
-			name: "2 & 1 tile xe devices with rm enabled - heterogeneous",
-			sysfsdirs: []string{
-				"card0/device/drm/card0",
-				"card1/device/drm/card1",
-				"card0/device/tile0/gt0",
-				"card0/device/tile1/gt1",
-				"card1/device/tile0/gt0",
-			},
-			sysfsfiles: map[string][]byte{
-				"card0/device/vendor": []byte("0x8086"),
-				"card1/device/vendor": []byte("0x8086"),
-			},
-			symlinkfiles: map[string]string{
-				"card0/device/driver": "drivers/xe",
-				"card1/device/driver": "drivers/xe",
-			},
-			devfsdirs: []string{
-				"card0",
-				"card1",
-			},
-		},
-	}
-
-	expectedTileCounts := []uint64{2, 0}
-
-	for i, tc := range tcs {
-		t.Run(tc.name, func(t *testing.T) {
-			root, err := os.MkdirTemp("", "test_new_device_plugin")
-			if err != nil {
-				t.Fatalf("Can't create temporary directory: %+v", err)
-			}
-			// dirs/files need to be removed for the next test
-			defer os.RemoveAll(root)
-
-			sysfs, devfs, err := createTestFiles(root, tc)
-			if err != nil {
-				t.Errorf("Unexpected error: %+v", err)
-			}
-
-			plugin := newDevicePlugin(sysfs, devfs, tc.options)
-
-			rm := &mockResourceManager{}
-			plugin.resMan = rm
-
-			notifier := &mockNotifier{
-				scanDone: plugin.scanDone,
-			}
-
-			err = plugin.Scan(notifier)
-			if err != nil {
-				t.Error("Unexpected error")
-			}
-			if rm.tileCount != expectedTileCounts[i] {
-				t.Error("Unexpected tilecount for RM")
 			}
 		})
 	}

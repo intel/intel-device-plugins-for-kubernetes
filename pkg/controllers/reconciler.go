@@ -26,7 +26,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,52 +40,14 @@ var (
 	ImageMinVersion = versionutil.MustParseSemantic("0.32.0")
 )
 
-const (
-	sharedObjectsNone = iota
-	sharedObjectsMayUse
-	sharedObjectsUsed
-)
-
 // +kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;delete
-// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;watch;create;delete
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
-// +kubebuilder:rbac:groups="",resources=nodes/proxy,verbs=get;list
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=create
 // +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=use
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,resourceNames=d1c7b6d5.intel.com,verbs=get;update
 
-// SharedObjectsFactory provides functions for creating service account and cluster rule binding objects.
-// Note that the rbac Role can be generated from kubebuilder:rbac comment (some examples above),
-// which is the reason why this interface does not yet have a NewRole function.
-type SharedObjectsFactory interface {
-	// Indicates if plugin will ever require shared objects. Not all plugins do.
-	PluginMayRequireSharedObjects() bool
-	// Indicates if plugin currently require shared objects.
-	PluginRequiresSharedObjects(ctx context.Context, client client.Client) bool
-	NewSharedServiceAccount() *v1.ServiceAccount
-	NewSharedClusterRoleBinding() *rbacv1.ClusterRoleBinding
-}
-
-// DefaultServiceAccountFactory is an empty ServiceAccountFactory. "default" will be used for the service account then.
-type DefaultServiceAccountFactory struct{}
-
-func (d *DefaultServiceAccountFactory) NewSharedServiceAccount() *v1.ServiceAccount {
-	return nil
-}
-func (d *DefaultServiceAccountFactory) NewSharedClusterRoleBinding() *rbacv1.ClusterRoleBinding {
-	return nil
-}
-func (d *DefaultServiceAccountFactory) PluginMayRequireSharedObjects() bool {
-	return false
-}
-func (d *DefaultServiceAccountFactory) PluginRequiresSharedObjects(ctx context.Context, client client.Client) bool {
-	return false
-}
-
 // DevicePluginController provides functionality for manipulating actual device plugin CRD objects.
 type DevicePluginController interface {
-	SharedObjectsFactory
 	CreateEmptyObject() (devicePlugin client.Object)
 	NewDaemonSet(devicePlugin client.Object) *apps.DaemonSet
 	UpdateDaemonSet(client.Object, *apps.DaemonSet) (updated bool)
@@ -138,27 +99,6 @@ func (r *reconciler) fetchObjects(ctx context.Context, req ctrl.Request, log log
 	return &childDaemonSets, nil
 }
 
-// createSharedObjects creates required objects for Reconcile.
-func (r *reconciler) createSharedObjects(ctx context.Context, log logr.Logger) (result ctrl.Result, err error) {
-	// Since ServiceAccount and ClusterRoleBinding are can be shared by many,
-	// it's not owned by the CR. 'SetControllerReference' in the create daemonset function.
-	sa := r.controller.NewSharedServiceAccount()
-
-	if err := r.Create(ctx, sa); client.IgnoreAlreadyExists(err) != nil {
-		log.Error(err, "unable to create shared ServiceAccount")
-		return result, err
-	}
-
-	rb := r.controller.NewSharedClusterRoleBinding()
-
-	if err := r.Create(ctx, rb); client.IgnoreAlreadyExists(err) != nil {
-		log.Error(err, "unable to create shared ClusterRoleBinding")
-		return ctrl.Result{}, err
-	}
-
-	return result, nil
-}
-
 func UpgradeImages(ctx context.Context, image *string, initimage *string) (upgrade bool) {
 	for _, s := range []*string{image, initimage} {
 		if s == nil {
@@ -202,25 +142,6 @@ func upgradeDevicePluginImages(ctx context.Context, r *reconciler, devicePlugin 
 	}
 }
 
-// determinateSharedObjectReqs Determinates if the installed plugins require shared objects.
-// The result is one of three: no, may use and uses currently.
-func (r *reconciler) determinateSharedObjectReqs(ctx context.Context, req ctrl.Request) int {
-	ret := sharedObjectsNone
-
-	if !r.controller.PluginMayRequireSharedObjects() {
-		return ret
-	}
-
-	ret = sharedObjectsMayUse
-
-	// Decide from the untyped objects the need to have shared objects.
-	if r.controller.PluginRequiresSharedObjects(ctx, r.Client) {
-		ret = sharedObjectsUsed
-	}
-
-	return ret
-}
-
 // Reconcile reconciles a device plugin object.
 func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
@@ -230,20 +151,10 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err2
 	}
 
-	sharedObjectsNeed := r.determinateSharedObjectReqs(ctx, req)
 	devicePlugin := r.controller.CreateEmptyObject()
 
 	if err := r.Get(ctx, req.NamespacedName, devicePlugin); err != nil {
-		// Delete shared objects if they are not needed anymore.
-		r.maybeDeleteSharedObjects(ctx, sharedObjectsNeed, log)
-
-		return r.maybeDeleteDaemonSets(ctx, err, childDaemonSets.Items, log)
-	}
-
-	if sharedObjectsNeed == sharedObjectsUsed {
-		if result, err := r.createSharedObjects(ctx, log); err != nil {
-			return result, err
-		}
+		return ctrl.Result{}, err
 	}
 
 	// Upgrade device plugin object's image, initImage etc.
@@ -295,11 +206,6 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}
 	}
 
-	// Drop redundant daemon sets, role bindings and service accounts, if any.
-	r.maybeDeleteRedundantDaemonSets(ctx, childDaemonSets.Items, log)
-	// Delete shared objects if they are not needed anymore.
-	r.maybeDeleteSharedObjects(ctx, sharedObjectsNeed, log)
-
 	return ctrl.Result{}, nil
 }
 
@@ -324,7 +230,7 @@ func indexDaemonSets(ctx context.Context, mgr ctrl.Manager, apiGVString, pluginK
 		})
 }
 
-func indexPods(ctx context.Context, mgr ctrl.Manager, apiGVString, pluginKind, ownerKey string) error {
+func indexPods(ctx context.Context, mgr ctrl.Manager, _, _, ownerKey string) error {
 	return mgr.GetFieldIndexer().IndexField(ctx, &v1.Pod{}, ownerKey,
 		func(rawObj client.Object) []string {
 			// grab the Pod object, extract the owner...
@@ -387,58 +293,4 @@ func (r *reconciler) createDaemonSet(ctx context.Context, dp client.Object, log 
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func (r *reconciler) maybeDeleteDaemonSets(ctx context.Context, err error, daemonSets []apps.DaemonSet, log logr.Logger) (ctrl.Result, error) {
-	if apierrors.IsNotFound(err) {
-		for i := range daemonSets {
-			if err = r.Delete(ctx, &daemonSets[i], client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
-				log.Error(err, "unable to delete DaemonSet", "DaemonSet", daemonSets[i])
-				return ctrl.Result{}, err
-			}
-		}
-
-		log.V(1).Info("deleted DaemonSets owned by deleted custom device plugin object")
-
-		return ctrl.Result{}, nil
-	}
-
-	log.Error(err, "unable to fetch custom device plugin object")
-
-	return ctrl.Result{}, err
-}
-
-func (r *reconciler) maybeDeleteRedundantDaemonSets(ctx context.Context, dsets []apps.DaemonSet, log logr.Logger) {
-	count := len(dsets)
-	if count > 1 {
-		log.V(0).Info("there are redundant DaemonSets", "redundantDS", count-1)
-
-		redundantSets := dsets[1:]
-		for i := range redundantSets {
-			if err := r.Delete(ctx, &redundantSets[i], client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
-				log.Error(err, "unable to delete redundant DaemonSet", "DaemonSet", redundantSets[i])
-			} else {
-				log.V(1).Info("deleted redundant DaemonSet", "DaemonSet", redundantSets[i])
-			}
-		}
-	}
-}
-
-func (r *reconciler) maybeDeleteSharedObjects(ctx context.Context, sharedObjectsNeed int, log logr.Logger) {
-	// Delete shared objects only if plugin may use but is not currently using any.
-	if sharedObjectsNeed != sharedObjectsMayUse {
-		return
-	}
-
-	sa := r.controller.NewSharedServiceAccount()
-
-	if err := r.Delete(ctx, sa, client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
-		log.Error(err, "unable to delete redundant shared ServiceAccount", "ServiceAccount", sa)
-	}
-
-	crb := r.controller.NewSharedClusterRoleBinding()
-
-	if err := r.Delete(ctx, crb, client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
-		log.Error(err, "unable to delete redundant shared ClusterRoleBinding", "ClusterRoleBinding", crb)
-	}
 }

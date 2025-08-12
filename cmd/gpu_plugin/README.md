@@ -47,8 +47,6 @@ Intel GPU plugin may register four node resources to the Kubernetes cluster:
 | gpu.intel.com/xe | GPU instance running new `xe` KMD |
 | gpu.intel.com/xe_monitoring | Monitoring resource for the new `xe` KMD devices |
 
-While GPU plugin basic operations support nodes having both (`i915` and `xe`) KMDs on the same node, its resource management (=GAS) does not, for that node needs to have only one of the KMDs present.
-
 For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 
 ## Modes and Configuration Options
@@ -56,11 +54,10 @@ For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 | Flag | Argument | Default | Meaning |
 |:---- |:-------- |:------- |:------- |
 | -enable-monitoring | - | disabled | Enable '*_monitoring' resource that provides access to all Intel GPU devices on the node, [see use](./monitoring.md) |
-| -resource-manager | - | disabled | Deprecated. Enable fractional resource management, [see use](./fractional.md) |
 | -health-management | - | disabled | Enable health management by requesting data from oneAPI/Level-Zero interface. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. See [health management](#health-management) |
 | -wsl | - | disabled | Adapt plugin to run in the WSL environment. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
-| -allocation-policy | string | none | 3 possible values: balanced, packed, none. For shared-dev-num > 1: _balanced_ mode spreads workloads among GPU devices, _packed_ mode fills one GPU fully before moving to next, and _none_ selects first available device from kubelet. Default is _none_. Allocation policy does not have an effect when resource manager is enabled. |
+| -allocation-policy | string | none | 3 possible values: balanced, packed, none. For shared-dev-num > 1: _balanced_ mode spreads workloads among GPU devices, _packed_ mode fills one GPU fully before moving to next, and _none_ selects first available device from kubelet. Default is _none_. |
 
 The plugin also accepts a number of other arguments (common to all plugins) related to logging.
 Please use the -h option to see the complete list of logging related options.
@@ -75,9 +72,6 @@ Intel GPU-plugin supports a few different operation modes. Depending on the work
 |:---- |:-------- |:------- |:------- |
 | shared-dev-num == 1 | No, 1 container per GPU | Workloads using all GPU capacity, e.g. AI training | Yes |
 | shared-dev-num > 1 | Yes, >1 containers per GPU | (Batch) workloads using only part of GPU resources, e.g. inference, media transcode/analytics, or CPU bound GPU workloads | No |
-| shared-dev-num > 1 && resource-management | Depends on resource requests | Any. For requirements and usage, see [fractional resource management](./fractional.md) | Yes. 1000 millicores = exclusive GPU usage. See note below. |
-
-> **Note**: Exclusive GPU usage with >=1000 millicores requires that also *all other GPU containers* specify (non-zero) millicores resource usage.
 
 ## Installing driver and firmware for Intel GPUs
 
@@ -121,10 +115,6 @@ $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes
 ### Install with Operator
 
 GPU plugin can be installed with the Intel Device Plugin Operator. It allows configuring GPU plugin's parameters without kustomizing the deployment files. The general installation is described in the [install documentation](../operator/README.md#installation). For configuring the GPU Custom Resource (CR), see the [configuration options](#modes-and-configuration-options) and [operation modes](#operation-modes-for-different-workload-types).
-
-### Install alongside with GPU Aware Scheduling (deprecated)
-
-GPU plugin can be installed alongside with GPU Aware Scheduling (GAS). It allows scheduling Pods which e.g. request only partial use of a GPU. The installation is described in [fractional resources](./fractional.md) page.
 
 ### Verify Plugin Installation
 
@@ -212,9 +202,9 @@ Furthermore, the deployments `securityContext` must be configured with appropria
 
 More info: https://kubernetes.io/blog/2021/11/09/non-root-containers-and-devices/
 
-### Labels created by GPU plugin
+### Labels created for Intel GPUs via NFD
 
-If installed with NFD and started with resource-management, plugin will export a set of labels for the node. For detailed info, see [labeling documentation](./labels.md).
+When NFD's NodeFeatureRules for Intel GPUs are installed, nodes are labeled with a variaty of GPU specific labels. For detailed info, see [labeling documentation](./labels.md).
 
 ### SR-IOV use with the plugin
 

@@ -103,7 +103,7 @@ func (r *commonDevicePluginValidator) ValidateCreate(ctx context.Context, obj ru
 	case *DsaDevicePlugin:
 		return nil, v.validatePlugin(r)
 	case *GpuDevicePlugin:
-		return nil, v.validatePlugin(ctx, r)
+		return nil, v.validatePlugin(r)
 	case *FpgaDevicePlugin:
 		return nil, v.validatePlugin(r)
 	case *IaaDevicePlugin:
@@ -118,16 +118,16 @@ func (r *commonDevicePluginValidator) ValidateCreate(ctx context.Context, obj ru
 }
 
 // ValidateUpdate implements admission.CustomValidator so a webhook will be registered for the type.
-func (r *commonDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj runtime.Object, newObj runtime.Object) (admission.Warnings, error) {
+func (r *commonDevicePluginValidator) ValidateUpdate(ctx context.Context, _ runtime.Object, newObj runtime.Object) (admission.Warnings, error) {
 	logf.FromContext(ctx).Info("validate update")
 
-	switch v := oldObj.(type) {
+	switch v := newObj.(type) {
 	case *DlbDevicePlugin:
 		return nil, v.validatePlugin(r)
 	case *DsaDevicePlugin:
 		return nil, v.validatePlugin(r)
 	case *GpuDevicePlugin:
-		return nil, v.validatePlugin(ctx, r)
+		return nil, v.validatePlugin(r)
 	case *FpgaDevicePlugin:
 		return nil, v.validatePlugin(r)
 	case *IaaDevicePlugin:
@@ -137,7 +137,7 @@ func (r *commonDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj
 	case *SgxDevicePlugin:
 		return nil, v.validatePlugin(r)
 	default:
-		return nil, fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, oldObj)
+		return nil, fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, newObj)
 	}
 }
 

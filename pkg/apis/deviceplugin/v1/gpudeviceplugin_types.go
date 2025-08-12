@@ -36,7 +36,6 @@ type GpuDevicePluginSpec struct {
 
 	// PreferredAllocationPolicy sets the mode of allocating GPU devices on a node.
 	// See documentation for detailed description of the policies. Only valid when SharedDevNum > 1 is set.
-	// Not applicable with ResourceManager.
 	// +kubebuilder:validation:Enum=balanced;packed;none
 	PreferredAllocationPolicy string `json:"preferredAllocationPolicy,omitempty"`
 
@@ -50,9 +49,6 @@ type GpuDevicePluginSpec struct {
 	// LogLevel sets the plugin's log level.
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`
-
-	// ResourceManager handles the fractional resource management for multi-GPU nodes. Enable only for clusters with GPU Aware Scheduling.
-	ResourceManager bool `json:"resourceManager,omitempty"`
 
 	// EnableMonitoring enables the monitoring resource ('i915_monitoring')
 	// which gives access to all GPU devices on given node. Typically used with Intel XPU-Manager.

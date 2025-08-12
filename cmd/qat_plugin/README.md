@@ -43,7 +43,6 @@ The QAT plugin can take a number of command line arguments, summarised in the fo
 | -dpdk-driver | string | DPDK Device driver for configuring the QAT device (default: `vfio-pci`) |
 | -kernel-vf-drivers | string | Comma separated list of the QuickAssist VFs to search and use in the system. Devices supported: DH895xCC, C62x, C3xxx, 4xxx/401xx/402xx, 420xx, C4xxx and D15xx (default: `4xxxvf,420xxvf`) |
 | -max-num-devices | int | maximum number of QAT devices to be provided to the QuickAssist device plugin (default: `64`) |
-| -mode | string | Deprecated: plugin mode which can be either `dpdk` or `kernel` (default: `dpdk`).|
 | -allocation-policy | string | 2 possible values: balanced and packed. Balanced mode spreads allocated QAT VF resources balanced among QAT PF devices, and packed mode packs one QAT PF device full of QAT VF resources before allocating resources from the next QAT PF. (There is no default.) |
 
 The plugin also accepts a number of other arguments related to logging. Please use the `-h` option to see
@@ -58,15 +57,6 @@ For more details on the `-dpdk-driver` choice, see
 
 For more details on the available options to the `-kernel-vf-drivers` option, see the list of
 vf drivers available in the [Linux Kernel](https://github.com/torvalds/linux/tree/master/drivers/crypto/intel/qat).
-
-If the `-mode` parameter is set to `kernel`, no other parameter documented above are valid,
-except the `klog` logging related parameters.
-`kernel` mode implements resource allocation based on system configured [logical instances][7] and
-it does not guarantee full device isolation between containers. Therefore, it's not recommended.
-
-> **Note**: `-mode` parameter is deprecated and it is also not made available as an option to
-> the operator based deployment. Furthermore, `kernel` mode is excluded by default from all builds (including those hosted on the Docker hub),
-> by default. See the [Build the plugin image](#build-the-plugin-image) section for more details.
 
 ## Installation
 

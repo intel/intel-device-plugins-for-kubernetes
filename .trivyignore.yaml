@@ -19,7 +19,6 @@ misconfigurations:
   - id: AVD-KSV-0047
     statement: gpu plugin in kubelet mode requires "nodes/proxy" resource access
     paths:
-      - gpu_plugin/overlays/fractional_resources/gpu-manager-role.yaml
       - operator/rbac/gpu_manager_role.yaml
       - operator/rbac/role.yaml
 
@@ -27,9 +26,6 @@ misconfigurations:
     statement: These are false detections for not setting "readOnlyFilesystem"
     paths:
       - fpga_plugin/overlays/region/mode-region.yaml
-      - gpu_plugin/overlays/fractional_resources/add-mounts.yaml
-      - gpu_plugin/overlays/fractional_resources/add-args.yaml
-      - gpu_plugin/overlays/fractional_resources/gpu-manager-role.yaml
       - gpu_plugin/overlays/monitoring_shared-dev_nfd/add-args.yaml
       - gpu_plugin/overlays/nfd_labeled_nodes/add-args.yaml
       - iaa_plugin/overlays/iaa_initcontainer/iaa_initcontainer.yaml
