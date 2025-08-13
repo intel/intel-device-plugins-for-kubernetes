@@ -1,0 +1,4 @@
+resources:
+- intel-sgx-dcap.yaml
+generatorOptions:
+  disableNameSuffixHash: true

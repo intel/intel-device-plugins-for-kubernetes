@@ -39,6 +39,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 
 	yes := true
 	no := false
+	directoryOrCreate := v1.HostPathDirectoryOrCreate
 	charDevice := v1.HostPathCharDev
 	maxUnavailable := intstr.FromInt(1)
 	maxSurge := intstr.FromInt(0)
@@ -116,6 +117,10 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 									MountPath: "/dev/sgx_provision",
 									ReadOnly:  true,
 								},
+								{
+									Name:      "cdipath",
+									MountPath: "/var/run/cdi",
+								},
 							},
 						},
 					},
@@ -144,6 +149,15 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 								HostPath: &v1.HostPathVolumeSource{
 									Path: "/dev/sgx_provision",
 									Type: &charDevice,
+								},
+							},
+						},
+						{
+							Name: "cdipath",
+							VolumeSource: v1.VolumeSource{
+								HostPath: &v1.HostPathVolumeSource{
+									Path: "/var/run/cdi",
+									Type: &directoryOrCreate,
 								},
 							},
 						},

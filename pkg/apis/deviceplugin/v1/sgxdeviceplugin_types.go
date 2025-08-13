@@ -46,6 +46,9 @@ type SgxDevicePluginSpec struct {
 	// +kubebuilder:validation:Minimum=1
 	ProvisionLimit int `json:"provisionLimit,omitempty"`
 
+	// DcapInfraResources adds two special resources for DCAP infra DaemonSet Pods.
+	DcapInfraResources bool `json:"dcapInfraResources,omitempty"`
+
 	// LogLevel sets the plugin's log level.
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`
