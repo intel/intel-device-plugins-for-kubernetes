@@ -26,6 +26,7 @@ jobs:
           - intel-dsa-plugin
           - intel-iaa-plugin
           - intel-idxd-config-initcontainer
+          - intel-npu-plugin
 
           # # Demo images
           - crypto-perf
@@ -35,6 +36,7 @@ jobs:
           - sgx-sdk-demo
           - sgx-aesmd-demo
           - dsa-dpdk-dmadevtest
+          - intel-npu-demo
         builder: [buildah, docker]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4

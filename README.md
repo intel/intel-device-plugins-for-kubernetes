@@ -22,6 +22,7 @@ Table of Contents
     * [DSA device plugin](#dsa-device-plugin)
     * [DLB device plugin](#dlb-device-plugin)
     * [IAA device plugin](#iaa-device-plugin)
+    * [NPU device plugin](#npu-device-plugin)
 * [Device Plugins Operator](#device-plugins-operator)
 * [XeLink XPU Manager sidecar](#xelink-xpu-manager-sidecar)
 * [Intel GPU Level-Zero sidecar](#intel-gpu-levelzero)
@@ -182,12 +183,17 @@ Balancer accelerator(DLB).
 The [IAA device plugin](cmd/iaa_plugin/README.md) supports acceleration using
 the Intel Analytics accelerator(IAA).
 
+### NPU Device Plugin
+
+The [NPU device plugin](cmd/npu_plugin/README.md) supports acceleration using
+the Intel Neural Processing Unit(NPU).
+
 ## Device Plugins Operator
 
 To simplify the deployment of the device plugins, a unified device plugins
 operator is implemented.
 
-Currently the operator has support for the DSA, DLB, FPGA, GPU, IAA, QAT, and
+Currently the operator has support for the DSA, DLB, FPGA, GPU, IAA, QAT, NPU, and
 Intel SGX device plugins. Each device plugin has its own custom resource
 definition (CRD) and the corresponding controller that watches CRUD operations
 to those custom resources.
@@ -236,6 +242,8 @@ The summary of resources available via plugins in this repository is given in th
    * [intelgpu-job.yaml](demo/intelgpu-job.yaml)
  * `iaa.intel.com`  : `wq-user-[shared or dedicated]`
    * [iaa-accel-config-demo-pod.yaml](demo/iaa-accel-config-demo-pod.yaml)
+ * `npu.intel.com`  : `accel`
+   * [intel-npu-workload.yaml](demo/intel-npu-workload.yaml)
  * `qat.intel.com`  : `generic` or `cy`/`dc`/`asym-dc`/`sym-dc`
    * [compress-perf-dpdk-pod-requesting-qat-dc.yaml](deployments/qat_dpdk_app/compress-perf/compress-perf-dpdk-pod-requesting-qat-dc.yaml)
    * [crypto-perf-dpdk-pod-requesting-qat-cy.yaml](deployments/qat_dpdk_app/crypto-perf/crypto-perf-dpdk-pod-requesting-qat-cy.yaml)
