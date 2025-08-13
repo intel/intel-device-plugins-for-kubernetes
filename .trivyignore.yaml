@@ -4,7 +4,6 @@ misconfigurations:
     paths:
       - dlb_plugin/base/intel-dlb-plugin.yaml
       - fpga_plugin/base/intel-fpga-plugin-daemonset.yaml
-      - qat_plugin/base/intel-qat-kernel-plugin.yaml
       - qat_plugin/overlays/qat_initcontainer/qat_initcontainer.yaml
 
   - id: AVD-KSV-0017
@@ -13,7 +12,6 @@ misconfigurations:
       - dlb_plugin/overlays/dlb_initcontainer/dlb_initcontainer.yaml
       - dsa_plugin/overlays/dsa_initcontainer/dsa_initcontainer.yaml
       - iaa_plugin/overlays/iaa_initcontainer/iaa_initcontainer.yaml
-      - qat_plugin/base/intel-qat-kernel-plugin.yaml
       - qat_plugin/overlays/qat_initcontainer/qat_initcontainer.yaml
 
   - id: AVD-KSV-0047

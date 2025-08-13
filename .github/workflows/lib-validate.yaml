@@ -64,8 +64,8 @@ jobs:
       - name: Check Dockerfiles
         run: make check-dockerfiles
       - run: make go-mod-tidy
-      - run: make BUILDTAGS=kerneldrv
-      - run: make test BUILDTAGS=kerneldrv
+      - run: make
+      - run: make test
         env:
           UNITTEST: 1
       - run: make check-github-actions
