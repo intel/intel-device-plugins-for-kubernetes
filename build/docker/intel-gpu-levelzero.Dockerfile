@@ -24,7 +24,7 @@ ARG ROCKYLINUX=1
 ARG BUILD_BASE=rockylinux:9
 ARG FINAL_BASE_DYN=registry.access.redhat.com/ubi9/ubi-minimal:9.3
 ###
-## Use the BUILD_BASE when either the a) golang-bookworm is updated to a newer glibc
+## Use the BUILD_BASE when either the a) golang-trixie is updated to a newer glibc
 ## or b) the intel-igc-core libraries are fixed to not to demand a newer glibc
 FROM ${FINAL_BASE_DYN} AS builder
 ARG DIR=/intel-device-plugins-for-kubernetes
@@ -37,7 +37,7 @@ ENV LDFLAGS="all=-linkmode=external -s -w"
 ARG GOLICENSES_VERSION
 ARG CMD
 ARG ROCKYLINUX
-ARG CGO_VERSION=1.24
+ARG CGO_VERSION=1.25
 RUN mkdir /runtime
 RUN if [ $ROCKYLINUX -eq 0 ]; then \
         apt-get update && apt-get install --no-install-recommends -y wget jq curl libc6-dev ocl-icd-libopencl1 gcc ca-certificates && \

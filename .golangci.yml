@@ -29,7 +29,6 @@ linters:
     - unconvert
     - unused
     - whitespace
-    - wsl
   settings:
     gocognit:
       min-complexity: 31
@@ -60,16 +59,11 @@ linters:
       - linters:
           - gocognit
           - gocyclo
-          - wsl
         path: _test\.go
       - linters:
           - gocognit
           - gocyclo
-          - wsl
         path: test/e2e/
-      - linters:
-          - wsl
-        path: cmd/gpu_fakedev/
       - linters:
           - goconst
         path: (.+)_test\.go
