@@ -11,7 +11,7 @@ on:
         required: false
         type: string
 env:
-  no_base_check: "['intel-qat-plugin-kerneldrv', 'intel-idxd-config-initcontainer', 'crypto-perf', 'opae-nlb-demo', 'intel-gpu-levelzero']"
+  no_base_check: "['intel-idxd-config-initcontainer', 'crypto-perf', 'opae-nlb-demo', 'intel-gpu-levelzero']"
 
 permissions:
   contents: read

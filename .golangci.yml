@@ -1,7 +1,5 @@
 version: "2"
 run:
-  build-tags:
-    - kerneldrv
   tests: true
 linters:
   default: none

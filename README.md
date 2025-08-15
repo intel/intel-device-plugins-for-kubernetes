@@ -244,7 +244,7 @@ The summary of resources available via plugins in this repository is given in th
    * [iaa-accel-config-demo-pod.yaml](demo/iaa-accel-config-demo-pod.yaml)
  * `npu.intel.com`  : `accel`
    * [intel-npu-workload.yaml](demo/intel-npu-workload.yaml)
- * `qat.intel.com`  : `generic` or `cy`/`dc`/`asym-dc`/`sym-dc`
+ * `qat.intel.com`  : `generic` or `cy`/`dc`/`asym-[dc|decomp]`/`sym-[dc|decomp]`/`asym-[dc|decomp]`/`asym-sym-[dc|decomp]`/`dcc`/`decomp`
    * [compress-perf-dpdk-pod-requesting-qat-dc.yaml](deployments/qat_dpdk_app/compress-perf/compress-perf-dpdk-pod-requesting-qat-dc.yaml)
    * [crypto-perf-dpdk-pod-requesting-qat-cy.yaml](deployments/qat_dpdk_app/crypto-perf/crypto-perf-dpdk-pod-requesting-qat-cy.yaml)
  * `sgx.intel.com`  : `epc`

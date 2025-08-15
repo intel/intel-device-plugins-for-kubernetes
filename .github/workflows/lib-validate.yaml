@@ -64,8 +64,8 @@ jobs:
       - name: Check Dockerfiles
         run: make check-dockerfiles
       - run: make go-mod-tidy
-      - run: make BUILDTAGS=kerneldrv
-      - run: make test BUILDTAGS=kerneldrv
+      - run: make
+      - run: make test
         env:
           UNITTEST: 1
       - run: make check-github-actions
@@ -77,9 +77,9 @@ jobs:
     strategy:
       matrix:
         version:
-          - 1.30.x
           - 1.31.x
           - 1.32.x
+          - 1.33.x
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
