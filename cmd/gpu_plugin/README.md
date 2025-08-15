@@ -57,6 +57,8 @@ For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 | -health-management | - | disabled | Enable health management by requesting data from oneAPI/Level-Zero interface. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. See [health management](#health-management) |
 | -wsl | - | disabled | Adapt plugin to run in the WSL environment. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
+| -allow-ids | string | "" | A list of PCI Device IDs that are allowed to be registered as resources. Default is empty (=all registered). Cannot be used together with `deny-ids`. |
+| -deny-ids | string | "" | A list of PCI Device IDs that are denied to be registered as resources. Default is empty (=all registered). Cannot be used together with `allow-ids`. |
 | -allocation-policy | string | none | 3 possible values: balanced, packed, none. For shared-dev-num > 1: _balanced_ mode spreads workloads among GPU devices, _packed_ mode fills one GPU fully before moving to next, and _none_ selects first available device from kubelet. Default is _none_. |
 
 The plugin also accepts a number of other arguments (common to all plugins) related to logging.

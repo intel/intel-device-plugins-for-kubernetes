@@ -55,6 +55,20 @@ spec:
           spec:
             description: GpuDevicePluginSpec defines the desired state of GpuDevicePlugin.
             properties:
+              allowIDs:
+                description: |-
+                  AllowIDs is a comma-separated list of PCI IDs of GPU devices that should only be advertised by the plugin.
+                  If not set, all devices are advertised.
+                  The list can contain IDs in the form of '0x1234,0x49a4,0x50b4'.
+                  Cannot be used together with DenyIDs.
+                type: string
+              denyIDs:
+                description: |-
+                  DenyIDs is a comma-separated list of PCI IDs of GPU devices that should only be denied by the plugin.
+                  If not set, all devices are advertised.
+                  The list can contain IDs in the form of '0x1234,0x49a4,0x50b4'.
+                  Cannot be used together with AllowIDs.
+                type: string
               enableMonitoring:
                 description: |-
                   EnableMonitoring enables the monitoring resource ('i915_monitoring')

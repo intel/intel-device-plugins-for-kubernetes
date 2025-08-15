@@ -34,6 +34,18 @@ type GpuDevicePluginSpec struct {
 	// InitImage is a container image with tools (e.g., GPU NFD source hook) installed on each node.
 	InitImage string `json:"initImage,omitempty"`
 
+	// AllowIDs is a comma-separated list of PCI IDs of GPU devices that should only be advertised by the plugin.
+	// If not set, all devices are advertised.
+	// The list can contain IDs in the form of '0x1234,0x49a4,0x50b4'.
+	// Cannot be used together with DenyIDs.
+	AllowIDs string `json:"allowIDs,omitempty"`
+
+	// DenyIDs is a comma-separated list of PCI IDs of GPU devices that should only be denied by the plugin.
+	// If not set, all devices are advertised.
+	// The list can contain IDs in the form of '0x1234,0x49a4,0x50b4'.
+	// Cannot be used together with AllowIDs.
+	DenyIDs string `json:"denyIDs,omitempty"`
+
 	// PreferredAllocationPolicy sets the mode of allocating GPU devices on a node.
 	// See documentation for detailed description of the policies. Only valid when SharedDevNum > 1 is set.
 	// +kubebuilder:validation:Enum=balanced;packed;none

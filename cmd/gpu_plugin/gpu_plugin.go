@@ -69,6 +69,8 @@ const (
 
 type cliOptions struct {
 	preferredAllocationPolicy string
+	allowIDs                  string
+	denyIDs                   string
 	sharedDevNum              int
 	temperatureLimit          int
 	enableMonitoring          bool
@@ -202,6 +204,23 @@ func packedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
 	klog.V(2).Infof("Allocate deviceIds: %q", deviceIds)
 
 	return deviceIds
+}
+
+func validatePCIDeviceIDs(pciIDList string) error {
+	r := regexp.MustCompile(`^0x[0-9a-f]{4}$`)
+
+	for id := range strings.SplitSeq(pciIDList, ",") {
+		id = strings.TrimSpace(id)
+		if id == "" {
+			return os.ErrNotExist
+		}
+
+		if !r.MatchString(id) {
+			return os.ErrInvalid
+		}
+	}
+
+	return nil
 }
 
 func (dp *devicePlugin) pciAddressForCard(cardPath, cardName string) (string, error) {
@@ -585,6 +604,31 @@ func (dp *devicePlugin) filterOutInvalidCards(files []fs.DirEntry) []fs.DirEntry
 			continue
 		}
 
+		allowlist := len(dp.options.allowIDs) > 0
+		denylist := len(dp.options.denyIDs) > 0
+
+		// Skip if the device is either not allowed or denied.
+		if allowlist || denylist {
+			pciID, err := pciDeviceIDForCard(path.Join(dp.sysfsDir, f.Name()))
+			if err != nil {
+				klog.Warningf("Failed to get PCI ID for device %s: %+v", f.Name(), err)
+
+				continue
+			}
+
+			if allowlist && !strings.Contains(dp.options.allowIDs, pciID) {
+				klog.V(4).Infof("Skipping device %s (%s), not in allowlist: %s", f.Name(), pciID, dp.options.allowIDs)
+
+				continue
+			}
+
+			if denylist && strings.Contains(dp.options.denyIDs, pciID) {
+				klog.V(4).Infof("Skipping device %s (%s), in denylist: %s", f.Name(), pciID, dp.options.denyIDs)
+
+				continue
+			}
+		}
+
 		filtered = append(filtered, f)
 	}
 
@@ -710,6 +754,25 @@ func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi
 	return nil, &dpapi.UseDefaultMethodError{}
 }
 
+func checkAllowDenyOptions(opts cliOptions) bool {
+	if len(opts.allowIDs) > 0 && len(opts.denyIDs) > 0 {
+		klog.Error("Cannot use both allow-ids and deny-ids options at the same time. Please use only one of them.")
+		return false
+	}
+
+	if err := validatePCIDeviceIDs(opts.allowIDs); err != nil {
+		klog.Error("Failed to validate allow-ids: ", err)
+		return false
+	}
+
+	if err := validatePCIDeviceIDs(opts.denyIDs); err != nil {
+		klog.Error("Failed to validate deny-ids: ", err)
+		return false
+	}
+
+	return true
+}
+
 func main() {
 	var (
 		prefix string
@@ -723,6 +786,9 @@ func main() {
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.IntVar(&opts.temperatureLimit, "temp-limit", 100, "temperature limit at which device is marked unhealthy")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
+	flag.StringVar(&opts.allowIDs, "allow-ids", "", "comma-separated list of device IDs to allow (e.g. 0x49c5,0x49c6)")
+	flag.StringVar(&opts.denyIDs, "deny-ids", "", "comma-separated list of device IDs to deny (e.g. 0x49c5,0x49c6)")
+
 	flag.Parse()
 
 	if opts.sharedDevNum < 1 {
@@ -733,6 +799,12 @@ func main() {
 	var str = opts.preferredAllocationPolicy
 	if !(str == "balanced" || str == "packed" || str == "none") {
 		klog.Error("invalid value for preferredAllocationPolicy, the valid values: balanced, packed, none")
+		os.Exit(1)
+	}
+
+	if !checkAllowDenyOptions(opts) {
+		klog.Error("Invalid allow/deny options.")
+
 		os.Exit(1)
 	}
 

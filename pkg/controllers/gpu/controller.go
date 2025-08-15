@@ -277,5 +277,13 @@ func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
 		args = append(args, "-allocation-policy", "none")
 	}
 
+	if gdp.Spec.AllowIDs != "" {
+		args = append(args, "-allow-ids", gdp.Spec.AllowIDs)
+	}
+
+	if gdp.Spec.DenyIDs != "" {
+		args = append(args, "-deny-ids", gdp.Spec.DenyIDs)
+	}
+
 	return args
 }
