@@ -98,7 +98,9 @@ func (k *kubeletStub) Register(ctx context.Context, r *pluginapi.RegisterRequest
 func (k *kubeletStub) start() error {
 	_ = os.Remove(k.socket)
 
-	s, err := net.Listen("unix", k.socket)
+	var lc net.ListenConfig
+
+	s, err := lc.Listen(context.Background(), "unix", k.socket)
 	if err != nil {
 		return errors.Wrap(err, "Can't listen at the socket")
 	}

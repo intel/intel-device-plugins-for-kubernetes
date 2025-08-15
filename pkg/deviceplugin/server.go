@@ -272,7 +272,9 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 		// We don't care if the plugin's socket file doesn't exist.
 		_ = os.Remove(pluginSocket)
 
-		lis, err := net.Listen("unix", pluginSocket)
+		var lc net.ListenConfig
+
+		lis, err := lc.Listen(context.Background(), "unix", pluginSocket)
 		if err != nil {
 			return errors.Wrap(err, "Failed to listen to plugin socket")
 		}

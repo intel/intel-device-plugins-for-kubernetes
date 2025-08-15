@@ -43,7 +43,9 @@ type mockServer struct {
 }
 
 func (m *mockServer) serve(socketPath string) {
-	lis, err := net.Listen("unix", socketPath)
+	var lc net.ListenConfig
+
+	lis, err := lc.Listen(context.Background(), "unix", socketPath)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

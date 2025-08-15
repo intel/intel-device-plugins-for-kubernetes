@@ -203,7 +203,9 @@ func main() {
 		}
 	})
 
-	lis, err := net.Listen("unix", *socketPath)
+	var lc net.ListenConfig
+
+	lis, err := lc.Listen(context.Background(), "unix", *socketPath)
 	if err != nil {
 		klog.Fatalf("failed to listen: %v", err)
 	}

@@ -31,7 +31,7 @@ fi
 
 BUILD_ARGS="${BUILD_ARGS} \
     --build-arg FINAL_BASE=gcr.io/distroless/static \
-    --build-arg BUILD_BASE=golang:1.24-bookworm \
+    --build-arg BUILD_BASE=golang:1.25-trixie \
     --build-arg FINAL_BASE_DYN=debian:unstable-slim \
     --build-arg ROCKYLINUX=0"
 
