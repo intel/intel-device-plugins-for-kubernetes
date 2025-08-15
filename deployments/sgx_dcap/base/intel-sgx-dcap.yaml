@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-sgx-dcap-infra
+  labels:
+    app: intel-sgx-dcap-infra
+spec:
+  selector:
+    matchLabels:
+      app: intel-sgx-dcap-infra
+  template:
+    metadata:
+      labels:
+        app: intel-sgx-dcap-infra
+    spec:
+      automountServiceAccountToken: false
+      initContainers:
+      - name: platform-registration
+        image: intel/sgx-dcap-infra:devel
+        restartPolicy: Always
+        workingDir: "/opt/intel/sgx-pck-id-retrieval-tool/"
+        command: ['/usr/bin/dcap-registration-flow']
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+        resources:
+          limits:
+            sgx.intel.com/registration: 1
+      containers:
+      - name: tdxqgs
+        image: intel/sgx-dcap-infra:devel
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+        resources:
+          limits:
+            sgx.intel.com/tdqe: 1
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: qgs-socket
+          mountPath: /var/run/tdx-qgs
+      volumes:
+      - name: qgs-socket
+        hostPath:
+          path: /var/run/tdx-qgs
+          type: DirectoryOrCreate

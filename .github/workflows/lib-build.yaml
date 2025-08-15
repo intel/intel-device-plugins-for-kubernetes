@@ -33,6 +33,7 @@ jobs:
           - accel-config-demo
           - intel-opencl-icd
           - openssl-qat-engine
+          - sgx-dcap-infra
           - sgx-sdk-demo
           - sgx-aesmd-demo
           - dsa-dpdk-dmadevtest
