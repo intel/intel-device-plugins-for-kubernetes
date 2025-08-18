@@ -1,40 +1,5 @@
 #
 # Syntax and details are here: https://help.github.com/articles/about-codeowners/
 #
-# Global code ownership, fallback
+# Global code ownership
 *                   @kad @mythi @bart0sh @tkatila
-
-# CI and building
-.github/workflows/  @bart0sh @kad @mythi @tkatila
-/scripts/           @bart0sh @kad @mythi
-
-# Binaries
-/cmd/               @mythi @bart0sh @tkatila
-/cmd/fpga_tool/     @bart0sh @kad @mythi
-/cmd/gpu_fakedev/   @tkatila @uniemimu @eero-t
-/cmd/gpu_plugin/    @tkatila @bart0sh @uniemimu
-/cmd/gpu_nfdhook/   @tkatila @bart0sh @uniemimu
-/cmd/gpu_levelzero/ @tkatila @eero-t @uniemimu
-/cmd/qat_plugin/    @hj-johannes-lee @mythi
-/cmd/sgx_plugin/    @hj-johannes-lee @mythi
-/cmd/dsa_plugin/    @hj-johannes-lee @ozhuraki @mythi
-/cmd/iaa_plugin/    @hj-johannes-lee @ozhuraki @mythi
-/cmd/dlb_plugin/    @bart0sh @hj-johannes-lee
-/cmd/xpumanager_sidecar/   @tkatila @uniemimu
-
-# Framework
-/pkg/               @mythi @bart0sh @tkatila
-/pkg/topology/      @bart0sh @kad
-
-# Deployments
-/deployments/       @hj-johannes-lee @bart0sh @mythi @tkatila
-
-# Demos
-/demo/              @tkatila @bart0sh @mythi @kad
-
-# Testing
-/test/              @mythi @bart0sh @ozhuraki @hj-johannes-lee
-
-# New dependencies review
-/go.sum             @kad @mythi @bart0sh @tkatila
-/go.mod             @kad @mythi @bart0sh @tkatila
