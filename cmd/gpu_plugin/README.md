@@ -39,13 +39,13 @@ For example containers with Intel media driver (and components using that), can 
 video transcoding operations, and containers with the Intel OpenCL / oneAPI Level Zero
 backend libraries can offload compute operations to GPU.
 
-Intel GPU plugin may register four node resources to the Kubernetes cluster:
+Intel GPU plugin may register four per-node resource types to the Kubernetes cluster:
 | Resource | Description |
 |:---- |:-------- |
-| gpu.intel.com/i915 | GPU instance running legacy `i915` KMD |
-| gpu.intel.com/i915_monitoring | Monitoring resource for the legacy `i915` KMD devices |
-| gpu.intel.com/xe | GPU instance running new `xe` KMD |
-| gpu.intel.com/xe_monitoring | Monitoring resource for the new `xe` KMD devices |
+| gpu.intel.com/i915 | Legacy `i915` KMD (Kernel Mode Driver) provided GPU instance |
+| gpu.intel.com/i915_monitoring | Monitoring resource for the `i915` KMD provided devices |
+| gpu.intel.com/xe | `xe` KMD provided GPU instance |
+| gpu.intel.com/xe_monitoring | Monitoring resource for the `xe` KMD provided devices |
 
 For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 
@@ -229,12 +229,12 @@ Kubernetes CDI support is included since 1.28 release. In 1.28 it needs to be en
 
 ### KMD and UMD
 
-There are 3 different Kernel Mode Drivers (KMD) available: `i915` (upstream), `i915` (out-of-tree) and `xe`:
+There are 3 different Kernel Mode Drivers (KMDs) available:
 * `i915` ([out-of-tree](https://github.com/intel-gpu/intel-gpu-i915-backports/)): official driver for Data Center GPUs, supporting only limited set of enterprise / LTS kernel versions.
 * `i915` (upstream): official upstream kernel driver for older Intel client GPUs. Included in the common Linux distributions like Ubuntu.
-* `xe`: official upstream kernel driver for the latest Intel GPUs.
+* `xe`: official upstream kernel driver for the latest (Xe2 or newer architecture) Intel GPUs.
 
-Although KMD may seem to work fine also on other hardware (HW), it's validated only for hardware it officially suppports, and can have problems on others. User-space APIs also differ between these KMDs, so care should taken to use in a container an User Space Driver (UMD) matching to the underlying KMD on the host.
+Although given KMD may seem to work fine also on other hardware (HW), it's validated only for [hardware it officially supports](https://dgpu-docs.intel.com/devices/hardware-table.html), and can have problems on others. User-space APIs also differ between these KMDs, so care should taken to use in a container an User Space Driver (UMD) matching to the underlying KMD on the host.
 
 | KMD | KMD / UMD packages | Support notes |
 |:---- |:-------- |:------- |
