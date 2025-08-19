@@ -19,11 +19,11 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/diff"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -220,7 +220,7 @@ func TestNewDamonSetGPU(t *testing.T) {
 			actual := c.NewDaemonSet(plugin)
 
 			if !reflect.DeepEqual(expected, actual) {
-				t.Errorf("expected and actuall daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+				t.Errorf("expected and actuall daemonsets differ: %+s", cmp.Diff(expected, actual))
 			}
 		})
 	}
@@ -240,7 +240,7 @@ func TestNewDamonSetGPUWithSecret(t *testing.T) {
 	actual := c.NewDaemonSet(plugin)
 
 	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("expected and actual daemonsets with secret differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+		t.Errorf("expected and actual daemonsets with secret differ: %+s", cmp.Diff(expected, actual))
 	}
 }
 
@@ -273,7 +273,7 @@ func TestUpdateDamonSetGPU(t *testing.T) {
 			actual := c.NewDaemonSet(before)
 
 			if !reflect.DeepEqual(expected, actual) {
-				t.Errorf("expected and actual daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+				t.Errorf("expected and actual daemonsets differ: %+s", cmp.Diff(expected, actual))
 			}
 
 			updated := c.UpdateDaemonSet(after, actual)
@@ -283,7 +283,7 @@ func TestUpdateDamonSetGPU(t *testing.T) {
 			c.updateDaemonSetExpected(after, expected)
 
 			if !reflect.DeepEqual(expected, actual) {
-				t.Errorf("updated expected and actual daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+				t.Errorf("updated expected and actual daemonsets differ: %+s", cmp.Diff(expected, actual))
 			}
 		})
 	}
