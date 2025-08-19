@@ -81,6 +81,7 @@ var _ = Describe("SgxDevicePlugin Controller", func() {
 			updatedLogLevel := 2
 			updatedEnclaveLimit := 2
 			updatedProvisionLimit := 2
+			updatedDcapInfra := true
 			updatedNodeSelector := map[string]string{"updated-sgx-nodeselector": "true"}
 
 			fetched.Spec.Image = updatedImage
@@ -89,6 +90,7 @@ var _ = Describe("SgxDevicePlugin Controller", func() {
 			fetched.Spec.EnclaveLimit = updatedEnclaveLimit
 			fetched.Spec.ProvisionLimit = updatedProvisionLimit
 			fetched.Spec.NodeSelector = updatedNodeSelector
+			fetched.Spec.DcapInfraResources = updatedDcapInfra
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
 			fetchedUpdated := &devicepluginv1.SgxDevicePlugin{}
@@ -109,6 +111,7 @@ var _ = Describe("SgxDevicePlugin Controller", func() {
 				strconv.Itoa(updatedEnclaveLimit),
 				"-provision-limit",
 				strconv.Itoa(updatedProvisionLimit),
+				"-dcap-infra-resources",
 			}
 
 			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(ConsistOf(expectArgs))

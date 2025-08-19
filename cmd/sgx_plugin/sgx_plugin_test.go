@@ -27,17 +27,22 @@ func init() {
 	_ = flag.Set("v", "4") // Enable debug output
 }
 
+// Update if new resource types are added.
+const dcapInfraResources = 2
+
 // mockNotifier implements Notifier interface.
 type mockNotifier struct {
 	scanDone          chan bool
 	enclaveDevCount   int
 	provisionDevCount int
+	dcapInfraResCnt   int
 }
 
 // Notify stops plugin Scan.
 func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.enclaveDevCount = len(newDeviceTree[deviceTypeEnclave])
 	n.provisionDevCount = len(newDeviceTree[deviceTypeProvision])
+	n.dcapInfraResCnt = len(newDeviceTree) - n.enclaveDevCount - n.provisionDevCount
 	n.scanDone <- true
 }
 
@@ -95,6 +100,7 @@ func TestScan(t *testing.T) {
 		requestedProvisionDevs uint
 		expectedEnclaveDevs    int
 		expectedProvisionDevs  int
+		requestDcapInfra       bool
 	}{
 		{
 			name: "no device installed",
@@ -131,6 +137,16 @@ func TestScan(t *testing.T) {
 			requestedProvisionDevs: 20,
 			expectedProvisionDevs:  20,
 		},
+		{
+			name:                   "all resources",
+			enclaveDevice:          "sgx_enclave",
+			provisionDevice:        "sgx_provision",
+			requestedEnclaveDevs:   1,
+			expectedEnclaveDevs:    1,
+			requestedProvisionDevs: 1,
+			expectedProvisionDevs:  1,
+			requestDcapInfra:       true,
+		},
 	}
 
 	for _, tc := range tcases {
@@ -159,7 +175,7 @@ func TestScan(t *testing.T) {
 				}
 			}
 
-			plugin := newDevicePlugin(devfs, tc.requestedEnclaveDevs, tc.requestedProvisionDevs)
+			plugin := newDevicePlugin(devfs, tc.requestedEnclaveDevs, tc.requestedProvisionDevs, tc.requestDcapInfra)
 
 			notifier := &mockNotifier{
 				scanDone: plugin.scanDone,
@@ -174,6 +190,9 @@ func TestScan(t *testing.T) {
 			}
 			if tc.expectedProvisionDevs != notifier.provisionDevCount {
 				t.Errorf("Wrong number of discovered provision devices")
+			}
+			if tc.requestDcapInfra && notifier.dcapInfraResCnt != dcapInfraResources {
+				t.Errorf("Wrong number of discovered DCAP infra resources: expected %d, got %d.", dcapInfraResources, notifier.dcapInfraResCnt)
 			}
 		})
 	}

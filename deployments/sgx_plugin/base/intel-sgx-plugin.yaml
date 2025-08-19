@@ -49,6 +49,8 @@ spec:
         - name: sgx-provision
           mountPath: /dev/sgx_provision
           readOnly: true
+        - name: cdipath
+          mountPath: /var/run/cdi
       volumes:
       - name: kubeletsockets
         hostPath:
@@ -61,5 +63,9 @@ spec:
         hostPath:
           path: /dev/sgx_provision
           type: CharDevice
+      - name: cdipath
+        hostPath:
+          path: /var/run/cdi
+          type: DirectoryOrCreate
       nodeSelector:
         kubernetes.io/arch: amd64

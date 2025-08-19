@@ -247,5 +247,9 @@ func getPodArgs(sdp *devicepluginv1.SgxDevicePlugin) []string {
 		args = append(args, "-provision-limit", "1")
 	}
 
+	if sdp.Spec.DcapInfraResources {
+		args = append(args, "-dcap-infra-resources")
+	}
+
 	return args
 }
