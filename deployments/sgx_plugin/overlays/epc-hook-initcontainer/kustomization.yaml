@@ -1,4 +1,0 @@
-resources:
-  - ../../base
-patches:
-  - path: add-epc-nfd-initcontainer.yaml
