@@ -234,7 +234,7 @@ There are 3 different Kernel Mode Drivers (KMDs) available:
 * `i915` (upstream): official upstream kernel driver for older Intel client GPUs. Included in the common Linux distributions like Ubuntu.
 * `xe`: official upstream kernel driver for the latest (Xe2 or newer architecture) Intel GPUs.
 
-Although given KMD may seem to work fine also on other hardware (HW), it's validated only for [hardware it officially supports](https://dgpu-docs.intel.com/devices/hardware-table.html), and can have problems on others. User-space APIs also differ between these KMDs, so care should taken to use in a container an User Space Driver (UMD) matching to the underlying KMD on the host.
+Although given KMD may seem to work fine also on other hardware (HW), it's validated only for [hardware it officially supports](https://dgpu-docs.intel.com/devices/hardware-table.html), and can have problems on others. User-space APIs also differ between these KMDs, so care should be taken to ensure that User Space Drivers (UMDs) within containers match KMDs used on the nodes they run, e.g. by them being installed from the same repository.
 
 | KMD | KMD / UMD packages | Support notes |
 |:---- |:-------- |:------- |
