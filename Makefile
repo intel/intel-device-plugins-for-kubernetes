@@ -106,8 +106,6 @@ generate:
 	$(CONTROLLER_GEN) webhook \
 		paths="./pkg/webhooks/sgx/..." \
 		output:webhook:artifacts:config=deployments/sgx_admissionwebhook/webhook
-	$(CONTROLLER_GEN) rbac:roleName=gpu-manager-role paths="./cmd/gpu_plugin/..." output:dir=deployments/operator/rbac
-	cp deployments/operator/rbac/role.yaml deployments/operator/rbac/gpu_manager_role.yaml
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./pkg/..." output:dir=deployments/operator/rbac
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./pkg/fpgacontroller/..." output:dir=deployments/fpga_admissionwebhook/rbac
 
