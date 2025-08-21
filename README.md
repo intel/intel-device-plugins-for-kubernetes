@@ -117,7 +117,7 @@ The [SGX device plugin](cmd/sgx_plugin/README.md) allows workloads to use
 Intel® Software Guard Extensions (Intel® SGX) on
 platforms with SGX Flexible Launch Control enabled, e.g.,:
 
-- 3rd Generation Intel® Xeon® Scalable processor family, code-named “Ice Lake”
+- 3rd Generation Intel® Xeon® Scalable processor family, and later
 - Intel® Xeon® E3 processor
 - Intel® NUC Kit NUC7CJYH
 

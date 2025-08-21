@@ -46,6 +46,9 @@ type SgxDevicePluginSpec struct {
 	// +kubebuilder:validation:Minimum=1
 	ProvisionLimit int `json:"provisionLimit,omitempty"`
 
+	// DcapInfraResources flag enables two special resources for Intel DCAP infrastructure containers.
+	DcapInfraResources bool `json:"dcapInfraResources,omitempty"`
+
 	// LogLevel sets the plugin's log level.
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`
