@@ -1160,7 +1160,7 @@ func TestParsePCIDeviceIDs(t *testing.T) {
 		{
 			name:      "empty string",
 			input:     "",
-			wantError: true,
+			wantError: false,
 		},
 		{
 			name:      "invalid ID format",
@@ -1189,6 +1189,54 @@ func TestParsePCIDeviceIDs(t *testing.T) {
 			err := validatePCIDeviceIDs(tt.input)
 			if (err != nil) != tt.wantError {
 				t.Errorf("parsePCIDeviceIDs() error = %v, wantError %v", err, tt.wantError)
+			}
+		})
+	}
+}
+
+func TestCheckAllowDenyOptions(t *testing.T) {
+	tcases := []struct {
+		name         string
+		options      cliOptions
+		expectReturn bool
+	}{
+		{
+			name:         "valid allow IDs",
+			options:      cliOptions{allowIDs: "0x1234,0x5678"},
+			expectReturn: true,
+		},
+		{
+			name:         "valid deny IDs",
+			options:      cliOptions{denyIDs: "0x1234,0x5678"},
+			expectReturn: true,
+		},
+		{
+			name:         "both allow and deny IDs",
+			options:      cliOptions{allowIDs: "0x1234", denyIDs: "0x5678"},
+			expectReturn: false,
+		},
+		{
+			name:         "invalid allow ID format",
+			options:      cliOptions{allowIDs: "0x1234,abcd"},
+			expectReturn: false,
+		},
+		{
+			name:         "invalid deny ID format",
+			options:      cliOptions{denyIDs: "0x1234,abcd"},
+			expectReturn: false,
+		},
+		{
+			name:         "both empty",
+			options:      cliOptions{allowIDs: "", denyIDs: ""},
+			expectReturn: true,
+		},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			ret := checkAllowDenyOptions(tc.options)
+			if ret != tc.expectReturn {
+				t.Errorf("checkAllowDenyOptions() return = %v, expected %v", ret, tc.expectReturn)
 			}
 		})
 	}

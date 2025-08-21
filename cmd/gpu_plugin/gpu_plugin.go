@@ -207,6 +207,10 @@ func packedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
 }
 
 func validatePCIDeviceIDs(pciIDList string) error {
+	if pciIDList == "" {
+		return nil
+	}
+
 	r := regexp.MustCompile(`^0x[0-9a-f]{4}$`)
 
 	for id := range strings.SplitSeq(pciIDList, ",") {
