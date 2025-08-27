@@ -1,0 +1,11 @@
+resources:
+- node-services.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+
+# required .env.pccs-credentials keys:
+# USER_TOKEN=
+secretGenerator:
+- name: pccs-credentials
+  envs:
+  - .env.pccs-credentials

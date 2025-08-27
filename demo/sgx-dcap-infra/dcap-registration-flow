@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -u
+
+if [ ! -x "${PWD}"/PCKIDRetrievalTool ]; then
+	echo "dcap-registration-flow: PCKIDRetrievalTool must be in the workingDir and executable"
+	exit 1
+fi
+
+echo "Waiting for the PCCS to be ready ..."
+
+if ! curl --retry 20 --retry-delay 30 -k ${PCCS_URL}/sgx/certification/v4/rootcacrl &> /dev/null; then
+	echo "ERROR: PCCS pod didn't become ready after 20 minutes"
+	exit 1
+fi
+
+echo "PCCS is online, proceeding ..."
+
+ARGS="-user_token ${USER_TOKEN} -url ${PCCS_URL} -use_secure_cert ${SECURE_CERT}"
+
+echo "Calling PCKIDRetrievalTool ..."
+
+./PCKIDRetrievalTool ${ARGS}
+
+sleep infinity
