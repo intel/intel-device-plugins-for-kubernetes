@@ -1,0 +1,7 @@
+resources:
+  - ../../base
+patches:
+  - path: add-args.yaml
+    target:
+      kind: DaemonSet
+
