@@ -60,8 +60,8 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 
 	devPaths := []string{}
 
-	for _, node := range nodes {
-		devPaths = append(devPaths, node.HostPath)
+	for idx := range nodes {
+		devPaths = append(devPaths, nodes[idx].HostPath)
 	}
 
 	topologyInfo, err := topology.GetTopologyInfo(devPaths)

@@ -874,13 +874,13 @@ func TestBypath(t *testing.T) {
 			absPaths = append(absPaths, path.Join(byPath, link))
 		}
 
-		for _, mount := range mounts {
-			if !slices.Contains(absPaths, mount.ContainerPath) {
-				t.Errorf("%s: containerpath is incorrect: %s", td.desc, mount.ContainerPath)
+		for idx := range mounts {
+			if !slices.Contains(absPaths, mounts[idx].ContainerPath) {
+				t.Errorf("%s: containerpath is incorrect: %s", td.desc, mounts[idx].ContainerPath)
 			}
 
-			if !slices.Contains(absPaths, mount.HostPath) {
-				t.Errorf("%s: hostpath is incorrect: %s", td.desc, mount.HostPath)
+			if !slices.Contains(absPaths, mounts[idx].HostPath) {
+				t.Errorf("%s: hostpath is incorrect: %s", td.desc, mounts[idx].HostPath)
 			}
 		}
 	}
