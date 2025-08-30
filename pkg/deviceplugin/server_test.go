@@ -56,6 +56,7 @@ type kubeletStub struct {
 	server         *grpc.Server
 	socket         string
 	pluginEndpoint string
+	pluginapi.UnsafeRegistrationServer
 }
 
 func init() {
@@ -194,7 +195,7 @@ func TestSetupAndServe(t *testing.T) {
 	_, err = client.Allocate(ctx, &pluginapi.AllocateRequest{
 		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
 			{
-				DevicesIDs: []string{"dev1", "dev2"},
+				DevicesIds: []string{"dev1", "dev2"},
 			},
 		},
 	})
@@ -242,7 +243,7 @@ func TestSetupAndServe(t *testing.T) {
 	_, err = client.Allocate(ctx, &pluginapi.AllocateRequest{
 		ContainerRequests: []*pluginapi.ContainerAllocateRequest{
 			{
-				DevicesIDs: []string{"dev1", "dev2"},
+				DevicesIds: []string{"dev1", "dev2"},
 			},
 		},
 	})
@@ -534,7 +535,7 @@ func TestAllocate(t *testing.T) {
 	for _, tt := range tcases {
 		rqt := &pluginapi.AllocateRequest{
 			ContainerRequests: []*pluginapi.ContainerAllocateRequest{
-				{DevicesIDs: []string{"dev-1"}},
+				{DevicesIds: []string{"dev-1"}},
 			},
 		}
 
@@ -544,7 +545,7 @@ func TestAllocate(t *testing.T) {
 				devNames = append(devNames, devName)
 			}
 
-			rqt.ContainerRequests[0].DevicesIDs = devNames
+			rqt.ContainerRequests[0].DevicesIds = devNames
 		}
 
 		srv.devices = tt.devices
@@ -582,7 +583,7 @@ func TestAllocate(t *testing.T) {
 				}
 			}
 
-			if len(resp.ContainerResponses[0].CDIDevices) == 0 {
+			if len(resp.ContainerResponses[0].CdiDevices) == 0 {
 				t.Errorf("Test case '%s': no cdi devices in allocate response", tt.name)
 			}
 		}

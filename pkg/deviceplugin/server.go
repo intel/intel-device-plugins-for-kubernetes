@@ -61,6 +61,7 @@ type devicePluginServer interface {
 
 // server implements devicePluginServer and pluginapi.PluginInterfaceServer interfaces.
 type server struct {
+	pluginapi.UnsafeDevicePluginServer
 	grpcServer             *grpc.Server
 	updatesCh              chan map[string]DeviceInfo
 	devices                map[string]DeviceInfo
@@ -156,9 +157,9 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 
 		cresp.Envs = map[string]string{}
 		cresp.Annotations = map[string]string{}
-		cresp.CDIDevices = []*pluginapi.CDIDevice{}
+		cresp.CdiDevices = []*pluginapi.CDIDevice{}
 
-		for _, id := range crqt.DevicesIDs {
+		for _, id := range crqt.DevicesIds {
 			dev, ok := srv.devices[id]
 			if !ok {
 				return nil, errors.Errorf("Invalid allocation request with non-existing device %s", id)
@@ -185,7 +186,7 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 			}
 
 			if names, err := writeCdiSpecToFilesystem(dev.cdiSpec, srv.cdiDir); err == nil {
-				cresp.CDIDevices = append(cresp.CDIDevices, names...)
+				cresp.CdiDevices = append(cresp.CdiDevices, names...)
 			} else {
 				klog.Errorf("CDI spec write failed: %+v", err)
 			}
