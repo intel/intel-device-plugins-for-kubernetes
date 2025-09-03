@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	"github.com/google/go-cmp/cmp"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -171,7 +170,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// Synchronize the DaemonSet with its owner.
 	if r.controller.UpdateDaemonSet(devicePlugin, ds) {
-		log.Info("daemonset difference", "diff", cmp.Diff(ds0.Spec.Template.Spec, ds.Spec.Template.Spec, diff.IgnoreUnset()))
+		log.Info("daemonset difference", "diff", diff.Diff(ds0.Spec.Template.Spec, ds.Spec.Template.Spec))
 
 		if err := r.Update(ctx, ds); err != nil {
 			log.Error(err, "unable to update DaemonSet", "DaemonSet", ds)

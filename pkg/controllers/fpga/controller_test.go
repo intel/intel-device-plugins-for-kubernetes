@@ -19,11 +19,11 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/diff"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -224,7 +224,7 @@ func TestNewDaemonSetFPGA(t *testing.T) {
 	actual := c.NewDaemonSet(plugin)
 
 	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("expected and actuall daemonsets differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+		t.Errorf("expected and actuall daemonsets differ: %+s", cmp.Diff(expected, actual))
 	}
 
 	c.args.ImagePullSecretName = "mysecret"
@@ -232,6 +232,6 @@ func TestNewDaemonSetFPGA(t *testing.T) {
 	expected = c.newDaemonSetExpected(plugin)
 	actual = c.NewDaemonSet(plugin)
 	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("expected and actual daemonsets with secret differ: %+s", diff.ObjectGoPrintDiff(expected, actual))
+		t.Errorf("expected and actual daemonsets with secret differ: %+s", cmp.Diff(expected, actual))
 	}
 }

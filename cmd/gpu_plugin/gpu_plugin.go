@@ -572,7 +572,7 @@ func (dp *devicePlugin) isCompatibleDevice(name string) bool {
 	return true
 }
 
-func (dp *devicePlugin) devSpecForDrmFile(drmFile string) (devSpec pluginapi.DeviceSpec, devPath string, err error) {
+func (dp *devicePlugin) devPathForDrmFile(drmFile string) (devPath string, err error) {
 	if dp.controlDeviceReg.MatchString(drmFile) {
 		//Skipping possible drm control node
 		err = os.ErrInvalid
@@ -583,13 +583,6 @@ func (dp *devicePlugin) devSpecForDrmFile(drmFile string) (devSpec pluginapi.Dev
 	devPath = path.Join(dp.devfsDir, drmFile)
 	if _, err = os.Stat(devPath); err != nil {
 		return
-	}
-
-	// even querying metrics requires device to be writable
-	devSpec = pluginapi.DeviceSpec{
-		HostPath:      devPath,
-		ContainerPath: devPath,
-		Permissions:   "rw",
 	}
 
 	return
@@ -645,16 +638,20 @@ func (dp *devicePlugin) createDeviceSpecsFromDrmFiles(cardPath string) []plugina
 	drmFiles, _ := os.ReadDir(path.Join(cardPath, "device/drm"))
 
 	for _, drmFile := range drmFiles {
-		devSpec, devPath, devSpecErr := dp.devSpecForDrmFile(drmFile.Name())
-		if devSpecErr != nil {
+		devPath, devPathErr := dp.devPathForDrmFile(drmFile.Name())
+		if devPathErr != nil {
 			continue
 		}
 
 		klog.V(4).Infof("Adding %s to GPU %s", devPath, filepath.Base(cardPath))
 
-		specs = append(specs, devSpec)
+		// even querying metrics requires device to be writable
+		specs = append(specs, pluginapi.DeviceSpec{
+			HostPath:      devPath,
+			ContainerPath: devPath,
+			Permissions:   "rw",
+		})
 	}
-
 	return specs
 }
 
@@ -677,18 +674,18 @@ func (dp *devicePlugin) createMountsAndCDIDevices(cardPath, name string, devSpec
 
 	cedits := &spec.Devices[0].ContainerEdits
 
-	for _, dspec := range devSpecs {
+	for idx := range devSpecs {
 		cedits.DeviceNodes = append(cedits.DeviceNodes, &cdispec.DeviceNode{
-			HostPath:    dspec.HostPath,
-			Path:        dspec.ContainerPath,
-			Permissions: dspec.Permissions,
+			HostPath:    devSpecs[idx].HostPath,
+			Path:        devSpecs[idx].ContainerPath,
+			Permissions: devSpecs[idx].Permissions,
 		})
 	}
 
-	for _, mount := range mounts {
+	for idx := range mounts {
 		cedits.Mounts = append(cedits.Mounts, &cdispec.Mount{
-			HostPath:      mount.HostPath,
-			ContainerPath: mount.ContainerPath,
+			HostPath:      mounts[idx].HostPath,
+			ContainerPath: mounts[idx].ContainerPath,
 			Type:          "none",
 			Options:       []string{"bind", "ro"},
 		})

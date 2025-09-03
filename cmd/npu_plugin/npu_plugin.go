@@ -167,13 +167,14 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		}
 
 		// even querying metrics requires device to be writable
-		devSpec := pluginapi.DeviceSpec{
+		devSpec := []pluginapi.DeviceSpec{{
 			HostPath:      devPath,
 			ContainerPath: devPath,
 			Permissions:   "rw",
+		},
 		}
 
-		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, []pluginapi.DeviceSpec{devSpec}, nil, nil, nil, nil)
+		deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devSpec, nil, nil, nil, nil)
 
 		for i := 0; i < dp.options.sharedDevNum; i++ {
 			devID := fmt.Sprintf("%s-%d", name, i)
