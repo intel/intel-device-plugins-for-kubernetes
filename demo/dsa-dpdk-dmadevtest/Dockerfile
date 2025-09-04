@@ -6,8 +6,8 @@ WORKDIR $DIR
 RUN apt-get update && apt-get install -y --no-install-recommends wget build-essential meson ninja-build python3-pyelftools libnuma-dev python3-pip pkg-config dpkg-dev libipsec-mb-dev
 
 # Download & unpack DPDK tarball
-ARG DPDK_TARBALL=dpdk-24.11.1.tar.xz
-ARG DPDK_TARBALL_SHA256="bcae7d42c449fc456dfb279feabcbe0599a29bebb2fe2905761e187339d96b8e"
+ARG DPDK_TARBALL=dpdk-25.03.tar.xz
+ARG DPDK_TARBALL_SHA256="6a40a731328286ebd79685b18ffa5992e6b770c13843d65fd0d1157cfccff63d"
 
 RUN wget -q https://fast.dpdk.org/rel/$DPDK_TARBALL \
     && echo "$DPDK_TARBALL_SHA256 $DPDK_TARBALL" | sha256sum -c - \
