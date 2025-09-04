@@ -90,6 +90,10 @@ func (c *mockClient) IsObjectNamespaced(runtime.Object) (bool, error) {
 	return false, nil
 }
 
+func (c *mockClient) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+	return nil
+}
+
 type mockManager struct {
 	scheme *runtime.Scheme
 	log    logr.Logger
