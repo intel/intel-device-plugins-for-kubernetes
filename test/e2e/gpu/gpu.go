@@ -41,8 +41,8 @@ const (
 	healthMgmtYaml      = "deployments/gpu_plugin/overlays/health/kustomization.yaml"
 	nfdRulesYaml        = "deployments/nfd/overlays/node-feature-rules/kustomization.yaml"
 	containerName       = "testcontainer"
-	tfKustomizationYaml = "deployments/gpu_tensorflow_test/kustomization.yaml"
-	tfPodName           = "training-pod"
+	ptKustomizationYaml = "deployments/gpu_pytorch_demo/kustomization.yaml"
+	ptPodName           = "training-pod"
 )
 
 func init() {
@@ -195,12 +195,12 @@ func describe() {
 			})
 		})
 
-		ginkgo.It("run a small workload on the GPU [App:tensorflow]", func(ctx context.Context) {
+		ginkgo.It("run a small workload on the GPU [App:pytorch]", func(ctx context.Context) {
 			createPluginAndVerifyExistence(f, ctx, vanillaPath, "gpu.intel.com/i915")
 
-			kustomYaml, err := utils.LocateRepoFile(tfKustomizationYaml)
+			kustomYaml, err := utils.LocateRepoFile(ptKustomizationYaml)
 			if err != nil {
-				framework.Failf("unable to locate %q: %v", tfKustomizationYaml, err)
+				framework.Failf("unable to locate %q: %v", ptKustomizationYaml, err)
 			}
 
 			ginkgo.By("submitting demo deployment")
@@ -209,8 +209,8 @@ func describe() {
 
 			ginkgo.By("waiting the pod to finish")
 
-			err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, tfPodName, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, tfPodName, containerName))
+			err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, ptPodName, f.Namespace.Name, 300*time.Second)
+			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, ptPodName, containerName))
 
 			framework.Logf("tensorflow execution succeeded!")
 		})

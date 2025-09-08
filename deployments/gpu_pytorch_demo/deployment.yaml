@@ -6,12 +6,12 @@ spec:
   restartPolicy: Never
   containers:
   - name: testcontainer
-    image: intel/intel-extension-for-tensorflow:latest
+    image: intel/intel-extension-for-pytorch:xpu
     imagePullPolicy: IfNotPresent
     securityContext:
       allowPrivilegeEscalation: false
     command: ["/bin/sh", "-c"]
-    args: ["python /code/training.py"]
+    args: ["python3 /code/demo.py"]
     resources:
       limits:
         gpu.intel.com/i915: 1
