@@ -37,6 +37,7 @@ import (
 
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
+	"github.com/prometheus/common/model"
 )
 
 type invalidEntryErr struct{}
@@ -183,7 +184,7 @@ func processMetricsLabels(labels []*io_prometheus_client.LabelPair, allowNonSubd
 func (xms *xpuManagerSidecar) GetTopologyFromXPUMMetrics(data []byte) (topologyInfos []xpuManagerTopologyMatrixCell) {
 	reader := bytes.NewReader(data)
 
-	var parser expfmt.TextParser
+	parser := expfmt.NewTextParser(model.LegacyValidation)
 	families, err := parser.TextToMetricFamilies(reader)
 
 	if err != nil {
