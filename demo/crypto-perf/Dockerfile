@@ -8,17 +8,18 @@ RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
 RUN apt-get update && apt-get install -y --no-install-recommends wget build-essential meson ninja-build python3-pyelftools libnuma-dev python3-pip pkg-config dpkg-dev libipsec-mb-dev
 
 # Download & unpack DPDK tarball
-ARG DPDK_TARBALL=dpdk-24.03.tar.xz
-ARG DPDK_TARBALL_SHA256="33ed973b3945af4f5923096ddca250b401dc80be3b5c6393b4e4fe43a1a6c2ad"
+ARG DPDK_TARBALL=dpdk-25.03.tar.xz
+ARG DPDK_TARBALL_SHA256="6a40a731328286ebd79685b18ffa5992e6b770c13843d65fd0d1157cfccff63d"
 
 RUN wget -q https://fast.dpdk.org/rel/$DPDK_TARBALL \
     && echo "$DPDK_TARBALL_SHA256 $DPDK_TARBALL" | sha256sum -c - \
     && tar -xf $DPDK_TARBALL && rm $DPDK_TARBALL
 
-ARG SOVERSION=24
+ARG SOVERSION=25
 RUN cd dpdk-* && meson setup \
     -Dplatform=generic \
     -Dcpu_instruction_set=westmere \
+    -Dmax_lcores=256 \
     "-Denable_drivers=common/qat,compress/qat,crypto/qat" \
     "-Denable_apps=test-crypto-perf,test-compress-perf" \
     --prefix $(pwd)/installdir \
