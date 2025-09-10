@@ -25,7 +25,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-        image: intel/intel-npu-plugin:devel
+        image: intel/intel-npu-plugin:0.34.0
         imagePullPolicy: IfNotPresent
         securityContext:
           seLinuxOptions:

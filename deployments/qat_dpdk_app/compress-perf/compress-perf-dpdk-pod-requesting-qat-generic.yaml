@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
   - name: compress-perf
-    image: intel/crypto-perf:devel
+    image: intel/crypto-perf:0.34.0
     imagePullPolicy: IfNotPresent
     env:
     - name: TESTCMD

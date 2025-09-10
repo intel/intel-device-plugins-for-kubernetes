@@ -62,7 +62,7 @@ ENTRYPOINT ["/usr/local/bin/intel_gpu_fakedev"]
 LABEL vendor='Intel®'
 LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
 LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL version='0.34.0'
 LABEL release='1'
 LABEL name='intel-gpu-fakedev'
 LABEL summary='Fake device file generator for Intel® GPU plugin'
