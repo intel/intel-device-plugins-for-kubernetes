@@ -57,7 +57,7 @@ discrete and integrated Intel GPU device files.
 The demo subdirectory contains both a [GPU plugin demo video](demo/readme.md#intel-gpu-device-plugin-demo-video)
 and an OpenCL sample deployment (`intelgpu-job.yaml`).
 
-### FPGA Device Plugin
+### FPGA Device Plugin (deprecated)
 
 The [FPGA device plugin](cmd/fpga_plugin/README.md) supports FPGA passthrough for
 the following hardware:
@@ -173,7 +173,7 @@ type [memory](https://kubernetes.io/docs/concepts/configuration/manage-resources
 The [DSA device plugin](cmd/dsa_plugin/README.md) supports acceleration using
 the Intel Data Streaming accelerator(DSA).
 
-### DLB Device Plugin
+### DLB Device Plugin (deprecated)
 
 The [DLB device plugin](cmd/dlb_plugin/README.md) supports Intel Dynamic Load
 Balancer accelerator(DLB).

@@ -12,6 +12,8 @@ Table of Contents
 
 ## Introduction
 
+**NOTICE**: Intel FPGA plugin has been deprecated.
+
 This FPGA device plugin is part of a collection of Kubernetes components found within this
 repository that enable integration of Intel FPGA hardware into Kubernetes.
 

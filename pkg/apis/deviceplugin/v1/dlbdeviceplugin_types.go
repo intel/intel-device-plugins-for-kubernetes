@@ -73,7 +73,7 @@ type DlbDevicePluginStatus struct {
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 // +operator-sdk:csv:customresourcedefinitions:displayName="Intel DLB Device Plugin"
 
-// DlbDevicePlugin is the Schema for the dlbdeviceplugins API. It represents
+// DEPRECATED: DlbDevicePlugin is the Schema for the dlbdeviceplugins API. It represents
 // the DLB device plugin responsible for advertising Intel DLB hardware resources to
 // the kubelet.
 type DlbDevicePlugin struct {
