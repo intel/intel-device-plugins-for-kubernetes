@@ -62,7 +62,7 @@ ENTRYPOINT ["/usr/local/bin/intel_sgx_device_plugin"]
 LABEL vendor='Intel®'
 LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
 LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL version='0.34.0'
 LABEL release='1'
 LABEL name='intel-sgx-plugin'
 LABEL summary='Intel® SGX device plugin for Kubernetes'

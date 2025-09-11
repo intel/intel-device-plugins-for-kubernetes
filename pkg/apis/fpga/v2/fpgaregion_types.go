@@ -43,7 +43,7 @@ type FpgaRegion struct {
 
 // +kubebuilder:object:root=true
 
-// FpgaRegionList is a list of FpgaRegion resources.
+// DEPRECATED: FpgaRegionList is a list of FpgaRegion resources.
 type FpgaRegionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`

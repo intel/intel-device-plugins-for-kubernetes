@@ -8,8 +8,8 @@ This repository contains a framework for developing plugins for the Kubernetes
 [device plugins framework](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/),
 along with a number of device plugin implementations utilizing that framework.
 
-The [v0.32.0 release](https://github.com/intel/intel-device-plugins-for-kubernetes/releases/latest)
-is the latest feature release with its documentation available [here](https://intel.github.io/intel-device-plugins-for-kubernetes/0.32/).
+The [v0.34.0 release](https://github.com/intel/intel-device-plugins-for-kubernetes/releases/latest)
+is the latest feature release with its documentation available [here](https://intel.github.io/intel-device-plugins-for-kubernetes/0.34/).
 
 Table of Contents
 
@@ -57,7 +57,7 @@ discrete and integrated Intel GPU device files.
 The demo subdirectory contains both a [GPU plugin demo video](demo/readme.md#intel-gpu-device-plugin-demo-video)
 and an OpenCL sample deployment (`intelgpu-job.yaml`).
 
-### FPGA Device Plugin
+### FPGA Device Plugin (deprecated)
 
 The [FPGA device plugin](cmd/fpga_plugin/README.md) supports FPGA passthrough for
 the following hardware:
@@ -173,7 +173,7 @@ type [memory](https://kubernetes.io/docs/concepts/configuration/manage-resources
 The [DSA device plugin](cmd/dsa_plugin/README.md) supports acceleration using
 the Intel Data Streaming accelerator(DSA).
 
-### DLB Device Plugin
+### DLB Device Plugin (deprecated)
 
 The [DLB device plugin](cmd/dlb_plugin/README.md) supports Intel Dynamic Load
 Balancer accelerator(DLB).
@@ -262,21 +262,16 @@ this repository, see the [Developers Guide](DEVEL.md).
 Releases are made under the github [releases area](https://github.com/intel/intel-device-plugins-for-kubernetes/releases). Supported releases and
 matching Kubernetes versions are listed below:
 
-| Branch            | Kubernetes branch/version      | Status      |
-|:------------------|:-------------------------------|:------------|
-| release-0.32      | Kubernetes 1.32 branch v1.32.x | supported   |
-| release-0.31      | Kubernetes 1.31 branch v1.31.x | supported   |
-| release-0.30      | Kubernetes 1.30 branch v1.30.x | supported   |
-| release-0.29      | Kubernetes 1.29 branch v1.29.x | unsupported |
-| release-0.28      | Kubernetes 1.28 branch v1.28.x | unsupported |
-| release-0.27      | Kubernetes 1.27 branch v1.27.x | unsupported |
-| release-0.26      | Kubernetes 1.26 branch v1.26.x | unsupported |
-| release-0.25      | Kubernetes 1.25 branch v1.25.x | unsupported |
-| release-0.24      | Kubernetes 1.24 branch v1.24.x | unsupported |
-| release-0.23      | Kubernetes 1.23 branch v1.23.x | unsupported |
-| release-0.22      | Kubernetes 1.22 branch v1.22.x | unsupported |
-| release-0.21      | Kubernetes 1.21 branch v1.21.x | unsupported |
-| release-0.20      | Kubernetes 1.20 branch v1.20.x | unsupported |
+| Branch            | Kubernetes version   | Status      |
+|:------------------|:---------------------|:------------|
+| release-0.34      | Kubernetes 1.33-1.34 | supported   |
+| release-0.32      | Kubernetes 1.32      | supported   |
+| release-0.31      | Kubernetes 1.31      | supported   |
+| release-0.30      | Kubernetes 1.30      | unsupported |
+| release-0.29      | Kubernetes 1.29      | unsupported |
+| release-0.28      | Kubernetes 1.28      | unsupported |
+| release-0.27      | Kubernetes 1.27      | unsupported |
+| release-0.26      | Kubernetes 1.26      | unsupported |
 
 *Note:* Device plugins leverage the Kubernetes v1 API. The API itself is GA (generally available) and [does not change](https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-changes) between Kubernetes versions. One does not necessarily need to use the latest Kubernetes cluster with the latest device plugin version. Using a newer device plugins release should work without issues on an older Kubernetes cluster. One possible exception to this are the device plugins CRDs that can vary between versions.
 

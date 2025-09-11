@@ -10,6 +10,8 @@ Table of Contents
 
 ## Introduction
 
+**NOTICE**: Intel DLB plugin has been deprecated.
+
 This Intel DLB device plugin provides support for [Intel DLB](https://builders.intel.com/docs/networkbuilders/SKU-343247-001US-queue-management-and-load-balancing-on-intel-architecture.pdf) devices under Kubernetes.
 
 ### DLB2 driver configuration for PFs

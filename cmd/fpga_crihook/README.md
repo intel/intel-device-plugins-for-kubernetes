@@ -8,6 +8,8 @@ Table of Contents
 
 ## Introduction
 
+**NOTICE**:: Intel FPGA plugin has been deprecated.
+
 The FPGA CDI hook is one of the components used to add support for Intel FPGA
 devices to Kubernetes.
 

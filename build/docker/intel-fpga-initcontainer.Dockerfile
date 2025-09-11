@@ -87,7 +87,7 @@ FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
 LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
 LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL version='0.34.0'
 LABEL release='1'
 LABEL name='intel-fpga-initcontainer'
 LABEL summary='Intel® FPGA programming CDI hook for Kubernetes'
