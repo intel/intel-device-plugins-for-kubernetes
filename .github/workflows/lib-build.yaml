@@ -35,6 +35,8 @@ jobs:
           - openssl-qat-engine
           - sgx-sdk-demo
           - sgx-aesmd-demo
+          - sgx-dcap-infra
+          - sgx-pccs
           - dsa-dpdk-dmadevtest
           - intel-npu-demo
         builder: [buildah, docker]
