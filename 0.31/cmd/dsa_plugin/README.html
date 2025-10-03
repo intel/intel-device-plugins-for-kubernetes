@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel DSA device plugin for Kubernetes &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Intel FPGA admission controller for Kubernetes" href="../fpga_admissionwebhook/README.html" />
+    <link rel="prev" title="Intel DLB device plugin for Kubernetes" href="../dlb_plugin/README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../docs/extensions.html">Extensions</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../dlb_plugin/README.html">Intel DLB device plugin for Kubernetes</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Intel DSA device plugin for Kubernetes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pre-built-images">Pre-built Images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#verify-plugin-registration">Verify Plugin Registration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#testing-and-demos">Testing and Demos</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_admissionwebhook/README.html">Intel FPGA admission controller for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_crihook/README.html">Intel FPGA OCI createRuntime hook for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_plugin/README.html">Intel FPGA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_tool/README.html">Intel FPGA test tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_nfdhook/README.html">Intel GPU NFD hook</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_plugin/README.html">Intel GPU device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iaa_plugin/README.html">Intel IAA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../operator/README.html">Intel Device Plugins Operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../qat_plugin/README.html">Intel QuickAssist Technology (QAT) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_plugin/README.html">Intel Software Guard Extensions (SGX) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_admissionwebhook/README.html">Intel SGX admission controller for Kubernetes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../docs/extensions.html">Extensions</a></li>
+      <li class="breadcrumb-item active">Intel DSA device plugin for Kubernetes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/dsa_plugin/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-dsa-device-plugin-for-kubernetes">
+<h1>Intel DSA device plugin for Kubernetes<a class="headerlink" href="#intel-dsa-device-plugin-for-kubernetes" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#pre-built-images">Pre-built Images</a></p></li>
+<li><p><a class="reference external" href="#verify-plugin-registration">Verify Plugin Registration</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#testing-and-demos">Testing and Demos</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>The DSA device plugin for Kubernetes supports acceleration using the Intel Data Streaming accelerator(DSA).</p>
+<p>The DSA plugin discovers DSA work queues and presents them as a node resources.</p>
+<p>The DSA plugin and operator optionally support provisioning of DSA devices and workqueues with the help of <a class="reference external" href="https://github.com/intel/idxd-config">accel-config</a> utility through initcontainer.</p>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>The following sections detail how to use the DSA device plugin.</p>
+<section id="pre-built-images">
+<h3>Pre-built Images<a class="headerlink" href="#pre-built-images" title="Permalink to this heading"></a></h3>
+<p><a class="reference external" href="https://hub.docker.com/r/intel/intel-dsa-plugin">Pre-built images</a>
+of this component are available on the Docker hub. These images are automatically built and uploaded
+to the hub from the latest main branch of this repository.</p>
+<p>Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers in the format <code class="docutils literal notranslate"><span class="pre">x.y.z</span></code>, corresponding to the branches and releases in this
+repository. Thus the easiest way to deploy the plugin in your cluster is to run this command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/dsa_plugin?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+daemonset.apps/intel-dsa-plugin<span class="w"> </span>created
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;RELEASE_VERSION&gt;</span></code> needs to be substituted with the desired <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tags">release tag</a> or <code class="docutils literal notranslate"><span class="pre">main</span></code> to get <code class="docutils literal notranslate"><span class="pre">devel</span></code> images.</p>
+<p>Nothing else is needed. See <a class="reference internal" href="../../DEVEL.html"><span class="doc">the development guide</span></a> for details if you want to deploy a customized version of the plugin.</p>
+<section id="automatic-provisioning">
+<h4>Automatic Provisioning<a class="headerlink" href="#automatic-provisioning" title="Permalink to this heading"></a></h4>
+<p>There’s a sample <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/build/docker/intel-idxd-config-initcontainer.Dockerfile">idxd initcontainer</a> included that provisions DSA devices and workqueues (1 engine / 1 group / 1 wq (user/dedicated)), to deploy:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span>deployments/dsa_plugin/overlays/dsa_initcontainer/
+</pre></div>
+</div>
+<p>The provisioning <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/idxd-init.sh">script</a> and <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/master/demo/dsa.conf">template</a> are available for customization.</p>
+<p>The provisioning config can be optionally stored in the ProvisioningConfig configMap which is then passed to initcontainer through the volume mount.</p>
+<p>There’s also a possibility for a node specific congfiguration through passing a nodename via NODE_NAME into initcontainer’s environment and passing a node specific profile via configMap volume mount.</p>
+<p>To create a custom provisioning config:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>create<span class="w"> </span>configmap<span class="w"> </span>--namespace<span class="o">=</span>inteldeviceplugins-system<span class="w"> </span>intel-dsa-config<span class="w"> </span>--from-file<span class="o">=</span>demo/dsa.conf
+</pre></div>
+</div>
+</section>
+</section>
+<section id="verify-plugin-registration">
+<h3>Verify Plugin Registration<a class="headerlink" href="#verify-plugin-registration" title="Permalink to this heading"></a></h3>
+<p>You can verify the plugin has been registered with the expected nodes by searching for the relevant
+resource allocation status on the nodes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-o<span class="w"> </span>go-template<span class="o">=</span><span class="s1">&#39;{{range .items}}{{.metadata.name}}{{&quot;\n&quot;}}{{range $k,$v:=.status.allocatable}}{{&quot;  &quot;}}{{$k}}{{&quot;: &quot;}}{{$v}}{{&quot;\n&quot;}}{{end}}{{end}}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s1">&#39;^\([^ ]\)\|\(  dsa\)&#39;</span>
+master
+<span class="w">  </span>dsa.intel.com/wq-user-dedicated:<span class="w"> </span><span class="m">2</span>
+<span class="w">  </span>dsa.intel.com/wq-user-shared:<span class="w"> </span><span class="m">8</span>
+node1
+<span class="w"> </span>dsa.intel.com/wq-user-dedicated:<span class="w"> </span><span class="m">4</span>
+<span class="w"> </span>dsa.intel.com/wq-user-shared:<span class="w"> </span><span class="m">20</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="testing-and-demos">
+<h2>Testing and Demos<a class="headerlink" href="#testing-and-demos" title="Permalink to this heading"></a></h2>
+<p>We can test the plugin is working by deploying the provided example accel-config test image.</p>
+<ol>
+<li><p>Build a Docker image with an accel-config tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>accel-config-demo
+...
+Successfully<span class="w"> </span>tagged<span class="w"> </span>accel-config-demo:devel
+</pre></div>
+</div>
+</li>
+<li><p>Create a pod running unit tests off the local Docker image:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/demo/dsa-accel-config-demo-pod.yaml
+pod/dsa-accel-config-demo<span class="w"> </span>created
+</pre></div>
+</div>
+</li>
+<li><p>Wait until pod is completed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w">  </span><span class="p">|</span>grep<span class="w"> </span>dsa-accel-config-demo
+dsa-accel-config-demo<span class="w">    </span><span class="m">0</span>/1<span class="w">     </span>Completed<span class="w">   </span><span class="m">0</span><span class="w">          </span>31m
+</pre></div>
+</div>
+</li>
+<li><p>Review the job’s logs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>logs<span class="w"> </span>dsa-accel-config-demo<span class="w"> </span><span class="p">|</span><span class="w"> </span>tail
+<span class="o">[</span>debug<span class="o">]</span><span class="w"> </span>PF<span class="w"> </span><span class="k">in</span><span class="w"> </span>sub-task<span class="o">[</span><span class="m">6</span><span class="o">]</span>,<span class="w"> </span>consider<span class="w"> </span>as<span class="w"> </span>passed
+<span class="o">[</span>debug<span class="o">]</span><span class="w"> </span>PF<span class="w"> </span><span class="k">in</span><span class="w"> </span>sub-task<span class="o">[</span><span class="m">7</span><span class="o">]</span>,<span class="w"> </span>consider<span class="w"> </span>as<span class="w"> </span>passed
+<span class="o">[</span>debug<span class="o">]</span><span class="w"> </span>PF<span class="w"> </span><span class="k">in</span><span class="w"> </span>sub-task<span class="o">[</span><span class="m">8</span><span class="o">]</span>,<span class="w"> </span>consider<span class="w"> </span>as<span class="w"> </span>passed
+<span class="o">[</span>debug<span class="o">]</span><span class="w"> </span>PF<span class="w"> </span><span class="k">in</span><span class="w"> </span>sub-task<span class="o">[</span><span class="m">9</span><span class="o">]</span>,<span class="w"> </span>consider<span class="w"> </span>as<span class="w"> </span>passed
+<span class="o">[</span>debug<span class="o">]</span><span class="w"> </span>PF<span class="w"> </span><span class="k">in</span><span class="w"> </span>sub-task<span class="o">[</span><span class="m">10</span><span class="o">]</span>,<span class="w"> </span>consider<span class="w"> </span>as<span class="w"> </span>passed
+<span class="o">[</span>debug<span class="o">]</span><span class="w"> </span>PF<span class="w"> </span><span class="k">in</span><span class="w"> </span>sub-task<span class="o">[</span><span class="m">11</span><span class="o">]</span>,<span class="w"> </span>consider<span class="w"> </span>as<span class="w"> </span>passed
+<span class="o">[</span>debug<span class="o">]</span><span class="w"> </span>PF<span class="w"> </span><span class="k">in</span><span class="w"> </span>sub-task<span class="o">[</span><span class="m">12</span><span class="o">]</span>,<span class="w"> </span>consider<span class="w"> </span>as<span class="w"> </span>passed
+<span class="o">[</span>debug<span class="o">]</span><span class="w"> </span>PF<span class="w"> </span><span class="k">in</span><span class="w"> </span>sub-task<span class="o">[</span><span class="m">13</span><span class="o">]</span>,<span class="w"> </span>consider<span class="w"> </span>as<span class="w"> </span>passed
+<span class="o">[</span>debug<span class="o">]</span><span class="w"> </span>PF<span class="w"> </span><span class="k">in</span><span class="w"> </span>sub-task<span class="o">[</span><span class="m">14</span><span class="o">]</span>,<span class="w"> </span>consider<span class="w"> </span>as<span class="w"> </span>passed
+<span class="o">[</span>debug<span class="o">]</span><span class="w"> </span>PF<span class="w"> </span><span class="k">in</span><span class="w"> </span>sub-task<span class="o">[</span><span class="m">15</span><span class="o">]</span>,<span class="w"> </span>consider<span class="w"> </span>as<span class="w"> </span>passed
+</pre></div>
+</div>
+<p>If the pod did not successfully launch, possibly because it could not obtain the DSA
+resource, it will be stuck in the <code class="docutils literal notranslate"><span class="pre">Pending</span></code> status:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods
+NAME<span class="w">                      </span>READY<span class="w">   </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
+dsa-accel-config-demo<span class="w">     </span><span class="m">0</span>/1<span class="w">     </span>Pending<span class="w">   </span><span class="m">0</span><span class="w">          </span>7s
+</pre></div>
+</div>
+<p>This can be verified by checking the Events of the pod:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>describe<span class="w"> </span>pod<span class="w"> </span>dsa-accel-config-demo<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-A3<span class="w"> </span>Events:
+Events:
+<span class="w">  </span>Type<span class="w">     </span>Reason<span class="w">            </span>Age<span class="w">    </span>From<span class="w">               </span>Message
+<span class="w">  </span>----<span class="w">     </span>------<span class="w">            </span>----<span class="w">   </span>----<span class="w">               </span>-------
+<span class="w">  </span>Warning<span class="w">  </span>FailedScheduling<span class="w">  </span>2m26s<span class="w">  </span>default-scheduler<span class="w">  </span><span class="m">0</span>/1<span class="w"> </span>nodes<span class="w"> </span>are<span class="w"> </span>available:<span class="w"> </span><span class="m">1</span><span class="w"> </span>Insufficient<span class="w"> </span>dsa.intel.com/wq-user-dedicated,<span class="w"> </span><span class="m">1</span><span class="w"> </span>Insufficient<span class="w"> </span>dsa.intel.com/wq-user-shared.
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../dlb_plugin/README.html" class="btn btn-neutral float-left" title="Intel DLB device plugin for Kubernetes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../fpga_admissionwebhook/README.html" class="btn btn-neutral float-right" title="Intel FPGA admission controller for Kubernetes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
