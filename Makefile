@@ -163,8 +163,9 @@ e2e-dsa:
 e2e-iaa:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:iaa.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
 
+# This is a CI specific target to run all tests that are possible in the SPR host
 e2e-spr:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:(iaa|dsa)|Device:qat.*Mode:dpdk.*Resource:(cy|dc).*" -ginkgo.focus "Device:sgx.*|(SGX Admission)" -ginkgo.focus "Device:gpu.*Resource:i915" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:qat.*Mode:dpdk.*Resource:(cy|dc).*" -ginkgo.focus "Device:sgx.*|(SGX Admission)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
 
 pre-pull:
 ifeq ($(TAG),devel)
