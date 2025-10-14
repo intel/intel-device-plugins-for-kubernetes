@@ -33,12 +33,9 @@ type LevelzeroService interface {
 }
 
 type DeviceHealth struct {
-	Memory            bool
-	Bus               bool
-	SoC               bool
-	GlobalTemperature float64
-	GPUTemperature    float64
-	MemoryTemperature float64
+	Memory bool
+	Bus    bool
+	SoC    bool
 }
 
 type DeviceTemperature struct {

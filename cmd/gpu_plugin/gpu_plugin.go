@@ -396,7 +396,7 @@ func (dp *devicePlugin) healthStatusForCard(cardPath string) string {
 		return health
 	}
 
-	dt, err := dp.levelzeroService.GetDeviceTemperature(bdfAddr)
+	deviceTemps, err := dp.levelzeroService.GetDeviceTemperature(bdfAddr)
 	// In case of any errors, return the current health status
 	if err != nil {
 		klog.Warningf("Device temperature retrieval failed: %v", err)
@@ -407,9 +407,10 @@ func (dp *devicePlugin) healthStatusForCard(cardPath string) string {
 	limit := float64(dp.options.temperatureLimit)
 
 	// Temperatures for different areas
-	klog.V(4).Infof("Temperatures: Memory=%.1fC, GPU=%.1fC, Global=%.1fC", dh.MemoryTemperature, dh.GPUTemperature, dh.GlobalTemperature)
+	klog.V(4).Infof("Temperatures: Memory=%.1fC, GPU=%.1fC, Global=%.1fC",
+		deviceTemps.Memory, deviceTemps.GPU, deviceTemps.Global)
 
-	if dt.GPU > limit || dt.Global > limit || dt.Memory > limit {
+	if deviceTemps.GPU > limit || deviceTemps.Global > limit || deviceTemps.Memory > limit {
 		health = pluginapi.Unhealthy
 	}
 
