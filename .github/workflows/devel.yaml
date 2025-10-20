@@ -39,10 +39,10 @@ jobs:
       - trivy
     uses: "./.github/workflows/lib-build.yaml"
 
-  # e2e:
-  #   needs:
-  #     - build
-  #   uses: "./.github/workflows/lib-e2e.yaml"
+  e2e:
+    needs:
+      - build
+    uses: "./.github/workflows/lib-e2e.yaml"
 
   # devel image push
   publish:
@@ -50,7 +50,7 @@ jobs:
       contents: read
       id-token: write
     needs:
-#      - e2e
+      - e2e
       - build
     uses: "./.github/workflows/lib-publish.yaml"
     secrets: inherit
