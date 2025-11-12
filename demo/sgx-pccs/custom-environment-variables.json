@@ -1,0 +1,7 @@
+{
+  "ApiKey": "PCS_API_KEY",
+  "proxy": "CLUSTER_HTTPS_PROXY",
+  "UserTokenHash": "PCCS_USER_TOKEN_HASH",
+  "AdminTokenHash": "PCCS_ADMIN_TOKEN_HASH",
+  "CachingFillMode": "PCCS_FILL_MODE"
+}
