@@ -338,6 +338,11 @@ func (dp *DevicePlugin) getDpdkMounts(dpdkDeviceName string) []pluginapi.Mount {
 	}
 }
 
+// Trim services reported by the kernel into k8s resource names.
+func trimServiceName(serviceName string) string {
+	return strings.Replace(strings.TrimSpace(serviceName), ";", "-", 2)
+}
+
 func readDeviceConfiguration(pfDev string) string {
 	qatState, err := os.ReadFile(filepath.Join(pfDev, "qat/state"))
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -353,7 +358,7 @@ func readDeviceConfiguration(pfDev string) string {
 		}
 
 		if err2 == nil && len(qatCfgServices) != 0 {
-			return strings.Join(strings.SplitN(strings.TrimSpace(string(qatCfgServices)), ";", 3), "-")
+			return trimServiceName(string(qatCfgServices))
 		}
 	}
 
@@ -370,7 +375,7 @@ func readDeviceConfiguration(pfDev string) string {
 		return defaultCapabilities
 	}
 
-	return devCfg.Section("GENERAL").Key("ServicesEnabled").String()
+	return trimServiceName(devCfg.Section("GENERAL").Key("ServicesEnabled").String())
 }
 
 func getDeviceHealthiness(device string, lookup map[string]string) string {
