@@ -70,7 +70,9 @@ type cliOptions struct {
 	allowIDs                  string
 	denyIDs                   string
 	sharedDevNum              int
-	temperatureLimit          int
+	globalTempLimit           int
+	memoryTempLimit           int
+	gpuTempLimit              int
 	enableMonitoring          bool
 	wslScan                   bool
 	healthManagement          bool
@@ -402,13 +404,13 @@ func (dp *devicePlugin) healthStatusForCard(cardPath string) string {
 		return health
 	}
 
-	limit := float64(dp.options.temperatureLimit)
-
 	// Temperatures for different areas
-	klog.V(4).Infof("Temperatures: Memory=%.1fC, GPU=%.1fC, Global=%.1fC",
+	klog.V(4).Infof("Temperatures: Memory=%dC, GPU=%dC, Global=%dC",
 		deviceTemps.Memory, deviceTemps.GPU, deviceTemps.Global)
 
-	if deviceTemps.GPU > limit || deviceTemps.Global > limit || deviceTemps.Memory > limit {
+	if deviceTemps.GPU > dp.options.gpuTempLimit ||
+		deviceTemps.Global > dp.options.globalTempLimit ||
+		deviceTemps.Memory > dp.options.memoryTempLimit {
 		health = pluginapi.Unhealthy
 	}
 
@@ -784,7 +786,9 @@ func main() {
 	flag.BoolVar(&opts.healthManagement, "health-management", false, "enable GPU health management")
 	flag.BoolVar(&opts.wslScan, "wsl", false, "scan for / use WSL devices")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
-	flag.IntVar(&opts.temperatureLimit, "temp-limit", 100, "temperature limit at which device is marked unhealthy")
+	flag.IntVar(&opts.globalTempLimit, "temp-limit", 100, "Global temperature limit at which device is marked unhealthy")
+	flag.IntVar(&opts.gpuTempLimit, "gpu-temp-limit", 100, "GPU temperature limit at which device is marked unhealthy")
+	flag.IntVar(&opts.memoryTempLimit, "memory-temp-limit", 100, "Memory temperature limit at which device is marked unhealthy")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
 	flag.StringVar(&opts.allowIDs, "allow-ids", "", "comma-separated list of device IDs to allow (e.g. 0x49c5,0x49c6)")
 	flag.StringVar(&opts.denyIDs, "deny-ids", "", "comma-separated list of device IDs to deny (e.g. 0x49c5,0x49c6)")
