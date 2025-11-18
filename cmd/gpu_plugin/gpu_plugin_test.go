@@ -58,10 +58,11 @@ func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 }
 
 type mockL0Service struct {
-	indices []uint32
-	memSize uint64
-	healthy bool
-	fail    bool
+	indices  []uint32
+	memSize  uint64
+	healthy  bool
+	failTemp bool
+	fail     bool
 }
 
 func (m *mockL0Service) Run(keep bool) {
@@ -83,7 +84,7 @@ func (m *mockL0Service) GetDeviceHealth(bdfAddress string) (levelzeroservice.Dev
 	return levelzeroservice.DeviceHealth{Memory: m.healthy, Bus: m.healthy, SoC: m.healthy}, nil
 }
 func (m *mockL0Service) GetDeviceTemperature(bdfAddress string) (levelzeroservice.DeviceTemperature, error) {
-	if m.fail {
+	if m.fail || m.failTemp {
 		return levelzeroservice.DeviceTemperature{}, errors.Errorf("error, error")
 	}
 
@@ -606,6 +607,24 @@ func TestScanWithHealth(t *testing.T) {
 			expectedI915Devs: 1,
 			l0mock: &mockL0Service{
 				healthy: true,
+			},
+		},
+		{
+			name:         "one device with failure on temp reading",
+			pciAddresses: map[string]string{"0000:00:00.0": "card0"},
+			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+			},
+			expectedI915Devs: 1,
+			l0mock: &mockL0Service{
+				healthy:  true,
+				failTemp: true,
 			},
 		},
 		{
