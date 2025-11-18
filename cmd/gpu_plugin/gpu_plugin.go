@@ -43,8 +43,6 @@ const (
 	devfsDriDirectory = "/dev/dri"
 	wslDxgPath        = "/dev/dxg"
 	wslLibPath        = "/usr/lib/wsl"
-	nfdFeatureDir     = "/etc/kubernetes/node-feature-discovery/features.d"
-	resourceFilename  = "intel-gpu-resources.txt"
 	gpuDeviceRE       = `^card[0-9]+$`
 	controlDeviceRE   = `^controlD[0-9]+$`
 	pciAddressRE      = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
