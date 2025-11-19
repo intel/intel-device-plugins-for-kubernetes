@@ -44,13 +44,13 @@ RUN if [ $ROCKYLINUX -eq 0 ]; then \
         LATEST_GO=$(curl --no-progress-meter https://go.dev/dl/?mode=json | jq ".[] | select(.version | startswith(\"go${CGO_VERSION}\")).version" | tr -d "\"") && \
         wget -q https://go.dev/dl/$LATEST_GO.linux-amd64.tar.gz -O - | tar -xz -C /usr/local && \
         cd /runtime && \
-        wget -q https://github.com/intel/compute-runtime/releases/download/25.09.32961.7/intel-level-zero-gpu_1.6.32961.7_amd64.deb && \
-        wget -q https://github.com/intel/compute-runtime/releases/download/25.09.32961.7/intel-opencl-icd_25.09.32961.7_amd64.deb && \
-        wget -q https://github.com/intel/compute-runtime/releases/download/25.09.32961.7/libigdgmm12_22.6.0_amd64.deb && \
-        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.20.2/level-zero-devel_1.20.2+u22.04_amd64.deb && \
-        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.20.2/level-zero_1.20.2+u22.04_amd64.deb && \
-        wget -q https://github.com/intel/intel-graphics-compiler/releases/download/v2.8.3/intel-igc-core-2_2.8.3+18762_amd64.deb && \
-        wget -q https://github.com/intel/intel-graphics-compiler/releases/download/v2.8.3/intel-igc-opencl-2_2.8.3+18762_amd64.deb && \
+        wget -q https://github.com/intel/intel-graphics-compiler/releases/download/v2.20.3/intel-igc-core-2_2.20.3+19972_amd64.deb && \
+        wget -q https://github.com/intel/intel-graphics-compiler/releases/download/v2.20.3/intel-igc-opencl-2_2.20.3+19972_amd64.deb && \
+        wget -q https://github.com/intel/compute-runtime/releases/download/25.40.35563.4/intel-opencl-icd_25.40.35563.4-0_amd64.deb && \
+        wget -q https://github.com/intel/compute-runtime/releases/download/25.40.35563.4/libigdgmm12_22.8.2_amd64.deb && \
+        wget -q https://github.com/intel/compute-runtime/releases/download/25.40.35563.4/libze-intel-gpu1_25.40.35563.4-0_amd64.deb && \
+        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.24.3/level-zero_1.24.3+u22.04_amd64.deb && \
+        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.24.3/level-zero-devel_1.24.3+u22.04_amd64.deb && \
         dpkg -i *.deb && \
         rm -rf /var/lib/apt/lists/\*; \
     else \
