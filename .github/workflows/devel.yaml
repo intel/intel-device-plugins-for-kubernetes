@@ -46,6 +46,8 @@ jobs:
 
   # devel image push
   publish:
+    # Disabled due to issues with dockerhub publishing
+    if: false
     permissions:
       contents: read
       id-token: write
