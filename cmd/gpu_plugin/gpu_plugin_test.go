@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -58,10 +59,11 @@ func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 }
 
 type mockL0Service struct {
-	indices []uint32
-	memSize uint64
-	healthy bool
-	fail    bool
+	indices  []uint32
+	memSize  uint64
+	healthy  bool
+	failTemp bool
+	fail     bool
 }
 
 func (m *mockL0Service) Run(keep bool) {
@@ -83,7 +85,7 @@ func (m *mockL0Service) GetDeviceHealth(bdfAddress string) (levelzeroservice.Dev
 	return levelzeroservice.DeviceHealth{Memory: m.healthy, Bus: m.healthy, SoC: m.healthy}, nil
 }
 func (m *mockL0Service) GetDeviceTemperature(bdfAddress string) (levelzeroservice.DeviceTemperature, error) {
-	if m.fail {
+	if m.fail || m.failTemp {
 		return levelzeroservice.DeviceTemperature{}, errors.Errorf("error, error")
 	}
 
@@ -606,6 +608,24 @@ func TestScanWithHealth(t *testing.T) {
 			expectedI915Devs: 1,
 			l0mock: &mockL0Service{
 				healthy: true,
+			},
+		},
+		{
+			name:         "one device with failure on temp reading",
+			pciAddresses: map[string]string{"0000:00:00.0": "card0"},
+			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+			},
+			expectedI915Devs: 1,
+			l0mock: &mockL0Service{
+				healthy:  true,
+				failTemp: true,
 			},
 		},
 		{
@@ -1133,6 +1153,97 @@ func TestCDIDeviceInclusion(t *testing.T) {
 	}
 	if tree.DeviceTypeCount("xe") != 1 {
 		t.Error("Invalid count for device (xe)")
+	}
+}
+
+func TestByPathOptions(t *testing.T) {
+	root, err := os.MkdirTemp("", "test_bypathoptions")
+	if err != nil {
+		t.Fatalf("Can't create temporary directory: %+v", err)
+	}
+	// dirs/files need to be removed for the next test
+	defer os.RemoveAll(root)
+
+	sysfs := path.Join(root, "sys")
+	devfs := path.Join(root, "dev")
+
+	sysfslinks := []symlinkItem{
+		{"/0042:01:02.0", "/class/drm/card0"},
+		{"/0042:01:05.0", "/class/drm/card1"},
+		{"driver/i915", "/class/drm/card0/device/driver"},
+		{"driver/xe", "/class/drm/card1/device/driver"},
+	}
+
+	devfslinks := []symlinkItem{
+		{"/dri/card0", "/dri/by-path/pci-0042:01:02.0-card"},
+		{"/dri/renderD128", "/dri/by-path/pci-0042:01:02.0-render"},
+		{"/dri/card1", "/dri/by-path/pci-0042:01:05.0-card"},
+		{"/dri/renderD129", "/dri/by-path/pci-0042:01:05.0-render"},
+	}
+
+	sysfsDirs := []string{
+		"class/drm/card0/device/drm/card0",
+		"class/drm/card0/device/drm/renderD128",
+		"class/drm/card1/device/drm/card1",
+		"class/drm/card1/device/drm/renderD129",
+	}
+
+	sysfsFiles := map[string][]byte{
+		"class/drm/card0/device/device": []byte("0x9a49"),
+		"class/drm/card0/device/vendor": []byte("0x8086"),
+		"class/drm/card1/device/device": []byte("0x9a48"),
+		"class/drm/card1/device/vendor": []byte("0x8086"),
+	}
+
+	devfsfiles := map[string][]byte{
+		"/dri/card0":      []byte("1"),
+		"/dri/renderD128": []byte("1"),
+		"/dri/card1":      []byte("1"),
+		"/dri/renderD129": []byte("1"),
+	}
+
+	createSymlinks(t, sysfs, sysfslinks)
+	createFiles(t, devfs, devfsfiles)
+	createFiles(t, sysfs, sysfsFiles)
+	createDirs(t, sysfs, sysfsDirs)
+	createSymlinks(t, devfs, devfslinks)
+
+	plugin := newDevicePlugin(sysfs+"/class/drm", devfs+"/dri", cliOptions{sharedDevNum: 1, bypathMount: bypathOptionAll})
+	plugin.bypathFound = true
+
+	devSpecs := []v1beta1.DeviceSpec{}
+
+	sysfsPath := filepath.Join(sysfs, "class", "drm", "card0")
+
+	mounts, _ := plugin.createMountsAndCDIDevices(sysfsPath, "card0", devSpecs)
+
+	if len(mounts) != 1 {
+		t.Error("Invalid count for mounts for by-path option 'all'")
+	}
+	if !strings.HasSuffix(mounts[0].ContainerPath, "/by-path") {
+		t.Error("Invalid container path mount for by-path option 'all'")
+	}
+
+	plugin.options.bypathMount = bypathOptionNone
+
+	mounts, _ = plugin.createMountsAndCDIDevices(sysfsPath, "card0", devSpecs)
+
+	if len(mounts) != 0 {
+		t.Error("Invalid count for mounts for by-path option 'none'")
+	}
+
+	plugin.options.bypathMount = bypathOptionSingle
+
+	mounts, _ = plugin.createMountsAndCDIDevices(sysfsPath, "card0", devSpecs)
+
+	if len(mounts) != 2 {
+		t.Error("Invalid count for mounts for by-path option 'single'")
+	}
+	if !strings.HasSuffix(mounts[0].ContainerPath, "by-path/pci-0042:01:02.0-card") {
+		t.Error("Invalid container path mount for by-path option 'single'")
+	}
+	if !strings.HasSuffix(mounts[1].ContainerPath, "by-path/pci-0042:01:02.0-render") {
+		t.Error("Invalid container path mount for by-path option 'single'")
 	}
 }
 

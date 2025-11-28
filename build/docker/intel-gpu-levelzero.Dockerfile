@@ -44,14 +44,15 @@ RUN if [ $ROCKYLINUX -eq 0 ]; then \
         LATEST_GO=$(curl --no-progress-meter https://go.dev/dl/?mode=json | jq ".[] | select(.version | startswith(\"go${CGO_VERSION}\")).version" | tr -d "\"") && \
         wget -q https://go.dev/dl/$LATEST_GO.linux-amd64.tar.gz -O - | tar -xz -C /usr/local && \
         cd /runtime && \
-        wget -q https://github.com/intel/compute-runtime/releases/download/25.09.32961.7/intel-level-zero-gpu_1.6.32961.7_amd64.deb && \
-        wget -q https://github.com/intel/compute-runtime/releases/download/25.09.32961.7/intel-opencl-icd_25.09.32961.7_amd64.deb && \
-        wget -q https://github.com/intel/compute-runtime/releases/download/25.09.32961.7/libigdgmm12_22.6.0_amd64.deb && \
-        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.20.2/level-zero-devel_1.20.2+u22.04_amd64.deb && \
-        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.20.2/level-zero_1.20.2+u22.04_amd64.deb && \
-        wget -q https://github.com/intel/intel-graphics-compiler/releases/download/v2.8.3/intel-igc-core-2_2.8.3+18762_amd64.deb && \
-        wget -q https://github.com/intel/intel-graphics-compiler/releases/download/v2.8.3/intel-igc-opencl-2_2.8.3+18762_amd64.deb && \
+        wget -q https://github.com/intel/intel-graphics-compiler/releases/download/v2.20.3/intel-igc-core-2_2.20.3+19972_amd64.deb && \
+        wget -q https://github.com/intel/intel-graphics-compiler/releases/download/v2.20.3/intel-igc-opencl-2_2.20.3+19972_amd64.deb && \
+        wget -q https://github.com/intel/compute-runtime/releases/download/25.40.35563.4/intel-opencl-icd_25.40.35563.4-0_amd64.deb && \
+        wget -q https://github.com/intel/compute-runtime/releases/download/25.40.35563.4/libigdgmm12_22.8.2_amd64.deb && \
+        wget -q https://github.com/intel/compute-runtime/releases/download/25.40.35563.4/libze-intel-gpu1_25.40.35563.4-0_amd64.deb && \
+        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.24.3/level-zero_1.24.3+u22.04_amd64.deb && \
+        wget -q https://github.com/oneapi-src/level-zero/releases/download/v1.24.3/level-zero-devel_1.24.3+u22.04_amd64.deb && \
         dpkg -i *.deb && \
+        rm -f *.deb && \
         rm -rf /var/lib/apt/lists/\*; \
     else \
         source /etc/os-release && dnf install -y gcc jq wget 'dnf-command(config-manager)' && \
@@ -83,9 +84,19 @@ ARG CMD
 ARG ROCKYLINUX
 COPY --from=builder /runtime /runtime
 RUN if [ $ROCKYLINUX -eq 0 ]; then \
-        apt-get update && apt-get install --no-install-recommends -y ocl-icd-libopencl1 && \
-        rm /runtime/level-zero-devel_*.deb && \
-        cd /runtime && dpkg -i *.deb && rm -rf /runtime && \
+        apt-get update && apt-get install --no-install-recommends -y ocl-icd-libopencl1 wget ca-certificates && \
+        cd /runtime && \
+        wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.20.3/intel-igc-core-2_2.20.3+19972_amd64.deb && \
+        wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.20.3/intel-igc-opencl-2_2.20.3+19972_amd64.deb && \
+        wget https://github.com/intel/compute-runtime/releases/download/25.40.35563.4/intel-opencl-icd_25.40.35563.4-0_amd64.deb && \
+        wget https://github.com/intel/compute-runtime/releases/download/25.40.35563.4/libigdgmm12_22.8.2_amd64.deb && \
+        wget https://github.com/intel/compute-runtime/releases/download/25.40.35563.4/libze-intel-gpu1_25.40.35563.4-0_amd64.deb && \
+        wget https://github.com/oneapi-src/level-zero/releases/download/v1.24.3/level-zero_1.24.3+u22.04_amd64.deb && \
+        dpkg -i *.deb && \
+        apt-get -y remove wget ca-certificates && \
+        apt-get -y autoremove && \
+        rm -f *.deb && \
+        rm -rf /var/lib/apt/lists/\* && \
         rm "/lib/x86_64-linux-gnu/libze_validation"* && rm "/lib/x86_64-linux-gnu/libze_tracing_layer"*; \
     else \
         cp -a /runtime//*.so* /usr/lib64/ && cp -a /runtime/OpenCL /etc/ && cp -a /runtime/licenses/* /usr/share/licenses/; \

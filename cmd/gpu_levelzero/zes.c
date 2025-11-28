@@ -137,8 +137,12 @@ static ze_result_t enumerate_zes_devices(void)
     for (uint32_t i = 0; i < count; ++i) {
         zes_device_handle_t dev_h = zes_handles[i];
 
-        zes_pci_properties_t pci_props;
+        zes_pci_properties_t pci_props = {
+            .pNext = NULL,
+        };
+
         if (zesDevicePciGetProperties(dev_h, &pci_props) != ZE_RESULT_SUCCESS) {
+            print_log(LOG_WARNING, "Failed to get PCI properties for device %d: %X\n", i, res);
             continue;
         }
 
@@ -332,8 +336,9 @@ bool zes_device_bus_is_healthy(char* bdf_address, uint32_t* error)
         return true;
     }
 
-    zes_pci_state_t pci_state;
-    memset(&pci_state, 0, sizeof(pci_state));
+    zes_pci_state_t pci_state = {
+        .pNext = NULL,
+    };
 
     ze_result_t res = zesDevicePciGetState(handle, &pci_state);
     if (res == ZE_RESULT_SUCCESS) {
@@ -409,7 +414,9 @@ double zes_device_temp_max(char* bdf_address, char* sensor, uint32_t* error)
     }
 
     for (uint32_t i = 0; i < count; ++i) {
-        zes_temp_properties_t props;
+        zes_temp_properties_t props = {
+            .pNext = NULL,
+        };
 
         res = zesTemperatureGetProperties(tempHandles[i], &props);
         if (res != ZE_RESULT_SUCCESS) {
