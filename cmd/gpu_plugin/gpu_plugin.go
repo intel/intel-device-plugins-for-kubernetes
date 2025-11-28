@@ -59,6 +59,10 @@ const (
 	monitorSuffix = "_monitoring"
 	monitorID     = "all"
 
+	bypathOptionNone   = "none"
+	bypathOptionAll    = "all"
+	bypathOptionSingle = "single"
+
 	levelzeroAffinityMaskEnvVar = "ZE_AFFINITY_MASK"
 
 	// Period of device scans.
@@ -69,6 +73,7 @@ type cliOptions struct {
 	preferredAllocationPolicy string
 	allowIDs                  string
 	denyIDs                   string
+	bypathMount               string
 	sharedDevNum              int
 	globalTempLimit           int
 	memoryTempLimit           int
@@ -287,6 +292,16 @@ func (dp *devicePlugin) bypathMountsForPci(pciAddress, bypathDir string) []plugi
 	}
 
 	return mounts
+}
+
+func (dp *devicePlugin) bypathMountForAll() []pluginapi.Mount {
+	return []pluginapi.Mount{
+		{
+			ContainerPath: dp.bypathDir,
+			HostPath:      dp.bypathDir,
+			ReadOnly:      true,
+		},
+	}
 }
 
 type devicePlugin struct {
@@ -660,8 +675,20 @@ func (dp *devicePlugin) createMountsAndCDIDevices(cardPath, name string, devSpec
 	mounts := []pluginapi.Mount{}
 
 	if dp.bypathFound {
-		if pciAddr, pciErr := dp.pciAddressForCard(cardPath, name); pciErr == nil {
-			mounts = dp.bypathMountsForPci(pciAddr, dp.bypathDir)
+		switch dp.options.bypathMount {
+		case bypathOptionAll:
+			klog.V(4).Info("Using by-path mount option: all")
+			mounts = dp.bypathMountForAll()
+		case bypathOptionNone:
+			klog.V(4).Info("Using by-path mount option: none")
+			// no mounts
+		case bypathOptionSingle:
+			fallthrough
+		default:
+			klog.V(4).Info("Using by-path mount option: single/default")
+			if pciAddr, pciErr := dp.pciAddressForCard(cardPath, name); pciErr == nil {
+				mounts = dp.bypathMountsForPci(pciAddr, dp.bypathDir)
+			}
 		}
 	}
 
@@ -784,6 +811,7 @@ func main() {
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable '*_monitoring' (= all GPUs) resource")
 	flag.BoolVar(&opts.healthManagement, "health-management", false, "enable GPU health management")
+	flag.StringVar(&opts.bypathMount, "bypath", bypathOptionSingle, "bypath mounting options: single, none, all. Default: single")
 	flag.BoolVar(&opts.wslScan, "wsl", false, "scan for / use WSL devices")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.IntVar(&opts.globalTempLimit, "temp-limit", 100, "Global temperature limit at which device is marked unhealthy")
