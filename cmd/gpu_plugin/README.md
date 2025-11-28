@@ -275,8 +275,8 @@ To support possible all use cases, GPU plugin allows changing the by-path mounti
 * `single` - Symlinks are individually mounted per device. Default.
   * Mostly Works, but is known to have issues with some pytorch workloads. See [issue](https://github.com/intel/intel-device-plugins-for-kubernetes/issues/2158).
 * `none` - No symlinks are mounted.
-  * Aligned with docker use where devices are included with privileged mode.
-* `all` - All symlinks are mounted even if only one is allocated by the container.
+  * Aligned with Docker `privileged` mode devices usage.
+* `all` - Mounts whole DRM `by-path` directory.  Pro: symlink file types are preserved.  Con: symlinks are present for all devices.
   * Optimal for scale-up workloads where all the GPUs are used by the workload.
 
 ### Issues with media workloads on multi-GPU setups

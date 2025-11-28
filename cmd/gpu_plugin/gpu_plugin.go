@@ -811,7 +811,7 @@ func main() {
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable '*_monitoring' (= all GPUs) resource")
 	flag.BoolVar(&opts.healthManagement, "health-management", false, "enable GPU health management")
-	flag.StringVar(&opts.bypathMount, "bypath", bypathOptionSingle, "bypath mounting options: single, none, all. Default: single")
+	flag.StringVar(&opts.bypathMount, "bypath", bypathOptionSingle, "DRI device 'by-path/' directory mounting options: single, none, all. Default: single")
 	flag.BoolVar(&opts.wslScan, "wsl", false, "scan for / use WSL devices")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.IntVar(&opts.globalTempLimit, "temp-limit", 100, "Global temperature limit at which device is marked unhealthy")
