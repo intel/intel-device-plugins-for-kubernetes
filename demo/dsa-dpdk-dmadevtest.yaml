@@ -6,7 +6,7 @@ spec:
   restartPolicy: Never
   containers:
     - name: dpdk
-      image: intel/dsa-dpdk-dmadevtest:0.34.0
+      image: intel/dsa-dpdk-dmadevtest:0.34.1
       securityContext:
         capabilities:
           add: ["SYS_RAWIO"]
