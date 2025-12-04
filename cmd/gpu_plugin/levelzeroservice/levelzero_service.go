@@ -39,9 +39,9 @@ type DeviceHealth struct {
 }
 
 type DeviceTemperature struct {
-	Global float64
-	GPU    float64
-	Memory float64
+	Global int
+	GPU    int
+	Memory int
 }
 
 type clientNotReadyErr struct{}
@@ -175,9 +175,9 @@ func (l *levelzero) GetDeviceTemperature(bdfAddress string) (DeviceTemperature, 
 	}
 
 	return DeviceTemperature{
-		Global: temps.Global,
-		GPU:    temps.Gpu,
-		Memory: temps.Memory,
+		Global: int(temps.Global),
+		GPU:    int(temps.Gpu),
+		Memory: int(temps.Memory),
 	}, nil
 }
 

@@ -43,8 +43,6 @@ const (
 	devfsDriDirectory = "/dev/dri"
 	wslDxgPath        = "/dev/dxg"
 	wslLibPath        = "/usr/lib/wsl"
-	nfdFeatureDir     = "/etc/kubernetes/node-feature-discovery/features.d"
-	resourceFilename  = "intel-gpu-resources.txt"
 	gpuDeviceRE       = `^card[0-9]+$`
 	controlDeviceRE   = `^controlD[0-9]+$`
 	pciAddressRE      = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
@@ -61,6 +59,10 @@ const (
 	monitorSuffix = "_monitoring"
 	monitorID     = "all"
 
+	bypathOptionNone   = "none"
+	bypathOptionAll    = "all"
+	bypathOptionSingle = "single"
+
 	levelzeroAffinityMaskEnvVar = "ZE_AFFINITY_MASK"
 
 	// Period of device scans.
@@ -71,8 +73,11 @@ type cliOptions struct {
 	preferredAllocationPolicy string
 	allowIDs                  string
 	denyIDs                   string
+	bypathMount               string
 	sharedDevNum              int
-	temperatureLimit          int
+	globalTempLimit           int
+	memoryTempLimit           int
+	gpuTempLimit              int
 	enableMonitoring          bool
 	wslScan                   bool
 	healthManagement          bool
@@ -289,6 +294,16 @@ func (dp *devicePlugin) bypathMountsForPci(pciAddress, bypathDir string) []plugi
 	return mounts
 }
 
+func (dp *devicePlugin) bypathMountForAll() []pluginapi.Mount {
+	return []pluginapi.Mount{
+		{
+			ContainerPath: dp.bypathDir,
+			HostPath:      dp.bypathDir,
+			ReadOnly:      true,
+		},
+	}
+}
+
 type devicePlugin struct {
 	gpuDeviceReg     *regexp.Regexp
 	controlDeviceReg *regexp.Regexp
@@ -404,13 +419,13 @@ func (dp *devicePlugin) healthStatusForCard(cardPath string) string {
 		return health
 	}
 
-	limit := float64(dp.options.temperatureLimit)
-
 	// Temperatures for different areas
-	klog.V(4).Infof("Temperatures: Memory=%.1fC, GPU=%.1fC, Global=%.1fC",
+	klog.V(4).Infof("Temperatures: Memory=%dC, GPU=%dC, Global=%dC",
 		deviceTemps.Memory, deviceTemps.GPU, deviceTemps.Global)
 
-	if deviceTemps.GPU > limit || deviceTemps.Global > limit || deviceTemps.Memory > limit {
+	if deviceTemps.GPU > dp.options.gpuTempLimit ||
+		deviceTemps.Global > dp.options.globalTempLimit ||
+		deviceTemps.Memory > dp.options.memoryTempLimit {
 		health = pluginapi.Unhealthy
 	}
 
@@ -660,8 +675,20 @@ func (dp *devicePlugin) createMountsAndCDIDevices(cardPath, name string, devSpec
 	mounts := []pluginapi.Mount{}
 
 	if dp.bypathFound {
-		if pciAddr, pciErr := dp.pciAddressForCard(cardPath, name); pciErr == nil {
-			mounts = dp.bypathMountsForPci(pciAddr, dp.bypathDir)
+		switch dp.options.bypathMount {
+		case bypathOptionAll:
+			klog.V(4).Info("Using by-path mount option: all")
+			mounts = dp.bypathMountForAll()
+		case bypathOptionNone:
+			klog.V(4).Info("Using by-path mount option: none")
+			// no mounts
+		case bypathOptionSingle:
+			fallthrough
+		default:
+			klog.V(4).Info("Using by-path mount option: single/default")
+			if pciAddr, pciErr := dp.pciAddressForCard(cardPath, name); pciErr == nil {
+				mounts = dp.bypathMountsForPci(pciAddr, dp.bypathDir)
+			}
 		}
 	}
 
@@ -784,9 +811,12 @@ func main() {
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable '*_monitoring' (= all GPUs) resource")
 	flag.BoolVar(&opts.healthManagement, "health-management", false, "enable GPU health management")
+	flag.StringVar(&opts.bypathMount, "bypath", bypathOptionSingle, "DRI device 'by-path/' directory mounting options: single, none, all. Default: single")
 	flag.BoolVar(&opts.wslScan, "wsl", false, "scan for / use WSL devices")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
-	flag.IntVar(&opts.temperatureLimit, "temp-limit", 100, "temperature limit at which device is marked unhealthy")
+	flag.IntVar(&opts.globalTempLimit, "temp-limit", 100, "Global temperature limit at which device is marked unhealthy")
+	flag.IntVar(&opts.gpuTempLimit, "gpu-temp-limit", 100, "GPU temperature limit at which device is marked unhealthy")
+	flag.IntVar(&opts.memoryTempLimit, "memory-temp-limit", 100, "Memory temperature limit at which device is marked unhealthy")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
 	flag.StringVar(&opts.allowIDs, "allow-ids", "", "comma-separated list of device IDs to allow (e.g. 0x49c5,0x49c6)")
 	flag.StringVar(&opts.denyIDs, "deny-ids", "", "comma-separated list of device IDs to deny (e.g. 0x49c5,0x49c6)")

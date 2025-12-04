@@ -19,6 +19,7 @@ Table of Contents
   * [CDI support](#cdi-support)
   * [KMD and UMD](#kmd-and-umd)
   * [Health management](#health-management)
+  * [by-path mounting](#by-path-mounting)
   * [Issues with media workloads on multi-GPU setups](#issues-with-media-workloads-on-multi-gpu-setups)
     * [Workaround for QSV and VA-API](#workaround-for-qsv-and-va-api)
 
@@ -60,6 +61,7 @@ For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 | -allow-ids | string | "" | A list of PCI Device IDs that are allowed to be registered as resources. Default is empty (=all registered). Cannot be used together with `deny-ids`. |
 | -deny-ids | string | "" | A list of PCI Device IDs that are denied to be registered as resources. Default is empty (=all registered). Cannot be used together with `allow-ids`. |
 | -allocation-policy | string | none | 3 possible values: balanced, packed, none. For shared-dev-num > 1: _balanced_ mode spreads workloads among GPU devices, _packed_ mode fills one GPU fully before moving to next, and _none_ selects first available device from kubelet. Default is _none_. |
+| -bypath | string | single | 3 possible values: single, none, all. Default is single. Changes how the by-path symlinks are handled by the plugin. More [info](#by-path-mounting). |
 
 The plugin also accepts a number of other arguments (common to all plugins) related to logging.
 Please use the -h option to see the complete list of logging related options.
@@ -257,6 +259,25 @@ Kubernetes Device Plugin API allows passing device's healthiness to Kubelet. By 
 1) Device temperature is over the limit
 
 Temperature limit can be provided via the command line argument, default is 100C.
+
+### By-path mounting
+
+The DRM devices for the Intel GPUs register `by-path` symlinks under `/dev/dri/by-path`. For each GPU character device, there is a corresponding symlink in the by-path directory:
+```
+$ ls -l /dev/dri/by-path/
+lrwxrwxrwx 1 root root   8 oct   x 13:09 pci-0000:00:02.0-card -> ../card1
+lrwxrwxrwx 1 root root  13 oct   x 13:09 pci-0000:00:02.0-render -> ../renderD128
+```
+
+The Intel GPU UMD uses these symlinks to detect hardware properties in some cases. Mounting the by-path symlinks as __symlinks__ with the Device plugin API (DP API) is not possible. When the symlinks are mounted via the DP API, they are mounted as the actual devices, and the symlink information is lost (pci address).
+
+To support possible all use cases, GPU plugin allows changing the by-path mounting method. The options are:
+* `single` - Symlinks are individually mounted per device. Default.
+  * Mostly Works, but is known to have issues with some pytorch workloads. See [issue](https://github.com/intel/intel-device-plugins-for-kubernetes/issues/2158).
+* `none` - No symlinks are mounted.
+  * Aligned with Docker `privileged` mode devices usage.
+* `all` - Mounts whole DRM `by-path` directory.  Pro: symlink file types are preserved.  Con: symlinks are present for all devices.
+  * Optimal for scale-up workloads where all the GPUs are used by the workload.
 
 ### Issues with media workloads on multi-GPU setups
 

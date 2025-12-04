@@ -62,6 +62,16 @@ spec:
                   The list can contain IDs in the form of '0x1234,0x49a4,0x50b4'.
                   Cannot be used together with DenyIDs.
                 type: string
+              bypathMode:
+                description: |-
+                  ByPathMode changes how plugin handles the DRM by-path/ directory mounting for GPU devices.
+                  See GPU plugin documentation for detailed description of the modes.
+                  If left empty, it defaults to 'single'.
+                enum:
+                - none
+                - single
+                - all
+                type: string
               denyIDs:
                 description: |-
                   DenyIDs is a comma-separated list of PCI IDs of GPU devices that should only be denied by the plugin.

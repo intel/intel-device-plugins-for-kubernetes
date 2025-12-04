@@ -285,5 +285,9 @@ func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
 		args = append(args, "-deny-ids", gdp.Spec.DenyIDs)
 	}
 
+	if gdp.Spec.ByPathMode != "" {
+		args = append(args, "-bypath", gdp.Spec.ByPathMode)
+	}
+
 	return args
 }
