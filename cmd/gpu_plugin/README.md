@@ -269,7 +269,7 @@ lrwxrwxrwx 1 root root   8 oct   x 13:09 pci-0000:00:02.0-card -> ../card1
 lrwxrwxrwx 1 root root  13 oct   x 13:09 pci-0000:00:02.0-render -> ../renderD128
 ```
 
-The Intel GPU UMD uses these symlinks to detect hardware properties in some cases. Mounting the by-path symlinks as __symlinks__ with the Device plugin API (DP API) is not possible. When the symlinks are mounted via the DP API, they are mounted as the actual devices, and the symlink information is lost (pci address).
+The Intel GPU UMD uses these symlinks to detect hardware properties in some cases. Mounting the `by-path/` directory symlinks individually is not possible with the Device plugin API (DP API), they get mounted as device files instead, and the symlink information (device PCI address) is lost.
 
 To support possible all use cases, GPU plugin allows changing the by-path mounting method. The options are:
 * `single` - Symlinks are individually mounted per device. Default.
