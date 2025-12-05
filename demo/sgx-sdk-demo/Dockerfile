@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:24.04 AS builder
 
 WORKDIR /root
 
@@ -23,9 +23,9 @@ RUN apt-get update && \
 # SGX SDK is installed in /opt/intel directory.
 WORKDIR /opt/intel
 
-ARG DCAP_VERSION=DCAP_1.21
+ARG DCAP_VERSION=DCAP_1.23
 
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main" | \
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu noble main" | \
     tee -a /etc/apt/sources.list.d/intel-sgx.list \
  && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | \
     gpg --dearmor --output /usr/share/keyrings/intel-sgx.gpg \
@@ -37,7 +37,7 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://d
     libsgx-quote-ex-dev
 
 # Install SGX SDK
-ARG SGX_SDK_URL=https://download.01.org/intel-sgx/sgx-linux/2.24/distro/ubuntu22.04-server/sgx_linux_x64_sdk_2.24.100.3.bin
+ARG SGX_SDK_URL=https://download.01.org/intel-sgx/sgx-linux/2.26/distro/ubuntu24.04-server/sgx_linux_x64_sdk_2.26.100.0.bin
 RUN wget ${SGX_SDK_URL} \
  && export SGX_SDK_INSTALLER=$(basename $SGX_SDK_URL) \
  && chmod +x $SGX_SDK_INSTALLER \
@@ -49,11 +49,11 @@ RUN cd sgxsdk/SampleCode/SampleEnclave \
     && make \
     && cd -
 
-ARG DCAP_TARBALL_SHA256="f0336fef8263b4c53664efb8486c021ca3d996817eb63b0671324a0acf706310"
+ARG DCAP_TARBALL_SHA256="9284ac7223f72daaeed8fb3c5bb3e4b1ccee6c2deafd0e7398c95c9fa50ffe8a"
 
-RUN wget -q https://github.com/intel/SGXDataCenterAttestationPrimitives/archive/$DCAP_VERSION.tar.gz && \
+RUN wget -q https://github.com/intel/confidential-computing.tee.dcap/archive/$DCAP_VERSION.tar.gz && \
     echo "$DCAP_TARBALL_SHA256 $DCAP_VERSION.tar.gz" | sha256sum -c - && \
-    tar xzf $DCAP_VERSION.tar.gz && mv SGXDataCenterAttestationPrimitives* SGXDataCenterAttestationPrimitives
+    tar xzf $DCAP_VERSION.tar.gz && mv confidential-computing.tee.dcap* SGXDataCenterAttestationPrimitives
 
 RUN cd SGXDataCenterAttestationPrimitives/SampleCode/QuoteGenerationSample \
     && . /opt/intel/sgxsdk/environment \
@@ -66,15 +66,15 @@ RUN cd SGXDataCenterAttestationPrimitives/SampleCode/QuoteVerificationSample \
     && sgx_sign sign -key ../QuoteGenerationSample/Enclave/Enclave_private_sample.pem -enclave enclave.so -out enclave.signed.so -config Enclave/Enclave.config.xml \
     && cd -
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 RUN apt-get update && \
     apt-get install -y \
     wget \
-    gnupg-agent
+    gnupg
 
 # Add 01.org to apt for SGX packages and install SGX runtime components
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main" | \
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu noble main" | \
     tee -a /etc/apt/sources.list.d/intel-sgx.list \
  && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | \
     gpg --dearmor --output /usr/share/keyrings/intel-sgx.gpg \
@@ -102,4 +102,4 @@ COPY --from=builder /opt/intel/SGXDataCenterAttestationPrimitives/SampleCode/Quo
 
 COPY --chmod=555 run-dcap-flow /opt/intel
 
-ENTRYPOINT /opt/intel/sgx-sample-app/sgx-sample-app
+ENTRYPOINT ["/opt/intel/sgx-sample-app/sgx-sample-app"]

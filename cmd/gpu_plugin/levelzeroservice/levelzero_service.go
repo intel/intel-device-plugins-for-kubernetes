@@ -33,18 +33,15 @@ type LevelzeroService interface {
 }
 
 type DeviceHealth struct {
-	Memory            bool
-	Bus               bool
-	SoC               bool
-	GlobalTemperature float64
-	GPUTemperature    float64
-	MemoryTemperature float64
+	Memory bool
+	Bus    bool
+	SoC    bool
 }
 
 type DeviceTemperature struct {
-	Global float64
-	GPU    float64
-	Memory float64
+	Global int
+	GPU    int
+	Memory int
 }
 
 type clientNotReadyErr struct{}
@@ -178,9 +175,9 @@ func (l *levelzero) GetDeviceTemperature(bdfAddress string) (DeviceTemperature, 
 	}
 
 	return DeviceTemperature{
-		Global: temps.Global,
-		GPU:    temps.Gpu,
-		Memory: temps.Memory,
+		Global: int(temps.Global),
+		GPU:    int(temps.Gpu),
+		Memory: int(temps.Memory),
 	}, nil
 }
 

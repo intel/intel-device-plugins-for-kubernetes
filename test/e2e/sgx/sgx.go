@@ -100,7 +100,7 @@ func describe() {
 					Containers: []v1.Container{
 						{
 							Name:       "testcontainer",
-							Image:      "intel/sgx-sdk-demo:0.34.0",
+							Image:      "intel/sgx-sdk-demo:0.34.1",
 							WorkingDir: "/opt/intel/sgx-sample-app/",
 							Command:    []string{"/opt/intel/sgx-sample-app/sgx-sample-app"},
 							Resources: v1.ResourceRequirements{

@@ -51,6 +51,12 @@ type GpuDevicePluginSpec struct {
 	// +kubebuilder:validation:Enum=balanced;packed;none
 	PreferredAllocationPolicy string `json:"preferredAllocationPolicy,omitempty"`
 
+	// ByPathMode changes how plugin handles the DRM by-path/-dir mounting for GPU devices.
+	// See GPU plugin documentation for detailed description of the modes.
+	// If left empty, it defaults to 'single'.
+	// +kubebuilder:validation:Enum=none;single;all
+	ByPathMode string `json:"bypathMode,omitempty"`
+
 	// Specialized nodes (e.g., with accelerators) can be Tainted to make sure unwanted pods are not scheduled on them. Tolerations can be set for the plugin pod to neutralize the Taint.
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 

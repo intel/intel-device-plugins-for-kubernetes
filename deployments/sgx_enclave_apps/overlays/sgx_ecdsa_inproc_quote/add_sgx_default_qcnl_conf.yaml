@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
       - name: intelsgx-demo-job-1
-        image: intel/sgx-sdk-demo:0.34.0
+        image: intel/sgx-sdk-demo:0.34.1
         volumeMounts:
         - name: qplconf
           mountPath: /etc/sgx_default_qcnl.conf
