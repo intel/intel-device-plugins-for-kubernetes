@@ -30,7 +30,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.22.4
 	sigs.k8s.io/yaml v1.6.0
 	tags.cncf.io/container-device-interface v1.0.1
-	tags.cncf.io/container-device-interface/specs-go v1.0.0
+	tags.cncf.io/container-device-interface/specs-go v1.1.0
 )
 
 require (
