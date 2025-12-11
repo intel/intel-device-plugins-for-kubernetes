@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel Software Guard Extensions (SGX) device plugin for Kubernetes &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Intel SGX admission controller for Kubernetes" href="../sgx_admissionwebhook/README.html" />
+    <link rel="prev" title="Intel QuickAssist Technology (QAT) device plugin for Kubernetes" href="../qat_plugin/README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../docs/extensions.html">Extensions</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../dlb_plugin/README.html">Intel DLB device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dsa_plugin/README.html">Intel DSA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_admissionwebhook/README.html">Intel FPGA admission controller for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_crihook/README.html">Intel FPGA OCI createRuntime hook for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_plugin/README.html">Intel FPGA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_tool/README.html">Intel FPGA test tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_nfdhook/README.html">Intel GPU NFD hook</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_plugin/README.html">Intel GPU device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iaa_plugin/README.html">Intel IAA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../operator/README.html">Intel Device Plugins Operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../qat_plugin/README.html">Intel QuickAssist Technology (QAT) device plugin for Kubernetes</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Intel Software Guard Extensions (SGX) device plugin for Kubernetes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#modes-and-configuration-options">Modes and Configuration options</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pre-built-images">Pre-built Images</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#installation-using-the-operator">Installation Using the Operator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#installation-using-kubectl">Installation Using kubectl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#verify-plugin-registration">Verify Plugin Registration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#testing-and-demos">Testing and Demos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sgx-ecdsa-remote-attestation">SGX ECDSA Remote Attestation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_admissionwebhook/README.html">Intel SGX admission controller for Kubernetes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../docs/extensions.html">Extensions</a></li>
+      <li class="breadcrumb-item active">Intel Software Guard Extensions (SGX) device plugin for Kubernetes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/sgx_plugin/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-software-guard-extensions-sgx-device-plugin-for-kubernetes">
+<h1>Intel Software Guard Extensions (SGX) device plugin for Kubernetes<a class="headerlink" href="#intel-software-guard-extensions-sgx-device-plugin-for-kubernetes" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#modes-and-configuration-options">Modes and Configuration Options</a></p></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#prerequisites">Prerequisites</a></p></li>
+<li><p><a class="reference external" href="#pre-built-images">Pre-built Images</a></p></li>
+<li><p><a class="reference external" href="#verify-plugin-registration">Verify Plugin Registration</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#testing-and-demos">Testing and Demos</a></p>
+<ul>
+<li><p><a class="reference external" href="#sgx-ecdsa-remote-attestation">SGX ECDSA Remote Attestation</a></p>
+<ul>
+<li><p><a class="reference external" href="#remote-attestation-prerequisites">Remote Attestation Prerequisites</a></p></li>
+<li><p><a class="reference external" href="#build-the-image">Build the images</a></p></li>
+<li><p><a class="reference external" href="#deploy-the-pod">Deploy the pod</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>The Intel SGX device plugin and related components allow workloads to use Intel SGX on
+platforms with SGX Flexible Launch Control enabled, e.g.,:</p>
+<ul class="simple">
+<li><p>3rd Generation Intel® Xeon® Scalable Platforms, and later</p></li>
+<li><p>Intel® Xeon® E3</p></li>
+<li><p>Intel® NUC Kit NUC7CJYH</p></li>
+</ul>
+<p>The SGX solution comes in three parts:</p>
+<ul class="simple">
+<li><p>the <a class="reference external" href="/README.html#sgx-device-plugin">SGX Device plugin</a></p></li>
+<li><p>the <a class="reference external" href="/README.html#sgx-admission-webhook">SGX Admission webhook</a></p></li>
+<li><p>the <a class="reference external" href="/README.html#sgx-epc-memory-registration">SGX EPC memory registration</a></p></li>
+</ul>
+<p>This README covers setting up all three components.</p>
+<section id="modes-and-configuration-options">
+<h3>Modes and Configuration options<a class="headerlink" href="#modes-and-configuration-options" title="Permalink to this heading"></a></h3>
+<p>The SGX plugin can take a number of command line arguments, summarised in the following table:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Flag</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">-enclave-limit</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">the number of containers per worker node allowed to use <code>/dev/sgx_enclave</code> device node (default: <code>20</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">-provision-limit</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">the number of containers per worker node allowed to use <code>/dev/sgx_provision</code> device node (default: <code>20</code>)</td>
+</tr>
+<tr>
+<td style="text-align: left;">-dcap-infra-resources</td>
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">a boolean opt-in flag to register special <code>qe</code> and <code>registration</code> resources for Intel Data Center Attestation Primitive (DCAP) containers (default: <code>false</code>)</td>
+</tr>
+</tbody>
+</table><p>The plugin also accepts a number of other arguments related to logging. Please use the <code class="docutils literal notranslate"><span class="pre">-h</span></code> option to see
+the complete list of logging related options.</p>
+<p>Note: <code class="docutils literal notranslate"><span class="pre">qe</span></code> and <code class="docutils literal notranslate"><span class="pre">registration</span></code> resources are intended for a very specific use-case: every SGX enabled
+node gets only one such resource and they are consumed by a quoting daemon (e.g., <code class="docutils literal notranslate"><span class="pre">aesmd</span></code> or <code class="docutils literal notranslate"><span class="pre">tdx-qgs</span></code>)
+and a platform registration tool (e.g., PCK-ID-Retrieval-Tool), respectively. This is done so that
+these containers can run without any elevated privileges.</p>
+</section>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>The following sections cover how to use the necessary Kubernetes SGX specific
+components.</p>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading"></a></h3>
+<p>The component has the same basic dependencies as the
+<a class="reference external" href="../../README.html#about">generic plugin framework dependencies</a>.</p>
+<p>The SGX device plugin requires Linux Kernel SGX drivers to be available. These drivers
+are available in Linux since 5.11. <a class="reference external" href="https://github.com/intel/SGXDataCenterAttestationPrimitives">The SGX DCAP out-of-tree driver</a>
+(v1.41 and later) is also known to work.</p>
+<p>The hardware platform must support SGX Flexible Launch Control.</p>
+<p>The SGX deployment depends on having <a class="reference external" href="https://cert-manager.io/">cert-manager</a>
+installed. See its installation instructions <a class="reference external" href="https://cert-manager.io/docs/installation/kubectl/">here</a>.</p>
+</section>
+<section id="pre-built-images">
+<h3>Pre-built Images<a class="headerlink" href="#pre-built-images" title="Permalink to this heading"></a></h3>
+<p><a class="reference external" href="https://hub.docker.com/u/intel/">Pre-built images</a>
+are available on Docker Hub. These images are automatically built and uploaded
+to the hub from the latest main branch of this repository.</p>
+<p>Release tagged images of the components are also available on Docker Hub, tagged with their
+release version numbers in the format <code class="docutils literal notranslate"><span class="pre">x.y.z</span></code>, corresponding to the branches and releases in this
+repository. Thus the easiest way to deploy Intel SGX components in your cluster is to follow the steps
+below.</p>
+<p>The deployment YAML files supplied with the components in this repository use the images with the <code class="docutils literal notranslate"><span class="pre">devel</span></code>
+tag by default. If you do not build your own local images, your Kubernetes cluster may pull down
+the devel images from Docker Hub by default.</p>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;RELEASE_VERSION&gt;</span></code> needs to be substituted with the desired <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tags">release tag</a> or <code class="docutils literal notranslate"><span class="pre">main</span></code> to get <code class="docutils literal notranslate"><span class="pre">devel</span></code> images.</p>
+</section>
+<section id="installation-using-the-operator">
+<h3>Installation Using the Operator<a class="headerlink" href="#installation-using-the-operator" title="Permalink to this heading"></a></h3>
+<p>First, deploy <code class="docutils literal notranslate"><span class="pre">node-feature-discovery</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> The <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/deployments/nfd/overlays/node-feature-rules/node-feature-rules.yaml">default configuration</a> assumes that the in-tree driver is used and enabled (<code class="docutils literal notranslate"><span class="pre">CONFIG_X86_SGX=y</span></code>). If
+the SGX DCAP out-of-tree driver is used, the <code class="docutils literal notranslate"><span class="pre">kernel.config</span></code> match expression must be removed.</p>
+<p>Next, deploy the Intel Device plugin operator:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/default?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> See the operator <a class="reference internal" href="../operator/README.html"><span class="doc">deployment details</span></a> for its dependencies and for setting it up on systems behind proxies.</p>
+<p>Finally, deploy the SGX device plugin with the operator</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="s1">&#39;https://raw.githubusercontent.com/intel/intel-device-plugins-for-kubernetes/&lt;RELEASE_VERSION&gt;/deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="installation-using-kubectl">
+<h3>Installation Using kubectl<a class="headerlink" href="#installation-using-kubectl" title="Permalink to this heading"></a></h3>
+<p>There are two alternative ways to deploy SGX device plugin using <code class="docutils literal notranslate"><span class="pre">kubectl</span></code>.</p>
+<p>The first approach involves deployment of the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/deployments/sgx_plugin/base/intel-sgx-plugin.yaml">SGX DaemonSet YAML</a>
+and <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/deployments/nfd/kustomization.yaml">node-feature-discovery</a>
+with the necessary configuration.</p>
+<p>The following kustomizations are needed for deploying everything:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># first, deploy NFD and the necessary NodeFeatureRules</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd&#39;</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules&#39;</span>
+<span class="c1"># and then, deploy SGX plugin</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_plugin/overlays/epc-nfd/&#39;</span>
+</pre></div>
+</div>
+<p>The second approach has a lesser deployment footprint. It does not require NFD, but a helper daemonset that creates <code class="docutils literal notranslate"><span class="pre">sgx.intel.com/capable='true'</span></code> node label and advertises EPC capacity directly to the API server.</p>
+<p>The following kustomization is used for this approach:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span>https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_plugin/overlays/epc-register/
+</pre></div>
+</div>
+<p>Additionally, SGX admission webhook must be deployed</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span>https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_admissionwebhook/
+<span class="c1"># or when cert-manager is used</span>
+$<span class="w"> </span>https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_admissionwebhook/overlays/default-with-certmanager
+</pre></div>
+</div>
+</section>
+<section id="verify-plugin-registration">
+<h3>Verify Plugin Registration<a class="headerlink" href="#verify-plugin-registration" title="Permalink to this heading"></a></h3>
+<p>Verification of the plugin deployment and detection of SGX hardware can be confirmed by
+examining the resource allocations on the nodes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>describe<span class="w"> </span>node<span class="w"> </span>&lt;node<span class="w"> </span>name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>sgx.intel.com
+<span class="w">                   </span>nfd.node.kubernetes.io/extended-resources:<span class="w"> </span>sgx.intel.com/epc
+<span class="w"> </span>sgx.intel.com/enclave:<span class="w">    </span><span class="m">20</span>
+<span class="w"> </span>sgx.intel.com/epc:<span class="w">        </span><span class="m">98566144</span>
+<span class="w"> </span>sgx.intel.com/provision:<span class="w">  </span><span class="m">20</span>
+<span class="w"> </span>sgx.intel.com/enclave:<span class="w">    </span><span class="m">20</span>
+<span class="w"> </span>sgx.intel.com/epc:<span class="w">        </span><span class="m">98566144</span>
+<span class="w"> </span>sgx.intel.com/provision:<span class="w">  </span><span class="m">20</span>
+<span class="w"> </span>sgx.intel.com/enclave<span class="w">    </span><span class="m">0</span><span class="w">           </span><span class="m">0</span>
+<span class="w"> </span>sgx.intel.com/epc<span class="w">        </span><span class="m">0</span><span class="w">           </span><span class="m">0</span>
+<span class="w"> </span>sgx.intel.com/provision<span class="w">  </span><span class="m">0</span><span class="w">           </span><span class="m">0</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="testing-and-demos">
+<h2>Testing and Demos<a class="headerlink" href="#testing-and-demos" title="Permalink to this heading"></a></h2>
+<section id="sgx-ecdsa-remote-attestation">
+<h3>SGX ECDSA Remote Attestation<a class="headerlink" href="#sgx-ecdsa-remote-attestation" title="Permalink to this heading"></a></h3>
+<p>The SGX remote attestation allows a relying party to verify that the software is running inside an Intel® SGX enclave on a platform
+that has the trusted computing base up to date.</p>
+<p>The demo guides to run an SGX DCAP/ECDSA quote generation in on a single-node kubernetes cluster using Intel® reference
+SGX PCK Certificate Cache Service (PCCS) that is configured to service localhost connections.</p>
+<p>Read more about <a class="reference external" href="https://software.intel.com/content/www/us/en/develop/topics/software-guard-extensions/attestation-services.html">SGX Remote Attestation</a>.</p>
+<section id="remote-attestation-prerequisites">
+<h4>Remote Attestation Prerequisites<a class="headerlink" href="#remote-attestation-prerequisites" title="Permalink to this heading"></a></h4>
+<p>For the SGX ECDSA Remote Attestation demo to work, the platform must be correctly registered and a PCCS running.</p>
+<p>For documentation to set up Intel® reference PCCS, refer to:
+<a class="reference external" href="https://api.portal.trustedservices.intel.com/">Intel® Software Guard Extensions (Intel® SGX) Services</a> and
+<a class="reference external" href="https://www.intel.com/content/www/us/en/developer/tools/software-guard-extensions/overview.html">Intel® Software Guard Extensions SDK for Linux</a></p>
+<p>Furthermore, the Kubernetes cluster must be set up according the <a class="reference external" href="#deploying-with-pre-built-images">instructions above</a>.</p>
+</section>
+<section id="build-the-image">
+<h4>Build the image<a class="headerlink" href="#build-the-image" title="Permalink to this heading"></a></h4>
+<p>The demo uses container images build from Intel® SGX SDK and DCAP releases.</p>
+<p>To build the demo images:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+$<span class="w"> </span>make<span class="w"> </span>sgx-aesmd-demo
+...
+Successfully<span class="w"> </span>tagged<span class="w"> </span>intel/sgx-aesmd-demo:devel
+$<span class="w"> </span>make<span class="w"> </span>sgx-sdk-demo
+...
+Successfully<span class="w"> </span>tagged<span class="w"> </span>intel/sgx-sdk-demo:devel
+</pre></div>
+</div>
+</section>
+<section id="deploy-the-pods">
+<h4>Deploy the pods<a class="headerlink" href="#deploy-the-pods" title="Permalink to this heading"></a></h4>
+<p>The demo runs Intel aesmd (architectural enclaves service daemon) that is responsible
+for generating SGX quotes for workloads.</p>
+<p><strong>Note</strong>: The PCCS URL must be configured in <code class="docutils literal notranslate"><span class="pre">sgx_default_qcnl.conf</span></code>. The default <code class="docutils literal notranslate"><span class="pre">localhost</span></code> URL
+is not available in containers</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_aesmd?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods
+<span class="w">  </span>NAME<span class="w">                     </span>READY<span class="w">     </span>STATUS<span class="w">    </span>RESTARTS<span class="w">   </span>AGE
+<span class="w">  </span>intel-sgx-aesmd-mrnm8<span class="w">                </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>3h47m
+<span class="w">  </span>sgxdeviceplugin-sample-z5dcq-llwlw<span class="w">   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">   </span><span class="m">0</span><span class="w">          </span>28m
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>: For quick experiments, <a class="reference external" href="https://kind.sigs.k8s.io/docs/user/configuration/">kind</a> can be used to deploy the cluster. With <code class="docutils literal notranslate"><span class="pre">kind</span></code>, host path <code class="docutils literal notranslate"><span class="pre">/var/run/aesmd/</span></code> must be mounted to the nodes manually using <a class="reference external" href="https://kind.sigs.k8s.io/docs/user/configuration/#extra-mounts%60">Extra Mounts</a>. <br />Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cat kind_config.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: &lt;your_node_name&gt;
+nodes:
+- role: control-plane
+  extraMounts:
+  - hostPath: /var/run/aesmd
+    containerPath: /var/run/aesmd
+    propagation: Bidirectional
+</pre></div>
+</div>
+<p>And bootstrap kind with it <br /><code class="docutils literal notranslate"><span class="pre">$</span> <span class="pre">kind</span> <span class="pre">create</span> <span class="pre">cluster</span> <span class="pre">--config</span> <span class="pre">kind_config.yaml</span></code></p>
+</div></blockquote>
+<p>The sample application runs SGX DCAP Quote Generation sample:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/sgx_enclave_apps/overlays/sgx_ecdsa_aesmd_quote?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods
+<span class="w">  </span>NAME<span class="w">                                 </span>READY<span class="w">   </span>STATUS<span class="w">      </span>RESTARTS<span class="w">   </span>AGE
+<span class="w">  </span>intel-sgx-aesmd-mrnm8<span class="w">                </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">     </span><span class="m">0</span><span class="w">          </span>3h55m
+<span class="w">  </span>ecdsa-quote-intelsgx-demo-job-vtq84<span class="w">  </span><span class="m">0</span>/1<span class="w">     </span>Completed<span class="w">   </span><span class="m">0</span><span class="w">          </span>4s
+<span class="w">  </span>sgxdeviceplugin-sample-z5dcq-llwlw<span class="w">   </span><span class="m">1</span>/1<span class="w">     </span>Running<span class="w">     </span><span class="m">0</span><span class="w">          </span>35m
+$<span class="w"> </span>kubectl<span class="w"> </span>logs<span class="w"> </span>ecdsa-quote-intelsgx-demo-job-vtq84
+
+<span class="w">  </span>Step1:<span class="w"> </span>Call<span class="w"> </span>sgx_qe_get_target_info:succeed!
+<span class="w">  </span>Step2:<span class="w"> </span>Call<span class="w"> </span>create_app_report:succeed!
+<span class="w">  </span>Step3:<span class="w"> </span>Call<span class="w"> </span>sgx_qe_get_quote_size:succeed!
+<span class="w">  </span>Step4:<span class="w"> </span>Call<span class="w"> </span>sgx_qe_get_quote:succeed!cert_key_type<span class="w"> </span><span class="o">=</span><span class="w"> </span>0x5
+</pre></div>
+</div>
+<p>Similarly, full SGX DCAP Flow with Quote Generation and Trusted Quote Verification can be deployed using the <code class="docutils literal notranslate"><span class="pre">sgx_ecdsa_inproc_quote</span></code> overlay. Again, the PCCS URL must be set beforehand.</p>
+<blockquote>
+<div><p><strong>Note</strong>: The deployment example above uses <a class="reference external" href="https://github.com/kubernetes-sigs/kustomize">kustomize</a>
+that is available in kubectl since Kubernetes v1.14 release.</p>
+</div></blockquote>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../qat_plugin/README.html" class="btn btn-neutral float-left" title="Intel QuickAssist Technology (QAT) device plugin for Kubernetes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../sgx_admissionwebhook/README.html" class="btn btn-neutral float-right" title="Intel SGX admission controller for Kubernetes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
