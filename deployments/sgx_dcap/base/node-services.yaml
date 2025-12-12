@@ -1,0 +1,90 @@
+# TODO
+# cert-manager / service-ca certificates
+# CURL_CA_BUNDLE once ^ is available
+# NFD (TDX) nodeSelector
+# cpu and memory resources/limits
+# split service name and port (PCCS URL)
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-dcap-node-infra
+spec:
+  selector:
+    matchLabels:
+      app: dcap-node-infra
+  template:
+    metadata:
+      annotations:
+        qcnl-conf: '{"pccs_url": "https://pccs-service:8042/sgx/certification/v4/", "use_secure_cert": false, "pck_cache_expire_hours": 168}'
+      labels:
+        app: dcap-node-infra
+        pccs-secure-cert: 'false'
+    spec:
+      automountServiceAccountToken: false
+      initContainers:
+      - name: platform-registration
+        image: intel/sgx-dcap-infra:devel
+        restartPolicy: Always
+        workingDir: "/opt/intel/sgx-pck-id-retrieval-tool/"
+        command: ['/usr/bin/dcap-registration-flow']
+        env:
+          - name: PCCS_URL
+            value: "https://pccs-service:8042"
+          - name: SECURE_CERT
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['pccs-secure-cert']
+        envFrom:
+          - secretRef:
+              name: pccs-credentials
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - LINUX_IMMUTABLE
+        resources:
+          limits:
+            sgx.intel.com/registration: 1
+      containers:
+      - name: tdx-qgs
+        image: intel/sgx-dcap-infra:devel
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        resources:
+          limits:
+            sgx.intel.com/qe: 1
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: QCNL_CONF_PATH
+          value: "/run/dcap/qcnl_conf"
+        - name: XDG_CACHE_HOME
+          value: "/run/dcap/cache"
+        volumeMounts:
+        - name: dcap-qcnl-cache
+          mountPath: /run/dcap/cache
+        - name: qgs-socket
+          mountPath: /var/run/tdx-qgs
+        - name: qcnl-config
+          mountPath: /run/dcap/
+          readOnly: true
+      volumes:
+      - name: dcap-qcnl-cache
+        emptyDir:
+          sizeLimit: 50Mi
+      - name: qgs-socket
+        hostPath:
+          path: /var/run/tdx-qgs
+          type: DirectoryOrCreate
+      - name: qcnl-config
+        downwardAPI:
+          items:
+          - path: "qcnl_conf"
+            fieldRef:
+              fieldPath: metadata.annotations['qcnl-conf']
