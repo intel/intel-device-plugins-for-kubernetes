@@ -47,7 +47,7 @@ func (r *GpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 func (r *GpuDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
 	if r.Spec.SharedDevNum == 1 && r.Spec.PreferredAllocationPolicy != "none" {
-		return fmt.Errorf("%w: PreferredAllocationPolicy is valid only when setting sharedDevNum > 1", errValidation)
+		return fmt.Errorf("%w: PreferredAllocationPolicy must be set to 'none' when sharedDevNum is 1", errValidation)
 	}
 
 	if r.Spec.AllowIDs != "" {
