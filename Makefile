@@ -165,7 +165,7 @@ e2e-iaa:
 
 # This is a CI specific target to run all tests that are possible in the SPR host
 e2e-spr:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:qat.*Mode:dpdk.*Resource:(cy|dc).*" -ginkgo.focus "Device:sgx.*|(SGX Admission)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:qat.*Mode:dpdk.*Resource:(cy|dc).*" -ginkgo.focus "Device:sgx.*|(SGX Admission)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false -e2e-verify-service-account=false
 
 pre-pull:
 ifeq ($(TAG),devel)
