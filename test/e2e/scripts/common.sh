@@ -27,7 +27,7 @@ k3s_version_for_k8s_version() {
 
   local known_versions
 
-  known_versions="v1.34.1+k3s1;v1.33.5+k3s1;v1.32.9+k3s1;v1.31.9+k3s1;v1.30.13+k3s1"
+  known_versions="v1.35.0+k3s1;v1.34.1+k3s1;v1.33.5+k3s1;v1.32.9+k3s1;v1.31.9+k3s1;v1.30.13+k3s1"
 
   local latest
   latest=$(echo $known_versions | tr ';' '\n' | grep "$requested" | head -1)
