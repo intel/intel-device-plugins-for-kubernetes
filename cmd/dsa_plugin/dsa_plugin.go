@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2026 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import (
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/idxd"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/vfio"
 
 	"k8s.io/klog/v2"
 )
@@ -31,12 +32,18 @@ const (
 	devDir = "/dev/dsa"
 	// Glob pattern for the state sysfs entry.
 	statePattern = "/sys/bus/dsa/devices/dsa*/wq*/state"
+
+	dsaDeviceIDs = "0x0b25 0x11fb 0x1212"
 )
 
 func main() {
-	var sharedDevNum int
+	var (
+		sharedDevNum int
+		plugin       dpapi.Scanner
+	)
 
 	flag.IntVar(&sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same work queue")
+	dsaDriver := flag.String("driver", "idxd", "Device driver used for the DSA devices")
 	flag.Parse()
 
 	if sharedDevNum < 1 {
@@ -44,9 +51,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	plugin := idxd.NewDevicePlugin(statePattern, devDir, sharedDevNum)
-	if plugin == nil {
-		klog.Fatal("Cannot create device plugin, please check above error messages.")
+	switch *dsaDriver {
+	case "idxd":
+		plugin = idxd.NewDevicePlugin(statePattern, devDir, sharedDevNum)
+	case "vfio-pci":
+		plugin = vfio.NewDevicePlugin("/sys/bus/pci/devices", dsaDeviceIDs)
+	default:
+		klog.Warningf("Unsupported DSA driver: %s. Use either idxd or vfio-pci.", *dsaDriver)
+		os.Exit(1)
 	}
 
 	manager := dpapi.NewManager(namespace, plugin)
