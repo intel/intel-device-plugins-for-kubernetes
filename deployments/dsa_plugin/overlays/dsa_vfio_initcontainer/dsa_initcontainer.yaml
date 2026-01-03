@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-dsa-plugin
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: intel-idxd-config-initcontainer
+        env:
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: DSA_DRIVER
+            value: vfio-pci
+        image: intel/intel-idxd-config-initcontainer:devel
+        securityContext:
+          seLinuxOptions:
+            type: "container_device_plugin_init_t"
+          readOnlyRootFilesystem: true
+          privileged: true
+        volumeMounts:
+        - mountPath: /sys/bus/dsa
+          name: sys-bus-dsa
+        - mountPath: /sys/bus/pci
+          name: sys-bus-pci
+        - mountPath: /sys/devices
+          name: sys-devices
+        - mountPath: /idxd-init/scratch
+          name: scratch
+      volumes:
+      - name: sys-bus-dsa
+        hostPath:
+          path: /sys/bus/dsa
+      - name: sys-bus-pci
+        hostPath:
+          path: /sys/bus/pci
+      - name: sys-devices
+        hostPath:
+          path: /sys/devices
+      - name: scratch
+        emptyDir: {}
