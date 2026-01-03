@@ -233,14 +233,14 @@ The summary of resources available via plugins in this repository is given in th
 **Device Namespace : Registered Resource(s)**
  * `dlb.intel.com`  : `pf` or `vf`
    * [dlb-libdlb-demo-pod.yaml](demo/dlb-libdlb-demo-pod.yaml)
- * `dsa.intel.com`  : `wq-user-[shared or dedicated]`
+ * `dsa.intel.com`  : `wq-user-[shared|dedicated]` or `vfio`
    * [dsa-accel-config-demo-pod.yaml](demo/dsa-accel-config-demo-pod.yaml)
    * [dsa-dpdk-dmadevtest.yaml](demo/dsa-dpdk-dmadevtest.yaml)
  * `fpga.intel.com` : custom, see [mappings](cmd/fpga_admissionwebhook/README.md#mappings)
    * [intelfpga-job.yaml](demo/intelfpga-job.yaml)
  * `gpu.intel.com`  : `i915`, `i915_monitoring`, `xe` or `xe_monitoring`
    * [intelgpu-job.yaml](demo/intelgpu-job.yaml)
- * `iaa.intel.com`  : `wq-user-[shared or dedicated]`
+ * `iaa.intel.com`  : `wq-user-[shared|dedicated]`
    * [iaa-accel-config-demo-pod.yaml](demo/iaa-accel-config-demo-pod.yaml)
  * `npu.intel.com`  : `accel`
    * [intel-npu-workload.yaml](demo/intel-npu-workload.yaml)

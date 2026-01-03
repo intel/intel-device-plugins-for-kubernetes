@@ -55,6 +55,13 @@ spec:
           spec:
             description: DsaDevicePluginSpec defines the desired state of DsaDevicePlugin.
             properties:
+              driver:
+                default: idxd
+                description: Driver name used for the DSA devices.
+                enum:
+                - idxd
+                - vfio-pci
+                type: string
               image:
                 description: Image is a container image with DSA device plugin executable.
                 type: string

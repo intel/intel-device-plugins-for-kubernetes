@@ -21,6 +21,8 @@ spec:
         volumeMounts:
         - mountPath: /sys/bus/dsa
           name: sys-bus-dsa
+        - mountPath: /sys/bus/pci
+          name: sys-bus-pci
         - mountPath: /sys/devices
           name: sys-devices
         - mountPath: /idxd-init/conf
@@ -31,6 +33,9 @@ spec:
       - name: sys-bus-dsa
         hostPath:
           path: /sys/bus/dsa
+      - name: sys-bus-pci
+        hostPath:
+          path: /sys/bus/pci
       - name: sys-devices
         hostPath:
           path: /sys/devices
