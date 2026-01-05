@@ -46,7 +46,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v7
         with:
-          version: v2.4.0
+          version: v2.7.2
           args: -v --timeout 5m
   build:
     name: Build and check device plugins
