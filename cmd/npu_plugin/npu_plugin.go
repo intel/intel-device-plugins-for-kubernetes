@@ -51,6 +51,9 @@ var npuIDs = []string{
 	"0x643e", // Core Ultra 200V Series
 	"0xad1d", // Core Ultra Series 2
 	"0x7d1d", // Core Ultra Series 2 (H)
+	"0xb03e", // Core Ultra Series 3
+	"0xfd3e", // WCL https://github.com/torvalds/linux/blob/f0b9d8eb98dfee8d00419aa07543bdc2c1a44fb1/drivers/accel/ivpu/ivpu_drv.h#L29
+	"0xd71d", // NVL https://github.com/torvalds/linux/blob/f0b9d8eb98dfee8d00419aa07543bdc2c1a44fb1/drivers/accel/ivpu/ivpu_drv.h#L30
 }
 
 type cliOptions struct {
