@@ -29,18 +29,13 @@ const (
 )
 
 func main() {
-	var (
-		plugin deviceplugin.Scanner
-		err    error
-	)
-
 	dpdkDriver := flag.String("dpdk-driver", "vfio-pci", "DPDK Device driver for configuring the QAT device")
 	kernelVfDrivers := flag.String("kernel-vf-drivers", "4xxxvf,420xxvf", "Comma separated VF Device Driver of the QuickAssist Devices in the system. Devices supported: DH895xCC, C62x, C3xxx, C4xxx, 4xxx, 420xxx, 6xxx, and D15xx")
 	preferredAllocationPolicy := flag.String("allocation-policy", "", "Modes of allocating QAT devices: balanced and packed")
 	maxNumDevices := flag.Int("max-num-devices", 64, "maximum number of QAT devices to be provided to the QuickAssist device plugin")
 	flag.Parse()
 
-	plugin, err = dpdkdrv.NewDevicePlugin(*maxNumDevices, *kernelVfDrivers, *dpdkDriver, *preferredAllocationPolicy)
+	plugin, err := dpdkdrv.NewDevicePlugin(*maxNumDevices, *kernelVfDrivers, *dpdkDriver, *preferredAllocationPolicy)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
