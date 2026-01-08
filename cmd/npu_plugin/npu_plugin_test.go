@@ -174,6 +174,20 @@ func TestScan(t *testing.T) {
 			},
 			expectedDevs: 2,
 		},
+		{
+			name: "PTL device",
+			sysfsdirs: []string{
+				"accel0/device/drm/accel0", "accel0/device/drm/accelD0",
+			},
+			sysfsfiles: map[string][]byte{
+				"accel0/device/vendor": []byte("0x8086"),
+				"accel0/device/device": []byte("0xb03e"),
+			},
+			devfsdirs: []string{
+				"accel0",
+			},
+			expectedDevs: 1,
+		},
 	}
 
 	for _, tc := range tcases {

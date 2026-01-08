@@ -20,6 +20,7 @@ The following CPU families are currently detected by the plugin:
 * Core Ultra Series 1 (Meteor Lake)
 * Core Ultra Series 2 (Arrow Lake)
 * Core Ultra 200V Series (Lunar Lake)
+* Core Ultra Series 3 (Panther Lake)
 
 Intel NPU plugin registers a resource to the Kubernetes cluster:
 | Resource | Description |

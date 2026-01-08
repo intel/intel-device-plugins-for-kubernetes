@@ -137,7 +137,7 @@ spec:
             class: {op: In, value: ["1200"]}
             device: {
               op: In,
-              value: ["7e4c","643e","ad1d","7d1d"]
+              value: ["7e4c","643e","ad1d","7d1d","b03e", "fd3e", "d71d"]
             }
       matchAny:
         - matchFeatures:
