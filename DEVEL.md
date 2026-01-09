@@ -14,6 +14,7 @@ Table of Contents
 * [How to Develop Simple Device Plugins](#how-to-develop-simple-device-plugins)
     * [Logging](#logging)
     * [Error Conventions](#error-conventions)
+* [UBI images](#ubi-images)
 * [Checklist for New Device Plugins](#checklist-for-new-device-plugins)
 
 ## Day-to-day Development How to's
@@ -253,12 +254,12 @@ go test -v ./test/e2e/... -args -ginkgo.focus "Device:(dlb|dsa|iaa|qat|sgx)"
 It is possible to run predefined e2e tests with:
 ```
 make e2e-<device> [E2E_LEVEL={basic|full}] [FOCUS=<labels in regex>] [SKIP=<labels in regex>]
-```  
+```
 
 | `E2E_LEVEL`   | Equivalent `FOCUS` or `SKIP` | Explanation                                                                                      |
 :-------------- |:---------------------------- |:------------------------------------------------------------------------------------------------ |
 | `basic`       | `FOCUS=App:noapp`            | `basic` does not run any app pod, but checks if the plugin works and the resources are available |
-| `full`        | `SKIP=App:noapp`             | `full` checks all resources, runs all apps except the spec kept for no app running               | 
+| `full`        | `SKIP=App:noapp`             | `full` checks all resources, runs all apps except the spec kept for no app running               |
 
 ### Examples
 
@@ -425,6 +426,36 @@ Otherwise, they can be logged as simple values:
 ```golang
     klog.Warningf("Example of a warning due to an external error: %v", err)
 ```
+
+## UBI images
+
+UBI based images use different base image.
+
+|Default|UBI|
+|---|---|
+|gcr.io/distroless/static|registry.access.redhat.com/ubi9-micro:latest|
+|debian:unstable-slim|registry.access.redhat.com/ubi9/ubi:latest|
+
+The UBI based images are required for deployments that run on OpenShift Container Platform (OCP).
+
+To build these images:
+```bash
+UBI=1 make <image-name>
+```
+
+### Containers with RPM dependencies
+
+There are two containers that have external dependencies which are installed at build time from OSV repositories:
+* intel-idxd-config-initcontainer
+* intel-gpu-levelzero
+
+To build these containers, the build host has to be registered via `subscription-manager`. Typically the host OS has to be RHEL or some other RPM based Linux variant (e.g. Fedora).
+
+```bash
+UBI=1 BUILDER=podman make <image-name>
+```
+
+Docker doesn't support installing RPM packages with `subscription-manager`, so Podman needs to be used.
 
 ## Checklist for New Device Plugins
 
