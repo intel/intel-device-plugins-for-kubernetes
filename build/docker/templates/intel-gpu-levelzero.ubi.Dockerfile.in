@@ -1,0 +1,62 @@
+#define _ENTRYPOINT_ /usr/local/bin/intel_gpu_levelzero
+
+ARG CMD=gpu_levelzero
+
+## At the time of writing this, 9.6 is the latest supported version for Intel GPU repos.
+ARG FINAL_BASE_UBI=registry.access.redhat.com/ubi9/ubi:9.6
+
+FROM ${FINAL_BASE_UBI} AS builder
+
+ARG DIR=/intel-device-plugins-for-kubernetes
+
+ENV CGO_CFLAGS="-pipe -fno-plt"
+ENV CGO_LDFLAGS="-fstack-protector-strong -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now,-z,noexecstack,-z,defs,-s"
+ENV CGOFLAGS="-trimpath -mod=readonly -buildmode=pie"
+ENV GCFLAGS="all=-spectre=all -N -l"
+ENV ASMFLAGS="all=-spectre=all"
+ENV LDFLAGS="all=-linkmode=external -s -w"
+
+ARG GOLICENSES_VERSION
+ARG CMD
+ARG CGO_VERSION=1.25
+
+RUN mkdir /runtime
+
+RUN source /etc/os-release && dnf install -y gcc jq 'dnf-command(config-manager)' && \N
+    dnf config-manager --add-repo https://repositories.intel.com/gpu/rhel/${VERSION_ID}/lts/2523/unified/intel-gpu-${VERSION_ID}.repo && \N
+    dnf install -y intel-opencl level-zero level-zero-devel intel-level-zero-gpu intel-gmmlib intel-ocloc && \N
+    dnf clean all && \N
+    LATEST_GO=$(curl -s https://go.dev/dl/?mode=json | jq ".[] | select(.version | startswith(\"go${CGO_VERSION}\")).version" | tr -d "\"") && \N
+    curl -sSL https://go.dev/dl/$LATEST_GO.linux-amd64.tar.gz | tar -xz -C /usr/local
+
+ARG EP=_ENTRYPOINT_
+
+WORKDIR ${DIR}
+COPY . .
+
+## Apply for the build phase as well as the license copy below the build.
+ENV PATH=$PATH:/usr/local/go/bin/
+
+RUN cd cmd/${CMD} && \N
+    GO111MODULE=on CGO_ENABLED=1 go install $CGOFLAGS --gcflags="$GCFLAGS" --asmflags="$ASMFLAGS" --ldflags="$LDFLAGS" && \N
+    install -D /root/go/bin/${CMD} /install_root${EP}
+
+#include "default_licenses.docker"
+
+FROM ${FINAL_BASE_UBI}
+
+ARG CMD
+
+COPY --from=builder /runtime /runtime
+
+RUN source /etc/os-release && dnf install -y 'dnf-command(config-manager)' && \N
+    dnf config-manager --add-repo https://repositories.intel.com/gpu/rhel/${VERSION_ID}/lts/2523/unified/intel-gpu-${VERSION_ID}.repo && \N
+    dnf install -y --setopt=install_weak_deps=False --setopt=tsflags=nodocs intel-opencl level-zero intel-level-zero-gpu intel-gmmlib intel-ocloc && \N
+    dnf remove -y 'dnf-command(config-manager)' && dnf -y autoremove && dnf clean all && rm -rf /var/cache/dnf
+
+#include "default_end.docker"
+#include "default_labels.docker"
+
+LABEL name='intel-gpu-levelzero'
+LABEL summary='Intel® GPU levelzero for Kubernetes'
+LABEL description='The GPU levelzero container provides access to Levelzero API for the Intel GPU plugin'
