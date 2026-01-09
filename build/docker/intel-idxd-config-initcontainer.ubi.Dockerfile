@@ -1,4 +1,4 @@
-## This is a generated file, do not edit directly. Edit build/docker/templates/intel-idxd-config-initcontainer.Dockerfile.in instead.
+## This is a generated file, do not edit directly. Edit build/docker/templates/intel-idxd-config-initcontainer.ubi.Dockerfile.in instead.
 ##
 ## Copyright 2022 Intel Corporation. All Rights Reserved.
 ##
@@ -14,11 +14,13 @@
 ## See the License for the specific language governing permissions and
 ## limitations under the License.
 ###
-FROM debian:unstable-slim
+FROM registry.access.redhat.com/ubi9/ubi:latest
 COPY ./LICENSE /licenses/intel-device-plugins-for-kubernetes/LICENSE
-RUN echo "deb-src http://deb.debian.org/debian unstable main" >> /etc/apt/sources.list.d/deb-src.list
-RUN apt-get update && apt-get install -y --no-install-recommends accel-config jq && rm -rf /var/lib/apt/lists/\*
-RUN cd /licenses/intel-device-plugins-for-kubernetes && apt-get source --download-only -y accel-config
+RUN dnf install --setopt=install_weak_deps=False --setopt=tsflags=nodocs -y accel-config jq && dnf -y autoremove && \
+    dnf clean all && rm -rf /var/cache/dnf && \
+    cd /licenses/intel-device-plugins-for-kubernetes && \
+    dnf install -y dnf-plugins-core && dnf download --source accel-config && \
+    dnf remove -y dnf-plugins-core && dnf -y autoremove && dnf clean all && rm -rf /var/cache/dnf
 COPY demo/idxd-init.sh /usr/local/bin/
 COPY demo/dsa.conf /idxd-init/
 COPY demo/iaa.conf /idxd-init/

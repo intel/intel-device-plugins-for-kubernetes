@@ -16,10 +16,11 @@ fi
 
 shift
 
-if [ "$1" = 'docker' -o "$1" = 'buildah' -o "$1" = 'podman' ]; then
-    BUILDER=$1
-    shift
-fi
+BUILDER=$1
+shift
+
+UBI=$1
+shift
 
 TAG=${TAG:-devel}
 
@@ -29,11 +30,22 @@ if [ -d $(dirname $0)/../../vendor ] ; then
     BUILD_ARGS="${BUILD_ARGS} --build-arg DIR=/go/src/github.com/intel/intel-device-plugins-for-kubernetes --build-arg GO111MODULE=off"
 fi
 
-BUILD_ARGS="${BUILD_ARGS} \
-    --build-arg FINAL_BASE=gcr.io/distroless/static \
-    --build-arg BUILD_BASE=golang:1.25-trixie \
-    --build-arg FINAL_BASE_DYN=debian:unstable-slim \
-    --build-arg ROCKYLINUX=0"
+GOLANG_BASE=golang:1.25-trixie
+
+if [ "${UBI}" = '1' ]; then
+    echo $DOCKERFILE | grep -q -e 'idxd-config' -e 'levelzero' && {
+        echo "Using UBI specific Dockerfile for ${IMG}"
+        DOCKERFILE="$(dirname $0)/$(basename ${IMG}).ubi.Dockerfile"
+    }
+
+    BUILD_ARGS="${BUILD_ARGS} \
+        --build-arg FINAL_BASE=registry.access.redhat.com/ubi9-micro:latest \
+        --build-arg BUILD_BASE=${GOLANG_BASE}"
+else
+    BUILD_ARGS="${BUILD_ARGS} \
+        --build-arg FINAL_BASE=gcr.io/distroless/static \
+        --build-arg BUILD_BASE=${GOLANG_BASE}"
+fi
 
 if [ -z "${BUILDER}" -o "${BUILDER}" = 'docker' -o "${BUILDER}" = 'podman' ] ; then
     ${BUILDER} build --pull -t ${IMG}:${TAG} ${BUILD_ARGS} -f ${DOCKERFILE} .

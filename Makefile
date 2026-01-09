@@ -3,6 +3,7 @@ GO := go
 GOFMT := gofmt
 KUSTOMIZE ?= kustomize
 OPERATOR_SDK ?= operator-sdk
+UBI ?= 0
 
 BUILDTAGS ?= ""
 BUILDER ?= "docker"
@@ -176,7 +177,7 @@ endif
 
 dockerlib = build/docker/lib
 dockertemplates = build/docker/templates
-images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in | grep -v -e dlb -e fpga -e xpumanager-sidecar)
+images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in | grep -v -e dlb -e fpga -e xpumanager-sidecar -e ubi)
 dockerfiles = $(shell basename -s .in -a $(dockertemplates)/*.Dockerfile.in | xargs -I"{}" echo build/docker/{})
 
 test-image-base-layer:
@@ -202,7 +203,7 @@ check-dockerfiles: dockerfiles
 	fi
 
 $(images): $(dockerfiles)
-	@build/docker/build-image.sh $(REG)$@ $(BUILDER) $(EXTRA_BUILD_ARGS)
+	@build/docker/build-image.sh $(REG)$@ $(BUILDER) $(UBI) $(EXTRA_BUILD_ARGS)
 
 images: $(images)
 
