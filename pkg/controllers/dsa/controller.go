@@ -38,6 +38,8 @@ const (
 	ownerKey          = ".metadata.controller.dsa"
 	initcontainerName = "intel-idxd-config-initcontainer"
 	configVolumeName  = "intel-dsa-config-volume"
+	vfioDriver        = "vfio-pci"
+	devfsVolumeName   = "devfs"
 )
 
 var defaultNodeSelector = deployments.DSAPluginDaemonSet().Spec.Template.Spec.NodeSelector
@@ -101,6 +103,11 @@ func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin)
 
 func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 	yes := true
+	driver := "idxd"
+
+	if dp.Spec.Driver == vfioDriver {
+		driver = vfioDriver
+	}
 
 	ds.Spec.Template.Spec.InitContainers = append(ds.Spec.Template.Spec.InitContainers, v1.Container{
 		Image:           dp.Spec.InitImage,
@@ -118,6 +125,10 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 			{
 				Name:  "DEVICE_TYPE",
 				Value: "dsa",
+			},
+			{
+				Name:  "DSA_DRIVER",
+				Value: driver,
 			},
 		},
 		SecurityContext: &v1.SecurityContext{
@@ -207,6 +218,25 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 		addInitContainer(daemonSet, devicePlugin)
 	}
 
+	devfsPath := "/dev/dsa"
+	if devicePlugin.Spec.Driver == vfioDriver {
+		devfsPath = "/dev/vfio"
+	}
+
+	for _, volume := range daemonSet.Spec.Template.Spec.Volumes {
+		if volume.Name == devfsVolumeName {
+			volume.VolumeSource.HostPath.Path = devfsPath
+			break
+		}
+	}
+
+	for _, volumePath := range daemonSet.Spec.Template.Spec.Containers[0].VolumeMounts {
+		if volumePath.Name == devfsVolumeName {
+			volumePath.MountPath = devfsPath
+			break
+		}
+	}
+
 	if len(c.args.ImagePullSecretName) > 0 {
 		daemonSet.Spec.Template.Spec.ImagePullSecrets = []v1.LocalObjectReference{
 			{Name: c.args.ImagePullSecretName},
@@ -285,6 +315,25 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		updated = true
 	}
 
+	devfsPath := "/dev/dsa"
+	if dp.Spec.Driver == vfioDriver {
+		devfsPath = "/dev/vfio"
+	}
+
+	for _, volume := range ds.Spec.Template.Spec.Volumes {
+		if volume.Name == devfsVolumeName {
+			volume.VolumeSource.HostPath.Path = devfsPath
+			break
+		}
+	}
+
+	for _, volumePath := range ds.Spec.Template.Spec.Containers[0].VolumeMounts {
+		if volumePath.Name == devfsVolumeName {
+			volumePath.MountPath = devfsPath
+			break
+		}
+	}
+
 	return updated
 }
 
@@ -320,8 +369,14 @@ func (c *controller) UpdateStatus(rawObj client.Object, ds *apps.DaemonSet, node
 }
 
 func getPodArgs(gdp *devicepluginv1.DsaDevicePlugin) []string {
-	args := make([]string, 0, 4)
+	args := make([]string, 0, 6)
 	args = append(args, "-v", strconv.Itoa(gdp.Spec.LogLevel))
+
+	if gdp.Spec.Driver == vfioDriver {
+		args = append(args, "-driver", "vfio-pci")
+	} else {
+		args = append(args, "-driver", "idxd")
+	}
 
 	if gdp.Spec.SharedDevNum > 0 {
 		args = append(args, "-shared-dev-num", strconv.Itoa(gdp.Spec.SharedDevNum))
