@@ -29,7 +29,7 @@ jobs:
           sudo systemctl stop clamav-freshclam.service
           sudo freshclam
       - name: Cache clamav databases
-        uses: actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        uses: actions/cache/save@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
         with:
           path: /var/lib/clamav
           key: clamav-${{ github.run_id }}
@@ -59,7 +59,7 @@ jobs:
           - intel-npu-plugin
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4
-      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v5
+      - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v5
         with:
           go-version-file: go.mod
           check-latest: true
@@ -80,7 +80,7 @@ jobs:
           sudo mkdir -p /var/lib/clamav
           sudo chmod a+rwx /var/lib/clamav
       - name: Retrieve AV database
-        uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
         with:
           path: /var/lib/clamav
           key: clamav-${{ github.run_id }}
