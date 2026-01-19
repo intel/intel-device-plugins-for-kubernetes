@@ -51,3 +51,30 @@ jobs:
           BUILDER_NAME: ${{ matrix.builder }}
         run: |
           make ${IMAGE_NAME} BUILDER=${BUILDER_NAME}
+  imageubi:
+    name: Build UBI image
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        image:
+          - intel-gpu-plugin
+          - intel-qat-initcontainer
+          - intel-qat-plugin
+          - intel-deviceplugin-operator
+          - intel-sgx-plugin
+          - intel-sgx-initcontainer
+          - intel-dsa-plugin
+        builder: [docker]
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4
+      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v5
+        with:
+          go-version-file: go.mod
+          check-latest: true
+      - run: make -e vendor
+      - name: Build image
+        env:
+          IMAGE_NAME: ${{ matrix.image }}
+          BUILDER_NAME: ${{ matrix.builder }}
+        run: |
+          make ${IMAGE_NAME} BUILDER=${BUILDER_NAME} UBI=1
