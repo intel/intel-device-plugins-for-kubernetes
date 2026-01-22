@@ -33,3 +33,6 @@ _work
 vendor/*
 licenses/*
 
+# Test binaries
+*.test
+pkg/topology/testdata/sys/
