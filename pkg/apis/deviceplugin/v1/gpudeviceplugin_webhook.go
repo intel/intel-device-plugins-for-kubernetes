@@ -30,14 +30,17 @@ var pciIDRegex regexp.Regexp
 func (r *GpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	pciIDRegex = *regexp.MustCompile(`^0x[0-9a-f]{4}$`)
 
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-gpu-plugin:" + controllers.ImageMinVersion.String(),
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(&gpuDevicePluginDefaulter{
+			commonDevicePluginDefaulter: commonDevicePluginDefaulter{
+				defaultImage: "intel/intel-gpu-plugin:" + controllers.ImageMinVersion.String(),
+			},
 		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:   "intel-gpu-plugin",
-			expectedVersion: *controllers.ImageMinVersion,
+		WithValidator(&gpuDevicePluginValidator{
+			commonDevicePluginValidator: commonDevicePluginValidator{
+				expectedImage:   "intel-gpu-plugin",
+				expectedVersion: *controllers.ImageMinVersion,
+			},
 		}).
 		Complete()
 }

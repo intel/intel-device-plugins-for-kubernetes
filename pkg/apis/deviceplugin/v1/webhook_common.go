@@ -22,7 +22,6 @@ import (
 	"regexp"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/version"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -40,109 +39,217 @@ type commonDevicePluginDefaulter struct {
 	defaultImage string
 }
 
-var _ admission.CustomDefaulter = &commonDevicePluginDefaulter{}
-
 type commonDevicePluginValidator struct {
 	expectedImage     string
 	expectedInitImage string
 	expectedVersion   version.Version
 }
 
-var _ admission.CustomValidator = &commonDevicePluginValidator{}
+// Type-specific defaulters
+type dlbDevicePluginDefaulter struct{ commonDevicePluginDefaulter }
+type dsaDevicePluginDefaulter struct{ commonDevicePluginDefaulter }
+type fpgaDevicePluginDefaulter struct{ commonDevicePluginDefaulter }
+type gpuDevicePluginDefaulter struct{ commonDevicePluginDefaulter }
+type iaaDevicePluginDefaulter struct{ commonDevicePluginDefaulter }
+type qatDevicePluginDefaulter struct{ commonDevicePluginDefaulter }
+type sgxDevicePluginDefaulter struct{ commonDevicePluginDefaulter }
+type npuDevicePluginDefaulter struct{ commonDevicePluginDefaulter }
 
-// Default implements admission.CustomDefaulter so a webhook will be registered for the type.
-func (r *commonDevicePluginDefaulter) Default(ctx context.Context, obj runtime.Object) error {
+// Type-specific validators
+type dlbDevicePluginValidator struct{ commonDevicePluginValidator }
+type dsaDevicePluginValidator struct{ commonDevicePluginValidator }
+type fpgaDevicePluginValidator struct{ commonDevicePluginValidator }
+type gpuDevicePluginValidator struct{ commonDevicePluginValidator }
+type iaaDevicePluginValidator struct{ commonDevicePluginValidator }
+type qatDevicePluginValidator struct{ commonDevicePluginValidator }
+type sgxDevicePluginValidator struct{ commonDevicePluginValidator }
+type npuDevicePluginValidator struct{ commonDevicePluginValidator }
+
+// Default implementations for each type
+func (r *dlbDevicePluginDefaulter) Default(ctx context.Context, obj *DlbDevicePlugin) error {
 	logf.FromContext(ctx).Info("default")
-
-	setDefaultImageIfNeeded := func(image *string) {
-		if len(*image) == 0 {
-			*image = r.defaultImage
-		}
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = r.defaultImage
 	}
-
-	// type switches can have only one type in a case so the same repeats for
-	// all xDevicePlugin types.
-	// TODO: implement receivers if more complex logic is needed.
-	switch v := obj.(type) {
-	case *DlbDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *DsaDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *FpgaDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *GpuDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *IaaDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *QatDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *SgxDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *NpuDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	default:
-		return fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, obj)
-	}
-
 	return nil
 }
 
-// ValidateCreate implements admission.CustomValidator so a webhook will be registered for the type.
-func (r *commonDevicePluginValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (r *dsaDevicePluginDefaulter) Default(ctx context.Context, obj *DsaDevicePlugin) error {
+	logf.FromContext(ctx).Info("default")
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = r.defaultImage
+	}
+	return nil
+}
+
+func (r *fpgaDevicePluginDefaulter) Default(ctx context.Context, obj *FpgaDevicePlugin) error {
+	logf.FromContext(ctx).Info("default")
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = r.defaultImage
+	}
+	return nil
+}
+
+func (r *gpuDevicePluginDefaulter) Default(ctx context.Context, obj *GpuDevicePlugin) error {
+	logf.FromContext(ctx).Info("default")
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = r.defaultImage
+	}
+	return nil
+}
+
+func (r *iaaDevicePluginDefaulter) Default(ctx context.Context, obj *IaaDevicePlugin) error {
+	logf.FromContext(ctx).Info("default")
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = r.defaultImage
+	}
+	return nil
+}
+
+func (r *qatDevicePluginDefaulter) Default(ctx context.Context, obj *QatDevicePlugin) error {
+	logf.FromContext(ctx).Info("default")
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = r.defaultImage
+	}
+	return nil
+}
+
+func (r *sgxDevicePluginDefaulter) Default(ctx context.Context, obj *SgxDevicePlugin) error {
+	logf.FromContext(ctx).Info("default")
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = r.defaultImage
+	}
+	return nil
+}
+
+func (r *npuDevicePluginDefaulter) Default(ctx context.Context, obj *NpuDevicePlugin) error {
+	logf.FromContext(ctx).Info("default")
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = r.defaultImage
+	}
+	return nil
+}
+
+// ValidateCreate implementations for each type
+func (r *dlbDevicePluginValidator) ValidateCreate(ctx context.Context, obj *DlbDevicePlugin) (admission.Warnings, error) {
 	logf.FromContext(ctx).Info("validate create")
-
-	switch v := obj.(type) {
-	case *DlbDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *DsaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *GpuDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *FpgaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *IaaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *QatDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *SgxDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *NpuDevicePlugin:
-		return nil, v.validatePlugin(r)
-	default:
-		return nil, fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, obj)
-	}
+	return nil, obj.validatePlugin(&r.commonDevicePluginValidator)
 }
 
-// ValidateUpdate implements admission.CustomValidator so a webhook will be registered for the type.
-func (r *commonDevicePluginValidator) ValidateUpdate(ctx context.Context, _ runtime.Object, newObj runtime.Object) (admission.Warnings, error) {
+func (r *dsaDevicePluginValidator) ValidateCreate(ctx context.Context, obj *DsaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create")
+	return nil, obj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+func (r *fpgaDevicePluginValidator) ValidateCreate(ctx context.Context, obj *FpgaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create")
+	return nil, obj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+func (r *gpuDevicePluginValidator) ValidateCreate(ctx context.Context, obj *GpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create")
+	return nil, obj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+func (r *iaaDevicePluginValidator) ValidateCreate(ctx context.Context, obj *IaaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create")
+	return nil, obj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+func (r *qatDevicePluginValidator) ValidateCreate(ctx context.Context, obj *QatDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create")
+	return nil, obj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+func (r *sgxDevicePluginValidator) ValidateCreate(ctx context.Context, obj *SgxDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create")
+	return nil, obj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+func (r *npuDevicePluginValidator) ValidateCreate(ctx context.Context, obj *NpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create")
+	return nil, obj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+// ValidateUpdate implementations for each type
+func (r *dlbDevicePluginValidator) ValidateUpdate(ctx context.Context, _ *DlbDevicePlugin, newObj *DlbDevicePlugin) (admission.Warnings, error) {
 	logf.FromContext(ctx).Info("validate update")
-
-	switch v := newObj.(type) {
-	case *DlbDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *DsaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *GpuDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *FpgaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *IaaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *QatDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *SgxDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *NpuDevicePlugin:
-		return nil, v.validatePlugin(r)
-	default:
-		return nil, fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, newObj)
-	}
+	return nil, newObj.validatePlugin(&r.commonDevicePluginValidator)
 }
 
-// ValidateDelete implements admission.CustomValidator so a webhook will be registered for the type.
-func (r *commonDevicePluginValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	logf.FromContext(ctx).Info("validate delete")
+func (r *dsaDevicePluginValidator) ValidateUpdate(ctx context.Context, _ *DsaDevicePlugin, newObj *DsaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update")
+	return nil, newObj.validatePlugin(&r.commonDevicePluginValidator)
+}
 
+func (r *fpgaDevicePluginValidator) ValidateUpdate(ctx context.Context, _ *FpgaDevicePlugin, newObj *FpgaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update")
+	return nil, newObj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+func (r *gpuDevicePluginValidator) ValidateUpdate(ctx context.Context, _ *GpuDevicePlugin, newObj *GpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update")
+	return nil, newObj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+func (r *iaaDevicePluginValidator) ValidateUpdate(ctx context.Context, _ *IaaDevicePlugin, newObj *IaaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update")
+	return nil, newObj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+func (r *qatDevicePluginValidator) ValidateUpdate(ctx context.Context, _ *QatDevicePlugin, newObj *QatDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update")
+	return nil, newObj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+func (r *sgxDevicePluginValidator) ValidateUpdate(ctx context.Context, _ *SgxDevicePlugin, newObj *SgxDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update")
+	return nil, newObj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+func (r *npuDevicePluginValidator) ValidateUpdate(ctx context.Context, _ *NpuDevicePlugin, newObj *NpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update")
+	return nil, newObj.validatePlugin(&r.commonDevicePluginValidator)
+}
+
+// ValidateDelete implementations for each type
+func (r *dlbDevicePluginValidator) ValidateDelete(ctx context.Context, obj *DlbDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete")
+	return nil, nil
+}
+
+func (r *dsaDevicePluginValidator) ValidateDelete(ctx context.Context, obj *DsaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete")
+	return nil, nil
+}
+
+func (r *fpgaDevicePluginValidator) ValidateDelete(ctx context.Context, obj *FpgaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete")
+	return nil, nil
+}
+
+func (r *gpuDevicePluginValidator) ValidateDelete(ctx context.Context, obj *GpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete")
+	return nil, nil
+}
+
+func (r *iaaDevicePluginValidator) ValidateDelete(ctx context.Context, obj *IaaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete")
+	return nil, nil
+}
+
+func (r *qatDevicePluginValidator) ValidateDelete(ctx context.Context, obj *QatDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete")
+	return nil, nil
+}
+
+func (r *sgxDevicePluginValidator) ValidateDelete(ctx context.Context, obj *SgxDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete")
+	return nil, nil
+}
+
+func (r *npuDevicePluginValidator) ValidateDelete(ctx context.Context, obj *NpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete")
 	return nil, nil
 }
 

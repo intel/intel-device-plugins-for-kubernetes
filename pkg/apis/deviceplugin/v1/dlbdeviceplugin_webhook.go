@@ -22,15 +22,18 @@ import (
 
 // SetupWebhookWithManager sets up a webhook for DlbDevicePlugin custom resources.
 func (r *DlbDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-dlb-plugin:" + controllers.ImageMinVersion.String(),
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(&dlbDevicePluginDefaulter{
+			commonDevicePluginDefaulter: commonDevicePluginDefaulter{
+				defaultImage: "intel/intel-dlb-plugin:" + controllers.ImageMinVersion.String(),
+			},
 		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:     "intel-dlb-plugin",
-			expectedInitImage: "intel-dlb-initimage",
-			expectedVersion:   *controllers.ImageMinVersion,
+		WithValidator(&dlbDevicePluginValidator{
+			commonDevicePluginValidator: commonDevicePluginValidator{
+				expectedImage:     "intel-dlb-plugin",
+				expectedInitImage: "intel-dlb-initimage",
+				expectedVersion:   *controllers.ImageMinVersion,
+			},
 		}).
 		Complete()
 }

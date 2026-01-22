@@ -22,15 +22,18 @@ import (
 
 // SetupWebhookWithManager sets up a webhook for SgxDevicePlugin custom resources.
 func (r *SgxDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-sgx-plugin:" + controllers.ImageMinVersion.String(),
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(&sgxDevicePluginDefaulter{
+			commonDevicePluginDefaulter: commonDevicePluginDefaulter{
+				defaultImage: "intel/intel-sgx-plugin:" + controllers.ImageMinVersion.String(),
+			},
 		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:     "intel-sgx-plugin",
-			expectedInitImage: "intel-sgx-initcontainer",
-			expectedVersion:   *controllers.ImageMinVersion,
+		WithValidator(&sgxDevicePluginValidator{
+			commonDevicePluginValidator: commonDevicePluginValidator{
+				expectedImage:     "intel-sgx-plugin",
+				expectedInitImage: "intel-sgx-initcontainer",
+				expectedVersion:   *controllers.ImageMinVersion,
+			},
 		}).
 		Complete()
 }

@@ -24,15 +24,18 @@ import (
 
 // SetupWebhookWithManager sets up a webhook for QatDevicePlugin custom resources.
 func (r *QatDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-qat-plugin:" + controllers.ImageMinVersion.String(),
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(&qatDevicePluginDefaulter{
+			commonDevicePluginDefaulter: commonDevicePluginDefaulter{
+				defaultImage: "intel/intel-qat-plugin:" + controllers.ImageMinVersion.String(),
+			},
 		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:     "intel-qat-plugin",
-			expectedInitImage: "intel-qat-initcontainer",
-			expectedVersion:   *controllers.ImageMinVersion,
+		WithValidator(&qatDevicePluginValidator{
+			commonDevicePluginValidator: commonDevicePluginValidator{
+				expectedImage:     "intel-qat-plugin",
+				expectedInitImage: "intel-qat-initcontainer",
+				expectedVersion:   *controllers.ImageMinVersion,
+			},
 		}).
 		Complete()
 }
