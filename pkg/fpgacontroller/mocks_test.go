@@ -92,7 +92,7 @@ func (c *mockClient) IsObjectNamespaced(runtime.Object) (bool, error) {
 	return false, nil
 }
 
-func (c *mockClient) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+func (c *mockClient) Apply(ctx context.Context, config runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
 	return nil
 }
 

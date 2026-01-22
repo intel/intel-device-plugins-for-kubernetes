@@ -119,7 +119,7 @@ func (f *fakeStatusWriter) Update(ctx context.Context, obj client.Object, opts .
 func (f *fakeStatusWriter) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
 	return nil
 }
-func (f *fakeStatusWriter) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.SubResourceApplyOption) error {
+func (f *fakeStatusWriter) Apply(ctx context.Context, config runtime.ApplyConfiguration, opts ...client.SubResourceApplyOption) error {
 	return nil
 }
 func (f *fakeStatusWriter) Status() client.StatusWriter {
@@ -182,7 +182,7 @@ func (f *fakeClient) Delete(ctx context.Context, obj client.Object, opts ...clie
 func (f *fakeClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
 	return nil
 }
-func (f *fakeClient) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+func (f *fakeClient) Apply(ctx context.Context, config runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
 	return nil
 }
 func (f *fakeClient) Status() client.StatusWriter {
