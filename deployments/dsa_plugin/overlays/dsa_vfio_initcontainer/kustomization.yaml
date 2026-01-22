@@ -1,0 +1,12 @@
+resources:
+- ../../base
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+patches:
+- path: dsa_initcontainer.yaml
+- path: driver_args.yaml
+  target:
+    kind: DaemonSet
+- path: devfs_path.yaml
+  target:
+    kind: DaemonSet

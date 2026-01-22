@@ -37,6 +37,11 @@ type DsaDevicePluginSpec struct {
 	// ProvisioningConfig is a ConfigMap used to pass the DSA devices and workqueues configuration into idxd-config initcontainer.
 	ProvisioningConfig string `json:"provisioningConfig,omitempty"`
 
+	// Driver name used for the DSA devices.
+	// +kubebuilder:validation:Enum=idxd;vfio-pci
+	// +kubebuilder:default=idxd
+	Driver string `json:"driver,omitempty"`
+
 	// Specialized nodes (e.g., with accelerators) can be Tainted to make sure unwanted pods are not scheduled on them. Tolerations can be set for the plugin pod to neutralize the Taint.
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 

@@ -12,6 +12,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
+          - name: DSA_DRIVER
+            value: vfio-pci
         image: intel/intel-idxd-config-initcontainer:devel
         securityContext:
           seLinuxOptions:
@@ -25,8 +27,6 @@ spec:
           name: sys-bus-pci
         - mountPath: /sys/devices
           name: sys-devices
-        - mountPath: /idxd-init/conf
-          name: intel-dsa-config-volume
         - mountPath: /idxd-init/scratch
           name: scratch
       volumes:
@@ -39,8 +39,5 @@ spec:
       - name: sys-devices
         hostPath:
           path: /sys/devices
-      - name: intel-dsa-config-volume
-        configMap:
-          name: intel-dsa-config
       - name: scratch
         emptyDir: {}

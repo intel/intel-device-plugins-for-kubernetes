@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Intel Corporation. All Rights Reserved.
+// Copyright 2020-2026 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ var _ = Describe("DsaDevicePlugin Controller", func() {
 			updatedProvisioningConfig := "updated-dsa-provisioningconfig"
 			updatedLogLevel := 2
 			updatedSharedDevNum := 42
+			updatedDriver := "vfio-pci"
 			updatedNodeSelector := map[string]string{"updated-dsa-nodeselector": "true"}
 
 			fetched.Spec.Image = updatedImage
@@ -88,6 +89,7 @@ var _ = Describe("DsaDevicePlugin Controller", func() {
 			fetched.Spec.ProvisioningConfig = updatedProvisioningConfig
 			fetched.Spec.LogLevel = updatedLogLevel
 			fetched.Spec.SharedDevNum = updatedSharedDevNum
+			fetched.Spec.Driver = updatedDriver
 			fetched.Spec.NodeSelector = updatedNodeSelector
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
@@ -106,6 +108,8 @@ var _ = Describe("DsaDevicePlugin Controller", func() {
 			expectArgs := []string{
 				"-v",
 				strconv.Itoa(updatedLogLevel),
+				"-driver",
+				"vfio-pci",
 				"-shared-dev-num",
 				strconv.Itoa(updatedSharedDevNum),
 			}
@@ -123,6 +127,8 @@ var _ = Describe("DsaDevicePlugin Controller", func() {
 			Expect(ds.Spec.Template.Spec.Containers[0].Image).Should(Equal(updatedImage))
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(updatedInitImage))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Env).To(HaveLen(3))
+			Expect(ds.Spec.Template.Spec.InitContainers[0].Env[2].Value).To(Equal("vfio-pci"))
 			Expect(ds.Spec.Template.Spec.Volumes).To(ContainElement(expectedVolume))
 
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(Equal(updatedNodeSelector))

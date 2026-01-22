@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dpdk-vfio
+spec:
+  restartPolicy: Never
+  containers:
+    - name: dpdk-vfio
+      image: intel/dsa-dpdk-dmadevtest:devel
+      command:
+        - dpdk-test
+      args:
+        - -a
+        - $(VFIO_BDF0)
+        - dmadev_autotest
+      securityContext:
+        capabilities:
+          add: ["IPC_LOCK"]
+          drop: ["ALL"]
+      volumeMounts:
+        - mountPath: /mnt/hugepage
+          name: hugepage
+      resources:
+        requests:
+          hugepages-2Mi: 64Mi
+          memory: 128Mi
+          dsa.intel.com/vfio: 1
+        limits:
+          hugepages-2Mi: 64Mi
+          memory: 128Mi
+          dsa.intel.com/vfio: 1
+  volumes:
+  - name: hugepage
+    emptyDir:
+      medium: HugePages

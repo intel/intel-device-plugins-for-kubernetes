@@ -1,0 +1,11 @@
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    name: devfs-vfio
+    mountPath: /dev/vfio
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: devfs-vfio
+    hostPath:
+      path: /dev/vfio

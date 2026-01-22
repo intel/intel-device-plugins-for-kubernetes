@@ -60,6 +60,20 @@ To create a custom provisioning config:
 $ kubectl create configmap --namespace=inteldeviceplugins-system intel-dsa-config --from-file=demo/dsa.conf
 ```
 
+#### VFIO Support
+
+Instead of using the default `idxd` driver based device resources, some workloads (e.g., DPDK) support using DSA through `vfio-pci` too. The DSA device plugin looks for VFIO
+device resources when started with `-driver vfio-pci` parameter. The registered resources are `dsa.intel.com/vfio`.
+
+The sample idxd initcontainer can be used to bind the devices to `vfio-pci` with:
+
+```bash
+$ kubectl apply -k deployments/dsa_plugin/overlays/dsa_vfio_initcontainer/
+```
+
+> **Note:**: The `vfio-pci` module must be loaded with `disable_denylist=1` parameter
+> for the DSA device plugin to work correctly with DSA devices with `PCI ID=0b25`.
+
 ### Verify Plugin Registration
 You can verify the plugin has been registered with the expected nodes by searching for the relevant
 resource allocation status on the nodes:
