@@ -119,12 +119,14 @@ func (f *fakeStatusWriter) Update(ctx context.Context, obj client.Object, opts .
 func (f *fakeStatusWriter) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
 	return nil
 }
+func (f *fakeStatusWriter) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.SubResourceApplyOption) error {
+	return nil
+}
 func (f *fakeStatusWriter) Status() client.StatusWriter {
 	return f
 }
 
 type fakeClient struct {
-	client.StatusWriter
 	client.Client
 	getErr       error
 	listErr      error
@@ -134,6 +136,7 @@ type fakeClient struct {
 	ds           []*apps.DaemonSet
 	pods         []*v1.Pod
 	createCalled bool
+	statusWriter *fakeStatusWriter
 }
 
 func (f *fakeClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
@@ -176,11 +179,14 @@ func (f *fakeClient) Patch(ctx context.Context, obj client.Object, patch client.
 func (f *fakeClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
 	return nil
 }
-func (f *fakeClient) UpdateStatus(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
-	return f.statusErr
+func (f *fakeClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
+	return nil
+}
+func (f *fakeClient) Apply(ctx context.Context, obj runtime.ApplyConfiguration, opts ...client.ApplyOption) error {
+	return nil
 }
 func (f *fakeClient) Status() client.StatusWriter {
-	return f.StatusWriter
+	return f.statusWriter
 }
 func (f *fakeClient) Scheme() *runtime.Scheme {
 	s := runtime.NewScheme()
@@ -253,7 +259,7 @@ func fillPods() []*v1.Pod {
 func TestReconciler_Reconcile_CreateDaemonSet(t *testing.T) {
 	controller := &mockController{}
 	c := &fakeClient{
-		StatusWriter: &fakeStatusWriter{},
+		statusWriter: &fakeStatusWriter{},
 		ds:           []*apps.DaemonSet{},
 	}
 	r := &reconciler{
@@ -283,7 +289,7 @@ func TestReconciler_Reconcile_UpdateDaemonSetAndStatus(t *testing.T) {
 		upgrade: false,
 	}
 	c := &fakeClient{
-		StatusWriter: &fakeStatusWriter{},
+		statusWriter: &fakeStatusWriter{},
 		ds:           fillDaemonSets(),
 		pods:         fillPods(),
 	}
@@ -319,7 +325,7 @@ func TestReconciler_Reconcile_GetError(t *testing.T) {
 	controller := &mockController{}
 	c := &fakeClient{
 		getErr:       getError{},
-		StatusWriter: &fakeStatusWriter{},
+		statusWriter: &fakeStatusWriter{},
 	}
 	r := &reconciler{
 		controller: controller,
@@ -340,7 +346,7 @@ func TestReconciler_Reconcile_ListError(t *testing.T) {
 	controller := &mockController{}
 	c := &fakeClient{
 		listErr:      listError{},
-		StatusWriter: &fakeStatusWriter{},
+		statusWriter: &fakeStatusWriter{},
 	}
 	r := &reconciler{
 		controller: controller,
@@ -362,7 +368,7 @@ func TestReconciler_Reconcile_UpdateStatusError(t *testing.T) {
 		statusErr: updatestatusError{},
 	}
 	c := &fakeClient{
-		StatusWriter: &fakeStatusWriter{},
+		statusWriter: &fakeStatusWriter{},
 		ds:           fillDaemonSets(),
 		pods:         fillPods(),
 	}
