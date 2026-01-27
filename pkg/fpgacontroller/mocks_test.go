@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/events"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
 )
 
 type mockClient struct {
@@ -139,6 +141,10 @@ func (m *mockManager) GetEventRecorderFor(string) record.EventRecorder {
 	return nil
 }
 
+func (m *mockManager) GetEventRecorder(string) events.EventRecorder {
+	return nil
+}
+
 func (m *mockManager) GetFieldIndexer() client.FieldIndexer {
 	return nil
 }
@@ -172,5 +178,9 @@ func (m *mockManager) Start(context.Context) error {
 }
 
 func (m *mockManager) GetHTTPClient() *http.Client {
+	return nil
+}
+
+func (m *mockManager) GetConverterRegistry() conversion.Registry {
 	return nil
 }

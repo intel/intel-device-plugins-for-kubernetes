@@ -36,9 +36,8 @@ var ErrObjectType = errors.New("invalid runtime object type")
 type Mutator struct{}
 
 func (s *Mutator) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&corev1.Pod{}).
-		WithDefaulter(s).
+	return ctrl.NewWebhookManagedBy(mgr, &corev1.Pod{}).
+		WithCustomDefaulter(s).
 		Complete()
 }
 
