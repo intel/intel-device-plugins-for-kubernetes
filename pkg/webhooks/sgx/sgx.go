@@ -16,19 +16,14 @@ package sgx
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/internal/containers"
 )
-
-var ErrObjectType = errors.New("invalid runtime object type")
 
 // +kubebuilder:webhook:path=/mutate--v1-pod,mutating=true,failurePolicy=ignore,groups="",resources=pods,verbs=create,versions=v1,name=sgx.mutator.webhooks.intel.com,sideEffects=None,admissionReviewVersions=v1,reinvocationPolicy=IfNeeded
 
@@ -36,8 +31,7 @@ var ErrObjectType = errors.New("invalid runtime object type")
 type Mutator struct{}
 
 func (s *Mutator) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&corev1.Pod{}).
+	return ctrl.NewWebhookManagedBy(mgr, &corev1.Pod{}).
 		WithDefaulter(s).
 		Complete()
 }
@@ -123,16 +117,8 @@ func createNewVolumeMounts(container *corev1.Container, volumeMount *corev1.Volu
 	return append(container.VolumeMounts, *volumeMount)
 }
 
-func (s *Mutator) Default(ctx context.Context, obj runtime.Object) error {
-	var pod *corev1.Pod
-
+func (s *Mutator) Default(ctx context.Context, pod *corev1.Pod) error {
 	log := logf.FromContext(ctx)
-
-	pod, ok := obj.(*corev1.Pod)
-
-	if !ok {
-		return fmt.Errorf("%w: expected a Pod but got a %T", ErrObjectType, obj)
-	}
 
 	totalEpc := int64(0)
 	epcUserCount := int32(0)
