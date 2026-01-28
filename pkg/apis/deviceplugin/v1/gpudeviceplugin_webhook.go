@@ -31,13 +31,13 @@ func (r *GpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	pciIDRegex = *regexp.MustCompile(`^0x[0-9a-f]{4}$`)
 
 	return ctrl.NewWebhookManagedBy(mgr, r).
-		WithCustomDefaulter(&commonDevicePluginDefaulter{
+		WithDefaulter(&gpuDevicePluginDefaulter{&commonDevicePluginDefaulter{
 			defaultImage: "intel/intel-gpu-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithCustomValidator(&commonDevicePluginValidator{
+		}}).
+		WithValidator(&gpuDevicePluginValidator{&commonDevicePluginValidator{
 			expectedImage:   "intel-gpu-plugin",
 			expectedVersion: *controllers.ImageMinVersion,
-		}).
+		}}).
 		Complete()
 }
 

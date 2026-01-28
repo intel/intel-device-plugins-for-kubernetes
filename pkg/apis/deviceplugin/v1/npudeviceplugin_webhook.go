@@ -23,13 +23,13 @@ import (
 // SetupWebhookWithManager sets up a webhook for NpuDevicePlugin custom resources.
 func (r *NpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr, r).
-		WithCustomDefaulter(&commonDevicePluginDefaulter{
+		WithDefaulter(&npuDevicePluginDefaulter{&commonDevicePluginDefaulter{
 			defaultImage: "intel/intel-npu-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithCustomValidator(&commonDevicePluginValidator{
+		}}).
+		WithValidator(&npuDevicePluginValidator{&commonDevicePluginValidator{
 			expectedImage:   "intel-npu-plugin",
 			expectedVersion: *controllers.ImageMinVersion,
-		}).
+		}}).
 		Complete()
 }
 

@@ -25,14 +25,14 @@ import (
 // SetupWebhookWithManager sets up a webhook for IaaDevicePlugin custom resources.
 func (r *IaaDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr, r).
-		WithCustomDefaulter(&commonDevicePluginDefaulter{
+		WithDefaulter(&iaaDevicePluginDefaulter{&commonDevicePluginDefaulter{
 			defaultImage: "intel/intel-iaa-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithCustomValidator(&commonDevicePluginValidator{
+		}}).
+		WithValidator(&iaaDevicePluginValidator{&commonDevicePluginValidator{
 			expectedImage:     "intel-iaa-plugin",
 			expectedInitImage: "intel-idxd-config-initcontainer",
 			expectedVersion:   *controllers.ImageMinVersion,
-		}).
+		}}).
 		Complete()
 }
 

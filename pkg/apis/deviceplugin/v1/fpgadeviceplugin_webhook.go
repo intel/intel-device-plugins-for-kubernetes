@@ -23,14 +23,14 @@ import (
 // SetupWebhookWithManager sets up a webhook for FpgaDevicePlugin custom resources.
 func (r *FpgaDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr, r).
-		WithCustomDefaulter(&commonDevicePluginDefaulter{
+		WithDefaulter(&fpgaDevicePluginDefaulter{&commonDevicePluginDefaulter{
 			defaultImage: "intel/intel-fpga-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithCustomValidator(&commonDevicePluginValidator{
+		}}).
+		WithValidator(&fpgaDevicePluginValidator{&commonDevicePluginValidator{
 			expectedImage:     "intel-fpga-plugin",
 			expectedInitImage: "intel-fpga-initimage",
 			expectedVersion:   *controllers.ImageMinVersion,
-		}).
+		}}).
 		Complete()
 }
 

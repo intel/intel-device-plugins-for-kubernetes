@@ -35,9 +35,18 @@ var ErrObjectType = errors.New("invalid runtime object type")
 // Mutator annotates Pods.
 type Mutator struct{}
 
+// podMutatorDefaulter wraps Mutator to implement the new generic Defaulter[*corev1.Pod] interface
+type podMutatorDefaulter struct {
+	*Mutator
+}
+
+func (p *podMutatorDefaulter) Default(ctx context.Context, obj *corev1.Pod) error {
+	return p.Mutator.Default(ctx, obj)
+}
+
 func (s *Mutator) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr, &corev1.Pod{}).
-		WithCustomDefaulter(s).
+		WithDefaulter(&podMutatorDefaulter{s}).
 		Complete()
 }
 

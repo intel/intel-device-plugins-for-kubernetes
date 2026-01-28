@@ -25,14 +25,14 @@ import (
 // SetupWebhookWithManager sets up a webhook for DsaDevicePlugin custom resources.
 func (r *DsaDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr, r).
-		WithCustomDefaulter(&commonDevicePluginDefaulter{
+		WithDefaulter(&dsaDevicePluginDefaulter{&commonDevicePluginDefaulter{
 			defaultImage: "intel/intel-dsa-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithCustomValidator(&commonDevicePluginValidator{
+		}}).
+		WithValidator(&dsaDevicePluginValidator{&commonDevicePluginValidator{
 			expectedImage:     "intel-dsa-plugin",
 			expectedInitImage: "intel-idxd-config-initcontainer",
 			expectedVersion:   *controllers.ImageMinVersion,
-		}).
+		}}).
 		Complete()
 }
 

@@ -177,3 +177,167 @@ func validatePluginImage(image, expectedImageName string, expectedMinVersion *ve
 
 	return nil
 }
+
+// Type-specific defaulter wrappers for the new generic Defaulter[T] interface
+
+type dlbDevicePluginDefaulter struct{ *commonDevicePluginDefaulter }
+
+func (d *dlbDevicePluginDefaulter) Default(ctx context.Context, obj *DlbDevicePlugin) error {
+	return d.commonDevicePluginDefaulter.Default(ctx, obj)
+}
+
+type dsaDevicePluginDefaulter struct{ *commonDevicePluginDefaulter }
+
+func (d *dsaDevicePluginDefaulter) Default(ctx context.Context, obj *DsaDevicePlugin) error {
+	return d.commonDevicePluginDefaulter.Default(ctx, obj)
+}
+
+type fpgaDevicePluginDefaulter struct{ *commonDevicePluginDefaulter }
+
+func (d *fpgaDevicePluginDefaulter) Default(ctx context.Context, obj *FpgaDevicePlugin) error {
+	return d.commonDevicePluginDefaulter.Default(ctx, obj)
+}
+
+type gpuDevicePluginDefaulter struct{ *commonDevicePluginDefaulter }
+
+func (d *gpuDevicePluginDefaulter) Default(ctx context.Context, obj *GpuDevicePlugin) error {
+	return d.commonDevicePluginDefaulter.Default(ctx, obj)
+}
+
+type iaaDevicePluginDefaulter struct{ *commonDevicePluginDefaulter }
+
+func (d *iaaDevicePluginDefaulter) Default(ctx context.Context, obj *IaaDevicePlugin) error {
+	return d.commonDevicePluginDefaulter.Default(ctx, obj)
+}
+
+type npuDevicePluginDefaulter struct{ *commonDevicePluginDefaulter }
+
+func (d *npuDevicePluginDefaulter) Default(ctx context.Context, obj *NpuDevicePlugin) error {
+	return d.commonDevicePluginDefaulter.Default(ctx, obj)
+}
+
+type qatDevicePluginDefaulter struct{ *commonDevicePluginDefaulter }
+
+func (d *qatDevicePluginDefaulter) Default(ctx context.Context, obj *QatDevicePlugin) error {
+	return d.commonDevicePluginDefaulter.Default(ctx, obj)
+}
+
+type sgxDevicePluginDefaulter struct{ *commonDevicePluginDefaulter }
+
+func (d *sgxDevicePluginDefaulter) Default(ctx context.Context, obj *SgxDevicePlugin) error {
+	return d.commonDevicePluginDefaulter.Default(ctx, obj)
+}
+
+// Type-specific validator wrappers for the new generic Validator[T] interface
+
+type dlbDevicePluginValidator struct{ *commonDevicePluginValidator }
+
+func (v *dlbDevicePluginValidator) ValidateCreate(ctx context.Context, obj *DlbDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateCreate(ctx, obj)
+}
+
+func (v *dlbDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj, newObj *DlbDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateUpdate(ctx, oldObj, newObj)
+}
+
+func (v *dlbDevicePluginValidator) ValidateDelete(ctx context.Context, obj *DlbDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateDelete(ctx, obj)
+}
+
+type dsaDevicePluginValidator struct{ *commonDevicePluginValidator }
+
+func (v *dsaDevicePluginValidator) ValidateCreate(ctx context.Context, obj *DsaDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateCreate(ctx, obj)
+}
+
+func (v *dsaDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj, newObj *DsaDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateUpdate(ctx, oldObj, newObj)
+}
+
+func (v *dsaDevicePluginValidator) ValidateDelete(ctx context.Context, obj *DsaDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateDelete(ctx, obj)
+}
+
+type fpgaDevicePluginValidator struct{ *commonDevicePluginValidator }
+
+func (v *fpgaDevicePluginValidator) ValidateCreate(ctx context.Context, obj *FpgaDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateCreate(ctx, obj)
+}
+
+func (v *fpgaDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj, newObj *FpgaDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateUpdate(ctx, oldObj, newObj)
+}
+
+func (v *fpgaDevicePluginValidator) ValidateDelete(ctx context.Context, obj *FpgaDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateDelete(ctx, obj)
+}
+
+type gpuDevicePluginValidator struct{ *commonDevicePluginValidator }
+
+func (v *gpuDevicePluginValidator) ValidateCreate(ctx context.Context, obj *GpuDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateCreate(ctx, obj)
+}
+
+func (v *gpuDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj, newObj *GpuDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateUpdate(ctx, oldObj, newObj)
+}
+
+func (v *gpuDevicePluginValidator) ValidateDelete(ctx context.Context, obj *GpuDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateDelete(ctx, obj)
+}
+
+type iaaDevicePluginValidator struct{ *commonDevicePluginValidator }
+
+func (v *iaaDevicePluginValidator) ValidateCreate(ctx context.Context, obj *IaaDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateCreate(ctx, obj)
+}
+
+func (v *iaaDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj, newObj *IaaDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateUpdate(ctx, oldObj, newObj)
+}
+
+func (v *iaaDevicePluginValidator) ValidateDelete(ctx context.Context, obj *IaaDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateDelete(ctx, obj)
+}
+
+type npuDevicePluginValidator struct{ *commonDevicePluginValidator }
+
+func (v *npuDevicePluginValidator) ValidateCreate(ctx context.Context, obj *NpuDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateCreate(ctx, obj)
+}
+
+func (v *npuDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj, newObj *NpuDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateUpdate(ctx, oldObj, newObj)
+}
+
+func (v *npuDevicePluginValidator) ValidateDelete(ctx context.Context, obj *NpuDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateDelete(ctx, obj)
+}
+
+type qatDevicePluginValidator struct{ *commonDevicePluginValidator }
+
+func (v *qatDevicePluginValidator) ValidateCreate(ctx context.Context, obj *QatDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateCreate(ctx, obj)
+}
+
+func (v *qatDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj, newObj *QatDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateUpdate(ctx, oldObj, newObj)
+}
+
+func (v *qatDevicePluginValidator) ValidateDelete(ctx context.Context, obj *QatDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateDelete(ctx, obj)
+}
+
+type sgxDevicePluginValidator struct{ *commonDevicePluginValidator }
+
+func (v *sgxDevicePluginValidator) ValidateCreate(ctx context.Context, obj *SgxDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateCreate(ctx, obj)
+}
+
+func (v *sgxDevicePluginValidator) ValidateUpdate(ctx context.Context, oldObj, newObj *SgxDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateUpdate(ctx, oldObj, newObj)
+}
+
+func (v *sgxDevicePluginValidator) ValidateDelete(ctx context.Context, obj *SgxDevicePlugin) (admission.Warnings, error) {
+	return v.commonDevicePluginValidator.ValidateDelete(ctx, obj)
+}
