@@ -1,7 +1,7 @@
 - op: add
   path: /spec/template/spec/containers/0/args
   value:
-    - "-wsl"
+    - "-run-mode=wsl"
 - op: add
   path: /spec/template/spec/containers/1/args/-
   value:

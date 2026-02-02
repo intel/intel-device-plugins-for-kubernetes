@@ -24,6 +24,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -39,19 +40,22 @@ import (
 )
 
 const (
-	sysfsDrmDirectory = "/sys/class/drm"
-	devfsDriDirectory = "/dev/dri"
-	wslDxgPath        = "/dev/dxg"
-	wslLibPath        = "/usr/lib/wsl"
-	gpuDeviceRE       = `^card[0-9]+$`
-	controlDeviceRE   = `^controlD[0-9]+$`
-	pciAddressRE      = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
+	sysfsDrmDirectory    = "/sys/class/drm"
+	devfsDriDirectory    = "/dev/dri"
+	wslDxgPath           = "/dev/dxg"
+	wslLibPath           = "/usr/lib/wsl"
+	vfioDevfsDirectory   = "/dev/vfio"
+	sysfsPciBusDirectory = "/sys/bus/pci/devices"
+	gpuDeviceRE          = `^card[0-9]+$`
+	controlDeviceRE      = `^controlD[0-9]+$`
+	pciAddressRE         = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
 
 	// Device plugin settings.
 	namespace         = "gpu.intel.com"
 	deviceTypeI915    = "i915"
 	deviceTypeXe      = "xe"
 	deviceTypeDxg     = "dxg"
+	deviceTypeVfio    = "vfio"
 	deviceTypeDefault = deviceTypeI915
 
 	// telemetry resource settings.
@@ -66,6 +70,15 @@ const (
 
 	// Period of device scans.
 	scanPeriod = 5 * time.Second
+
+	// Run modes.
+	runModeDefault = "default"
+	runModeWSL     = "wsl"
+	runModeVfio    = "vfio"
+
+	// KubeVirt interface env names.
+	kubeVirtGpuVfio  = "PCI_RESOURCE_GPU_INTEL_COM_VFIO"
+	kubeVirtMGpuVfio = "MDEV_PCI_RESOURCE_GPU_INTEL_COM_VFIO"
 )
 
 type cliOptions struct {
@@ -73,12 +86,12 @@ type cliOptions struct {
 	allowIDs                  string
 	denyIDs                   string
 	bypathMount               string
+	runMode                   string
 	sharedDevNum              int
 	globalTempLimit           int
 	memoryTempLimit           int
 	gpuTempLimit              int
 	enableMonitoring          bool
-	wslScan                   bool
 	healthManagement          bool
 }
 
@@ -286,12 +299,15 @@ type devicePlugin struct {
 	devfsDir       string
 	bypathDir      string
 	healthStatuses map[string]string
+	ioGroupToBdf   map[string]string
 
 	// Note: If restarting the plugin with a new policy, the allocations for existing pods remain with old policy.
 	policy  preferredAllocationPolicyFunc
 	options cliOptions
 
 	bypathFound bool
+
+	bdfMutex sync.Mutex
 }
 
 func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugin {
@@ -308,6 +324,8 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 		bypathFound:      true,
 		scanResources:    make(chan bool, 1),
 		healthStatuses:   make(map[string]string),
+		ioGroupToBdf:     make(map[string]string),
+		bdfMutex:         sync.Mutex{},
 	}
 
 	switch options.preferredAllocationPolicy {
@@ -319,7 +337,8 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 		dp.policy = nonePolicy
 	}
 
-	if !options.wslScan {
+	// Only run by-path detection on default mode.
+	if options.runMode == runModeDefault {
 		if _, err := os.ReadDir(dp.bypathDir); err != nil {
 			klog.Warningf("failed to read by-path dir: %+v", err)
 
@@ -430,9 +449,12 @@ func (dp *devicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocatio
 }
 
 func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
-	if dp.options.wslScan {
+	switch dp.options.runMode {
+	case runModeWSL:
 		return dp.wslGpuScan(notifier)
-	} else {
+	case runModeVfio:
+		return dp.bdfGpuScan(notifier)
+	default:
 		return dp.drmGpuScan(notifier)
 	}
 }
@@ -533,6 +555,116 @@ func (dp *devicePlugin) drmGpuScan(notifier dpapi.Notifier) error {
 		case <-dp.scanTicker.C:
 		}
 	}
+}
+
+func (dp *devicePlugin) bdfGpuScan(notifier dpapi.Notifier) error {
+	defer dp.scanTicker.Stop()
+
+	klog.V(1).Infof("GPU (%s)", deviceTypeVfio)
+
+	previousCount := map[string]int{deviceTypeVfio: 0}
+
+	for {
+		devTree, err := dp.bdfScan()
+		if err != nil {
+			klog.Warning("Failed to scan: ", err)
+		}
+
+		countChanged := false
+
+		for name, prev := range previousCount {
+			count := devTree.DeviceTypeCount(name)
+			if count != prev {
+				klog.V(1).Infof("GPU scan update: %d->%d '%s' resources found", prev, count, name)
+
+				previousCount[name] = count
+
+				countChanged = true
+			}
+		}
+
+		notifier.Notify(devTree)
+
+		// Trigger resource scan if it's enabled.
+		if countChanged {
+			dp.scanResources <- true
+		}
+
+		select {
+		case <-dp.scanDone:
+			return nil
+		case <-dp.scanTicker.C:
+		}
+	}
+}
+
+func (dp *devicePlugin) bdfScan() (dpapi.DeviceTree, error) {
+	// scan /sys/bus/pci/devices for devices
+	pciDevices, err := filepath.Glob(filepath.Join(dp.sysfsDir, "????:??:??.?"))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	devTree := dpapi.NewDeviceTree()
+
+	iogroupToBdf := make(map[string]string)
+
+	for _, dpath := range pciDevices {
+		if !pluginutils.IsCompatibleGpuVfioDevice(dpath, dp.options.allowIDs, dp.options.denyIDs) {
+			continue
+		}
+
+		// device belongs to an IOMMU group
+		iommu_group, err := filepath.EvalSymlinks(filepath.Join(dpath, "iommu_group"))
+		if err != nil {
+			klog.V(4).Infof("Skipping device %s, unable to resolve iommu_group symlink: %v", dpath, err)
+			return nil, errors.WithStack(err)
+		}
+
+		devfsPath := filepath.Join(dp.devfsDir, filepath.Base(iommu_group))
+		if _, err := os.Stat(devfsPath); os.IsNotExist(err) {
+			klog.Warningf("VFIO device path %s does not exist", devfsPath)
+			continue
+		}
+
+		devNodes := []pluginapi.DeviceSpec{
+			{
+				HostPath:      devfsPath,
+				ContainerPath: devfsPath,
+				Permissions:   "rw",
+			},
+			{
+				HostPath:      filepath.Join(dp.devfsDir, "vfio"),
+				ContainerPath: filepath.Join(dp.devfsDir, "vfio"),
+				Permissions:   "rw",
+			},
+		}
+
+		// TODO: add IOMMUFD nodes
+		// iommuFdDevices, err := filepath.Glob(filepath.Join(dpath, "vfio-dev", "vfio?"))
+		// if err == nil {
+		// 	for _, iommuDev := range iommuFdDevices {
+		// 		devNodes = append(devNodes, pluginapi.DeviceSpec{
+		// 			HostPath:      filepath.Join(vfioPath, "devices", filepath.Base(iommuDev)),
+		// 			ContainerPath: filepath.Join(vfioPath, "devices", filepath.Base(iommuDev)),
+		// 			Permissions:   "rw",
+		// 		})
+		// 	}
+		// }
+
+		bdf := filepath.Base(dpath)
+
+		klog.V(4).Infof("%s: nodes: %+v", bdf, devNodes)
+		devTree.AddDevice(deviceTypeVfio, bdf, dpapi.NewDeviceInfo(pluginapi.Healthy, devNodes, nil, nil, nil, nil))
+
+		iogroupToBdf[devfsPath] = bdf
+	}
+
+	dp.bdfMutex.Lock()
+	dp.ioGroupToBdf = iogroupToBdf
+	dp.bdfMutex.Unlock()
+
+	return devTree, nil
 }
 
 func (dp *devicePlugin) isSupportedDrmDevice(name string) bool {
@@ -698,23 +830,77 @@ func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi
 	return nil, &dpapi.UseDefaultMethodError{}
 }
 
-func checkAllowDenyOptions(opts cliOptions) bool {
+// PostAllocate is used only in VFIO mode to set PCI resource envs for KubeVirt.
+func (dp *devicePlugin) PostAllocate(ar *pluginapi.AllocateResponse) error {
+	if dp.options.runMode != runModeVfio {
+		return nil
+	}
+
+	dp.bdfMutex.Lock()
+	defer dp.bdfMutex.Unlock()
+
+	bdfs := []string{}
+
+	for _, cr := range ar.ContainerResponses {
+		for _, devSpec := range cr.Devices {
+			dpath := devSpec.HostPath
+
+			klog.V(4).Infof("Looking for %s in %+v", dpath, dp.ioGroupToBdf)
+
+			if bdf, found := dp.ioGroupToBdf[dpath]; found {
+				bdfs = append(bdfs, bdf)
+			}
+		}
+
+		cr.Envs[kubeVirtGpuVfio] = strings.Join(bdfs, ",")
+		cr.Envs[kubeVirtMGpuVfio] = "" // empty on purpose
+	}
+
+	return nil
+}
+
+func checkAllowDenyOptions(opts cliOptions) error {
 	if len(opts.allowIDs) > 0 && len(opts.denyIDs) > 0 {
-		klog.Error("Cannot use both allow-ids and deny-ids options at the same time. Please use only one of them.")
-		return false
+		return errors.New("cannot use both allow-ids and deny-ids options at the same time. Please use only one of them.")
 	}
 
 	if err := pluginutils.ValidatePCIDeviceIDs(opts.allowIDs); err != nil {
-		klog.Error("Failed to validate allow-ids: ", err)
-		return false
+		return errors.New(fmt.Sprintf("failed to validate allow-ids: %s", err.Error()))
 	}
 
 	if err := pluginutils.ValidatePCIDeviceIDs(opts.denyIDs); err != nil {
-		klog.Error("Failed to validate deny-ids: ", err)
-		return false
+		return errors.New(fmt.Sprintf("failed to validate deny-ids: %s", err.Error()))
 	}
 
-	return true
+	return nil
+}
+
+func checkWSLModeOptions(opts cliOptions) error {
+	if opts.enableMonitoring {
+		return errors.New("monitoring is not supported within WSL. Please disable monitoring.")
+	}
+
+	if opts.healthManagement {
+		return errors.New("health management is not supported within WSL. Please disable health management.")
+	}
+
+	return nil
+}
+
+func checkVfioModeOptions(opts cliOptions) error {
+	if opts.enableMonitoring {
+		return errors.New("monitoring is not supported within VFIO mode. Please disable monitoring.")
+	}
+
+	if opts.healthManagement {
+		return errors.New("health management is not supported within VFIO mode. Please disable health management.")
+	}
+
+	if opts.sharedDevNum > 1 {
+		return errors.New("VFIO mode does not support shared devices. Please set shared-dev-num to 1.")
+	}
+
+	return nil
 }
 
 func main() {
@@ -727,7 +913,7 @@ func main() {
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable '*_monitoring' (= all GPUs) resource")
 	flag.BoolVar(&opts.healthManagement, "health-management", false, "enable GPU health management")
 	flag.StringVar(&opts.bypathMount, "bypath", bypathOptionSingle, "DRI device 'by-path/' directory mounting options: single, none, all. Default: single")
-	flag.BoolVar(&opts.wslScan, "wsl", false, "scan for / use WSL devices")
+	flag.StringVar(&opts.runMode, "run-mode", runModeDefault, "run mode: default, wsl, vfio")
 	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
 	flag.IntVar(&opts.globalTempLimit, "temp-limit", 100, "Global temperature limit at which device is marked unhealthy")
 	flag.IntVar(&opts.gpuTempLimit, "gpu-temp-limit", 100, "GPU temperature limit at which device is marked unhealthy")
@@ -744,39 +930,42 @@ func main() {
 
 	var str = opts.preferredAllocationPolicy
 	if !(str == "balanced" || str == "packed" || str == "none") {
-		klog.Error("invalid value for preferredAllocationPolicy, the valid values: balanced, packed, none")
-		os.Exit(1)
+		klog.Fatal("invalid value for preferredAllocationPolicy, the valid values: balanced, packed, none")
 	}
 
-	if !checkAllowDenyOptions(opts) {
-		klog.Error("Invalid allow/deny options.")
-
-		os.Exit(1)
+	if err := checkAllowDenyOptions(opts); err != nil {
+		klog.Fatal(err)
 	}
 
 	var plugin *devicePlugin
 
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
 
-	plugin = newDevicePlugin(prefix+sysfsDrmDirectory, prefix+devfsDriDirectory, opts)
-
-	if plugin.options.wslScan {
+	switch opts.runMode {
+	case runModeDefault:
+		plugin = newDevicePlugin(prefix+sysfsDrmDirectory, prefix+devfsDriDirectory, opts)
+	case runModeWSL:
 		klog.Info("WSL mode requested")
 
-		if plugin.options.enableMonitoring {
-			klog.Error("Monitoring is not supported within WSL. Please disable monitoring.")
-
-			os.Exit(1)
+		if err := checkWSLModeOptions(opts); err != nil {
+			klog.Fatal(err)
 		}
 
-		if plugin.options.healthManagement {
-			klog.Error("Health management is not supported within WSL. Please disable health management.")
+		plugin = newDevicePlugin(prefix+sysfsDrmDirectory, prefix+devfsDriDirectory, opts)
+	case runModeVfio:
+		klog.Info("VFIO mode requested")
 
-			os.Exit(1)
+		if err := checkVfioModeOptions(opts); err != nil {
+			klog.Fatal(err)
 		}
+
+		plugin = newDevicePlugin(prefix+sysfsPciBusDirectory, prefix+vfioDevfsDirectory, opts)
+	default:
+		klog.Fatalf("Invalid run-mode option: %s. Supported options are: %s, %s, %s",
+			opts.runMode, runModeDefault, runModeWSL, runModeVfio)
 	}
 
-	if plugin.options.healthManagement || plugin.options.wslScan {
+	if plugin.options.healthManagement || plugin.options.runMode == runModeWSL {
 		plugin.levelzeroService = levelzeroservice.NewLevelzero(gpulevelzero.DefaultUnixSocketPath)
 
 		go plugin.levelzeroService.Run(true)

@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-gpu-plugin
+spec:
+  template:
+    spec:
+      containers:
+      - name: intel-gpu-plugin
+        args:
+        - "-shared-dev-num=1"
+        - "-enable-monitoring=false"
+        - "-v=2"
+        - "-run-mode=vfio"
