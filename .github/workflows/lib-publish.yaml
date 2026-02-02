@@ -29,7 +29,7 @@ jobs:
           sudo systemctl stop clamav-freshclam.service
           sudo freshclam
       - name: Cache clamav databases
-        uses: actions/cache/save@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: /var/lib/clamav
           key: clamav-${{ github.run_id }}
@@ -80,7 +80,7 @@ jobs:
           sudo mkdir -p /var/lib/clamav
           sudo chmod a+rwx /var/lib/clamav
       - name: Retrieve AV database
-        uses: actions/cache/restore@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: /var/lib/clamav
           key: clamav-${{ github.run_id }}
@@ -100,7 +100,7 @@ jobs:
         if: ${{ !contains(fromJson(env.no_base_check), matrix.image) }}
         run: IMG=${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }} make test-image-base-layer BUILDER=docker
       - name: Login
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}
