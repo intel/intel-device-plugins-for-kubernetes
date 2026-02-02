@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-gpu-plugin
+spec:
+  template:
+    spec:
+      initContainers:
+      - name: intel-gpu-initcontainer
+        image: intel/intel-gpu-initcontainer:devel
+        securityContext:
+          readOnlyRootFilesystem: true
+          privileged: true
+        volumeMounts:
+        - name: sysbuspci
+          mountPath: /sys/bus/pci
+

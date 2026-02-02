@@ -22,8 +22,8 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/pluginutils"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 

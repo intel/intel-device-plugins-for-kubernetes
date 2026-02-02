@@ -30,7 +30,7 @@ import (
 	"time"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
-	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/pluginutils"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 )

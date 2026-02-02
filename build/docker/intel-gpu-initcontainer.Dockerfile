@@ -14,6 +14,7 @@
 ## See the License for the specific language governing permissions and
 ## limitations under the License.
 ###
+ARG CMD=gpu_init
 ## FINAL_BASE can be used to configure the base image of the final image.
 ##
 ## This is used in two ways:
@@ -43,10 +44,8 @@ ARG GOFLAGS="-trimpath"
 ARG GCFLAGS="all=-spectre=all -N -l"
 ARG ASMFLAGS="all=-spectre=all"
 ARG GOLICENSES_VERSION
-ARG EP=/usr/local/bin/gpu-sw/intel-gpu-nfdhook
-ARG CMD=gpu_nfdhook
-ARG NFD_HOOK=intel-gpu-nfdhook
-ARG SRC_DIR=/usr/local/bin/gpu-sw
+ARG EP=/usr/local/bin/intel-gpu-init
+ARG CMD
 WORKDIR ${DIR}
 COPY . .
 RUN (cd cmd/${CMD}; GO111MODULE=${GO111MODULE} GOFLAGS=${GOFLAGS} CGO_ENABLED=0 go install -gcflags="${GCFLAGS}" -asmflags="${ASMFLAGS}" -ldflags="${LDFLAGS}") && install -D /go/bin/${CMD} /install_root${EP}
@@ -57,29 +56,14 @@ RUN install -D ${DIR}/LICENSE /install_root/licenses/intel-device-plugins-for-ku
     else mkdir -p /install_root/licenses/$CMD/go-licenses/ && cd licenses/$CMD && cp -r * /install_root/licenses/$CMD/go-licenses/ ; fi && \
     echo "Verifying installed licenses" && test -e /install_root/licenses/$CMD/go-licenses
 ###
-ARG TOYBOX_VERSION="0.8.12"
-ARG TOYBOX_SHA256="3c529d93923dde67d048e7bcbd5d1bc0dd1ad09362269e2415f5f2eaab349b5b"
-ARG ROOT=/install_root
-RUN apt-get update && apt-get --no-install-recommends -y install musl musl-tools musl-dev
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-ARG FINAL_BASE=registry.access.redhat.com/ubi9-micro:latest
-RUN curl -SL https://github.com/landley/toybox/archive/refs/tags/$TOYBOX_VERSION.tar.gz -o toybox.tar.gz \
-    && echo "$TOYBOX_SHA256 toybox.tar.gz" | sha256sum -c - \
-    && tar -xzf toybox.tar.gz \
-    && rm toybox.tar.gz \
-    && cd toybox-$TOYBOX_VERSION \
-    && KCONFIG_CONFIG=${DIR}/build/docker/toybox-config-$(echo ${FINAL_BASE} | xargs basename -s :latest) LDFLAGS="--static" CC=musl-gcc PREFIX=$ROOT/usr/bin V=2 make toybox install_flat \
-    && install -D LICENSE $ROOT/licenses/toybox \
-    && cp -r /usr/share/doc/musl $ROOT/licenses/
-###
 FROM ${FINAL_BASE}
+COPY --from=builder /install_root /
+ENTRYPOINT ["/usr/local/bin/intel-gpu-init"]
 LABEL vendor='Intel®'
 LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
 LABEL maintainer="Intel®"
 LABEL version='devel'
 LABEL release='1'
 LABEL name='intel-gpu-initcontainer'
-LABEL summary='Intel® GPU NFD hook for Kubernetes'
-LABEL description='The GPU fractional resources, such as GPU memory is registered as a kubernetes extended resource using node-feature-discovery (NFD). A custom NFD source hook is installed as part of GPU device plugin operator deployment and NFD is configured to register the GPU memory extended resource reported by the hook'
-COPY --from=builder /install_root /
-ENTRYPOINT [ "/usr/bin/sh", "-c", "cp -a /usr/local/bin/gpu-sw/intel-gpu-nfdhook /etc/kubernetes/node-feature-discovery/source.d/" ]
+LABEL summary='Intel® GPU Init hook for Kubernetes'
+LABEL description='The GPU Init hook initializes the Intel GPU hardware to be used with KubeVirt'
