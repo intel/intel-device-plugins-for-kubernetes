@@ -62,8 +62,11 @@ func validateDeviceIds(idList string) error {
 }
 
 func (r *GpuDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
-	if r.Spec.SharedDevNum == 1 && r.Spec.PreferredAllocationPolicy != "none" {
-		return fmt.Errorf("%w: PreferredAllocationPolicy is valid only when setting sharedDevNum > 1", errValidation)
+	if r.Spec.SharedDevNum == 1 {
+		switch r.Spec.PreferredAllocationPolicy {
+		case "packed", "balanced":
+			return fmt.Errorf("%w: PreferredAllocationPolicy is valid only when setting sharedDevNum > 1", errValidation)
+		}
 	}
 
 	if err := validateDeviceIds(r.Spec.AllowIDs); err != nil {
