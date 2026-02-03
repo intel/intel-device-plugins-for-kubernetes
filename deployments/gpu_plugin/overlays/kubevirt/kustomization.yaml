@@ -6,3 +6,7 @@ patches:
     target:
       kind: DaemonSet
       name: intel-gpu-plugin
+  - path: initcontainer.yaml
+    target:
+      kind: DaemonSet
+      name: intel-gpu-plugin
