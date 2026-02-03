@@ -31,15 +31,15 @@ import (
 
 var _ = Describe("GpuDevicePlugin Controller", func() {
 
-	const timeout = time.Second * 30
-	const interval = time.Second * 1
+	const timeout = time.Second * 5
+	const interval = time.Millisecond * 100
 
 	Context("Basic CRUD operations", func() {
 		It("should handle GpuDevicePlugin objects correctly", func() {
 			spec := devicepluginv1.GpuDevicePluginSpec{
 				Image:        "gpu-testimage",
-				InitImage:    "gpu-testinitimage",
 				NodeSelector: map[string]string{"gpu-nodeselector": "true"},
+				SharedDevNum: 5,
 			}
 
 			key := types.NamespacedName{
@@ -55,9 +55,17 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 
 			expectedDsName := "intel-gpu-plugin-gpudeviceplugin-test"
 
+			expectArgs := []string{
+				"-v",
+				"0",
+				"-shared-dev-num",
+				"5",
+				"-allocation-policy",
+				"none",
+			}
+
 			By("creating GpuDevicePlugin successfully")
 			Expect(k8sClient.Create(context.Background(), toCreate)).Should(Succeed())
-			time.Sleep(time.Second * 5)
 
 			fetched := &devicepluginv1.GpuDevicePlugin{}
 			Eventually(func() bool {
@@ -67,11 +75,19 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 
 			By("checking DaemonSet is created successfully")
 			ds := &apps.DaemonSet{}
+
+			Eventually(func() error {
+				return k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
+			}, timeout, interval).Should(BeNil())
+
 			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
+
+			dsGen := ds.Generation
+
 			Expect(err).To(BeNil())
+			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(BeEquivalentTo(expectArgs))
 			Expect(ds.Spec.Template.Spec.Containers[0].Image).To(Equal(spec.Image))
-			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
-			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(spec.InitImage))
+			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(0))
 			Expect(ds.Spec.Template.Spec.NodeSelector).To(Equal(spec.NodeSelector))
 			Expect(ds.Spec.Template.Spec.Tolerations).To(HaveLen(0))
 
@@ -79,7 +95,7 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 			updatedImage := "updated-gpu-testimage"
 			updatedInitImage := "updated-gpu-testinitimage"
 			updatedLogLevel := 2
-			updatedSharedDevNum := 42
+			updatedSharedDevNum := 1
 			updatedNodeSelector := map[string]string{"updated-gpu-nodeselector": "true"}
 
 			fetched.Spec.Image = updatedImage
@@ -87,6 +103,7 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 			fetched.Spec.LogLevel = updatedLogLevel
 			fetched.Spec.SharedDevNum = updatedSharedDevNum
 			fetched.Spec.NodeSelector = updatedNodeSelector
+			fetched.Spec.VFIOMode = true
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
 			fetchedUpdated := &devicepluginv1.GpuDevicePlugin{}
@@ -94,25 +111,31 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 				_ = k8sClient.Get(context.Background(), key, fetchedUpdated)
 				return fetchedUpdated.Spec
 			}, timeout, interval).Should(Equal(fetched.Spec))
-			time.Sleep(interval)
 
 			By("checking DaemonSet is updated successfully")
-			_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
+			// Wait for DS to update to the next generation
+			Eventually(func() int64 {
+				_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
+				return ds.Generation
+			}, timeout, interval).Should(BeNumerically(">", dsGen))
 
-			expectArgs := []string{
+			expectArgs = []string{
 				"-v",
 				strconv.Itoa(updatedLogLevel),
 				"-shared-dev-num",
 				strconv.Itoa(updatedSharedDevNum),
 				"-allocation-policy",
 				"none",
+				"-run-mode=vfio",
 			}
 
-			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(ConsistOf(expectArgs))
+			Expect(ds.Spec.Template.Spec.Containers[0].Args).Should(BeEquivalentTo(expectArgs))
 			Expect(ds.Spec.Template.Spec.Containers[0].Image).Should(Equal(updatedImage))
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(updatedInitImage))
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(Equal(updatedNodeSelector))
+
+			dsGen = ds.Generation
 
 			By("updating GpuDevicePlugin with different values successfully")
 			updatedInitImage = ""
@@ -121,12 +144,18 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 			fetched.Spec.NodeSelector = updatedNodeSelector
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
-			time.Sleep(interval)
 
 			By("checking DaemonSet is updated with different values successfully")
-			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
-			Expect(err).To(BeNil())
+			// Wait for DS to update to the next generation
+			Eventually(func() int64 {
+				_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
+				return ds.Generation
+			}, timeout, interval).Should(BeNumerically(">", dsGen))
+
+			dsGen = ds.Generation
+
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(0))
+			Expect(ds.Spec.Template.Spec.NodeSelector).Should(HaveLen(1))
 			Expect(ds.Spec.Template.Spec.NodeSelector).Should(And(HaveLen(1), HaveKeyWithValue("kubernetes.io/arch", "amd64")))
 
 			By("updating GPUDevicePlugin with tolerations")
@@ -137,12 +166,19 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 
 			fetched.Spec.Tolerations = tolerations
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
-			time.Sleep(interval)
 
 			By("checking DaemonSet is updated with tolerations")
-			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
-			Expect(err).To(BeNil())
-			Expect(ds.Spec.Template.Spec.Tolerations).To(Equal(tolerations))
+			// Wait for DS to update to the next generation
+			Eventually(func() int64 {
+				_ = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
+				return ds.Generation
+			}, timeout, interval).Should(BeNumerically(">", dsGen))
+
+			Expect(ds.Spec.Template.Spec.Tolerations).Should(BeEquivalentTo(tolerations))
+
+			// Not really needed, but if extra steps are added later...
+			//nolint:ineffassign,staticcheck
+			dsGen = ds.Generation
 
 			By("deleting GpuDevicePlugin successfully")
 			Eventually(func() error {
@@ -161,12 +197,11 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 	It("upgrades", func() {
 		dp := &devicepluginv1.GpuDevicePlugin{}
 
-		var image, initimage string
+		var image string
 
-		testUpgrade("gpu", dp, &image, &initimage)
+		testUpgrade("gpu", dp, &image, nil)
 
 		Expect(dp.Spec.Image == image).To(BeTrue())
-		Expect(dp.Spec.InitImage == initimage).To(BeTrue())
 	})
 
 	var _ = AfterEach(func() {

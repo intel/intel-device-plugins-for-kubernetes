@@ -18,6 +18,7 @@ package gpu
 import (
 	"context"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -96,14 +97,50 @@ func (c *controller) NewDaemonSet(rawObj client.Object) *apps.DaemonSet {
 		}
 	}
 
-	if devicePlugin.Spec.InitImage == "" {
-		daemonSet.Spec.Template.Spec.InitContainers = nil
-		daemonSet.Spec.Template.Spec.Volumes = removeVolume(daemonSet.Spec.Template.Spec.Volumes, "nfd-features")
-	} else {
-		setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage)
+	daemonSet.Spec.Template.Spec.InitContainers = nil
+
+	if devicePlugin.Spec.VFIOMode {
+		daemonSetToVfio(&daemonSet.Spec.Template.Spec)
+
+		if devicePlugin.Spec.InitImage != "" {
+			setInitContainer(&daemonSet.Spec.Template.Spec, devicePlugin.Spec.InitImage,
+				getInitArgs(devicePlugin))
+		}
 	}
 
 	return daemonSet
+}
+
+func daemonSetToVfio(spec *v1.PodSpec) {
+	conts := spec.Containers
+
+	// Add vfio related volumes and mounts
+	addVolumeIfMissing(spec, "devvfio", "/dev/vfio", v1.HostPathDirectory)
+	addVolumeIfMissing(spec, "sysbuspci", "/sys/bus/pci", v1.HostPathDirectory)
+	addVolumeMountIfMissing(&conts[0], "devvfio", "/dev/vfio")
+	addVolumeMountIfMissing(&conts[0], "sysbuspci", "/sys/bus/pci")
+
+	// Remove devfs and sysfsdrm volumes and mounts
+	spec.Volumes = removeVolume(spec.Volumes, "devfs")
+	spec.Volumes = removeVolume(spec.Volumes, "sysfsdrm")
+	conts[0].VolumeMounts = removeVolumeMount(conts[0].VolumeMounts, "devfs")
+	conts[0].VolumeMounts = removeVolumeMount(conts[0].VolumeMounts, "sysfsdrm")
+}
+
+func daemonSetToNormal(spec *v1.PodSpec) {
+	conts := spec.Containers
+
+	// Remove vfio related volumes and mounts
+	spec.Volumes = removeVolume(spec.Volumes, "devvfio")
+	spec.Volumes = removeVolume(spec.Volumes, "sysbuspci")
+	conts[0].VolumeMounts = removeVolumeMount(conts[0].VolumeMounts, "devvfio")
+	conts[0].VolumeMounts = removeVolumeMount(conts[0].VolumeMounts, "sysbuspci")
+
+	// Add back devfs and sysfsdrm volumes and mounts
+	addVolumeIfMissing(spec, "devfs", "/dev/dri", v1.HostPathDirectory)
+	addVolumeIfMissing(spec, "sysfsdrm", "/sys/class/drm", v1.HostPathDirectory)
+	addVolumeMountIfMissing(&conts[0], "devfs", "/dev/dri")
+	addVolumeMountIfMissing(&conts[0], "sysfsdrm", "/sys/class/drm")
 }
 
 func addVolumeIfMissing(spec *v1.PodSpec, name, path string, hpType v1.HostPathType) {
@@ -124,14 +161,29 @@ func addVolumeIfMissing(spec *v1.PodSpec, name, path string, hpType v1.HostPathT
 	})
 }
 
-func setInitContainer(spec *v1.PodSpec, imageName string) {
+func addVolumeMountIfMissing(spec *v1.Container, name, path string) {
+	for _, mount := range spec.VolumeMounts {
+		if mount.Name == name {
+			return
+		}
+	}
+
+	spec.VolumeMounts = append(spec.VolumeMounts, v1.VolumeMount{
+		Name:      name,
+		MountPath: path,
+	})
+}
+
+func setInitContainer(spec *v1.PodSpec, imageName string, args []string) {
 	yes := true
 	spec.InitContainers = []v1.Container{
 		{
 			Image:           imageName,
 			ImagePullPolicy: "IfNotPresent",
+			Args:            args,
 			Name:            "intel-gpu-initcontainer",
 			SecurityContext: &v1.SecurityContext{
+				Privileged: &yes,
 				SELinuxOptions: &v1.SELinuxOptions{
 					Type: "container_device_plugin_init_t",
 				},
@@ -139,12 +191,11 @@ func setInitContainer(spec *v1.PodSpec, imageName string) {
 			},
 			VolumeMounts: []v1.VolumeMount{
 				{
-					MountPath: "/etc/kubernetes/node-feature-discovery/source.d/",
-					Name:      "nfd-sources",
+					MountPath: "/sys/bus/pci",
+					Name:      "sysbuspci",
 				},
 			},
 		}}
-	addVolumeIfMissing(spec, "nfd-sources", "/etc/kubernetes/node-feature-discovery/source.d/", v1.HostPathDirectoryOrCreate)
 }
 
 func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
@@ -159,23 +210,16 @@ func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
 	return newVolumes
 }
 
-func processInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.GpuDevicePlugin) bool {
-	initContainers := ds.Spec.Template.Spec.InitContainers
+func removeVolumeMount(mounts []v1.VolumeMount, name string) []v1.VolumeMount {
+	newMounts := []v1.VolumeMount{}
 
-	if dp.Spec.InitImage == "" {
-		if initContainers != nil {
-			ds.Spec.Template.Spec.InitContainers = nil
-			ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, "nfd-features")
-
-			return true
+	for _, volume := range mounts {
+		if volume.Name != name {
+			newMounts = append(newMounts, volume)
 		}
-	} else if len(initContainers) != 1 || initContainers[0].Image != dp.Spec.InitImage {
-		setInitContainer(&ds.Spec.Template.Spec, dp.Spec.InitImage)
-
-		return true
 	}
 
-	return false
+	return newMounts
 }
 
 func processNodeSelector(ds *apps.DaemonSet, dp *devicepluginv1.GpuDevicePlugin) bool {
@@ -194,6 +238,78 @@ func processNodeSelector(ds *apps.DaemonSet, dp *devicepluginv1.GpuDevicePlugin)
 	return false
 }
 
+func processVfioInitcontainer(ds *apps.DaemonSet, dp *devicepluginv1.GpuDevicePlugin) bool {
+	initConts := ds.Spec.Template.Spec.InitContainers
+
+	hadInit := len(initConts) == 1
+	wantInit := len(dp.Spec.InitImage) > 0
+
+	if hadInit && wantInit {
+		changed := false
+
+		if initConts[0].Image != dp.Spec.InitImage {
+			initConts[0].Image = dp.Spec.InitImage
+			changed = true
+		}
+
+		args := getInitArgs(dp)
+		if !changed {
+			changed = slices.Compare(args, initConts[0].Args) != 0
+		}
+
+		initConts[0].Args = args
+
+		return changed
+	} else if !hadInit && wantInit {
+		// Add init container if it is not present but init image is specified
+		setInitContainer(&ds.Spec.Template.Spec, dp.Spec.InitImage, getInitArgs(dp))
+
+		return true
+	} else if hadInit && !wantInit {
+		// Remove init container if it is present but init image is not specified
+		ds.Spec.Template.Spec.InitContainers = nil
+
+		return true
+	}
+
+	return false
+}
+
+func processVfioMode(ds *apps.DaemonSet, dp *devicepluginv1.GpuDevicePlugin) bool {
+	hadVfio := slices.Contains(ds.Spec.Template.Spec.Containers[0].Args, "-run-mode=vfio")
+	wantVfio := dp.Spec.VFIOMode
+
+	// VFIO is enabled currently and in future
+	if hadVfio && wantVfio {
+		// Reassert full VFIO configuration to make reconciliation idempotent and self-healing.
+		daemonSetToVfio(&ds.Spec.Template.Spec)
+
+		return processVfioInitcontainer(ds, dp)
+	} else if hadVfio && !wantVfio {
+		// VFIO is enabled but will be disabled in future
+		daemonSetToNormal(&ds.Spec.Template.Spec)
+
+		// Remove init container
+		ds.Spec.Template.Spec.InitContainers = nil
+
+		return true
+	} else if !hadVfio && wantVfio {
+		// VFIO is disabled currently but will be enabled in future
+		daemonSetToVfio(&ds.Spec.Template.Spec)
+
+		// Add init container if specified
+		if dp.Spec.InitImage != "" {
+			setInitContainer(&ds.Spec.Template.Spec, dp.Spec.InitImage, getInitArgs(dp))
+		} else {
+			ds.Spec.Template.Spec.InitContainers = nil
+		}
+
+		return true
+	}
+
+	return false
+}
+
 func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (updated bool) {
 	dp := rawObj.(*devicepluginv1.GpuDevicePlugin)
 
@@ -202,11 +318,11 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		updated = true
 	}
 
-	if processInitContainer(ds, dp) {
+	if processNodeSelector(ds, dp) {
 		updated = true
 	}
 
-	if processNodeSelector(ds, dp) {
+	if processVfioMode(ds, dp) {
 		updated = true
 	}
 
@@ -257,6 +373,20 @@ func (c *controller) UpdateStatus(rawObj client.Object, ds *apps.DaemonSet, node
 	return updated, nil
 }
 
+func getInitArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
+	args := []string{}
+
+	if gdp.Spec.AllowIDs != "" {
+		args = append(args, "-allow-ids", strings.ToLower(gdp.Spec.AllowIDs))
+	}
+
+	if gdp.Spec.DenyIDs != "" {
+		args = append(args, "-deny-ids", strings.ToLower(gdp.Spec.DenyIDs))
+	}
+
+	return args
+}
+
 func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
 	args := make([]string, 0, 8)
 	args = append(args, "-v", strconv.Itoa(gdp.Spec.LogLevel))
@@ -278,15 +408,19 @@ func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
 	}
 
 	if gdp.Spec.AllowIDs != "" {
-		args = append(args, "-allow-ids", gdp.Spec.AllowIDs)
+		args = append(args, "-allow-ids", strings.ToLower(gdp.Spec.AllowIDs))
 	}
 
 	if gdp.Spec.DenyIDs != "" {
-		args = append(args, "-deny-ids", gdp.Spec.DenyIDs)
+		args = append(args, "-deny-ids", strings.ToLower(gdp.Spec.DenyIDs))
 	}
 
 	if gdp.Spec.ByPathMode != "" {
 		args = append(args, "-bypath", gdp.Spec.ByPathMode)
+	}
+
+	if gdp.Spec.VFIOMode {
+		args = append(args, "-run-mode=vfio")
 	}
 
 	return args

@@ -24,12 +24,8 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
-var pciIDRegex regexp.Regexp
-
 // SetupWebhookWithManager sets up a webhook for GpuDevicePlugin custom resources.
 func (r *GpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	pciIDRegex = *regexp.MustCompile(`^0x[0-9a-f]{4}$`)
-
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		WithDefaulter(&commonDevicePluginDefaulter{
@@ -45,37 +41,60 @@ func (r *GpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-gpudeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=gpudeviceplugins,verbs=create;update,versions=v1,name=mgpudeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-gpudeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=gpudeviceplugins,versions=v1,name=vgpudeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
+// ValidatePCIDeviceIDs validates that the provided comma-separated list of PCI
+// device IDs is in the correct format (0x followed by 4 hexadecimal digits).
+func validatePCIDeviceIDs(pciIDList string) error {
+	if pciIDList == "" {
+		return nil
+	}
+
+	r := regexp.MustCompile(`^0x[0-9a-fA-F]{4}$`)
+
+	for id := range strings.SplitSeq(pciIDList, ",") {
+		id = strings.TrimSpace(id)
+		if id == "" {
+			return fmt.Errorf("empty PCI device ID: %w", errValidation)
+		}
+
+		if !r.MatchString(id) {
+			return fmt.Errorf("invalid PCI device ID: %s: %w", id, errValidation)
+		}
+	}
+
+	return nil
+}
+
 func (r *GpuDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
-	if r.Spec.SharedDevNum == 1 && r.Spec.PreferredAllocationPolicy != "none" {
-		return fmt.Errorf("%w: PreferredAllocationPolicy is valid only when setting sharedDevNum > 1", errValidation)
-	}
-
-	if r.Spec.AllowIDs != "" {
-		for id := range strings.SplitSeq(r.Spec.AllowIDs, ",") {
-			if id == "" {
-				return fmt.Errorf("%w: Empty PCI Device ID in AllowIDs", errValidation)
-			}
-
-			if !pciIDRegex.MatchString(id) {
-				return fmt.Errorf("%w: Invalid PCI Device ID: %s", errValidation, id)
-			}
+	if r.Spec.SharedDevNum == 1 {
+		switch r.Spec.PreferredAllocationPolicy {
+		case "packed", "balanced":
+			return fmt.Errorf("preferredAllocationPolicy is valid only when setting sharedDevNum > 1: %w", errValidation)
 		}
 	}
 
-	if r.Spec.DenyIDs != "" {
-		for id := range strings.SplitSeq(r.Spec.DenyIDs, ",") {
-			if id == "" {
-				return fmt.Errorf("%w: Empty PCI Device ID in DenyIDs", errValidation)
-			}
+	if err := validatePCIDeviceIDs(r.Spec.AllowIDs); err != nil {
+		return fmt.Errorf("invalid allow IDs: %w", err)
+	}
 
-			if !pciIDRegex.MatchString(id) {
-				return fmt.Errorf("%w: Invalid PCI Device ID: %s", errValidation, id)
-			}
-		}
+	if err := validatePCIDeviceIDs(r.Spec.DenyIDs); err != nil {
+		return fmt.Errorf("invalid deny IDs: %w", err)
 	}
 
 	if len(r.Spec.AllowIDs) > 0 && len(r.Spec.DenyIDs) > 0 {
-		return fmt.Errorf("%w: AllowIDs and DenyIDs cannot be used together", errValidation)
+		return fmt.Errorf("allowIDs and denyIDs cannot be used together: %w", errValidation)
+	}
+
+	if r.Spec.VFIOMode {
+		if r.Spec.EnableMonitoring {
+			return fmt.Errorf("%w: enableMonitoring cannot be used together with vfioMode", errValidation)
+		}
+		if r.Spec.SharedDevNum > 1 {
+			return fmt.Errorf("%w: sharedDevNum cannot be greater than 1 when vfioMode is enabled", errValidation)
+		}
+	}
+
+	if !r.Spec.VFIOMode && r.Spec.InitImage != "" {
+		return fmt.Errorf("initImage should be used only when vfioMode is enabled: %w", errValidation)
 	}
 
 	return validatePluginImage(r.Spec.Image, ref.expectedImage, &ref.expectedVersion)
