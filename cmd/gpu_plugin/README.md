@@ -10,7 +10,7 @@ Table of Contents
 * [Installation](#installation)
     * [Install with NFD](#install-with-nfd)
     * [Install with Operator](#install-with-operator)
-    * [Verify Plugin Registration](#verify-plugin-registration)
+    * [Verify Plugin Installation](#verify-plugin-installation)
 * [Testing and Demos](#testing-and-demos)
 * [Notes](#notes)
   * [Running GPU plugin as non-root](#running-gpu-plugin-as-non-root)
