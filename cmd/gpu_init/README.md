@@ -1,6 +1,6 @@
 # Intel GPU Initcontainer
 
-**Note:** Intel GPU Initcontainer has shifted from an NFD hook to a VFIO provisioning container. The previous NFD hook version is available in releases `<= 0.34.1`.
+**Note:** Intel GPU Initcontainer has shifted from an NFD hook to a VFIO provisioning container. The previous NFD hook initcontainer has not been actively used since 0.28.0.
 
 The initcontainer performs a single task: it unbinds Intel GPU devices from their GPU driver (`i915` or `xe`) and binds them to the `vfio-pci` driver so they can be used by VMs. This enables the GPU plugin’s KubeVirt use case without manual device binding.
 

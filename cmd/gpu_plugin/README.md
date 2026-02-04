@@ -40,13 +40,14 @@ For example containers with Intel media driver (and components using that), can 
 video transcoding operations, and containers with the Intel OpenCL / oneAPI Level Zero
 backend libraries can offload compute operations to GPU.
 
-Intel GPU plugin may register four per-node resource types to the Kubernetes cluster:
+Intel GPU plugin may register different per-node resource types to the Kubernetes cluster:
 | Resource | Description |
 |:---- |:-------- |
 | gpu.intel.com/i915 | Legacy `i915` KMD (Kernel Mode Driver) provided GPU instance |
 | gpu.intel.com/i915_monitoring | Monitoring resource for the `i915` KMD provided devices |
 | gpu.intel.com/xe | `xe` KMD provided GPU instance |
 | gpu.intel.com/xe_monitoring | Monitoring resource for the `xe` KMD provided devices |
+| gpu.intel.com/vfio | VFIO-PCI bound GPU devices. To be used with [KubeVirt](kubevirt.md) |
 
 For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 
@@ -56,12 +57,12 @@ For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 |:---- |:-------- |:------- |:------- |
 | -enable-monitoring | - | disabled | Enable '*_monitoring' resource that provides access to all Intel GPU devices on the node, [see use](./monitoring.md) |
 | -health-management | - | disabled | Enable health management by requesting data from oneAPI/Level-Zero interface. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. See [health management](#health-management) |
-| -wsl | - | disabled | Adapt plugin to run in the WSL environment. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
 | -allow-ids | string | "" | A list of PCI Device IDs that are allowed to be registered as resources. Default is empty (=all registered). Cannot be used together with `deny-ids`. |
 | -deny-ids | string | "" | A list of PCI Device IDs that are denied to be registered as resources. Default is empty (=all registered). Cannot be used together with `allow-ids`. |
 | -allocation-policy | string | none | 3 possible values: balanced, packed, none. For shared-dev-num > 1: _balanced_ mode spreads workloads among GPU devices, _packed_ mode fills one GPU fully before moving to next, and _none_ selects first available device from kubelet. Default is _none_. |
 | -bypath | string | single | 3 possible values: single, none, all. Default is single. Changes how the by-path symlinks are handled by the plugin. More [info](#by-path-mounting). |
+| -run-mode | string | default | Options: default, wsl or vfio. Adapt plugin to run in the WSL or VFIO mode. WSL mode requires [GPU Level-Zero](../gpu_levelzero/) sidecar. VFIO mode may utilize GPU initcontainer to rebind devices from GPU KMD to VFIO-PCI. |
 
 The plugin also accepts a number of other arguments (common to all plugins) related to logging.
 Please use the -h option to see the complete list of logging related options.
