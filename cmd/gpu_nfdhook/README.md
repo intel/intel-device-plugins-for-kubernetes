@@ -1,14 +1,5 @@
 # Intel GPU NFD hook
 
-Table of Contents
-
-* [Introduction](#introduction)
-* [GPU memory](#gpu-memory)
-* [Default labels](#default-labels)
-* [PCI-groups (optional)](#pci-groups-optional)
-* [Capability labels (optional)](#capability-labels-optional)
-* [Limitations](#limitations)
-
 ## Introduction
 
 ***NOTE:*** NFD's binary hook support will be turned off by default in the 0.14 release. The functionality in the GPU NFD hook is moved into a new NFD rule and into GPU plugin, and the capability labels are being removed completely. The GPU plugin deployment doesn't anymore support using init container. This directory will be removed in the future.
