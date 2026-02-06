@@ -32,7 +32,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/pluginutils"
 	"k8s.io/klog/v2"
 
 	io_prometheus_client "github.com/prometheus/client_model/go"

@@ -24,7 +24,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -34,8 +33,8 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
 	gpulevelzero "github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/levelzero"
-	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/pluginutils"
 	cdispec "tags.cncf.io/container-device-interface/specs-go"
 )
 
@@ -299,15 +298,12 @@ type devicePlugin struct {
 	devfsDir       string
 	bypathDir      string
 	healthStatuses map[string]string
-	ioGroupToBdf   map[string]string
 
 	// Note: If restarting the plugin with a new policy, the allocations for existing pods remain with old policy.
 	policy  preferredAllocationPolicyFunc
 	options cliOptions
 
 	bypathFound bool
-
-	bdfMutex sync.Mutex
 }
 
 func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugin {
@@ -324,8 +320,6 @@ func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugi
 		bypathFound:      true,
 		scanResources:    make(chan bool, 1),
 		healthStatuses:   make(map[string]string),
-		ioGroupToBdf:     make(map[string]string),
-		bdfMutex:         sync.Mutex{},
 	}
 
 	switch options.preferredAllocationPolicy {
@@ -564,8 +558,12 @@ func (dp *devicePlugin) bdfGpuScan(notifier dpapi.Notifier) error {
 
 	previousCount := map[string]int{deviceTypeVfio: 0}
 
+	filterFunc := func(dpath string) (bool, error) {
+		return pluginutils.IsCompatibleGpuVfioDevice(dpath, dp.options.allowIDs, dp.options.denyIDs), nil
+	}
+
 	for {
-		devTree, err := dp.bdfScan()
+		devTree, err := pluginutils.PciScan(filterFunc, dp.sysfsDir)
 		if err != nil {
 			klog.Warning("Failed to scan: ", err)
 		}
@@ -596,75 +594,6 @@ func (dp *devicePlugin) bdfGpuScan(notifier dpapi.Notifier) error {
 		case <-dp.scanTicker.C:
 		}
 	}
-}
-
-func (dp *devicePlugin) bdfScan() (dpapi.DeviceTree, error) {
-	// scan /sys/bus/pci/devices for devices
-	pciDevices, err := filepath.Glob(filepath.Join(dp.sysfsDir, "????:??:??.?"))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	devTree := dpapi.NewDeviceTree()
-
-	iogroupToBdf := make(map[string]string)
-
-	for _, dpath := range pciDevices {
-		if !pluginutils.IsCompatibleGpuVfioDevice(dpath, dp.options.allowIDs, dp.options.denyIDs) {
-			continue
-		}
-
-		// device belongs to an IOMMU group
-		iommu_group, err := filepath.EvalSymlinks(filepath.Join(dpath, "iommu_group"))
-		if err != nil {
-			klog.V(4).Infof("Skipping device %s, unable to resolve iommu_group symlink: %v", dpath, err)
-			return nil, errors.WithStack(err)
-		}
-
-		devfsPath := filepath.Join(dp.devfsDir, filepath.Base(iommu_group))
-		if _, err := os.Stat(devfsPath); os.IsNotExist(err) {
-			klog.Warningf("VFIO device path %s does not exist", devfsPath)
-			continue
-		}
-
-		devNodes := []pluginapi.DeviceSpec{
-			{
-				HostPath:      devfsPath,
-				ContainerPath: devfsPath,
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      filepath.Join(dp.devfsDir, "vfio"),
-				ContainerPath: filepath.Join(dp.devfsDir, "vfio"),
-				Permissions:   "rw",
-			},
-		}
-
-		// TODO: add IOMMUFD nodes
-		// iommuFdDevices, err := filepath.Glob(filepath.Join(dpath, "vfio-dev", "vfio?"))
-		// if err == nil {
-		// 	for _, iommuDev := range iommuFdDevices {
-		// 		devNodes = append(devNodes, pluginapi.DeviceSpec{
-		// 			HostPath:      filepath.Join(vfioPath, "devices", filepath.Base(iommuDev)),
-		// 			ContainerPath: filepath.Join(vfioPath, "devices", filepath.Base(iommuDev)),
-		// 			Permissions:   "rw",
-		// 		})
-		// 	}
-		// }
-
-		bdf := filepath.Base(dpath)
-
-		klog.V(4).Infof("%s: nodes: %+v", bdf, devNodes)
-		devTree.AddDevice(deviceTypeVfio, bdf, dpapi.NewDeviceInfo(pluginapi.Healthy, devNodes, nil, nil, nil, nil))
-
-		iogroupToBdf[devfsPath] = bdf
-	}
-
-	dp.bdfMutex.Lock()
-	dp.ioGroupToBdf = iogroupToBdf
-	dp.bdfMutex.Unlock()
-
-	return devTree, nil
 }
 
 func (dp *devicePlugin) isSupportedDrmDevice(name string) bool {
@@ -836,22 +765,16 @@ func (dp *devicePlugin) PostAllocate(ar *pluginapi.AllocateResponse) error {
 		return nil
 	}
 
-	dp.bdfMutex.Lock()
-	defer dp.bdfMutex.Unlock()
-
-	bdfs := []string{}
-
 	for _, cr := range ar.ContainerResponses {
-		for _, devSpec := range cr.Devices {
-			dpath := devSpec.HostPath
+		bdfs := []string{}
 
-			klog.V(4).Infof("Looking for %s in %+v", dpath, dp.ioGroupToBdf)
-
-			if bdf, found := dp.ioGroupToBdf[dpath]; found {
-				bdfs = append(bdfs, bdf)
+		for env, val := range cr.Envs {
+			if strings.HasPrefix(env, pluginutils.VFIO_BDF_PREFIX) {
+				bdfs = append(bdfs, val)
 			}
 		}
 
+		cr.Envs[pluginutils.VFIO_BDF_PREFIX] = strings.Join(bdfs, ",")
 		cr.Envs[kubeVirtGpuVfio] = strings.Join(bdfs, ",")
 		cr.Envs[kubeVirtMGpuVfio] = "" // empty on purpose
 	}

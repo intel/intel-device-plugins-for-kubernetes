@@ -26,7 +26,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
-	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/pluginutils"
 )
 
 const (

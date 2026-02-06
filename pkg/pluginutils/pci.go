@@ -24,13 +24,23 @@ import (
 	"time"
 
 	"k8s.io/klog/v2"
+
+	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"github.com/pkg/errors"
+	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
 const (
 	vendorId      = "8086"          // Intel vendor ID
 	vendorString  = "0x" + vendorId // Intel vendor ID
 	vfioPciDriver = "vfio-pci"
+	vfioPath      = "/dev/vfio"
+	vfioCtrlPath  = "/dev/vfio/vfio"
+
+	VFIO_BDF_PREFIX = "VFIO_BDF"
 )
+
+type filterPciDeviceFunc func(dpath string) (bool, error)
 
 func DeviceDriverName(devicePath, defaultDriver string) string {
 	driverName := defaultDriver
@@ -203,4 +213,69 @@ End:
 	klog.Infof("Bound device %s to driver %s", bdfAddress, driverName)
 
 	return nil
+}
+
+// scan collects devices by scanning sysfs and devfs entries.
+func PciScan(filterFunc filterPciDeviceFunc, devDir string) (dpapi.DeviceTree, error) {
+	// scan sysfs tree
+	pciDevices, err := filepath.Glob(filepath.Join(devDir, "????:??:??.?"))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	devTree := dpapi.NewDeviceTree()
+	devNum := 0
+
+	for _, dpath := range pciDevices {
+		if ok, err := filterFunc(dpath); err != nil {
+			return nil, err
+		} else if !ok {
+			continue
+		}
+
+		// device belongs to an IOMMU group
+		iommu_group, err := filepath.EvalSymlinks(filepath.Join(dpath, "iommu_group"))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		vfioDevPath := filepath.Join(vfioPath, filepath.Base(iommu_group))
+
+		devNodes := []pluginapi.DeviceSpec{
+			{
+				HostPath:      vfioDevPath,
+				ContainerPath: vfioDevPath,
+				Permissions:   "rw",
+			},
+			{
+				HostPath:      vfioCtrlPath,
+				ContainerPath: vfioCtrlPath,
+				Permissions:   "rw",
+			},
+		}
+
+		// TODO: add IOMMUFD nodes
+		// iommuFdDevices, err := filepath.Glob(filepath.Join(dpath, "vfio-dev", "vfio?"))
+		// if err == nil {
+		// 	for _, iommuDev := range iommuFdDevices {
+		// 		devNodes = append(devNodes, pluginapi.DeviceSpec{
+		// 			HostPath:      filepath.Join(vfioPath, "devices", filepath.Base(iommuDev)),
+		// 			ContainerPath: filepath.Join(vfioPath, "devices", filepath.Base(iommuDev)),
+		// 			Permissions:   "rw",
+		// 		})
+		// 	}
+		// }
+
+		devNum = devNum + 1
+		bdf := filepath.Base(dpath)
+
+		envs := map[string]string{
+			fmt.Sprintf("%s%d", VFIO_BDF_PREFIX, devNum): bdf,
+		}
+
+		klog.V(4).Infof("%s: nodes: %+v", bdf, devNodes)
+		devTree.AddDevice("vfio", bdf, dpapi.NewDeviceInfo(pluginapi.Healthy, devNodes, nil, envs, nil, nil))
+	}
+
+	return devTree, nil
 }

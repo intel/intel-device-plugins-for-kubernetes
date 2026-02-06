@@ -275,7 +275,6 @@ func TestAllocate(t *testing.T) {
 
 func TestPostAllocate(t *testing.T) {
 	plugin := newDevicePlugin("", "", cliOptions{})
-	plugin.ioGroupToBdf = map[string]string{}
 
 	ar := &v1beta1.AllocateResponse{
 		ContainerResponses: []*v1beta1.ContainerAllocateResponse{
@@ -287,7 +286,9 @@ func TestPostAllocate(t *testing.T) {
 						Permissions:   "mrw",
 					},
 				},
-				Envs: map[string]string{},
+				Envs: map[string]string{
+					"VFIO_BDF1": "0000:00:05.0",
+				},
 			},
 		},
 	}
@@ -298,7 +299,7 @@ func TestPostAllocate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected return value: %+v", err)
 	}
-	if len(ar.ContainerResponses[0].Envs) > 0 {
+	if len(ar.ContainerResponses[0].Envs) != 1 {
 		t.Errorf("Unexpected envs: %+v", ar.ContainerResponses[0].Envs)
 	}
 
@@ -308,7 +309,7 @@ func TestPostAllocate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected return value: %+v", err)
 	}
-	if len(ar.ContainerResponses[0].Envs) != 2 {
+	if len(ar.ContainerResponses[0].Envs) != 4 {
 		t.Errorf("Unexpected envs: %+v", ar.ContainerResponses[0].Envs)
 	}
 }

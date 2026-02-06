@@ -19,7 +19,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/pluginutils"
 	"k8s.io/klog/v2"
 )
 
