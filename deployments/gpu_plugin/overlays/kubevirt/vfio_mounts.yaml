@@ -1,0 +1,30 @@
+- op: remove
+  path: /spec/template/spec/containers/0/volumeMounts/0
+- op: remove
+  path: /spec/template/spec/containers/0/volumeMounts/0
+- op: remove
+  path: /spec/template/spec/volumes/0
+- op: remove
+  path: /spec/template/spec/volumes/0
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    name: devvfio
+    mountPath: /dev/vfio
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: devvfio
+    hostPath:
+      path: /dev/vfio
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    name: sysbuspci
+    mountPath: /sys/bus/pci
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: sysbuspci
+    hostPath:
+      path: /sys/bus/pci

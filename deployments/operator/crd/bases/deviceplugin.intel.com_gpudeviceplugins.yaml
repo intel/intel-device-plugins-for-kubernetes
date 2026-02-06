@@ -157,6 +157,10 @@ spec:
                       type: string
                   type: object
                 type: array
+              vfioMode:
+                description: VFIOMode enables GPU plugin to register GPU devices using
+                  the VFIO driver.
+                type: boolean
             type: object
           status:
             description: GpuDevicePluginStatus defines the observed state of GpuDevicePlugin.

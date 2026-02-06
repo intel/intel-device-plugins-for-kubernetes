@@ -16,6 +16,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -45,6 +46,7 @@ type mockNotifier struct {
 	dxgCount         int
 	i915monitorCount int
 	xeMonitorCount   int
+	vfioCount        int
 }
 
 // Notify stops plugin Scan.
@@ -54,6 +56,7 @@ func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.i915Count = len(newDeviceTree[deviceTypeI915])
 	n.dxgCount = len(newDeviceTree[deviceTypeDxg])
 	n.i915monitorCount = len(newDeviceTree[deviceTypeDefault+monitorSuffix])
+	n.vfioCount = len(newDeviceTree[deviceTypeVfio])
 
 	n.scanDone <- true
 }
@@ -270,6 +273,47 @@ func TestAllocate(t *testing.T) {
 	}
 }
 
+func TestPostAllocate(t *testing.T) {
+	plugin := newDevicePlugin("", "", cliOptions{})
+
+	ar := &v1beta1.AllocateResponse{
+		ContainerResponses: []*v1beta1.ContainerAllocateResponse{
+			{
+				Devices: []*v1beta1.DeviceSpec{
+					{
+						ContainerPath: "/dev/vfio/vfio5",
+						HostPath:      "/dev/vfio/vfio5",
+						Permissions:   "mrw",
+					},
+				},
+				Envs: map[string]string{
+					"VFIO_BDF1": "0000:00:05.0",
+				},
+			},
+		},
+	}
+
+	plugin.options.runMode = runModeDefault
+
+	err := plugin.PostAllocate(ar)
+	if err != nil {
+		t.Errorf("Unexpected return value: %+v", err)
+	}
+	if len(ar.ContainerResponses[0].Envs) != 1 {
+		t.Errorf("Unexpected envs: %+v", ar.ContainerResponses[0].Envs)
+	}
+
+	plugin.options.runMode = runModeVfio
+
+	err = plugin.PostAllocate(ar)
+	if err != nil {
+		t.Errorf("Unexpected return value: %+v", err)
+	}
+	if len(ar.ContainerResponses[0].Envs) != 4 {
+		t.Errorf("Unexpected envs: %+v", ar.ContainerResponses[0].Envs)
+	}
+}
+
 func TestScan(t *testing.T) {
 	tcases := []TestCaseDetails{
 		{
@@ -284,6 +328,8 @@ func TestScan(t *testing.T) {
 			sysfsdirs: []string{"card0/device"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 			},
 		},
 		{
@@ -291,6 +337,8 @@ func TestScan(t *testing.T) {
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 			},
 			devfsdirs: []string{
 				"card0",
@@ -304,6 +352,8 @@ func TestScan(t *testing.T) {
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 			},
 			symlinkfiles: map[string]string{
 				"card0/device/driver": "drivers/xe",
@@ -320,7 +370,11 @@ func TestScan(t *testing.T) {
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64", "card1/device/drm/card1"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 				"card1/device/vendor": []byte("0x8086"),
+				"card1/device/class":  []byte("0x030000"),
+				"card1/device/device": []byte("0x1234"),
 			},
 			symlinkfiles: map[string]string{
 				"card0/device/driver": "drivers/xe",
@@ -343,7 +397,11 @@ func TestScan(t *testing.T) {
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64", "card1/device/drm/card1"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x038000"),
+				"card0/device/device": []byte("0x1234"),
 				"card1/device/vendor": []byte("0x8086"),
+				"card1/device/class":  []byte("0x038000"),
+				"card1/device/device": []byte("0x1234"),
 			},
 			symlinkfiles: map[string]string{
 				"card0/device/driver": "drivers/xe",
@@ -369,8 +427,10 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 				"card0/device/device": []byte("0x1234"),
+				"card0/device/class":  []byte("0x030000"),
 				"card1/device/vendor": []byte("0x8086"),
 				"card1/device/device": []byte("0x9876"),
+				"card1/device/class":  []byte("0x030000"),
 			},
 			symlinkfiles: map[string]string{
 				"card0/device/driver": "drivers/xe",
@@ -396,10 +456,13 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 				"card0/device/device": []byte("0x1234"),
+				"card0/device/class":  []byte("0x030000"),
 				"card1/device/vendor": []byte("0x8086"),
 				"card1/device/device": []byte("0x9876"),
+				"card1/device/class":  []byte("0x030000"),
 				"card2/device/vendor": []byte("0x8086"),
 				"card2/device/device": []byte("0x0101"),
+				"card2/device/class":  []byte("0x030000"),
 			},
 			symlinkfiles: map[string]string{
 				"card0/device/driver": "drivers/xe",
@@ -429,8 +492,10 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 				"card0/device/device": []byte("0x1234"),
+				"card0/device/class":  []byte("0x030000"),
 				"card1/device/vendor": []byte("0x8086"),
 				"card1/device/device": []byte("0x9876"),
+				"card1/device/class":  []byte("0x030000"),
 			},
 			symlinkfiles: map[string]string{
 				"card0/device/driver": "drivers/xe",
@@ -455,6 +520,8 @@ func TestScan(t *testing.T) {
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor":       []byte("0x8086"),
+				"card0/device/class":        []byte("0x030000"),
+				"card0/device/device":       []byte("0x1234"),
 				"card0/device/sriov_numvfs": []byte("0"),
 			},
 			devfsdirs:            []string{"card0"},
@@ -470,7 +537,11 @@ func TestScan(t *testing.T) {
 			},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 				"card1/device/vendor": []byte("0x8086"),
+				"card1/device/class":  []byte("0x030000"),
+				"card1/device/device": []byte("0x1234"),
 			},
 			devfsdirs:        []string{"card0"},
 			expectedI915Devs: 1,
@@ -484,9 +555,15 @@ func TestScan(t *testing.T) {
 			},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor":       []byte("0x8086"),
+				"card0/device/class":        []byte("0x030000"),
 				"card0/device/sriov_numvfs": []byte("2"),
+				"card0/device/device":       []byte("0x1234"),
 				"card1/device/vendor":       []byte("0x8086"),
+				"card1/device/class":        []byte("0x030000"),
+				"card1/device/device":       []byte("0x1234"),
 				"card2/device/vendor":       []byte("0x8086"),
+				"card2/device/class":        []byte("0x030000"),
+				"card2/device/device":       []byte("0x1234"),
 			},
 			devfsdirs:        []string{"card0", "card1", "card2"},
 			expectedI915Devs: 2,
@@ -499,7 +576,11 @@ func TestScan(t *testing.T) {
 			},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 				"card1/device/vendor": []byte("0x8086"),
+				"card1/device/class":  []byte("0x030000"),
+				"card1/device/device": []byte("0x1234"),
 			},
 			devfsdirs:            []string{"card0", "card1"},
 			options:              cliOptions{sharedDevNum: 13, enableMonitoring: true},
@@ -511,6 +592,8 @@ func TestScan(t *testing.T) {
 			sysfsdirs: []string{"card0/device/drm/card0"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0xbeef"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 			},
 			devfsdirs: []string{"card0"},
 		},
@@ -519,6 +602,8 @@ func TestScan(t *testing.T) {
 			sysfsdirs: []string{"card0/device/drm/card0"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0xbeef"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 			},
 			devfsdirs: []string{"card0"},
 			options:   cliOptions{sharedDevNum: 13, enableMonitoring: true},
@@ -567,11 +652,11 @@ func TestScan(t *testing.T) {
 					tc.expectedI915Monitors, notifier.i915monitorCount)
 			}
 			if tc.expectedXeDevs != notifier.xeCount {
-				t.Errorf("Expected %d, discovered %d devices (XE)",
+				t.Errorf("Expected %d, discovered %d devices (xe)",
 					tc.expectedXeDevs, notifier.xeCount)
 			}
 			if tc.expectedXeMonitors != notifier.xeMonitorCount {
-				t.Errorf("Expected %d, discovered %d monitors (XE)",
+				t.Errorf("Expected %d, discovered %d monitors (xe)",
 					tc.expectedXeMonitors, notifier.xeMonitorCount)
 			}
 		})
@@ -585,6 +670,8 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 			},
 			devfsdirs: []string{
 				"card0",
@@ -599,6 +686,8 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 			},
 			devfsdirs: []string{
 				"card0",
@@ -616,6 +705,8 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 			},
 			devfsdirs: []string{
 				"card0",
@@ -634,6 +725,8 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 			},
 			devfsdirs: []string{
 				"card0",
@@ -651,6 +744,8 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+				"card0/device/class":  []byte("0x030000"),
+				"card0/device/device": []byte("0x1234"),
 			},
 			devfsdirs: []string{
 				"card0",
@@ -746,7 +841,7 @@ func TestScanWsl(t *testing.T) {
 			}
 
 			plugin := newDevicePlugin(sysfs, devfs, tc.options)
-			plugin.options.wslScan = true
+			plugin.options.runMode = runModeWSL
 			plugin.levelzeroService = tc.l0mock
 
 			notifier := &mockNotifier{
@@ -761,6 +856,125 @@ func TestScanWsl(t *testing.T) {
 			if tc.expectedDxgDevs != notifier.dxgCount {
 				t.Errorf("Expected %d, discovered %d devices (dxg)",
 					tc.expectedI915Devs, notifier.i915Count)
+			}
+		})
+	}
+}
+
+func TestBdfScan(t *testing.T) {
+	type TestCaseDetails struct {
+		name             string
+		sysfsdirs        []string
+		sysfsfiles       map[string][]byte
+		devfsdirs        []string
+		symlinkfiles     map[string]string
+		options          cliOptions
+		expectedVfioDevs int
+	}
+
+	vfioCreateSysfsTestFiles := func(root string, tc TestCaseDetails) (string, string, error) {
+		sysfsPath := path.Join(root, "sys/bus/pci/devices")
+		devfsPath := path.Join(root, "dev")
+
+		// Create sysfs dirs
+		for _, dir := range tc.sysfsdirs {
+			fullPath := path.Join(sysfsPath, dir)
+			if err := os.MkdirAll(fullPath, 0700); err != nil {
+				return "", "", fmt.Errorf("couldn't create test sysfs dir %s: %w", fullPath, err)
+			}
+		}
+
+		// Create sysfs files
+		for file, content := range tc.sysfsfiles {
+			fullPath := path.Join(sysfsPath, file)
+			if err := os.WriteFile(fullPath, content, 0o600); err != nil {
+				return "", "", fmt.Errorf("couldn't create test sysfs file %s: %w", fullPath, err)
+			}
+		}
+
+		// Create symlink files
+		for link, target := range tc.symlinkfiles {
+			fullLinkPath := path.Join(sysfsPath, link)
+			fullTargetPath := path.Join(sysfsPath, target)
+
+			if err := os.MkdirAll(fullTargetPath, 0700); err != nil {
+				return "", "", fmt.Errorf("couldn't create test symlink target dir %s: %w", fullTargetPath, err)
+			}
+
+			if err := os.Symlink(fullTargetPath, fullLinkPath); err != nil {
+				return "", "", fmt.Errorf("couldn't create test symlink %s -> %s: %w", fullLinkPath, fullTargetPath, err)
+			}
+		}
+
+		// Create devfs dirs
+		for _, dir := range tc.devfsdirs {
+			fullPath := path.Join(devfsPath, dir)
+			if err := os.MkdirAll(fullPath, 0700); err != nil {
+				return "", "", fmt.Errorf("couldn't create test devfs dir %s: %w", fullPath, err)
+			}
+		}
+
+		return sysfsPath, devfsPath, nil
+	}
+
+	tcases := []TestCaseDetails{
+		{
+			name: "no sysfs mounted",
+		},
+		{
+			name:      "no device installed",
+			sysfsdirs: []string{"0000:00:01.0"},
+		},
+		{
+			name:      "one device",
+			sysfsdirs: []string{"0000:00:01.0/"},
+			sysfsfiles: map[string][]byte{
+				"0000:00:01.0/vendor": []byte("0x8086"),
+				"0000:00:01.0/class":  []byte("0x030000"),
+				"0000:00:01.0/device": []byte("0x1234"),
+			},
+			devfsdirs: []string{
+				"vfio/4",
+			},
+			symlinkfiles: map[string]string{
+				"0000:00:01.0/driver":      "drivers/vfio-pci",
+				"0000:00:01.0/iommu_group": "iommu_groups/4",
+			},
+			expectedVfioDevs: 1,
+		},
+	}
+
+	for _, tc := range tcases {
+		tc.options.sharedDevNum = 1
+
+		t.Run(tc.name, func(t *testing.T) {
+			root, err := os.MkdirTemp("", "test_device_plugin_scan_bdf")
+			if err != nil {
+				t.Fatalf("Can't create temporary directory: %+v", err)
+			}
+			// dirs/files need to be removed for the next test
+			defer os.RemoveAll(root)
+
+			sysfs, devfs, err := vfioCreateSysfsTestFiles(root, tc)
+			if err != nil {
+				t.Errorf("Unexpected error: %+v", err)
+			}
+
+			plugin := newDevicePlugin(sysfs, devfs+"/vfio", tc.options)
+			plugin.options.runMode = runModeVfio
+
+			notifier := &mockNotifier{
+				scanDone: plugin.scanDone,
+			}
+
+			err = plugin.Scan(notifier)
+			// Scans in GPU plugin never fail
+			if err != nil {
+				t.Errorf("Unexpected error: %+v", err)
+			}
+			if tc.expectedVfioDevs != notifier.vfioCount {
+				t.Errorf("Expected %d, discovered %d devices (vfio)",
+					tc.expectedVfioDevs, notifier.vfioCount)
 			}
 		})
 	}
@@ -906,61 +1120,6 @@ func TestBypath(t *testing.T) {
 	}
 }
 
-func TestPciDeviceForCard(t *testing.T) {
-	root, err := os.MkdirTemp("", "test_pci_device_for_card")
-	if err != nil {
-		t.Fatalf("Can't create temporary directory: %+v", err)
-	}
-	// dirs/files need to be removed for the next test
-	defer os.RemoveAll(root)
-
-	sysfs := path.Join(root, "sys")
-
-	cardPath := filepath.Join(sysfs, "class", "drm", "card0")
-	cardDevicePath := filepath.Join(cardPath, "device")
-
-	if err = os.MkdirAll(cardDevicePath, 0750); err != nil {
-		t.Fatalf("Card device path creation failed: %+v", err)
-	}
-
-	data := "0x5959"
-
-	err = os.WriteFile(filepath.Join(cardDevicePath, "device"), []byte(data), 0o600)
-	if err != nil {
-		t.Fatalf("Device id write failed: %+v", err)
-	}
-
-	id, err := pciDeviceIDForCard(cardPath)
-
-	if err != nil {
-		t.Errorf("Failed to get device id for card: %+v", err)
-	}
-
-	if id != data {
-		t.Errorf("Wrong id received %s vs %s", id, data)
-	}
-
-	// Check bad device
-
-	cardPath = filepath.Join(sysfs, "class", "drm", "card1")
-	cardDevicePath = filepath.Join(cardPath, "device")
-
-	if err = os.MkdirAll(cardDevicePath, 0750); err != nil {
-		t.Fatalf("Card device path creation failed: %+v", err)
-	}
-
-	err = os.WriteFile(filepath.Join(cardDevicePath, "devicebad"), []byte(data), 0o600)
-	if err != nil {
-		t.Fatalf("Device id write failed: %+v", err)
-	}
-
-	id, err = pciDeviceIDForCard(cardPath)
-
-	if err == nil {
-		t.Errorf("ID received when it shouldn't be possible: %s", id)
-	}
-}
-
 type symlinkItem struct {
 	old string
 	new string
@@ -1046,8 +1205,10 @@ func TestCDIDeviceInclusion(t *testing.T) {
 	sysfsFiles := map[string][]byte{
 		"class/drm/card0/device/device": []byte("0x9a49"),
 		"class/drm/card0/device/vendor": []byte("0x8086"),
+		"class/drm/card0/device/class":  []byte("0x030000"),
 		"class/drm/card1/device/device": []byte("0x9a48"),
 		"class/drm/card1/device/vendor": []byte("0x8086"),
+		"class/drm/card1/device/class":  []byte("0x030000"),
 	}
 
 	devfsfiles := map[string][]byte{
@@ -1191,8 +1352,10 @@ func TestByPathOptions(t *testing.T) {
 	sysfsFiles := map[string][]byte{
 		"class/drm/card0/device/device": []byte("0x9a49"),
 		"class/drm/card0/device/vendor": []byte("0x8086"),
+		"class/drm/card0/device/class":  []byte("0x030000"),
 		"class/drm/card1/device/device": []byte("0x9a48"),
 		"class/drm/card1/device/vendor": []byte("0x8086"),
+		"class/drm/card1/device/class":  []byte("0x030000"),
 	}
 
 	devfsfiles := map[string][]byte{
@@ -1247,64 +1410,6 @@ func TestByPathOptions(t *testing.T) {
 	}
 }
 
-func TestParsePCIDeviceIDs(t *testing.T) {
-	tests := []struct {
-		name      string
-		input     string
-		wantError bool
-	}{
-		{
-			name:      "valid single ID",
-			input:     "0x1234",
-			wantError: false,
-		},
-		{
-			name:      "valid multiple IDs",
-			input:     "0x1234,0x5678,0x9abc",
-			wantError: false,
-		},
-		{
-			name:      "valid IDs with spaces",
-			input:     " 0x1234 , 0x5678 ",
-			wantError: false,
-		},
-		{
-			name:      "empty string",
-			input:     "",
-			wantError: false,
-		},
-		{
-			name:      "invalid ID format",
-			input:     "0x1234,abcd",
-			wantError: true,
-		},
-		{
-			name:      "invalid hex length",
-			input:     "0x123,0x5678",
-			wantError: true,
-		},
-		{
-			name:      "extra comma",
-			input:     "0x1234,",
-			wantError: true,
-		},
-		{
-			name:      "capita hex",
-			input:     "0xAA12,",
-			wantError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := validatePCIDeviceIDs(tt.input)
-			if (err != nil) != tt.wantError {
-				t.Errorf("parsePCIDeviceIDs() error = %v, wantError %v", err, tt.wantError)
-			}
-		})
-	}
-}
-
 func TestCheckAllowDenyOptions(t *testing.T) {
 	tcases := []struct {
 		name         string
@@ -1346,8 +1451,86 @@ func TestCheckAllowDenyOptions(t *testing.T) {
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
 			ret := checkAllowDenyOptions(tc.options)
-			if ret != tc.expectReturn {
+			if ret == nil && !tc.expectReturn {
 				t.Errorf("checkAllowDenyOptions() return = %v, expected %v", ret, tc.expectReturn)
+			} else if (ret != nil) && tc.expectReturn {
+				t.Errorf("checkAllowDenyOptions() return = %v, expected %v", ret, tc.expectReturn)
+			}
+		})
+	}
+}
+
+func TestCheckWSLModeOptions(t *testing.T) {
+	tcases := []struct {
+		name      string
+		options   cliOptions
+		expectErr bool
+	}{
+		{
+			name:      "monitoring enabled",
+			options:   cliOptions{enableMonitoring: true},
+			expectErr: true,
+		},
+		{
+			name:      "health management enabled",
+			options:   cliOptions{healthManagement: true},
+			expectErr: true,
+		},
+		{
+			name:      "monitoring and health management enabled",
+			options:   cliOptions{enableMonitoring: true, healthManagement: true},
+			expectErr: true,
+		},
+		{
+			name:      "monitoring and health management disabled",
+			options:   cliOptions{enableMonitoring: false, healthManagement: false},
+			expectErr: false,
+		},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := checkWSLModeOptions(tc.options)
+			if (err != nil) != tc.expectErr {
+				t.Errorf("checkWSLModeOptions() error = %v, expected error = %v", err, tc.expectErr)
+			}
+		})
+	}
+}
+
+func TestCheckVfioModeOptions(t *testing.T) {
+	tcases := []struct {
+		name      string
+		options   cliOptions
+		expectErr bool
+	}{
+		{
+			name:      "monitoring enabled",
+			options:   cliOptions{enableMonitoring: true},
+			expectErr: true,
+		},
+		{
+			name:      "health management enabled",
+			options:   cliOptions{healthManagement: true},
+			expectErr: true,
+		},
+		{
+			name:      "shared devices greater than 1",
+			options:   cliOptions{sharedDevNum: 2},
+			expectErr: true,
+		},
+		{
+			name:      "monitoring and health management disabled with sharedDevNum 1",
+			options:   cliOptions{sharedDevNum: 1},
+			expectErr: false,
+		},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := checkVfioModeOptions(tc.options)
+			if (err != nil) != tc.expectErr {
+				t.Errorf("checkVfioModeOptions() error = %v, expected error = %v", err, tc.expectErr)
 			}
 		})
 	}

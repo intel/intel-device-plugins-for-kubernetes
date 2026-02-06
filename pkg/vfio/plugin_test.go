@@ -18,7 +18,6 @@ import (
 	"flag"
 	"os"
 	"path"
-	"slices"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -104,12 +103,14 @@ func TestScan(t *testing.T) {
 			dirs: []string{
 				"sys/bus/pci/drivers/vfio-pci",
 				"sys/bus/pci/devices/0000:02:00.0",
+				"dev/vfio/",
 			},
 			files: map[string][]byte{
 				"sys/bus/pci/devices/0000:02:00.0/device": []byte("0x37c8"),
+				"dev/vfio/vfio5": []byte("0x1234"),
 			},
 			symlinks: map[string]string{
-				"sys/bus/pci/devices/0000:02:00.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:02:00.0/iommu_group": "sys/kernel/iommu_groups/5",
 				"sys/bus/pci/devices/0000:02:00.0/driver":      "sys/bus/pci/drivers/vfio-pci",
 			},
 			expectedDevNum: 1,
@@ -120,12 +121,14 @@ func TestScan(t *testing.T) {
 			dirs: []string{
 				"sys/bus/pci/drivers/idxd",
 				"sys/bus/pci/devices/0000:02:00.0",
+				"dev/vfio/",
 			},
 			files: map[string][]byte{
 				"sys/bus/pci/devices/0000:02:00.0/device": []byte("0x1212"),
+				"dev/vfio/vfio5": []byte("0x1234"),
 			},
 			symlinks: map[string]string{
-				"sys/bus/pci/devices/0000:02:00.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:02:00.0/iommu_group": "sys/kernel/iommu_groups/5",
 				"sys/bus/pci/devices/0000:02:00.0/driver":      "sys/bus/pci/drivers/idxd",
 			},
 		},
@@ -134,12 +137,14 @@ func TestScan(t *testing.T) {
 			deviceIDSet: DeviceIDSet{"0x1212": {}},
 			dirs: []string{
 				"sys/bus/pci/devices/0000:02:00.0",
+				"dev/vfio/",
 			},
 			files: map[string][]byte{
 				"sys/bus/pci/devices/0000:02:00.0/device": []byte("0x1212"),
+				"dev/vfio/vfio5": []byte("0x1234"),
 			},
 			symlinks: map[string]string{
-				"sys/bus/pci/devices/0000:02:00.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:02:00.0/iommu_group": "sys/kernel/iommu_groups/5",
 			},
 			expectedErr: true,
 		},
@@ -149,12 +154,14 @@ func TestScan(t *testing.T) {
 			dirs: []string{
 				"sys/bus/pci/drivers/vfio-pci",
 				"sys/bus/pci/devices/0000:02:00.0",
+				"dev/vfio/",
 			},
 			files: map[string][]byte{
 				"sys/bus/pci/devices/0000:02:00.0/device": []byte("0x4940"),
+				"dev/vfio/vfio5": []byte("0x1234"),
 			},
 			symlinks: map[string]string{
-				"sys/bus/pci/devices/0000:02:00.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:02:00.0/iommu_group": "sys/kernel/iommu_groups/5",
 				"sys/bus/pci/devices/0000:02:00.0/driver":      "sys/bus/pci/drivers/vfio-pci",
 			},
 		},
@@ -163,6 +170,7 @@ func TestScan(t *testing.T) {
 			deviceIDSet: DeviceIDSet{"0x37c8": {}},
 			dirs: []string{
 				"sys/bus/pci/devices/0000:02:00.0",
+				"dev/vfio/",
 			},
 			files: map[string][]byte{
 				"sys/bus/pci/devices/0000:02:00.0/device": []byte("0x37c8"),
@@ -176,15 +184,18 @@ func TestScan(t *testing.T) {
 				"sys/bus/pci/drivers/vfio-pci",
 				"sys/bus/pci/devices/0000:02:00.0",
 				"sys/bus/pci/devices/0000:03:00.0",
+				"dev/vfio/",
 			},
 			files: map[string][]byte{
 				"sys/bus/pci/devices/0000:02:00.0/device": []byte("0x37c8"),
 				"sys/bus/pci/devices/0000:03:00.0/device": []byte("0x4940"),
+				"dev/vfio/vfio5":  []byte("0x1234"),
+				"dev/vfio/vfio10": []byte("0x1234"),
 			},
 			symlinks: map[string]string{
-				"sys/bus/pci/devices/0000:02:00.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:02:00.0/iommu_group": "sys/kernel/iommu_groups/5",
 				"sys/bus/pci/devices/0000:02:00.0/driver":      "sys/bus/pci/drivers/vfio-pci",
-				"sys/bus/pci/devices/0000:03:00.0/iommu_group": "sys/kernel/iommu_groups/vfiotestfile",
+				"sys/bus/pci/devices/0000:03:00.0/iommu_group": "sys/kernel/iommu_groups/10",
 				"sys/bus/pci/devices/0000:03:00.0/driver":      "sys/bus/pci/drivers/vfio-pci",
 			},
 			expectedDevNum: 1,
@@ -239,23 +250,22 @@ func TestPostAllocate(t *testing.T) {
 	cresp := new(pluginapi.ContainerAllocateResponse)
 	response.ContainerResponses = append(response.ContainerResponses, cresp)
 	testMap := map[string]string{
-		"VFIO_BDF29": "03:04.1",
-		"VFIO_BDF13": "03:04.2",
-		"VFIO_BDF6":  "03:04.3",
-		"VFIO_BDF21": "03:04.4",
+		"VFIO_BDF0": "03:04.1",
+		"VFIO_BDF1": "03:04.2",
+		"VFIO_BDF2": "03:04.3",
+		"VFIO_BDF3": "03:04.4",
 	}
 	response.ContainerResponses[0].Envs = testMap
-	resultKey := []string{
-		"VFIO_BDF0",
-		"VFIO_BDF1",
-		"VFIO_BDF2",
-		"VFIO_BDF3",
-	}
-	expectedValues := map[string]struct{}{
-		"03:04.1": {},
-		"03:04.2": {},
-		"03:04.3": {},
-		"03:04.4": {},
+
+	// expected results
+	resultEnvs := map[string]string{
+		"VFIO_BDF0":                            "03:04.1",
+		"VFIO_BDF1":                            "03:04.2",
+		"VFIO_BDF2":                            "03:04.3",
+		"VFIO_BDF3":                            "03:04.4",
+		"VFIO_BDF":                             "03:04.1,03:04.2,03:04.3,03:04.4",
+		"PCI_RESOURCE_DSA_INTEL_COM_VFIO":      "03:04.1,03:04.2,03:04.3,03:04.4",
+		"MDEV_PCI_RESOURCE_DSA_INTEL_COM_VFIO": "",
 	}
 
 	dp := &DevicePlugin{}
@@ -263,23 +273,15 @@ func TestPostAllocate(t *testing.T) {
 		t.Errorf("Unexpected error: %+v", err)
 	}
 
-	if len(response.ContainerResponses[0].Envs) != 4 {
+	if len(response.ContainerResponses[0].Envs) != len(resultEnvs) {
 		t.Fatal("Set wrong number of Environment Variables")
 	}
 
-	for k := range response.ContainerResponses[0].Envs {
-		if !slices.Contains(resultKey, k) {
-			t.Fatalf("Set wrong key: %s. The key should be in the range %v", k, resultKey)
-		}
-	}
-
-	for _, key := range resultKey {
-		if value, ok := response.ContainerResponses[0].Envs[key]; ok {
-			if _, ok := expectedValues[value]; ok {
-				delete(expectedValues, value)
-			} else {
-				t.Errorf("Unexpected value %s", value)
-			}
+	for k, v := range resultEnvs {
+		if refVal, ok := response.ContainerResponses[0].Envs[k]; !ok {
+			t.Fatalf("key not found: %s", k)
+		} else if refVal != v {
+			t.Fatalf("%s value not as expected: %s vs %s", k, v, refVal)
 		}
 	}
 }

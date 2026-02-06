@@ -15,26 +15,25 @@
 package vfio
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
+	"slices"
 	"strings"
 	"time"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/pluginutils"
 	"github.com/pkg/errors"
-	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
 const (
-	// VFIO devices directory and control device path.
-	vfioPath     = "/dev/vfio"
-	vfioCtrlPath = "/dev/vfio/vfio"
 	// Frequency of device scans.
 	scanFrequency = 15 * time.Second
-	envVarPrefix  = "VFIO_BDF"
+
+	// KubeVirt interface env names.
+	kubeVirtDsaVfio  = "PCI_RESOURCE_DSA_INTEL_COM_VFIO"
+	kubeVirtMDsaVfio = "MDEV_PCI_RESOURCE_DSA_INTEL_COM_VFIO"
 )
 
 // DevicePlugin defines properties of the vfio device plugin.
@@ -90,17 +89,20 @@ func readFile(fpath string) (string, error) {
 // VFIO_BDF<devNum counter> environment variables set by scan() to VFIO_BDF<0,1, ...>
 // based on device resources requested by the container.
 func (dp *DevicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error {
-	tempMap := make(map[string]string)
-
 	for _, cresp := range response.ContainerResponses {
-		counter := 0
-
-		for k := range cresp.Envs {
-			tempMap[strings.Join([]string{envVarPrefix, strconv.Itoa(counter)}, "")] = cresp.Envs[k]
-			counter++
+		bdfs := []string{}
+		for k, v := range cresp.Envs {
+			if strings.HasPrefix(k, pluginutils.VFIO_BDF_PREFIX) {
+				bdfs = append(bdfs, v)
+			}
 		}
 
-		cresp.Envs = tempMap
+		slices.Sort(bdfs)
+
+		commaSeparatedBdfs := strings.Join(bdfs, ",")
+		cresp.Envs[pluginutils.VFIO_BDF_PREFIX] = commaSeparatedBdfs
+		cresp.Envs[kubeVirtDsaVfio] = commaSeparatedBdfs
+		cresp.Envs[kubeVirtMDsaVfio] = ""
 	}
 
 	return nil
@@ -108,75 +110,27 @@ func (dp *DevicePlugin) PostAllocate(response *pluginapi.AllocateResponse) error
 
 // scan collects devices by scanning sysfs and devfs entries.
 func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
-	// scan sysfs tree
-	pciDevices, err := filepath.Glob(filepath.Join(dp.devDir, "????:??:??.?"))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	devTree := dpapi.NewDeviceTree()
-	devNum := 0
-
-	for _, dpath := range pciDevices {
+	filterFunc := func(dpath string) (bool, error) {
 		devID, err := readFile(filepath.Join(dpath, "device"))
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 
 		if _, ok := dp.devIDs[devID]; !ok {
-			continue
-		}
-
-		// device belongs to an IOMMU group
-		iommu_group, err := filepath.EvalSymlinks(filepath.Join(dpath, "iommu_group"))
-		if err != nil {
-			return nil, errors.WithStack(err)
+			return false, nil
 		}
 
 		driver, err := filepath.EvalSymlinks(filepath.Join(dpath, "driver"))
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return false, errors.WithStack(err)
 		}
 
 		if filepath.Base(driver) != "vfio-pci" {
-			continue
+			return false, nil
 		}
 
-		devNodes := []pluginapi.DeviceSpec{
-			{
-				HostPath:      filepath.Join(vfioPath, filepath.Base(iommu_group)),
-				ContainerPath: filepath.Join(vfioPath, filepath.Base(iommu_group)),
-				Permissions:   "rw",
-			},
-			{
-				HostPath:      vfioCtrlPath,
-				ContainerPath: vfioCtrlPath,
-				Permissions:   "rw",
-			},
-		}
-
-		// TODO: add IOMMUFD nodes
-		// iommuFdDevices, err := filepath.Glob(filepath.Join(dpath, "vfio-dev", "vfio?"))
-		// if err == nil {
-		// 	for _, iommuDev := range iommuFdDevices {
-		// 		devNodes = append(devNodes, pluginapi.DeviceSpec{
-		// 			HostPath:      filepath.Join(vfioPath, "devices", filepath.Base(iommuDev)),
-		// 			ContainerPath: filepath.Join(vfioPath, "devices", filepath.Base(iommuDev)),
-		// 			Permissions:   "rw",
-		// 		})
-		// 	}
-		// }
-
-		devNum = devNum + 1
-		bdf := filepath.Base(dpath)
-
-		envs := map[string]string{
-			fmt.Sprintf("%s%d", envVarPrefix, devNum): bdf,
-		}
-
-		klog.V(4).Infof("%s (ID=%s): nodes: %+v", bdf, devID, devNodes)
-		devTree.AddDevice("vfio", bdf, dpapi.NewDeviceInfo(pluginapi.Healthy, devNodes, nil, envs, nil, nil))
+		return true, nil
 	}
 
-	return devTree, nil
+	return pluginutils.PciScan(filterFunc, dp.devDir)
 }

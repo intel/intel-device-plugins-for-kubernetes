@@ -45,37 +45,53 @@ func (r *GpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-gpudeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=gpudeviceplugins,verbs=create;update,versions=v1,name=mgpudeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-gpudeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=gpudeviceplugins,versions=v1,name=vgpudeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
+func validateDeviceIds(idList string) error {
+	if idList != "" {
+		for id := range strings.SplitSeq(idList, ",") {
+			if id == "" {
+				return fmt.Errorf("%w: Empty PCI Device ID", errValidation)
+			}
+
+			if !pciIDRegex.MatchString(id) {
+				return fmt.Errorf("%w: Invalid PCI Device ID: %s", errValidation, id)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (r *GpuDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
-	if r.Spec.SharedDevNum == 1 && r.Spec.PreferredAllocationPolicy != "none" {
-		return fmt.Errorf("%w: PreferredAllocationPolicy is valid only when setting sharedDevNum > 1", errValidation)
-	}
-
-	if r.Spec.AllowIDs != "" {
-		for id := range strings.SplitSeq(r.Spec.AllowIDs, ",") {
-			if id == "" {
-				return fmt.Errorf("%w: Empty PCI Device ID in AllowIDs", errValidation)
-			}
-
-			if !pciIDRegex.MatchString(id) {
-				return fmt.Errorf("%w: Invalid PCI Device ID: %s", errValidation, id)
-			}
+	if r.Spec.SharedDevNum == 1 {
+		switch r.Spec.PreferredAllocationPolicy {
+		case "packed", "balanced":
+			return fmt.Errorf("%w: PreferredAllocationPolicy is valid only when setting sharedDevNum > 1", errValidation)
 		}
 	}
 
-	if r.Spec.DenyIDs != "" {
-		for id := range strings.SplitSeq(r.Spec.DenyIDs, ",") {
-			if id == "" {
-				return fmt.Errorf("%w: Empty PCI Device ID in DenyIDs", errValidation)
-			}
+	if err := validateDeviceIds(r.Spec.AllowIDs); err != nil {
+		return fmt.Errorf("%w: Allow IDs", err)
+	}
 
-			if !pciIDRegex.MatchString(id) {
-				return fmt.Errorf("%w: Invalid PCI Device ID: %s", errValidation, id)
-			}
-		}
+	if err := validateDeviceIds(r.Spec.DenyIDs); err != nil {
+		return fmt.Errorf("%w: Deny IDs", err)
 	}
 
 	if len(r.Spec.AllowIDs) > 0 && len(r.Spec.DenyIDs) > 0 {
 		return fmt.Errorf("%w: AllowIDs and DenyIDs cannot be used together", errValidation)
+	}
+
+	if r.Spec.VFIOMode {
+		if r.Spec.EnableMonitoring {
+			return fmt.Errorf("%w: enableMonitoring cannot be used together with vfioMode", errValidation)
+		}
+		if r.Spec.SharedDevNum > 1 {
+			return fmt.Errorf("%w: sharedDevNum cannot be greater than 1 when vfioMode is enabled", errValidation)
+		}
+	}
+
+	if !r.Spec.VFIOMode && r.Spec.InitImage != "" {
+		return fmt.Errorf("%w: initImage should be used only when vfioMode is enabled", errValidation)
 	}
 
 	return validatePluginImage(r.Spec.Image, ref.expectedImage, &ref.expectedVersion)

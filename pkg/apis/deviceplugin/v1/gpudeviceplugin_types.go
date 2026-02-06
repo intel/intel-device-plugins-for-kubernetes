@@ -71,6 +71,9 @@ type GpuDevicePluginSpec struct {
 	// EnableMonitoring enables the monitoring resource ('i915_monitoring')
 	// which gives access to all GPU devices on given node. Typically used with Intel XPU-Manager.
 	EnableMonitoring bool `json:"enableMonitoring,omitempty"`
+
+	// VFIOMode enables GPU plugin to register GPU devices using the VFIO driver.
+	VFIOMode bool `json:"vfioMode,omitempty"`
 }
 
 // GpuDevicePluginStatus defines the observed state of GpuDevicePlugin.
