@@ -46,8 +46,13 @@ func (r *GpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-gpudeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=gpudeviceplugins,versions=v1,name=vgpudeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
 func (r *GpuDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
-	if r.Spec.SharedDevNum == 1 && r.Spec.PreferredAllocationPolicy != "none" {
-		return fmt.Errorf("%w: PreferredAllocationPolicy is valid only when setting sharedDevNum > 1", errValidation)
+	if r.Spec.SharedDevNum <= 1 {
+		switch r.Spec.PreferredAllocationPolicy {
+		case "packed", "balanced":
+			return fmt.Errorf("%w: '%s' PreferredAllocationPolicy is valid only when setting sharedDevNum > 1", errValidation, r.Spec.PreferredAllocationPolicy)
+		default:
+			// empty on purpose
+		}
 	}
 
 	if r.Spec.AllowIDs != "" {
