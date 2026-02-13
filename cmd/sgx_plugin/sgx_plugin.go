@@ -167,7 +167,7 @@ func main() {
 
 	flag.UintVar(&enclaveLimit, "enclave-limit", podCount, "Number of \"enclave\" resources")
 	flag.UintVar(&provisionLimit, "provision-limit", podCount, "Number of \"provision\" resources")
-	flag.BoolVar(&dcapInfraResources, "dcap-infra-resources", false, "Register special resources for Intel DCAP infrastructure containers")
+	flag.BoolVar(&dcapInfraResources, "dcap-infra-resources", false, "Deprecated: Register special resources for Intel DCAP infrastructure containers. This will be removed/modified in the future.")
 	flag.Parse()
 
 	klog.V(4).Infof("SGX device plugin started with %d \"%s/enclave\" resources and %d \"%s/provision\" resources.", enclaveLimit, namespace, provisionLimit, namespace)
