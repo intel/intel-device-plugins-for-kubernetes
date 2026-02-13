@@ -20,23 +20,23 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
+var npuDefaultImage = "intel/intel-npu-plugin:" + controllers.ImageMinVersion.String()
+var npuValidatorConfig = &validatorConfig{
+	expectedImage:   "intel-npu-plugin",
+	expectedVersion: *controllers.ImageMinVersion,
+}
+
 // SetupWebhookWithManager sets up a webhook for NpuDevicePlugin custom resources.
 func (r *NpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-npu-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:   "intel-npu-plugin",
-			expectedVersion: *controllers.ImageMinVersion,
-		}).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-npudeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=npudeviceplugins,verbs=create;update,versions=v1,name=mnpudeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-npudeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=npudeviceplugins,versions=v1,name=vnpudeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-func (r *NpuDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
+func (r *NpuDevicePlugin) validatePlugin(ref *validatorConfig) error {
 	return validatePluginImage(r.Spec.Image, ref.expectedImage, &ref.expectedVersion)
 }

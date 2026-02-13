@@ -20,25 +20,25 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
+var dlbDefaultImage = "intel/intel-dlb-plugin:" + controllers.ImageMinVersion.String()
+var dlbValidatorConfig = &validatorConfig{
+	expectedImage:     "intel-dlb-plugin",
+	expectedInitImage: "intel-dlb-initimage",
+	expectedVersion:   *controllers.ImageMinVersion,
+}
+
 // SetupWebhookWithManager sets up a webhook for DlbDevicePlugin custom resources.
 func (r *DlbDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-dlb-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:     "intel-dlb-plugin",
-			expectedInitImage: "intel-dlb-initimage",
-			expectedVersion:   *controllers.ImageMinVersion,
-		}).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-dlbdeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=dlbdeviceplugins,verbs=create;update,versions=v1,name=mdlbdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-dlbdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=dlbdeviceplugins,versions=v1,name=vdlbdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-func (r *DlbDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
+func (r *DlbDevicePlugin) validatePlugin(ref *validatorConfig) error {
 	if r.Spec.InitImage != "" {
 		if err := validatePluginImage(r.Spec.InitImage, ref.expectedInitImage, &ref.expectedVersion); err != nil {
 			return err

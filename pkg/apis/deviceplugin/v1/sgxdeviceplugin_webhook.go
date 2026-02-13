@@ -20,25 +20,25 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
+var sgxDefaultImage = "intel/intel-sgx-plugin:" + controllers.ImageMinVersion.String()
+var sgxValidatorConfig = &validatorConfig{
+	expectedImage:     "intel-sgx-plugin",
+	expectedInitImage: "intel-sgx-initcontainer",
+	expectedVersion:   *controllers.ImageMinVersion,
+}
+
 // SetupWebhookWithManager sets up a webhook for SgxDevicePlugin custom resources.
 func (r *SgxDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-sgx-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:     "intel-sgx-plugin",
-			expectedInitImage: "intel-sgx-initcontainer",
-			expectedVersion:   *controllers.ImageMinVersion,
-		}).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-sgxdeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=sgxdeviceplugins,verbs=create;update,versions=v1,name=msgxdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1,reinvocationPolicy=IfNeeded
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-sgxdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=sgxdeviceplugins,versions=v1,name=vsgxdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-func (r *SgxDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
+func (r *SgxDevicePlugin) validatePlugin(ref *validatorConfig) error {
 	if err := validatePluginImage(r.Spec.Image, ref.expectedImage, &ref.expectedVersion); err != nil {
 		return err
 	}

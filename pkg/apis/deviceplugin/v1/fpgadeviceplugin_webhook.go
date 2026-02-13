@@ -20,25 +20,25 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
+var fpgaDefaultImage = "intel/intel-fpga-plugin:" + controllers.ImageMinVersion.String()
+var fpgaValidatorConfig = &validatorConfig{
+	expectedImage:     "intel-fpga-plugin",
+	expectedInitImage: "intel-fpga-initimage",
+	expectedVersion:   *controllers.ImageMinVersion,
+}
+
 // SetupWebhookWithManager sets up a webhook for FpgaDevicePlugin custom resources.
 func (r *FpgaDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-fpga-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:     "intel-fpga-plugin",
-			expectedInitImage: "intel-fpga-initimage",
-			expectedVersion:   *controllers.ImageMinVersion,
-		}).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-fpgadeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=fpgadeviceplugins,verbs=create;update,versions=v1,name=mfpgadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-fpgadeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=fpgadeviceplugins,versions=v1,name=vfpgadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-func (r *FpgaDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
+func (r *FpgaDevicePlugin) validatePlugin(ref *validatorConfig) error {
 	if err := validatePluginImage(r.Spec.Image, ref.expectedImage, &ref.expectedVersion); err != nil {
 		return err
 	}
