@@ -6,7 +6,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: pf
-    image: intel/dlb-libdlb-demo:devel
+    image: intel/dlb-libdlb-demo:0.35.0
     imagePullPolicy: IfNotPresent
     resources:
       limits:
@@ -18,7 +18,7 @@ spec:
         cpu: 1
         memory: 200Mi
   - name: vf
-    image: intel/dlb-libdlb-demo:devel
+    image: intel/dlb-libdlb-demo:0.35.0
     imagePullPolicy: IfNotPresent
     resources:
       limits:

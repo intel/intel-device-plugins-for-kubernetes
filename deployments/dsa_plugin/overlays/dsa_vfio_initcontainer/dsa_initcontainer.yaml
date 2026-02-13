@@ -14,7 +14,7 @@ spec:
                 fieldPath: spec.nodeName
           - name: DSA_DRIVER
             value: vfio-pci
-        image: intel/intel-idxd-config-initcontainer:devel
+        image: intel/intel-idxd-config-initcontainer:0.35.0
         securityContext:
           seLinuxOptions:
             type: "container_device_plugin_init_t"

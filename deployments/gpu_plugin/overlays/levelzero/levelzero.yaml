@@ -2,7 +2,7 @@
   path: /spec/template/spec/containers/-
   value:
     name: intel-gpu-levelzero
-    image: intel/intel-gpu-levelzero:devel
+    image: intel/intel-gpu-levelzero:0.35.0
     imagePullPolicy: IfNotPresent
     args:
       - "-v=2"
