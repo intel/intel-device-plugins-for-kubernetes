@@ -22,25 +22,25 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
+var dsaDefaultImage = "intel/intel-dsa-plugin:" + controllers.ImageMinVersion.String()
+var dsaValidatorConfig = &validatorConfig{
+	expectedImage:     "intel-dsa-plugin",
+	expectedInitImage: "intel-idxd-config-initcontainer",
+	expectedVersion:   *controllers.ImageMinVersion,
+}
+
 // SetupWebhookWithManager sets up a webhook for DsaDevicePlugin custom resources.
 func (r *DsaDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-dsa-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:     "intel-dsa-plugin",
-			expectedInitImage: "intel-idxd-config-initcontainer",
-			expectedVersion:   *controllers.ImageMinVersion,
-		}).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-dsadeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=dsadeviceplugins,verbs=create;update,versions=v1,name=mdsadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-dsadeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=dsadeviceplugins,versions=v1,name=vdsadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-func (r *DsaDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
+func (r *DsaDevicePlugin) validatePlugin(ref *validatorConfig) error {
 	if err := validatePluginImage(r.Spec.Image, ref.expectedImage, &ref.expectedVersion); err != nil {
 		return err
 	}

@@ -22,25 +22,25 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
+var iaaDefaultImage = "intel/intel-iaa-plugin:" + controllers.ImageMinVersion.String()
+var iaaValidatorConfig = &validatorConfig{
+	expectedImage:     "intel-iaa-plugin",
+	expectedInitImage: "intel-idxd-config-initcontainer",
+	expectedVersion:   *controllers.ImageMinVersion,
+}
+
 // SetupWebhookWithManager sets up a webhook for IaaDevicePlugin custom resources.
 func (r *IaaDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-iaa-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:     "intel-iaa-plugin",
-			expectedInitImage: "intel-idxd-config-initcontainer",
-			expectedVersion:   *controllers.ImageMinVersion,
-		}).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-iaadeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=iaadeviceplugins,verbs=create;update,versions=v1,name=miaadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-iaadeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=iaadeviceplugins,versions=v1,name=viaadeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-func (r *IaaDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
+func (r *IaaDevicePlugin) validatePlugin(ref *validatorConfig) error {
 	if err := validatePluginImage(r.Spec.Image, ref.expectedImage, &ref.expectedVersion); err != nil {
 		return err
 	}

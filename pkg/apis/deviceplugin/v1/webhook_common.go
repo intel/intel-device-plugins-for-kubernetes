@@ -22,7 +22,6 @@ import (
 	"regexp"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/version"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -31,119 +30,12 @@ import (
 
 const sha256RE = "@sha256:[0-9a-f]{64}$"
 
-var errObjType = errors.New("invalid object")
 var errValidation = errors.New("invalid resource")
 
-// common functions for webhooks
-
-type commonDevicePluginDefaulter struct {
-	defaultImage string
-}
-
-var _ admission.CustomDefaulter = &commonDevicePluginDefaulter{}
-
-type commonDevicePluginValidator struct {
+type validatorConfig struct {
 	expectedImage     string
 	expectedInitImage string
 	expectedVersion   version.Version
-}
-
-var _ admission.CustomValidator = &commonDevicePluginValidator{}
-
-// Default implements admission.CustomDefaulter so a webhook will be registered for the type.
-func (r *commonDevicePluginDefaulter) Default(ctx context.Context, obj runtime.Object) error {
-	logf.FromContext(ctx).Info("default")
-
-	setDefaultImageIfNeeded := func(image *string) {
-		if len(*image) == 0 {
-			*image = r.defaultImage
-		}
-	}
-
-	// type switches can have only one type in a case so the same repeats for
-	// all xDevicePlugin types.
-	// TODO: implement receivers if more complex logic is needed.
-	switch v := obj.(type) {
-	case *DlbDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *DsaDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *FpgaDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *GpuDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *IaaDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *QatDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *SgxDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	case *NpuDevicePlugin:
-		setDefaultImageIfNeeded(&v.Spec.Image)
-	default:
-		return fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, obj)
-	}
-
-	return nil
-}
-
-// ValidateCreate implements admission.CustomValidator so a webhook will be registered for the type.
-func (r *commonDevicePluginValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	logf.FromContext(ctx).Info("validate create")
-
-	switch v := obj.(type) {
-	case *DlbDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *DsaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *GpuDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *FpgaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *IaaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *QatDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *SgxDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *NpuDevicePlugin:
-		return nil, v.validatePlugin(r)
-	default:
-		return nil, fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, obj)
-	}
-}
-
-// ValidateUpdate implements admission.CustomValidator so a webhook will be registered for the type.
-func (r *commonDevicePluginValidator) ValidateUpdate(ctx context.Context, _ runtime.Object, newObj runtime.Object) (admission.Warnings, error) {
-	logf.FromContext(ctx).Info("validate update")
-
-	switch v := newObj.(type) {
-	case *DlbDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *DsaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *GpuDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *FpgaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *IaaDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *QatDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *SgxDevicePlugin:
-		return nil, v.validatePlugin(r)
-	case *NpuDevicePlugin:
-		return nil, v.validatePlugin(r)
-	default:
-		return nil, fmt.Errorf("%w: expected an xDevicePlugin object but got %T", errObjType, newObj)
-	}
-}
-
-// ValidateDelete implements admission.CustomValidator so a webhook will be registered for the type.
-func (r *commonDevicePluginValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	logf.FromContext(ctx).Info("validate delete")
-
-	return nil, nil
 }
 
 func validatePluginImage(image, expectedImageName string, expectedMinVersion *version.Version) error {
@@ -176,4 +68,204 @@ func validatePluginImage(image, expectedImageName string, expectedMinVersion *ve
 	}
 
 	return nil
+}
+
+// DlbDevicePlugin webhook methods
+
+func (r *DlbDevicePlugin) Default(ctx context.Context, obj *DlbDevicePlugin) error {
+	logf.FromContext(ctx).Info("default", "name", obj.Name)
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = dlbDefaultImage
+	}
+	return nil
+}
+
+func (r *DlbDevicePlugin) ValidateCreate(ctx context.Context, obj *DlbDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create", "name", obj.Name)
+	return nil, obj.validatePlugin(dlbValidatorConfig)
+}
+
+func (r *DlbDevicePlugin) ValidateUpdate(ctx context.Context, oldObj, newObj *DlbDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update", "name", newObj.Name)
+	return nil, newObj.validatePlugin(dlbValidatorConfig)
+}
+
+func (r *DlbDevicePlugin) ValidateDelete(ctx context.Context, obj *DlbDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete", "name", obj.Name)
+	return nil, nil
+}
+
+// DsaDevicePlugin webhook methods
+
+func (r *DsaDevicePlugin) Default(ctx context.Context, obj *DsaDevicePlugin) error {
+	logf.FromContext(ctx).Info("default", "name", obj.Name)
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = dsaDefaultImage
+	}
+	return nil
+}
+
+func (r *DsaDevicePlugin) ValidateCreate(ctx context.Context, obj *DsaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create", "name", obj.Name)
+	return nil, obj.validatePlugin(dsaValidatorConfig)
+}
+
+func (r *DsaDevicePlugin) ValidateUpdate(ctx context.Context, oldObj, newObj *DsaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update", "name", newObj.Name)
+	return nil, newObj.validatePlugin(dsaValidatorConfig)
+}
+
+func (r *DsaDevicePlugin) ValidateDelete(ctx context.Context, obj *DsaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete", "name", obj.Name)
+	return nil, nil
+}
+
+// FpgaDevicePlugin webhook methods
+
+func (r *FpgaDevicePlugin) Default(ctx context.Context, obj *FpgaDevicePlugin) error {
+	logf.FromContext(ctx).Info("default", "name", obj.Name)
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = fpgaDefaultImage
+	}
+	return nil
+}
+
+func (r *FpgaDevicePlugin) ValidateCreate(ctx context.Context, obj *FpgaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create", "name", obj.Name)
+	return nil, obj.validatePlugin(fpgaValidatorConfig)
+}
+
+func (r *FpgaDevicePlugin) ValidateUpdate(ctx context.Context, oldObj, newObj *FpgaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update", "name", newObj.Name)
+	return nil, newObj.validatePlugin(fpgaValidatorConfig)
+}
+
+func (r *FpgaDevicePlugin) ValidateDelete(ctx context.Context, obj *FpgaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete", "name", obj.Name)
+	return nil, nil
+}
+
+// GpuDevicePlugin webhook methods
+
+func (r *GpuDevicePlugin) Default(ctx context.Context, obj *GpuDevicePlugin) error {
+	logf.FromContext(ctx).Info("default", "name", obj.Name)
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = gpuDefaultImage
+	}
+	return nil
+}
+
+func (r *GpuDevicePlugin) ValidateCreate(ctx context.Context, obj *GpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create", "name", obj.Name)
+	return nil, obj.validatePlugin(gpuValidatorConfig)
+}
+
+func (r *GpuDevicePlugin) ValidateUpdate(ctx context.Context, oldObj, newObj *GpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update", "name", newObj.Name)
+	return nil, newObj.validatePlugin(gpuValidatorConfig)
+}
+
+func (r *GpuDevicePlugin) ValidateDelete(ctx context.Context, obj *GpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete", "name", obj.Name)
+	return nil, nil
+}
+
+// IaaDevicePlugin webhook methods
+
+func (r *IaaDevicePlugin) Default(ctx context.Context, obj *IaaDevicePlugin) error {
+	logf.FromContext(ctx).Info("default", "name", obj.Name)
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = iaaDefaultImage
+	}
+	return nil
+}
+
+func (r *IaaDevicePlugin) ValidateCreate(ctx context.Context, obj *IaaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create", "name", obj.Name)
+	return nil, obj.validatePlugin(iaaValidatorConfig)
+}
+
+func (r *IaaDevicePlugin) ValidateUpdate(ctx context.Context, oldObj, newObj *IaaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update", "name", newObj.Name)
+	return nil, newObj.validatePlugin(iaaValidatorConfig)
+}
+
+func (r *IaaDevicePlugin) ValidateDelete(ctx context.Context, obj *IaaDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete", "name", obj.Name)
+	return nil, nil
+}
+
+// NpuDevicePlugin webhook methods
+
+func (r *NpuDevicePlugin) Default(ctx context.Context, obj *NpuDevicePlugin) error {
+	logf.FromContext(ctx).Info("default", "name", obj.Name)
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = npuDefaultImage
+	}
+	return nil
+}
+
+func (r *NpuDevicePlugin) ValidateCreate(ctx context.Context, obj *NpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create", "name", obj.Name)
+	return nil, obj.validatePlugin(npuValidatorConfig)
+}
+
+func (r *NpuDevicePlugin) ValidateUpdate(ctx context.Context, oldObj, newObj *NpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update", "name", newObj.Name)
+	return nil, newObj.validatePlugin(npuValidatorConfig)
+}
+
+func (r *NpuDevicePlugin) ValidateDelete(ctx context.Context, obj *NpuDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete", "name", obj.Name)
+	return nil, nil
+}
+
+// QatDevicePlugin webhook methods
+
+func (r *QatDevicePlugin) Default(ctx context.Context, obj *QatDevicePlugin) error {
+	logf.FromContext(ctx).Info("default", "name", obj.Name)
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = qatDefaultImage
+	}
+	return nil
+}
+
+func (r *QatDevicePlugin) ValidateCreate(ctx context.Context, obj *QatDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create", "name", obj.Name)
+	return nil, obj.validatePlugin(qatValidatorConfig)
+}
+
+func (r *QatDevicePlugin) ValidateUpdate(ctx context.Context, oldObj, newObj *QatDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update", "name", newObj.Name)
+	return nil, newObj.validatePlugin(qatValidatorConfig)
+}
+
+func (r *QatDevicePlugin) ValidateDelete(ctx context.Context, obj *QatDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete", "name", obj.Name)
+	return nil, nil
+}
+
+// SgxDevicePlugin webhook methods
+
+func (r *SgxDevicePlugin) Default(ctx context.Context, obj *SgxDevicePlugin) error {
+	logf.FromContext(ctx).Info("default", "name", obj.Name)
+	if len(obj.Spec.Image) == 0 {
+		obj.Spec.Image = sgxDefaultImage
+	}
+	return nil
+}
+
+func (r *SgxDevicePlugin) ValidateCreate(ctx context.Context, obj *SgxDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate create", "name", obj.Name)
+	return nil, obj.validatePlugin(sgxValidatorConfig)
+}
+
+func (r *SgxDevicePlugin) ValidateUpdate(ctx context.Context, oldObj, newObj *SgxDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate update", "name", newObj.Name)
+	return nil, newObj.validatePlugin(sgxValidatorConfig)
+}
+
+func (r *SgxDevicePlugin) ValidateDelete(ctx context.Context, obj *SgxDevicePlugin) (admission.Warnings, error) {
+	logf.FromContext(ctx).Info("validate delete", "name", obj.Name)
+	return nil, nil
 }

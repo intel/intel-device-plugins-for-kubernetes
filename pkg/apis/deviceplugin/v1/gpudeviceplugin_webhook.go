@@ -26,26 +26,26 @@ import (
 
 var pciIDRegex regexp.Regexp
 
+var gpuDefaultImage = "intel/intel-gpu-plugin:" + controllers.ImageMinVersion.String()
+var gpuValidatorConfig = &validatorConfig{
+	expectedImage:   "intel-gpu-plugin",
+	expectedVersion: *controllers.ImageMinVersion,
+}
+
 // SetupWebhookWithManager sets up a webhook for GpuDevicePlugin custom resources.
 func (r *GpuDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	pciIDRegex = *regexp.MustCompile(`^0x[0-9a-f]{4}$`)
 
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-gpu-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:   "intel-gpu-plugin",
-			expectedVersion: *controllers.ImageMinVersion,
-		}).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-gpudeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=gpudeviceplugins,verbs=create;update,versions=v1,name=mgpudeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-gpudeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=gpudeviceplugins,versions=v1,name=vgpudeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-func (r *GpuDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
+func (r *GpuDevicePlugin) validatePlugin(ref *validatorConfig) error {
 	if r.Spec.SharedDevNum <= 1 {
 		switch r.Spec.PreferredAllocationPolicy {
 		case "packed", "balanced":

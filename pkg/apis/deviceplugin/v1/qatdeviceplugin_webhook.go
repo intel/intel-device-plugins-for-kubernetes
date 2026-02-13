@@ -22,25 +22,25 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 )
 
+var qatDefaultImage = "intel/intel-qat-plugin:" + controllers.ImageMinVersion.String()
+var qatValidatorConfig = &validatorConfig{
+	expectedImage:     "intel-qat-plugin",
+	expectedInitImage: "intel-qat-initcontainer",
+	expectedVersion:   *controllers.ImageMinVersion,
+}
+
 // SetupWebhookWithManager sets up a webhook for QatDevicePlugin custom resources.
 func (r *QatDevicePlugin) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithDefaulter(&commonDevicePluginDefaulter{
-			defaultImage: "intel/intel-qat-plugin:" + controllers.ImageMinVersion.String(),
-		}).
-		WithValidator(&commonDevicePluginValidator{
-			expectedImage:     "intel-qat-plugin",
-			expectedInitImage: "intel-qat-initcontainer",
-			expectedVersion:   *controllers.ImageMinVersion,
-		}).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
 // +kubebuilder:webhook:path=/mutate-deviceplugin-intel-com-v1-qatdeviceplugin,mutating=true,failurePolicy=fail,groups=deviceplugin.intel.com,resources=qatdeviceplugins,verbs=create;update,versions=v1,name=mqatdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 // +kubebuilder:webhook:verbs=create;update,path=/validate-deviceplugin-intel-com-v1-qatdeviceplugin,mutating=false,failurePolicy=fail,groups=deviceplugin.intel.com,resources=qatdeviceplugins,versions=v1,name=vqatdeviceplugin.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-func (r *QatDevicePlugin) validatePlugin(ref *commonDevicePluginValidator) error {
+func (r *QatDevicePlugin) validatePlugin(ref *validatorConfig) error {
 	if r.Spec.InitImage != "" {
 		if err := validatePluginImage(r.Spec.InitImage, ref.expectedInitImage, &ref.expectedVersion); err != nil {
 			return err
