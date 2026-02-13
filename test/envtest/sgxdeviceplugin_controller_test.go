@@ -90,6 +90,7 @@ var _ = Describe("SgxDevicePlugin Controller", func() {
 			fetched.Spec.EnclaveLimit = updatedEnclaveLimit
 			fetched.Spec.ProvisionLimit = updatedProvisionLimit
 			fetched.Spec.NodeSelector = updatedNodeSelector
+			//nolint:staticcheck
 			fetched.Spec.DcapInfraResources = updatedDcapInfra
 
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())

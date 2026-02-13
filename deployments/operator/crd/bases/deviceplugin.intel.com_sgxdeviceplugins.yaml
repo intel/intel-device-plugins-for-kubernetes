@@ -56,8 +56,9 @@ spec:
             description: SgxDevicePluginSpec defines the desired state of SgxDevicePlugin.
             properties:
               dcapInfraResources:
-                description: DcapInfraResources flag enables two special resources
-                  for Intel DCAP infrastructure containers.
+                description: |-
+                  Deprecated: DcapInfraResources flag enables two special resources for Intel DCAP infrastructure containers.
+                  This is will be removed/modified in the future.
                 type: boolean
               enclaveLimit:
                 description: EnclaveLimit is a number of containers that can share
