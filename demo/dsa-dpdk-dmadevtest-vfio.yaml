@@ -6,7 +6,7 @@ spec:
   restartPolicy: Never
   containers:
     - name: dpdk-vfio
-      image: intel/dsa-dpdk-dmadevtest:devel
+      image: intel/dsa-dpdk-dmadevtest:0.35.0
       command:
         - dpdk-test
       args:

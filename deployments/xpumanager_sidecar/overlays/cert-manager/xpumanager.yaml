@@ -41,7 +41,7 @@ spec:
           httpGet:
             scheme: HTTPS
       - name: xelink-sidecar
-        image: intel/intel-xpumanager-sidecar:devel
+        image: intel/intel-xpumanager-sidecar:0.35.0
         imagePullPolicy: IfNotPresent
         args:
           - -v=2

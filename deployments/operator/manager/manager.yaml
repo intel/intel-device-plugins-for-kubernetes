@@ -30,7 +30,7 @@ spec:
         manager: intel-deviceplugin-operator
     spec:
       containers:
-      - image: docker.io/intel/intel-deviceplugin-operator:devel
+      - image: docker.io/intel/intel-deviceplugin-operator:0.35.0
         imagePullPolicy: IfNotPresent
         name: manager
         args:

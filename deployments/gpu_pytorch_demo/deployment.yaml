@@ -6,7 +6,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: testcontainer
-    image: intel/intel-extension-for-pytorch:xpu
+    image: intel/intel-extension-for-pytorch:0.35.0
     imagePullPolicy: IfNotPresent
     securityContext:
       allowPrivilegeEscalation: false

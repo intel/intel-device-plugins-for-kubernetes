@@ -76,7 +76,7 @@ FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
 LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
 LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL version='0.35.0'
 LABEL release='1'
 LABEL name='intel-gpu-initcontainer'
 LABEL summary='Intel® GPU NFD hook for Kubernetes'

@@ -59,7 +59,7 @@ FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
 LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
 LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL version='0.35.0'
 LABEL release='1'
 COPY --from=builder /install_root /
 COPY demo/dlb-init.sh /usr/local/bin/

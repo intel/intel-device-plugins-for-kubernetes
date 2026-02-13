@@ -59,7 +59,7 @@ FROM ${FINAL_BASE}
 LABEL vendor='Intel®'
 LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
 LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL version='0.35.0'
 LABEL release='1'
 LABEL name='intel-qat-initcontainer'
 LABEL summary='Intel® QAT initcontainer for Kubernetes'
