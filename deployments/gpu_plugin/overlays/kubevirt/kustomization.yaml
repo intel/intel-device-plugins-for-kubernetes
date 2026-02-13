@@ -1,0 +1,12 @@
+resources:
+  - ../../base
+patches:
+  - path: add-args.yaml
+  - path: vfio-mounts.yaml
+    target:
+      kind: DaemonSet
+      name: intel-gpu-plugin
+  - path: initcontainer.yaml
+    target:
+      kind: DaemonSet
+      name: intel-gpu-plugin

@@ -1,0 +1,27 @@
+- op: replace
+  path: /spec/template/spec/containers/0/volumeMounts
+  value:
+    - mountPath: /var/lib/kubelet/device-plugins
+      name: kubeletsockets
+    - mountPath: /var/run/cdi
+      name: cdipath
+    - mountPath: /dev/vfio
+      name: devvfio
+    - mountPath: /sys/bus/pci
+      name: sysbuspci
+- op: replace
+  path: /spec/template/spec/volumes
+  value:
+    - hostPath:
+        path: /var/lib/kubelet/device-plugins
+      name: kubeletsockets
+    - hostPath:
+        path: /var/run/cdi
+        type: DirectoryOrCreate
+      name: cdipath
+    - hostPath:
+        path: /dev/vfio
+      name: devvfio
+    - hostPath:
+        path: /sys/bus/pci
+      name: sysbuspci
