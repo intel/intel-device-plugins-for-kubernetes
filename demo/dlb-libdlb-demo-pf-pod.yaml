@@ -6,7 +6,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: dlb-libdlb-demo-pf-pod
-    image: intel/dlb-libdlb-demo:devel
+    image: intel/dlb-libdlb-demo:0.35.0
     imagePullPolicy: IfNotPresent
     resources:
       limits:

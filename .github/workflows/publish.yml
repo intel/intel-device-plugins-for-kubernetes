@@ -4,9 +4,9 @@ on:
   push:
     branches:
         - main
-        - release-0.31
         - release-0.32
         - release-0.34
+        - release-0.35
 
 permissions:
   contents: read
@@ -47,17 +47,6 @@ jobs:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
       with:
         fetch-depth: 0
-        ref: release-0.31
-    - name: Build release-0.31
-      run: |
-        GITHUB_SHA=$(git rev-parse HEAD)
-        export GITHUB_SHA
-        rm -rf _work/venv
-        make vhtml
-        mv _build/html $HOME/output/0.31
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
-      with:
-        fetch-depth: 0
         ref: release-0.32
     - name: Build release-0.32
       run: |
@@ -77,6 +66,17 @@ jobs:
         rm -rf _work/venv
         make vhtml
         mv _build/html $HOME/output/0.34
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+      with:
+        fetch-depth: 0
+        ref: release-0.35
+    - name: Build release-0.35
+      run: |
+        GITHUB_SHA=$(git rev-parse HEAD)
+        export GITHUB_SHA
+        rm -rf _work/venv
+        make vhtml
+        mv _build/html $HOME/output/0.35
     - name: Deploy the docs
       shell: bash
       env:

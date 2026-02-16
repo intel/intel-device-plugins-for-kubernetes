@@ -62,7 +62,7 @@ ENTRYPOINT ["/usr/local/bin/intel_dsa_device_plugin"]
 LABEL vendor='Intel®'
 LABEL org.opencontainers.image.source='https://github.com/intel/intel-device-plugins-for-kubernetes'
 LABEL maintainer="Intel®"
-LABEL version='devel'
+LABEL version='0.35.0'
 LABEL release='1'
 LABEL name='intel-dsa-plugin'
 LABEL summary='Intel® DSA device plugin for Kubernetes'
