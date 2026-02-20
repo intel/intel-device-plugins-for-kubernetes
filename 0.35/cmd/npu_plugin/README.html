@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel NPU device plugin for Kubernetes &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Intel NPU device plugin for Kubernetes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/npu_plugin/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-npu-device-plugin-for-kubernetes">
+<h1>Intel NPU device plugin for Kubernetes<a class="headerlink" href="#intel-npu-device-plugin-for-kubernetes" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#modes-and-configuration-options">Modes and Configuration Options</a></p></li>
+<li><p><a class="reference external" href="#umd-kmd-and-firmware">UMD, KMD and firmware</a></p></li>
+<li><p><a class="reference external" href="#pre-built-images">Pre-built Images</a></p></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#install-with-nfd">Install with NFD</a></p></li>
+<li><p><a class="reference external" href="#install-with-operator">Install with Operator</a></p></li>
+<li><p><a class="reference external" href="#verify-plugin-registration">Verify Plugin Registration</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#testing-and-demos">Testing and Demos</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Intel NPU plugin facilitates Kubernetes workload offloading by providing access to Intel CPU neural processing units supported by the host kernel.</p>
+<p>The following CPU families are currently detected by the plugin:</p>
+<ul class="simple">
+<li><p>Core Ultra Series 1 (Meteor Lake)</p></li>
+<li><p>Core Ultra Series 2 (Arrow Lake)</p></li>
+<li><p>Core Ultra 200V Series (Lunar Lake)</p></li>
+<li><p>Core Ultra Series 3 (Panther Lake)</p></li>
+</ul>
+<p>Intel NPU plugin registers a resource to the Kubernetes cluster:
+| Resource | Description |
+|:—- |:——– |
+| npu.intel.com/accel | NPU |</p>
+</section>
+<section id="modes-and-configuration-options">
+<h2>Modes and Configuration Options<a class="headerlink" href="#modes-and-configuration-options" title="Permalink to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Flag</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">-shared-dev-num</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Number of containers that can share the same NPU device</td>
+</tr>
+</tbody>
+</table><p>The plugin also accepts a number of other arguments (common to all plugins) related to logging.
+Please use the -h option to see the complete list of logging related options.</p>
+</section>
+<section id="umd-kmd-and-firmware">
+<h2>UMD, KMD, and Firmware<a class="headerlink" href="#umd-kmd-and-firmware" title="Permalink to this heading"></a></h2>
+<p>To run workloads on the NPU device, three components are required:</p>
+<ul class="simple">
+<li><p><strong>UMD (User Mode Driver):</strong> Must be included in the container image. Download it from the <a class="reference external" href="https://github.com/intel/linux-npu-driver/">Intel NPU driver</a> project.</p></li>
+<li><p><strong>KMD (Kernel Mode Driver):</strong> Provided by recent Linux distributions (e.g., Ubuntu 24.04) as part of the operating system.</p></li>
+<li><p><strong>Firmware:</strong> Also included in modern Linux distributions, or available from <a class="reference external" href="https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/tree/intel/vpu">linux-firmware</a> and <a class="reference external" href="https://github.com/intel/linux-npu-driver/tree/main/firmware/bin">intel-npu-driver</a>.</p></li>
+</ul>
+<p>For a detailed overview, see the Intel NPU driver <a class="reference external" href="https://github.com/intel/linux-npu-driver/blob/main/docs/overview.md">documentation</a>.</p>
+<p>An example <a class="reference external" href="#testing-and-demos">demo workload</a> is provided in this repository.</p>
+<p>For reference:</p>
+<ul class="simple">
+<li><p>The NPU KMD source is in the <a class="reference external" href="https://github.com/torvalds/linux/tree/master/drivers/accel/ivpu">Linux kernel</a>.</p></li>
+<li><p>Firmware sources are in <a class="reference external" href="https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/tree/intel/vpu">linux-firmware</a> and <a class="reference external" href="https://github.com/intel/linux-npu-driver/tree/main/firmware/bin">intel-npu-driver</a>.</p></li>
+</ul>
+</section>
+<section id="pre-built-images">
+<h2>Pre-built Images<a class="headerlink" href="#pre-built-images" title="Permalink to this heading"></a></h2>
+<p><a class="reference external" href="https://hub.docker.com/r/intel/intel-npu-plugin">Pre-built images</a>
+are available on the Docker hub. These images are automatically built and uploaded
+to the hub from the latest main branch of this repository.</p>
+<p>Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers in the format <code class="docutils literal notranslate"><span class="pre">x.y.z</span></code>, corresponding to the branches and releases in this
+repository.</p>
+<p>See <a class="reference internal" href="../../DEVEL.html"><span class="doc">the development guide</span></a> for details if you want to deploy a customized version of the plugin.</p>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>There are multiple ways to install Intel NPU plugin to a cluster. The most common methods are described below.</p>
+<blockquote>
+<div><p><strong>Note</strong>: Replace <code class="docutils literal notranslate"><span class="pre">&lt;RELEASE_VERSION&gt;</span></code> with the desired <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tags">release tag</a> or <code class="docutils literal notranslate"><span class="pre">main</span></code> to get <code class="docutils literal notranslate"><span class="pre">devel</span></code> images.</p>
+</div></blockquote>
+<blockquote>
+<div><p><strong>Note</strong>: Add <code class="docutils literal notranslate"><span class="pre">--dry-run=client</span> <span class="pre">-o</span> <span class="pre">yaml</span></code> to the <code class="docutils literal notranslate"><span class="pre">kubectl</span></code> commands below to visualize the YAML content being applied.</p>
+</div></blockquote>
+<section id="install-with-nfd">
+<h3>Install with NFD<a class="headerlink" href="#install-with-nfd" title="Permalink to this heading"></a></h3>
+<p>Deploy NPU plugin with the help of NFD (<a class="reference external" href="https://github.com/kubernetes-sigs/node-feature-discovery">Node Feature Discovery</a>). It detects the presence of Intel NPUs and labels them accordingly. NPU plugin’s node selector is used to deploy plugin to nodes which have such a NPU label.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start NFD - if your cluster doesn&#39;t have NFD installed yet</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+
+<span class="c1"># Create NodeFeatureRules for detecting NPUs on nodes</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+
+<span class="c1"># Create NPU plugin daemonset</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/npu_plugin/overlays/nfd_labeled_nodes?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="install-with-operator">
+<h3>Install with Operator<a class="headerlink" href="#install-with-operator" title="Permalink to this heading"></a></h3>
+<p>NPU plugin can be installed with the Intel Device Plugin Operator. It allows configuring NPU plugin parameters without kustomizing the deployment files. The general installation is described in the <a class="reference external" href="../operator/README.html#installation">install documentation</a>.</p>
+</section>
+<section id="verify-plugin-registration">
+<h3>Verify Plugin Registration<a class="headerlink" href="#verify-plugin-registration" title="Permalink to this heading"></a></h3>
+<p>You can verify that the plugin has been installed on the expected nodes by searching for the relevant
+resource allocation status on the nodes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-o<span class="o">=</span><span class="nv">jsonpath</span><span class="o">=</span><span class="s2">&quot;{range .items[*]}{.metadata.name}{&#39;\n&#39;}{&#39; accel: &#39;}{.status.allocatable.npu\.intel\.com/accel}{&#39;\n&#39;}&quot;</span>
+master
+<span class="w"> </span>accel:<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="testing-and-demos">
+<h2>Testing and Demos<a class="headerlink" href="#testing-and-demos" title="Permalink to this heading"></a></h2>
+<p>The NPU plugin functionality can be verified by deploying a <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/c9259062b205a4c93fdb1e083057646b8a54a355/cmd/npu_plugin/../../demo/intel-npu-demo/">npu-plugin-demo</a> image which runs tests with the Intel NPU.</p>
+<ol>
+<li><p>Make the image available to the cluster:</p>
+<p>Build image:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>make<span class="w"> </span>intel-npu-demo
+</pre></div>
+</div>
+<p>Tag and push the <code class="docutils literal notranslate"><span class="pre">intel-npu-demo</span></code> image to a repository available in the cluster. Then modify the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/c9259062b205a4c93fdb1e083057646b8a54a355/cmd/npu_plugin/../../demo/intel-npu-workload.yaml">intel-npu-workload.yaml’s</a> image location accordingly:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>docker<span class="w"> </span>tag<span class="w"> </span>intel/intel-npu-demo:devel<span class="w"> </span>&lt;repository&gt;/intel/intel-npu-demo:latest
+$<span class="w"> </span>docker<span class="w"> </span>push<span class="w"> </span>&lt;repository&gt;/intel/intel-npu-demo:latest
+$<span class="w"> </span><span class="nv">$EDITOR</span><span class="w"> </span><span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/demo/intel-npu-workload.yaml
+</pre></div>
+</div>
+<p>If you are running the demo on a single node cluster, and do not have your own registry, you can add image to node image cache instead. For example, to import docker image to containerd cache:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>docker<span class="w"> </span>save<span class="w"> </span>intel/intel-npu-demo:devel<span class="w"> </span><span class="p">|</span><span class="w"> </span>ctr<span class="w"> </span>-n<span class="w"> </span>k8s.io<span class="w"> </span>images<span class="w"> </span>import<span class="w"> </span>-
+</pre></div>
+</div>
+<p>Running <code class="docutils literal notranslate"><span class="pre">ctr</span></code> may require the use of <code class="docutils literal notranslate"><span class="pre">sudo</span></code>.</p>
+</li>
+<li><p>Create a job:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/demo/intel-npu-workload.yaml
+job.batch/npu-workload<span class="w"> </span>created
+</pre></div>
+</div>
+</li>
+<li><p>Review the job’s logs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span><span class="p">|</span><span class="w"> </span>fgrep<span class="w"> </span>npu-workload
+<span class="c1"># substitute the &#39;xxxxx&#39; below for the pod name listed above</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>logs<span class="w"> </span>npu-workload-xxxxx
+&lt;log<span class="w"> </span>output&gt;
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

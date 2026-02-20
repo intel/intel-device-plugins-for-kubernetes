@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XeLink sidecar for Intel XPU Manager &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">XeLink sidecar for Intel XPU Manager</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/xpumanager_sidecar/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="xelink-sidecar-for-intel-xpu-manager">
+<h1>XeLink sidecar for Intel XPU Manager<a class="headerlink" href="#xelink-sidecar-for-intel-xpu-manager" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#modes-and-configuration-options">Modes and Configuration Options</a></p></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#install-xpu-manager-with-the-sidecar">Install XPU Manager with the Sidecar</a></p></li>
+<li><p><a class="reference external" href="#install-sidecar-to-an-existing-xpu-manager">Install Sidecar to an Existing XPU Manager</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#verify-sidecar-functionality">Verify Sidecar Functionality</a></p></li>
+<li><p><a class="reference external" href="#use-https-with-xpu-manager">Use HTTPS with XPU Manager</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Intel GPUs can be interconnected via an XeLink. In some workloads it is beneficial to use GPUs that are XeLinked together for optimal performance. XeLink information is provided by <a class="reference external" href="https://www.github.com/intel/xpumanager">Intel XPU Manager</a> via its metrics API. Xelink sidecar retrieves the information from XPU Manager and stores it on the node under <code class="docutils literal notranslate"><span class="pre">/etc/kubernetes/node-feature-discovery/features.d/</span></code> as a feature label file. <a class="reference external" href="https://github.com/kubernetes-sigs/node-feature-discovery">NFD</a> reads this file and converts it to Kubernetes node labels. These labels are then used by <a class="reference external" href="https://github.com/intel/platform-aware-scheduling/tree/master/gpu-aware-scheduling">GAS</a> to make <a class="reference external" href="https://github.com/intel/platform-aware-scheduling/blob/master/gpu-aware-scheduling/docs/usage.md#multi-gpu-allocation-with-xe-link-connections">scheduling decisions</a> for Pods.</p>
+</section>
+<section id="modes-and-configuration-options">
+<h2>Modes and Configuration Options<a class="headerlink" href="#modes-and-configuration-options" title="Permalink to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Flag</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">-lane-count</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">Minimum lane count for an XeLink interconnect to be accepted</td>
+</tr>
+<tr>
+<td style="text-align: left;">-interval</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Interval for XeLink topology fetching and label writing (seconds, &gt;= 1)</td>
+</tr>
+<tr>
+<td style="text-align: left;">-startup-delay</td>
+<td style="text-align: left;">int</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">Startup delay before the first topology fetching (seconds, &gt;= 0)</td>
+</tr>
+<tr>
+<td style="text-align: left;">-label-namespace</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">gpu.intel.com</td>
+<td style="text-align: left;">Namespace or prefix for the labels. i.e. <strong>gpu.intel.com</strong>/xe-links</td>
+</tr>
+<tr>
+<td style="text-align: left;">-allow-subdeviceless-links</td>
+<td style="text-align: left;">bool</td>
+<td style="text-align: left;">false</td>
+<td style="text-align: left;">Include xelinks also for devices that do not have subdevices</td>
+</tr>
+<tr>
+<td style="text-align: left;">-cert</td>
+<td style="text-align: left;">string</td>
+<td style="text-align: left;">""</td>
+<td style="text-align: left;">Use HTTPS and verify server's endpoint</td>
+</tr>
+</tbody>
+</table><p>The sidecar also accepts a number of other arguments. Please use the -h option to see the complete list of options.</p>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>The following sections detail how to obtain, deploy and test the XPU Manager XeLink sidecar.</p>
+<section id="pre-built-images">
+<h3>Pre-built Images<a class="headerlink" href="#pre-built-images" title="Permalink to this heading"></a></h3>
+<p><a class="reference external" href="https://hub.docker.com/r/intel/intel-xpumanager-sidecar">Pre-built images</a>
+of this component are available on the Docker hub. These images are automatically built and uploaded
+to the hub from the latest main branch of this repository.</p>
+<p>Release tagged images of the components are also available on the Docker hub, tagged with their
+release version numbers in the format <code class="docutils literal notranslate"><span class="pre">x.y.z</span></code>, corresponding to the branches and releases in this
+repository.</p>
+<p>Note: Replace <code class="docutils literal notranslate"><span class="pre">&lt;RELEASE_VERSION&gt;</span></code> with the desired <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tags">release tag</a> or <code class="docutils literal notranslate"><span class="pre">main</span></code> to get <code class="docutils literal notranslate"><span class="pre">devel</span></code> images.</p>
+<p>See <a class="reference internal" href="../../DEVEL.html"><span class="doc">the development guide</span></a> for details if you want to deploy a customized version of the plugin.</p>
+<section id="install-xpu-manager-with-the-sidecar">
+<h4>Install XPU Manager with the Sidecar<a class="headerlink" href="#install-xpu-manager-with-the-sidecar" title="Permalink to this heading"></a></h4>
+<p>Install XPU Manager daemonset with the XeLink sidecar</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/xpumanager_sidecar/overlays/http?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+</pre></div>
+</div>
+<p>Please see XPU Manager Kubernetes files for additional info on <a class="reference external" href="https://github.com/intel/xpumanager/tree/master/deployment/kubernetes">installation</a>.</p>
+</section>
+<section id="install-sidecar-to-an-existing-xpu-manager">
+<h4>Install Sidecar to an Existing XPU Manager<a class="headerlink" href="#install-sidecar-to-an-existing-xpu-manager" title="Permalink to this heading"></a></h4>
+<p>Use patch to add sidecar into the XPU Manager daemonset.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>patch<span class="w"> </span>daemonsets.apps<span class="w"> </span>intel-xpumanager<span class="w"> </span>--patch-file<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/xpumanager_sidecar/overlays/http/xpumanager.yaml?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+</pre></div>
+</div>
+<p>NOTE: The sidecar patch will remove other resources from the XPU Manager container. If your XPU Manager daemonset is using, for example, the smarter device manager resources, those will be removed.</p>
+</section>
+</section>
+<section id="verify-sidecar-functionality">
+<h3>Verify Sidecar Functionality<a class="headerlink" href="#verify-sidecar-functionality" title="Permalink to this heading"></a></h3>
+<p>You can verify the sidecar’s functionality by checking node’s xe-links labels:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span>-A<span class="w"> </span>-o<span class="o">=</span><span class="nv">jsonpath</span><span class="o">=</span><span class="s2">&quot;{range .items[*]}{.metadata.name},{.metadata.labels.gpu\.intel\.com\/xe-links}{&#39;\n&#39;}{end}&quot;</span>
+master,0.0-1.0_0.1-1.1
+</pre></div>
+</div>
+</section>
+<section id="use-https-with-xpu-manager">
+<h3>Use HTTPS with XPU Manager<a class="headerlink" href="#use-https-with-xpu-manager" title="Permalink to this heading"></a></h3>
+<p>There is an alternative deployment that uses HTTPS instead of HTTP. The reference deployment requires <code class="docutils literal notranslate"><span class="pre">cert-manager</span></code> to provide a certificate for TLS. To deploy:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/xpumanager_sidecar/overlays/cert-manager?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+</pre></div>
+</div>
+<p>The deployment requests a certificate and key from <code class="docutils literal notranslate"><span class="pre">cert-manager</span></code>. They are then provided to the gunicorn container as secrets and are used in the HTTPS interface. The sidecar container uses the same certificate to verify the server.</p>
+<blockquote>
+<div><p><em>NOTE</em>: The HTTPS deployment uses self-signed certificates. For production use, the certificates should be properly set up.</p>
+</div></blockquote>
+<details>
+<summary>Enabling HTTPS manually</summary><p>If one doesn’t want to use <code class="docutils literal notranslate"><span class="pre">cert-manager</span></code>, the same can be achieved manually by creating certificates with openssl and then adding it to the deployment. The steps are roughly:</p>
+<ol class="simple">
+<li><p>Create a certificate with <a class="reference external" href="https://www.linode.com/docs/guides/create-a-self-signed-tls-certificate/">openssl</a></p></li>
+<li><p>Create a secret from the <a class="reference external" href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_secret_tls/">certificate &amp; key</a>.</p></li>
+<li><p>Change the deployment:</p></li>
+</ol>
+<ul class="simple">
+<li><p>Add certificate and key to gunicorn container:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>      <span class="o">-</span> <span class="n">command</span><span class="p">:</span>
+        <span class="o">-</span> <span class="n">gunicorn</span>
+<span class="o">...</span>
+        <span class="o">-</span> <span class="o">--</span><span class="n">certfile</span><span class="o">=/</span><span class="n">certs</span><span class="o">/</span><span class="n">tls</span><span class="o">.</span><span class="n">crt</span>
+        <span class="o">-</span> <span class="o">--</span><span class="n">keyfile</span><span class="o">=/</span><span class="n">certs</span><span class="o">/</span><span class="n">tls</span><span class="o">.</span><span class="n">key</span>
+<span class="o">...</span>
+        <span class="o">-</span> <span class="n">xpum_rest_main</span><span class="p">:</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Add secret mounting to the Pod:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">containers</span><span class="p">:</span>
+      <span class="o">-</span> <span class="n">name</span><span class="p">:</span> <span class="n">python</span><span class="o">-</span><span class="n">exporter</span>
+        <span class="n">volumeMounts</span><span class="p">:</span>
+        <span class="o">-</span> <span class="n">mountPath</span><span class="p">:</span> <span class="o">/</span><span class="n">certs</span>
+          <span class="n">name</span><span class="p">:</span> <span class="n">certs</span>
+          <span class="n">readOnly</span><span class="p">:</span> <span class="n">true</span>
+    <span class="n">volumes</span><span class="p">:</span>
+    <span class="o">-</span> <span class="n">name</span><span class="p">:</span> <span class="n">certs</span>
+      <span class="n">secret</span><span class="p">:</span>
+        <span class="n">defaultMode</span><span class="p">:</span> <span class="mi">420</span>
+        <span class="n">secretName</span><span class="p">:</span> <span class="n">xpum</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">cert</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Add use-https and cert to sidecar</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>        <span class="n">name</span><span class="p">:</span> <span class="n">xelink</span><span class="o">-</span><span class="n">sidecar</span>
+        <span class="n">volumeMounts</span><span class="p">:</span>
+        <span class="o">-</span> <span class="n">mountPath</span><span class="p">:</span> <span class="o">/</span><span class="n">certs</span>
+          <span class="n">name</span><span class="p">:</span> <span class="n">certs</span>
+          <span class="n">readOnly</span><span class="p">:</span> <span class="n">true</span>
+        <span class="n">args</span><span class="p">:</span>
+<span class="o">...</span>
+          <span class="o">-</span> <span class="o">--</span><span class="n">cert</span><span class="o">=/</span><span class="n">certs</span><span class="o">/</span><span class="n">tls</span><span class="o">.</span><span class="n">crt</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+</details></section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

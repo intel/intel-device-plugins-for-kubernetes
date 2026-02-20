@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Instructions for Device Plugin Development and Maintenance &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Extensions" href="docs/extensions.html" />
+    <link rel="prev" title="Overview" href="README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Instructions for Device Plugin Development and Maintenance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#day-to-day-development-how-to-s">Day-to-day Development How to’s</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#get-the-source-code">Get the Source Code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build-and-run-plugin-binaries">Build and Run Plugin Binaries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build-container-images">Build Container Images</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#build-against-a-newer-version-of-kubernetes">Build Against a Newer Version of Kubernetes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#work-with-intel-device-plugins-operator-modifications">Work with Intel Device Plugins Operator Modifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#publish-a-new-version-of-the-intel-device-plugins-operator-to-operatorhub-io">Publish a New Version of the Intel Device Plugins Operator to operatorhub.io</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-e2e-tests">Run E2E Tests</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#table-of-labels">Table of Labels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#predefined-e2e-tests">Predefined E2E Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-controller-tests-with-a-local-control-plane">Run Controller Tests with a Local Control Plane</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-develop-simple-device-plugins">How to Develop Simple Device Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#logging">Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#error-conventions">Error Conventions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#ubi-images">UBI images</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#containers-with-rpm-dependencies">Containers with RPM dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#checklist-for-new-device-plugins">Checklist for New Device Plugins</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Instructions for Device Plugin Development and Maintenance</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/DEVEL.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="instructions-for-device-plugin-development-and-maintenance">
+<h1>Instructions for Device Plugin Development and Maintenance<a class="headerlink" href="#instructions-for-device-plugin-development-and-maintenance" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#day-to-day-development">Day-to-day Development How to’s</a></p>
+<ul>
+<li><p><a class="reference external" href="#get-the-source-code">Get the Source Code</a></p></li>
+<li><p><a class="reference external" href="#build-and-run-plugin-binaries">Build and Run Plugin Binaries</a></p></li>
+<li><p><a class="reference external" href="#build-container-images">Build Container Images</a></p></li>
+<li><p><a class="reference external" href="#build-against-a-newer-version-of-kubernetes">Build Against a Newer Version of Kubernetes</a></p></li>
+<li><p><a class="reference external" href="#work-with-intel-device-plugins-operator-modifications">Work with Intel Device Plugins Operator Modifications</a></p></li>
+<li><p><a class="reference external" href="#publish-a-new-version-of-the-intel-device-plugins-operator-to-operatorhubio">Publish a New Version of the Intel Device Plugins Operator to operatorhub.io</a></p></li>
+<li><p><a class="reference external" href="#run-e2e-tests">Run E2E Tests</a></p></li>
+<li><p><a class="reference external" href="#run-controller-tests-with-a-local-control-plane">Run Controller Tests with a Local Control Plane</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#how-to-develop-simple-device-plugins">How to Develop Simple Device Plugins</a></p>
+<ul>
+<li><p><a class="reference external" href="#logging">Logging</a></p></li>
+<li><p><a class="reference external" href="#error-conventions">Error Conventions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#ubi-images">UBI images</a></p></li>
+<li><p><a class="reference external" href="#checklist-for-new-device-plugins">Checklist for New Device Plugins</a></p></li>
+</ul>
+<section id="day-to-day-development-how-to-s">
+<h2>Day-to-day Development How to’s<a class="headerlink" href="#day-to-day-development-how-to-s" title="Permalink to this heading"></a></h2>
+<section id="get-the-source-code">
+<h3>Get the Source Code<a class="headerlink" href="#get-the-source-code" title="Permalink to this heading"></a></h3>
+<p>With <code class="docutils literal notranslate"><span class="pre">git</span></code> installed on the system, just clone the repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="o">=</span>/path/to/intel-device-plugins-for-kubernetes
+$<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/intel-device-plugins-for-kubernetes<span class="w"> </span><span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+</pre></div>
+</div>
+</section>
+<section id="build-and-run-plugin-binaries">
+<h3>Build and Run Plugin Binaries<a class="headerlink" href="#build-and-run-plugin-binaries" title="Permalink to this heading"></a></h3>
+<p>With <code class="docutils literal notranslate"><span class="pre">go</span></code> development environment installed on the system, build the plugin:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>
+$<span class="w"> </span>make<span class="w"> </span>&lt;plugin-build-target&gt;
+</pre></div>
+</div>
+<p><strong>Note:</strong> All the available plugin build targets is roughly the output of <code class="docutils literal notranslate"><span class="pre">ls</span> <span class="pre">${INTEL_DEVICE_PLUGINS_SRC}/cmd</span></code>.</p>
+<p>To test the plugin binary on the development system, run as administrator:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>sudo<span class="w"> </span>-E<span class="w"> </span><span class="si">${</span><span class="nv">INTEL_DEVICE_PLUGINS_SRC</span><span class="si">}</span>/cmd/&lt;plugin-build-target&gt;/&lt;plugin-build-target&gt;
+</pre></div>
+</div>
+</section>
+<section id="build-container-images">
+<h3>Build Container Images<a class="headerlink" href="#build-container-images" title="Permalink to this heading"></a></h3>
+<p>The dockerfiles are generated on the fly from <code class="docutils literal notranslate"><span class="pre">.in</span></code> suffixed files and <code class="docutils literal notranslate"><span class="pre">.docker</span></code> include-snippets which are stitched together with
+cpp preprocessor. You need to install cpp for that, e.g. in ubuntu it is found from build-essential (sudo apt install build-essential).
+Don’t edit the generated dockerfiles. Edit the inputs.</p>
+<p>The simplest way to build all the docker images, is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ make images
+</pre></div>
+</div>
+<p>But it is very slow. You can drastically speed it up by first running once:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ make vendor
+</pre></div>
+</div>
+<p>Which brings the libraries into the builder container without downloading them again and again for each plugin.</p>
+<p>But it is still slow. You can further speed it up by first running once:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ make licenses
+</pre></div>
+</div>
+<p>Which pre-creates the go-licenses for all plugins, instead of re-creating them for each built plugin, every time.</p>
+<p>But it is still rather slow to build all the images, and unnecessary, if you iterate on just one. Instead, build just the one you are iterating on, example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ make &lt;image-build-target&gt;
+</pre></div>
+</div>
+<p><strong>Note:</strong> All the available image build targets is roughly the output of <code class="docutils literal notranslate"><span class="pre">ls</span> <span class="pre">${INTEL_DEVICE_PLUGINS_SRC}/build/docker/*.Dockerfile</span></code>.</p>
+<p>If you iterate on only one plugin and if you know what its target cmd is (see folder <code class="docutils literal notranslate"><span class="pre">cmd/</span></code>), you can opt to pre-create just its licenses, example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ make licenses/&lt;plugin-build-target&gt;
+</pre></div>
+</div>
+<p>The container image target names in the Makefile are derived from the <code class="docutils literal notranslate"><span class="pre">.Dockerfile.in</span></code> suffixed filenames under folder <code class="docutils literal notranslate"><span class="pre">build/docker/templates/</span></code>.</p>
+<p>Recap:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ make vendor
+$ make licenses (or just make licenses/&lt;plugin-build-target&gt;)
+$ make &lt;image-build-target&gt;
+</pre></div>
+</div>
+<p>Repeat the last step only, unless you change library dependencies. If you pull in new sources, start again from <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">vendor</span></code>.</p>
+<p><strong>Note:</strong> The image build tool can be changed from the default <code class="docutils literal notranslate"><span class="pre">docker</span></code> by setting the <code class="docutils literal notranslate"><span class="pre">BUILDER</span></code> argument
+to the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/47f074545279ed2c9e154038e4f1ebbe6e744a6d/Makefile"><code class="docutils literal notranslate"><span class="pre">Makefile</span></code></a>: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">&lt;image-build-target&gt;</span> <span class="pre">BUILDER=&lt;builder&gt;</span></code>. Supported values are <code class="docutils literal notranslate"><span class="pre">docker</span></code>, <code class="docutils literal notranslate"><span class="pre">buildah</span></code>, and <code class="docutils literal notranslate"><span class="pre">podman</span></code>.</p>
+</section>
+<section id="build-against-a-newer-version-of-kubernetes">
+<h3>Build Against a Newer Version of Kubernetes<a class="headerlink" href="#build-against-a-newer-version-of-kubernetes" title="Permalink to this heading"></a></h3>
+<p>First, you need to update module dependencies. The easiest way is to use
+<code class="docutils literal notranslate"><span class="pre">scripts/upgrade_k8s.sh</span></code> copied <a class="reference external" href="https://github.com/kubernetes/kubernetes/issues/79384#issuecomment-521493597">from a k/k issue</a>:</p>
+<p>Just run it inside the repo’s root, e.g.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ ${INTEL_DEVICE_PLUGINS_SRC}/scripts/upgrade_k8s.sh &lt;k8s version&gt;
+</pre></div>
+</div>
+<p>Finally, run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ make generate
+$ make test
+</pre></div>
+</div>
+<p>and fix all new compilation issues.</p>
+</section>
+<section id="work-with-intel-device-plugins-operator-modifications">
+<h3>Work with Intel Device Plugins Operator Modifications<a class="headerlink" href="#work-with-intel-device-plugins-operator-modifications" title="Permalink to this heading"></a></h3>
+<p>There are few useful steps when working with changes to Device Plugins CRDs and controllers:</p>
+<ol class="simple">
+<li><p>Install controller-gen: <code class="docutils literal notranslate"><span class="pre">GO111MODULE=on</span> <span class="pre">go</span> <span class="pre">get</span> <span class="pre">-u</span> <span class="pre">sigs.k8s.io/controller-tools/cmd/controller-gen&#64;&lt;release</span> <span class="pre">ver&gt;,</span> <span class="pre">e.g,</span> <span class="pre">v0.4.1</span></code></p></li>
+<li><p>Generate CRD and Webhook artifacts: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">generate</span></code></p></li>
+<li><p>Test local changes using <a class="reference external" href="https://book.kubebuilder.io/reference/envtest.html">envtest</a>: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">envtest</span></code></p></li>
+<li><p>Build a custom operator image: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">intel-deviceplugin-operator</span></code></p></li>
+<li><p>(Un)deploy operator: <code class="docutils literal notranslate"><span class="pre">kubectl</span> <span class="pre">[apply|delete]</span> <span class="pre">-k</span> <span class="pre">deployments/operator/default</span></code></p></li>
+</ol>
+</section>
+<section id="publish-a-new-version-of-the-intel-device-plugins-operator-to-operatorhub-io">
+<h3>Publish a New Version of the Intel Device Plugins Operator to operatorhub.io<a class="headerlink" href="#publish-a-new-version-of-the-intel-device-plugins-operator-to-operatorhub-io" title="Permalink to this heading"></a></h3>
+<p>Check if the fields mentioned below in the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/47f074545279ed2c9e154038e4f1ebbe6e744a6d/deployments/operator/manifests/bases/intel-device-plugins-operator.clusterserviceversion.yaml">base CSV manifest file</a> have the correct values. If not, fix them manually (operator-sdk does not support updating these fields in any other way).</p>
+<ul class="simple">
+<li><p>spec.maturity</p></li>
+<li><p>spec.version</p></li>
+<li><p>spec.replaces</p></li>
+<li><p>metadata.annotations.capabilities</p></li>
+<li><p>metadata.annotations.containerImage</p></li>
+<li><p>metadata.annotations.createdAT</p></li>
+</ul>
+<p>Check if <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/47f074545279ed2c9e154038e4f1ebbe6e744a6d/deployments/operator/manager/manager.yaml">manager yaml file</a> <code class="docutils literal notranslate"><span class="pre">spec.template.spec.containers.env</span></code> has correct sha256 digest for each plugin image.</p>
+<p>Fork the <a class="reference external" href="https://github.com/k8s-operatorhub/community-operators">Community Operators</a> repo and clone it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/&lt;GitHub Username&gt;/community-operators
+</pre></div>
+</div>
+<p>Generate bundle and build bundle image:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ make bundle TAG=0.X.Y CHANNELS=stable DEFAULT_CHANNEL=stable
+$ make bundle-build
+</pre></div>
+</div>
+<p>Push the image to a registry:</p>
+<ul class="simple">
+<li><p>If pushing to the Docker hub, specify <code class="docutils literal notranslate"><span class="pre">docker.io/</span></code> in front of the image name for running bundle.</p></li>
+<li><p>If pushing to the local registry, put the option <code class="docutils literal notranslate"><span class="pre">--use-http</span></code> for running bundle.</p></li>
+</ul>
+<p>Verify the operator deployment works OK via OLM in your development cluster:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ operator-sdk olm install
+$ kubectl create namespace testoperator
+$ operator-sdk run bundle &lt;Registry&gt;:&lt;Tag&gt; -n testoperator
+# do verification checks
+...
+# do clean up
+$ operator-sdk cleanup intel-device-plugins-operator --namespace testoperator
+$ kubectl delete namespace testoperator
+$ operator-sdk olm uninstall
+</pre></div>
+</div>
+<p>Commit files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cd community-operators
+$ git add operators/intel-device-plugins-operator/0.X.Y
+$ git commit -am &#39;operators intel-device-plugins-operator (0.X.Y)&#39; -s
+</pre></div>
+</div>
+<p>Submit a PR to <a class="reference external" href="https://github.com/k8s-operatorhub/community-operators">Community Operators</a> repo.</p>
+<p>Check operator page
+https://operatorhub.io/operator/intel-device-plugins-operator
+after PR is merged.</p>
+</section>
+<section id="run-e2e-tests">
+<h3>Run E2E Tests<a class="headerlink" href="#run-e2e-tests" title="Permalink to this heading"></a></h3>
+<p>Currently the E2E tests require having a Kubernetes cluster already configured
+on the nodes with the hardware required by the device plugins. Also all the
+container images with the executables under test must be available in the
+cluster. If these two conditions are satisfied, run the tests with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run all e2e tests in this repository</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-v<span class="w"> </span>./test/e2e/...
+</pre></div>
+</div>
+<p>If you need to specify paths to your custom <code class="docutils literal notranslate"><span class="pre">kubeconfig</span></code> containing
+embedded authentication info then add the <code class="docutils literal notranslate"><span class="pre">-kubeconfig</span></code> argument:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-v<span class="w"> </span>./test/e2e/...<span class="w"> </span>-args<span class="w"> </span>-kubeconfig<span class="w"> </span>/path/to/kubeconfig
+</pre></div>
+</div>
+<p>The full list of available options can be obtained with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>./test/e2e/...<span class="w"> </span>-args<span class="w"> </span>-help
+</pre></div>
+</div>
+<p>In most cases, it would not be possible to run all E2E tests in one system.
+For running a subset of tests, there are labels that you can use to pick out specific parts.
+You can run the tests with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run a subset of tests</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-v<span class="w"> </span>./test/e2e/...<span class="w"> </span>-args<span class="w"> </span>-ginkgo.focus<span class="w"> </span>&lt;labels<span class="w"> </span><span class="k">in</span><span class="w"> </span>regex&gt;<span class="w"> </span>-ginkgo.skip<span class="w"> </span>&lt;labels<span class="w"> </span><span class="k">in</span><span class="w"> </span>regex&gt;
+</pre></div>
+</div>
+<section id="table-of-labels">
+<h4>Table of Labels<a class="headerlink" href="#table-of-labels" title="Permalink to this heading"></a></h4>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Device</th>
+<th style="text-align: left;">Mode</th>
+<th style="text-align: left;">Resource</th>
+<th style="text-align: left;">App</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>dlb</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;"><code>pf</code>, <code>vf</code></td>
+<td style="text-align: left;"><code>libdlb</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>dsa</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;"><code>dedicated</code></td>
+<td style="text-align: left;"><code>accel-config</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>fpga</code></td>
+<td style="text-align: left;"><code>af</code>, <code>region</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>opae-nlb-demo</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>gpu</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;"><code>i915</code></td>
+<td style="text-align: left;"><code>busybox</code>, <code>tensorflow</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>iaa</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;"><code>dedicated</code></td>
+<td style="text-align: left;"><code>accel-config</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>qat</code></td>
+<td style="text-align: left;"><code>dpdk</code></td>
+<td style="text-align: left;"><code>dc</code></td>
+<td style="text-align: left;"><code>openssl</code>, <code>compress-perf</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>qat</code></td>
+<td style="text-align: left;"><code>dpdk</code></td>
+<td style="text-align: left;"><code>cy</code></td>
+<td style="text-align: left;"><code>openssl</code>, <code>crypto-perf</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>qat</code></td>
+<td style="text-align: left;"><code>kernel</code></td>
+<td style="text-align: left;"><code>cy1_dc0</code></td>
+<td style="text-align: left;"><code>busybox</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>sgx</code></td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><code>sgx-sdk-demo</code></td>
+</tr>
+</tbody>
+</table></section>
+<section id="examples">
+<h4>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># DLB for VF resource without any app running</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-v<span class="w"> </span>./test/e2e/...<span class="w"> </span>-args<span class="w"> </span>-ginkgo.focus<span class="w"> </span><span class="s2">&quot;Device:dlb.*Resource:vf.*App:noapp&quot;</span>
+
+<span class="c1"># FPGA with af mode with opae-nlb-demo app running</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-v<span class="w"> </span>./test/e2e/...<span class="w"> </span>-args<span class="w"> </span>-ginkgo.focus<span class="w"> </span><span class="s2">&quot;Device:fpga.*Mode:af.*App:opae-nlb-demo&quot;</span>
+
+<span class="c1"># GPU with running only tensorflow app</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-v<span class="w"> </span>./test/e2e/...<span class="w"> </span>-args<span class="w"> </span>-ginkgo.focus<span class="w"> </span><span class="s2">&quot;Device:gpu.*App:tensorflow&quot;</span>
+<span class="c1">#or</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-v<span class="w"> </span>./test/e2e/...<span class="w"> </span>-args<span class="w"> </span>-ginkgo.focus<span class="w"> </span><span class="s2">&quot;Device:gpu&quot;</span><span class="w"> </span>-ginkgo.skip<span class="w"> </span><span class="s2">&quot;App:busybox&quot;</span>
+
+<span class="c1"># QAT for qat4 cy resource with openssl app running</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-v<span class="w"> </span>./test/e2e/...<span class="w"> </span>-args<span class="w"> </span>-ginkgo.focus<span class="w"> </span><span class="s2">&quot;Device:qat.*Resource:cy.*App:openssl&quot;</span>
+
+<span class="c1"># SGX without running sgx-sdk-demo app</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-v<span class="w"> </span>./test/e2e/...<span class="w"> </span>-args<span class="w"> </span>-ginkgo.focus<span class="w"> </span><span class="s2">&quot;Device:sgx&quot;</span><span class="w"> </span>-ginkgo.skip<span class="w"> </span><span class="s2">&quot;App:sgx-sdk-demo&quot;</span>
+
+<span class="c1"># All of Sapphire Rapids device plugins</span>
+go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-v<span class="w"> </span>./test/e2e/...<span class="w"> </span>-args<span class="w"> </span>-ginkgo.focus<span class="w"> </span><span class="s2">&quot;Device:(dlb|dsa|iaa|qat|sgx)&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="predefined-e2e-tests">
+<h2>Predefined E2E Tests<a class="headerlink" href="#predefined-e2e-tests" title="Permalink to this heading"></a></h2>
+<p>It is possible to run predefined e2e tests with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">e2e</span><span class="o">-&lt;</span><span class="n">device</span><span class="o">&gt;</span> <span class="p">[</span><span class="n">E2E_LEVEL</span><span class="o">=</span><span class="p">{</span><span class="n">basic</span><span class="o">|</span><span class="n">full</span><span class="p">}]</span> <span class="p">[</span><span class="n">FOCUS</span><span class="o">=&lt;</span><span class="n">labels</span> <span class="ow">in</span> <span class="n">regex</span><span class="o">&gt;</span><span class="p">]</span> <span class="p">[</span><span class="n">SKIP</span><span class="o">=&lt;</span><span class="n">labels</span> <span class="ow">in</span> <span class="n">regex</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;"><code>E2E_LEVEL</code></th>
+<th style="text-align: left;">Equivalent <code>FOCUS</code> or <code>SKIP</code></th>
+<th style="text-align: left;">Explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>basic</code></td>
+<td style="text-align: left;"><code>FOCUS=App:noapp</code></td>
+<td style="text-align: left;"><code>basic</code> does not run any app pod, but checks if the plugin works and the resources are available</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>full</code></td>
+<td style="text-align: left;"><code>SKIP=App:noapp</code></td>
+<td style="text-align: left;"><code>full</code> checks all resources, runs all apps except the spec kept for no app running</td>
+</tr>
+</tbody>
+</table><section id="id1">
+<h3>Examples<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># DLB for both of pf and vf resources with running libdlb app</span>
+make<span class="w"> </span>e2e-dlb<span class="w"> </span><span class="nv">E2E_LEVEL</span><span class="o">=</span>full
+
+<span class="c1"># QAT for cy resource with running only openssl app</span>
+make<span class="w"> </span>e2e-qat<span class="w"> </span><span class="nv">FOCUS</span><span class="o">=</span>Resource:cy.*App:openssl
+
+<span class="c1"># QAT for dc resource without running any app</span>
+make<span class="w"> </span>e2e-qat<span class="w"> </span><span class="nv">E2E_LEVEL</span><span class="o">=</span>basic<span class="w"> </span><span class="nv">FOCUS</span><span class="o">=</span>Resource:dc
+
+<span class="c1"># GPU without running tensorflow app</span>
+make<span class="w"> </span>e2e-gpu<span class="w"> </span><span class="nv">E2E_LEVEL</span><span class="o">=</span>full<span class="w"> </span><span class="nv">SKIP</span><span class="o">=</span>tensorflow
+</pre></div>
+</div>
+<p>It is also possible to run the tests which don’t depend on hardware
+without a pre-configured Kubernetes cluster. Just make sure you have
+<a class="reference external" href="https://kind.sigs.k8s.io/">Kind</a> installed on your host and run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">test</span><span class="o">-</span><span class="k">with</span><span class="o">-</span><span class="n">kind</span>
+</pre></div>
+</div>
+</section>
+<section id="run-controller-tests-with-a-local-control-plane">
+<h3>Run Controller Tests with a Local Control Plane<a class="headerlink" href="#run-controller-tests-with-a-local-control-plane" title="Permalink to this heading"></a></h3>
+<p>The controller-runtime library provides a package for integration testing by
+starting a local control plane. The package is called
+<a class="reference external" href="https://pkg.go.dev/sigs.k8s.io/controller-runtime/pkg/envtest">envtest</a>. The
+operator uses this package for its integration testing.</p>
+<p>For setting up the environment for testing, <code class="docutils literal notranslate"><span class="pre">setup-envtest</span></code> can be used:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>go<span class="w"> </span>install<span class="w"> </span>sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+$<span class="w"> </span>setup-envtest<span class="w"> </span>use<span class="w"> </span>&lt;K8S_VERSION&gt;
+$<span class="w"> </span><span class="nv">KUBEBUILDER_ASSETS</span><span class="o">=</span><span class="k">$(</span>setup-envtest<span class="w"> </span>use<span class="w"> </span>-i<span class="w"> </span>-p<span class="w"> </span>path<span class="w"> </span>&lt;K8S_VERSION&gt;<span class="k">)</span><span class="w"> </span>make<span class="w"> </span>envtest
+</pre></div>
+</div>
+</section>
+</section>
+<section id="how-to-develop-simple-device-plugins">
+<h2>How to Develop Simple Device Plugins<a class="headerlink" href="#how-to-develop-simple-device-plugins" title="Permalink to this heading"></a></h2>
+<p>To create a simple device plugin without the hassle of developing your own gRPC
+server, you can use a package included in this repository called
+<code class="docutils literal notranslate"><span class="pre">github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin</span></code>.</p>
+<p>All you have to do is instantiate a <code class="docutils literal notranslate"><span class="pre">deviceplugin.Manager</span></code> and call
+its <code class="docutils literal notranslate"><span class="pre">Run()</span></code> method:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="o">...</span>
+
+<span class="w">    </span><span class="nx">manager</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">dpapi</span><span class="p">.</span><span class="nx">NewManager</span><span class="p">(</span><span class="nx">namespace</span><span class="p">,</span><span class="w"> </span><span class="nx">plugin</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">manager</span><span class="p">.</span><span class="nx">Run</span><span class="p">()</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The manager’s constructor accepts two parameters:</p>
+<ol class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">namespace</span></code> which is a string like “color.example.com”. All your devices
+will be exposed under this name space, e.g. “color.example.com/yellow”.
+Please note that one device plugin can register many such “colors”.
+The manager will instantiate multiple gRPC servers for every registered “color”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plugin</span></code> which is a reference to an object implementing one mandatory
+interface <code class="docutils literal notranslate"><span class="pre">deviceplugin.Scanner</span></code>.</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">deviceplugin.Scanner</span></code> defines one method <code class="docutils literal notranslate"><span class="pre">Scan()</span></code> which is called only once
+for every device plugin by <code class="docutils literal notranslate"><span class="pre">deviceplugin.Manager</span></code> in a goroutine and operates
+in an infinite loop. A <code class="docutils literal notranslate"><span class="pre">Scan()</span></code> implementation scans the host for devices and
+sends all found devices to a <code class="docutils literal notranslate"><span class="pre">deviceplugin.Notifier</span></code> instance. The
+<code class="docutils literal notranslate"><span class="pre">deviceplugin.Notifier</span></code> is implemented and provided by the <code class="docutils literal notranslate"><span class="pre">deviceplugin</span></code>
+package itself. The found devices are organized in an instance of
+<code class="docutils literal notranslate"><span class="pre">deviceplugin.DeviceTree</span></code> object. The object is filled in with its
+<code class="docutils literal notranslate"><span class="pre">AddDevice()</span></code> method:</p>
+<div class="highlight-go notranslate"><div class="highlight"><pre><span></span><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">dp</span><span class="w"> </span><span class="o">*</span><span class="nx">devicePlugin</span><span class="p">)</span><span class="w"> </span><span class="nx">Scan</span><span class="p">(</span><span class="nx">notifier</span><span class="w"> </span><span class="nx">deviceplugin</span><span class="p">.</span><span class="nx">Notifier</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">devTree</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">deviceplugin</span><span class="p">.</span><span class="nx">NewDeviceTree</span><span class="p">()</span>
+<span class="w">        </span><span class="o">...</span>
+<span class="w">        </span><span class="nx">devTree</span><span class="p">.</span><span class="nx">AddDevice</span><span class="p">(</span><span class="s">&quot;yellow&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">devID</span><span class="p">,</span><span class="w"> </span><span class="nx">deviceplugin</span><span class="p">.</span><span class="nx">DeviceInfo</span><span class="p">{</span>
+<span class="w">            </span><span class="nx">State</span><span class="p">:</span><span class="w"> </span><span class="nx">health</span><span class="p">,</span>
+<span class="w">            </span><span class="nx">Nodes</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span><span class="nx">pluginapi</span><span class="p">.</span><span class="nx">DeviceSpec</span><span class="p">{</span>
+<span class="w">                </span><span class="p">{</span>
+<span class="w">                    </span><span class="nx">HostPath</span><span class="p">:</span><span class="w">      </span><span class="nx">devPath</span><span class="p">,</span>
+<span class="w">                    </span><span class="nx">ContainerPath</span><span class="p">:</span><span class="w"> </span><span class="nx">devPath</span><span class="p">,</span>
+<span class="w">                    </span><span class="nx">Permissions</span><span class="p">:</span><span class="w">   </span><span class="s">&quot;rw&quot;</span><span class="p">,</span>
+<span class="w">                </span><span class="p">},</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">        </span><span class="p">})</span>
+<span class="w">        </span><span class="o">...</span>
+<span class="w">        </span><span class="nx">notifier</span><span class="p">.</span><span class="nx">Notify</span><span class="p">(</span><span class="nx">devTree</span><span class="p">)</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Optionally, your device plugin may also implement the
+<code class="docutils literal notranslate"><span class="pre">deviceplugin.PostAllocator</span></code> interface. If implemented, its method
+<code class="docutils literal notranslate"><span class="pre">PostAllocate()</span></code> modifies <code class="docutils literal notranslate"><span class="pre">pluginapi.AllocateResponse</span></code> responses just
+before they are sent to <code class="docutils literal notranslate"><span class="pre">kubelet</span></code>. To see an example, refer to the FPGA
+plugin which implements this interface to annotate its responses.</p>
+<p>In case you want to implement the whole allocation functionality in your
+device plugin, you can implement the optional <code class="docutils literal notranslate"><span class="pre">deviceplugin.Allocator</span></code>
+interface. In this case <code class="docutils literal notranslate"><span class="pre">PostAllocate()</span></code> is not called. But if you decide in your
+implementation of <code class="docutils literal notranslate"><span class="pre">deviceplugin.Allocator</span></code> that you need to resort to the default
+implementation of the allocation functionality then return an error of the type
+<code class="docutils literal notranslate"><span class="pre">deviceplugin.UseDefaultMethodError</span></code>.</p>
+<section id="logging">
+<h3>Logging<a class="headerlink" href="#logging" title="Permalink to this heading"></a></h3>
+<p>The framework uses <a class="reference external" href="https://github.com/kubernetes/klog"><code class="docutils literal notranslate"><span class="pre">klog</span></code></a> as its logging
+framework. It is encouraged for plugins to also use <code class="docutils literal notranslate"><span class="pre">klog</span></code> to maintain uniformity
+in the logs and command line options.</p>
+<p>The framework initialises <code class="docutils literal notranslate"><span class="pre">klog</span></code>, so further calls to <code class="docutils literal notranslate"><span class="pre">klog.InitFlags()</span></code> by
+plugins should not be necessary. This does add a number of log configuration
+options to your plugin, which can be viewed with the <code class="docutils literal notranslate"><span class="pre">-h</span></code> command line option of your
+plugin.</p>
+<p>The framework tries to adhere to the Kubernetes
+<a class="reference external" href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-instrumentation/logging.md">Logging Conventions</a>.
+The advise is to use the <code class="docutils literal notranslate"><span class="pre">V()</span></code> levels for <code class="docutils literal notranslate"><span class="pre">Info()</span></code> calls, as calling <code class="docutils literal notranslate"><span class="pre">Info()</span></code>
+with no set level will make configuration and filtering of logging via the command
+line more difficult.</p>
+<p>The default is to not log <code class="docutils literal notranslate"><span class="pre">Info()</span></code> calls. This can be changed using the plugin command
+line <code class="docutils literal notranslate"><span class="pre">-v</span></code> parameter. The additional annotations prepended to log lines by ‘klog’ can be disabled
+with the <code class="docutils literal notranslate"><span class="pre">-skip_headers</span></code> option.</p>
+</section>
+<section id="error-conventions">
+<h3>Error Conventions<a class="headerlink" href="#error-conventions" title="Permalink to this heading"></a></h3>
+<p>The framework has a convention for producing and logging errors. Ideally plugins will also adhere
+to the convention.</p>
+<p>Errors generated within the framework and plugins are instantiated with the <code class="docutils literal notranslate"><span class="pre">New()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">Errorf()</span></code> functions of the <a class="reference external" href="https://golang.org/pkg/errors/">errors package</a>:</p>
+<div class="highlight-golang notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">New</span><span class="p">(</span><span class="s">&quot;error message&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Errors generated from outside the plugins and framework are augmented with their stack dump with code such as</p>
+<div class="highlight-golang notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">WithStack</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-golang notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">errors</span><span class="p">.</span><span class="nx">Wrap</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;some additional error message&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>These errors are then logged using a default struct value format like:</p>
+<div class="highlight-golang notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="nx">klog</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&quot;Example of an internal error death: %+v&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>at the line where it’s certain that the error cannot be passed out farther nor handled gracefully.
+Otherwise, they can be logged as simple values:</p>
+<div class="highlight-golang notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="nx">klog</span><span class="p">.</span><span class="nx">Warningf</span><span class="p">(</span><span class="s">&quot;Example of a warning due to an external error: %v&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="ubi-images">
+<h2>UBI images<a class="headerlink" href="#ubi-images" title="Permalink to this heading"></a></h2>
+<p>UBI based images use different base image.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Default</th>
+<th>UBI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gcr.io/distroless/static</td>
+<td>registry.access.redhat.com/ubi9-micro:latest</td>
+</tr>
+<tr>
+<td>debian:unstable-slim</td>
+<td>registry.access.redhat.com/ubi9/ubi:latest</td>
+</tr>
+</tbody>
+</table><p>The UBI based images are required for deployments that run on OpenShift Container Platform (OCP).</p>
+<p>To build these images:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">UBI</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>make<span class="w"> </span>&lt;image-name&gt;
+</pre></div>
+</div>
+<section id="containers-with-rpm-dependencies">
+<h3>Containers with RPM dependencies<a class="headerlink" href="#containers-with-rpm-dependencies" title="Permalink to this heading"></a></h3>
+<p>There are two containers that have external dependencies which are installed at build time from OSV repositories:</p>
+<ul class="simple">
+<li><p>intel-idxd-config-initcontainer</p></li>
+<li><p>intel-gpu-levelzero</p></li>
+</ul>
+<p>To build these containers, the build host has to be registered via <code class="docutils literal notranslate"><span class="pre">subscription-manager</span></code>. Typically the host OS has to be RHEL or some other RPM based Linux variant (e.g. Fedora).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">UBI</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="nv">BUILDER</span><span class="o">=</span>podman<span class="w"> </span>make<span class="w"> </span>&lt;image-name&gt;
+</pre></div>
+</div>
+<p>Docker doesn’t support installing RPM packages with <code class="docutils literal notranslate"><span class="pre">subscription-manager</span></code>, so Podman needs to be used.</p>
+</section>
+</section>
+<section id="checklist-for-new-device-plugins">
+<h2>Checklist for New Device Plugins<a class="headerlink" href="#checklist-for-new-device-plugins" title="Permalink to this heading"></a></h2>
+<p>For new device plugins contributed to this repository, below is a
+checklist to get the plugin on par feature and quality wise with
+others:</p>
+<ol class="simple">
+<li><p>Plugin binary available in <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/47f074545279ed2c9e154038e4f1ebbe6e744a6d/cmd"><code class="docutils literal notranslate"><span class="pre">cmd/</span></code></a>, its corresponding Dockerfile in <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/47f074545279ed2c9e154038e4f1ebbe6e744a6d/build/docker"><code class="docutils literal notranslate"><span class="pre">build/docker/</span></code></a> and deployment Kustomization/YAMLs in <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/47f074545279ed2c9e154038e4f1ebbe6e744a6d/deployments"><code class="docutils literal notranslate"><span class="pre">deployments/</span></code></a>.</p></li>
+<li><p>Plugin binary Go unit tests implemented and passing with &gt;80% coverage: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">test</span> <span class="pre">WHAT=./cmd/&lt;plugin&gt;</span></code>.</p></li>
+<li><p>Plugin binary linter checks passing: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">lint</span></code>.</p></li>
+<li><p>Plugin e2e tests implemented in <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/47f074545279ed2c9e154038e4f1ebbe6e744a6d/test/e2e"><code class="docutils literal notranslate"><span class="pre">test/e2e/</span></code></a> and passing: <code class="docutils literal notranslate"><span class="pre">go</span> <span class="pre">test</span> <span class="pre">-v</span> <span class="pre">./test/e2e/...</span> <span class="pre">-args</span> <span class="pre">-ginkgo.focus</span> <span class="pre">&quot;&lt;plugin&gt;&quot;</span></code>.</p></li>
+<li><p>Plugin CRD API added to <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/47f074545279ed2c9e154038e4f1ebbe6e744a6d/pkg/apis/deviceplugin/v1"><code class="docutils literal notranslate"><span class="pre">pkg/apis/deviceplugin/v1</span></code></a> and CRDs generated: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">generate</span></code>.</p></li>
+<li><p>Plugin CRD validation tests implemented in <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/47f074545279ed2c9e154038e4f1ebbe6e744a6d/test/envtest"><code class="docutils literal notranslate"><span class="pre">test/envtest/</span></code></a> and passing: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">envtest</span></code>.</p></li>
+<li><p>Plugin CRD controller implemented in <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/47f074545279ed2c9e154038e4f1ebbe6e744a6d/pkg/controllers"><code class="docutils literal notranslate"><span class="pre">pkg/controllers/</span></code></a> and added to the manager in <code class="docutils literal notranslate"><span class="pre">cmd/operator/main.go</span></code>.</p></li>
+<li><p>Plugin documentation written <code class="docutils literal notranslate"><span class="pre">cmd/&lt;plugin&gt;/README.md</span></code> and optionally end to end demos created in <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/47f074545279ed2c9e154038e4f1ebbe6e744a6d/demo"><code class="docutils literal notranslate"><span class="pre">demo</span></code></a>.</p></li>
+<li><p>Plugin <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/47f074545279ed2c9e154038e4f1ebbe6e744a6d/deployments/nfd/overlays/node-feature-rules"><code class="docutils literal notranslate"><span class="pre">NodeFeatureRule</span></code></a>s added for Node Feature Discovery labeling.</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="README.html" class="btn btn-neutral float-left" title="Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="docs/extensions.html" class="btn btn-neutral float-right" title="Extensions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
