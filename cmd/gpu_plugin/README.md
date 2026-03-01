@@ -250,7 +250,7 @@ Creating a workload that would support all the different KMDs is not currently p
 |:---- |:-------- |:------- |:------- |:------- |
 | Compute | Default | NEO_ENABLE_I915_PRELIM_DETECTION | Default since `24.13.29138.x` | Same-time support can be built for all three KMDs. |
 | Media | Default | ENABLE_PRODUCTION_KMD | Default since `intel-media-25.2.2` | `xe` with either upstream or out-of-tree `i915`, not all three. |
-| Graphics | Default | Unsupported | Default since `mesa-24.0.5` | Both `i915` (upsteam) and `xe` KMDs supported at the same time. |
+| Graphics | Default | Unsupported | Default since `mesa-24.0.5` | Both `i915` (upstream) and `xe` KMDs supported at the same time. |
 
 ### Health management
 
