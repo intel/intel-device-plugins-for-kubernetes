@@ -59,7 +59,7 @@ jobs:
           - intel-npu-plugin
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
-      - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v5
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v5
         with:
           go-version-file: go.mod
           check-latest: true
@@ -70,7 +70,7 @@ jobs:
         run: |
           ORG=${{ inputs.registry }} TAG=${{ inputs.image_tag }} make ${IMAGE_NAME} BUILDER=docker
       - name: Trivy scan for image
-        uses: aquasecurity/trivy-action@c1824fd6edce30d7ab345a9989de00bbd46ef284 # 0.34.0
+        uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # 0.34.1
         with:
           scan-type: image
           image-ref: ${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }}
