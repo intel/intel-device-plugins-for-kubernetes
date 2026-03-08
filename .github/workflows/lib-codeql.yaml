@@ -19,7 +19,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
-    - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v5
+    - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v5
       with:
         go-version-file: go.mod
         check-latest: true
@@ -29,11 +29,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y libze1 libze-dev
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@9e907b5e64f6b83e7804b09294d44122997950d6 # v3
+      uses: github/codeql-action/init@0d579ffd059c29b07949a3cce3983f0780820c98 # v3
       with:
         languages: 'go'
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@9e907b5e64f6b83e7804b09294d44122997950d6 # v3
+      uses: github/codeql-action/analyze@0d579ffd059c29b07949a3cce3983f0780820c98 # v3
       with:
         category: "/language:go"
