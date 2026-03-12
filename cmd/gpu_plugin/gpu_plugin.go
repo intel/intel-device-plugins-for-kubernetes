@@ -56,8 +56,13 @@ const (
 	deviceTypeDefault = deviceTypeI915
 
 	// telemetry resource settings.
-	monitorSuffix = "_monitoring"
-	monitorID     = "all"
+	monitorSuffix           = "_monitoring"
+	monitorID               = "all"
+	monitorResourceCombined = "monitoring"
+
+	// monitoring mode options.
+	monitoringModeSingle = "single"
+	monitoringModeSplit  = "split"
 
 	bypathOptionNone   = "none"
 	bypathOptionAll    = "all"
@@ -74,6 +79,7 @@ type cliOptions struct {
 	allowIDs                  string
 	denyIDs                   string
 	bypathMount               string
+	monitoringMode            string
 	sharedDevNum              int
 	globalTempLimit           int
 	memoryTempLimit           int
@@ -534,7 +540,8 @@ func (dp *devicePlugin) sysFsGpuScan(notifier dpapi.Notifier) error {
 	previousCount := map[string]int{
 		deviceTypeI915: 0, deviceTypeXe: 0,
 		deviceTypeXe + monitorSuffix:   0,
-		deviceTypeI915 + monitorSuffix: 0}
+		deviceTypeI915 + monitorSuffix: 0,
+		monitorResourceCombined:        0}
 
 	for {
 		devTree, err := dp.scan()
@@ -797,12 +804,19 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		}
 
 		if dp.options.enableMonitoring {
-			res := devProps.monitorResource()
-			meiSpecs := dp.createMeiDeviceSpecs(cardPath)
-			monitorSpecs := append(devSpecs, meiSpecs...)
-			klog.V(4).Infof("For %s/%s, adding nodes: %+v", res, monitorID, monitorSpecs)
+			mei := dp.createMeiDeviceSpecs(cardPath)
+			monitorSpecs := append(devSpecs, mei...)
 
-			monitor[res] = append(monitor[res], monitorSpecs...)
+			if dp.options.monitoringMode == monitoringModeSingle {
+				klog.V(4).Infof("For %s/%s, adding nodes: %+v", monitorResourceCombined, monitorID, monitorSpecs)
+
+				monitor[monitorResourceCombined] = append(monitor[monitorResourceCombined], monitorSpecs...)
+			} else {
+				res := devProps.monitorResource()
+				klog.V(4).Infof("For %s/%s, adding nodes: %+v", res, monitorID, monitorSpecs)
+
+				monitor[res] = append(monitor[res], monitorSpecs...)
+			}
 		}
 	}
 
@@ -847,7 +861,8 @@ func main() {
 	)
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
-	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable '*_monitoring' (= all GPUs) resource")
+	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable monitoring resources (see also --monitoring-mode)")
+	flag.StringVar(&opts.monitoringMode, "monitoring-mode", monitoringModeSingle, "monitoring resource mode when --enable-monitoring is set: single (combined gpu.intel.com/monitoring resource) or split (per-driver i915_monitoring/xe_monitoring resources)")
 	flag.BoolVar(&opts.healthManagement, "health-management", false, "enable GPU health management")
 	flag.StringVar(&opts.bypathMount, "bypath", bypathOptionSingle, "DRI device 'by-path/' directory mounting options: single, none, all. Default: single")
 	flag.BoolVar(&opts.wslScan, "wsl", false, "scan for / use WSL devices")
@@ -876,6 +891,13 @@ func main() {
 		klog.Error("Invalid allow/deny options.")
 
 		os.Exit(1)
+	}
+
+	switch opts.monitoringMode {
+	case monitoringModeSingle:
+	case monitoringModeSplit:
+	default:
+		klog.Fatalf("invalid value for monitoring-mode, valid values: %s, %s", monitoringModeSplit, monitoringModeSingle)
 	}
 
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)

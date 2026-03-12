@@ -45,6 +45,7 @@ type mockNotifier struct {
 	dxgCount         int
 	i915monitorCount int
 	xeMonitorCount   int
+	gpuMonitorCount  int
 }
 
 // Notify stops plugin Scan.
@@ -54,6 +55,7 @@ func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.i915Count = len(newDeviceTree[deviceTypeI915])
 	n.dxgCount = len(newDeviceTree[deviceTypeDxg])
 	n.i915monitorCount = len(newDeviceTree[deviceTypeDefault+monitorSuffix])
+	n.gpuMonitorCount = len(newDeviceTree[monitorResourceCombined])
 
 	n.scanDone <- true
 }
@@ -119,6 +121,8 @@ type TestCaseDetails struct {
 	// what the result should be (xe)
 	expectedXeDevs     int
 	expectedXeMonitors int
+	// what the result should be (single/combined monitoring)
+	expectedGpuMonitors int
 }
 
 func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
@@ -526,6 +530,53 @@ func TestScan(t *testing.T) {
 			options:   cliOptions{sharedDevNum: 13, enableMonitoring: true},
 		},
 		{
+			name:      "two devices with xe and i915 drivers + single monitoring",
+			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64", "card1/device/drm/card1"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card1/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/xe",
+				"card1/device/driver": "drivers/i915",
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+				"card1",
+				"by-path/pci-0000:00:01.0-card",
+				"by-path/pci-0000:00:01.0-render",
+			},
+			options:             cliOptions{enableMonitoring: true, monitoringMode: monitoringModeSingle},
+			expectedXeDevs:      1,
+			expectedI915Devs:    1,
+			expectedGpuMonitors: 1,
+		},
+		{
+			name:      "two devices with xe driver + single monitoring",
+			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64", "card1/device/drm/card1"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card1/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/xe",
+				"card1/device/driver": "drivers/xe",
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+				"card1",
+				"by-path/pci-0000:00:01.0-card",
+				"by-path/pci-0000:00:01.0-render",
+			},
+			options:             cliOptions{enableMonitoring: true, monitoringMode: monitoringModeSingle},
+			expectedXeDevs:      2,
+			expectedGpuMonitors: 1,
+		},
+		{
 			name:      "no sysfs records",
 			sysfsdirs: []string{"non_gpu_card"},
 		},
@@ -575,6 +626,10 @@ func TestScan(t *testing.T) {
 			if tc.expectedXeMonitors != notifier.xeMonitorCount {
 				t.Errorf("Expected %d, discovered %d monitors (XE)",
 					tc.expectedXeMonitors, notifier.xeMonitorCount)
+			}
+			if tc.expectedGpuMonitors != notifier.gpuMonitorCount {
+				t.Errorf("Expected %d, discovered %d monitors (gpu/combined)",
+					tc.expectedGpuMonitors, notifier.gpuMonitorCount)
 			}
 		})
 	}

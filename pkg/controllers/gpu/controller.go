@@ -263,6 +263,10 @@ func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
 
 	if gdp.Spec.EnableMonitoring {
 		args = append(args, "-enable-monitoring")
+
+		if gdp.Spec.MonitoringMode != "" {
+			args = append(args, "-monitoring-mode="+gdp.Spec.MonitoringMode)
+		}
 	}
 
 	if gdp.Spec.SharedDevNum > 0 {
