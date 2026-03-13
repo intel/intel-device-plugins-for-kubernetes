@@ -122,8 +122,9 @@ type TestCaseDetails struct {
 }
 
 func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
-	sysfs := path.Join(root, "sys")
-	devfs := path.Join(root, "dev")
+	// The test case details assume sysfs and devfs to include the class/drm and dri subdirectories.
+	sysfs := path.Join(root, "sys", "class", "drm")
+	devfs := path.Join(root, "dev", "dri")
 
 	for _, devfsdir := range tc.devfsdirs {
 		if err := os.MkdirAll(path.Join(devfs, devfsdir), 0750); err != nil {
@@ -183,7 +184,8 @@ func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
 		}
 	}
 
-	return sysfs, devfs, nil
+	// Return paths to sysfs and devfs roots
+	return path.Join(root, "sys"), path.Join(root, "dev"), nil
 }
 
 func TestNewDevicePlugin(t *testing.T) {
@@ -1063,7 +1065,7 @@ func TestCDIDeviceInclusion(t *testing.T) {
 	createDirs(t, sysfs, sysfsDirs)
 	createSymlinks(t, devfs, devfslinks)
 
-	plugin := newDevicePlugin(sysfs+"/class/drm", devfs+"/dri", cliOptions{sharedDevNum: 1})
+	plugin := newDevicePlugin(sysfs, devfs, cliOptions{sharedDevNum: 1})
 	plugin.bypathFound = true
 
 	tree, err := plugin.scan()
@@ -1208,7 +1210,7 @@ func TestByPathOptions(t *testing.T) {
 	createDirs(t, sysfs, sysfsDirs)
 	createSymlinks(t, devfs, devfslinks)
 
-	plugin := newDevicePlugin(sysfs+"/class/drm", devfs+"/dri", cliOptions{sharedDevNum: 1, bypathMount: bypathOptionAll})
+	plugin := newDevicePlugin(sysfs, devfs, cliOptions{sharedDevNum: 1, bypathMount: bypathOptionAll})
 	plugin.bypathFound = true
 
 	devSpecs := []v1beta1.DeviceSpec{}
@@ -1348,6 +1350,76 @@ func TestCheckAllowDenyOptions(t *testing.T) {
 			ret := checkAllowDenyOptions(tc.options)
 			if ret != tc.expectReturn {
 				t.Errorf("checkAllowDenyOptions() return = %v, expected %v", ret, tc.expectReturn)
+			}
+		})
+	}
+}
+
+func TestCreateMeiDeviceSpecs(t *testing.T) {
+	tcases := []struct {
+		name          string
+		meiSysfsDirs  []string
+		expectedCount int
+	}{
+		{
+			name:          "no mei sysfs entries",
+			expectedCount: 0,
+		},
+		{
+			name:          "one mei device",
+			meiSysfsDirs:  []string{"device/xe.mei-gscfi.1024/mei/mei1"},
+			expectedCount: 1,
+		},
+		{
+			name: "two mei devices from separate i915.mei-* dirs",
+			meiSysfsDirs: []string{
+				"device/i915.mei-gscfi.1024/mei/mei1",
+				"device/i915.mei-gscfi.1025/mei/mei2",
+			},
+			expectedCount: 2,
+		},
+	}
+
+	for _, tc := range tcases {
+		t.Run(tc.name, func(t *testing.T) {
+			root, err := os.MkdirTemp("", "test_mei_specs")
+			if err != nil {
+				t.Fatalf("can't create temporary directory: %+v", err)
+			}
+
+			defer os.RemoveAll(root)
+
+			cardPath := path.Join(root, "card0")
+			devfsDir := path.Join(root, "dev")
+			sysfsDir := path.Join(root, "sys")
+
+			for _, sysfsDir := range tc.meiSysfsDirs {
+				if err := os.MkdirAll(path.Join(cardPath, sysfsDir), 0750); err != nil {
+					t.Fatalf("can't create sysfs dir %s: %+v", sysfsDir, err)
+				}
+			}
+
+			plugin := newDevicePlugin(sysfsDir, devfsDir, cliOptions{sharedDevNum: 1})
+
+			specs := plugin.createMeiDeviceSpecs(cardPath)
+
+			if len(specs) != tc.expectedCount {
+				t.Errorf("expected %d MEI device specs, got %d: %+v", tc.expectedCount, len(specs), specs)
+			}
+
+			//nolint: govet
+			for _, spec := range specs {
+				if !strings.HasPrefix(spec.HostPath, devfsDir) {
+					t.Errorf("MEI device spec path '%q' does not start with devfs dir '%q'", spec.HostPath, devfsDir)
+				}
+
+				if spec.ContainerPath != spec.HostPath {
+					t.Errorf("MEI device spec ContainerPath '%q' != HostPath '%q'", spec.ContainerPath, spec.HostPath)
+				}
+
+				if spec.Permissions != "rw" {
+					t.Errorf("MEI device spec permissions '%q', expected 'rw'", spec.Permissions)
+				}
 			}
 		})
 	}

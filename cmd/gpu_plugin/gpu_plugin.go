@@ -39,14 +39,14 @@ import (
 )
 
 const (
-	sysfsDrmDirectory = "/sys/class/drm"
-	devfsDriDirectory = "/dev/dri"
-	wslDxgPath        = "/dev/dxg"
-	wslLibPath        = "/usr/lib/wsl"
-	gpuDeviceRE       = `^card[0-9]+$`
-	controlDeviceRE   = `^controlD[0-9]+$`
-	pciAddressRE      = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
-	vendorString      = "0x8086"
+	sysFsRoot       = "/sys"
+	devFsRoot       = "/dev"
+	wslDxgPath      = "/dev/dxg"
+	wslLibPath      = "/usr/lib/wsl"
+	gpuDeviceRE     = `^card[0-9]+$`
+	controlDeviceRE = `^controlD[0-9]+$`
+	pciAddressRE    = "^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\\.[0-9a-f]{1}$"
+	vendorString    = "0x8086"
 
 	// Device plugin settings.
 	namespace         = "gpu.intel.com"
@@ -315,8 +315,9 @@ type devicePlugin struct {
 
 	levelzeroService levelzeroservice.LevelzeroService
 
-	sysfsDir       string
-	devfsDir       string
+	sysfsDrmDir    string
+	devFsRoot      string
+	devDriDir      string
 	bypathDir      string
 	healthStatuses map[string]string
 
@@ -327,11 +328,12 @@ type devicePlugin struct {
 	bypathFound bool
 }
 
-func newDevicePlugin(sysfsDir, devfsDir string, options cliOptions) *devicePlugin {
+func newDevicePlugin(sysfsDir, devFsDir string, options cliOptions) *devicePlugin {
 	dp := &devicePlugin{
-		sysfsDir:         sysfsDir,
-		devfsDir:         devfsDir,
-		bypathDir:        path.Join(devfsDir, "/by-path"),
+		sysfsDrmDir:      path.Join(sysfsDir, "class", "drm"),
+		devFsRoot:        devFsDir,
+		devDriDir:        path.Join(devFsDir, "dri"),
+		bypathDir:        path.Join(devFsDir, "dri", "by-path"),
 		options:          options,
 		gpuDeviceReg:     regexp.MustCompile(gpuDeviceRE),
 		controlDeviceReg: regexp.MustCompile(controlDeviceRE),
@@ -574,7 +576,7 @@ func (dp *devicePlugin) isCompatibleDevice(name string) bool {
 		return false
 	}
 
-	dat, err := os.ReadFile(path.Join(dp.sysfsDir, name, "device/vendor"))
+	dat, err := os.ReadFile(path.Join(dp.sysfsDrmDir, name, "device/vendor"))
 	if err != nil {
 		klog.Warning("Skipping. Can't read vendor file: ", err)
 		return false
@@ -596,7 +598,7 @@ func (dp *devicePlugin) devPathForDrmFile(drmFile string) (devPath string, err e
 		return
 	}
 
-	devPath = path.Join(dp.devfsDir, drmFile)
+	devPath = path.Join(dp.devDriDir, drmFile)
 	if _, err = os.Stat(devPath); err != nil {
 		return
 	}
@@ -612,7 +614,7 @@ func (dp *devicePlugin) filterOutInvalidCards(files []fs.DirEntry) []fs.DirEntry
 			continue
 		}
 
-		_, err := os.Stat(path.Join(dp.sysfsDir, f.Name(), "device/drm"))
+		_, err := os.Stat(path.Join(dp.sysfsDrmDir, f.Name(), "device/drm"))
 		if err != nil {
 			continue
 		}
@@ -622,7 +624,7 @@ func (dp *devicePlugin) filterOutInvalidCards(files []fs.DirEntry) []fs.DirEntry
 
 		// Skip if the device is either not allowed or denied.
 		if allowlist || denylist {
-			pciID, err := pciDeviceIDForCard(path.Join(dp.sysfsDir, f.Name()))
+			pciID, err := pciDeviceIDForCard(path.Join(dp.sysfsDrmDir, f.Name()))
 			if err != nil {
 				klog.Warningf("Failed to get PCI ID for device %s: %+v", f.Name(), err)
 
@@ -668,6 +670,40 @@ func (dp *devicePlugin) createDeviceSpecsFromDrmFiles(cardPath string) []plugina
 			Permissions:   "rw",
 		})
 	}
+	return specs
+}
+
+// createMeiDeviceSpecs finds MEI devices associated with a GPU card by looking in
+// the card's *.mei-* sysfs subdirectories and returns device specs for the
+// corresponding /dev/meiX character devices.
+// Device plugin cannot mount the whole /dev/ directory so verifying the existence of each
+// /dev/meiX device is not possible.
+func (dp *devicePlugin) createMeiDeviceSpecs(cardPath string) []pluginapi.DeviceSpec {
+	specs := []pluginapi.DeviceSpec{}
+
+	meiSysfsDirs, _ := filepath.Glob(path.Join(cardPath, "device/*.mei-*/mei"))
+
+	klog.V(4).Info("Looking for MEI devices in sysfs dirs: ", meiSysfsDirs)
+
+	for _, meiSysfsDir := range meiSysfsDirs {
+		entries, err := os.ReadDir(meiSysfsDir)
+		if err != nil {
+			continue
+		}
+
+		for _, entry := range entries {
+			devPath := path.Join(dp.devFsRoot, entry.Name())
+
+			klog.V(4).Infof("Adding MEI device %s for GPU %s", devPath, filepath.Base(cardPath))
+
+			specs = append(specs, pluginapi.DeviceSpec{
+				HostPath:      devPath,
+				ContainerPath: devPath,
+				Permissions:   "rw",
+			})
+		}
+	}
+
 	return specs
 }
 
@@ -723,7 +759,7 @@ func (dp *devicePlugin) createMountsAndCDIDevices(cardPath, name string, devSpec
 }
 
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
-	files, err := os.ReadDir(dp.sysfsDir)
+	files, err := os.ReadDir(dp.sysfsDrmDir)
 	if err != nil {
 		return nil, errors.Wrap(err, "Can't read sysfs folder")
 	}
@@ -735,7 +771,7 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 	for _, f := range dp.filterOutInvalidCards(files) {
 		name := f.Name()
-		cardPath := path.Join(dp.sysfsDir, name)
+		cardPath := path.Join(dp.sysfsDrmDir, name)
 
 		devProps.fetch(cardPath)
 
@@ -762,9 +798,11 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		if dp.options.enableMonitoring {
 			res := devProps.monitorResource()
-			klog.V(4).Infof("For %s/%s, adding nodes: %+v", res, monitorID, devSpecs)
+			meiSpecs := dp.createMeiDeviceSpecs(cardPath)
+			monitorSpecs := append(devSpecs, meiSpecs...)
+			klog.V(4).Infof("For %s/%s, adding nodes: %+v", res, monitorID, monitorSpecs)
 
-			monitor[res] = append(monitor[res], devSpecs...)
+			monitor[res] = append(monitor[res], monitorSpecs...)
 		}
 	}
 
@@ -842,7 +880,7 @@ func main() {
 
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
 
-	plugin := newDevicePlugin(prefix+sysfsDrmDirectory, prefix+devfsDriDirectory, opts)
+	plugin := newDevicePlugin(prefix+sysFsRoot, prefix+devFsRoot, opts)
 
 	if plugin.options.wslScan {
 		klog.Info("WSL mode requested")
