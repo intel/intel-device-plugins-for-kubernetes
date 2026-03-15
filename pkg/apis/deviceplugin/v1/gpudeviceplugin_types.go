@@ -57,6 +57,13 @@ type GpuDevicePluginSpec struct {
 	// +kubebuilder:validation:Enum=none;single;all
 	ByPathMode string `json:"bypathMode,omitempty"`
 
+	// MonitoringMode sets how monitoring resources are exposed when EnableMonitoring is true.
+	// single (default): one combined gpu_monitoring resource for all GPU drivers.
+	// split: per-driver resources (i915_monitoring, xe_monitoring).
+	// +kubebuilder:validation:Enum=split;single
+	// +optional
+	MonitoringMode string `json:"monitoringMode,omitempty"`
+
 	// Specialized nodes (e.g., with accelerators) can be Tainted to make sure unwanted pods are not scheduled on them. Tolerations can be set for the plugin pod to neutralize the Taint.
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 
@@ -68,8 +75,8 @@ type GpuDevicePluginSpec struct {
 	// +kubebuilder:validation:Minimum=0
 	LogLevel int `json:"logLevel,omitempty"`
 
-	// EnableMonitoring enables the monitoring resource ('i915_monitoring')
-	// which gives access to all GPU devices on given node. Typically used with Intel XPU-Manager.
+	// EnableMonitoring enables the monitoring resource which gives access to all GPU devices
+	// on the given node. Typically used with Intel XPU-Manager. See also MonitoringMode.
 	EnableMonitoring bool `json:"enableMonitoring,omitempty"`
 }
 
