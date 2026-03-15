@@ -1,8 +1,14 @@
 # Monitoring GPUs
 
-## i915_monitoring resource
+## Monitoring mode
 
-GPU plugin can be configured to register a monitoring resource for the nodes that have Intel GPUs on them. `gpu.intel.com/i915_monitoring` (or `gpu.intel.com/xe_monitoring`) is a singular resource on the nodes. A container requesting it, will get access to _all_ the Intel GPUs (`i915` or `xe` KMD device files) on the node. The idea behind this resource is to allow the container to _monitor_ the GPUs. A container requesting the `i915_monitoring` resource would typically export data to some metrics consumer. An example for such a consumer is [Prometheus](https://prometheus.io/).
+GPU plugin has moved to single monitoring resource: `gpu.intel.com/monitoring`. It includes both `i915` and `xe` KMD devices. In case, the old behaviour is required, the plugin can be started with `-monitoring-mode=split` argument, which brings back the old `i915` and `xe` resources.
+
+The problem with the split monitoring resources is that Pod scheduling becomes difficult for nodes which have both devices. Especially if the cluster has nodes with only `xe` devices, and nodes with both `xe` and `i915` devices. Nodes with integrated GPUs are still mostly using `i915` while new GPUs are using `xe`. To get around this, one can use node selectors etc. to guide scheduling, but using a single monitoring resource for all fixes it.
+
+## Monitoring resource
+
+GPU plugin can be configured to register a monitoring resource for the nodes that have Intel GPUs on them. `gpu.intel.com/monitoring` is a singular resource on the nodes. A container requesting it, will get access to _all_ the Intel GPUs (`i915` and `xe` KMD device files) on the node. The idea behind this resource is to allow the container to _monitor_ the GPUs. A container requesting the `monitoring` resource would typically export data to some metrics consumer. An example for such a consumer is [Prometheus](https://prometheus.io/).
 
 <figure>
   <img src="monitoring.png"/>
@@ -14,9 +20,10 @@ For the monitoring applications, there are two possibilities: [Intel XPU Manager
 To deploy XPU Manager to a cluster, one has to run the following kubectl:
 ```
 $ kubectl apply -k https://github.com/intel/xpumanager/deployment/kubernetes/daemonset/base
+& kubectl patch ds intel-xpumanager --type='strategic' -p '{"spec": {"template": {"spec": {"containers": [{"name": "xpumd","resources": {"limits": {"gpu.intel.com/monitoring": "1","gpu.intel.com/i915_monitoring": null}}}]}}}}'
 ```
 
-This will deploy an XPU Manager daemonset to run on all the nodes having the `i915_monitoring` resource.
+This will deploy an XPU Manager daemonset to run on all the nodes having the `monitoring` resource.
 
 ## Prometheus integration with XPU Manager
 

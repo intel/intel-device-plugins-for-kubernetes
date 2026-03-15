@@ -44,9 +44,10 @@ Intel GPU plugin may register four per-node resource types to the Kubernetes clu
 | Resource | Description |
 |:---- |:-------- |
 | gpu.intel.com/i915 | Legacy `i915` KMD (Kernel Mode Driver) provided GPU instance |
-| gpu.intel.com/i915_monitoring | Monitoring resource for the `i915` KMD provided devices |
 | gpu.intel.com/xe | `xe` KMD provided GPU instance |
-| gpu.intel.com/xe_monitoring | Monitoring resource for the `xe` KMD provided devices |
+| gpu.intel.com/monitoring | Monitoring resource for all the GPU devices |
+| gpu.intel.com/i915_monitoring | Deprecated: Monitoring resource for the `i915` KMD provided devices |
+| gpu.intel.com/xe_monitoring | Deprecated: Monitoring resource for the `xe` KMD provided devices |
 
 For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 
@@ -55,6 +56,7 @@ For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 | Flag | Argument | Default | Meaning |
 |:---- |:-------- |:------- |:------- |
 | -enable-monitoring | - | disabled | Enable '*_monitoring' resource that provides access to all Intel GPU devices on the node, [see use](./monitoring.md) |
+| -monitoring-mode | string | single | How monitoring resources are registered: single or split |
 | -health-management | - | disabled | Enable health management by requesting data from oneAPI/Level-Zero interface. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. See [health management](#health-management) |
 | -wsl | - | disabled | Adapt plugin to run in the WSL environment. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
