@@ -27,7 +27,7 @@ ENV ASMFLAGS="all=-spectre=all"
 ENV LDFLAGS="all=-linkmode=external -s -w"
 ARG GOLICENSES_VERSION
 ARG CMD
-ARG CGO_VERSION=1.25
+ARG CGO_VERSION=1.26
 RUN mkdir /runtime
 RUN source /etc/os-release && dnf install -y gcc jq 'dnf-command(config-manager)' && \
     dnf config-manager --add-repo https://repositories.intel.com/gpu/rhel/${VERSION_ID}/lts/2523/unified/intel-gpu-${VERSION_ID}.repo && \

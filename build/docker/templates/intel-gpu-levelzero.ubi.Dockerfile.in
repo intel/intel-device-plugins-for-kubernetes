@@ -18,7 +18,7 @@ ENV LDFLAGS="all=-linkmode=external -s -w"
 
 ARG GOLICENSES_VERSION
 ARG CMD
-ARG CGO_VERSION=1.25
+ARG CGO_VERSION=1.26
 
 RUN mkdir /runtime
 
