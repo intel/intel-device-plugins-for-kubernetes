@@ -40,8 +40,8 @@ ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
 ARG LDFLAGS="all=-w -s"
 ARG GOFLAGS="-trimpath"
-ARG GCFLAGS="all=-spectre=all -N -l"
-ARG ASMFLAGS="all=-spectre=all"
+ARG GCFLAGS="-spectre=all -N -l"
+ARG ASMFLAGS="-spectre=all"
 ARG GOLICENSES_VERSION
 ARG CRI_HOOK=intel-fpga-crihook
 ARG CMD=fpga_crihook
