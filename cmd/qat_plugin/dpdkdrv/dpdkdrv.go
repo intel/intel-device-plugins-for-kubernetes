@@ -534,7 +534,7 @@ func getPciDevicesWithPattern(pattern string) (pciDevices []string) {
 }
 
 func (dp *DevicePlugin) getVfDevices() []string {
-	qatPfDevices := make([]string, 0)
+	qatPfDevices := make([]string, 0, len(dp.kernelVfDrivers))
 	qatVfDevices := make([]string, 0)
 
 	// Get PF BDFs bound to a known QAT PF driver

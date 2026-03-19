@@ -407,7 +407,7 @@ func waitForServer(socket string, timeout time.Duration) error {
 // Writes CDI spec to filesystem if not found from the CDI cache.
 // Returns a list of CDI device names.
 func writeCdiSpecToFilesystem(spec *cdispec.Spec, cdiDir string) ([]*pluginapi.CDIDevice, error) {
-	names := []*pluginapi.CDIDevice{}
+	names := make([]*pluginapi.CDIDevice, 0, 1)
 
 	if spec == nil {
 		return names, nil

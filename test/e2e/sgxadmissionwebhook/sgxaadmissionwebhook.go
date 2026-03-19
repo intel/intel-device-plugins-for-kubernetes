@@ -199,7 +199,7 @@ func submitCustomPod(ctx context.Context, f *framework.Framework, podSpec *v1.Po
 }
 
 func createPodSpec(containerNames []string, quoteProvider string) *v1.Pod {
-	containers := make([]v1.Container, 0)
+	containers := make([]v1.Container, 0, len(containerNames))
 
 	for _, c := range containerNames {
 		containers = append(containers, v1.Container{
