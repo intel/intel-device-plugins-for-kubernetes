@@ -169,7 +169,7 @@ func (m *mockManager) GetControllerOptions() config.Controller {
 	return config.Controller{}
 }
 
-func (m *mockManager) SetFields(interface{}) error {
+func (m *mockManager) SetFields(any) error {
 	return nil
 }
 

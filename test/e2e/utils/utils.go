@@ -186,7 +186,7 @@ func CreateKustomizationOverlay(namespace, kustomizeYamlFileDir, overlayDir stri
 		return err
 	}
 
-	content := make(map[string]interface{})
+	content := make(map[string]any)
 
 	err = yaml.Unmarshal(bytes, content)
 	if err != nil {
@@ -195,7 +195,7 @@ func CreateKustomizationOverlay(namespace, kustomizeYamlFileDir, overlayDir stri
 
 	content["namespace"] = namespace
 
-	resInterface := content["resources"].([]interface{})
+	resInterface := content["resources"].([]any)
 	resources := make([]string, len(resInterface))
 
 	for i, v := range resInterface {

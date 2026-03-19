@@ -312,7 +312,7 @@ func GetTopologyInfo(devs []string) (*pluginapi.TopologyInfo, error) {
 
 		for _, hint := range hints {
 			if hint.NUMAs != "" {
-				for _, nNode := range strings.Split(hint.NUMAs, ",") {
+				for nNode := range strings.SplitSeq(hint.NUMAs, ",") {
 					nNodeID, err := strconv.ParseInt(strings.TrimSpace(nNode), 10, 64)
 					if err != nil {
 						return nil, errors.Wrapf(err, "unable to convert numa node %s into int64", nNode)

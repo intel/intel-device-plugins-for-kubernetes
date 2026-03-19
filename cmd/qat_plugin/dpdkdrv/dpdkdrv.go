@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -481,10 +482,8 @@ func isValidDpdkDeviceDriver(dpdkDriver string) bool {
 
 func (dp *DevicePlugin) isValidVfDeviceID(vfDevID string) bool {
 	if driver, ok := qatDeviceDriver[vfDevID]; ok {
-		for _, enabledDriver := range dp.kernelVfDrivers {
-			if driver == enabledDriver {
-				return true
-			}
+		if slices.Contains(dp.kernelVfDrivers, driver) {
+			return true
 		}
 	}
 

@@ -20,6 +20,7 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -712,15 +713,7 @@ func TestScan(t *testing.T) {
 		})
 	}
 }
-func eleInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
 
-	return false
-}
 func TestPostAllocate(t *testing.T) {
 	response := new(pluginapi.AllocateResponse)
 	cresp := new(pluginapi.ContainerAllocateResponse)
@@ -755,7 +748,7 @@ func TestPostAllocate(t *testing.T) {
 	}
 
 	for k := range response.ContainerResponses[0].Envs {
-		if !eleInSlice(k, resultKey) {
+		if !slices.Contains(resultKey, k) {
 			t.Fatalf("Set wrong key: %s. The key should be in the range %v", k, resultKey)
 		}
 	}

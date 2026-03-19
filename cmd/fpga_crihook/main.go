@@ -80,7 +80,7 @@ func (dev *Device) getName() string {
 	return dev.name
 }
 
-func decodeJSONStream(reader io.Reader, dest interface{}) error {
+func decodeJSONStream(reader io.Reader, dest any) error {
 	decoder := json.NewDecoder(reader)
 	err := decoder.Decode(&dest)
 

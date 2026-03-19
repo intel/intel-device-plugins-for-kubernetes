@@ -149,7 +149,7 @@ func describe() {
 	})
 }
 
-func checkMutatedVolumes(f *framework.Framework, pod *v1.Pod, volumeName string, volumeType interface{}) {
+func checkMutatedVolumes(f *framework.Framework, pod *v1.Pod, volumeName string, volumeType any) {
 	gomega.Expect(len(pod.Spec.Volumes)).To(gomega.Equal(1))
 
 	switch reflect.TypeOf(volumeType).String() {
