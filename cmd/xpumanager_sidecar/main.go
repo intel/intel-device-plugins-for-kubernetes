@@ -29,6 +29,7 @@ import (
 	"path"
 	"reflect"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -328,7 +329,7 @@ func isValidTopologyCell(cell *xpuManagerTopologyMatrixCell) bool {
 }
 
 func (xms *xpuManagerSidecar) createLabels(topologyInfos []xpuManagerTopologyMatrixCell) []string {
-	links := ""
+	var links strings.Builder
 	separator := ""
 
 	submitted := map[string]int{}
@@ -352,7 +353,7 @@ func (xms *xpuManagerSidecar) createLabels(topologyInfos []xpuManagerTopologyMat
 
 		count, found := submitted[linkString]
 		if !found {
-			links += separator + linkString
+			links.WriteString(separator + linkString)
 			separator = "_"
 		}
 
@@ -365,7 +366,7 @@ func (xms *xpuManagerSidecar) createLabels(topologyInfos []xpuManagerTopologyMat
 		submitted[linkString] = count
 	}
 
-	splitLinks := pluginutils.SplitAtLastAlphaNum(links, labelMaxLength, labelControlChar)
+	splitLinks := pluginutils.SplitAtLastAlphaNum(links.String(), labelMaxLength, labelControlChar)
 
 	labels := []string{}
 

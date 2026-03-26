@@ -103,15 +103,16 @@ func ConcatAlphaNumSplitChunks(chunks []string, concatChars string) string {
 		return chunks[0]
 	}
 
-	s := chunks[0]
+	var s strings.Builder
+	s.WriteString(chunks[0])
 
 	for _, chunk := range chunks[1:] {
 		if !strings.HasPrefix(chunk, concatChars) {
 			klog.Warningf("Chunk has invalid prefix: %s (should have %s)", chunk[:len(concatChars)], concatChars)
 		}
 
-		s += chunk[len(concatChars):]
+		s.WriteString(chunk[len(concatChars):])
 	}
 
-	return s
+	return s.String()
 }

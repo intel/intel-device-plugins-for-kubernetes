@@ -128,7 +128,7 @@ func nonePolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
 
 	// Convert selected map into an array
 
-	deviceIDs := []string{}
+	deviceIDs := make([]string, 0, len(selected))
 
 	for deviceID := range selected {
 		deviceIDs = append(deviceIDs, deviceID)
@@ -155,7 +155,7 @@ func balancedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string
 	}
 
 	// Save the physical GPUs in order.
-	Index := make([]string, 0)
+	Index := make([]string, 0, len(Count))
 	for key := range Count {
 		Index = append(Index, key)
 		sort.Strings(Card[key])

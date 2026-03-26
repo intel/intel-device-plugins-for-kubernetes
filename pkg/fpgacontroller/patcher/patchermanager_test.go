@@ -177,13 +177,13 @@ func TestMutate(t *testing.T) {
 			if tcase.expectedAllowed != resp.Allowed {
 				t.Errorf("Allowed expected to be %t but got %t", tcase.expectedAllowed, resp.Allowed)
 			} else if resp.Allowed && resp.Patch != nil {
-				var ops interface{}
+				var ops any
 
 				err := json.Unmarshal(resp.Patch, &ops)
 				if err != nil {
 					t.Errorf("Test case '%s': got unparsable patch '%s'", tcase.name, resp.Patch)
 				} else {
-					actualPatchOps = len(ops.([]interface{}))
+					actualPatchOps = len(ops.([]any))
 				}
 			}
 

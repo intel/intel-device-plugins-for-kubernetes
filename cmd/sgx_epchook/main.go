@@ -38,9 +38,9 @@ const (
 )
 
 type patchNodeOp struct {
-	Value interface{} `json:"value"`
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
+	Value any    `json:"value"`
+	Op    string `json:"op"`
+	Path  string `json:"path"`
 }
 
 func main() {

@@ -149,7 +149,7 @@ func describe() {
 	})
 }
 
-func checkMutatedVolumes(f *framework.Framework, pod *v1.Pod, volumeName string, volumeType interface{}) {
+func checkMutatedVolumes(f *framework.Framework, pod *v1.Pod, volumeName string, volumeType any) {
 	gomega.Expect(len(pod.Spec.Volumes)).To(gomega.Equal(1))
 
 	switch reflect.TypeOf(volumeType).String() {
@@ -199,7 +199,7 @@ func submitCustomPod(ctx context.Context, f *framework.Framework, podSpec *v1.Po
 }
 
 func createPodSpec(containerNames []string, quoteProvider string) *v1.Pod {
-	containers := make([]v1.Container, 0)
+	containers := make([]v1.Container, 0, len(containerNames))
 
 	for _, c := range containerNames {
 		containers = append(containers, v1.Container{

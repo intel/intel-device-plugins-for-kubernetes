@@ -58,7 +58,7 @@ func NewDeviceInfo(state string, nodes []pluginapi.DeviceSpec, mounts []pluginap
 		cdiSpec:     cdiSpec,
 	}
 
-	devPaths := []string{}
+	devPaths := make([]string, 0, len(nodes))
 
 	for idx := range nodes {
 		devPaths = append(devPaths, nodes[idx].HostPath)

@@ -208,12 +208,9 @@ func (l *labeler) GetMemoryAmount(sysfsDrmDir, gpuName string, numTiles uint64) 
 
 // GetTileCount reads the tile count.
 func GetTileCount(cardPath string) (numTiles uint64) {
-	files := []string{}
+	files, _ := filepath.Glob(filepath.Join(cardPath, "gt/gt*")) // i915 driver
 
-	paths, _ := filepath.Glob(filepath.Join(cardPath, "gt/gt*")) // i915 driver
-	files = append(files, paths...)
-
-	paths, _ = filepath.Glob(filepath.Join(cardPath, "device/tile?")) // Xe driver
+	paths, _ := filepath.Glob(filepath.Join(cardPath, "device/tile?")) // Xe driver
 	files = append(files, paths...)
 
 	klog.V(4).Info("tile files found:", files)
@@ -394,9 +391,9 @@ func (l *labeler) createLabels() error {
 }
 
 func createNumaNodeMappingLabel(mapping map[int][]string) string {
-	parts := []string{}
+	parts := make([]string, 0, len(mapping))
 
-	numas := []int{}
+	numas := make([]int, 0, len(mapping))
 	for numaNode := range mapping {
 		numas = append(numas, numaNode)
 	}
