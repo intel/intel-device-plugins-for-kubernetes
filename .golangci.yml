@@ -23,6 +23,7 @@ linters:
     - nakedret
     - noctx
     - nolintlint
+    - prealloc
     - revive
     - staticcheck
     - unconvert
