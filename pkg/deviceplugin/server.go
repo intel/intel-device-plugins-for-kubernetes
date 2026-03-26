@@ -17,6 +17,7 @@ package deviceplugin
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"path"
@@ -177,13 +178,9 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 				cresp.Mounts = append(cresp.Mounts, &dev.mounts[i])
 			}
 
-			for key, value := range dev.envs {
-				cresp.Envs[key] = value
-			}
+			maps.Copy(cresp.Envs, dev.envs)
 
-			for key, value := range dev.annotations {
-				cresp.Annotations[key] = value
-			}
+			maps.Copy(cresp.Annotations, dev.annotations)
 
 			if names, err := writeCdiSpecToFilesystem(dev.cdiSpec, srv.cdiDir); err == nil {
 				cresp.CdiDevices = append(cresp.CdiDevices, names...)
@@ -407,7 +404,7 @@ func waitForServer(socket string, timeout time.Duration) error {
 // Writes CDI spec to filesystem if not found from the CDI cache.
 // Returns a list of CDI device names.
 func writeCdiSpecToFilesystem(spec *cdispec.Spec, cdiDir string) ([]*pluginapi.CDIDevice, error) {
-	names := []*pluginapi.CDIDevice{}
+	names := make([]*pluginapi.CDIDevice, 0, 1)
 
 	if spec == nil {
 		return names, nil

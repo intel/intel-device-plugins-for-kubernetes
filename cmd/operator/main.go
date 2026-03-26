@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,12 +76,12 @@ func (flag *flagList) String() string {
 }
 
 func (flag *flagList) Set(value string) error {
-	if !contains(supportedDevices, value) {
+	if !slices.Contains(supportedDevices, value) {
 		setupLog.Error(nil, fmt.Sprintf("Unsupported device: %s", value))
 		os.Exit(1)
 	}
 
-	if contains(devices, value) {
+	if slices.Contains(devices, value) {
 		setupLog.Error(nil, fmt.Sprintf("Duplicate device: %s", value))
 		os.Exit(1)
 	}
@@ -89,17 +90,6 @@ func (flag *flagList) Set(value string) error {
 
 	return nil
 }
-
-func contains(arr []string, val string) bool {
-	for _, s := range arr {
-		if s == val {
-			return true
-		}
-	}
-
-	return false
-}
-
 func createTLSCfgs(enableHTTP2 bool) []func(*tls.Config) {
 	tlsCfgFuncs := []func(*tls.Config){
 		func(cfg *tls.Config) {
@@ -227,14 +217,14 @@ func main() {
 		}
 	}
 
-	if contains(devices, "sgx") {
+	if slices.Contains(devices, "sgx") {
 		if err = (&sgxwebhook.Mutator{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Pod")
 			os.Exit(1)
 		}
 	}
 
-	if contains(devices, "fpga") {
+	if slices.Contains(devices, "fpga") {
 		pm = patcher.NewPatcherManager(mgr.GetLogger().WithName("webhooks").WithName("Fpga"))
 
 		mgr.GetWebhookServer().Register("/pods", &webhook.Admission{

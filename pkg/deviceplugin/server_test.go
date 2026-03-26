@@ -615,11 +615,11 @@ func (s *listAndWatchServerStub) Context() context.Context {
 	return nil
 }
 
-func (s *listAndWatchServerStub) RecvMsg(m interface{}) error {
+func (s *listAndWatchServerStub) RecvMsg(m any) error {
 	return nil
 }
 
-func (s *listAndWatchServerStub) SendMsg(m interface{}) error {
+func (s *listAndWatchServerStub) SendMsg(m any) error {
 	return nil
 }
 

@@ -154,7 +154,7 @@ func down() {
 	cancel()
 }
 
-func testUpgrade(name string, dp interface{}, pimage, pinitimage *string) {
+func testUpgrade(name string, dp any, pimage, pinitimage *string) {
 	down()
 
 	prefix := "intel/intel-" + name

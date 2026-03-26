@@ -235,7 +235,7 @@ func (p *Patcher) getPatchOps(containerIdx int, container corev1.Container) ([]s
 		case region:
 			// Let fpga_crihook know how to program the regions by setting ENV variables.
 			// The requested resources are exposed by FPGA plugins working in "region" mode.
-			for i := int64(0); i < quantity; i++ {
+			for range quantity {
 				counter++
 
 				envVars[fmt.Sprintf("FPGA_REGION_%d", counter)] = p.afMap[rname].Spec.InterfaceID

@@ -63,8 +63,8 @@ type Metadata struct {
 				Optional bool   `json:"optional,omitempty"`
 			} `json:"module-ports,omitempty"`
 		} `json:"afu-top-interface"`
-		ClockFrequencyHigh  interface{} `json:"clock-frequency-high,omitempty"`
-		ClockFrequencyLow   interface{} `json:"clock-frequency-low,omitempty"`
+		ClockFrequencyHigh  any `json:"clock-frequency-high,omitempty"`
+		ClockFrequencyLow   any `json:"clock-frequency-low,omitempty"`
 		AcceleratorClusters []struct {
 			AcceleratorTypeUUID string `json:"accelerator-type-uuid"`
 			Name                string `json:"name"`

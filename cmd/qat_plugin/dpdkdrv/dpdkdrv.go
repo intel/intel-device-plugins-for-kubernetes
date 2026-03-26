@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -481,10 +482,8 @@ func isValidDpdkDeviceDriver(dpdkDriver string) bool {
 
 func (dp *DevicePlugin) isValidVfDeviceID(vfDevID string) bool {
 	if driver, ok := qatDeviceDriver[vfDevID]; ok {
-		for _, enabledDriver := range dp.kernelVfDrivers {
-			if driver == enabledDriver {
-				return true
-			}
+		if slices.Contains(dp.kernelVfDrivers, driver) {
+			return true
 		}
 	}
 
@@ -534,7 +533,7 @@ func getPciDevicesWithPattern(pattern string) (pciDevices []string) {
 }
 
 func (dp *DevicePlugin) getVfDevices() []string {
-	qatPfDevices := make([]string, 0)
+	qatPfDevices := make([]string, 0, len(dp.kernelVfDrivers))
 	qatVfDevices := make([]string, 0)
 
 	// Get PF BDFs bound to a known QAT PF driver

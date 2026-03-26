@@ -313,10 +313,10 @@ func makeXelinkSideCar(opts genOptions) {
 }
 
 func buildConnectionList(gpus, tiles int) string {
-	var nodes = make([]string, 0)
+	var nodes = make([]string, 0, tiles*gpus)
 
-	for mm := 0; mm < gpus; mm++ {
-		for nn := 0; nn < tiles; nn++ {
+	for mm := range gpus {
+		for nn := range tiles {
 			nodes = append(nodes, fmt.Sprintf("%d.%d", mm, nn))
 		}
 	}
