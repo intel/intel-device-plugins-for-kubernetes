@@ -20,7 +20,6 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strings"
 	"testing"
 
@@ -45,6 +44,7 @@ type mockNotifier struct {
 	dxgCount         int
 	i915monitorCount int
 	xeMonitorCount   int
+	gpuMonitorCount  int
 }
 
 // Notify stops plugin Scan.
@@ -54,6 +54,7 @@ func (n *mockNotifier) Notify(newDeviceTree dpapi.DeviceTree) {
 	n.i915Count = len(newDeviceTree[deviceTypeI915])
 	n.dxgCount = len(newDeviceTree[deviceTypeDxg])
 	n.i915monitorCount = len(newDeviceTree[deviceTypeDefault+monitorSuffix])
+	n.gpuMonitorCount = len(newDeviceTree[monitorResourceCombined])
 
 	n.scanDone <- true
 }
@@ -119,6 +120,8 @@ type TestCaseDetails struct {
 	// what the result should be (xe)
 	expectedXeDevs     int
 	expectedXeMonitors int
+	// what the result should be (single/combined monitoring)
+	expectedGpuMonitors int
 }
 
 func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
@@ -191,75 +194,6 @@ func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
 func TestNewDevicePlugin(t *testing.T) {
 	if newDevicePlugin("", "", cliOptions{sharedDevNum: 2}) == nil {
 		t.Error("Failed to create plugin")
-	}
-}
-
-func TestGetPreferredAllocation(t *testing.T) {
-	rqt := &v1beta1.PreferredAllocationRequest{
-		ContainerRequests: []*v1beta1.ContainerPreferredAllocationRequest{
-			{
-				AvailableDeviceIDs: []string{"card0-4", "card0-2", "card1-1", "card2-3", "card2-4", "card2-1", "card1-0", "card1-4", "card3-4", "card1-2", "card0-1", "card2-0", "card2-2", "card1-3", "card3-0", "card3-3", "card0-3", "card0-0", "card3-1", "card3-2"},
-				AllocationSize:     4,
-			},
-		},
-	}
-
-	rqtNotEnough := &v1beta1.PreferredAllocationRequest{
-		ContainerRequests: []*v1beta1.ContainerPreferredAllocationRequest{
-			{
-				AvailableDeviceIDs: []string{"card0-1", "card0-2", "card0-3", "card1-1"},
-				AllocationSize:     3,
-			},
-		},
-	}
-
-	rqtErr := &v1beta1.PreferredAllocationRequest{
-		ContainerRequests: []*v1beta1.ContainerPreferredAllocationRequest{
-			{
-				AvailableDeviceIDs: []string{"card0-4", "card1-1", "card2-3", "card2-4", "card2-1"},
-				AllocationSize:     6,
-			},
-		},
-	}
-
-	plugin := newDevicePlugin("", "", cliOptions{sharedDevNum: 5, preferredAllocationPolicy: "none"})
-	response, _ := plugin.GetPreferredAllocation(rqt)
-
-	sort.Strings(response.ContainerResponses[0].DeviceIDs)
-
-	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-4", "card1-1", "card2-3", "card3-4"}) {
-		t.Error("Unexpected return value for none preferred allocation", response.ContainerResponses[0].DeviceIDs)
-	}
-
-	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, preferredAllocationPolicy: "balanced"})
-	response, _ = plugin.GetPreferredAllocation(rqt)
-
-	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-0", "card1-0", "card2-0", "card3-0"}) {
-		t.Error("Unexpected return value for balanced preferred allocation", response.ContainerResponses[0].DeviceIDs)
-	}
-
-	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, preferredAllocationPolicy: "packed"})
-	response, _ = plugin.GetPreferredAllocation(rqt)
-
-	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-0", "card0-1", "card0-2", "card0-3"}) {
-		t.Error("Unexpected return value for packed preferred allocation", response.ContainerResponses[0].DeviceIDs)
-	}
-
-	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, preferredAllocationPolicy: "none"})
-	response, _ = plugin.GetPreferredAllocation(rqtErr)
-
-	if response != nil {
-		t.Error("Fail to handle the input error that req.AllocationSize is greater than len(req.AvailableDeviceIDs).")
-	}
-
-	plugin = newDevicePlugin("", "", cliOptions{sharedDevNum: 5, preferredAllocationPolicy: "none"})
-	response, _ = plugin.GetPreferredAllocation(rqtNotEnough)
-
-	sort.Strings(response.ContainerResponses[0].DeviceIDs)
-
-	if !reflect.DeepEqual(response.ContainerResponses[0].DeviceIDs, []string{"card0-1", "card0-2", "card1-1"}) {
-		t.Error("Unexpected return value for none preferred allocation with too few separate devices",
-			response.ContainerResponses[0].DeviceIDs)
 	}
 }
 
@@ -526,6 +460,53 @@ func TestScan(t *testing.T) {
 			options:   cliOptions{sharedDevNum: 13, enableMonitoring: true},
 		},
 		{
+			name:      "two devices with xe and i915 drivers + single monitoring",
+			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64", "card1/device/drm/card1"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card1/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/xe",
+				"card1/device/driver": "drivers/i915",
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+				"card1",
+				"by-path/pci-0000:00:01.0-card",
+				"by-path/pci-0000:00:01.0-render",
+			},
+			options:             cliOptions{enableMonitoring: true, monitoringMode: monitoringModeSingle},
+			expectedXeDevs:      1,
+			expectedI915Devs:    1,
+			expectedGpuMonitors: 1,
+		},
+		{
+			name:      "two devices with xe driver + single monitoring",
+			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64", "card1/device/drm/card1"},
+			sysfsfiles: map[string][]byte{
+				"card0/device/vendor": []byte("0x8086"),
+				"card1/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/xe",
+				"card1/device/driver": "drivers/xe",
+			},
+			devfsdirs: []string{
+				"card0",
+				"by-path/pci-0000:00:00.0-card",
+				"by-path/pci-0000:00:00.0-render",
+				"card1",
+				"by-path/pci-0000:00:01.0-card",
+				"by-path/pci-0000:00:01.0-render",
+			},
+			options:             cliOptions{enableMonitoring: true, monitoringMode: monitoringModeSingle},
+			expectedXeDevs:      2,
+			expectedGpuMonitors: 1,
+		},
+		{
 			name:      "no sysfs records",
 			sysfsdirs: []string{"non_gpu_card"},
 		},
@@ -575,6 +556,10 @@ func TestScan(t *testing.T) {
 			if tc.expectedXeMonitors != notifier.xeMonitorCount {
 				t.Errorf("Expected %d, discovered %d monitors (XE)",
 					tc.expectedXeMonitors, notifier.xeMonitorCount)
+			}
+			if tc.expectedGpuMonitors != notifier.gpuMonitorCount {
+				t.Errorf("Expected %d, discovered %d monitors (gpu/combined)",
+					tc.expectedGpuMonitors, notifier.gpuMonitorCount)
 			}
 		})
 	}

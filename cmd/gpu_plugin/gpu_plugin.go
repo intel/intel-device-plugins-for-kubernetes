@@ -22,7 +22,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -56,8 +55,13 @@ const (
 	deviceTypeDefault = deviceTypeI915
 
 	// telemetry resource settings.
-	monitorSuffix = "_monitoring"
-	monitorID     = "all"
+	monitorSuffix           = "_monitoring"
+	monitorID               = "all"
+	monitorResourceCombined = "monitoring"
+
+	// monitoring mode options.
+	monitoringModeSingle = "single"
+	monitoringModeSplit  = "split"
 
 	bypathOptionNone   = "none"
 	bypathOptionAll    = "all"
@@ -74,6 +78,7 @@ type cliOptions struct {
 	allowIDs                  string
 	denyIDs                   string
 	bypathMount               string
+	monitoringMode            string
 	sharedDevNum              int
 	globalTempLimit           int
 	memoryTempLimit           int
@@ -81,134 +86,6 @@ type cliOptions struct {
 	enableMonitoring          bool
 	wslScan                   bool
 	healthManagement          bool
-}
-
-type preferredAllocationPolicyFunc func(*pluginapi.ContainerPreferredAllocationRequest) []string
-
-// nonePolicy is used for allocating GPU devices randomly, while trying
-// to select as many individual GPU devices as requested.
-func nonePolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
-	klog.V(2).Info("Select nonePolicy for GPU device allocation")
-
-	devices := make(map[string]bool)
-	selected := make(map[string]bool)
-	neededCount := req.AllocationSize
-
-	// When shared-dev-num is greater than 1, try to find as
-	// many independent GPUs as possible, to satisfy the request.
-
-	for _, deviceID := range req.AvailableDeviceIDs {
-		device := strings.Split(deviceID, "-")[0]
-
-		if _, found := devices[device]; !found {
-			devices[device] = true
-			selected[deviceID] = true
-			neededCount--
-
-			if neededCount == 0 {
-				break
-			}
-		}
-	}
-
-	// If there were not enough independent GPUs, use remaining untaken deviceIDs.
-
-	if neededCount > 0 {
-		for _, deviceID := range req.AvailableDeviceIDs {
-			if _, found := selected[deviceID]; !found {
-				selected[deviceID] = true
-				neededCount--
-
-				if neededCount == 0 {
-					break
-				}
-			}
-		}
-	}
-
-	// Convert selected map into an array
-
-	deviceIDs := make([]string, 0, len(selected))
-
-	for deviceID := range selected {
-		deviceIDs = append(deviceIDs, deviceID)
-	}
-
-	klog.V(2).Infof("Allocate deviceIds: %q", deviceIDs)
-
-	return deviceIDs
-}
-
-// balancedPolicy is used for allocating GPU devices in balance.
-func balancedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
-	klog.V(2).Info("Select balancedPolicy for GPU device allocation")
-
-	// Save the shared-devices list of each physical GPU.
-	Card := make(map[string][]string)
-	// Save the available shared-nums of each physical GPU.
-	Count := make(map[string]int)
-
-	for _, deviceID := range req.AvailableDeviceIDs {
-		device := strings.Split(deviceID, "-")
-		Card[device[0]] = append(Card[device[0]], deviceID)
-		Count[device[0]]++
-	}
-
-	// Save the physical GPUs in order.
-	Index := make([]string, 0, len(Count))
-	for key := range Count {
-		Index = append(Index, key)
-		sort.Strings(Card[key])
-	}
-
-	sort.Strings(Index)
-
-	need := req.AllocationSize
-
-	var deviceIds []string
-
-	// We choose one device ID from the GPU card that has most shared gpu IDs each time.
-	for {
-		var (
-			allocateCard string
-			max          int
-		)
-
-		for _, key := range Index {
-			if Count[key] > max {
-				max = Count[key]
-				allocateCard = key
-			}
-		}
-
-		deviceIds = append(deviceIds, Card[allocateCard][0])
-		need--
-
-		if need == 0 {
-			break
-		}
-
-		// Update Maps
-		Card[allocateCard] = Card[allocateCard][1:]
-		Count[allocateCard]--
-	}
-
-	klog.V(2).Infof("Allocate deviceIds: %q", deviceIds)
-
-	return deviceIds
-}
-
-// packedPolicy is used for allocating GPU devices one by one.
-func packedPolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
-	klog.V(2).Info("Select packedPolicy for GPU device allocation")
-
-	deviceIds := req.AvailableDeviceIDs
-	sort.Strings(deviceIds)
-	deviceIds = deviceIds[:req.AllocationSize]
-
-	klog.V(2).Infof("Allocate deviceIds: %q", deviceIds)
-
-	return deviceIds
 }
 
 func validatePCIDeviceIDs(pciIDList string) error {
@@ -534,7 +411,8 @@ func (dp *devicePlugin) sysFsGpuScan(notifier dpapi.Notifier) error {
 	previousCount := map[string]int{
 		deviceTypeI915: 0, deviceTypeXe: 0,
 		deviceTypeXe + monitorSuffix:   0,
-		deviceTypeI915 + monitorSuffix: 0}
+		deviceTypeI915 + monitorSuffix: 0,
+		monitorResourceCombined:        0}
 
 	for {
 		devTree, err := dp.scan()
@@ -797,12 +675,19 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 		}
 
 		if dp.options.enableMonitoring {
-			res := devProps.monitorResource()
-			meiSpecs := dp.createMeiDeviceSpecs(cardPath)
-			monitorSpecs := append(devSpecs, meiSpecs...)
-			klog.V(4).Infof("For %s/%s, adding nodes: %+v", res, monitorID, monitorSpecs)
+			mei := dp.createMeiDeviceSpecs(cardPath)
+			monitorSpecs := append(devSpecs, mei...)
 
-			monitor[res] = append(monitor[res], monitorSpecs...)
+			if dp.options.monitoringMode == monitoringModeSingle {
+				klog.V(4).Infof("For %s/%s, adding nodes: %+v", monitorResourceCombined, monitorID, monitorSpecs)
+
+				monitor[monitorResourceCombined] = append(monitor[monitorResourceCombined], monitorSpecs...)
+			} else {
+				res := devProps.monitorResource()
+				klog.V(4).Infof("For %s/%s, adding nodes: %+v", res, monitorID, monitorSpecs)
+
+				monitor[res] = append(monitor[res], monitorSpecs...)
+			}
 		}
 	}
 
@@ -847,7 +732,8 @@ func main() {
 	)
 
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
-	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable '*_monitoring' (= all GPUs) resource")
+	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable monitoring (= all GPUs) resource(s). See also --monitoring-mode")
+	flag.StringVar(&opts.monitoringMode, "monitoring-mode", monitoringModeSingle, "monitoring resource mode when --enable-monitoring is set: single (combined gpu.intel.com/monitoring resource) or split (per-driver i915_monitoring/xe_monitoring resources)")
 	flag.BoolVar(&opts.healthManagement, "health-management", false, "enable GPU health management")
 	flag.StringVar(&opts.bypathMount, "bypath", bypathOptionSingle, "DRI device 'by-path/' directory mounting options: single, none, all. Default: single")
 	flag.BoolVar(&opts.wslScan, "wsl", false, "scan for / use WSL devices")
@@ -876,6 +762,13 @@ func main() {
 		klog.Error("Invalid allow/deny options.")
 
 		os.Exit(1)
+	}
+
+	switch opts.monitoringMode {
+	case monitoringModeSingle:
+	case monitoringModeSplit:
+	default:
+		klog.Fatalf("invalid value for monitoring-mode, valid values: %s, %s", monitoringModeSplit, monitoringModeSingle)
 	}
 
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
