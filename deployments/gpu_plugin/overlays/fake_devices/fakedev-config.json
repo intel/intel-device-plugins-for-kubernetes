@@ -1,0 +1,8 @@
+{
+	"Info": "8x 4 GiB DG1 [Iris Xe MAX Graphics] GPUs",
+	"DevCount": 8,
+	"DevMemSize": 4294967296,
+	"Capabilities": {
+		"platform": "fake_DG1"
+	}
+}
