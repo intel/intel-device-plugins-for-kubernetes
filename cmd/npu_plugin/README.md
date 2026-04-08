@@ -11,6 +11,7 @@ Table of Contents
     * [Install with Operator](#install-with-operator)
     * [Verify Plugin Registration](#verify-plugin-registration)
 * [Testing and Demos](#testing-and-demos)
+* [Leverage CDI](#leverage-cdi)
 
 ## Introduction
 
@@ -144,3 +145,32 @@ The NPU plugin functionality can be verified by deploying a [npu-plugin-demo](..
     $ kubectl logs npu-workload-xxxxx
     <log output>
     ```
+
+## Leverage CDI
+
+Container Device Interface (CDI) enables defining specifications that allow greater control on how devices are exposed to containers. The most common way to expose NPU devices to containers is to use privileged mode: `docker run --privileged`. The problem with that is it exposes every device in the host as well as gives unlimited access to the host. A slightly better way to expose NPU devices is to expose the device files one by one: `docker run --device /dev/accel/accel0`.
+
+### CDI specification
+
+An improved way to access Intel NPUs is to use CDI and its device specifications to expose Intel NPUs to containers. CDI uses predefined YAML or JSON specification files to describe which device files, mounts and environment variables should be exposed to the container. An example is shown below:
+
+```
+---
+cdiVersion: 0.5.0
+kind: intel.com/npu
+devices:
+    - name: npu0
+      containerEdits:
+        deviceNodes:
+            - path: /dev/accel/accel0
+              hostPath: /dev/accel/accel0
+              type: c
+```
+
+Docker's `--device` argument can use the CDI device name:
+```
+$ docker run --device intel.com/npu=npu0 --rm -it ubuntu:24.04
+root@8fc6b8d2c45d:/# ls -l /dev/accel/
+total 0
+crw-rw-rw- 1 root root 261, 0 Apr  8 08:08 accel0
+```

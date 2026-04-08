@@ -229,6 +229,8 @@ To enable CDI support, container runtime has to support it. The support varies d
 
 Kubernetes CDI support is included since 1.28 release. In 1.28 it needs to be enabled via `DevicePluginCDIDevices` feature gate. From 1.29 onwards the feature is enabled by default.
 
+Use of CDI specifications with Docker is explained in a separate [CDI documentation](./cdi.md).
+
 > *NOTE*: To use CDI outside of Kubernetes, for example with Docker or Podman, CDI specs can be generated with the [Intel CDI specs generator](https://github.com/intel/intel-resource-drivers-for-kubernetes/releases/tag/specs-generator-v0.1.0).
 
 ### KMD and UMD
