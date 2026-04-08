@@ -74,7 +74,7 @@ func describe() {
 		framework.Failf("unable to locate %q: %v", dpdkDemoYaml, errFailedToLocateRepoFile)
 	}
 
-	ginkgo.Context("When DSA resources are available [Resource:dedicated]", func() {
+	ginkgo.Context("When DSA resources are available", ginkgo.Label("dsa"), ginkgo.Label("idxd"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			kustomizationPath, errFailedToLocateRepoFile = utils.LocateRepoFile(kustomizationYaml)
 			if errFailedToLocateRepoFile != nil {
@@ -122,7 +122,7 @@ func describe() {
 			}
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "configmap", "intel-dsa-config")
 		})
-		ginkgo.It("deploys a demo app [App:accel-config]", func(ctx context.Context) {
+		ginkgo.It("deploys a demo app (accel-config)", ginkgo.Label("accel-config"), func(ctx context.Context) {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 			ginkgo.By("waiting for the DSA demo to succeed")
@@ -130,20 +130,16 @@ func describe() {
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
 		})
 
-		ginkgo.It("deploys a demo app [App:dpdk-test]", func(ctx context.Context) {
+		ginkgo.It("deploys a demo app (dpdk-test)", ginkgo.Label("dpdk-test"), func(ctx context.Context) {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoDpdkPath)
 
 			ginkgo.By("waiting for the DSA DPDK demo to succeed")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkPodName, f.Namespace.Name, 200*time.Second)
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, dpdkPodName, dpdkPodName))
 		})
-
-		ginkgo.When("there is no app to run [App:noapp]", func() {
-			ginkgo.It("does nothing", func() {})
-		})
 	})
 
-	ginkgo.Context("When DSA VFIO resources are available [Resource:vfio]", func() {
+	ginkgo.Context("When DSA VFIO resources are available", ginkgo.Label("dsa"), ginkgo.Label("vfio"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			kustomizationPath, errFailedToLocateRepoFile = utils.LocateRepoFile(kustomVfioYaml)
 			if errFailedToLocateRepoFile != nil {
@@ -185,16 +181,12 @@ func describe() {
 			}
 		})
 
-		ginkgo.It("deploys a demo app [App:dpdk-vfio-test]", func(ctx context.Context) {
+		ginkgo.It("deploys a demo app", ginkgo.Label("dpdk-vfio-test"), func(ctx context.Context) {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoDpdkVfioPath)
 
 			ginkgo.By("waiting for the DSA DPDK VFIO demo to succeed")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkVfioPodName, f.Namespace.Name, 200*time.Second)
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, dpdkVfioPodName, dpdkVfioPodName))
-		})
-
-		ginkgo.When("there is no app to run [App:noapp]", func() {
-			ginkgo.It("does nothing", func() {})
 		})
 	})
 }

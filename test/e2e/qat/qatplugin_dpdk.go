@@ -56,7 +56,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("QAT plugin in DPDK mode [Device:qat] [Mode:dpdk]", describeQatDpdkPlugin)
+	ginkgo.Describe("QAT plugin in DPDK mode", ginkgo.Label("qat"), ginkgo.Label("dpdk"), describeQatDpdkPlugin)
 }
 
 func describeQatDpdkPlugin() {
@@ -115,7 +115,7 @@ func describeQatDpdkPlugin() {
 		}
 	})
 
-	ginkgo.Context("When QAT resources are continuously available with crypto (cy) services enabled [Resource:cy]", func() {
+	ginkgo.Context("When QAT resources are continuously available with crypto (cy) services enabled", ginkgo.Label("cy"), func() {
 		// This BeforeEach runs even before the JustBeforeEach above.
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("creating a configMap before plugin gets deployed")
@@ -125,7 +125,7 @@ func describeQatDpdkPlugin() {
 			resourceName = cyResource
 		})
 
-		ginkgo.It("deploys a crypto pod (openssl) requesting QAT resources [App:openssl]", func(ctx context.Context) {
+		ginkgo.It("deploys a crypto pod (openssl) requesting QAT resources", ginkgo.Label("openssl"), func(ctx context.Context) {
 			command := []string{
 				"cpa_sample_code",
 				"runTests=" + strconv.Itoa(symmetric),
@@ -138,7 +138,7 @@ func describeQatDpdkPlugin() {
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 		})
 
-		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources [App:crypto-perf]", func(ctx context.Context) {
+		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources", ginkgo.Label("crypto-perf"), func(ctx context.Context) {
 			ginkgo.By("submitting a crypto pod requesting QAT resources")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
@@ -147,7 +147,7 @@ func describeQatDpdkPlugin() {
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-crypto-perf", "crypto-perf"))
 		})
 
-		ginkgo.It("deploys a crypto pod (qat-engine testapp) [App:qat-engine]", func(ctx context.Context) {
+		ginkgo.It("deploys a crypto pod (qat-engine testapp)", ginkgo.Label("qat-engine"), func(ctx context.Context) {
 			command := []string{
 				"testapp",
 				"-engine", "qathwtest",
@@ -164,13 +164,9 @@ func describeQatDpdkPlugin() {
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 		})
-
-		ginkgo.When("there is no app to run [App:noapp]", func() {
-			ginkgo.It("does nothing", func() {})
-		})
 	})
 
-	ginkgo.Context("When QAT resources are continuously available with compress (dc) services enabled [Resource:dc]", func() {
+	ginkgo.Context("When QAT resources are continuously available with compress (dc) services enabled", ginkgo.Label("dc"), func() {
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("creating a configMap before plugin gets deployed")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "--from-literal", "qat.conf=ServicesEnabled=dc", "qat-config")
@@ -179,7 +175,7 @@ func describeQatDpdkPlugin() {
 			resourceName = dcResource
 		})
 
-		ginkgo.It("deploys a compress pod (openssl) requesting QAT resources [App:openssl]", func(ctx context.Context) {
+		ginkgo.It("deploys a compress pod (openssl) requesting QAT resources", ginkgo.Label("openssl"), func(ctx context.Context) {
 			command := []string{
 				"cpa_sample_code",
 				"runTests=" + strconv.Itoa(compression),
@@ -192,7 +188,7 @@ func describeQatDpdkPlugin() {
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 		})
 
-		ginkgo.It("deploys a compress pod (dpdk compress-perf) requesting QAT resources [App:compress-perf]", func(ctx context.Context) {
+		ginkgo.It("deploys a compress pod (dpdk compress-perf) requesting QAT resources", ginkgo.Label("compress-perf"), func(ctx context.Context) {
 			ginkgo.By("submitting a compress pod requesting QAT resources")
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
@@ -200,13 +196,9 @@ func describeQatDpdkPlugin() {
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-compress-perf", f.Namespace.Name, 300*time.Second)
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-compress-perf", "compress-perf"))
 		})
-
-		ginkgo.When("there is no app to run [App:noapp]", func() {
-			ginkgo.It("does nothing", func() {})
-		})
 	})
 
-	ginkgo.Context("When a QAT device goes unresponsive", func() {
+	ginkgo.Context("When a QAT device goes unresponsive", ginkgo.Label("nft"), func() {
 		ginkgo.When("QAT's auto-reset is off", func() {
 			ginkgo.BeforeEach(func() {
 				ginkgo.By("creating a configMap before plugin gets deployed")
@@ -216,7 +208,7 @@ func describeQatDpdkPlugin() {
 				resourceName = dcResource
 			})
 
-			ginkgo.It("checks if unhealthy status is reported [Functionality:heartbeat]", func(ctx context.Context) {
+			ginkgo.It("checks if unhealthy status is reported", ginkgo.Label("heartbeat"), func(ctx context.Context) {
 				injectError(ctx, f, resourceName)
 
 				ginkgo.By("waiting node resources become zero")
@@ -235,7 +227,7 @@ func describeQatDpdkPlugin() {
 				resourceName = dcResource
 			})
 
-			ginkgo.It("checks if an injected error gets solved [Functionality:auto-reset]", func(ctx context.Context) {
+			ginkgo.It("checks if an injected error gets solved", ginkgo.Label("autoreset"), func(ctx context.Context) {
 				injectError(ctx, f, resourceName)
 
 				ginkgo.By("seeing if there is zero resource")

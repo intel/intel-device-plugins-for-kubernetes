@@ -41,7 +41,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("SGX plugin [Device:sgx]", describe)
+	ginkgo.Describe("SGX plugin", ginkgo.Label("sgx"), describe)
 }
 
 func describe() {
@@ -93,7 +93,7 @@ func describe() {
 			}
 		})
 
-		ginkgo.It("deploys a sgx-sdk-demo pod requesting SGX enclave resources [App:sgx-sdk-demo]", func(ctx context.Context) {
+		ginkgo.It("deploys a sgx-sdk-demo pod requesting SGX enclave resources", ginkgo.Label("sgx-sdk-demo"), func(ctx context.Context) {
 			podSpec := &v1.Pod{
 				ObjectMeta: metav1.ObjectMeta{Name: "sgxplugin-tester"},
 				Spec: v1.PodSpec{
@@ -118,10 +118,6 @@ func describe() {
 			ginkgo.By("waiting the pod to finish successfully")
 			err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 60*time.Second)
 			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, "testcontainer"))
-		})
-
-		ginkgo.When("there is no app to run [App:noapp]", func() {
-			ginkgo.It("does nothing", func() {})
 		})
 	})
 

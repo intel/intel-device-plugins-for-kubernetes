@@ -14,7 +14,6 @@ jobs:
           - name: e2e-spr
             targetjob: e2e-spr
             runner: spr
-            skip: App:compress-perf
             images:
               - intel-qat-plugin
               - intel-qat-initcontainer
@@ -32,7 +31,6 @@ jobs:
     env:
       TARGET_JOB: ${{ matrix.targetjob || matrix.name }}
       IMAGES: ${{ join(matrix.images, ' ') }}
-      SKIP: ${{ matrix.skip || '' }}
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
