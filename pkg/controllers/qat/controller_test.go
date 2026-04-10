@@ -16,6 +16,7 @@
 package qat
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -192,7 +193,7 @@ func TestNewDaemonSetQAT(t *testing.T) {
 
 	plugin := &devicepluginv1.QatDevicePlugin{}
 	plugin.Name = "testing"
-	plugin.Spec.InitImage = "intel/intel-qat-initcontainer:" + controllers.ImageMinVersion.String()
+	plugin.Spec.InitImage = fmt.Sprintf("%s:%s", "intel/intel-qat-initcontainer", controllers.ImageMinVersion.String())
 
 	expected := c.newDaemonSetExpected(plugin)
 	actual := c.NewDaemonSet(plugin)
