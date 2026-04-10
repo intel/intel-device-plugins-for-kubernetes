@@ -88,7 +88,7 @@ jobs:
           check-latest: true
       - name: Install envtest and k8s control plane
         run: |
-          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+          go install sigs.k8s.io/controller-runtime/tools/setup-envtest@release-0.23
           setup-envtest use ${{ matrix.version }}
       - name: Run envtest
         run: |

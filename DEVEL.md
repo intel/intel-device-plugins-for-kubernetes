@@ -295,7 +295,7 @@ operator uses this package for its integration testing.
 For setting up the environment for testing, `setup-envtest` can be used:
 
 ```bash
-$ go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+$ go install sigs.k8s.io/controller-runtime/tools/setup-envtest@release-0.23
 $ setup-envtest use <K8S_VERSION>
 $ KUBEBUILDER_ASSETS=$(setup-envtest use -i -p path <K8S_VERSION>) make envtest
 ```
