@@ -10,6 +10,7 @@ Table of Contents
    * [Work with Intel Device Plugins Operator Modifications](#work-with-intel-device-plugins-operator-modifications)
    * [Publish a New Version of the Intel Device Plugins Operator to operatorhub.io](#publish-a-new-version-of-the-intel-device-plugins-operator-to-operatorhubio)
    * [Run E2E Tests](#run-e2e-tests)
+   * [Run Operator E2E Tests](#run-operator-e2e-tests)
    * [Run Controller Tests with a Local Control Plane](#run-controller-tests-with-a-local-control-plane)
 * [How to Develop Simple Device Plugins](#how-to-develop-simple-device-plugins)
     * [Logging](#logging)
@@ -267,6 +268,99 @@ without a pre-configured Kubernetes cluster. Just make sure you have
 ```
 make test-with-kind
 ```
+
+### Run Operator E2E Tests
+
+The operator E2E tests (`test/e2e/operator/`) verify that the Intel Device Plugins Operator
+correctly deploys each plugin DaemonSet and exposes device resources as allocatable on nodes.
+The tests cover QAT (cy, dc), SGX, DSA (idxd, vfio), IAA, and GPU plugins.
+
+The following environment variables must be set before running:
+
+| Variable | Required | Description |
+|---|---|---|
+| `PROJECT_NAMESPACE`| always | Kubernetes namespace where the operator is deployed |
+| `IMAGE_PATH`       | always | Image path under the registry (e.g. `myproject`) |
+| `PLUGIN_VERSION`   | always | Plugin image tag (e.g. `0.35.0`) |
+| `IMAGE_REGISTRY`   | K8s only | Container registry address (e.g. `registry.example.com:5000`); omit on OCP|
+
+#### Vanilla Kubernetes
+
+**Prerequisites:**
+
+- `cert-manager` must already be installed in the cluster (the `cert-manager` namespace must exist).
+  The tests will fail early if it is absent. See the [cert-manager install guide](https://cert-manager.io/docs/installation/).
+- Node Feature Discovery (NFD) is deployed automatically by the test suite if no pods are found in the `node-feature-discovery` namespace.
+- The `PROJECT_NAMESPACE` namespace is created automatically if it does not yet exist.
+- The operator is deployed from `deployments/operator/default/kustomization.yaml`.
+
+```bash
+export PLUGIN_VERSION=0.35.0
+export PROJECT_NAMESPACE=inteldeviceplugin-operator
+export IMAGE_PATH=myproject
+export IMAGE_REGISTRY=registry.example.com:5000
+KUBECONFIG=/path/to/kubeconfig make e2e-operator
+```
+
+Running operator tests with existing container images (0.35.0):
+```bash
+export PLUGIN_VERSION=0.35.0
+export PROJECT_NAMESPACE=inteldeviceplugin-operator
+export IMAGE_PATH=intel
+export IMAGE_REGISTRY=docker.io
+KUBECONFIG=/path/to/kubeconfig make e2e-operator
+```
+
+#### OpenShift (OCP)
+
+**Prerequisites:**
+
+- The OCP service-CA operator is used for TLS; `cert-manager` is **not** required and must not
+  interfere.
+- NFD is expected to already be running, either via the OpenShift NFD Operator
+  (`openshift-nfd` namespace) or standard upstream NFD (`node-feature-discovery` namespace).
+  The test suite deploys NFD automatically only if neither namespace has running pods.
+- The `PROJECT_NAMESPACE` namespace **must exist before running**; it is not created automatically
+  on OCP.  For OCP internal registry access, `PROJECT_NAMESPACE` and `IMAGE_PATH` typically refer
+  to the same OpenShift project.
+- Do **not** set `IMAGE_REGISTRY`; the tests default to the OCP internal registry
+  (`image-registry.openshift-image-registry.svc:5000`).
+- The operator is deployed from `deployments/operator/overlays/ocp/kustomization.yaml`.
+- Plugin images must be mirrored to the OCP internal registry before running:
+
+```bash
+# The TAG has to be same or greater than the current release semver
+TAG=0.35.1 make set-version dockerfiles mirror-images-ocp
+```
+
+Then run the tests:
+
+```bash
+export PROJECT_NAMESPACE=inteldeviceplugin-operator
+export IMAGE_PATH=inteldeviceplugin-operator
+export PLUGIN_VERSION=0.35.1
+KUBECONFIG=/path/to/kubeconfig make e2e-operator
+```
+
+#### Filtering Operator Tests
+
+The `make e2e-operator` target uses the label filter `operator && !(gpu || iaa)` by default.
+Use `--ginkgo.label-filter` directly when you need a different subset:
+
+```bash
+# Run only the QAT operator tests
+KUBECONFIG=/path/to/kubeconfig go test -v ./test/e2e/... \
+  -ginkgo.v --ginkgo.label-filter "operator && qat" \
+  -delete-namespace-on-failure=false
+
+# Run all operator tests including GPU and IAA
+KUBECONFIG=/path/to/kubeconfig go test -v ./test/e2e/... \
+  -ginkgo.v --ginkgo.label-filter "operator" \
+  -delete-namespace-on-failure=false
+```
+
+Available per-plugin labels: `qat`, `sgx`, `dsa`, `iaa`, `gpu`.
+Focus labels within operator tests: `cy`, `dc` (QAT), `idxd`, `vfio` (DSA), `i915` (GPU).
 
 ### Run Controller Tests with a Local Control Plane
 
