@@ -36,7 +36,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("Device Plugins Operator", describe)
+	ginkgo.Describe("Device Plugins Operator", ginkgo.Label("operator"), describe)
 }
 
 func describe() {
@@ -66,16 +66,20 @@ func describe() {
 		gomega.Expect(err).To(gomega.BeNil())
 	})
 
-	ginkgo.It("deploys IAA plugin with operator", func(ctx context.Context) {
+	ginkgo.It("deploys IAA plugin with operator", ginkgo.Label("iaa"), func(ctx context.Context) {
 		testPluginWithOperator("iaa", []v1.ResourceName{"iaa.intel.com/wq-user-dedicated"}, f, ctx)
 	})
 
-	ginkgo.It("deploys DSA plugin with operator", func(ctx context.Context) {
+	ginkgo.It("deploys DSA plugin with operator", ginkgo.Label("dsa"), func(ctx context.Context) {
 		testPluginWithOperator("dsa", []v1.ResourceName{"dsa.intel.com/wq-user-dedicated"}, f, ctx)
 	})
 
-	ginkgo.It("deploys SGX plugin with operator", func(ctx context.Context) {
+	ginkgo.It("deploys SGX plugin with operator", ginkgo.Label("sgx"), func(ctx context.Context) {
 		testPluginWithOperator("sgx", []v1.ResourceName{"sgx.intel.com/epc", "sgx.intel.com/enclave", "sgx.intel.com/provision"}, f, ctx)
+	})
+
+	ginkgo.It("deploys QAT plugin with operator", ginkgo.Label("qat"), func(ctx context.Context) {
+		testPluginWithOperator("qat", []v1.ResourceName{"qat.intel.com/cy"}, f, ctx)
 	})
 }
 
