@@ -38,9 +38,7 @@ jobs:
         scan-ref: deployments/
         exit-code: 1
         severity: CRITICAL,HIGH
-        # When trivy-action starts supporting this, use it instead of .trivyaction
-        # https://github.com/aquasecurity/trivy-action/issues/284
-        #ignorefile: .trivyignore.yaml
+        trivyignores: .trivyignore.yaml
 
   trivy-scan-dockerfiles:
     name: Scan Dockerfiles
@@ -56,6 +54,7 @@ jobs:
         scan-ref: build/docker/
         exit-code: 1
         severity: CRITICAL,HIGH
+        trivyignores: .trivyignore.yaml
 
   trivy-scan-licenses:
     runs-on: ubuntu-24.04
@@ -88,3 +87,4 @@ jobs:
         exit-code: 1
         list-all-pkgs: true
         format: table
+        trivyignores: .trivyignore.yaml

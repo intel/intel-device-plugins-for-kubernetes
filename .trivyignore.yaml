@@ -1,10 +1,16 @@
+vulnerabilities:
+  - id: CVE-2025-1767
+    statement: >
+      GitRepo volume vulnerability - we don't use it and it might not
+      receive a fix due to being a deprecated feature
+
 misconfigurations:
-  - id: AVD-KSV-0121
-    statement: Some plugins require access to various host paths
-    paths:
-      - dlb_plugin/base/intel-dlb-plugin.yaml
-      - fpga_plugin/base/intel-fpga-plugin-daemonset.yaml
-      - qat_plugin/overlays/qat_initcontainer/qat_initcontainer.yaml
+  - id: AVD-DS-0002
+    statement: >
+      Image user should not be 'root'. Running containers with 'root'
+      user can lead to a container escape situation. It is a best practice
+      to run containers as non-root users, which can be done by adding a
+      'USER' statement to the Dockerfile.
 
   - id: AVD-KSV-0017
     statement: initcontainers require privileged access
@@ -14,11 +20,17 @@ misconfigurations:
       - iaa_plugin/overlays/iaa_initcontainer/iaa_initcontainer.yaml
       - qat_plugin/overlays/qat_initcontainer/qat_initcontainer.yaml
 
-  - id: AVD-KSV-0047
-    statement: gpu plugin in kubelet mode requires "nodes/proxy" resource access
+  - id: AVD-KSV-0048
+    statement: >
+      Do not allow update/create of a malicious pod. Device plugin
+      operator requires access to daemonset creation etc.
+
+  - id: AVD-KSV-0121
+    statement: Some plugins require access to various host paths
     paths:
-      - operator/rbac/gpu_manager_role.yaml
-      - operator/rbac/role.yaml
+      - dlb_plugin/base/intel-dlb-plugin.yaml
+      - fpga_plugin/base/intel-fpga-plugin-daemonset.yaml
+      - qat_plugin/overlays/qat_initcontainer/qat_initcontainer.yaml
 
   - id: AVD-KSV-0014
     statement: These are false detections for not setting "readOnlyFilesystem"
@@ -43,3 +55,8 @@ misconfigurations:
       - qat_plugin/overlays/e2e/add-args.yaml
       - qat_plugin/overlays/debug/add-args.yaml
       - sgx_admissionwebhook/base/manager_webhook_patch.yaml
+
+  - id: AVD-KSV-0118
+    statement: >
+      Trivy invalidly detects securityContext issues from yaml
+      files that are patch files
