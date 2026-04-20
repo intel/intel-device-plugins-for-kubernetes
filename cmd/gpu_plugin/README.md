@@ -41,6 +41,7 @@ video transcoding operations, and containers with the Intel OpenCL / oneAPI Leve
 backend libraries can offload compute operations to GPU.
 
 Intel GPU plugin may register four per-node resource types to the Kubernetes cluster:
+
 | Resource | Description |
 |:---- |:-------- |
 | gpu.intel.com/i915 | Legacy `i915` KMD (Kernel Mode Driver) provided GPU instance |
