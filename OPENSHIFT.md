@@ -153,7 +153,7 @@ spec:
             class: {op: In, value: ["0b40"]}
         - feature: kernel.loadedmodule
           matchExpressions:
-            intel_qat: {op: Exists}
+            intel_qat: {op: Exists}  # intel_qat module must be loaded
 
     - name: "intel.sgx"
       labels:
@@ -183,7 +183,7 @@ spec:
             class: {op: In, value: ["0880"]}
         - feature: kernel.loadedmodule
           matchExpressions:
-            idxd: {op: Exists}
+            idxd: {op: Exists}  # idxd module must be loaded
 ```
 
 Save the above to a file (e.g. `node-feature-rules.yaml`) and apply:
@@ -191,6 +191,11 @@ Save the above to a file (e.g. `node-feature-rules.yaml`) and apply:
 ```bash
 oc apply -f node-feature-rules.yaml
 ```
+
+> **Note:** The QAT rule requires the `intel_qat` kernel module and the DSA rule
+> requires the `idxd` kernel module to be loaded on the nodes. These modules are
+> typically loaded automatically when the corresponding hardware is present and
+> properly configured.
 
 > **Note:** As a cluster administrator, you may need to merge these rules with
 > other `NodeFeatureRule` resources already applied on your cluster.
@@ -308,7 +313,7 @@ kind: GpuDevicePlugin
 metadata:
   name: gpudeviceplugin-sample
 spec:
-  image: registry.connect.redhat.com/intel/intel-gpu-plugin@sha256:e2c2ce658e78c35c425f16a4f8e85c5f32ce31848d9b53a644a05e7f8b7f71b0
+  image: registry.connect.redhat.com/intel/intel-gpu-plugin@sha256:e2c2ce658e78c35c425f16a4f8e85c5f32ce31848d9b53a644a05e7f8b7f71b0  # check Red Hat Ecosystem Catalog for latest digest
   preferredAllocationPolicy: none
   sharedDevNum: 1
   logLevel: 4
@@ -372,8 +377,8 @@ kind: QatDevicePlugin
 metadata:
   name: qatdeviceplugin-sample
 spec:
-  image: registry.connect.redhat.com/intel/intel-qat-plugin@sha256:8d79dba051b83ec770a4b0fdc3da6ac92264cb19cac8d455b707ed92a6a95d02
-  initImage: registry.connect.redhat.com/intel/intel-qat-initcontainer@sha256:34f0b993ca654ea0b386217cba1a44d5ef3da841b3befc780508f5323e95fa90
+  image: registry.connect.redhat.com/intel/intel-qat-plugin@sha256:8d79dba051b83ec770a4b0fdc3da6ac92264cb19cac8d455b707ed92a6a95d02  # check Red Hat Ecosystem Catalog for latest digest
+  initImage: registry.connect.redhat.com/intel/intel-qat-initcontainer@sha256:34f0b993ca654ea0b386217cba1a44d5ef3da841b3befc780508f5323e95fa90  # check Red Hat Ecosystem Catalog for latest digest
   dpdkDriver: vfio-pci
   kernelVfDrivers:
     - 4xxxvf
@@ -472,7 +477,7 @@ kind: SgxDevicePlugin
 metadata:
   name: sgxdeviceplugin-sample
 spec:
-  image: registry.connect.redhat.com/intel/intel-sgx-plugin@sha256:f2c77521c6dae6b4db1896a5784ba8b06a5ebb2a01684184fc90143cfcca7bf4
+  image: registry.connect.redhat.com/intel/intel-sgx-plugin@sha256:f2c77521c6dae6b4db1896a5784ba8b06a5ebb2a01684184fc90143cfcca7bf4  # check Red Hat Ecosystem Catalog for latest digest
   enclaveLimit: 110
   provisionLimit: 110
   logLevel: 4
@@ -521,8 +526,8 @@ kind: DsaDevicePlugin
 metadata:
   name: dsadeviceplugin-sample
 spec:
-  image: registry.connect.redhat.com/intel/intel-dsa-plugin@sha256:2742a13279cc3f301daa09b6389517024530f658d4e1dd13db495cc94d9ba57c
-  initImage: registry.connect.redhat.com/intel/intel-idxd-config-initcontainer@sha256:b74dc43fa81ce14ea97f20ff6b2f726039f6309fdd868d5f45d751d0a8662cc1
+  image: registry.connect.redhat.com/intel/intel-dsa-plugin@sha256:2742a13279cc3f301daa09b6389517024530f658d4e1dd13db495cc94d9ba57c  # check Red Hat Ecosystem Catalog for latest digest
+  initImage: registry.connect.redhat.com/intel/intel-idxd-config-initcontainer@sha256:b74dc43fa81ce14ea97f20ff6b2f726039f6309fdd868d5f45d751d0a8662cc1  # check Red Hat Ecosystem Catalog for latest digest
   logLevel: 4
   nodeSelector:
     intel.feature.node.kubernetes.io/dsa: "true"
