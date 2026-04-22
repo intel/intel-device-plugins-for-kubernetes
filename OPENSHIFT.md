@@ -53,7 +53,7 @@ for specific instructions. The following are general references:
 | Intel® Data Center GPU Flex Series | [GPU Flex Series setup guide](https://www.intel.com/content/www/us/en/content-details/774119/virtualization-guide-for-intel-data-center-gpu-flex-series.html) |
 | Intel® Data Center GPU Max Series | [GPU Max Series BIOS setup](https://dgpu-docs.intel.com/system-user-guides/DNP-Max-1100-userguide/DNP-Max-1100-userguide.html#bios-setup) |
 | Intel® QAT | [QAT BIOS setup](https://github.com/intel/qatlib/blob/main/INSTALL) |
-| Intel® DSA | [DSA setup guide (PDF)](https://cdrdv2-public.intel.com/759709/353216-data-streaming-accelerator-user-guide-003.pdf) |
+| Intel® DSA | [DSA setup guide](https://www.intel.com/content/www/us/en/content-details/759709/intel-data-streaming-accelerator-user-guide.html) |
 
 ## Machine Configuration
 
