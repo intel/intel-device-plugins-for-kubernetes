@@ -534,6 +534,36 @@ Save and apply:
 oc apply -f dsa-device-plugin.yaml
 ```
 
+#### Create via CLI (VFIO driver)
+
+Some workloads (e.g., DPDK) support using DSA through `vfio-pci`. Setting
+`driver: vfio-pci` makes the plugin advertise `dsa.intel.com/vfio` resources
+instead of the default `idxd`-based work queue resources.
+
+```yaml
+apiVersion: deviceplugin.intel.com/v1
+kind: DsaDevicePlugin
+metadata:
+  name: dsadeviceplugin-vfio-sample
+spec:
+  image: registry.connect.redhat.com/intel/intel-dsa-plugin@sha256:64ec224b9382f711cf834722a85497965bb20e4fbf54e619ac296b46be6e1964  # check Red Hat Ecosystem Catalog for latest digest
+  initImage: registry.connect.redhat.com/intel/intel-idxd-config-initcontainer@sha256:c573ff46096f78d025d736bb3eedb131e9fc3aa2271d2dd6096a4c4911ee8a1f  # check Red Hat Ecosystem Catalog for latest digest
+  driver: vfio-pci
+  logLevel: 4
+  nodeSelector:
+    intel.feature.node.kubernetes.io/dsa: "true"
+```
+
+> **Note:** The `vfio-pci` module must be loaded with `disable_denylist=1`
+> parameter for the DSA device plugin to work correctly with DSA devices with
+> `PCI ID=0b25`.
+
+Save and apply:
+
+```bash
+oc apply -f dsa-device-plugin-vfio.yaml
+```
+
 #### Verify
 
 ```bash
@@ -543,8 +573,9 @@ oc get DsaDevicePlugin
 Example output:
 
 ```
-NAME                     DESIRED   READY   NODE SELECTOR                                       AGE
-dsadeviceplugin-sample   3         3       {"intel.feature.node.kubernetes.io/dsa":"true"}      98m
+NAME                          DESIRED   READY   NODE SELECTOR                                       AGE
+dsadeviceplugin-sample        3         3       {"intel.feature.node.kubernetes.io/dsa":"true"}      98m
+dsadeviceplugin-vfio-sample   3         3       {"intel.feature.node.kubernetes.io/dsa":"true"}      10m
 ```
 
 Verify DSA resources on a node:
@@ -553,11 +584,17 @@ Verify DSA resources on a node:
 oc describe node <node-name> | grep dsa.intel.com
 ```
 
-Example output:
+Example output (idxd driver):
 
 ```
 dsa.intel.com/wq-user-shared:     160
 dsa.intel.com/wq-user-dedicated:  0
+```
+
+Example output (vfio-pci driver):
+
+```
+dsa.intel.com/vfio:  4
 ```
 
 #### DSA Resource Configuration
