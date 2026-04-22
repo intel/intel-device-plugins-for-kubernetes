@@ -692,3 +692,4 @@ plugin. Workloads request these resources in their pod specs.
 | Intel® QAT | `qat.intel.com/dc` | QAT VFIO VF for compression |
 | Intel® DSA | `dsa.intel.com/wq-user-shared` | DSA shared work queue |
 | Intel® DSA | `dsa.intel.com/wq-user-dedicated` | DSA dedicated work queue |
+| Intel® DSA | `dsa.intel.com/vfio` | DSA VFIO device (vfio-pci driver) |
