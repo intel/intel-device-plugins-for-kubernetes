@@ -312,8 +312,8 @@ kind: QatDevicePlugin
 metadata:
   name: qatdeviceplugin-sample
 spec:
-  image: registry.connect.redhat.com/intel/intel-qat-plugin@sha256:8d79dba051b83ec770a4b0fdc3da6ac92264cb19cac8d455b707ed92a6a95d02  # check Red Hat Ecosystem Catalog for latest digest
-  initImage: registry.connect.redhat.com/intel/intel-qat-initcontainer@sha256:34f0b993ca654ea0b386217cba1a44d5ef3da841b3befc780508f5323e95fa90  # check Red Hat Ecosystem Catalog for latest digest
+  image: registry.connect.redhat.com/intel/intel-qat-plugin@sha256:ccb19d26f6afdb79cf0b2b70dab73b45f2bb9d5d3d94482486bec4beab6bfba3  # check Red Hat Ecosystem Catalog for latest digest
+  initImage: registry.connect.redhat.com/intel/intel-qat-initcontainer@sha256:33c39996800676660f72952c994775c05de63e102f4b67afdd6a0e3f5a1bab5f  # check Red Hat Ecosystem Catalog for latest digest
   dpdkDriver: vfio-pci
   kernelVfDrivers:
     - 4xxxvf
@@ -412,7 +412,7 @@ kind: SgxDevicePlugin
 metadata:
   name: sgxdeviceplugin-sample
 spec:
-  image: registry.connect.redhat.com/intel/intel-sgx-plugin@sha256:f2c77521c6dae6b4db1896a5784ba8b06a5ebb2a01684184fc90143cfcca7bf4  # check Red Hat Ecosystem Catalog for latest digest
+  image: registry.connect.redhat.com/intel/intel-sgx-plugin@sha256:4ac8769c4f0a82b3ea04cf1532f15e9935c71fe390ff5a9dc3ee57f970a65f0b  # check Red Hat Ecosystem Catalog for latest digest
   enclaveLimit: 110
   provisionLimit: 110
   logLevel: 4
@@ -461,8 +461,8 @@ kind: DsaDevicePlugin
 metadata:
   name: dsadeviceplugin-sample
 spec:
-  image: registry.connect.redhat.com/intel/intel-dsa-plugin@sha256:2742a13279cc3f301daa09b6389517024530f658d4e1dd13db495cc94d9ba57c  # check Red Hat Ecosystem Catalog for latest digest
-  initImage: registry.connect.redhat.com/intel/intel-idxd-config-initcontainer@sha256:b74dc43fa81ce14ea97f20ff6b2f726039f6309fdd868d5f45d751d0a8662cc1  # check Red Hat Ecosystem Catalog for latest digest
+  image: registry.connect.redhat.com/intel/intel-dsa-plugin@sha256:64ec224b9382f711cf834722a85497965bb20e4fbf54e619ac296b46be6e1964  # check Red Hat Ecosystem Catalog for latest digest
+  initImage: registry.connect.redhat.com/intel/intel-idxd-config-initcontainer@sha256:c573ff46096f78d025d736bb3eedb131e9fc3aa2271d2dd6096a4c4911ee8a1f  # check Red Hat Ecosystem Catalog for latest digest
   logLevel: 4
   nodeSelector:
     intel.feature.node.kubernetes.io/dsa: "true"
@@ -539,7 +539,7 @@ kind: GpuDevicePlugin
 metadata:
   name: gpudeviceplugin-sample
 spec:
-  image: registry.connect.redhat.com/intel/intel-gpu-plugin@sha256:e2c2ce658e78c35c425f16a4f8e85c5f32ce31848d9b53a644a05e7f8b7f71b0  # check Red Hat Ecosystem Catalog for latest digest
+  image: registry.connect.redhat.com/intel/intel-gpu-plugin@sha256:51f5db99b7ec78407cb8f00e20d6f455e62edbb3a4abe3352dfaa6c037ba598c  # check Red Hat Ecosystem Catalog for latest digest
   preferredAllocationPolicy: none
   sharedDevNum: 1
   logLevel: 4
