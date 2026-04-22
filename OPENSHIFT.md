@@ -442,6 +442,12 @@ Where `<option>` is one of:
 - `asym` — asymmetric crypto (`qat.intel.com/asym`)
 - `sym;dc` — symmetric crypto and compression (`qat.intel.com/sym-dc`)
 - `asym;dc` — asymmetric crypto and compression (`qat.intel.com/asym-dc`)
+- `sym;decomp` — symmetric crypto and decompression, 6xxx only (`qat.intel.com/sym-decomp`)
+- `asym;decomp` — asymmetric crypto and decompression, 6xxx only (`qat.intel.com/asym-decomp`)
+- `asym;sym;dc` — crypto and compression, 6xxx only (`qat.intel.com/asym-sym-dc`)
+- `asym;sym;decomp` — crypto and decompression, 6xxx only (`qat.intel.com/asym-sym-decomp`)
+- `dcc` — dc chaining feature (`qat.intel.com/dcc`)
+- `decomp` — decompression, 6xxx only (`qat.intel.com/decomp`)
 
 Then reference the ConfigMap name in the `provisioningConfig` field of the
 `QatDevicePlugin` CR.
@@ -688,8 +694,19 @@ plugin. Workloads request these resources in their pod specs.
 |---|---|---|
 | Intel® SGX | `sgx.intel.com/epc` | SGX Enclave Page Cache memory |
 | Intel® Data Center GPU | `gpu.intel.com/i915` | Intel GPU device |
-| Intel® QAT | `qat.intel.com/cy` | QAT VFIO VF for cryptography |
+| Intel® QAT | `qat.intel.com/generic` | QAT VFIO VF (pre-Gen4 devices) |
+| Intel® QAT | `qat.intel.com/cy` | QAT VFIO VF for crypto (`sym;asym`) |
 | Intel® QAT | `qat.intel.com/dc` | QAT VFIO VF for compression |
+| Intel® QAT | `qat.intel.com/sym` | QAT VFIO VF for symmetric crypto |
+| Intel® QAT | `qat.intel.com/asym` | QAT VFIO VF for asymmetric crypto |
+| Intel® QAT | `qat.intel.com/sym-dc` | QAT VFIO VF for symmetric crypto and compression |
+| Intel® QAT | `qat.intel.com/asym-dc` | QAT VFIO VF for asymmetric crypto and compression |
+| Intel® QAT | `qat.intel.com/sym-decomp` | QAT VFIO VF for symmetric crypto and decompression (6xxx) |
+| Intel® QAT | `qat.intel.com/asym-decomp` | QAT VFIO VF for asymmetric crypto and decompression (6xxx) |
+| Intel® QAT | `qat.intel.com/asym-sym-dc` | QAT VFIO VF for crypto and compression (6xxx) |
+| Intel® QAT | `qat.intel.com/asym-sym-decomp` | QAT VFIO VF for crypto and decompression (6xxx) |
+| Intel® QAT | `qat.intel.com/dcc` | QAT VFIO VF for dc chaining |
+| Intel® QAT | `qat.intel.com/decomp` | QAT VFIO VF for decompression (6xxx) |
 | Intel® DSA | `dsa.intel.com/wq-user-shared` | DSA shared work queue |
 | Intel® DSA | `dsa.intel.com/wq-user-dedicated` | DSA dedicated work queue |
 | Intel® DSA | `dsa.intel.com/vfio` | DSA VFIO device (vfio-pci driver) |
