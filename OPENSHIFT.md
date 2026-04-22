@@ -15,6 +15,8 @@ DSA, and GPU resources to workloads.
 - [Prerequisites](#prerequisites)
 - [BIOS Configuration](#bios-configuration)
 - [Machine Configuration](#machine-configuration)
+  - [Hugepages](#hugepages)
+  - [CPU Manager](#cpu-manager)
 - [Node Feature Discovery](#node-feature-discovery)
   - [NodeFeatureRules for Intel Devices](#nodefeaturerules-for-intel-devices)
   - [Verification](#nfd-verification)
@@ -85,6 +87,65 @@ Save the above to a file (e.g. `100-intel-iommu-on.yaml`) and apply:
 
 ```bash
 oc apply -f 100-intel-iommu-on.yaml
+```
+
+### Hugepages
+
+If your workloads require hugepages (e.g. DPDK-based QAT applications), apply
+the following `MachineConfig` to allocate 2 Mi hugepages at boot:
+
+> **Note:** Applying this MachineConfig will trigger a reboot of the matching
+> worker nodes.
+
+```yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  name: 99-worker-hugepages-2mi
+  labels:
+    machineconfiguration.openshift.io/role: worker
+spec:
+  kernelArguments:
+    - "default_hugepagesz=2M"
+    - "hugepagesz=2M"
+    - "hugepages=1024"
+```
+
+Save the above to a file (e.g. `99-worker-hugepages-2mi.yaml`) and apply:
+
+```bash
+oc apply -f 99-worker-hugepages-2mi.yaml
+```
+
+### CPU Manager
+
+For workloads that require exclusive CPU pinning, enable the static CPU Manager
+policy via a `KubeletConfig`:
+
+```yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: KubeletConfig
+metadata:
+  name: cpumanager-enabled
+spec:
+  machineConfigPoolSelector:
+    matchLabels:
+      custom-kubelet: cpumanager-enabled
+  kubeletConfig:
+     cpuManagerPolicy: static
+     cpuManagerReconcilePeriod: 5s
+```
+
+Save the above to a file (e.g. `cpumanager-kubeletconfig.yaml`) and apply:
+
+```bash
+oc apply -f cpumanager-kubeletconfig.yaml
+```
+
+Then label the `MachineConfigPool` to activate the config:
+
+```bash
+oc label machineconfigpool worker custom-kubelet=cpumanager-enabled
 ```
 
 ### Verification
