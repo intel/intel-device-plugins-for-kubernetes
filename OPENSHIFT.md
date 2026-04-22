@@ -75,9 +75,6 @@ metadata:
     machineconfiguration.openshift.io/role: worker
   name: 100-intel-iommu-on
 spec:
-  config:
-    ignition:
-      version: 3.2.0
   kernelArguments:
     # The vfio-pci.ids below are examples; add any supported QAT VF or DSA PF PCI IDs for your hardware
     - intel_iommu=on,sm_on modules_load=vfio-pci vfio-pci.ids=8086:4941,8086:4943
