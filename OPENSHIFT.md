@@ -579,6 +579,8 @@ configuration:
 
 ### Intel GPU Device Plugin
 
+> **Note:** Although the Intel GPU device plugin is part of the supported device plugins set, the i915 out-of-tree KMD driver is no longer provided and the new Xe KMD driver is not yet available. It is not possible to utilize the GPU plugin in RHCOP without a functioning GPU KMD.
+
 #### Prerequisites
 
 - NFD labels indicating GPU presence on worker nodes.
