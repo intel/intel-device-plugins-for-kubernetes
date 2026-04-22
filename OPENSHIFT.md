@@ -24,16 +24,16 @@ DSA, and GPU resources to workloads.
   - [Installation via CLI](#installation-via-cli)
   - [Verify Installation](#verify-operator-installation)
 - [Creating Device Plugin Custom Resources](#creating-device-plugin-custom-resources)
-  - [Intel GPU Device Plugin](#intel-gpu-device-plugin)
   - [Intel QAT Device Plugin](#intel-qat-device-plugin)
   - [Intel SGX Device Plugin](#intel-sgx-device-plugin)
   - [Intel DSA Device Plugin](#intel-dsa-device-plugin)
+  - [Intel GPU Device Plugin](#intel-gpu-device-plugin)
 - [Resources Provided by Intel Device Plugins](#resources-provided-by-intel-device-plugins)
 
 ## Prerequisites
 
 - A provisioned RHOCP cluster (bare-metal multi-node is recommended). See
-  [Red Hat's installation documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/installation_overview/ocp-installation-overview)
+  [Red Hat's installation documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/installation_overview/ocp-installation-overview)
   for cluster provisioning instructions.
 - `oc` CLI tool installed and configured with cluster-admin privileges.
 - Intel hardware present in worker nodes (see [BIOS Configuration](#bios-configuration)
@@ -77,6 +77,7 @@ spec:
     ignition:
       version: 3.2.0
   kernelArguments:
+    # The vfio-pci.ids below are examples; add any supported QAT VF or DSA PF PCI IDs for your hardware
     - intel_iommu=on,sm_on modules_load=vfio-pci vfio-pci.ids=8086:4941,8086:4943
 ```
 
@@ -104,7 +105,7 @@ lsmod | grep vfio_pci
 
 ## Node Feature Discovery
 
-[Node Feature Discovery (NFD)](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator)
+[Node Feature Discovery (NFD)](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator)
 detects hardware features and system configuration on cluster nodes and exposes
 them as node labels. These labels are used by the Intel Device Plugins Operator
 to schedule device plugin pods on appropriate nodes.
@@ -113,12 +114,12 @@ to schedule device plugin pods on appropriate nodes.
 
 Follow the Red Hat documentation to install the NFD Operator:
 
-- [Install from the CLI](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator#install-operator-cli_psap-node-feature-discovery-operator)
-- [Install from the web console](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator#install-operator-web-console_psap-node-feature-discovery-operator)
+- [Install from the CLI](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator#install-operator-cli_psap-node-feature-discovery-operator)
+- [Install from the web console](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator#install-operator-web-console_psap-node-feature-discovery-operator)
 
 After installing the operator, create a `NodeFeatureDiscovery` CR instance
 following the
-[Red Hat NFD documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator#creating-nfd-cr-cli_psap-node-feature-discovery-operator).
+[Red Hat NFD documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator#creating-nfd-cr-cli_psap-node-feature-discovery-operator).
 
 ### NodeFeatureRules for Intel Devices
 
@@ -196,9 +197,6 @@ oc apply -f node-feature-rules.yaml
 > requires the `idxd` kernel module to be loaded on the nodes. These modules are
 > typically loaded automatically when the corresponding hardware is present and
 > properly configured.
-
-> **Note:** As a cluster administrator, you may need to merge these rules with
-> other `NodeFeatureRule` resources already applied on your cluster.
 
 ### NFD Verification
 
@@ -291,69 +289,6 @@ via `oc` CLI.
 > **Note:** The container image references shown below are examples. Always
 > check the [Red Hat Ecosystem Catalog](https://catalog.redhat.com/software/container-stacks/detail/61e9f2d7b9cdd99018fc5736)
 > for the latest certified image digests.
-
-### Intel GPU Device Plugin
-
-#### Prerequisites
-
-- NFD labels indicating GPU presence on worker nodes.
-
-#### Create via Web Console
-
-1. Go to **Operator** → **Installed Operators**.
-2. Open **Intel Device Plugins Operator**.
-3. Navigate to the **Intel GPU Device Plugin** tab.
-4. Click **Create GpuDevicePlugin** → set parameters → click **Create**.
-
-#### Create via CLI
-
-```yaml
-apiVersion: deviceplugin.intel.com/v1
-kind: GpuDevicePlugin
-metadata:
-  name: gpudeviceplugin-sample
-spec:
-  image: registry.connect.redhat.com/intel/intel-gpu-plugin@sha256:e2c2ce658e78c35c425f16a4f8e85c5f32ce31848d9b53a644a05e7f8b7f71b0  # check Red Hat Ecosystem Catalog for latest digest
-  preferredAllocationPolicy: none
-  sharedDevNum: 1
-  logLevel: 4
-  nodeSelector:
-    intel.feature.node.kubernetes.io/gpu: "true"
-```
-
-Save and apply:
-
-```bash
-oc apply -f gpu-device-plugin.yaml
-```
-
-#### Verify
-
-```bash
-oc get GpuDevicePlugin
-```
-
-Example output:
-
-```
-NAME                     DESIRED   READY   NODE SELECTOR                                       AGE
-gpudeviceplugin-sample   1         1       {"intel.feature.node.kubernetes.io/gpu":"true"}      3m
-```
-
-#### Using GPU Resources
-
-When claiming `i915` resources in your workload, set both limits and requests:
-
-```yaml
-spec:
-  containers:
-    - name: gpu-workload
-      resources:
-        limits:
-          gpu.intel.com/i915: 1
-        requests:
-          gpu.intel.com/i915: 1
-```
 
 ### Intel QAT Device Plugin
 
@@ -582,6 +517,69 @@ configuration:
 
 2. Reference the ConfigMap name in the `provisioningConfig` field of the
    `DsaDevicePlugin` CR.
+
+### Intel GPU Device Plugin
+
+#### Prerequisites
+
+- NFD labels indicating GPU presence on worker nodes.
+
+#### Create via Web Console
+
+1. Go to **Operator** → **Installed Operators**.
+2. Open **Intel Device Plugins Operator**.
+3. Navigate to the **Intel GPU Device Plugin** tab.
+4. Click **Create GpuDevicePlugin** → set parameters → click **Create**.
+
+#### Create via CLI
+
+```yaml
+apiVersion: deviceplugin.intel.com/v1
+kind: GpuDevicePlugin
+metadata:
+  name: gpudeviceplugin-sample
+spec:
+  image: registry.connect.redhat.com/intel/intel-gpu-plugin@sha256:e2c2ce658e78c35c425f16a4f8e85c5f32ce31848d9b53a644a05e7f8b7f71b0  # check Red Hat Ecosystem Catalog for latest digest
+  preferredAllocationPolicy: none
+  sharedDevNum: 1
+  logLevel: 4
+  nodeSelector:
+    intel.feature.node.kubernetes.io/gpu: "true"
+```
+
+Save and apply:
+
+```bash
+oc apply -f gpu-device-plugin.yaml
+```
+
+#### Verify
+
+```bash
+oc get GpuDevicePlugin
+```
+
+Example output:
+
+```
+NAME                     DESIRED   READY   NODE SELECTOR                                       AGE
+gpudeviceplugin-sample   1         1       {"intel.feature.node.kubernetes.io/gpu":"true"}      3m
+```
+
+#### Using GPU Resources
+
+When claiming `i915` resources in your workload, set both limits and requests:
+
+```yaml
+spec:
+  containers:
+    - name: gpu-workload
+      resources:
+        limits:
+          gpu.intel.com/i915: 1
+        requests:
+          gpu.intel.com/i915: 1
+```
 
 ## Resources Provided by Intel Device Plugins
 
