@@ -1,0 +1,53 @@
+# TODO
+# cert-manager / service-ca certificates
+# add PCCS nodeSelector
+# cpu and memory resources/limits
+# make HTTPS_PORT configurable via env
+# fix proxy setting label
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: intel-dcap-pccs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pccs
+  template:
+    metadata:
+      labels:
+        app: pccs
+        trustedservices.intel.com/cache: pccs
+    spec:
+      containers:
+        - name: pccs
+          image: quay.io/redhat-user-workloads/ose-osc-tenant/osc-pccs@sha256:de64fc7b13aaa7e466e825d62207f77e7c63a4f9da98663c3ab06abc45f2334d
+          ports:
+            - containerPort: 8042
+              name: pccs-port
+          volumeMounts:
+            - name: pccs-cache
+              mountPath: /run/pccs
+            - name: pccs-tls
+              mountPath: /opt/app-root/src/intel/pccs/ssl_key
+              readOnly: true
+          env:
+            - name: PCCS_FILL_MODE
+              value: "REQ"
+            - name: CLUSTER_HTTPS_PROXY
+              value: ""
+          envFrom:
+            - secretRef:
+                name: pccs-tokens
+      volumes:
+        - name: pccs-cache
+          emptyDir:
+            sizeLimit: 50Mi
+        - name: pccs-tls
+          secret:
+            secretName: pccs-tls
+            items:
+            - key: tls.key
+              path: private.pem
+            - key: tls.crt
+              path: file.crt
