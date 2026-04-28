@@ -20,8 +20,10 @@ import (
 	"context"
 	"flag"
 	"os"
+	"reflect"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -226,6 +228,12 @@ func TestMain(m *testing.M) {
 	logs.InitLogs()
 	config.CopyFlags(config.Flags, flag.CommandLine)
 	framework.RegisterCommonFlags(flag.CommandLine)
+	// controller-runtime's init() registers "kubeconfig" to flag.CommandLine before TestMain runs.
+	// framework.RegisterClusterFlags also registers "kubeconfig", which causes a panic.
+	// Remove the controller-runtime registration so the framework's version (which binds to
+	// TestContext.KubeConfig) takes over. "formal" is unexported, so unsafe is required.
+	fv := reflect.ValueOf(flag.CommandLine).Elem().FieldByName("formal")
+	reflect.NewAt(fv.Type(), unsafe.Pointer(fv.UnsafeAddr())).Elem().SetMapIndex(reflect.ValueOf("kubeconfig"), reflect.Value{})
 	framework.RegisterClusterFlags(flag.CommandLine)
 	flag.Parse()
 
