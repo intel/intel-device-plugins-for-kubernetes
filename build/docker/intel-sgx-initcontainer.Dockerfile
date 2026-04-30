@@ -40,7 +40,7 @@ ARG DIR=/intel-device-plugins-for-kubernetes
 ARG GO111MODULE=on
 ARG LDFLAGS="all=-w -s"
 ARG GOFLAGS="-trimpath"
-ARG GCFLAGS="-spectre=all -N -l"
+ARG GCFLAGS="all=-spectre=all -N -l"
 ARG ASMFLAGS="-spectre=all"
 ARG GOLICENSES_VERSION
 ARG EP=/usr/local/bin/sgx-sw/intel-sgx-epchook

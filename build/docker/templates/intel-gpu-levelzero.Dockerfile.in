@@ -10,7 +10,7 @@ ARG DIR=/intel-device-plugins-for-kubernetes
 ENV CGO_CFLAGS="-pipe -fno-plt"
 ENV CGO_LDFLAGS="-fstack-protector-strong -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now,-z,noexecstack,-z,defs,-s,-w"
 ENV CGOFLAGS="-trimpath -mod=readonly -buildmode=pie"
-ENV GCFLAGS="-spectre=all -N -l"
+ENV GCFLAGS="all=-spectre=all -N -l"
 ENV ASMFLAGS="-spectre=all"
 ENV LDFLAGS="all=-linkmode=external -s -w"
 
