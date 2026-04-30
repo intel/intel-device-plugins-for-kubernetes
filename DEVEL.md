@@ -187,14 +187,14 @@ cluster. If these two conditions are satisfied, run the tests with:
 
 ```bash
 # Run all e2e tests in this repository
-go test -v ./test/e2e/...
+make e2e
 ```
 
 If you need to specify paths to your custom `kubeconfig` containing
-embedded authentication info then add the `-kubeconfig` argument:
+embedded authentication info then set KUBECONFIG environment:
 
 ```bash
-go test -v ./test/e2e/... -args -kubeconfig /path/to/kubeconfig
+KUBECONFIG=/path/to/kubeconfig make e2e
 ```
 
 The full list of available options can be obtained with:
@@ -208,73 +208,56 @@ For running a subset of tests, there are labels that you can use to pick out spe
 You can run the tests with:
 ```bash
 # Run a subset of tests
-go test -v ./test/e2e/... -args -ginkgo.focus <labels in regex> -ginkgo.skip <labels in regex>
+E2E_FILTER="qat" KUBECONFIG=/path/to/kubeconfig make e2e
 ```
 
 #### Table of Labels
 
-| Device | Mode             | Resource    | App                            |
-|:-------|:-----------------|:------------|:-------------------------------|
-| `dlb`  |-                 | `pf`, `vf`  | `libdlb`                       |
-| `dsa`  |-                 | `dedicated` | `accel-config`                 |
-| `fpga` | `af`, `region`   |             | `opae-nlb-demo`                |
-| `gpu`  |-                 | `i915`      | `busybox`, `tensorflow`        |
-| `iaa`  |-                 | `dedicated` | `accel-config`                 |
-| `qat`  | `dpdk`           | `dc`        | `openssl`, `compress-perf`     |
-| `qat`  | `dpdk`           | `cy`        | `openssl`, `crypto-perf`       |
-| `qat`  | `kernel`         | `cy1_dc0`   | `busybox`                      |
-| `sgx`  |-                 |             | `sgx-sdk-demo`                 |
+| Device Label | Focus Labels |
+|-------|-------|
+| `dlb`  |`pf`, `vf`, `libdlb`|
+| `dsa`  |`idxd`, `vfio`, `accel-config`, `dpdk-test`, `dpdk-vfio-test`|
+| `fpga` | `af`, `region`, `opae-nlb-demo`, `admissionwebhook`|
+| `gpu`  |`i915`,`xe`,`busybox`, `monitoring`, `health`, `pytorch`|
+| `iaa`  |`dedicated`, `accel-config`|
+| `qat`  | `dpdk`, `dc`, `cy`, `openssl`, `compress-perf`, `crypto-perf`|
+| `sgx`  |`sgx-sdk-demo`, `admissionwebhook`|
 
 #### Examples
 
 ```bash
 # DLB for VF resource without any app running
-go test -v ./test/e2e/... -args -ginkgo.focus "Device:dlb.*Resource:vf.*App:noapp"
+E2E_FILTER="dlb && vf" make e2e
 
-# FPGA with af mode with opae-nlb-demo app running
-go test -v ./test/e2e/... -args -ginkgo.focus "Device:fpga.*Mode:af.*App:opae-nlb-demo"
-
-# GPU with running only tensorflow app
-go test -v ./test/e2e/... -args -ginkgo.focus "Device:gpu.*App:tensorflow"
+# GPU with running only pytorch app
+E2E_FILTER="gpu && pytorch" make e2e
 #or
-go test -v ./test/e2e/... -args -ginkgo.focus "Device:gpu" -ginkgo.skip "App:busybox"
+E2E_FILTER="gpu && busybox && i915" make e2e
 
 # QAT for qat4 cy resource with openssl app running
-go test -v ./test/e2e/... -args -ginkgo.focus "Device:qat.*Resource:cy.*App:openssl"
-
-# SGX without running sgx-sdk-demo app
-go test -v ./test/e2e/... -args -ginkgo.focus "Device:sgx" -ginkgo.skip "App:sgx-sdk-demo"
+E2E_FILTER="qat && cy && openssl" make e2e
 
 # All of Sapphire Rapids device plugins
-go test -v ./test/e2e/... -args -ginkgo.focus "Device:(dlb|dsa|iaa|qat|sgx)"
+E2E_FILTER="qat || sgx || dsa || iaa" make e2e
 ```
 
 ## Predefined E2E Tests
 
 It is possible to run predefined e2e tests with:
 ```
-make e2e-<device> [E2E_LEVEL={basic|full}] [FOCUS=<labels in regex>] [SKIP=<labels in regex>]
+make e2e-<device>
 ```
 
-| `E2E_LEVEL`   | Equivalent `FOCUS` or `SKIP` | Explanation                                                                                      |
-:-------------- |:---------------------------- |:------------------------------------------------------------------------------------------------ |
-| `basic`       | `FOCUS=App:noapp`            | `basic` does not run any app pod, but checks if the plugin works and the resources are available |
-| `full`        | `SKIP=App:noapp`             | `full` checks all resources, runs all apps except the spec kept for no app running               |
+> Possible devices are: qat, sgx, gpu, dsa, iaa
 
 ### Examples
 
 ```bash
-# DLB for both of pf and vf resources with running libdlb app
-make e2e-dlb E2E_LEVEL=full
+# all QAT tests
+make e2e-qat
 
-# QAT for cy resource with running only openssl app
-make e2e-qat FOCUS=Resource:cy.*App:openssl
-
-# QAT for dc resource without running any app
-make e2e-qat E2E_LEVEL=basic FOCUS=Resource:dc
-
-# GPU without running tensorflow app
-make e2e-gpu E2E_LEVEL=full SKIP=tensorflow
+# or all GPU tests
+make e2e-gpu
 ```
 
 It is also possible to run the tests which don't depend on hardware
@@ -295,7 +278,7 @@ operator uses this package for its integration testing.
 For setting up the environment for testing, `setup-envtest` can be used:
 
 ```bash
-$ go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+$ go install sigs.k8s.io/controller-runtime/tools/setup-envtest@release-0.23
 $ setup-envtest use <K8S_VERSION>
 $ KUBEBUILDER_ASSETS=$(setup-envtest use -i -p path <K8S_VERSION>) make envtest
 ```

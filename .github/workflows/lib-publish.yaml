@@ -29,7 +29,7 @@ jobs:
           sudo systemctl stop clamav-freshclam.service
           sudo freshclam
       - name: Cache clamav databases
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: /var/lib/clamav
           key: clamav-${{ github.run_id }}
@@ -59,7 +59,7 @@ jobs:
           - intel-npu-plugin
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
-      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v5
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v5
         with:
           go-version-file: go.mod
           check-latest: true
@@ -70,7 +70,7 @@ jobs:
         run: |
           ORG=${{ inputs.registry }} TAG=${{ inputs.image_tag }} make ${IMAGE_NAME} BUILDER=docker
       - name: Trivy scan for image
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           scan-type: image
           image-ref: ${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }}
@@ -80,7 +80,7 @@ jobs:
           sudo mkdir -p /var/lib/clamav
           sudo chmod a+rwx /var/lib/clamav
       - name: Retrieve AV database
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: /var/lib/clamav
           key: clamav-${{ github.run_id }}
@@ -100,7 +100,7 @@ jobs:
         if: ${{ !contains(fromJson(env.no_base_check), matrix.image) }}
         run: IMG=${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }} make test-image-base-layer BUILDER=docker
       - name: Login
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}
@@ -113,7 +113,7 @@ jobs:
           echo "image_sha=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ inputs.registry }}/${{ matrix.image }}:${{ inputs.image_tag }})" >> $GITHUB_OUTPUT
       - name: Install cosign
         if: ${{ inputs.image_tag != 'devel' }}
-        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 #v4.1.0
+        uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 #v4.1.1
       - name: Keyless image sign
         if: ${{ inputs.image_tag != 'devel' }}
         run: |

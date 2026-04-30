@@ -139,34 +139,35 @@ REG?=$(ORG)/
 TAG?=devel
 export TAG
 
-ifeq ($(E2E_LEVEL), $(filter $(E2E_LEVEL), full))
-  GENERATED_SKIP_OPT=-ginkgo.skip "App:noapp"
-else ifeq ($(E2E_LEVEL),basic)
-  ADDITIONAL_FOCUS_REGEX=App:noapp
+# Set dry-run arg if E2E_DRYRUN is set
+ifeq ($(E2E_DRYRUN), $())
+E2E_DRYRUN=--ginkgo.dry-run=false
 else
-  $(error Unsupported E2E_LEVEL value: $(E2E_LEVEL). Possible options: full, basic)
+E2E_DRYRUN=--ginkgo.dry-run=true
 endif
-GENERATED_SKIP_OPT += $(if $(SKIP),-ginkgo.skip "$(SKIP)")
-ADDITIONAL_FOCUS_REGEX := $(if $(FOCUS),$(FOCUS).*$(ADDITIONAL_FOCUS_REGEX),$(ADDITIONAL_FOCUS_REGEX))
 
 e2e-qat:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:qat.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "qat && !operator" $(E2E_DRYRUN) -delete-namespace-on-failure=false
 
 e2e-sgx:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:sgx.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "sgx && !operator && !admissionwebhook" $(E2E_DRYRUN) -delete-namespace-on-failure=false
 
 e2e-gpu:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:gpu.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "gpu && !operator && i915" $(E2E_DRYRUN) -delete-namespace-on-failure=false
 
 e2e-dsa:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:dsa.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "dsa && !operator && idxd" $(E2E_DRYRUN) -delete-namespace-on-failure=false
 
 e2e-iaa:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:iaa.*$(ADDITIONAL_FOCUS_REGEX)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "iaa && !operator" $(E2E_DRYRUN) -delete-namespace-on-failure=false
 
 # This is a CI specific target to run all tests that are possible in the SPR host
 e2e-spr:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events -ginkgo.focus "Device:qat.*Mode:dpdk.*Resource:(cy|dc).*" -ginkgo.focus "Device:sgx.*|(SGX Admission)" $(GENERATED_SKIP_OPT) -delete-namespace-on-failure=false -e2e-verify-service-account=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "(qat && !compress-perf && dpdk && (cy || dc) || sgx) && !operator " $(E2E_DRYRUN) -delete-namespace-on-failure=false -e2e-verify-service-account=false
+
+# Target to run a subset of tests depending on the given filter arg. By default, runs all tests.
+e2e:
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "$(E2E_FILTER)" $(E2E_DRYRUN) -delete-namespace-on-failure=false
 
 pre-pull:
 ifeq ($(TAG),devel)

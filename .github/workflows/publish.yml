@@ -4,9 +4,9 @@ on:
   push:
     branches:
         - main
-        - release-0.31
         - release-0.32
         - release-0.34
+        - release-0.35
 
 permissions:
   contents: read

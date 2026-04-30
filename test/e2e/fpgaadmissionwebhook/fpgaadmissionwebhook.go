@@ -36,7 +36,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("FPGA Admission Webhook", describe)
+	ginkgo.Describe("FPGA Admission Webhook", ginkgo.Label("fpga"), ginkgo.Label("admissionwebhook"), describe)
 }
 
 func describe() {

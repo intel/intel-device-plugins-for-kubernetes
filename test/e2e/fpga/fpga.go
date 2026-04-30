@@ -47,7 +47,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("FPGA Plugin [Device:fpga]", describe)
+	ginkgo.Describe("FPGA Plugin", ginkgo.Label("fpga"), describe)
 }
 
 func describe() {
@@ -71,7 +71,7 @@ func describe() {
 		fmw.DeleteNamespace(ctx, fmw.Namespace.Name)
 	})
 
-	ginkgo.Context("When FPGA plugin is running in region mode [Mode:region]", func() {
+	ginkgo.Context("When FPGA plugin is running in region mode", ginkgo.Label("region"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			runDevicePlugin(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, arria10NodeResource, "region")
 		})
@@ -81,32 +81,24 @@ func describe() {
 		})
 	})
 
-	ginkgo.Context("When FPGA plugin is running in af mode [Mode:af]", func() {
+	ginkgo.Context("When FPGA plugin is running in af mode", ginkgo.Label("af"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			runDevicePlugin(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, nlb0NodeResource, "af")
 		})
-		ginkgo.It("runs an opae-nlb-demo pod [App:opae-nlb-demo]", func(ctx context.Context) {
+		ginkgo.It("runs an opae-nlb-demo pod", ginkgo.Label("opae-nlb-demo"), func(ctx context.Context) {
 			runTestCase(ctx, fmw, "af", nlb0PodResourceAF, "nlb0", "nlb3")
-		})
-
-		ginkgo.When("there is no app to run [App:noapp]", func() {
-			ginkgo.It("does nothing", func() {})
 		})
 	})
 
-	ginkgo.Context("When FPGA plugin is running in region mode [Mode:region]", func() {
+	ginkgo.Context("When FPGA plugin is running in region mode", ginkgo.Label("region"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			runDevicePlugin(ctx, fmw, pluginKustomizationPath, mappingsCollectionPath, arria10NodeResource, "region")
 		})
-		ginkgo.It("runs [App:opae-nlb-demo]", func(ctx context.Context) {
+		ginkgo.It("runs an opae-nlb-demo pod nlb3-nlb0", ginkgo.Label("opae-nlb-demo"), func(ctx context.Context) {
 			runTestCase(ctx, fmw, "region", nlb3PodResource, "nlb3", "nlb0")
 		})
-		ginkgo.It("runs an opae-nlb-demo pod [App:opae-nlb-demo]", func(ctx context.Context) {
+		ginkgo.It("runs an opae-nlb-demo pod nlb0-nlb3", ginkgo.Label("opae-nlb-demo"), func(ctx context.Context) {
 			runTestCase(ctx, fmw, "region", nlb0PodResource, "nlb0", "nlb3")
-		})
-
-		ginkgo.When("there is no app to run [App:noapp]", func() {
-			ginkgo.It("does nothing", func() {})
 		})
 	})
 }

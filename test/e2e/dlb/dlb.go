@@ -39,7 +39,7 @@ const (
 )
 
 func init() {
-	ginkgo.Describe("DLB plugin [Device:dlb]", describe)
+	ginkgo.Describe("DLB plugin", ginkgo.Label("dlb"), describe)
 }
 
 func describe() {
@@ -81,7 +81,7 @@ func describe() {
 		}
 	})
 
-	ginkgo.Context("When PF resources are available [Resource:pf]", func() {
+	ginkgo.Context("When PF resources are available", ginkgo.Label("pf"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			resource := v1.ResourceName("dlb.intel.com/pf")
 			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resource, 30*time.Second, utils.WaitForPositiveResource); err != nil {
@@ -89,16 +89,16 @@ func describe() {
 			}
 		})
 
-		ginkgo.It("can run demo app [App:libdlb]", func(ctx context.Context) {
+		ginkgo.It("can run demo app", ginkgo.Label("libdlb"), func(ctx context.Context) {
 			runDemoApp(ctx, "PF", demoPFYaml, f)
 		})
 
-		ginkgo.When("there is no app to run [App:noapp]", func() {
+		ginkgo.When("there is no app to run", func() {
 			ginkgo.It("does nothing", func() {})
 		})
 	})
 
-	ginkgo.Context("When VF resources are available [Resource:vf]", func() {
+	ginkgo.Context("When VF resources are available", ginkgo.Label("vf"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			resource := v1.ResourceName("dlb.intel.com/vf")
 			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resource, 30*time.Second, utils.WaitForPositiveResource); err != nil {
@@ -106,12 +106,8 @@ func describe() {
 			}
 		})
 
-		ginkgo.It("can run demo app [App:libdlb]", func(ctx context.Context) {
+		ginkgo.It("can run demo app", ginkgo.Label("libdlb"), func(ctx context.Context) {
 			runDemoApp(ctx, "VF", demoVFYaml, f)
-		})
-
-		ginkgo.When("there is no app to run [App:noapp]", func() {
-			ginkgo.It("does nothing", func() {})
 		})
 	})
 }
