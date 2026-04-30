@@ -215,7 +215,7 @@ func TestGetDevicesFromVirtual(t *testing.T) {
 			case err == nil && test.expectedErr:
 				t.Fatalf("unexpected success: %+v", output)
 			case len(output) != len(test.output):
-				t.Fatalf("expected: %q got: %q", len(test.output), len(output))
+				t.Fatalf("expected: %d got: %d", len(test.output), len(output))
 			}
 			for i, p := range test.output {
 				if test.output[i] != p {

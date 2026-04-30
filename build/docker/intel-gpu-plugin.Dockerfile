@@ -34,7 +34,7 @@ ARG FINAL_BASE=registry.access.redhat.com/ubi9-micro:latest
 ##
 ## This is used on release branches before tagging a stable version.
 ## The main branch defaults to using the latest Golang base image.
-ARG GOLANG_BASE=golang:1.25-trixie
+ARG GOLANG_BASE=golang:1.26-trixie
 ###
 FROM ${GOLANG_BASE} AS builder
 ARG DIR=/intel-device-plugins-for-kubernetes
@@ -42,7 +42,7 @@ ARG GO111MODULE=on
 ARG LDFLAGS="all=-w -s"
 ARG GOFLAGS="-trimpath"
 ARG GCFLAGS="all=-spectre=all -N -l"
-ARG ASMFLAGS="all=-spectre=all"
+ARG ASMFLAGS="-spectre=all"
 ARG GOLICENSES_VERSION
 ARG EP=/usr/local/bin/intel_gpu_device_plugin
 ARG CMD

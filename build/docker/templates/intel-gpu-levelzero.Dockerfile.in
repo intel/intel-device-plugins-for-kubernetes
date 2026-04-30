@@ -1,7 +1,7 @@
 #define _ENTRYPOINT_ /usr/local/bin/intel_gpu_levelzero
 
 ARG CMD=gpu_levelzero
-ARG BUILD_BASE=golang:1.25-trixie
+ARG BUILD_BASE=golang:1.26-trixie
 
 FROM ${BUILD_BASE} AS builder
 
@@ -11,7 +11,7 @@ ENV CGO_CFLAGS="-pipe -fno-plt"
 ENV CGO_LDFLAGS="-fstack-protector-strong -Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now,-z,noexecstack,-z,defs,-s,-w"
 ENV CGOFLAGS="-trimpath -mod=readonly -buildmode=pie"
 ENV GCFLAGS="all=-spectre=all -N -l"
-ENV ASMFLAGS="all=-spectre=all"
+ENV ASMFLAGS="-spectre=all"
 ENV LDFLAGS="all=-linkmode=external -s -w"
 
 ARG GOLICENSES_VERSION
