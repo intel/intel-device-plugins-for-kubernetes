@@ -231,6 +231,10 @@ generate_tag() {
   local BUILD_VERSION
   BUILD_VERSION=$(grep -r --include="*.go" 'ImageMinVersion =' ${GITHUB_WORKSPACE} | head -1 | sed -e 's/.*"\(.*\)".*/\1/')
 
+  # Increase patch version to ensure the version is considered newer than any released version.
+  # This is needed as x.y.z-1234-1234 seems to be considered older than just x.y.z.
+  BUILD_VERSION=$(echo $BUILD_VERSION | awk -F. -v OFS=. '{$NF = $NF + 1} 1')
+
   # Add random components to avoid collision with other images.
   BUILD_VERSION=$BUILD_VERSION-$GITHUB_RUN_NUMBER-$RANDOM
 

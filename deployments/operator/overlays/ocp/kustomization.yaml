@@ -1,0 +1,47 @@
+# OCP-specific operator overlay.
+# Replaces cert-manager TLS with the OCP service-CA operator and grants the
+# privileged SCC to the default service account in the operator namespace so
+# that device-plugin DaemonSets can access host devices.
+namePrefix: intel-deviceplugins-
+
+resources:
+- ../../crd
+- ../../rbac
+- ../../manager
+- ../../webhook
+# SCC privileged mode doesn't seem to be needed, so it's left out for now.
+# If we need it in the future, we can add it back in.
+#- scc-binding.yaml
+
+patches:
+- path: manager_metrics_patch.yaml
+  target:
+    kind: Deployment
+- path: manager_webhook_patch.yaml
+  target:
+    kind: Deployment
+    name: controller-manager
+- path: webhook-service-patch.yaml
+  target:
+    kind: Service
+    name: webhook-service
+- path: webhook-mutating-ca-patch.yaml
+  target:
+    kind: MutatingWebhookConfiguration
+- path: webhook-validating-ca-patch.yaml
+  target:
+    kind: ValidatingWebhookConfiguration
+# remove namespace object as we don't want to create (and delete) it in OCP overlay
+# In OCP, we must keep the namespace so the images within the ImageStream stay intact.
+- patch: |-
+    $patch: delete
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      labels:
+        control-plane: controller-manager
+        manager: intel-deviceplugin-operator
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/audit: privileged
+        pod-security.kubernetes.io/warn: privileged
+      name: system

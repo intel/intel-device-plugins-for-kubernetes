@@ -1,0 +1,9 @@
+# Instruct the OCP service-CA operator to issue a signed serving certificate
+# for the webhook service and store it in the named secret.  The secret name
+# must match the volume mount defined in manager_webhook_patch.yaml.
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-service
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: webhook-server-cert
