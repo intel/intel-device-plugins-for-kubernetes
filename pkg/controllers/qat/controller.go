@@ -122,7 +122,11 @@ func (c *controller) UpdateDaemonSet(rawObj client.Object, ds *apps.DaemonSet) (
 		}
 	} else {
 		containers := ds.Spec.Template.Spec.InitContainers
-		if len(containers) != 1 || containers[0].Image != dp.Spec.InitImage {
+		if len(containers) != 1 || containers[0].Image != dp.Spec.InitImage || provisioningConfigChanged(&ds.Spec.Template.Spec, dp.Spec.ProvisioningConfig) {
+			if dp.Spec.ProvisioningConfig == "" {
+				ds.Spec.Template.Spec.Volumes = removeVolume(ds.Spec.Template.Spec.Volumes, qatConfigVolume)
+			}
+
 			setInitContainer(&ds.Spec.Template.Spec, dp.Spec)
 
 			updated = true
@@ -182,6 +186,21 @@ func (c *controller) UpdateStatus(rawObj client.Object, ds *apps.DaemonSet, node
 	}
 
 	return updated, nil
+}
+
+func provisioningConfigChanged(dsSpec *v1.PodSpec, provisioningConfig string) bool {
+	for _, vol := range dsSpec.Volumes {
+		if vol.Name == qatConfigVolume {
+			if vol.ConfigMap != nil {
+				return vol.ConfigMap.Name != provisioningConfig
+			}
+
+			return provisioningConfig != ""
+		}
+	}
+
+	// Volume not found: it's a change if provisioningConfig is non-empty
+	return provisioningConfig != ""
 }
 
 func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
