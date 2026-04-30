@@ -3,7 +3,7 @@
 NODE_NAME="${NODE_NAME:-}"
 ENABLED_QAT_PF_PCIIDS=${ENABLED_QAT_PF_PCIIDS:-37c8 4940 4942 4944 4946 4948}
 # TODO: check against qatlib
-SERVICES_LIST="sym asym sym;asym dc sym;dc asym;dc dcc decomp asym;sym;dc asym;sym;decomp"
+SERVICES_LIST="sym asym sym;asym asym;sym dc sym;dc asym;dc dcc decomp asym;sym;dc asym;sym;decomp"
 QAT_4XXX_DEVICE_PCI_ID="0x4940"
 QAT_401XX_DEVICE_PCI_ID="0x4942"
 QAT_402XX_DEVICE_PCI_ID="0x4944"
