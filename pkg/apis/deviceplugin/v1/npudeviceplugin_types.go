@@ -1,4 +1,4 @@
-// Copyright 2025 Intel Corporation. All Rights Reserved.
+// Copyright 2025-2026 Intel Corporation. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -93,8 +93,4 @@ type NpuDevicePluginList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []NpuDevicePlugin `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&NpuDevicePlugin{}, &NpuDevicePluginList{})
 }
