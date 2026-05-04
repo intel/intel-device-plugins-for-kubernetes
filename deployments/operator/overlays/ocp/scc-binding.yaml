@@ -1,0 +1,15 @@
+# Grant the privileged SCC to the default service account in the operator
+# namespace so that device-plugin DaemonSet pods can access host devices and
+# run with the required capabilities.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: privileged-scc
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: inteldeviceplugins-system
+roleRef:
+  kind: ClusterRole
+  name: system:openshift:scc:privileged
+  apiGroup: rbac.authorization.k8s.io

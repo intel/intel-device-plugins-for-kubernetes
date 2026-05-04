@@ -1,0 +1,9 @@
+# Instruct the OCP service-CA operator to inject the cluster CA bundle into
+# the ValidatingWebhookConfiguration so that the API server can validate the
+# webhook server's TLS certificate.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validating-webhook-configuration
+  annotations:
+    service.beta.openshift.io/inject-cabundle: "true"

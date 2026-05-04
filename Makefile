@@ -134,6 +134,11 @@ bundle-build:
 clean:
 	@for cmd in $(cmds) ; do pwd=$(shell pwd) ; cd cmd/$$cmd ; $(GO) clean ; cd $$pwd ; done
 
+.PHONY: mirror-images-ocp
+mirror-images-ocp:
+	@bash scripts/build-images-for-ocp.sh
+	@bash scripts/mirror-images-to-ocp.sh inteldeviceplugin-operator
+
 ORG?=intel
 REG?=$(ORG)/
 TAG?=devel
@@ -161,13 +166,25 @@ e2e-dsa:
 e2e-iaa:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "iaa && !operator" $(E2E_DRYRUN) -delete-namespace-on-failure=false
 
-# This is a CI specific target to run all tests that are possible in the SPR host
+# This is a CI specific target to run all tests that are possible in the SPR host.
+# Plugin tests run first, operator tests run second to avoid resource conflicts.
 e2e-spr:
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "(qat && !compress-perf && dpdk && (cy || dc) || sgx) && !operator " $(E2E_DRYRUN) -delete-namespace-on-failure=false -e2e-verify-service-account=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events \
+		--ginkgo.label-filter "(qat && !compress-perf && !nft && !operator) || (sgx && !operator)" $(E2E_DRYRUN) \
+		-delete-namespace-on-failure=false -e2e-verify-service-account=false
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events \
+		--ginkgo.label-filter "operator && (qat || sgx)" $(E2E_DRYRUN) \
+		-delete-namespace-on-failure=false -e2e-verify-service-account=false
 
 # Target to run a subset of tests depending on the given filter arg. By default, runs all tests.
 e2e:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "$(E2E_FILTER)" $(E2E_DRYRUN) -delete-namespace-on-failure=false
+
+e2e-operator:
+	@echo "NOTE: This depends on 'mirror-images-ocp' target but does not depend on it directly to allow running tests without building and mirroring every time."
+	@echo "For OCP: Make sure PROJECT_NAMESPACE, IMAGE_PATH and PLUGIN_VERSION env variables are set, and IMAGE_REGISTRY _not_ set."
+	@echo "For K8s: Make sure PROJECT_NAMESPACE, IMAGE_PATH, PLUGIN_VERSION and IMAGE_REGISTRY env variables are set"
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "operator && !(gpu || iaa)" $(E2E_DRYRUN) -delete-namespace-on-failure=false
 
 pre-pull:
 ifeq ($(TAG),devel)
