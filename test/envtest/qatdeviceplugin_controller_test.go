@@ -234,12 +234,23 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 			By("adding provisioning config without changing InitImage")
 			fetched.Spec.ProvisioningConfig = "qat-prov-config"
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
-			time.Sleep(interval * 2)
 
-			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
-			Expect(err).To(BeNil())
+			Eventually(func() bool {
+				ds = &apps.DaemonSet{}
+				if err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds); err != nil {
+					return false
+				}
+
+				for _, vol := range ds.Spec.Template.Spec.Volumes {
+					if vol.Name == configVolume.Name && vol.ConfigMap != nil && vol.ConfigMap.Name == configVolume.ConfigMap.Name {
+						return true
+					}
+				}
+
+				return false
+			}, timeout, interval).Should(BeTrue())
+
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(initImage))
-			Expect(ds.Spec.Template.Spec.Volumes).To(ContainElement(configVolume))
 
 			By("changing provisioning config name without changing InitImage")
 			changedConfigVolume := v1.Volume{
@@ -252,24 +263,48 @@ var _ = Describe("QatDevicePlugin Controller", func() {
 				},
 			}
 
+			_ = k8sClient.Get(context.Background(), key, fetched)
 			fetched.Spec.ProvisioningConfig = "qat-prov-config-new"
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
-			time.Sleep(interval * 2)
 
-			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
-			Expect(err).To(BeNil())
+			Eventually(func() bool {
+				ds = &apps.DaemonSet{}
+				if err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds); err != nil {
+					return false
+				}
+
+				for _, vol := range ds.Spec.Template.Spec.Volumes {
+					if vol.Name == changedConfigVolume.Name && vol.ConfigMap != nil && vol.ConfigMap.Name == changedConfigVolume.ConfigMap.Name {
+						return true
+					}
+				}
+
+				return false
+			}, timeout, interval).Should(BeTrue())
+
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(initImage))
-			Expect(ds.Spec.Template.Spec.Volumes).To(ContainElement(changedConfigVolume))
 
 			By("removing provisioning config without changing InitImage")
+			_ = k8sClient.Get(context.Background(), key, fetched)
 			fetched.Spec.ProvisioningConfig = ""
 			Expect(k8sClient.Update(context.Background(), fetched)).Should(Succeed())
-			time.Sleep(interval * 2)
 
-			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
-			Expect(err).To(BeNil())
+			Eventually(func() bool {
+				ds = &apps.DaemonSet{}
+				if err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds); err != nil {
+					return false
+				}
+
+				for _, vol := range ds.Spec.Template.Spec.Volumes {
+					if vol.Name == changedConfigVolume.Name {
+						return false
+					}
+				}
+
+				return true
+			}, timeout, interval).Should(BeTrue())
+
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(initImage))
-			Expect(ds.Spec.Template.Spec.Volumes).ShouldNot(ContainElement(changedConfigVolume))
 
 			By("deleting QatDevicePlugin successfully")
 			Eventually(func() error {

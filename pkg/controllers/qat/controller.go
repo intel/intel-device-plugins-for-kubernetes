@@ -189,18 +189,19 @@ func (c *controller) UpdateStatus(rawObj client.Object, ds *apps.DaemonSet, node
 }
 
 func provisioningConfigChanged(dsSpec *v1.PodSpec, provisioningConfig string) bool {
+	currentConfig := ""
+
 	for _, vol := range dsSpec.Volumes {
 		if vol.Name == qatConfigVolume {
 			if vol.ConfigMap != nil {
-				return vol.ConfigMap.Name != provisioningConfig
+				currentConfig = vol.ConfigMap.Name
 			}
 
-			return provisioningConfig != ""
+			break
 		}
 	}
 
-	// Volume not found: it's a change if provisioningConfig is non-empty
-	return provisioningConfig != ""
+	return currentConfig != provisioningConfig
 }
 
 func removeVolume(volumes []v1.Volume, name string) []v1.Volume {
