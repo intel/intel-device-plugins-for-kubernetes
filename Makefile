@@ -188,7 +188,7 @@ e2e-operator:
 
 pre-pull:
 ifeq ($(TAG),devel)
-	@$(BUILDER) pull golang:1.25-trixie
+	@$(BUILDER) pull golang:1.26-trixie
 	@$(BUILDER) pull debian:unstable-slim
 	@$(BUILDER) pull ubuntu:22.04
 endif

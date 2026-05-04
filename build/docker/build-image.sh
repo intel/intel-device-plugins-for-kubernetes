@@ -30,7 +30,7 @@ if [ -d $(dirname $0)/../../vendor ] ; then
     BUILD_ARGS="${BUILD_ARGS} --build-arg DIR=/go/src/github.com/intel/intel-device-plugins-for-kubernetes --build-arg GO111MODULE=off"
 fi
 
-GOLANG_BASE=golang:1.25-trixie
+GOLANG_BASE=golang:1.26-trixie
 
 if [ "${UBI}" = '1' ]; then
     echo $DOCKERFILE | grep -q -e 'idxd-config' -e 'levelzero' && {
