@@ -20,12 +20,12 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/pkg/errors"
 	"k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
-	"k8s.io/utils/strings/slices"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
