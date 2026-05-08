@@ -1,0 +1,9 @@
+resources:
+  - ../../base
+patches:
+  - path: xpumd-socket.yaml
+    target:
+      kind: DaemonSet
+  - path: args.yaml
+    target:
+      kind: DaemonSet

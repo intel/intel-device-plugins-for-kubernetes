@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -32,6 +33,7 @@ import (
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
+	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/xpumdservice"
 	gpulevelzero "github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/levelzero"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
 	cdispec "tags.cncf.io/container-device-interface/specs-go"
@@ -71,6 +73,9 @@ const (
 
 	// Period of device scans.
 	scanPeriod = 5 * time.Second
+
+	// Default limit for temperatures.
+	defaultTempLimit = 100
 )
 
 type cliOptions struct {
@@ -79,6 +84,7 @@ type cliOptions struct {
 	denyIDs                   string
 	bypathMount               string
 	monitoringMode            string
+	xpumdEndpoint             string
 	sharedDevNum              int
 	globalTempLimit           int
 	memoryTempLimit           int
@@ -86,6 +92,20 @@ type cliOptions struct {
 	enableMonitoring          bool
 	wslScan                   bool
 	healthManagement          bool
+}
+
+type argError struct {
+	msg string
+}
+
+func (e argError) Error() string {
+	return fmt.Sprintf("argument error: %s", e.msg)
+}
+
+func newArgError(msg string) error {
+	return argError{
+		msg: msg,
+	}
 }
 
 func validatePCIDeviceIDs(pciIDList string) error {
@@ -98,11 +118,11 @@ func validatePCIDeviceIDs(pciIDList string) error {
 	for id := range strings.SplitSeq(pciIDList, ",") {
 		id = strings.TrimSpace(id)
 		if id == "" {
-			return os.ErrNotExist
+			return newArgError("empty PCI ID")
 		}
 
 		if !r.MatchString(id) {
-			return os.ErrInvalid
+			return newArgError("invalid PCI ID: " + id)
 		}
 	}
 
@@ -191,6 +211,7 @@ type devicePlugin struct {
 	scanResources chan bool
 
 	levelzeroService levelzeroservice.LevelzeroService
+	xpumdService     xpumdservice.XpumdService
 
 	sysfsDrmDir    string
 	devFsRoot      string
@@ -255,15 +276,33 @@ func logHealthStatusChange(card, newStatus string, statuses map[string]string) {
 	}
 }
 
-func (dp *devicePlugin) healthStatusForCard(cardPath string) string {
-	if dp.levelzeroService == nil {
-		return pluginapi.Healthy
-	}
-
+// bdfForCard resolves the PCI BDF address for a card sysfs path by following
+// the "device" symlink.  It returns ("", false) when the link cannot be read.
+func bdfForCard(cardPath string) (string, bool) {
 	link, err := os.Readlink(filepath.Join(cardPath, "device"))
 	if err != nil {
 		klog.Warning("couldn't read device link for", cardPath)
 
+		return "", false
+	}
+
+	return filepath.Base(link), true
+}
+
+func (dp *devicePlugin) healthStatusForCard(cardPath string) string {
+	if dp.xpumdService != nil {
+		return dp.healthStatusForCardXpumd(cardPath)
+	} else if dp.levelzeroService != nil {
+		return dp.healthStatusForCardLZ(cardPath)
+	}
+
+	return pluginapi.Healthy
+}
+
+// healthStatusForCardLZ checks device health using the Level-Zero service.
+func (dp *devicePlugin) healthStatusForCardLZ(cardPath string) string {
+	bdfAddr, ok := bdfForCard(cardPath)
+	if !ok {
 		return pluginapi.Healthy
 	}
 
@@ -271,8 +310,6 @@ func (dp *devicePlugin) healthStatusForCard(cardPath string) string {
 
 	// Check status changes after the function exits
 	defer func() { logHealthStatusChange(cardPath, health, dp.healthStatuses) }()
-
-	bdfAddr := filepath.Base(link)
 
 	dh, err := dp.levelzeroService.GetDeviceHealth(bdfAddr)
 	if err != nil {
@@ -305,6 +342,34 @@ func (dp *devicePlugin) healthStatusForCard(cardPath string) string {
 	if deviceTemps.GPU > dp.options.gpuTempLimit ||
 		deviceTemps.Global > dp.options.globalTempLimit ||
 		deviceTemps.Memory > dp.options.memoryTempLimit {
+		health = pluginapi.Unhealthy
+	}
+
+	return health
+}
+
+// healthStatusForCardXpumd checks device health using the xpumd service.
+func (dp *devicePlugin) healthStatusForCardXpumd(cardPath string) string {
+	bdfAddr, ok := bdfForCard(cardPath)
+	if !ok {
+		return pluginapi.Healthy
+	}
+
+	health := pluginapi.Healthy
+
+	// Check status changes after the function exits
+	defer func() { logHealthStatusChange(cardPath, health, dp.healthStatuses) }()
+
+	healthy, err := dp.xpumdService.GetDeviceHealth(bdfAddr)
+	if err != nil {
+		klog.Warningf("xpumd device health retrieval failed: %v", err)
+
+		return health
+	}
+
+	klog.V(4).Infof("xpumd health for %s: Healthy=%t", bdfAddr, healthy)
+
+	if !healthy {
 		health = pluginapi.Unhealthy
 	}
 
@@ -706,23 +771,67 @@ func (dp *devicePlugin) Allocate(request *pluginapi.AllocateRequest) (*pluginapi
 	return nil, &dpapi.UseDefaultMethodError{}
 }
 
-func checkAllowDenyOptions(opts cliOptions) bool {
+func checkBasics(opts cliOptions) error {
+	if opts.sharedDevNum < 1 {
+		return newArgError("the number of containers sharing the same GPU must greater than zero")
+	}
+
+	var str = opts.preferredAllocationPolicy
+	if !(str == "balanced" || str == "packed" || str == "none") {
+		return newArgError("invalid value for preferredAllocationPolicy, the valid values: balanced, packed, none")
+	}
+
 	if len(opts.allowIDs) > 0 && len(opts.denyIDs) > 0 {
-		klog.Error("Cannot use both allow-ids and deny-ids options at the same time. Please use only one of them.")
-		return false
+		return newArgError("cannot use both allow-ids and deny-ids options at the same time")
 	}
 
 	if err := validatePCIDeviceIDs(opts.allowIDs); err != nil {
-		klog.Error("Failed to validate allow-ids: ", err)
-		return false
+		return fmt.Errorf("failed to validate allow-ids: %w", err)
 	}
 
 	if err := validatePCIDeviceIDs(opts.denyIDs); err != nil {
-		klog.Error("Failed to validate deny-ids: ", err)
-		return false
+		return fmt.Errorf("failed to validate deny-ids: %w", err)
 	}
 
-	return true
+	switch opts.monitoringMode {
+	case monitoringModeSingle:
+	case monitoringModeSplit:
+	default:
+		return newArgError(fmt.Sprintf("invalid value for monitoring-mode, valid values: %s, %s",
+			monitoringModeSplit, monitoringModeSingle))
+	}
+
+	return nil
+}
+
+func checkArgs(opts cliOptions) error {
+	if err := checkBasics(opts); err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	if opts.wslScan {
+		if opts.enableMonitoring {
+			return newArgError("monitoring is not supported within WSL.")
+		}
+
+		if opts.healthManagement || opts.xpumdEndpoint != "" {
+			return newArgError("health management is not supported within WSL.")
+		}
+	}
+
+	if opts.healthManagement && opts.xpumdEndpoint != "" {
+		return newArgError("cannot use both Level-Zero sidecar and xpumd for health management.")
+	}
+
+	if opts.xpumdEndpoint != "" {
+		if opts.globalTempLimit != defaultTempLimit ||
+			opts.gpuTempLimit != defaultTempLimit ||
+			opts.memoryTempLimit != defaultTempLimit {
+			return newArgError("temperature limits do not work with xpumd health source")
+		}
+	}
+
+	return nil
 }
 
 func main() {
@@ -734,69 +843,57 @@ func main() {
 	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable monitoring (= all GPUs) resource(s). See also --monitoring-mode")
 	flag.StringVar(&opts.monitoringMode, "monitoring-mode", monitoringModeSingle, "monitoring resource mode when --enable-monitoring is set: single (combined gpu.intel.com/monitoring resource) or split (per-driver i915_monitoring/xe_monitoring resources)")
-	flag.BoolVar(&opts.healthManagement, "health-management", false, "enable GPU health management")
+	flag.BoolVar(&opts.healthManagement, "health-management", false, "enable Level-Zero sidecar based GPU health management")
+	flag.StringVar(&opts.xpumdEndpoint, "xpumd-endpoint", "", "enable xpumd based health management. Argument is unix socket path for the xpumd health service (e.g. /run/xpumd/intelxpuinfo.sock). When set, health data is retrieved from xpumd")
 	flag.StringVar(&opts.bypathMount, "bypath", bypathOptionSingle, "DRI device 'by-path/' directory mounting options: single, none, all. Default: single")
 	flag.BoolVar(&opts.wslScan, "wsl", false, "scan for / use WSL devices")
-	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device")
-	flag.IntVar(&opts.globalTempLimit, "temp-limit", 100, "Global temperature limit at which device is marked unhealthy")
-	flag.IntVar(&opts.gpuTempLimit, "gpu-temp-limit", 100, "GPU temperature limit at which device is marked unhealthy")
-	flag.IntVar(&opts.memoryTempLimit, "memory-temp-limit", 100, "Memory temperature limit at which device is marked unhealthy")
+	flag.IntVar(&opts.sharedDevNum, "shared-dev-num", 1, "number of containers sharing the same GPU device.")
+	flag.IntVar(&opts.globalTempLimit, "temp-limit", defaultTempLimit, "Global temperature limit at which device is marked unhealthy. Use with health-managmement.")
+	flag.IntVar(&opts.gpuTempLimit, "gpu-temp-limit", defaultTempLimit, "GPU temperature limit at which device is marked unhealthy. Use with health-managmement.")
+	flag.IntVar(&opts.memoryTempLimit, "memory-temp-limit", defaultTempLimit, "Memory temperature limit at which device is marked unhealthy. Use with health-managmement.")
 	flag.StringVar(&opts.preferredAllocationPolicy, "allocation-policy", "none", "modes of allocating GPU devices: balanced, packed and none")
 	flag.StringVar(&opts.allowIDs, "allow-ids", "", "comma-separated list of device IDs to allow (e.g. 0x49c5,0x49c6)")
 	flag.StringVar(&opts.denyIDs, "deny-ids", "", "comma-separated list of device IDs to deny (e.g. 0x49c5,0x49c6)")
 
 	flag.Parse()
 
-	if opts.sharedDevNum < 1 {
-		klog.Error("The number of containers sharing the same GPU must greater than zero")
-		os.Exit(1)
-	}
-
-	var str = opts.preferredAllocationPolicy
-	if !(str == "balanced" || str == "packed" || str == "none") {
-		klog.Error("invalid value for preferredAllocationPolicy, the valid values: balanced, packed, none")
-		os.Exit(1)
-	}
-
-	if !checkAllowDenyOptions(opts) {
-		klog.Error("Invalid allow/deny options.")
-
-		os.Exit(1)
-	}
-
-	switch opts.monitoringMode {
-	case monitoringModeSingle:
-	case monitoringModeSplit:
-	default:
-		klog.Fatalf("invalid value for monitoring-mode, valid values: %s, %s", monitoringModeSplit, monitoringModeSingle)
-	}
-
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
 
 	plugin := newDevicePlugin(prefix+sysFsRoot, prefix+devFsRoot, opts)
 
-	if plugin.options.wslScan {
-		klog.Info("WSL mode requested")
-
-		if plugin.options.enableMonitoring {
-			klog.Error("Monitoring is not supported within WSL. Please disable monitoring.")
-
-			os.Exit(1)
-		}
-
-		if plugin.options.healthManagement {
-			klog.Error("Health management is not supported within WSL. Please disable health management.")
-
-			os.Exit(1)
-		}
+	if err := checkArgs(plugin.options); err != nil {
+		klog.Fatal("Argument check failed: ", err)
 	}
 
-	if plugin.options.healthManagement || plugin.options.wslScan {
-		plugin.levelzeroService = levelzeroservice.NewLevelzero(gpulevelzero.DefaultUnixSocketPath)
-
-		go plugin.levelzeroService.Run(true)
-	}
+	// Setup xpumd service if enabled
+	setupXpumdService(plugin)
+	// Setup Level-Zero service if enabled
+	setupLevelZeroService(plugin)
 
 	manager := dpapi.NewManager(namespace, plugin)
 	manager.Run()
+}
+
+func setupLevelZeroService(plugin *devicePlugin) {
+	if !plugin.options.healthManagement && !plugin.options.wslScan {
+		return
+	}
+
+	klog.Info("levelzero service requested: ", gpulevelzero.DefaultUnixSocketPath)
+
+	plugin.levelzeroService = levelzeroservice.NewLevelzero(gpulevelzero.DefaultUnixSocketPath)
+
+	go plugin.levelzeroService.Run(true)
+}
+
+func setupXpumdService(plugin *devicePlugin) {
+	if plugin.options.xpumdEndpoint == "" {
+		return
+	}
+
+	klog.Info("xpumd health source requested: ", plugin.options.xpumdEndpoint)
+
+	plugin.xpumdService = xpumdservice.NewXpumd(plugin.options.xpumdEndpoint)
+
+	go plugin.xpumdService.Run(context.Background())
 }

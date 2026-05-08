@@ -1,0 +1,13 @@
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    name: xpumdsocket
+    mountPath: /run/xpumd
+    readOnly: true
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: xpumdsocket
+    hostPath:
+      path: /run/xpumd
+      type: DirectoryOrCreate

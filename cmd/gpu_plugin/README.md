@@ -19,6 +19,7 @@ Table of Contents
   * [CDI support](#cdi-support)
   * [KMD and UMD](#kmd-and-umd)
   * [Health management](#health-management)
+  * [xpumd health source](#xpumd-health-source)
   * [by-path mounting](#by-path-mounting)
   * [Issues with media workloads on multi-GPU setups](#issues-with-media-workloads-on-multi-gpu-setups)
     * [Workaround for QSV and VA-API](#workaround-for-qsv-and-va-api)
@@ -59,6 +60,7 @@ For workloads on different KMDs, see [KMD and UMD](#kmd-and-umd).
 | -enable-monitoring | - | disabled | Enable '*_monitoring' resource that provides access to all Intel GPU devices on the node, [see use](./monitoring.md) |
 | -monitoring-mode | string | single | How monitoring resources are registered: single or split |
 | -health-management | - | disabled | Enable health management by requesting data from oneAPI/Level-Zero interface. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. See [health management](#health-management) |
+| -xpumd-endpoint | string | "" | Unix socket path for xpumd health service (e.g. `/run/xpumd/intelxpuinfo.sock`). When set, xpumd is used as the health data source instead of the Level-Zero sidecar. Cannot be combined with `-health-management`. Temperature limits are specified in xpumd service configuration, not with GPU plugin flags. See [xpumd health source](#xpumd-health-source) |
 | -wsl | - | disabled | Adapt plugin to run in the WSL environment. Requires [GPU Level-Zero](../gpu_levelzero/) sidecar. |
 | -shared-dev-num | int | 1 | Number of containers that can share the same GPU device |
 | -allow-ids | string | "" | A list of PCI Device IDs that are allowed to be registered as resources. Default is empty (=all registered). Cannot be used together with `deny-ids`. |
@@ -264,6 +266,22 @@ Kubernetes Device Plugin API allows passing device's healthiness to Kubelet. By 
 1) Device temperature is over the limit
 
 Temperature limit can be provided via the command line argument, default is 100C.
+
+### xpumd health source
+
+As an alternative to the Level-Zero sidecar, GPU plugin can obtain device health data from [Intel XPU Manager (xpumd)](https://github.com/intel/xpumanager) v2.x that provides equivalent health information without requiring a privileged sidecar container.
+
+When xpumd is running on the host it creates a unix socket (default: `/run/xpumd/intelxpuinfo.sock`). The GPU plugin connects to this socket and streams health events. A device is reported as `Unhealthy` if any health domain reports severity `WARNING` or higher.
+
+To use xpumd as the health source, deploy the plugin with the provided Kustomize overlay:
+
+```bash
+kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/xpumd?ref=<RELEASE_VERSION>'
+```
+
+The overlay mounts `/run/xpumd` from the host (read-only) into the plugin pod and passes the required `-xpumd-endpoint` and `-enable-monitoring` flags automatically.
+
+> **Note**: `-xpumd-endpoint` and (sidecar) `-health-management` flags are mutually exclusive. Sidecar specific temperature limit flags (`-temp-limit`, `-gpu-temp-limit`, `-memory-temp-limit`) are not applicable when using `xpumd` as health source.
 
 ### By-path mounting
 

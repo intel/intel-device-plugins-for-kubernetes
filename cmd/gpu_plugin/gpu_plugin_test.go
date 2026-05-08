@@ -1292,49 +1292,216 @@ func TestParsePCIDeviceIDs(t *testing.T) {
 	}
 }
 
-func TestCheckAllowDenyOptions(t *testing.T) {
+func TestCheckArgs(t *testing.T) {
 	tcases := []struct {
 		name         string
+		expectErrStr string
 		options      cliOptions
-		expectReturn bool
 	}{
 		{
-			name:         "valid allow IDs",
-			options:      cliOptions{allowIDs: "0x1234,0x5678"},
-			expectReturn: true,
+			name: "bad sharedDevNum",
+			options: cliOptions{
+				sharedDevNum:              0,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+			},
+			expectErrStr: "the number of containers sharing the same GPU must greater than zero",
 		},
 		{
-			name:         "valid deny IDs",
-			options:      cliOptions{denyIDs: "0x1234,0x5678"},
-			expectReturn: true,
+			name: "valid allow IDs",
+			options: cliOptions{
+				allowIDs:                  "0x1234,0x5678",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+			},
+			expectErrStr: "",
 		},
 		{
-			name:         "both allow and deny IDs",
-			options:      cliOptions{allowIDs: "0x1234", denyIDs: "0x5678"},
-			expectReturn: false,
+			name: "valid deny IDs",
+			options: cliOptions{
+				denyIDs:                   "0x1234,0x5678",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+			},
+			expectErrStr: "",
 		},
 		{
-			name:         "invalid allow ID format",
-			options:      cliOptions{allowIDs: "0x1234,abcd"},
-			expectReturn: false,
+			name: "both allow and deny IDs",
+			options: cliOptions{
+				allowIDs:                  "0x1234",
+				denyIDs:                   "0x5678",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+			},
+			expectErrStr: "cannot use both allow-ids and deny-ids options at the same time",
 		},
 		{
-			name:         "invalid deny ID format",
-			options:      cliOptions{denyIDs: "0x1234,abcd"},
-			expectReturn: false,
+			name: "invalid allow ID format",
+			options: cliOptions{
+				allowIDs:                  "0x1234,abcd",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+			},
+			expectErrStr: "invalid PCI ID: abcd",
 		},
 		{
-			name:         "both empty",
-			options:      cliOptions{allowIDs: "", denyIDs: ""},
-			expectReturn: true,
+			name: "invalid deny ID format",
+			options: cliOptions{
+				denyIDs:                   "0x1234,abcd",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+			},
+			expectErrStr: "invalid PCI ID: abcd",
+		},
+		{
+			name: "no allow or deny IDs",
+			options: cliOptions{
+				allowIDs:                  "",
+				denyIDs:                   "",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+			},
+			expectErrStr: "",
+		},
+		{
+			name: "bad allocation policy",
+			options: cliOptions{
+				allowIDs:                  "",
+				denyIDs:                   "",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "",
+				monitoringMode:            "single",
+			},
+			expectErrStr: "invalid value for preferredAllocationPolicy",
+		},
+		{
+			name: "health and xpumd at the same time",
+			options: cliOptions{
+				allowIDs:                  "",
+				denyIDs:                   "",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+				healthManagement:          true,
+				xpumdEndpoint:             "/foo/bar/socket.sock",
+			},
+			expectErrStr: "cannot use both Level-Zero sidecar and xpumd for health management",
+		},
+		{
+			name: "levelzero health",
+			options: cliOptions{
+				allowIDs:                  "",
+				denyIDs:                   "",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+				healthManagement:          true,
+				xpumdEndpoint:             "",
+			},
+			expectErrStr: "",
+		},
+		{
+			name: "xpumd health",
+			options: cliOptions{
+				allowIDs:                  "",
+				denyIDs:                   "",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+				healthManagement:          false,
+				xpumdEndpoint:             "/foo/bar/socket.sock",
+				globalTempLimit:           100,
+				memoryTempLimit:           100,
+				gpuTempLimit:              100,
+			},
+			expectErrStr: "",
+		},
+		{
+			name: "xpumd health error with temp limit",
+			options: cliOptions{
+				allowIDs:                  "",
+				denyIDs:                   "",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+				healthManagement:          false,
+				xpumdEndpoint:             "/foo/bar/socket.sock",
+				globalTempLimit:           50,
+				memoryTempLimit:           50,
+				gpuTempLimit:              50,
+			},
+			expectErrStr: "temperature limits do not work with xpumd health source",
+		},
+		{
+			name: "wsl",
+			options: cliOptions{
+				allowIDs:                  "",
+				denyIDs:                   "",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+				wslScan:                   true,
+			},
+			expectErrStr: "",
+		},
+		{
+			name: "wsl error with monitoring",
+			options: cliOptions{
+				allowIDs:                  "",
+				denyIDs:                   "",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+				enableMonitoring:          true,
+				wslScan:                   true,
+			},
+			expectErrStr: "monitoring is not supported within WSL",
+		},
+		{
+			name: "wsl error with health",
+			options: cliOptions{
+				allowIDs:                  "",
+				denyIDs:                   "",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "single",
+				healthManagement:          true,
+				wslScan:                   true,
+			},
+			expectErrStr: "health management is not supported within WSL",
+		},
+		{
+			name: "invalid monitoring mode",
+			options: cliOptions{
+				allowIDs:                  "",
+				denyIDs:                   "",
+				sharedDevNum:              1,
+				preferredAllocationPolicy: "none",
+				monitoringMode:            "foobar",
+				healthManagement:          true,
+				wslScan:                   true,
+			},
+			expectErrStr: "invalid value for monitoring-mode, valid values",
 		},
 	}
 
 	for _, tc := range tcases {
 		t.Run(tc.name, func(t *testing.T) {
-			ret := checkAllowDenyOptions(tc.options)
-			if ret != tc.expectReturn {
-				t.Errorf("checkAllowDenyOptions() return = %v, expected %v", ret, tc.expectReturn)
+			ret := checkArgs(tc.options)
+			if tc.expectErrStr == "" && ret != nil {
+				t.Errorf("checkArgs() return unexpected error: %v", ret)
+			}
+			if tc.expectErrStr != "" && ret == nil {
+				t.Errorf("checkArgs() expected error containing %q, got nil", tc.expectErrStr)
+			}
+			if tc.expectErrStr != "" && ret != nil && !strings.Contains(ret.Error(), tc.expectErrStr) {
+				t.Errorf("checkArgs() return error = %v, expected error containing %q", ret, tc.expectErrStr)
 			}
 		})
 	}
