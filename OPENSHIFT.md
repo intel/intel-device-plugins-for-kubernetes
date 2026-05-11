@@ -159,6 +159,9 @@ cat /proc/cmdline
 # Check that vfio_pci driver is loaded
 chroot /host
 lsmod | grep vfio_pci
+
+# Check that CPU manager static policy is enabled
+jq -r .policyName < /var/lib/kubelet/cpu_manager_state
 ```
 
 ## Node Feature Discovery
