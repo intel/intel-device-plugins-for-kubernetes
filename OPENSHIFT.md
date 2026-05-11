@@ -335,7 +335,7 @@ oc get pod -n openshift-operators | grep inteldeviceplugins-controller-manager
 Expected output (example):
 
 ```
-inteldeviceplugins-controller-manager-6b8c76c867-hftqm   2/2     Running   0   17m
+inteldeviceplugins-controller-manager-6b8c76c867-hftqm   1/1     Running   0   17m
 ```
 
 ## Creating Device Plugin Custom Resources
@@ -540,6 +540,32 @@ Save and apply:
 oc apply -f dsa-device-plugin.yaml
 ```
 
+Verify:
+
+```bash
+oc get DsaDevicePlugin
+```
+
+Example output:
+
+```
+NAME                     DESIRED   READY   NODE SELECTOR                                       AGE
+dsadeviceplugin-sample   3         3       {"intel.feature.node.kubernetes.io/dsa":"true"}      98m
+```
+
+Verify DSA resources on a node:
+
+```bash
+oc describe node <node-name> | grep dsa.intel.com
+```
+
+Example output:
+
+```
+dsa.intel.com/wq-user-shared:     160
+dsa.intel.com/wq-user-dedicated:  0
+```
+
 #### Create via CLI (VFIO driver)
 
 Some workloads (e.g., DPDK) support using DSA through `vfio-pci`. Setting
@@ -570,7 +596,7 @@ Save and apply:
 oc apply -f dsa-device-plugin-vfio.yaml
 ```
 
-#### Verify
+Verify:
 
 ```bash
 oc get DsaDevicePlugin
@@ -580,7 +606,6 @@ Example output:
 
 ```
 NAME                          DESIRED   READY   NODE SELECTOR                                       AGE
-dsadeviceplugin-sample        3         3       {"intel.feature.node.kubernetes.io/dsa":"true"}      98m
 dsadeviceplugin-vfio-sample   3         3       {"intel.feature.node.kubernetes.io/dsa":"true"}      10m
 ```
 
@@ -590,14 +615,7 @@ Verify DSA resources on a node:
 oc describe node <node-name> | grep dsa.intel.com
 ```
 
-Example output (idxd driver):
-
-```
-dsa.intel.com/wq-user-shared:     160
-dsa.intel.com/wq-user-dedicated:  0
-```
-
-Example output (vfio-pci driver):
+Example output:
 
 ```
 dsa.intel.com/vfio:  4
