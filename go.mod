@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/intel/xpumanager/xpumd/exporter v0.0.0-20260416113012-0a2523c6e0f6
 	github.com/klauspost/cpuid/v2 v2.3.0
-	github.com/onsi/ginkgo/v2 v2.28.3
+	github.com/onsi/ginkgo/v2 v2.29.0
 	github.com/onsi/gomega v1.40.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_model v0.6.2
