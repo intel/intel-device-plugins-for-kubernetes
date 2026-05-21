@@ -1,0 +1,25 @@
+resources:
+- pccs.yaml
+- service.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+
+# self-signed TLS certs for pccs-tls:
+# openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout private.pem -out file.crt -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com"
+# token hashesh follow (with 'helloworld' changed to the desired secret tokens):
+# echo -n helloworld | sha512sum | tr -d '[:space:]-'
+# where helloworld is then used as the USER_TOKEN in intel-dcap-node-infra deployment:
+#
+# required .env.pccs-tokens keys:
+# PCS_API_KEY=
+# PCCS_USER_TOKEN_HASH=
+# PCCS_ADMIN_TOKEN_HASH=
+secretGenerator:
+- name: pccs-tokens
+  envs:
+  - .env.pccs-tokens
+- name: pccs-tls
+  type: "kubernetes.io/tls"
+  files:
+  - tls.key=private.pem
+  - tls.crt=file.crt
