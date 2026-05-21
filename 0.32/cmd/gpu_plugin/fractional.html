@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GPU plugin with GPU Aware Scheduling &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">GPU plugin with GPU Aware Scheduling</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/gpu_plugin/fractional.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gpu-plugin-with-gpu-aware-scheduling">
+<h1>GPU plugin with GPU Aware Scheduling<a class="headerlink" href="#gpu-plugin-with-gpu-aware-scheduling" title="Permalink to this heading"></a></h1>
+<p>This is an experimental feature.</p>
+<p>Installing the GPU plugin with <a class="reference external" href="https://github.com/intel/platform-aware-scheduling/tree/master/gpu-aware-scheduling">GPU Aware Scheduling</a> (GAS) enables containers to request partial (fractional) GPU resources. For example, a Pod’s container can request GPU’s millicores or memory and use only a fraction of the GPU. The remaining resources could be leveraged by another container.</p>
+<blockquote>
+<div><p><em>NOTE</em>: For this use case to work properly, all GPUs in a given node should provide equal amount of resources
+i.e. heterogenous GPU nodes are not supported.</p>
+</div></blockquote>
+<blockquote>
+<div><p><em>NOTE</em>:  Resource values are used only for scheduling workloads to nodes, not for limiting their GPU usage on the nodes. Container requesting 50% of the GPU’s resources is not restricted by the kernel driver or firmware from using more than 50% of the resources. A container requesting 1% of the GPU could use 100% of it.</p>
+</div></blockquote>
+<section id="install-gpu-aware-scheduling">
+<h2>Install GPU Aware Scheduling<a class="headerlink" href="#install-gpu-aware-scheduling" title="Permalink to this heading"></a></h2>
+<p>GAS’ installation is described in its <a class="reference external" href="https://github.com/intel/platform-aware-scheduling/tree/master/gpu-aware-scheduling#usage-with-nfd-and-the-gpu-plugin">README</a>.</p>
+</section>
+<section id="install-gpu-plugin-with-fractional-resources">
+<h2>Install GPU plugin with fractional resources<a class="headerlink" href="#install-gpu-plugin-with-fractional-resources" title="Permalink to this heading"></a></h2>
+<section id="with-yaml-deployments">
+<h3>With yaml deployments<a class="headerlink" href="#with-yaml-deployments" title="Permalink to this heading"></a></h3>
+<p>The GPU Plugin DaemonSet needs additional RBAC-permissions and access to the kubelet podresources
+gRPC service to function. All the required changes are gathered in the <code class="docutils literal notranslate"><span class="pre">fractional_resources</span></code>
+overlay. Install GPU plugin by running:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Start NFD - if your cluster doesn&#39;t have NFD installed yet</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+
+<span class="c1"># Create NodeFeatureRules for detecting GPUs on nodes</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+
+<span class="c1"># Create GPU plugin daemonset</span>
+$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span><span class="s1">&#39;https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/fractional_resources?ref=&lt;RELEASE_VERSION&gt;&#39;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>NOTE:</strong> The yaml deployment above does not support deployment to non-default namespace. The ClusterRoleBinding object has a hardcoded namespace and does not respect the target namespace. If you would like to deploy to a custom namespace, you will need to either modify the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/61c7b4e82326752f2004f58bc720454aeaa5d817/cmd/gpu_plugin/../../deployments/gpu_plugin/overlays/fractional_resources/gpu-manager-rolebinding.yaml">yaml file</a> or deploy using the Operator.</p>
+</div></blockquote>
+</section>
+<section id="with-device-plugin-operator">
+<h3>With Device Plugin Operator<a class="headerlink" href="#with-device-plugin-operator" title="Permalink to this heading"></a></h3>
+<p>Install the Device Plugin Operator according to the <a class="reference external" href="../operator/README.html#installation">install</a> instructions. When applying the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/61c7b4e82326752f2004f58bc720454aeaa5d817/cmd/gpu_plugin/../../deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml">GPU plugin Custom Resource</a> (CR), set <code class="docutils literal notranslate"><span class="pre">resourceManager</span></code> option to <code class="docutils literal notranslate"><span class="pre">true</span></code>. The Operator will install all the required RBAC objects and service accounts.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span><span class="p">:</span>
+  <span class="n">resourceManager</span><span class="p">:</span> <span class="n">true</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="details-about-fractional-resources">
+<h2>Details about fractional resources<a class="headerlink" href="#details-about-fractional-resources" title="Permalink to this heading"></a></h2>
+<p>Use of fractional GPU resources requires that the cluster has node extended resources with the name prefix <code class="docutils literal notranslate"><span class="pre">gpu.intel.com/</span></code>. Those are automatically created by GPU plugin with the help of the NFD. When fractional resources are enabled, the plugin lets GAS do card selection decisions based on resource availability and the amount of extended resources requested in the <a class="reference external" href="https://github.com/intel/platform-aware-scheduling/blob/master/gpu-aware-scheduling/docs/usage.md#pods">pod spec</a>.</p>
+<p>GAS then annotates the pod objects with unique increasing numeric timestamps in the annotation <code class="docutils literal notranslate"><span class="pre">gas-ts</span></code> and container card selections in <code class="docutils literal notranslate"><span class="pre">gas-container-cards</span></code> annotation. The latter has container separator ‘<code class="docutils literal notranslate"><span class="pre">|</span></code>’ and card separator ‘<code class="docutils literal notranslate"><span class="pre">,</span></code>’. Example for a pod with two containers and both containers getting two cards: <code class="docutils literal notranslate"><span class="pre">gas-container-cards:card0,card1|card2,card3</span></code>.</p>
+<p>Enabling the fractional resource support in the plugin without running GAS in the cluster will only slow down GPU-deployments, so do not enable this feature unnecessarily.</p>
+</section>
+<section id="tile-level-access-and-level-zero-workloads">
+<h2>Tile level access and Level Zero workloads<a class="headerlink" href="#tile-level-access-and-level-zero-workloads" title="Permalink to this heading"></a></h2>
+<p>Level Zero library supports targeting different tiles on a GPU. If the host is equipped with multi-tile GPU devices, and the container requests both <code class="docutils literal notranslate"><span class="pre">gpu.intel.com/i915</span></code> and <code class="docutils literal notranslate"><span class="pre">gpu.intel.com/tiles</span></code> resources, GPU plugin (with GAS) adds an <a class="reference external" href="https://spec.oneapi.io/level-zero/latest/core/PROG.html#affinity-mask">affinity mask</a> to the container. By default the mask is in “FLAT” <a class="reference external" href="https://spec.oneapi.io/level-zero/latest/core/PROG.html#device-hierarchy">device hierarchy</a> format. With the affinity mask, two Level Zero workloads can share a two tile GPU so that workloads use one tile each.</p>
+<p>If a multi-tile workload is intended to work in “COMPOSITE” hierarchy mode, the container spec environment should include hierarchy mode variable (ZE_FLAT_DEVICE_HIERARCHY) with “COMPOSITE” value. GPU plugin will then adapt the affinity mask from the default “FLAT” to “COMPOSITE” format.</p>
+<p>If the GPU is a single tile device, GPU plugin does not set the affinity mask. Only exposing GPU devices is enough in that case.</p>
+<section id="details-about-tile-resources">
+<h3>Details about tile resources<a class="headerlink" href="#details-about-tile-resources" title="Permalink to this heading"></a></h3>
+<p>GAS makes the GPU and tile selection based on the Pod’s resource specification. The selection is passed to GPU plugin via the Pod’s annotation.</p>
+<p>Tiles targeted for containers are specified to Pod via <code class="docutils literal notranslate"><span class="pre">gas-container-tiles</span></code> annotation where the the annotation value describes a set of card and tile combinations. For example in a two container pod, the annotation could be <code class="docutils literal notranslate"><span class="pre">gas-container-tiles:card0:gt0+gt1|card1:gt1,card2:gt0</span></code>. Similarly to <code class="docutils literal notranslate"><span class="pre">gas-container-cards</span></code>, the container details are split via <code class="docutils literal notranslate"><span class="pre">|</span></code>. In the example above, the first container gets tiles 0 and 1 from card 0, and the second container gets tile 1 from card 1 and tile 0 from card 2.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

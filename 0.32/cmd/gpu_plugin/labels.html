@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Labels &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Labels</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/gpu_plugin/labels.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="labels">
+<h1>Labels<a class="headerlink" href="#labels" title="Permalink to this heading"></a></h1>
+<p>GPU labels originate from two main sources: NFD rules and GPU plugin (&amp; NFD hook).</p>
+<section id="nfd-rules">
+<h2>NFD rules<a class="headerlink" href="#nfd-rules" title="Permalink to this heading"></a></h2>
+<p>NFD rule is a method to instruct NFD to add certain label(s) to node based on the devices detected on it. There is a generic rule to identify all Intel GPUs. It will add labels for each PCI device type. For example, a Tigerlake iGPU (PCI Id 0x9a49) will show up as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gpu</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">device</span><span class="o">-</span><span class="nb">id</span><span class="mf">.0300</span><span class="o">-</span><span class="mi">9</span><span class="n">a49</span><span class="o">.</span><span class="n">count</span><span class="o">=</span><span class="mi">1</span>
+<span class="n">gpu</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">device</span><span class="o">-</span><span class="nb">id</span><span class="mf">.0300</span><span class="o">-</span><span class="mi">9</span><span class="n">a49</span><span class="o">.</span><span class="n">present</span><span class="o">=</span><span class="n">true</span>
+</pre></div>
+</div>
+<p>For data center GPUs, there are more specific rules which will create additional labels for GPU family, product and device count. For example, Flex 170:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gpu</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">device</span><span class="o">.</span><span class="n">count</span><span class="o">=</span><span class="mi">1</span>
+<span class="n">gpu</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">family</span><span class="o">=</span><span class="n">Flex_Series</span>
+<span class="n">gpu</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">product</span><span class="o">=</span><span class="n">Flex_170</span>
+</pre></div>
+</div>
+<p>For MAX 1550:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gpu</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">device</span><span class="o">.</span><span class="n">count</span><span class="o">=</span><span class="mi">2</span>
+<span class="n">gpu</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">family</span><span class="o">=</span><span class="n">Max_Series</span>
+<span class="n">gpu</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">product</span><span class="o">=</span><span class="n">Max_1550</span>
+</pre></div>
+</div>
+<p>Current covered platforms/devices are: Flex 140, Flex 170, Max 1100 and Max 1550.</p>
+<p>To identify other GPUs, see the graphics processor table <a class="reference external" href="https://dgpu-docs.intel.com/devices/hardware-table.html#graphics-processor-table">here</a>.</p>
+</section>
+<section id="gpu-plugin-and-nfd-hook">
+<h2>GPU Plugin and NFD hook<a class="headerlink" href="#gpu-plugin-and-nfd-hook" title="Permalink to this heading"></a></h2>
+<p>In GPU plugin, these labels are only applied when <a class="reference external" href="README.html#fractional-resources-details">Resource Management</a> is enabled. With the NFD hook, labels are created regardless of how GPU plugin is configured.</p>
+<p>Numeric labels are converted into extended resources for the node (with NFD) and other labels are used directly by <a class="reference external" href="https://github.com/intel/platform-aware-scheduling/tree/master/gpu-aware-scheduling">GPU Aware Scheduling (GAS)</a>. Extended resources should only be used with GAS as Kubernetes scheduler doesn’t properly handle resource allocations with multiple GPUs.</p>
+<section id="default-labels">
+<h3>Default labels<a class="headerlink" href="#default-labels" title="Permalink to this heading"></a></h3>
+<p>Following labels are created by default.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>name</th>
+<th>type</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gpu.intel.com/millicores</code></td>
+<td>number</td>
+<td>node GPU count * 1000.</td>
+</tr>
+<tr>
+<td><code>gpu.intel.com/memory.max</code></td>
+<td>number</td>
+<td>sum of detected <a href="#gpu-memory">GPU memory amounts</a> in bytes OR environment variable value * GPU count</td>
+</tr>
+<tr>
+<td><code>gpu.intel.com/cards</code></td>
+<td>string</td>
+<td>list of card names separated by '<code>.</code>'. The names match host <code>card*</code>-folders under <code>/sys/class/drm/</code>. Deprecated, use <code>gpu-numbers</code>.</td>
+</tr>
+<tr>
+<td><code>gpu.intel.com/gpu-numbers</code></td>
+<td>string</td>
+<td>list of numbers separated by '<code>.</code>'. The numbers correspond to device file numbers for the primary nodes of given GPUs in kernel DRI subsystem, listed as <code>/dev/dri/card&lt;num&gt;</code> in devfs, and <code>/sys/class/drm/card&lt;num&gt;</code> in sysfs.</td>
+</tr>
+<tr>
+<td><code>gpu.intel.com/tiles</code></td>
+<td>number</td>
+<td>sum of all detected GPU tiles in the system.</td>
+</tr>
+<tr>
+<td><code>gpu.intel.com/numa-gpu-map</code></td>
+<td>string</td>
+<td>list of numa node to gpu mappings.</td>
+</tr>
+</tbody>
+</table><p>If the value of the <code class="docutils literal notranslate"><span class="pre">gpu-numbers</span></code> label would not fit into the 63 character length limit, you will also get labels <code class="docutils literal notranslate"><span class="pre">gpu-numbers2</span></code>,
+<code class="docutils literal notranslate"><span class="pre">gpu-numbers3</span></code>… until all the gpu numbers have been labeled.</p>
+<p>The tile count <code class="docutils literal notranslate"><span class="pre">gpu.intel.com/tiles</span></code> describes the total amount of tiles on the system. System is expected to be homogeneous, and thus the number of tiles per GPU can be calculated by dividing the tile count with GPU count.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">numa-gpu-map</span></code> label is a list of numa to gpu mapping items separated by <code class="docutils literal notranslate"><span class="pre">_</span></code>. Each list item has a numa node id combined with a list of gpu indices. e.g. 0-1.2.3 would mean: numa node 0 has gpus 1, 2 and 3. More complex example would be: 0-0.1_1-3.4 where numa node 0 would have gpus 0 and 1, and numa node 1 would have gpus 3 and 4. As with <code class="docutils literal notranslate"><span class="pre">gpu-numbers</span></code>, this label will be extended to multiple labels if the length of the value exceeds the max label length.</p>
+</section>
+<section id="pci-groups-optional">
+<h3>PCI-groups (optional)<a class="headerlink" href="#pci-groups-optional" title="Permalink to this heading"></a></h3>
+<p>GPUs which share the same PCI paths under <code class="docutils literal notranslate"><span class="pre">/sys/devices/pci*</span></code> can be grouped into a label. GPU nums are separated by ‘<code class="docutils literal notranslate"><span class="pre">.</span></code>’ and
+groups are separated by ‘<code class="docutils literal notranslate"><span class="pre">_</span></code>’. The label is created only if environment variable named <code class="docutils literal notranslate"><span class="pre">GPU_PCI_GROUPING_LEVEL</span></code> has a value greater
+than zero. GPUs are considered to belong to the same group, if as many identical folder names are found for the GPUs, as is the value
+of the environment variable. Counting starts from the folder name which starts with <code class="docutils literal notranslate"><span class="pre">pci</span></code>.</p>
+<p>For example, the SG1 card has 4 GPUs, which end up sharing pci-folder names under <code class="docutils literal notranslate"><span class="pre">/sys/devices</span></code>. With a <code class="docutils literal notranslate"><span class="pre">GPU_PCI_GROUPING_LEVEL</span></code>
+of 3, a node with two such SG1 cards could produce a <code class="docutils literal notranslate"><span class="pre">pci-groups</span></code> label with a value of <code class="docutils literal notranslate"><span class="pre">0.1.2.3_4.5.6.7</span></code>.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>name</th>
+<th>type</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gpu.intel.com/pci-groups</code></td>
+<td>string</td>
+<td>list of pci-groups separated by '<code>_</code>'. GPU numbers in the groups are separated by '<code>.</code>'. The numbers correspond to device file numbers for the primary nodes of given GPUs in kernel DRI subsystem, listed as <code>/dev/dri/card&lt;num&gt;</code> in devfs, and <code>/sys/class/drm/card&lt;num&gt;</code> in sysfs.</td>
+</tr>
+</tbody>
+</table><p>If the value of the <code class="docutils literal notranslate"><span class="pre">pci-groups</span></code> label would not fit into the 63 character length limit, you will also get labels <code class="docutils literal notranslate"><span class="pre">pci-groups2</span></code>,
+<code class="docutils literal notranslate"><span class="pre">pci-groups3</span></code>… until all the PCI groups have been labeled.</p>
+</section>
+<section id="limitations">
+<h3>Limitations<a class="headerlink" href="#limitations" title="Permalink to this heading"></a></h3>
+<p>For the above to work as intended, GPUs on the same node must be identical in their capabilities.</p>
+</section>
+<section id="gpu-memory">
+<h3>GPU memory<a class="headerlink" href="#gpu-memory" title="Permalink to this heading"></a></h3>
+<p>GPU memory amount is read from sysfs <code class="docutils literal notranslate"><span class="pre">gt/gt*</span></code> files and turned into a label.
+There are two supported environment variables named <code class="docutils literal notranslate"><span class="pre">GPU_MEMORY_OVERRIDE</span></code> and
+<code class="docutils literal notranslate"><span class="pre">GPU_MEMORY_RESERVED</span></code>. Both are supposed to hold numeric byte amounts. For systems with
+older kernel drivers or GPUs which do not support reading the GPU memory
+amount, the <code class="docutils literal notranslate"><span class="pre">GPU_MEMORY_OVERRIDE</span></code> environment variable value is turned into a GPU
+memory amount label instead of a read value. <code class="docutils literal notranslate"><span class="pre">GPU_MEMORY_RESERVED</span></code> value will be
+scoped out from the GPU memory amount found from sysfs.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel FPGA admission controller for Kubernetes &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Intel FPGA OCI createRuntime hook for Kubernetes" href="../fpga_crihook/README.html" />
+    <link rel="prev" title="Intel DSA device plugin for Kubernetes" href="../dsa_plugin/README.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../docs/extensions.html">Extensions</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../dlb_plugin/README.html">Intel DLB device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dsa_plugin/README.html">Intel DSA device plugin for Kubernetes</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Intel FPGA admission controller for Kubernetes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pre-requisites">Pre-requisites</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#mappings">Mappings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#deployment">Deployment</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#next-steps">Next steps</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_crihook/README.html">Intel FPGA OCI createRuntime hook for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_plugin/README.html">Intel FPGA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga_tool/README.html">Intel FPGA test tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_nfdhook/README.html">Intel GPU NFD hook</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpu_plugin/README.html">Intel GPU device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iaa_plugin/README.html">Intel IAA device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../operator/README.html">Intel Device Plugins Operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../qat_plugin/README.html">Intel QuickAssist Technology (QAT) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_plugin/README.html">Intel Software Guard Extensions (SGX) device plugin for Kubernetes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sgx_admissionwebhook/README.html">Intel SGX admission controller for Kubernetes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../docs/extensions.html">Extensions</a></li>
+      <li class="breadcrumb-item active">Intel FPGA admission controller for Kubernetes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/fpga_admissionwebhook/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-fpga-admission-controller-for-kubernetes">
+<h1>Intel FPGA admission controller for Kubernetes<a class="headerlink" href="#intel-fpga-admission-controller-for-kubernetes" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#dependencies">Dependencies</a></p></li>
+<li><p><a class="reference external" href="#installation">Installation</a></p>
+<ul>
+<li><p><a class="reference external" href="#pre-requisites">Pre-requisites</a></p></li>
+<li><p><a class="reference external" href="#mappings">Mappings</a></p></li>
+<li><p><a class="reference external" href="#deployment">Deployment</a></p>
+<ul>
+<li><p><a class="reference external" href="#webhook-deployment">Webhook deployment</a></p></li>
+<li><p><a class="reference external" href="#mappings-deployment">Mappings deployment</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#next-steps">Next steps</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>The FPGA admission controller is one of the components used to add support for Intel FPGA
+devices to Kubernetes.</p>
+<blockquote>
+<div><p><strong>NOTE:</strong> Installation of the FPGA admission controller can be skipped if the
+<a class="reference internal" href="../fpga_plugin/README.html"><span class="doc">FPGA device plugin</span></a> is operated with the Intel Device Plugins Operator
+since it integrates the controller’s functionality.</p>
+</div></blockquote>
+<p>The FPGA admission controller webhook is responsible for performing mapping from user-friendly
+function IDs to the Interface ID and Bitstream ID that are required for FPGA programming by
+the <a class="reference internal" href="../fpga_crihook/README.html"><span class="doc">FPGA OCI createRuntime hook</span></a>.</p>
+<p>Mappings are stored in namespaced custom resource definition (CRD) objects, therefore the admission
+controller also performs access control, determining which bitstream can be used for which namespace.
+More details can be found in the <a class="reference external" href="#mappings">Mappings</a> section.</p>
+<p>The admission controller also keeps the user from bypassing namespaced mapping restrictions,
+by denying admission of any pods that are trying to use internal knowledge of InterfaceID or
+Bitstream ID environment variables used by the createRuntime hook.</p>
+</section>
+<section id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this heading"></a></h2>
+<p>This component is one of a set of components that work together. You may also want to
+install the following:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../fpga_plugin/README.html"><span class="doc">FPGA device plugin</span></a></p></li>
+<li><p><a class="reference internal" href="../fpga_crihook/README.html"><span class="doc">FPGA OCI createRuntime hook</span></a></p></li>
+</ul>
+<p>All components have the same basic dependencies as the
+<a class="reference external" href="../../README.html#about">generic plugin framework dependencies</a></p>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<p>The following sections detail how to obtain, build and deploy the admission
+controller webhook plugin.</p>
+<section id="pre-requisites">
+<h3>Pre-requisites<a class="headerlink" href="#pre-requisites" title="Permalink to this heading"></a></h3>
+<p>The default webhook deployment depends on having <a class="reference external" href="https://cert-manager.io/">cert-manager</a>
+installed. See its installation instructions <a class="reference external" href="https://cert-manager.io/docs/installation/kubectl/">here</a>.</p>
+<blockquote>
+<div><p><strong>Note</strong>: The default deployment for the Intel FPGA webhook uses self-signed certificates. For a production cluster, the certificate issuer should be properly set and not use a self-signed method.</p>
+</div></blockquote>
+<p>Also if your cluster operates behind a corporate proxy make sure that the API
+server is configured not to send requests to cluster services through the
+proxy. You can check that with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>describe<span class="w"> </span>pod<span class="w"> </span>kube-apiserver<span class="w"> </span>--namespace<span class="w"> </span>kube-system<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span>no_proxy<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;\.svc&quot;</span>
+</pre></div>
+</div>
+<p>In case there’s no output and your cluster was deployed with <code class="docutils literal notranslate"><span class="pre">kubeadm</span></code> open
+<code class="docutils literal notranslate"><span class="pre">/etc/kubernetes/manifests/kube-apiserver.yaml</span></code> at the control plane nodes and
+append <code class="docutils literal notranslate"><span class="pre">.svc</span></code> and <code class="docutils literal notranslate"><span class="pre">.svc.cluster.local</span></code> to the <code class="docutils literal notranslate"><span class="pre">no_proxy</span></code> environment variable:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Pod</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">command</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-apiserver</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--advertise-address=10.237.71.99</span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">    </span><span class="nt">env</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http_proxy</span>
+<span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://proxy.host:8080</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https_proxy</span>
+<span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://proxy.host:8433</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">no_proxy</span>
+<span class="w">      </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">127.0.0.1,localhost,.example.com,10.0.0.0/8,.svc,.svc.cluster.local</span>
+<span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+</pre></div>
+</div>
+<p><strong>Note:</strong> To build clusters using <code class="docutils literal notranslate"><span class="pre">kubeadm</span></code> with the right <code class="docutils literal notranslate"><span class="pre">no_proxy</span></code> settings from the very beginning,
+set the cluster service names to <code class="docutils literal notranslate"><span class="pre">$no_proxy</span></code> before <code class="docutils literal notranslate"><span class="pre">kubeadm</span> <span class="pre">init</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export no_proxy=$no_proxy,.svc,.svc.cluster.local
+</pre></div>
+</div>
+</section>
+</section>
+<section id="mappings">
+<h2>Mappings<a class="headerlink" href="#mappings" title="Permalink to this heading"></a></h2>
+<p>Mappings is a an essential part of the setup that gives a flexible instrument to a cluster
+administrator to manage FPGA bitstreams and to control access to them. Being a set of
+custom resource definitions they are used to configure the way FPGA resource requests get
+translated into actual resources provided by the cluster.</p>
+<p>For the following mapping</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fpga.intel.com/v2</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AcceleratorFunction</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">arria10.dcp1.2-nlb0-preprogrammed</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">afuId</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">d8424dc4a4a3c413f89e433683f9040b</span>
+<span class="w">  </span><span class="nt">interfaceId</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">69528db6eb31577a8c3668f9faa081f6</span>
+<span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">af</span>
+</pre></div>
+</div>
+<p>requested FPGA resources are translated to AF resources. For example,
+<code class="docutils literal notranslate"><span class="pre">fpga.intel.com/arria10.dcp1.2-nlb0-preprogrammed</span></code> is translated to
+<code class="docutils literal notranslate"><span class="pre">fpga.intel.com/af-695.d84.aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs</span></code> where the <code class="docutils literal notranslate"><span class="pre">af-</span></code>
+prefix indicates the plugin’s mode (<code class="docutils literal notranslate"><span class="pre">af</span></code>), <code class="docutils literal notranslate"><span class="pre">695</span></code> is the first three characters of
+the region interface ID, <code class="docutils literal notranslate"><span class="pre">d84</span></code> is the first three characters of the accelerator function ID
+and the last part <code class="docutils literal notranslate"><span class="pre">aVKNtusxV3qMNmj5-qCB9thCTcSko8QT-J5DNoP5BAs</span></code> is a base64-encoded concatenation
+of the full region interface ID and accelerator function ID.
+The format of resource names (e.g. <code class="docutils literal notranslate"><span class="pre">arria10.dcp1.2-nlb0-preprogrammed</span></code>) can be any and is up
+to a cluster administrator.</p>
+<p>The same mapping, but with its mode field set to <code class="docutils literal notranslate"><span class="pre">region</span></code>, would translate
+<code class="docutils literal notranslate"><span class="pre">fpga.intel.com/arria10.dcp1.2-nlb0-preprogrammed</span></code> to <code class="docutils literal notranslate"><span class="pre">fpga.intel.com/region-69528db6eb31577a8c3668f9faa081f6</span></code>,
+and the corresponding AF IDs are set in environment variables for the container.
+Though in this case the cluster administrator would probably want to rename
+the mapping <code class="docutils literal notranslate"><span class="pre">arria10.dcp1.2-nlb0-preprogrammed</span></code> to something like <code class="docutils literal notranslate"><span class="pre">arria10.dcp1.2-nlb0-orchestrated</span></code>
+to reflect its mode. The <a class="reference internal" href="../fpga_crihook/README.html"><span class="doc">FPGA OCI createRuntime hook</span></a> then loads the requested
+bitstream to a region before the container is started.</p>
+<p>Mappings of resource names are configured with objects of <code class="docutils literal notranslate"><span class="pre">AcceleratorFunction</span></code> and
+<code class="docutils literal notranslate"><span class="pre">FpgaRegion</span></code> custom resource definitions found respectively in
+<a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/deployments/fpga_admissionwebhook/crd/bases/fpga.intel.com_acceleratorfunctions.yaml"><code class="docutils literal notranslate"><span class="pre">./deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_af.yaml</span></code></a>
+and <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/deployments/fpga_admissionwebhook/crd/bases/fpga.intel.com_fpgaregions.yaml"><code class="docutils literal notranslate"><span class="pre">./deployment/fpga_admissionwebhook/crd/bases/fpga.intel.com_region.yaml</span></code></a>.</p>
+<p>Example mappings between ‘names’ and ‘ID’s are controlled by the admission controller mappings collection file found in
+<a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/deployments/fpga_admissionwebhook/mappings-collection.yaml"><code class="docutils literal notranslate"><span class="pre">./deployments/fpga_admissionwebhook/mappings-collection.yaml</span></code></a>.</p>
+<section id="deployment">
+<h3>Deployment<a class="headerlink" href="#deployment" title="Permalink to this heading"></a></h3>
+<section id="webhook-deployment">
+<h4>Webhook deployment<a class="headerlink" href="#webhook-deployment" title="Permalink to this heading"></a></h4>
+<p>To deploy the webhook, run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-k<span class="w"> </span>https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/fpga_admissionwebhook/default?ref<span class="o">=</span>main
+namespace/intelfpgawebhook-system<span class="w"> </span>created
+customresourcedefinition.apiextensions.k8s.io/acceleratorfunctions.fpga.intel.com<span class="w"> </span>created
+customresourcedefinition.apiextensions.k8s.io/fpgaregions.fpga.intel.com<span class="w"> </span>created
+mutatingwebhookconfiguration.admissionregistration.k8s.io/intelfpgawebhook-mutating-webhook-configuration<span class="w"> </span>created
+clusterrole.rbac.authorization.k8s.io/intelfpgawebhook-manager-role<span class="w"> </span>created
+clusterrolebinding.rbac.authorization.k8s.io/intelfpgawebhook-manager-rolebinding<span class="w"> </span>created
+service/intelfpgawebhook-webhook-service<span class="w"> </span>created
+deployment.apps/intelfpgawebhook-webhook<span class="w"> </span>created
+certificate.cert-manager.io/intelfpgawebhook-serving-cert<span class="w"> </span>created
+issuer.cert-manager.io/intelfpgawebhook-selfsigned-issuer<span class="w"> </span>created
+</pre></div>
+</div>
+</section>
+<section id="mappings-deployment">
+<h4>Mappings deployment<a class="headerlink" href="#mappings-deployment" title="Permalink to this heading"></a></h4>
+<p>Mappings deployment is a mandatory part of the webhook deployment. You should
+prepare and deploy mappings that describe FPGA bitstreams available in your cluster.</p>
+<p>Example mappings collection <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/deployments/fpga_admissionwebhook/mappings-collection.yaml"><code class="docutils literal notranslate"><span class="pre">./deployments/fpga_admissionwebhook/mappings-collection.yaml</span></code></a>
+can be used as an example for cluster mappings. This collection is not intended to be deployed as is,
+it should be used as a reference and example of your own cluster mappings.</p>
+<p>To deploy the mappings, run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>&lt;path<span class="w"> </span>to<span class="w"> </span>mappings<span class="w"> </span>yaml&gt;
+</pre></div>
+</div>
+<p>Note that the mappings are scoped to the namespaces they were created in
+and they are applicable to pods created in the corresponding namespaces.</p>
+</section>
+</section>
+</section>
+<section id="next-steps">
+<h2>Next steps<a class="headerlink" href="#next-steps" title="Permalink to this heading"></a></h2>
+<p>Continue with <a class="reference internal" href="../fpga_crihook/README.html"><span class="doc">FPGA OCI createRuntime hook</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../dsa_plugin/README.html" class="btn btn-neutral float-left" title="Intel DSA device plugin for Kubernetes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../fpga_crihook/README.html" class="btn btn-neutral float-right" title="Intel FPGA OCI createRuntime hook for Kubernetes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel Device Plugins for Red Hat OpenShift Container Platform &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Intel Device Plugins for Red Hat OpenShift Container Platform</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/OPENSHIFT.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-device-plugins-for-red-hat-openshift-container-platform">
+<h1>Intel Device Plugins for Red Hat OpenShift Container Platform<a class="headerlink" href="#intel-device-plugins-for-red-hat-openshift-container-platform" title="Permalink to this heading"></a></h1>
+<p>This document describes how to provision Intel hardware features on a Red Hat
+OpenShift Container Platform (RHOCP) cluster using Intel Device Plugins. It
+covers hardware and BIOS configuration, node labeling with Node Feature
+Discovery, and installing the Intel Device Plugins Operator to expose QAT, SGX,
+DSA, and GPU resources to workloads.</p>
+<blockquote>
+<div><p><strong>Note:</strong> Version numbers used in examples throughout this document are for
+reference only. Always check the latest versions of RHOCP, operators, and
+container images before deploying.</p>
+</div></blockquote>
+<section id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="#prerequisites">Prerequisites</a></p></li>
+<li><p><a class="reference external" href="#bios-configuration">BIOS Configuration</a></p></li>
+<li><p><a class="reference external" href="#machine-configuration">Machine Configuration</a></p>
+<ul>
+<li><p><a class="reference external" href="#hugepages">Hugepages</a></p></li>
+<li><p><a class="reference external" href="#cpu-manager">CPU Manager</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#node-feature-discovery">Node Feature Discovery</a></p>
+<ul>
+<li><p><a class="reference external" href="#nodefeaturerules-for-intel-devices">NodeFeatureRules for Intel Devices</a></p></li>
+<li><p><a class="reference external" href="#nfd-verification">Verification</a></p></li>
+<li><p><a class="reference external" href="#labels-table">Labels Table</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#intel-device-plugins-operator">Intel Device Plugins Operator</a></p>
+<ul>
+<li><p><a class="reference external" href="#installation-via-web-console">Installation via Web Console</a></p></li>
+<li><p><a class="reference external" href="#installation-via-cli">Installation via CLI</a></p></li>
+<li><p><a class="reference external" href="#verify-operator-installation">Verify Installation</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#creating-device-plugin-custom-resources">Creating Device Plugin Custom Resources</a></p>
+<ul>
+<li><p><a class="reference external" href="#intel-qat-device-plugin">Intel QAT Device Plugin</a></p></li>
+<li><p><a class="reference external" href="#intel-sgx-device-plugin">Intel SGX Device Plugin</a></p></li>
+<li><p><a class="reference external" href="#intel-dsa-device-plugin">Intel DSA Device Plugin</a></p></li>
+<li><p><a class="reference external" href="#intel-gpu-device-plugin">Intel GPU Device Plugin</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#resources-provided-by-intel-device-plugins">Resources Provided by Intel Device Plugins</a></p></li>
+</ul>
+</section>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>A provisioned RHOCP cluster (bare-metal multi-node is recommended). See
+<a class="reference external" href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/installation_overview/ocp-installation-overview">Red Hat’s installation documentation</a>
+for cluster provisioning instructions.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">oc</span></code> CLI tool installed and configured with cluster-admin privileges.</p></li>
+<li><p>Intel hardware present in worker nodes (see <a class="reference external" href="#bios-configuration">BIOS Configuration</a>
+for per-feature requirements).</p></li>
+</ul>
+</section>
+<section id="bios-configuration">
+<h2>BIOS Configuration<a class="headerlink" href="#bios-configuration" title="Permalink to this heading"></a></h2>
+<p>Before provisioning Intel hardware features, ensure the BIOS is configured
+correctly on each worker node. Refer to your server vendor’s BIOS documentation
+for specific instructions. The following are general references:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Feature</th>
+<th>BIOS Configuration Reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Intel® SGX</td>
+<td><a href="https://www.intel.com/content/www/us/en/support/articles/000087972/server-products/single-node-servers.html">Intel SGX BIOS setup</a></td>
+</tr>
+<tr>
+<td>Intel® Data Center GPU Flex Series</td>
+<td><a href="https://www.intel.com/content/www/us/en/content-details/774119/virtualization-guide-for-intel-data-center-gpu-flex-series.html">GPU Flex Series setup guide</a></td>
+</tr>
+<tr>
+<td>Intel® Data Center GPU Max Series</td>
+<td><a href="https://dgpu-docs.intel.com/system-user-guides/DNP-Max-1100-userguide/DNP-Max-1100-userguide.html#bios-setup">GPU Max Series BIOS setup</a></td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><a href="https://github.com/intel/qatlib/blob/main/INSTALL">QAT BIOS setup</a></td>
+</tr>
+<tr>
+<td>Intel® DSA</td>
+<td><a href="https://www.intel.com/content/www/us/en/content-details/759709/intel-data-streaming-accelerator-user-guide.html">DSA setup guide</a></td>
+</tr>
+</tbody>
+</table></section>
+<section id="machine-configuration">
+<h2>Machine Configuration<a class="headerlink" href="#machine-configuration" title="Permalink to this heading"></a></h2>
+<p>The Machine Config Operator (MCO) manages operating system configuration on
+RHOCP worker nodes. For Intel QAT and Intel DSA, you must enable the
+<code class="docutils literal notranslate"><span class="pre">intel_iommu</span></code> kernel parameter with <code class="docutils literal notranslate"><span class="pre">sm_on</span></code> and load the <code class="docutils literal notranslate"><span class="pre">vfio-pci</span></code> module at
+boot.</p>
+<p>Apply the following <code class="docutils literal notranslate"><span class="pre">MachineConfig</span></code> to enable IOMMU and VFIO for QAT and DSA:</p>
+<blockquote>
+<div><p><strong>Note:</strong> Applying this MachineConfig will trigger a reboot of the matching
+worker nodes.</p>
+</div></blockquote>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">machineconfiguration.openshift.io/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MachineConfig</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">machineconfiguration.openshift.io/role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100-intel-iommu-on</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kernelArguments</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># The vfio-pci.ids below are examples; add any supported QAT VF or DSA PF PCI IDs for your hardware</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">intel_iommu=on,sm_on modules_load=vfio-pci vfio-pci.ids=8086:4941,8086:4943</span>
+</pre></div>
+</div>
+<p>Save the above to a file (e.g. <code class="docutils literal notranslate"><span class="pre">100-intel-iommu-on.yaml</span></code>) and apply:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="m">100</span>-intel-iommu-on.yaml
+</pre></div>
+</div>
+<section id="hugepages">
+<h3>Hugepages<a class="headerlink" href="#hugepages" title="Permalink to this heading"></a></h3>
+<p>If your workloads require hugepages (e.g. DPDK-based QAT applications), apply
+the following <code class="docutils literal notranslate"><span class="pre">MachineConfig</span></code> to allocate 2 Mi hugepages at boot:</p>
+<blockquote>
+<div><p><strong>Note:</strong> Applying this MachineConfig will trigger a reboot of the matching
+worker nodes.</p>
+</div></blockquote>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">machineconfiguration.openshift.io/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MachineConfig</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">99-worker-hugepages-2mi</span>
+<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">machineconfiguration.openshift.io/role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">kernelArguments</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;default_hugepagesz=2M&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;hugepagesz=2M&quot;</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;hugepages=1024&quot;</span>
+</pre></div>
+</div>
+<p>Save the above to a file (e.g. <code class="docutils literal notranslate"><span class="pre">99-worker-hugepages-2mi.yaml</span></code>) and apply:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span><span class="m">99</span>-worker-hugepages-2mi.yaml
+</pre></div>
+</div>
+</section>
+<section id="cpu-manager">
+<h3>CPU Manager<a class="headerlink" href="#cpu-manager" title="Permalink to this heading"></a></h3>
+<p>For workloads that require exclusive CPU pinning, enable the static CPU Manager
+policy via a <code class="docutils literal notranslate"><span class="pre">KubeletConfig</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">machineconfiguration.openshift.io/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">KubeletConfig</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cpumanager-enabled</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">machineConfigPoolSelector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">matchLabels</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">custom-kubelet</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cpumanager-enabled</span>
+<span class="w">  </span><span class="nt">kubeletConfig</span><span class="p">:</span>
+<span class="w">     </span><span class="nt">cpuManagerPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">static</span>
+<span class="w">     </span><span class="nt">cpuManagerReconcilePeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span>
+</pre></div>
+</div>
+<p>Save the above to a file (e.g. <code class="docutils literal notranslate"><span class="pre">cpumanager-kubeletconfig.yaml</span></code>) and apply:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>cpumanager-kubeletconfig.yaml
+</pre></div>
+</div>
+<p>Then label the <code class="docutils literal notranslate"><span class="pre">MachineConfigPool</span></code> to activate the config:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>label<span class="w"> </span>machineconfigpool<span class="w"> </span>worker<span class="w"> </span>custom-kubelet<span class="o">=</span>cpumanager-enabled
+</pre></div>
+</div>
+</section>
+<section id="verification">
+<h3>Verification<a class="headerlink" href="#verification" title="Permalink to this heading"></a></h3>
+<p>After the worker nodes have rebooted, verify the configuration by navigating to
+the node terminal on the web console (<strong>Compute</strong> → <strong>Nodes</strong> → select a node →
+<strong>Terminal</strong>), or by using <code class="docutils literal notranslate"><span class="pre">oc</span> <span class="pre">debug</span> <span class="pre">node/&lt;node-name&gt;</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check kernel command line</span>
+cat<span class="w"> </span>/proc/cmdline
+<span class="c1"># Ensure &quot;intel_iommu=on,sm_on&quot; is present</span>
+
+<span class="c1"># Check that vfio_pci driver is loaded</span>
+chroot<span class="w"> </span>/host
+lsmod<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>vfio_pci
+
+<span class="c1"># Check that CPU manager static policy is enabled</span>
+jq<span class="w"> </span>-r<span class="w"> </span>.policyName<span class="w"> </span>&lt;<span class="w"> </span>/var/lib/kubelet/cpu_manager_state
+</pre></div>
+</div>
+</section>
+</section>
+<section id="node-feature-discovery">
+<h2>Node Feature Discovery<a class="headerlink" href="#node-feature-discovery" title="Permalink to this heading"></a></h2>
+<p><a class="reference external" href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator">Node Feature Discovery (NFD)</a>
+detects hardware features and system configuration on cluster nodes and exposes
+them as node labels. These labels are used by the Intel Device Plugins Operator
+to schedule device plugin pods on appropriate nodes.</p>
+<section id="installing-the-nfd-operator">
+<h3>Installing the NFD Operator<a class="headerlink" href="#installing-the-nfd-operator" title="Permalink to this heading"></a></h3>
+<p>Follow the Red Hat documentation to install the NFD Operator:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator#install-operator-cli_psap-node-feature-discovery-operator">Install from the CLI</a></p></li>
+<li><p><a class="reference external" href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator#install-operator-web-console_psap-node-feature-discovery-operator">Install from the web console</a></p></li>
+</ul>
+<p>After installing the operator, create a <code class="docutils literal notranslate"><span class="pre">NodeFeatureDiscovery</span></code> CR instance
+following the
+<a class="reference external" href="https://docs.redhat.com/en/documentation/openshift_container_platform/4.21/html/specialized_hardware_and_driver_enablement/psap-node-feature-discovery-operator#creating-nfd-cr-cli_psap-node-feature-discovery-operator">Red Hat NFD documentation</a>.</p>
+</section>
+<section id="nodefeaturerules-for-intel-devices">
+<h3>NodeFeatureRules for Intel Devices<a class="headerlink" href="#nodefeaturerules-for-intel-devices" title="Permalink to this heading"></a></h3>
+<p>Once NFD is running, apply the following <code class="docutils literal notranslate"><span class="pre">NodeFeatureRule</span></code> to label nodes with
+Intel hardware features (GPU, QAT, SGX, DSA):</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nfd.openshift.io/v1alpha1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NodeFeatureRule</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">intel-dp-devices</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openshift-nfd</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;intel.gpu&quot;</span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">        </span><span class="s">&quot;intel.feature.node.kubernetes.io/gpu&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<span class="w">      </span><span class="nt">matchFeatures</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">feature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pci.device</span>
+<span class="w">          </span><span class="nt">matchExpressions</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">vendor</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">In</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;8086&quot;</span><span class="p p-Indicator">]}</span>
+<span class="w">            </span><span class="nt">class</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">In</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;0300&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;0380&quot;</span><span class="p p-Indicator">]}</span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;intel.qat&quot;</span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">        </span><span class="s">&quot;intel.feature.node.kubernetes.io/qat&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<span class="w">      </span><span class="nt">matchFeatures</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">feature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pci.device</span>
+<span class="w">          </span><span class="nt">matchExpressions</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">vendor</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">In</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;8086&quot;</span><span class="p p-Indicator">]}</span>
+<span class="w">            </span><span class="nt">device</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">In</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;4940&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;4942&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;4944&quot;</span><span class="p p-Indicator">]}</span>
+<span class="w">            </span><span class="nt">class</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">In</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;0b40&quot;</span><span class="p p-Indicator">]}</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">feature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kernel.loadedmodule</span>
+<span class="w">          </span><span class="nt">matchExpressions</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">intel_qat</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">Exists</span><span class="p p-Indicator">}</span><span class="w">  </span><span class="c1"># intel_qat module must be loaded</span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;intel.sgx&quot;</span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">        </span><span class="s">&quot;intel.feature.node.kubernetes.io/sgx&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<span class="w">      </span><span class="nt">extendedResources</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">sgx.intel.com/epc</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;@cpu.security.sgx.epc&quot;</span>
+<span class="w">      </span><span class="nt">matchFeatures</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">feature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cpu.cpuid</span>
+<span class="w">          </span><span class="nt">matchExpressions</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">SGX</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">Exists</span><span class="p p-Indicator">}</span>
+<span class="w">            </span><span class="nt">SGXLC</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">Exists</span><span class="p p-Indicator">}</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">feature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cpu.security</span>
+<span class="w">          </span><span class="nt">matchExpressions</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">sgx.enabled</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">IsTrue</span><span class="p p-Indicator">}</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">feature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kernel.config</span>
+<span class="w">          </span><span class="nt">matchExpressions</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">X86_SGX</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">Exists</span><span class="p p-Indicator">}</span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;intel.dsa&quot;</span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">        </span><span class="s">&quot;intel.feature.node.kubernetes.io/dsa&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<span class="w">      </span><span class="nt">matchFeatures</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">feature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pci.device</span>
+<span class="w">          </span><span class="nt">matchExpressions</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">vendor</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">In</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;8086&quot;</span><span class="p p-Indicator">]}</span>
+<span class="w">            </span><span class="nt">device</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">In</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;0b25&quot;</span><span class="p p-Indicator">]}</span>
+<span class="w">            </span><span class="nt">class</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">In</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;0880&quot;</span><span class="p p-Indicator">]}</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">feature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kernel.loadedmodule</span>
+<span class="w">          </span><span class="nt">matchExpressions</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">idxd</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">op</span><span class="p">:</span><span class="w"> </span><span class="nv">Exists</span><span class="p p-Indicator">}</span><span class="w">  </span><span class="c1"># idxd module must be loaded</span>
+</pre></div>
+</div>
+<p>Save the above to a file (e.g. <code class="docutils literal notranslate"><span class="pre">node-feature-rules.yaml</span></code>) and apply:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>node-feature-rules.yaml
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note:</strong> The QAT rule requires the <code class="docutils literal notranslate"><span class="pre">intel_qat</span></code> kernel module and the DSA rule
+requires the <code class="docutils literal notranslate"><span class="pre">idxd</span></code> kernel module to be loaded on the nodes. These modules are
+typically loaded automatically when the corresponding hardware is present and
+properly configured.</p>
+</div></blockquote>
+</section>
+<section id="nfd-verification">
+<h3>NFD Verification<a class="headerlink" href="#nfd-verification" title="Permalink to this heading"></a></h3>
+<p>Use the following commands to verify that nodes are labeled correctly:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>get<span class="w"> </span>nodes
+oc<span class="w"> </span>describe<span class="w"> </span>node<span class="w"> </span>&lt;node-name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>intel.feature.node.kubernetes.io
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">intel</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">kubernetes</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">gpu</span><span class="o">=</span><span class="n">true</span>
+<span class="n">intel</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">kubernetes</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">qat</span><span class="o">=</span><span class="n">true</span>
+<span class="n">intel</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">kubernetes</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">sgx</span><span class="o">=</span><span class="n">true</span>
+<span class="n">intel</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">kubernetes</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">dsa</span><span class="o">=</span><span class="n">true</span>
+</pre></div>
+</div>
+</section>
+<section id="labels-table">
+<h3>Labels Table<a class="headerlink" href="#labels-table" title="Permalink to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Label</th>
+<th>Intel Hardware Feature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>intel.feature.node.kubernetes.io/gpu=true</code></td>
+<td>Intel® Data Center GPU Flex Series or Intel® Data Center GPU Max Series</td>
+</tr>
+<tr>
+<td><code>intel.feature.node.kubernetes.io/sgx=true</code></td>
+<td>Intel® SGX</td>
+</tr>
+<tr>
+<td><code>intel.feature.node.kubernetes.io/qat=true</code></td>
+<td>Intel® QAT</td>
+</tr>
+<tr>
+<td><code>intel.feature.node.kubernetes.io/dsa=true</code></td>
+<td>Intel® DSA</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="intel-device-plugins-operator">
+<h2>Intel Device Plugins Operator<a class="headerlink" href="#intel-device-plugins-operator" title="Permalink to this heading"></a></h2>
+<p>The <a class="reference external" href="https://catalog.redhat.com/software/container-stacks/detail/61e9f2d7b9cdd99018fc5736">Intel Device Plugins Operator</a>
+manages the deployment and lifecycle of device plugins that advertise Intel
+hardware resources to the RHOCP cluster. The operator and device plugin
+container images are certified and published on the
+<a class="reference external" href="https://catalog.redhat.com/software/container-stacks/detail/61e9f2d7b9cdd99018fc5736">Red Hat Ecosystem Catalog</a>.</p>
+<section id="installation-via-web-console">
+<h3>Installation via Web Console<a class="headerlink" href="#installation-via-web-console" title="Permalink to this heading"></a></h3>
+<ol class="simple">
+<li><p>In the OpenShift web console, navigate to <strong>Operator</strong> → <strong>OperatorHub</strong>.</p></li>
+<li><p>Search for <strong>Intel Device Plugins Operator</strong>.</p></li>
+<li><p>Click <strong>Install</strong>.</p></li>
+</ol>
+<p>Verify by navigating to <strong>Operator</strong> → <strong>Installed Operators</strong> and confirming
+the status is <strong>Succeeded</strong>.</p>
+</section>
+<section id="installation-via-cli">
+<h3>Installation via CLI<a class="headerlink" href="#installation-via-cli" title="Permalink to this heading"></a></h3>
+<p>Apply the following to create an operator subscription:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">operators.coreos.com/v1alpha1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Subscription</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">operators.coreos.com/intel-device-plugins-operator.openshift-operators</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">intel-device-plugins-operator</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openshift-operators</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">channel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stable</span>
+<span class="w">  </span><span class="nt">installPlanApproval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Automatic</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">intel-device-plugins-operator</span>
+<span class="w">  </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">certified-operators</span>
+<span class="w">  </span><span class="nt">sourceNamespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openshift-marketplace</span>
+</pre></div>
+</div>
+<p>Save the above to a file (e.g. <code class="docutils literal notranslate"><span class="pre">install-operator.yaml</span></code>) and apply:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>install-operator.yaml
+</pre></div>
+</div>
+</section>
+<section id="verify-operator-installation">
+<h3>Verify Operator Installation<a class="headerlink" href="#verify-operator-installation" title="Permalink to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>-n<span class="w"> </span>openshift-operators<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>inteldeviceplugins-controller-manager
+</pre></div>
+</div>
+<p>Expected output (example):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">inteldeviceplugins</span><span class="o">-</span><span class="n">controller</span><span class="o">-</span><span class="n">manager</span><span class="o">-</span><span class="mi">6</span><span class="n">b8c76c867</span><span class="o">-</span><span class="n">hftqm</span>   <span class="mi">1</span><span class="o">/</span><span class="mi">1</span>     <span class="n">Running</span>   <span class="mi">0</span>   <span class="mi">17</span><span class="n">m</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="creating-device-plugin-custom-resources">
+<h2>Creating Device Plugin Custom Resources<a class="headerlink" href="#creating-device-plugin-custom-resources" title="Permalink to this heading"></a></h2>
+<p>After the operator is installed, create Custom Resources (CRs) for each device
+plugin you need. Each CR can be created either via the OpenShift web console or
+via <code class="docutils literal notranslate"><span class="pre">oc</span></code> CLI.</p>
+<blockquote>
+<div><p><strong>Note:</strong> The container image references shown below are examples. Always
+check the <a class="reference external" href="https://catalog.redhat.com/software/container-stacks/detail/61e9f2d7b9cdd99018fc5736">Red Hat Ecosystem Catalog</a>
+for the latest certified image digests.</p>
+</div></blockquote>
+<section id="intel-qat-device-plugin">
+<h3>Intel QAT Device Plugin<a class="headerlink" href="#intel-qat-device-plugin" title="Permalink to this heading"></a></h3>
+<section id="id1">
+<h4>Prerequisites<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p><a class="reference external" href="#machine-configuration">Machine Configuration</a> applied (IOMMU and VFIO enabled).</p></li>
+<li><p>NFD labels indicating QAT presence on worker nodes.</p></li>
+</ul>
+</section>
+<section id="create-via-web-console">
+<h4>Create via Web Console<a class="headerlink" href="#create-via-web-console" title="Permalink to this heading"></a></h4>
+<ol class="simple">
+<li><p>Go to <strong>Operator</strong> → <strong>Installed Operators</strong>.</p></li>
+<li><p>Open <strong>Intel Device Plugins Operator</strong>.</p></li>
+<li><p>Navigate to the <strong>Intel QuickAssist Technology Device Plugin</strong> tab.</p></li>
+<li><p>Click <strong>Create QatDevicePlugin</strong> → set parameters → click <strong>Create</strong>.</p></li>
+</ol>
+</section>
+<section id="create-via-cli">
+<h4>Create via CLI<a class="headerlink" href="#create-via-cli" title="Permalink to this heading"></a></h4>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deviceplugin.intel.com/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">QatDevicePlugin</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">qatdeviceplugin-sample</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">registry.connect.redhat.com/intel/intel-qat-plugin@sha256:ccb19d26f6afdb79cf0b2b70dab73b45f2bb9d5d3d94482486bec4beab6bfba3</span><span class="w">  </span><span class="c1"># check Red Hat Ecosystem Catalog for latest digest</span>
+<span class="w">  </span><span class="nt">initImage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">registry.connect.redhat.com/intel/intel-qat-initcontainer@sha256:33c39996800676660f72952c994775c05de63e102f4b67afdd6a0e3f5a1bab5f</span><span class="w">  </span><span class="c1"># check Red Hat Ecosystem Catalog for latest digest</span>
+<span class="w">  </span><span class="nt">dpdkDriver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vfio-pci</span>
+<span class="w">  </span><span class="nt">kernelVfDrivers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4xxxvf</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">420xxvf</span>
+<span class="w">  </span><span class="nt">maxNumDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
+<span class="w">  </span><span class="nt">logLevel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">  </span><span class="nt">nodeSelector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">intel.feature.node.kubernetes.io/qat</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+</pre></div>
+</div>
+<p>Save and apply:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>qat-device-plugin.yaml
+</pre></div>
+</div>
+</section>
+<section id="verify">
+<h4>Verify<a class="headerlink" href="#verify" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>get<span class="w"> </span>QatDevicePlugin
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">NAME</span>                     <span class="n">DESIRED</span>   <span class="n">READY</span>   <span class="n">NODE</span> <span class="n">SELECTOR</span>                                       <span class="n">AGE</span>
+<span class="n">qatdeviceplugin</span><span class="o">-</span><span class="n">sample</span>   <span class="mi">1</span>         <span class="mi">1</span>       <span class="p">{</span><span class="s2">&quot;intel.feature.node.kubernetes.io/qat&quot;</span><span class="p">:</span><span class="s2">&quot;true&quot;</span><span class="p">}</span>      <span class="mi">3</span><span class="n">h</span>
+</pre></div>
+</div>
+<p>Verify QAT resources on a node:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>describe<span class="w"> </span>node<span class="w"> </span>&lt;node-name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>qat.intel.com
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">qat</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">cy</span><span class="p">:</span> <span class="mi">32</span>
+<span class="n">qat</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">dc</span><span class="p">:</span> <span class="mi">32</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note:</strong> By default the device plugin registers half the resources for
+<code class="docutils literal notranslate"><span class="pre">qat.intel.com/cy</span></code> (crypto) and half for <code class="docutils literal notranslate"><span class="pre">qat.intel.com/dc</span></code> (compression).</p>
+</div></blockquote>
+</section>
+<section id="qat-resource-configuration">
+<h4>QAT Resource Configuration<a class="headerlink" href="#qat-resource-configuration" title="Permalink to this heading"></a></h4>
+<p>The QAT device plugin supports the following configuration flags:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Flag</th>
+<th>Value</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-dpdk-driver</code></td>
+<td><code>vfio-pci</code></td>
+<td>VFIO driver for QAT VFIO devices</td>
+</tr>
+<tr>
+<td><code>-kernel-vf-drivers</code></td>
+<td><code>4xxxvf</code></td>
+<td>Support for 4xxx QAT devices</td>
+</tr>
+<tr>
+<td><code>-max-num-devices</code></td>
+<td><code>128</code></td>
+<td>Maximum VF devices to enable</td>
+</tr>
+<tr>
+<td><code>-provisioning-config</code></td>
+<td>ConfigMap name</td>
+<td>Custom resource configuration</td>
+</tr>
+</tbody>
+</table><p>To customize QAT resource services, create a ConfigMap:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>create<span class="w"> </span>configmap<span class="w"> </span>--namespace<span class="o">=</span>openshift-operators<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--from-literal<span class="w"> </span><span class="s2">&quot;qat.conf=ServicesEnabled=&lt;option&gt;&quot;</span><span class="w"> </span>&lt;configmap-name&gt;
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;option&gt;</span></code> is one of:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">dc</span></code> — compression services (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/dc</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sym;asym</span></code> — crypto services (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/cy</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sym</span></code> — symmetric crypto (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/sym</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">asym</span></code> — asymmetric crypto (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/asym</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sym;dc</span></code> — symmetric crypto and compression (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/sym-dc</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">asym;dc</span></code> — asymmetric crypto and compression (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/asym-dc</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sym;decomp</span></code> — symmetric crypto and decompression, 6xxx only (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/sym-decomp</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">asym;decomp</span></code> — asymmetric crypto and decompression, 6xxx only (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/asym-decomp</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">asym;sym;dc</span></code> — crypto and compression, 6xxx only (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/asym-sym-dc</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">asym;sym;decomp</span></code> — crypto and decompression, 6xxx only (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/asym-sym-decomp</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dcc</span></code> — dc chaining feature (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/dcc</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">decomp</span></code> — decompression, 6xxx only (<code class="docutils literal notranslate"><span class="pre">qat.intel.com/decomp</span></code>)</p></li>
+</ul>
+<p>Then reference the ConfigMap name in the <code class="docutils literal notranslate"><span class="pre">provisioningConfig</span></code> field of the
+<code class="docutils literal notranslate"><span class="pre">QatDevicePlugin</span></code> CR.</p>
+<p>For more details about QAT device plugin configuration, see
+<a class="reference external" href="cmd/qat_plugin/README.html#modes-and-configuration-options">Modes and Configuration Options</a>.</p>
+</section>
+</section>
+<section id="intel-sgx-device-plugin">
+<h3>Intel SGX Device Plugin<a class="headerlink" href="#intel-sgx-device-plugin" title="Permalink to this heading"></a></h3>
+<section id="id2">
+<h4>Prerequisites<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>NFD labels indicating SGX presence on worker nodes.</p></li>
+<li><p>SGX enabled in BIOS (see <a class="reference external" href="#bios-configuration">BIOS Configuration</a>).</p></li>
+</ul>
+</section>
+<section id="id3">
+<h4>Create via Web Console<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h4>
+<ol class="simple">
+<li><p>Go to <strong>Operator</strong> → <strong>Installed Operators</strong>.</p></li>
+<li><p>Open <strong>Intel Device Plugins Operator</strong>.</p></li>
+<li><p>Navigate to the <strong>Intel Software Guard Extensions Device Plugin</strong> tab.</p></li>
+<li><p>Click <strong>Create SgxDevicePlugin</strong> → set parameters → click <strong>Create</strong>.</p></li>
+</ol>
+</section>
+<section id="id4">
+<h4>Create via CLI<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h4>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deviceplugin.intel.com/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SgxDevicePlugin</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sgxdeviceplugin-sample</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">registry.connect.redhat.com/intel/intel-sgx-plugin@sha256:4ac8769c4f0a82b3ea04cf1532f15e9935c71fe390ff5a9dc3ee57f970a65f0b</span><span class="w">  </span><span class="c1"># check Red Hat Ecosystem Catalog for latest digest</span>
+<span class="w">  </span><span class="nt">enclaveLimit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">110</span>
+<span class="w">  </span><span class="nt">provisionLimit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">110</span>
+<span class="w">  </span><span class="nt">logLevel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">  </span><span class="nt">nodeSelector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">intel.feature.node.kubernetes.io/sgx</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+</pre></div>
+</div>
+<p>Save and apply:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>sgx-device-plugin.yaml
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h4>Verify<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>get<span class="w"> </span>SgxDevicePlugin
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">NAME</span>                     <span class="n">DESIRED</span>   <span class="n">READY</span>   <span class="n">NODE</span> <span class="n">SELECTOR</span>                                       <span class="n">AGE</span>
+<span class="n">sgxdeviceplugin</span><span class="o">-</span><span class="n">sample</span>   <span class="mi">1</span>         <span class="mi">1</span>       <span class="p">{</span><span class="s2">&quot;intel.feature.node.kubernetes.io/sgx&quot;</span><span class="p">:</span><span class="s2">&quot;true&quot;</span><span class="p">}</span>      <span class="mi">2</span><span class="n">m</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="intel-dsa-device-plugin">
+<h3>Intel DSA Device Plugin<a class="headerlink" href="#intel-dsa-device-plugin" title="Permalink to this heading"></a></h3>
+<section id="id6">
+<h4>Prerequisites<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p><a class="reference external" href="#machine-configuration">Machine Configuration</a> applied (IOMMU and VFIO enabled).</p></li>
+<li><p>NFD labels indicating DSA presence on worker nodes.</p></li>
+</ul>
+</section>
+<section id="id7">
+<h4>Create via Web Console<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h4>
+<ol class="simple">
+<li><p>Go to <strong>Operator</strong> → <strong>Installed Operators</strong>.</p></li>
+<li><p>Open <strong>Intel Device Plugins Operator</strong>.</p></li>
+<li><p>Navigate to the <strong>Intel DSA Device Plugin</strong> tab.</p></li>
+<li><p>Click <strong>Create DSADevicePlugin</strong> → set parameters → click <strong>Create</strong>.</p></li>
+</ol>
+</section>
+<section id="id8">
+<h4>Create via CLI<a class="headerlink" href="#id8" title="Permalink to this heading"></a></h4>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deviceplugin.intel.com/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DsaDevicePlugin</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dsadeviceplugin-sample</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">registry.connect.redhat.com/intel/intel-dsa-plugin@sha256:64ec224b9382f711cf834722a85497965bb20e4fbf54e619ac296b46be6e1964</span><span class="w">  </span><span class="c1"># check Red Hat Ecosystem Catalog for latest digest</span>
+<span class="w">  </span><span class="nt">initImage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">registry.connect.redhat.com/intel/intel-idxd-config-initcontainer@sha256:c573ff46096f78d025d736bb3eedb131e9fc3aa2271d2dd6096a4c4911ee8a1f</span><span class="w">  </span><span class="c1"># check Red Hat Ecosystem Catalog for latest digest</span>
+<span class="w">  </span><span class="nt">logLevel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">  </span><span class="nt">nodeSelector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">intel.feature.node.kubernetes.io/dsa</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+<span class="w">  </span><span class="nt">sharedDevNum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+</pre></div>
+</div>
+<p>Save and apply:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>dsa-device-plugin.yaml
+</pre></div>
+</div>
+<p>Verify:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>get<span class="w"> </span>DsaDevicePlugin
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">NAME</span>                     <span class="n">DESIRED</span>   <span class="n">READY</span>   <span class="n">NODE</span> <span class="n">SELECTOR</span>                                       <span class="n">AGE</span>
+<span class="n">dsadeviceplugin</span><span class="o">-</span><span class="n">sample</span>   <span class="mi">3</span>         <span class="mi">3</span>       <span class="p">{</span><span class="s2">&quot;intel.feature.node.kubernetes.io/dsa&quot;</span><span class="p">:</span><span class="s2">&quot;true&quot;</span><span class="p">}</span>      <span class="mi">98</span><span class="n">m</span>
+</pre></div>
+</div>
+<p>Verify DSA resources on a node:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>describe<span class="w"> </span>node<span class="w"> </span>&lt;node-name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>dsa.intel.com
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dsa</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">wq</span><span class="o">-</span><span class="n">user</span><span class="o">-</span><span class="n">shared</span><span class="p">:</span>     <span class="mi">160</span>
+<span class="n">dsa</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">wq</span><span class="o">-</span><span class="n">user</span><span class="o">-</span><span class="n">dedicated</span><span class="p">:</span>  <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<section id="create-via-cli-vfio-driver">
+<h4>Create via CLI (VFIO driver)<a class="headerlink" href="#create-via-cli-vfio-driver" title="Permalink to this heading"></a></h4>
+<p>Some workloads (e.g., DPDK) support using DSA through <code class="docutils literal notranslate"><span class="pre">vfio-pci</span></code>. Setting
+<code class="docutils literal notranslate"><span class="pre">driver:</span> <span class="pre">vfio-pci</span></code> makes the plugin advertise <code class="docutils literal notranslate"><span class="pre">dsa.intel.com/vfio</span></code> resources
+instead of the default <code class="docutils literal notranslate"><span class="pre">idxd</span></code>-based work queue resources.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deviceplugin.intel.com/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DsaDevicePlugin</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dsadeviceplugin-vfio-sample</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">registry.connect.redhat.com/intel/intel-dsa-plugin@sha256:64ec224b9382f711cf834722a85497965bb20e4fbf54e619ac296b46be6e1964</span><span class="w">  </span><span class="c1"># check Red Hat Ecosystem Catalog for latest digest</span>
+<span class="w">  </span><span class="nt">initImage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">registry.connect.redhat.com/intel/intel-idxd-config-initcontainer@sha256:c573ff46096f78d025d736bb3eedb131e9fc3aa2271d2dd6096a4c4911ee8a1f</span><span class="w">  </span><span class="c1"># check Red Hat Ecosystem Catalog for latest digest</span>
+<span class="w">  </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vfio-pci</span>
+<span class="w">  </span><span class="nt">logLevel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">  </span><span class="nt">nodeSelector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">intel.feature.node.kubernetes.io/dsa</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note:</strong> The <code class="docutils literal notranslate"><span class="pre">vfio-pci</span></code> module must be loaded with <code class="docutils literal notranslate"><span class="pre">disable_denylist=1</span></code>
+parameter for the DSA device plugin to work correctly with DSA devices with
+<code class="docutils literal notranslate"><span class="pre">PCI</span> <span class="pre">ID=0b25</span></code>.</p>
+</div></blockquote>
+<p>Save and apply:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>dsa-device-plugin-vfio.yaml
+</pre></div>
+</div>
+<p>Verify:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>get<span class="w"> </span>DsaDevicePlugin
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">NAME</span>                          <span class="n">DESIRED</span>   <span class="n">READY</span>   <span class="n">NODE</span> <span class="n">SELECTOR</span>                                       <span class="n">AGE</span>
+<span class="n">dsadeviceplugin</span><span class="o">-</span><span class="n">vfio</span><span class="o">-</span><span class="n">sample</span>   <span class="mi">3</span>         <span class="mi">3</span>       <span class="p">{</span><span class="s2">&quot;intel.feature.node.kubernetes.io/dsa&quot;</span><span class="p">:</span><span class="s2">&quot;true&quot;</span><span class="p">}</span>      <span class="mi">10</span><span class="n">m</span>
+</pre></div>
+</div>
+<p>Verify DSA resources on a node:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>describe<span class="w"> </span>node<span class="w"> </span>&lt;node-name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>dsa.intel.com
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dsa</span><span class="o">.</span><span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">vfio</span><span class="p">:</span>  <span class="mi">4</span>
+</pre></div>
+</div>
+</section>
+<section id="dsa-resource-configuration">
+<h4>DSA Resource Configuration<a class="headerlink" href="#dsa-resource-configuration" title="Permalink to this heading"></a></h4>
+<p>The DSA plugin uses a
+<a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/demo/dsa.conf">default configuration</a>
+that creates dedicated work queues for each DSA device. To customize the
+configuration:</p>
+<ol>
+<li><p>Create a ConfigMap with your DSA configuration:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>create<span class="w"> </span>configmap<span class="w"> </span>--namespace<span class="o">=</span>openshift-operators<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>intel-dsa-config<span class="w"> </span>--from-file<span class="o">=</span>dsa.conf
+</pre></div>
+</div>
+</li>
+<li><p>Reference the ConfigMap name in the <code class="docutils literal notranslate"><span class="pre">provisioningConfig</span></code> field of the
+<code class="docutils literal notranslate"><span class="pre">DsaDevicePlugin</span></code> CR.</p></li>
+</ol>
+</section>
+</section>
+<section id="intel-gpu-device-plugin">
+<h3>Intel GPU Device Plugin<a class="headerlink" href="#intel-gpu-device-plugin" title="Permalink to this heading"></a></h3>
+<blockquote>
+<div><p><strong>Note:</strong> Although the Intel GPU device plugin is part of the supported device plugins set, the i915 out-of-tree KMD driver is no longer provided and the new Xe KMD driver is not yet available. It is not possible to utilize the GPU plugin in RHCOP without a functioning GPU KMD.</p>
+</div></blockquote>
+<section id="id9">
+<h4>Prerequisites<a class="headerlink" href="#id9" title="Permalink to this heading"></a></h4>
+<ul class="simple">
+<li><p>NFD labels indicating GPU presence on worker nodes.</p></li>
+</ul>
+</section>
+<section id="id10">
+<h4>Create via Web Console<a class="headerlink" href="#id10" title="Permalink to this heading"></a></h4>
+<ol class="simple">
+<li><p>Go to <strong>Operator</strong> → <strong>Installed Operators</strong>.</p></li>
+<li><p>Open <strong>Intel Device Plugins Operator</strong>.</p></li>
+<li><p>Navigate to the <strong>Intel GPU Device Plugin</strong> tab.</p></li>
+<li><p>Click <strong>Create GpuDevicePlugin</strong> → set parameters → click <strong>Create</strong>.</p></li>
+</ol>
+</section>
+<section id="id11">
+<h4>Create via CLI<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h4>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deviceplugin.intel.com/v1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">GpuDevicePlugin</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpudeviceplugin-sample</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">registry.connect.redhat.com/intel/intel-gpu-plugin@sha256:51f5db99b7ec78407cb8f00e20d6f455e62edbb3a4abe3352dfaa6c037ba598c</span><span class="w">  </span><span class="c1"># check Red Hat Ecosystem Catalog for latest digest</span>
+<span class="w">  </span><span class="nt">preferredAllocationPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">none</span>
+<span class="w">  </span><span class="nt">sharedDevNum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">logLevel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">  </span><span class="nt">nodeSelector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">intel.feature.node.kubernetes.io/gpu</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+</pre></div>
+</div>
+<p>Save and apply:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>gpu-device-plugin.yaml
+</pre></div>
+</div>
+</section>
+<section id="id12">
+<h4>Verify<a class="headerlink" href="#id12" title="Permalink to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>oc<span class="w"> </span>get<span class="w"> </span>GpuDevicePlugin
+</pre></div>
+</div>
+<p>Example output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">NAME</span>                     <span class="n">DESIRED</span>   <span class="n">READY</span>   <span class="n">NODE</span> <span class="n">SELECTOR</span>                                       <span class="n">AGE</span>
+<span class="n">gpudeviceplugin</span><span class="o">-</span><span class="n">sample</span>   <span class="mi">1</span>         <span class="mi">1</span>       <span class="p">{</span><span class="s2">&quot;intel.feature.node.kubernetes.io/gpu&quot;</span><span class="p">:</span><span class="s2">&quot;true&quot;</span><span class="p">}</span>      <span class="mi">3</span><span class="n">m</span>
+</pre></div>
+</div>
+</section>
+<section id="using-gpu-resources">
+<h4>Using GPU Resources<a class="headerlink" href="#using-gpu-resources" title="Permalink to this heading"></a></h4>
+<p>When claiming <code class="docutils literal notranslate"><span class="pre">i915</span></code> resources in your workload, set both limits and requests:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpu-workload</span>
+<span class="w">      </span><span class="nt">resources</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">limits</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">gpu.intel.com/i915</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">        </span><span class="nt">requests</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">gpu.intel.com/i915</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="resources-provided-by-intel-device-plugins">
+<h2>Resources Provided by Intel Device Plugins<a class="headerlink" href="#resources-provided-by-intel-device-plugins" title="Permalink to this heading"></a></h2>
+<p>The table below summarizes the Kubernetes resources exposed by each device
+plugin. Workloads request these resources in their pod specs.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Feature</th>
+<th>Resource</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Intel® SGX</td>
+<td><code>sgx.intel.com/epc</code></td>
+<td>SGX Enclave Page Cache memory</td>
+</tr>
+<tr>
+<td>Intel® Data Center GPU</td>
+<td><code>gpu.intel.com/i915</code></td>
+<td>Intel GPU device</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/generic</code></td>
+<td>QAT VFIO VF (pre-Gen4 devices)</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/cy</code></td>
+<td>QAT VFIO VF for crypto (<code>sym;asym</code>)</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/dc</code></td>
+<td>QAT VFIO VF for compression</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/sym</code></td>
+<td>QAT VFIO VF for symmetric crypto</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/asym</code></td>
+<td>QAT VFIO VF for asymmetric crypto</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/sym-dc</code></td>
+<td>QAT VFIO VF for symmetric crypto and compression</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/asym-dc</code></td>
+<td>QAT VFIO VF for asymmetric crypto and compression</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/sym-decomp</code></td>
+<td>QAT VFIO VF for symmetric crypto and decompression (6xxx)</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/asym-decomp</code></td>
+<td>QAT VFIO VF for asymmetric crypto and decompression (6xxx)</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/asym-sym-dc</code></td>
+<td>QAT VFIO VF for crypto and compression (6xxx)</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/asym-sym-decomp</code></td>
+<td>QAT VFIO VF for crypto and decompression (6xxx)</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/dcc</code></td>
+<td>QAT VFIO VF for dc chaining</td>
+</tr>
+<tr>
+<td>Intel® QAT</td>
+<td><code>qat.intel.com/decomp</code></td>
+<td>QAT VFIO VF for decompression (6xxx)</td>
+</tr>
+<tr>
+<td>Intel® DSA</td>
+<td><code>dsa.intel.com/wq-user-shared</code></td>
+<td>DSA shared work queue</td>
+</tr>
+<tr>
+<td>Intel® DSA</td>
+<td><code>dsa.intel.com/wq-user-dedicated</code></td>
+<td>DSA dedicated work queue</td>
+</tr>
+<tr>
+<td>Intel® DSA</td>
+<td><code>dsa.intel.com/vfio</code></td>
+<td>DSA VFIO device (vfio-pci driver)</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
