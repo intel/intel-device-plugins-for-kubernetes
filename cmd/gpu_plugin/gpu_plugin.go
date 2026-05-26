@@ -759,7 +759,8 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	// all Intel GPUs are under single monitoring resource per KMD
 	if len(monitor) > 0 {
 		for resourceName, devices := range monitor {
-			deviceInfo := dpapi.NewDeviceInfo(pluginapi.Healthy, devices, nil, nil, nil, nil)
+			deviceInfo := dpapi.NewDeviceInfoWithTopologyHints(
+				pluginapi.Healthy, devices, nil, nil, nil, nil, nil)
 			devTree.AddDevice(resourceName, monitorID, deviceInfo)
 		}
 	}
