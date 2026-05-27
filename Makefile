@@ -141,7 +141,7 @@ mirror-images-ocp:
 
 ORG?=intel
 REG?=$(ORG)/
-TAG?=devel
+TAG?=0.36.0
 export TAG
 
 # Set dry-run arg if E2E_DRYRUN is set
