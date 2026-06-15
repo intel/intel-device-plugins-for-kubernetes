@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overview &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Instructions for Device Plugin Development and Maintenance" href="DEVEL.html" />
+    <link rel="prev" title="Intel® Device Plugins for Kubernetes" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plugins">Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#gpu-device-plugin">GPU Device Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fpga-device-plugin-deprecated">FPGA Device Plugin (deprecated)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#device-plugin">Device Plugin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#admission-controller">Admission Controller</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#oci-createruntime-hook">OCI createRuntime Hook</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#qat-device-plugin">QAT Device Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sgx-device-plugin">SGX Device Plugin</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">device plugin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#intel-sgx-admission-webhook">Intel SGX Admission Webhook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#intel-sgx-epc-memory-registration">Intel SGX EPC memory registration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#dsa-device-plugin">DSA Device Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dlb-device-plugin-deprecated">DLB Device Plugin (deprecated)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#iaa-device-plugin">IAA Device Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#npu-device-plugin">NPU Device Plugin</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#device-plugins-operator">Device Plugins Operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#intel-gpu-level-zero-sidecar">Intel GPU Level-Zero sidecar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#demos">Demos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#workload-authors">Workload Authors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#developers">Developers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#releases">Releases</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#supported-kubernetes-versions">Supported Kubernetes Versions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#release-procedures">Release procedures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pre-built-plugin-images">Pre-built plugin images</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#signed-container-images">Signed container images</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#license">License</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#helm-charts">Helm Charts</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Overview</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h1>
+<p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/actions?query=workflow%3ADevel"><img alt="Build Status" src="https://github.com/intel/intel-device-plugins-for-kubernetes/actions/workflows/devel.yaml/badge.svg" /></a>
+<a class="reference external" href="https://goreportcard.com/report/github.com/intel/intel-device-plugins-for-kubernetes"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/intel/intel-device-plugins-for-kubernetes" /></a>
+<a class="reference external" href="https://godoc.org/github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"><img alt="GoDoc" src="https://godoc.org/github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin?status.svg" /></a>
+<a class="reference external" href="https://scorecard.dev/viewer/?uri=github.com/intel/intel-device-plugins-for-kubernetes"><img alt="OpenSSF Scorecard" src="https://api.securityscorecards.dev/projects/github.com/intel/intel-device-plugins-for-kubernetes/badge" /></a></p>
+<p>This repository contains a framework for developing plugins for the Kubernetes
+<a class="reference external" href="https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/device-plugins/">device plugins framework</a>,
+along with a number of device plugin implementations utilizing that framework.</p>
+<p>The <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/releases/latest">v0.34.0 release</a>
+is the latest feature release with its documentation available <a class="reference external" href="https://intel.github.io/intel-device-plugins-for-kubernetes/0.34/">here</a>.</p>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#prerequisites">Prerequisites</a></p></li>
+<li><p><a class="reference external" href="#plugins">Plugins</a></p>
+<ul>
+<li><p><a class="reference external" href="#gpu-device-plugin">GPU device plugin</a></p></li>
+<li><p><a class="reference external" href="#fpga-device-plugin">FPGA device plugin</a></p></li>
+<li><p><a class="reference external" href="#qat-device-plugin">QAT device plugin</a></p></li>
+<li><p><a class="reference external" href="#sgx-device-plugin">SGX device plugin</a></p></li>
+<li><p><a class="reference external" href="#dsa-device-plugin">DSA device plugin</a></p></li>
+<li><p><a class="reference external" href="#dlb-device-plugin">DLB device plugin</a></p></li>
+<li><p><a class="reference external" href="#iaa-device-plugin">IAA device plugin</a></p></li>
+<li><p><a class="reference external" href="#npu-device-plugin">NPU device plugin</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#device-plugins-operator">Device Plugins Operator</a></p></li>
+<li><p><a class="reference external" href="#xelink-xpu-manager-sidecar">XeLink XPU Manager sidecar</a></p></li>
+<li><p><a class="reference external" href="#intel-gpu-levelzero">Intel GPU Level-Zero sidecar</a></p></li>
+<li><p><a class="reference external" href="#demos">Demos</a></p></li>
+<li><p><a class="reference external" href="#workload-authors">Workload Authors</a></p></li>
+<li><p><a class="reference external" href="#developers">Developers</a></p></li>
+<li><p><a class="reference external" href="#releases">Releases</a></p>
+<ul>
+<li><p><a class="reference external" href="#supported-kubernetes-versions">Supported Kubernetes versions</a></p></li>
+<li><p><a class="reference external" href="#release-procedures">Release procedures</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#pre-built-plugin-images">Pre-built plugin images</a></p>
+<ul>
+<li><p><a class="reference external" href="#signed-container-images">Signed container images</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#license">License</a></p></li>
+<li><p><a class="reference external" href="#helm-charts">Helm charts</a></p></li>
+</ul>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading"></a></h2>
+<p>Prerequisites for building and running these device plugins include:</p>
+<ul class="simple">
+<li><p>Appropriate hardware and drivers</p></li>
+<li><p>A fully configured [Kubernetes cluster]</p></li>
+<li><p>A working [Go environment], of at least version v1.16.</p></li>
+</ul>
+</section>
+<section id="plugins">
+<h2>Plugins<a class="headerlink" href="#plugins" title="Permalink to this heading"></a></h2>
+<p>The below sections detail existing plugins developed using the framework.</p>
+<section id="gpu-device-plugin">
+<h3>GPU Device Plugin<a class="headerlink" href="#gpu-device-plugin" title="Permalink to this heading"></a></h3>
+<p>The <a class="reference internal" href="cmd/gpu_plugin/README.html"><span class="doc">GPU device plugin</span></a> provides access to
+discrete and integrated Intel GPU device files.</p>
+<p>The demo subdirectory contains both a <a class="reference external" href="demo/readme.html#intel-gpu-device-plugin-demo-video">GPU plugin demo video</a>
+and an OpenCL sample deployment (<code class="docutils literal notranslate"><span class="pre">intelgpu-job.yaml</span></code>).</p>
+</section>
+<section id="fpga-device-plugin-deprecated">
+<h3>FPGA Device Plugin (deprecated)<a class="headerlink" href="#fpga-device-plugin-deprecated" title="Permalink to this heading"></a></h3>
+<p>The <a class="reference internal" href="cmd/fpga_plugin/README.html"><span class="doc">FPGA device plugin</span></a> supports FPGA passthrough for
+the following hardware:</p>
+<ul class="simple">
+<li><p>Intel® Arria® 10 devices</p></li>
+<li><p>Intel® Stratix® 10 devices</p></li>
+</ul>
+<p>The FPGA plugin comes as three parts.</p>
+<ul class="simple">
+<li><p>the <a class="reference external" href="#device-plugin">device plugin</a></p></li>
+<li><p>the <a class="reference external" href="#admission-controller">admission controller</a></p></li>
+<li><p>the <a class="reference external" href="#OCI-createRuntime-hook">OCI createRuntime hook</a></p></li>
+</ul>
+<p>Refer to each individual sub-components documentation for more details.
+Brief overviews of the sub-components are below.</p>
+<p>The demo subdirectory contains a
+<a class="reference external" href="demo/readme.html#intel-fpga-device-plugin-demo-video">video</a> showing deployment
+and use of the FPGA plugin. Sources relating to the demo can be found in the
+<a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/1a407221a18992878dca827d080f6a16095fed43/demo/opae-nlb-demo">opae-nlb-demo</a> subdirectory.</p>
+<section id="device-plugin">
+<h4>Device Plugin<a class="headerlink" href="#device-plugin" title="Permalink to this heading"></a></h4>
+<p>The <a class="reference internal" href="cmd/fpga_plugin/README.html"><span class="doc">FPGA device plugin</span></a> is responsible for
+discovering and reporting FPGA devices to <code class="docutils literal notranslate"><span class="pre">kubelet</span></code>.</p>
+</section>
+<section id="admission-controller">
+<h4>Admission Controller<a class="headerlink" href="#admission-controller" title="Permalink to this heading"></a></h4>
+<p>The <a class="reference internal" href="cmd/fpga_admissionwebhook/README.html"><span class="doc">FPGA admission controller webhook</span></a>
+is responsible for performing mapping from user-friendly function IDs to the
+Interface ID and Bitstream ID that are required for FPGA programming. It also
+implements access control by namespacing FPGA configuration information.</p>
+</section>
+<section id="oci-createruntime-hook">
+<h4>OCI createRuntime Hook<a class="headerlink" href="#oci-createruntime-hook" title="Permalink to this heading"></a></h4>
+<p>The <a class="reference internal" href="cmd/fpga_crihook/README.html"><span class="doc">FPGA OCI createRuntime hook</span></a> performs discovery
+of the requested FPGA function bitstream and programs FPGA devices based on the
+environment variables in the workload description.</p>
+</section>
+</section>
+<section id="qat-device-plugin">
+<h3><a class="reference external" href="https://developer.intel.com/quickassist">QAT</a> Device Plugin<a class="headerlink" href="#qat-device-plugin" title="Permalink to this heading"></a></h3>
+<p>The <a class="reference internal" href="cmd/qat_plugin/README.html"><span class="doc">QAT plugin</span></a> supports device plugin for Intel QAT adapters, and includes
+code <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/1a407221a18992878dca827d080f6a16095fed43/cmd/qat_plugin/dpdkdrv">showing deployment</a> via <a class="reference external" href="https://doc.dpdk.org/guides/cryptodevs/qat.html">DPDK</a>.</p>
+<p>The demo subdirectory includes details of both a
+<a class="reference external" href="demo/readme.html#intel-quickassist-technology-device-plugin-with-dpdk-demo-video">QAT DPDK demo</a>
+and a <a class="reference external" href="demo/readme.html#intel-quickassist-technology-device-plugin-openssl-demo-video">QAT OpenSSL demo</a>.
+Source for the OpenSSL demo can be found in the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/1a407221a18992878dca827d080f6a16095fed43/demo/openssl-qat-engine">relevant subdirectory</a>.</p>
+<p>Details for integrating the QAT device plugin into <a class="reference external" href="https://katacontainers.io/">Kata Containers</a>
+can be found in the
+<a class="reference external" href="https://github.com/kata-containers/kata-containers/blob/main/docs/use-cases/using-Intel-QAT-and-kata.md">Kata Containers documentation repository</a>.</p>
+</section>
+<section id="sgx-device-plugin">
+<h3>SGX Device Plugin<a class="headerlink" href="#sgx-device-plugin" title="Permalink to this heading"></a></h3>
+<p>The <a class="reference internal" href="cmd/sgx_plugin/README.html"><span class="doc">SGX device plugin</span></a> allows workloads to use
+Intel® Software Guard Extensions (Intel® SGX) on
+platforms with SGX Flexible Launch Control enabled, e.g.,:</p>
+<ul class="simple">
+<li><p>3rd Generation Intel® Xeon® Scalable processor family, and later</p></li>
+<li><p>Intel® Xeon® E3 processor</p></li>
+<li><p>Intel® NUC Kit NUC7CJYH</p></li>
+</ul>
+<p>The Intel SGX plugin comes in three parts.</p>
+<ul class="simple">
+<li><p>the <a class="reference external" href="#sgx-plugin">device plugin</a></p></li>
+<li><p>the <a class="reference external" href="#sgx-admission-webhook">admission webhook</a></p></li>
+<li><p>the <a class="reference external" href="#sgx-epc-memory-registration">SGX EPC memory registration</a></p></li>
+</ul>
+<p>The demo subdirectory contains a <a class="reference external" href="demo/readme.html#intel-sgx-device-plugin-demo-video">video</a> showing the deployment
+and use of the Intel SGX device plugin. Sources relating to the demo can be found in the
+<a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/1a407221a18992878dca827d080f6a16095fed43/demo/sgx-sdk-demo">sgx-sdk-demo</a> and <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/1a407221a18992878dca827d080f6a16095fed43/demo/sgx-aesmd-demo">sgx-aesmd-demo</a> subdirectories.</p>
+<p>Brief overviews of the Intel SGX sub-components are given below.</p>
+<p><a name="sgx-plugin"></a></p>
+<section id="id1">
+<h4>device plugin<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h4>
+<p>The <a class="reference internal" href="cmd/sgx_plugin/README.html"><span class="doc">SGX device plugin</span></a> is responsible for discovering
+and reporting Intel SGX device nodes to <code class="docutils literal notranslate"><span class="pre">kubelet</span></code>.</p>
+<p>Containers requesting Intel SGX resources in the cluster should not use the
+device plugins resources directly.</p>
+</section>
+<section id="intel-sgx-admission-webhook">
+<h4>Intel SGX Admission Webhook<a class="headerlink" href="#intel-sgx-admission-webhook" title="Permalink to this heading"></a></h4>
+<p>The Intel SGX admission webhook is responsible for performing Pod mutations based on
+the <code class="docutils literal notranslate"><span class="pre">sgx.intel.com/quote-provider</span></code> pod annotation set by the user. The purpose
+of the webhook is to hide the details of setting the necessary device resources
+and volume mounts for using Intel SGX remote attestation in the cluster. Furthermore,
+the Intel SGX admission webhook is responsible for writing a pod/sandbox
+<code class="docutils literal notranslate"><span class="pre">sgx.intel.com/epc</span></code> annotation that is used by Kata Containers to dynamically
+adjust its virtualized Intel SGX encrypted page cache (EPC) bank(s) size.</p>
+<p>The Intel SGX admission webhook is available as part of
+<a class="reference internal" href="cmd/operator/README.html"><span class="doc">Intel Device Plugin Operator</span></a> or
+as a standalone <a class="reference internal" href="cmd/sgx_admissionwebhook/README.html"><span class="doc">SGX Admission webhook image</span></a>.</p>
+</section>
+<section id="intel-sgx-epc-memory-registration">
+<h4>Intel SGX EPC memory registration<a class="headerlink" href="#intel-sgx-epc-memory-registration" title="Permalink to this heading"></a></h4>
+<p>The Intel SGX EPC memory available on each node is registered as a Kubernetes extended resource using
+node-feature-discovery (NFD). An NFD Node Feature Rule is installed as part of
+<a class="reference internal" href="cmd/sgx_plugin/README.html"><span class="doc">SGX device plugin</span></a>
+operator deployment and NFD is configured to register the Intel SGX EPC memory
+extended resource.</p>
+<p>Containers requesting Intel SGX EPC resources in the cluster use
+<code class="docutils literal notranslate"><span class="pre">sgx.intel.com/epc</span></code> resource which is of
+type <a class="reference external" href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory">memory</a>.</p>
+</section>
+</section>
+<section id="dsa-device-plugin">
+<h3>DSA Device Plugin<a class="headerlink" href="#dsa-device-plugin" title="Permalink to this heading"></a></h3>
+<p>The <a class="reference internal" href="cmd/dsa_plugin/README.html"><span class="doc">DSA device plugin</span></a> supports acceleration using
+the Intel Data Streaming accelerator(DSA).</p>
+</section>
+<section id="dlb-device-plugin-deprecated">
+<h3>DLB Device Plugin (deprecated)<a class="headerlink" href="#dlb-device-plugin-deprecated" title="Permalink to this heading"></a></h3>
+<p>The <a class="reference internal" href="cmd/dlb_plugin/README.html"><span class="doc">DLB device plugin</span></a> supports Intel Dynamic Load
+Balancer accelerator(DLB).</p>
+</section>
+<section id="iaa-device-plugin">
+<h3>IAA Device Plugin<a class="headerlink" href="#iaa-device-plugin" title="Permalink to this heading"></a></h3>
+<p>The <a class="reference internal" href="cmd/iaa_plugin/README.html"><span class="doc">IAA device plugin</span></a> supports acceleration using
+the Intel Analytics accelerator(IAA).</p>
+</section>
+<section id="npu-device-plugin">
+<h3>NPU Device Plugin<a class="headerlink" href="#npu-device-plugin" title="Permalink to this heading"></a></h3>
+<p>The <a class="reference internal" href="cmd/npu_plugin/README.html"><span class="doc">NPU device plugin</span></a> supports acceleration using
+the Intel Neural Processing Unit(NPU).</p>
+</section>
+</section>
+<section id="device-plugins-operator">
+<h2>Device Plugins Operator<a class="headerlink" href="#device-plugins-operator" title="Permalink to this heading"></a></h2>
+<p>To simplify the deployment of the device plugins, a unified device plugins
+operator is implemented.</p>
+<p>Currently the operator has support for the DSA, DLB, FPGA, GPU, IAA, QAT, NPU, and
+Intel SGX device plugins. Each device plugin has its own custom resource
+definition (CRD) and the corresponding controller that watches CRUD operations
+to those custom resources.</p>
+<p>The <a class="reference internal" href="cmd/operator/README.html"><span class="doc">Device plugins operator README</span></a> gives the installation and usage details for the community operator available on <a class="reference external" href="https://operatorhub.io/operator/intel-device-plugins-operator">operatorhub.io</a>.</p>
+<p>The <a class="reference external" href="https://github.com/intel/intel-technology-enabling-for-openshift">Device plugins Operator for OpenShift</a> gives the installation and usage details for the operator available on <a class="reference external" href="https://catalog.redhat.com/software/operators/detail/61e9f2d7b9cdd99018fc5736">Red Hat OpenShift Container Platform</a>.</p>
+</section>
+<section id="intel-gpu-level-zero-sidecar">
+<h2>Intel GPU Level-Zero sidecar<a class="headerlink" href="#intel-gpu-level-zero-sidecar" title="Permalink to this heading"></a></h2>
+<p>Sidecar uses Level-Zero API to provide additional GPU information for the GPU plugin that it cannot get through sysfs interfaces.</p>
+<p>See <a class="reference internal" href="cmd/gpu_levelzero/README.html"><span class="doc">Intel GPU Level-Zero sidecar README</span></a> for more details.</p>
+</section>
+<section id="demos">
+<h2>Demos<a class="headerlink" href="#demos" title="Permalink to this heading"></a></h2>
+<p>The <a class="reference internal" href="demo/readme.html"><span class="doc">demo subdirectory</span></a> contains a number of demonstrations for
+a variety of the available plugins.</p>
+</section>
+<section id="workload-authors">
+<h2>Workload Authors<a class="headerlink" href="#workload-authors" title="Permalink to this heading"></a></h2>
+<p>For workloads to get accesss to devices managed by the plugins, the
+<code class="docutils literal notranslate"><span class="pre">Pod</span></code> spec must specify the hardware resources needed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span><span class="p">:</span>
+  <span class="n">containers</span><span class="p">:</span>
+    <span class="o">-</span> <span class="n">name</span><span class="p">:</span> <span class="n">demo</span><span class="o">-</span><span class="n">container</span>
+      <span class="n">image</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">registry</span><span class="o">&gt;/&lt;</span><span class="n">image</span><span class="o">&gt;</span><span class="p">:</span><span class="o">&lt;</span><span class="n">version</span><span class="o">&gt;</span>
+      <span class="n">resources</span><span class="p">:</span>
+        <span class="n">limits</span><span class="p">:</span>
+          <span class="o">&lt;</span><span class="n">device</span> <span class="n">namespace</span><span class="o">&gt;/&lt;</span><span class="n">resource</span><span class="o">&gt;</span><span class="p">:</span> <span class="n">X</span>
+</pre></div>
+</div>
+<p>The summary of resources available via plugins in this repository is given in the list below.</p>
+<p><strong>Device Namespace : Registered Resource(s)</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">dlb.intel.com</span></code>  : <code class="docutils literal notranslate"><span class="pre">pf</span></code> or <code class="docutils literal notranslate"><span class="pre">vf</span></code></p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/demo/dlb-libdlb-demo-pod.yaml">dlb-libdlb-demo-pod.yaml</a></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dsa.intel.com</span></code>  : <code class="docutils literal notranslate"><span class="pre">wq-user-[shared</span> <span class="pre">or</span> <span class="pre">dedicated]</span></code></p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/demo/dsa-accel-config-demo-pod.yaml">dsa-accel-config-demo-pod.yaml</a></p></li>
+<li><p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/demo/dsa-dpdk-dmadevtest.yaml">dsa-dpdk-dmadevtest.yaml</a></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fpga.intel.com</span></code> : custom, see <a class="reference external" href="cmd/fpga_admissionwebhook/README.html#mappings">mappings</a></p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/demo/intelfpga-job.yaml">intelfpga-job.yaml</a></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gpu.intel.com</span></code>  : <code class="docutils literal notranslate"><span class="pre">i915</span></code>, <code class="docutils literal notranslate"><span class="pre">i915_monitoring</span></code>, <code class="docutils literal notranslate"><span class="pre">xe</span></code> or <code class="docutils literal notranslate"><span class="pre">xe_monitoring</span></code></p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/demo/intelgpu-job.yaml">intelgpu-job.yaml</a></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">iaa.intel.com</span></code>  : <code class="docutils literal notranslate"><span class="pre">wq-user-[shared</span> <span class="pre">or</span> <span class="pre">dedicated]</span></code></p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/demo/iaa-accel-config-demo-pod.yaml">iaa-accel-config-demo-pod.yaml</a></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">npu.intel.com</span></code>  : <code class="docutils literal notranslate"><span class="pre">accel</span></code></p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/demo/intel-npu-workload.yaml">intel-npu-workload.yaml</a></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">qat.intel.com</span></code>  : <code class="docutils literal notranslate"><span class="pre">generic</span></code> or <code class="docutils literal notranslate"><span class="pre">cy</span></code>/<code class="docutils literal notranslate"><span class="pre">dc</span></code>/<code class="docutils literal notranslate"><span class="pre">asym-[dc|decomp]</span></code>/<code class="docutils literal notranslate"><span class="pre">sym-[dc|decomp]</span></code>/<code class="docutils literal notranslate"><span class="pre">asym-[dc|decomp]</span></code>/<code class="docutils literal notranslate"><span class="pre">asym-sym-[dc|decomp]</span></code>/<code class="docutils literal notranslate"><span class="pre">dcc</span></code>/<code class="docutils literal notranslate"><span class="pre">decomp</span></code></p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/deployments/qat_dpdk_app/compress-perf/compress-perf-dpdk-pod-requesting-qat-dc.yaml">compress-perf-dpdk-pod-requesting-qat-dc.yaml</a></p></li>
+<li><p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/deployments/qat_dpdk_app/crypto-perf/crypto-perf-dpdk-pod-requesting-qat-cy.yaml">crypto-perf-dpdk-pod-requesting-qat-cy.yaml</a></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sgx.intel.com</span></code>  : <code class="docutils literal notranslate"><span class="pre">epc</span></code></p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/blob/1a407221a18992878dca827d080f6a16095fed43/deployments/sgx_enclave_apps/base/intelsgx-job.yaml">intelsgx-job.yaml</a></p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="developers">
+<h2>Developers<a class="headerlink" href="#developers" title="Permalink to this heading"></a></h2>
+<p>For information on how to develop a new plugin using the framework or work on development task in
+this repository, see the <a class="reference internal" href="DEVEL.html"><span class="doc">Developers Guide</span></a>.</p>
+</section>
+<section id="releases">
+<h2>Releases<a class="headerlink" href="#releases" title="Permalink to this heading"></a></h2>
+<section id="supported-kubernetes-versions">
+<h3>Supported Kubernetes Versions<a class="headerlink" href="#supported-kubernetes-versions" title="Permalink to this heading"></a></h3>
+<p>Releases are made under the github <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/releases">releases area</a>. Supported releases and
+matching Kubernetes versions are listed below:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Branch</th>
+<th style="text-align: left;">Kubernetes version</th>
+<th style="text-align: left;">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">release-0.34</td>
+<td style="text-align: left;">Kubernetes 1.33-1.34</td>
+<td style="text-align: left;">supported</td>
+</tr>
+<tr>
+<td style="text-align: left;">release-0.32</td>
+<td style="text-align: left;">Kubernetes 1.32</td>
+<td style="text-align: left;">supported</td>
+</tr>
+<tr>
+<td style="text-align: left;">release-0.31</td>
+<td style="text-align: left;">Kubernetes 1.31</td>
+<td style="text-align: left;">supported</td>
+</tr>
+<tr>
+<td style="text-align: left;">release-0.30</td>
+<td style="text-align: left;">Kubernetes 1.30</td>
+<td style="text-align: left;">unsupported</td>
+</tr>
+<tr>
+<td style="text-align: left;">release-0.29</td>
+<td style="text-align: left;">Kubernetes 1.29</td>
+<td style="text-align: left;">unsupported</td>
+</tr>
+<tr>
+<td style="text-align: left;">release-0.28</td>
+<td style="text-align: left;">Kubernetes 1.28</td>
+<td style="text-align: left;">unsupported</td>
+</tr>
+<tr>
+<td style="text-align: left;">release-0.27</td>
+<td style="text-align: left;">Kubernetes 1.27</td>
+<td style="text-align: left;">unsupported</td>
+</tr>
+<tr>
+<td style="text-align: left;">release-0.26</td>
+<td style="text-align: left;">Kubernetes 1.26</td>
+<td style="text-align: left;">unsupported</td>
+</tr>
+</tbody>
+</table><p><em>Note:</em> Device plugins leverage the Kubernetes v1 API. The API itself is GA (generally available) and <a class="reference external" href="https://kubernetes.io/docs/concepts/overview/kubernetes-api/#api-changes">does not change</a> between Kubernetes versions. One does not necessarily need to use the latest Kubernetes cluster with the latest device plugin version. Using a newer device plugins release should work without issues on an older Kubernetes cluster. One possible exception to this are the device plugins CRDs that can vary between versions.</p>
+<p><a class="reference external" href="https://golang.org/doc/install">Go environment</a> | <a class="reference external" href="https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/">Kubernetes cluster setup</a></p>
+</section>
+<section id="release-procedures">
+<h3>Release procedures<a class="headerlink" href="#release-procedures" title="Permalink to this heading"></a></h3>
+<p>Project’s release cadence is tied to Kubernetes release cadence. Device plugins release typically follows a couple of weeks after the Kubernetes release. There can be some delays on the releases due to required changes in the pull request pipeline. Once the content is available in the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch and CI &amp; e2e validation <span style="color:green">PASS</span>es, release branch will be created (e.g. release-0.26). The HEAD of release branch will also be tagged with the corresponding <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tags">tag</a> (e.g. v0.26.0).</p>
+<p>During the <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/issues/1393">release creation</a>, the project’s documentation, deployment files etc. will be <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/pull/1441">changed</a> to point to the newly created version.</p>
+<p>Patch releases (e.g. 0.26.3) are done on a need basis if there are security issues or minor fixes requested for specific version. Fixes are always cherry-picked from the <code class="docutils literal notranslate"><span class="pre">main</span></code> branch to the release branches.</p>
+</section>
+</section>
+<section id="pre-built-plugin-images">
+<h2>Pre-built plugin images<a class="headerlink" href="#pre-built-plugin-images" title="Permalink to this heading"></a></h2>
+<p>Pre-built images of the plugins are available on the Docker hub. These images
+are automatically built and uploaded to the hub from the latest main branch of
+this repository.</p>
+<p>Release tagged images of the components are also available on the Docker hub,
+tagged with their release version numbers in the format x.y.z, corresponding to
+the branches and releases in this repository.</p>
+<p><strong>Note:</strong> the default deployment files and operators are configured with
+<a class="reference external" href="https://kubernetes.io/docs/concepts/containers/images/#updating-images">imagePullPolicy</a>
+<code class="docutils literal notranslate"><span class="pre">IfNotPresent</span></code> and can be changed with <code class="docutils literal notranslate"><span class="pre">scripts/set-image-pull-policy.sh</span></code>.</p>
+<section id="signed-container-images">
+<h3>Signed container images<a class="headerlink" href="#signed-container-images" title="Permalink to this heading"></a></h3>
+<p>Starting from 0.31 release, the images (<code class="docutils literal notranslate"><span class="pre">0.31.0</span></code> etc., not <code class="docutils literal notranslate"><span class="pre">devel</span></code>) are signed with keyless signing using <code class="docutils literal notranslate"><span class="pre">cosign</span></code>. The signing proof is stored in <a class="reference external" href="https://rekor.sigstore.dev">rekor.sigstore.dev</a> in an append-only transparency log. The signature is also stored within the dockerhub.</p>
+<p>To verify the signing in Kubernetes, one can use <a class="reference external" href="https://docs.sigstore.dev/policy-controller/overview/">policy managers</a> with <a class="reference external" href="https://docs.sigstore.dev/policy-controller/overview/#configuring-keyless-authorities">keyless authorities</a>.</p>
+</section>
+</section>
+<section id="license">
+<h2>License<a class="headerlink" href="#license" title="Permalink to this heading"></a></h2>
+<p>All of the source code required to build intel-device-plugins-for-kubernetes
+is available under Open Source licenses. The source code files identify external Go
+modules used. Binaries are distributed as container images on
+DockerHub*. Those images contain license texts and source code under <code class="docutils literal notranslate"><span class="pre">/licenses</span></code>.</p>
+<section id="helm-charts">
+<h3>Helm Charts<a class="headerlink" href="#helm-charts" title="Permalink to this heading"></a></h3>
+<p>Device Plugins Helm Charts are located in Intel Helm Charts repository <a class="reference external" href="https://github.com/intel/helm-charts">Intel Helm Charts</a>. This is another way of distributing Kubernetes resources of the device plugins framework.</p>
+<p>To add repo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">helm</span> <span class="n">repo</span> <span class="n">add</span> <span class="n">intel</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">intel</span><span class="o">.</span><span class="n">github</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">helm</span><span class="o">-</span><span class="n">charts</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Intel® Device Plugins for Kubernetes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="DEVEL.html" class="btn btn-neutral float-right" title="Instructions for Device Plugin Development and Maintenance" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
