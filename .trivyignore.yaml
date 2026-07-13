@@ -3,6 +3,11 @@ vulnerabilities:
     statement: >
       GitRepo volume vulnerability - we don't use it and it might not
       receive a fix due to being a deprecated feature
+  - id: GO-2026-5932
+    statement: >
+      Trivy reports about golang.org/x/crypto/openpgp but that is not used
+      here. The same is true for k8s e2e test framework that adds the crypto
+      package indirect dependency.
 
 misconfigurations:
   - id: AVD-DS-0002
