@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-ini/ini v1.67.0
-	github.com/go-logr/logr v1.4.3
+	github.com/go-logr/logr v1.4.4
 	github.com/google/go-cmp v0.7.0
 	github.com/intel/xpumanager/xpumd/exporter/intelxpuinfo/api v0.2.0-1
 	github.com/klauspost/cpuid/v2 v2.4.0
