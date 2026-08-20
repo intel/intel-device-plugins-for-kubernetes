@@ -43,7 +43,7 @@ spec:
             memory: "15Mi"
             cpu: 70m
           limits:
-            memory: "30Mi"
+            memory: "50Mi"
             cpu: 140m
         volumeMounts:
         - name: devdir
