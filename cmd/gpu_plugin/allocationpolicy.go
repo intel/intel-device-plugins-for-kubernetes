@@ -37,7 +37,7 @@ func nonePolicy(req *pluginapi.ContainerPreferredAllocationRequest) []string {
 	// many independent GPUs as possible, to satisfy the request.
 
 	for _, deviceID := range req.AvailableDeviceIDs {
-		device := strings.Split(deviceID, "-")[0]
+		device, _, _ := strings.Cut(deviceID, "-")
 
 		if _, found := devices[device]; !found {
 			devices[device] = true

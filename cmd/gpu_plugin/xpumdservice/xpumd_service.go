@@ -170,7 +170,7 @@ func (x *xpumd) waitForStream(ctx context.Context, client xpumapi.DeviceInfoClie
 		err    error
 	)
 
-	for attempt := 0; attempt < connectAttemptsMax; attempt++ {
+	for attempt := range connectAttemptsMax {
 		klog.V(5).Infof("xpumd-client: WatchDeviceHealth attempt %d/%d", attempt+1, connectAttemptsMax)
 
 		stream, err = client.WatchDeviceHealth(ctx, &xpumapi.WatchDeviceHealthRequest{})

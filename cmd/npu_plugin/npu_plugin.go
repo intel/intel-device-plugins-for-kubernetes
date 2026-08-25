@@ -140,7 +140,7 @@ func (dp *devicePlugin) isCompatibleDevice(name string) bool {
 		return false
 	}
 
-	datStr := strings.Split(string(dat), "\n")[0]
+	datStr, _, _ := strings.Cut(string(dat), "\n")
 	if !slices.Contains(npuIDs, datStr) {
 		klog.Warning("Unknown device ID: ", datStr)
 		return false
