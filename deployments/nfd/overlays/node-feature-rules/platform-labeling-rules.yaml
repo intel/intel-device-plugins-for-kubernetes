@@ -189,3 +189,163 @@ spec:
           - "56bd"
           - "56bb"
     name: intel.gpu.a.series
+    # source: https://dgpu-docs.intel.com/overview/supported-hardware/xe-driver-gpus.html
+  - labels:
+      gpu.intel.com/product: "Arc_Pro_B50"
+      gpu.intel.com/family: "B_Series"
+    matchFeatures:
+    - feature: pci.device
+      matchExpressions:
+        class:
+          op: In
+          value:
+          - "0300"
+        vendor:
+          op: In
+          value:
+          - "8086"
+        device:
+          op: In
+          value:
+          - "e212"
+    name: intel.gpu.pro.b50
+  - labels:
+      gpu.intel.com/product: "Arc_Pro_B60"
+      gpu.intel.com/family: "B_Series"
+    matchFeatures:
+    - feature: pci.device
+      matchExpressions:
+        class:
+          op: In
+          value:
+          - "0300"
+        vendor:
+          op: In
+          value:
+          - "8086"
+        device:
+          op: In
+          value:
+          - "e211"
+    name: intel.gpu.pro.b60
+  - labels:
+      gpu.intel.com/product: "Arc_Pro_B65"
+      gpu.intel.com/family: "B_Series"
+    matchFeatures:
+    - feature: pci.device
+      matchExpressions:
+        class:
+          op: In
+          value:
+          - "0300"
+        vendor:
+          op: In
+          value:
+          - "8086"
+        device:
+          op: In
+          value:
+          - "e222"
+    name: intel.gpu.pro.b65
+  - labels:
+      gpu.intel.com/product: "Arc_Pro_B70"
+      gpu.intel.com/family: "B_Series"
+    matchFeatures:
+    - feature: pci.device
+      matchExpressions:
+        class:
+          op: In
+          value:
+          - "0300"
+        vendor:
+          op: In
+          value:
+          - "8086"
+        device:
+          op: In
+          value:
+          - "e223"
+    name: intel.gpu.pro.b70
+  - labels:
+      gpu.intel.com/product: "Arc_B370"
+      gpu.intel.com/family: "B_Series"
+    matchFeatures:
+    - feature: pci.device
+      matchExpressions:
+        class:
+          op: In
+          value:
+          - "0300"
+        vendor:
+          op: In
+          value:
+          - "8086"
+        device:
+          op: In
+          value:
+          - "b081"
+          - "b083"
+          - "b085"
+          - "b087"
+    name: intel.gpu.b370
+  - labels:
+      gpu.intel.com/product: "Arc_B390"
+      gpu.intel.com/family: "B_Series"
+    matchFeatures:
+    - feature: pci.device
+      matchExpressions:
+        class:
+          op: In
+          value:
+          - "0300"
+        vendor:
+          op: In
+          value:
+          - "8086"
+        device:
+          op: In
+          value:
+          - "b080"
+          - "b082"
+          - "b084"
+          - "b086"
+    name: intel.gpu.b390
+  - labels:
+      gpu.intel.com/product: "Arc_B570"
+      gpu.intel.com/family: "B_Series"
+    matchFeatures:
+    - feature: pci.device
+      matchExpressions:
+        class:
+          op: In
+          value:
+          - "0300"
+        vendor:
+          op: In
+          value:
+          - "8086"
+        device:
+          op: In
+          value:
+          - "e20c"
+    name: intel.gpu.b570
+  - labels:
+      gpu.intel.com/product: "Arc_B580"
+      gpu.intel.com/family: "B_Series"
+    matchFeatures:
+    - feature: pci.device
+      matchExpressions:
+        class:
+          op: In
+          value:
+          - "0300"
+        vendor:
+          op: In
+          value:
+          - "8086"
+        device:
+          op: In
+          value:
+          - "e20b"
+    name: intel.gpu.b580
+
