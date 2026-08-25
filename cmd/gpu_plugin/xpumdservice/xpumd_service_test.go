@@ -127,8 +127,7 @@ func TestGetDeviceHealth_Healthy(t *testing.T) {
 
 	svc := NewXpumd(sockPath, "critical")
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	// Run in background; cancel after health data has been received.
 	go func() {
@@ -156,8 +155,7 @@ func TestGetDeviceHealth_Unhealthy(t *testing.T) {
 
 	svc := NewXpumd(sockPath, "warning")
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	go func() {
 		svc.Run(ctx)
@@ -195,8 +193,7 @@ func TestGetDeviceHealth_CriticalUnhealthy(t *testing.T) {
 
 	svc := NewXpumd(sockPath, "critical")
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	go func() {
 		svc.Run(ctx)
@@ -223,8 +220,7 @@ func TestGetDeviceHealth_WarningHealthy(t *testing.T) {
 
 	svc := NewXpumd(sockPath, "critical")
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	go func() {
 		svc.Run(ctx)
