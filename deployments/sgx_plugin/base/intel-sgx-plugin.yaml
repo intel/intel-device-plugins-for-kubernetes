@@ -38,7 +38,7 @@ spec:
             memory: "15Mi"
             cpu: 40m
           limits:
-            memory: "30Mi"
+            memory: "50Mi"
             cpu: 100m
         volumeMounts:
         - name: kubeletsockets

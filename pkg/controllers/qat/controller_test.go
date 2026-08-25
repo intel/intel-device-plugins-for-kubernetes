@@ -104,7 +104,7 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							Resources: v1.ResourceRequirements{
 								Limits: v1.ResourceList{
 									v1.ResourceCPU:    resource.MustParse("140m"),
-									v1.ResourceMemory: resource.MustParse("30Mi"),
+									v1.ResourceMemory: resource.MustParse("50Mi"),
 								},
 								Requests: v1.ResourceList{
 									v1.ResourceCPU:    resource.MustParse("70m"),
