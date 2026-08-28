@@ -66,7 +66,7 @@ helm install dp-operator intel/intel-device-plugins-operator --namespace intelde
 
 ### Installing specific plugins
 
-Replace PLUGIN with the desired plugin name. At least the following plugins are supported: **gpu, sgx, qat, dlb, dsa & iaa**.
+Replace PLUGIN with the desired plugin name. At least the following plugins are supported: **gpu, sgx, qat, dsa & iaa**.
 
 ```bash
 helm install <PLUGIN> intel/intel-device-plugins-<PLUGIN> --namespace inteldeviceplugins-system --create-namespace \

@@ -1,7 +1,0 @@
-resources:
- - ../../default
-
-patches:
-- path: dlb.yaml
-  target:
-    kind: Deployment

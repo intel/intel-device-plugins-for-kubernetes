@@ -12,7 +12,7 @@ Table of Contents
 
 Intel Device Plugins Operator is a Kubernetes custom controller whose goal is to serve the
 installation and lifecycle management of Intel device plugins for Kubernetes.
-It provides a single point of control for GPU, QAT, SGX, FPGA, DSA and DLB devices to a cluster
+It provides a single point of control for GPU, QAT, SGX, FPGA, DSA devices to a cluster
 administrators.
 
 ## Installation
@@ -42,17 +42,16 @@ nfd-worker-qqq4h              1/1     Running   0          25h
 
 Note that labelling is not performed immediately. Give NFD 1 minute to pick up the rules and label nodes.
 
-As a result all found devices should have correspondent labels, e.g. for Intel DLB devices the label is
-`intel.feature.node.kubernetes.io/dlb`:
+As a result all found devices should have correspondent labels, e.g. for Intel QAT devices the label is
+`intel.feature.node.kubernetes.io/qat`:
 ```
-$ kubectl get no -o json | jq .items[].metadata.labels |grep intel.feature.node.kubernetes.io/dlb
-  "intel.feature.node.kubernetes.io/dlb": "true",
+$ kubectl get no -o json | jq .items[].metadata.labels |grep intel.feature.node.kubernetes.io/qat
+  "intel.feature.node.kubernetes.io/qat": "true",
 ```
 
 Full list of labels can be found in the deployments/operator/samples directory:
 ```
 $ grep -r feature.node.kubernetes.io/ deployments/operator/samples/
-deployments/operator/samples/deviceplugin_v1_dlbdeviceplugin.yaml:    intel.feature.node.kubernetes.io/dlb: 'true'
 deployments/operator/samples/deviceplugin_v1_qatdeviceplugin.yaml:    intel.feature.node.kubernetes.io/qat: 'true'
 deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml:    intel.feature.node.kubernetes.io/sgx: 'true'
 deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml:    intel.feature.node.kubernetes.io/gpu: "true"

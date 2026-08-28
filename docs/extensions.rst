@@ -3,7 +3,6 @@ Extensions
 
 .. toctree::
 
-   ../cmd/dlb_plugin/README.md
    ../cmd/dsa_plugin/README.md
    ../cmd/fpga_admissionwebhook/README.md
    ../cmd/fpga_crihook/README.md

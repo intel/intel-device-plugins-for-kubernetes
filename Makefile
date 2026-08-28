@@ -195,7 +195,7 @@ endif
 
 dockerlib = build/docker/lib
 dockertemplates = build/docker/templates
-images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in | grep -v -e dlb -e fpga -e xpumanager-sidecar -e ubi)
+images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in | grep -v -e fpga -e xpumanager-sidecar -e ubi)
 dockerfiles = $(shell basename -s .in -a $(dockertemplates)/*.Dockerfile.in | xargs -I"{}" echo build/docker/{})
 
 test-image-base-layer:
@@ -225,7 +225,7 @@ $(images): $(dockerfiles)
 
 images: $(images)
 
-demos = $(shell basename -a demo/*/ | grep -v -e dlb -e opae-nlb-demo)
+demos = $(shell basename -a demo/*/ | grep -v -e opae-nlb-demo)
 
 $(demos):
 	@cd demo/ && ./build-image.sh $(REG)$@ $(BUILDER)

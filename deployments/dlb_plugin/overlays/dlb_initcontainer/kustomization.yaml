@@ -1,4 +1,0 @@
-resources:
-- ../../base
-patches:
-- path: dlb_initcontainer.yaml

@@ -42,7 +42,6 @@ rules:
 - apiGroups:
   - deviceplugin.intel.com
   resources:
-  - dlbdeviceplugins
   - dsadeviceplugins
   - fpgadeviceplugins
   - gpudeviceplugins
@@ -61,7 +60,6 @@ rules:
 - apiGroups:
   - deviceplugin.intel.com
   resources:
-  - dlbdeviceplugins/finalizers
   - dsadeviceplugins/finalizers
   - fpgadeviceplugins/finalizers
   - gpudeviceplugins/finalizers
@@ -74,7 +72,6 @@ rules:
 - apiGroups:
   - deviceplugin.intel.com
   resources:
-  - dlbdeviceplugins/status
   - dsadeviceplugins/status
   - fpgadeviceplugins/status
   - gpudeviceplugins/status

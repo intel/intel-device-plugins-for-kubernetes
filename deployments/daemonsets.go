@@ -22,13 +22,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-//go:embed dlb_plugin/base/*plugin*.yaml
-var contentDLB []byte
-
-func DLBPluginDaemonSet() *apps.DaemonSet {
-	return getDaemonset(contentDLB).DeepCopy()
-}
-
 //go:embed dsa_plugin/base/*plugin*.yaml
 var contentDSA []byte
 

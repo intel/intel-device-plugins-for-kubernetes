@@ -216,7 +216,6 @@ E2E_FILTER="qat" KUBECONFIG=/path/to/kubeconfig make e2e
 
 | Device Label | Focus Labels |
 |-------|-------|
-| `dlb`  |`pf`, `vf`, `libdlb`|
 | `dsa`  |`idxd`, `vfio`, `accel-config`, `dpdk-test`, `dpdk-vfio-test`|
 | `fpga` | `af`, `region`, `opae-nlb-demo`, `admissionwebhook`|
 | `gpu`  |`i915`,`xe`,`busybox`, `monitoring`, `health`, `pytorch`|
@@ -227,9 +226,6 @@ E2E_FILTER="qat" KUBECONFIG=/path/to/kubeconfig make e2e
 #### Examples
 
 ```bash
-# DLB for VF resource without any app running
-E2E_FILTER="dlb && vf" make e2e
-
 # GPU with running only pytorch app
 E2E_FILTER="gpu && pytorch" make e2e
 #or
