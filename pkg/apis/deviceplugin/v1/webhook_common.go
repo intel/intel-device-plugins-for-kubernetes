@@ -70,31 +70,6 @@ func validatePluginImage(image, expectedImageName string, expectedMinVersion *ve
 	return nil
 }
 
-// DlbDevicePlugin webhook methods
-
-func (r *DlbDevicePlugin) Default(ctx context.Context, obj *DlbDevicePlugin) error {
-	logf.FromContext(ctx).Info("default", "name", obj.Name)
-	if len(obj.Spec.Image) == 0 {
-		obj.Spec.Image = dlbDefaultImage
-	}
-	return nil
-}
-
-func (r *DlbDevicePlugin) ValidateCreate(ctx context.Context, obj *DlbDevicePlugin) (admission.Warnings, error) {
-	logf.FromContext(ctx).Info("validate create", "name", obj.Name)
-	return nil, obj.validatePlugin(dlbValidatorConfig)
-}
-
-func (r *DlbDevicePlugin) ValidateUpdate(ctx context.Context, oldObj, newObj *DlbDevicePlugin) (admission.Warnings, error) {
-	logf.FromContext(ctx).Info("validate update", "name", newObj.Name)
-	return nil, newObj.validatePlugin(dlbValidatorConfig)
-}
-
-func (r *DlbDevicePlugin) ValidateDelete(ctx context.Context, obj *DlbDevicePlugin) (admission.Warnings, error) {
-	logf.FromContext(ctx).Info("validate delete", "name", obj.Name)
-	return nil, nil
-}
-
 // DsaDevicePlugin webhook methods
 
 func (r *DsaDevicePlugin) Default(ctx context.Context, obj *DsaDevicePlugin) error {

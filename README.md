@@ -19,7 +19,6 @@ Table of Contents
     * [QAT device plugin](#qat-device-plugin)
     * [SGX device plugin](#sgx-device-plugin)
     * [DSA device plugin](#dsa-device-plugin)
-    * [DLB device plugin](#dlb-device-plugin)
     * [IAA device plugin](#iaa-device-plugin)
     * [NPU device plugin](#npu-device-plugin)
 * [Device Plugins Operator](#device-plugins-operator)
@@ -172,11 +171,6 @@ type [memory](https://kubernetes.io/docs/concepts/configuration/manage-resources
 The [DSA device plugin](cmd/dsa_plugin/README.md) supports acceleration using
 the Intel Data Streaming accelerator(DSA).
 
-### DLB Device Plugin
-
-The [DLB device plugin](cmd/dlb_plugin/README.md) supports Intel Dynamic Load
-Balancer accelerator(DLB).
-
 ### IAA Device Plugin
 
 The [IAA device plugin](cmd/iaa_plugin/README.md) supports acceleration using
@@ -192,7 +186,7 @@ the Intel Neural Processing Unit(NPU).
 To simplify the deployment of the device plugins, a unified device plugins
 operator is implemented.
 
-Currently the operator has support for the DSA, DLB, FPGA, GPU, IAA, QAT, NPU, and
+Currently the operator has support for the DSA, FPGA, GPU, IAA, QAT, NPU, and
 Intel SGX device plugins. Each device plugin has its own custom resource
 definition (CRD) and the corresponding controller that watches CRUD operations
 to those custom resources.
@@ -230,8 +224,6 @@ spec:
 The summary of resources available via plugins in this repository is given in the list below.
 
 **Device Namespace : Registered Resource(s)**
- * `dlb.intel.com`  : `pf` or `vf`
-   * [dlb-libdlb-demo-pod.yaml](demo/dlb-libdlb-demo-pod.yaml)
  * `dsa.intel.com`  : `wq-user-[shared|dedicated]` or `vfio`
    * [dsa-accel-config-demo-pod.yaml](demo/dsa-accel-config-demo-pod.yaml)
    * [dsa-dpdk-dmadevtest.yaml](demo/dsa-dpdk-dmadevtest.yaml)

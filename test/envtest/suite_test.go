@@ -43,7 +43,6 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/deployments"
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	ctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
-	dlbctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dlb"
 	dsactr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dsa"
 	fpgactr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	gpuctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
@@ -114,8 +113,6 @@ func up() {
 	Expect(managerErr).To(BeNil())
 
 	args := ctr.ControllerOptions{Namespace: ns, WithWebhook: false}
-
-	Expect(dlbctr.SetupReconciler(k8sManager, args)).To(BeNil())
 
 	Expect(dsactr.SetupReconciler(k8sManager, args)).To(BeNil())
 
@@ -198,13 +195,6 @@ func makeDevicePlugin(name, image, initimage string) client.Object {
 	var obj client.Object
 
 	switch name {
-	case "dlb":
-		obj = &devicepluginv1.DlbDevicePlugin{
-			Spec: devicepluginv1.DlbDevicePluginSpec{
-				Image:     image,
-				InitImage: initimage,
-			},
-		}
 	case "dsa":
 		obj = &devicepluginv1.DsaDevicePlugin{
 			Spec: devicepluginv1.DsaDevicePluginSpec{
@@ -260,8 +250,6 @@ func makeDaemonSet(name, image, initimage string) *apps.DaemonSet {
 	initcontainerName := "intel-" + name + "-initcontainer"
 
 	switch name {
-	case "dlb":
-		ds = deployments.DLBPluginDaemonSet()
 	case "dsa":
 		ds = deployments.DSAPluginDaemonSet()
 		initcontainerName = "intel-idxd-config-initcontainer"

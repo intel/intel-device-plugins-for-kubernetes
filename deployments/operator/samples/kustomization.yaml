@@ -5,5 +5,4 @@ resources:
   - deviceplugin_v1_iaadeviceplugin.yaml
   - deviceplugin_v1_qatdeviceplugin.yaml
   - deviceplugin_v1_sgxdeviceplugin.yaml
-  - deviceplugin_v1_dlbdeviceplugin.yaml
   - mappings-collection.yaml

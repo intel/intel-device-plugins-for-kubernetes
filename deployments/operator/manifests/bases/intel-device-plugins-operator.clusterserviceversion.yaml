@@ -26,13 +26,6 @@ spec:
       kind: DsaDevicePlugin
       name: dsadeviceplugins.deviceplugin.intel.com
       version: v1
-    - description: DlbDevicePlugin is the Schema for the dlbdeviceplugins API. It
-        represents the DLB device plugin responsible for advertising DLB device nodes
-        to the kubelet.
-      displayName: Intel Dynamic Load Balancer Device Plugin
-      kind: DlbDevicePlugin
-      name: dlbdeviceplugins.deviceplugin.intel.com
-      version: v1
     - description: IaaDevicePlugin is the Schema for the iaadeviceplugins API. It
         represents the IAA device plugin responsible for advertising Intel IAA hardware
         resources to the kubelet.
@@ -108,7 +101,6 @@ spec:
   - sgx
   - gpu
   - dsa
-  - dlb
   links:
   - name: Intel Device Plugins Operator
     url: https://github.com/intel/intel-device-plugins-for-kubernetes
