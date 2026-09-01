@@ -147,12 +147,12 @@ func main() {
 	}
 
 	setupControllerAndWebhook := devicePluginControllerAndWebhook{
-		"dsa":  dsa.SetupReconciler,
-		"gpu":  gpu.SetupReconciler,
-		"iaa":  iaa.SetupReconciler,
-		"qat":  qat.SetupReconciler,
-		"sgx":  sgx.SetupReconciler,
-		"npu":  npu.SetupReconciler,
+		"dsa": dsa.SetupReconciler,
+		"gpu": gpu.SetupReconciler,
+		"iaa": iaa.SetupReconciler,
+		"qat": qat.SetupReconciler,
+		"sgx": sgx.SetupReconciler,
+		"npu": npu.SetupReconciler,
 	}
 
 	tlsCfgFuncs := createTLSCfgs(enableHTTP2)
