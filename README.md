@@ -15,7 +15,6 @@ Table of Contents
 * [Prerequisites](#prerequisites)
 * [Plugins](#plugins)
     * [GPU device plugin](#gpu-device-plugin)
-    * [FPGA device plugin](#fpga-device-plugin)
     * [QAT device plugin](#qat-device-plugin)
     * [SGX device plugin](#sgx-device-plugin)
     * [DSA device plugin](#dsa-device-plugin)
@@ -54,46 +53,6 @@ discrete and integrated Intel GPU device files.
 
 The demo subdirectory contains both a [GPU plugin demo video](demo/readme.md#intel-gpu-device-plugin-demo-video)
 and an OpenCL sample deployment (`intelgpu-job.yaml`).
-
-### FPGA Device Plugin
-
-The [FPGA device plugin](cmd/fpga_plugin/README.md) supports FPGA passthrough for
-the following hardware:
-
-- Intel® Arria® 10 devices
-- Intel® Stratix® 10 devices
-
-The FPGA plugin comes as three parts.
-
-- the [device plugin](#device-plugin)
-- the [admission controller](#admission-controller)
-- the [OCI createRuntime hook](#OCI-createRuntime-hook)
-
-Refer to each individual sub-components documentation for more details.
-Brief overviews of the sub-components are below.
-
-The demo subdirectory contains a
-[video](demo/readme.md#intel-fpga-device-plugin-demo-video) showing deployment
-and use of the FPGA plugin. Sources relating to the demo can be found in the
-[opae-nlb-demo](demo/opae-nlb-demo) subdirectory.
-
-#### Device Plugin
-
-The [FPGA device plugin](cmd/fpga_plugin/README.md) is responsible for
-discovering and reporting FPGA devices to `kubelet`.
-
-#### Admission Controller
-
-The [FPGA admission controller webhook](cmd/fpga_admissionwebhook/README.md)
-is responsible for performing mapping from user-friendly function IDs to the
-Interface ID and Bitstream ID that are required for FPGA programming. It also
-implements access control by namespacing FPGA configuration information.
-
-#### OCI createRuntime Hook
-
-The [FPGA OCI createRuntime hook](cmd/fpga_crihook/README.md) performs discovery
-of the requested FPGA function bitstream and programs FPGA devices based on the
-environment variables in the workload description.
 
 ### [QAT](https://developer.intel.com/quickassist) Device Plugin
 
@@ -186,7 +145,7 @@ the Intel Neural Processing Unit(NPU).
 To simplify the deployment of the device plugins, a unified device plugins
 operator is implemented.
 
-Currently the operator has support for the DSA, FPGA, GPU, IAA, QAT, NPU, and
+Currently the operator has support for the DSA, GPU, IAA, QAT, NPU, and
 Intel SGX device plugins. Each device plugin has its own custom resource
 definition (CRD) and the corresponding controller that watches CRUD operations
 to those custom resources.
@@ -227,8 +186,6 @@ The summary of resources available via plugins in this repository is given in th
  * `dsa.intel.com`  : `wq-user-[shared|dedicated]` or `vfio`
    * [dsa-accel-config-demo-pod.yaml](demo/dsa-accel-config-demo-pod.yaml)
    * [dsa-dpdk-dmadevtest.yaml](demo/dsa-dpdk-dmadevtest.yaml)
- * `fpga.intel.com` : custom, see [mappings](cmd/fpga_admissionwebhook/README.md#mappings)
-   * [intelfpga-job.yaml](demo/intelfpga-job.yaml)
  * `gpu.intel.com`  : `i915`, `xe` or `monitoring`
    * [intelgpu-job.yaml](demo/intelgpu-job.yaml)
  * `iaa.intel.com`  : `wq-user-[shared|dedicated]`
