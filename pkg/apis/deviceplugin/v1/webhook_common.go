@@ -95,31 +95,6 @@ func (r *DsaDevicePlugin) ValidateDelete(ctx context.Context, obj *DsaDevicePlug
 	return nil, nil
 }
 
-// FpgaDevicePlugin webhook methods
-
-func (r *FpgaDevicePlugin) Default(ctx context.Context, obj *FpgaDevicePlugin) error {
-	logf.FromContext(ctx).Info("default", "name", obj.Name)
-	if len(obj.Spec.Image) == 0 {
-		obj.Spec.Image = fpgaDefaultImage
-	}
-	return nil
-}
-
-func (r *FpgaDevicePlugin) ValidateCreate(ctx context.Context, obj *FpgaDevicePlugin) (admission.Warnings, error) {
-	logf.FromContext(ctx).Info("validate create", "name", obj.Name)
-	return nil, obj.validatePlugin(fpgaValidatorConfig)
-}
-
-func (r *FpgaDevicePlugin) ValidateUpdate(ctx context.Context, oldObj, newObj *FpgaDevicePlugin) (admission.Warnings, error) {
-	logf.FromContext(ctx).Info("validate update", "name", newObj.Name)
-	return nil, newObj.validatePlugin(fpgaValidatorConfig)
-}
-
-func (r *FpgaDevicePlugin) ValidateDelete(ctx context.Context, obj *FpgaDevicePlugin) (admission.Warnings, error) {
-	logf.FromContext(ctx).Info("validate delete", "name", obj.Name)
-	return nil, nil
-}
-
 // GpuDevicePlugin webhook methods
 
 func (r *GpuDevicePlugin) Default(ctx context.Context, obj *GpuDevicePlugin) error {

@@ -44,7 +44,6 @@ import (
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	ctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 	dsactr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dsa"
-	fpgactr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	gpuctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
 	iaactr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/iaa"
 	qatctr "github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/qat"
@@ -115,8 +114,6 @@ func up() {
 	args := ctr.ControllerOptions{Namespace: ns, WithWebhook: false}
 
 	Expect(dsactr.SetupReconciler(k8sManager, args)).To(BeNil())
-
-	Expect(fpgactr.SetupReconciler(k8sManager, args)).To(BeNil())
 
 	Expect(gpuctr.SetupReconciler(k8sManager, args)).To(BeNil())
 
@@ -202,13 +199,6 @@ func makeDevicePlugin(name, image, initimage string) client.Object {
 				InitImage: initimage,
 			},
 		}
-	case "fpga":
-		obj = &devicepluginv1.FpgaDevicePlugin{
-			Spec: devicepluginv1.FpgaDevicePluginSpec{
-				Image:     image,
-				InitImage: initimage,
-			},
-		}
 	case "gpu":
 		obj = &devicepluginv1.GpuDevicePlugin{
 			Spec: devicepluginv1.GpuDevicePluginSpec{
@@ -255,8 +245,6 @@ func makeDaemonSet(name, image, initimage string) *apps.DaemonSet {
 		initcontainerName = "intel-idxd-config-initcontainer"
 	case "gpu":
 		ds = deployments.GPUPluginDaemonSet()
-	case "fpga":
-		ds = deployments.FPGAPluginDaemonSet()
 	case "iaa":
 		ds = deployments.IAAPluginDaemonSet()
 		initcontainerName = "intel-idxd-config-initcontainer"

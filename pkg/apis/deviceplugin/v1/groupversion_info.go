@@ -38,8 +38,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(GroupVersion,
 		&DsaDevicePlugin{},
 		&DsaDevicePluginList{},
-		&FpgaDevicePlugin{},
-		&FpgaDevicePluginList{},
 		&GpuDevicePlugin{},
 		&GpuDevicePluginList{},
 		&IaaDevicePlugin{},
