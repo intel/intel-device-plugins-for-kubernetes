@@ -41,12 +41,12 @@ func TestNotify(t *testing.T) {
 			name: "Added 1 new device type",
 			newmap: map[string]map[string]DeviceInfo{
 				"someDeviceType": {
-					"intel-fpga-port.0": {
+					"fake-device.0": {
 						state: pluginapi.Healthy,
 						nodes: []pluginapi.DeviceSpec{
 							{
-								HostPath:      "/dev/intel-fpga-port.0",
-								ContainerPath: "/dev/intel-fpga-port.0",
+								HostPath:      "/dev/fake-device.0",
+								ContainerPath: "/dev/fake-device.0",
 								Permissions:   "rw",
 							},
 						},
@@ -59,12 +59,12 @@ func TestNotify(t *testing.T) {
 			name: "Updated 1 new device type",
 			oldmap: map[string]map[string]DeviceInfo{
 				"someDeviceType": {
-					"intel-fpga-port.0": {
+					"fake-device.0": {
 						state: pluginapi.Healthy,
 						nodes: []pluginapi.DeviceSpec{
 							{
-								HostPath:      "/dev/intel-fpga-port.0",
-								ContainerPath: "/dev/intel-fpga-port.0",
+								HostPath:      "/dev/fake-device.0",
+								ContainerPath: "/dev/fake-device.0",
 								Permissions:   "rw",
 							},
 						},
@@ -73,12 +73,12 @@ func TestNotify(t *testing.T) {
 			},
 			newmap: map[string]map[string]DeviceInfo{
 				"someDeviceType": {
-					"intel-fpga-port.1": {
+					"fake-device.1": {
 						state: pluginapi.Healthy,
 						nodes: []pluginapi.DeviceSpec{
 							{
-								HostPath:      "/dev/intel-fpga-port.1",
-								ContainerPath: "/dev/intel-fpga-port.1",
+								HostPath:      "/dev/fake-device.1",
+								ContainerPath: "/dev/fake-device.1",
 								Permissions:   "rw",
 							},
 						},
@@ -91,12 +91,12 @@ func TestNotify(t *testing.T) {
 			name: "Removed 1 new device type",
 			oldmap: map[string]map[string]DeviceInfo{
 				"someDeviceType": {
-					"intel-fpga-port.0": {
+					"fake-device.0": {
 						state: pluginapi.Healthy,
 						nodes: []pluginapi.DeviceSpec{
 							{
-								HostPath:      "/dev/intel-fpga-port.0",
-								ContainerPath: "/dev/intel-fpga-port.0",
+								HostPath:      "/dev/fake-device.0",
+								ContainerPath: "/dev/fake-device.0",
 								Permissions:   "rw",
 							},
 						},
@@ -189,32 +189,32 @@ func TestHandleUpdate(t *testing.T) {
 			update: updateInfo{
 				Added: map[string]map[string]DeviceInfo{
 					"ce48969398f05f33946d560708be108a": {
-						"intel-fpga-fme.0": {
+						"fake-device.0": {
 							state: pluginapi.Healthy,
 							nodes: []pluginapi.DeviceSpec{
 								{
-									HostPath:      "/dev/intel-fpga-port.0",
-									ContainerPath: "/dev/intel-fpga-port.0",
+									HostPath:      "/dev/fake-device.0",
+									ContainerPath: "/dev/fake-device.0",
 									Permissions:   "rw",
 								},
 								{
-									HostPath:      "/dev/intel-fpga-fme.0",
-									ContainerPath: "/dev/intel-fpga-fme.0",
+									HostPath:      "/dev/fake-control.0",
+									ContainerPath: "/dev/fake-control.0",
 									Permissions:   "rw",
 								},
 							},
 						},
-						"intel-fpga-fme.1": {
+						"fake-device.1": {
 							state: pluginapi.Healthy,
 							nodes: []pluginapi.DeviceSpec{
 								{
-									HostPath:      "/dev/intel-fpga-port.1",
-									ContainerPath: "/dev/intel-fpga-port.1",
+									HostPath:      "/dev/fake-device.1",
+									ContainerPath: "/dev/fake-device.1",
 									Permissions:   "rw",
 								},
 								{
-									HostPath:      "/dev/intel-fpga-fme.1",
-									ContainerPath: "/dev/intel-fpga-fme.1",
+									HostPath:      "/dev/fake-control.1",
+									ContainerPath: "/dev/fake-control.1",
 									Permissions:   "rw",
 								},
 							},
@@ -232,17 +232,17 @@ func TestHandleUpdate(t *testing.T) {
 			update: updateInfo{
 				Updated: map[string]map[string]DeviceInfo{
 					"ce48969398f05f33946d560708be108a": {
-						"intel-fpga-fme.1": {
+						"fake-device.1": {
 							state: pluginapi.Healthy,
 							nodes: []pluginapi.DeviceSpec{
 								{
-									HostPath:      "/dev/intel-fpga-port.1",
-									ContainerPath: "/dev/intel-fpga-port.1",
+									HostPath:      "/dev/fake-device.1",
+									ContainerPath: "/dev/fake-device.1",
 									Permissions:   "rw",
 								},
 								{
-									HostPath:      "/dev/intel-fpga-fme.1",
-									ContainerPath: "/dev/intel-fpga-fme.1",
+									HostPath:      "/dev/fake-control.1",
+									ContainerPath: "/dev/fake-control.1",
 									Permissions:   "rw",
 								},
 							},

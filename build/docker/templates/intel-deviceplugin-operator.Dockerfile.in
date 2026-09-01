@@ -5,4 +5,4 @@ ARG CMD=operator
 
 LABEL name='intel-deviceplugin-operator'
 LABEL summary='Intel® device plugin operator for Kubernetes'
-LABEL description='To simplify the deployment of the device plugins, a unified device plugins operator is implemented. Currently the operator has support for the QAT, GPU, FPGA, SGX and DSA device plugins. Each device plugin has its own custom resource definition (CRD) and the corresponding controller that watches CRUD operations to those custom resources.'
+LABEL description='To simplify the deployment of the device plugins, a unified device plugins operator is implemented. Currently the operator has support for the QAT, GPU, SGX and DSA device plugins. Each device plugin has its own custom resource definition (CRD) and the corresponding controller that watches CRUD operations to those custom resources.'
