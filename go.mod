@@ -12,7 +12,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.32.1
 	github.com/onsi/gomega v1.42.1
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_model v0.6.2
+	github.com/prometheus/client_model v0.6.3
 	github.com/prometheus/common v0.70.1
 	golang.org/x/sys v0.47.0
 	golang.org/x/text v0.41.0
