@@ -70,16 +70,14 @@ else
 	    exit $$rc
 endif
 
-test-with-kind: fixture intel-sgx-admissionwebhook intel-fpga-admissionwebhook intel-deviceplugin-operator install-tools
+test-with-kind: fixture intel-sgx-admissionwebhook intel-deviceplugin-operator install-tools
 	# Build a Cluster with KinD & Load Images & Install Cert-Manager
 	kind create cluster
 	kind load docker-image $(REG)intel-sgx-admissionwebhook:$(TAG)
-	kind load docker-image $(REG)intel-fpga-admissionwebhook:$(TAG)
 	kind load docker-image $(REG)intel-deviceplugin-operator:$(TAG)
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
-	# Test SGX Admission Webhook, FPGA Admission Webhook and Device Plugin Operator Manager's Webhook
+	# Test SGX Admission Webhook and Device Plugin Operator Manager's Webhook
 	$(GO) test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "SGX Admission"
-	$(GO) test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "FPGA Admission"
 	$(GO) test -v ./test/e2e -args -kubeconfig ~/.kube/config -ginkgo.focus "Operator"
 
 envtest:
@@ -95,20 +93,13 @@ generate:
 	$(CONTROLLER_GEN) crd:crdVersions=v1 \
 		paths="./pkg/apis/..." \
 		output:crd:artifacts:config=deployments/operator/crd/bases
-	$(CONTROLLER_GEN) crd:crdVersions=v1 \
-		paths="./pkg/apis/fpga/..." \
-		output:crd:artifacts:config=deployments/fpga_admissionwebhook/crd/bases
 	$(CONTROLLER_GEN) webhook \
 		paths="./pkg/..." \
 		output:webhook:artifacts:config=deployments/operator/webhook
 	$(CONTROLLER_GEN) webhook \
-		paths="./pkg/fpgacontroller/..." \
-		output:webhook:artifacts:config=deployments/fpga_admissionwebhook/webhook
-	$(CONTROLLER_GEN) webhook \
 		paths="./pkg/webhooks/sgx/..." \
 		output:webhook:artifacts:config=deployments/sgx_admissionwebhook/webhook
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./pkg/..." output:dir=deployments/operator/rbac
-	$(CONTROLLER_GEN) rbac:roleName=manager-role paths="./pkg/fpgacontroller/..." output:dir=deployments/fpga_admissionwebhook/rbac
 
 $(cmds):
 	cd cmd/$@; $(GO) build -tags $(BUILDTAGS)
@@ -195,7 +186,7 @@ endif
 
 dockerlib = build/docker/lib
 dockertemplates = build/docker/templates
-images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in | grep -v -e fpga -e xpumanager-sidecar -e ubi)
+images = $(shell basename -s .Dockerfile.in -a $(dockertemplates)/*.Dockerfile.in | grep -v -e xpumanager-sidecar -e ubi)
 dockerfiles = $(shell basename -s .in -a $(dockertemplates)/*.Dockerfile.in | xargs -I"{}" echo build/docker/{})
 
 test-image-base-layer:
@@ -225,7 +216,7 @@ $(images): $(dockerfiles)
 
 images: $(images)
 
-demos = $(shell basename -a demo/*/ | grep -v -e opae-nlb-demo)
+demos = $(shell basename -a demo/*/)
 
 $(demos):
 	@cd demo/ && ./build-image.sh $(REG)$@ $(BUILDER)

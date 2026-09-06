@@ -217,7 +217,6 @@ E2E_FILTER="qat" KUBECONFIG=/path/to/kubeconfig make e2e
 | Device Label | Focus Labels |
 |-------|-------|
 | `dsa`  |`idxd`, `vfio`, `accel-config`, `dpdk-test`, `dpdk-vfio-test`|
-| `fpga` | `af`, `region`, `opae-nlb-demo`, `admissionwebhook`|
 | `gpu`  |`i915`,`xe`,`busybox`, `monitoring`, `health`, `pytorch`|
 | `iaa`  |`dedicated`, `accel-config`|
 | `qat`  | `dpdk`, `dc`, `cy`, `openssl`, `compress-perf`, `crypto-perf`|
@@ -432,8 +431,7 @@ func (dp *devicePlugin) Scan(notifier deviceplugin.Notifier) error {
 Optionally, your device plugin may also implement the
 `deviceplugin.PostAllocator` interface. If implemented, its method
 `PostAllocate()` modifies `pluginapi.AllocateResponse` responses just
-before they are sent to `kubelet`. To see an example, refer to the FPGA
-plugin which implements this interface to annotate its responses.
+before they are sent to `kubelet`.
 
 In case you want to implement the whole allocation functionality in your
 device plugin, you can implement the optional `deviceplugin.Allocator`

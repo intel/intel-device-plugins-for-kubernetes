@@ -655,8 +655,8 @@ func TestListAndWatch(t *testing.T) {
 						state: pluginapi.Healthy,
 						nodes: []pluginapi.DeviceSpec{
 							{
-								HostPath:      "/dev/intel-fpga-port.0",
-								ContainerPath: "/dev/intel-fpga-port.0",
+								HostPath:      "/dev/fake-device.0",
+								ContainerPath: "/dev/fake-device.0",
 								Permissions:   "rw",
 							},
 						},
@@ -672,8 +672,8 @@ func TestListAndWatch(t *testing.T) {
 						state: pluginapi.Healthy,
 						nodes: []pluginapi.DeviceSpec{
 							{
-								HostPath:      "/dev/intel-fpga-port.0",
-								ContainerPath: "/dev/intel-fpga-port.0",
+								HostPath:      "/dev/fake-device.0",
+								ContainerPath: "/dev/fake-device.0",
 								Permissions:   "rw",
 							},
 						},

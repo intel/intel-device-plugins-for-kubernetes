@@ -8,33 +8,6 @@ resources:
   # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
   # controller: true
   domain: intel.com
-  group: fpga
-  kind: AcceleratorFunction
-  # TODO(user): Update the package path for your API if the below value is incorrect.
-  path: github.com/intel/intel-device-plugins-for-kubernetes/apis/fpga/v2
-  version: v2
--
-  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
-  # controller: true
-  domain: intel.com
-  group: deviceplugin
-  kind: FpgaDevicePlugin
-  # TODO(user): Update the package path for your API if the below value is incorrect.
-  path: github.com/intel/intel-device-plugins-for-kubernetes/apis/deviceplugin/v1
-  version: v1
--
-  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
-  # controller: true
-  domain: intel.com
-  group: fpga
-  kind: FpgaRegion
-  # TODO(user): Update the package path for your API if the below value is incorrect.
-  path: github.com/intel/intel-device-plugins-for-kubernetes/apis/fpga/v2
-  version: v2
--
-  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
-  # controller: true
-  domain: intel.com
   group: deviceplugin
   kind: GpuDevicePlugin
   # TODO(user): Update the package path for your API if the below value is incorrect.

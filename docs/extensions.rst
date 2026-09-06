@@ -4,10 +4,6 @@ Extensions
 .. toctree::
 
    ../cmd/dsa_plugin/README.md
-   ../cmd/fpga_admissionwebhook/README.md
-   ../cmd/fpga_crihook/README.md
-   ../cmd/fpga_plugin/README.md
-   ../cmd/fpga_tool/README.md
    ../cmd/gpu_nfdhook/README.md
    ../cmd/gpu_plugin/README.md
    ../cmd/iaa_plugin/README.md

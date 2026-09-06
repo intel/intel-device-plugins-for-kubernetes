@@ -31,20 +31,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
-	fpgav2 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/fpga/v2"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/dsa"
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/fpga"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/gpu"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/iaa"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/npu"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/qat"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers/sgx"
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller"
-	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/fpgacontroller/patcher"
 	sgxwebhook "github.com/intel/intel-device-plugins-for-kubernetes/pkg/webhooks/sgx"
 )
 
@@ -59,7 +54,6 @@ func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
 	_ = devicepluginv1.AddToScheme(scheme)
-	_ = fpgav2.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -67,7 +61,7 @@ type devicePluginControllerAndWebhook map[string](func(ctrl.Manager, controllers
 
 type flagList []string
 
-var supportedDevices = flagList{"dsa", "fpga", "gpu", "iaa", "qat", "sgx", "npu"}
+var supportedDevices = flagList{"dsa", "gpu", "iaa", "qat", "sgx", "npu"}
 var devices flagList
 
 func (flag *flagList) String() string {
@@ -128,7 +122,6 @@ func main() {
 		enableLeaderElection  bool
 		enableHTTP2           bool
 		secureMetrics         bool
-		pm                    *patcher.Manager
 	)
 
 	tlConf := textlogger.NewConfig()
@@ -154,13 +147,12 @@ func main() {
 	}
 
 	setupControllerAndWebhook := devicePluginControllerAndWebhook{
-		"dsa":  dsa.SetupReconciler,
-		"fpga": fpga.SetupReconciler,
-		"gpu":  gpu.SetupReconciler,
-		"iaa":  iaa.SetupReconciler,
-		"qat":  qat.SetupReconciler,
-		"sgx":  sgx.SetupReconciler,
-		"npu":  npu.SetupReconciler,
+		"dsa": dsa.SetupReconciler,
+		"gpu": gpu.SetupReconciler,
+		"iaa": iaa.SetupReconciler,
+		"qat": qat.SetupReconciler,
+		"sgx": sgx.SetupReconciler,
+		"npu": npu.SetupReconciler,
 	}
 
 	tlsCfgFuncs := createTLSCfgs(enableHTTP2)
@@ -218,32 +210,6 @@ func main() {
 	if slices.Contains(devices, "sgx") {
 		if err = (&sgxwebhook.Mutator{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "Pod")
-			os.Exit(1)
-		}
-	}
-
-	if slices.Contains(devices, "fpga") {
-		pm = patcher.NewPatcherManager(mgr.GetLogger().WithName("webhooks").WithName("Fpga"))
-
-		mgr.GetWebhookServer().Register("/pods", &webhook.Admission{
-			Handler: admission.HandlerFunc(pm.GetPodMutator()),
-		})
-
-		if err = (&fpgacontroller.AcceleratorFunctionReconciler{
-			Client:         mgr.GetClient(),
-			Scheme:         mgr.GetScheme(),
-			PatcherManager: pm,
-		}).SetupWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create controller", "controller", "AcceleratorFunction")
-			os.Exit(1)
-		}
-
-		if err = (&fpgacontroller.FpgaRegionReconciler{
-			Client:         mgr.GetClient(),
-			Scheme:         mgr.GetScheme(),
-			PatcherManager: pm,
-		}).SetupWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create controller", "controller", "FpgaRegion")
 			os.Exit(1)
 		}
 	}

@@ -12,7 +12,7 @@ Table of Contents
 
 Intel Device Plugins Operator is a Kubernetes custom controller whose goal is to serve the
 installation and lifecycle management of Intel device plugins for Kubernetes.
-It provides a single point of control for GPU, QAT, SGX, FPGA, DSA devices to a cluster
+It provides a single point of control for GPU, QAT, SGX and DSA devices to a cluster
 administrators.
 
 ## Installation
@@ -55,7 +55,6 @@ $ grep -r feature.node.kubernetes.io/ deployments/operator/samples/
 deployments/operator/samples/deviceplugin_v1_qatdeviceplugin.yaml:    intel.feature.node.kubernetes.io/qat: 'true'
 deployments/operator/samples/deviceplugin_v1_sgxdeviceplugin.yaml:    intel.feature.node.kubernetes.io/sgx: 'true'
 deployments/operator/samples/deviceplugin_v1_gpudeviceplugin.yaml:    intel.feature.node.kubernetes.io/gpu: "true"
-deployments/operator/samples/deviceplugin_v1_fpgadeviceplugin.yaml:    intel.feature.node.kubernetes.io/fpga-arria10: 'true'
 deployments/operator/samples/deviceplugin_v1_dsadeviceplugin.yaml:    intel.feature.node.kubernetes.io/dsa: 'true'
 ```
 
@@ -125,10 +124,10 @@ The value of env variables is the full path of the image (e.g. `docker.io/intel/
 In order to limit the deployment to a specific device type,
 use one of kustomizations under `deployments/operator/device`.
 
-For example, to limit the deployment to FPGA, use:
+For example, to limit the deployment to GPU, use:
 
 ```bash
-$ kubectl apply -k deployments/operator/device/fpga
+$ kubectl apply -k deployments/operator/device/gpu
 ```
 
 Operator also supports deployments with multiple selected device types.

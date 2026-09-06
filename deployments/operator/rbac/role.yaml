@@ -43,7 +43,6 @@ rules:
   - deviceplugin.intel.com
   resources:
   - dsadeviceplugins
-  - fpgadeviceplugins
   - gpudeviceplugins
   - iaadeviceplugins
   - npudeviceplugins
@@ -61,7 +60,6 @@ rules:
   - deviceplugin.intel.com
   resources:
   - dsadeviceplugins/finalizers
-  - fpgadeviceplugins/finalizers
   - gpudeviceplugins/finalizers
   - iaadeviceplugins/finalizers
   - npudeviceplugins/finalizers
@@ -73,7 +71,6 @@ rules:
   - deviceplugin.intel.com
   resources:
   - dsadeviceplugins/status
-  - fpgadeviceplugins/status
   - gpudeviceplugins/status
   - iaadeviceplugins/status
   - npudeviceplugins/status
@@ -83,15 +80,6 @@ rules:
   - get
   - patch
   - update
-- apiGroups:
-  - fpga.intel.com
-  resources:
-  - acceleratorfunctions
-  - fpgaregions
-  verbs:
-  - get
-  - list
-  - watch
 - apiGroups:
   - security.openshift.io
   resources:

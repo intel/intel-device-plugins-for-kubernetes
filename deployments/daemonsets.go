@@ -29,13 +29,6 @@ func DSAPluginDaemonSet() *apps.DaemonSet {
 	return getDaemonset(contentDSA).DeepCopy()
 }
 
-//go:embed fpga_plugin/base/*plugin*.yaml
-var contentFPGA []byte
-
-func FPGAPluginDaemonSet() *apps.DaemonSet {
-	return getDaemonset(contentFPGA).DeepCopy()
-}
-
 //go:embed gpu_plugin/base/*plugin.yaml
 var contentGPU []byte
 
