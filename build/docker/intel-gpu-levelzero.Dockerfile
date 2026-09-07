@@ -15,7 +15,7 @@
 ## limitations under the License.
 ###
 ARG CMD=gpu_levelzero
-ARG BUILD_BASE=golang:1.26-trixie
+ARG BUILD_BASE=golang:1.27-trixie
 FROM ${BUILD_BASE} AS builder
 ARG DIR=/intel-device-plugins-for-kubernetes
 ENV CGO_CFLAGS="-pipe -fno-plt"
