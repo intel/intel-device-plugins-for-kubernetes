@@ -55,6 +55,8 @@ const (
 
 	// Resource name to use when device capabilities are not available.
 	defaultCapabilities = "generic"
+
+	qat4xxxVFDriver = "4xxxvf"
 )
 
 // QAT PCI VF Device ID -> kernel QAT VF device driver mappings.
@@ -63,9 +65,9 @@ var qatDeviceDriver = map[string]string{
 	"0443": "dh895xccvf",
 	"18a1": "c4xxxvf",
 	"19e3": "c3xxxvf",
-	"4941": "4xxxvf",
-	"4943": "4xxxvf",
-	"4945": "4xxxvf",
+	"4941": qat4xxxVFDriver,
+	"4943": qat4xxxVFDriver,
+	"4945": qat4xxxVFDriver,
 	"4947": "420xxvf",
 	"4949": "6xxxvf",
 	"37c9": "c6xxvf",

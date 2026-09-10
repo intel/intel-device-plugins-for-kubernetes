@@ -40,6 +40,10 @@ const (
 	configVolumeName  = "intel-dsa-config-volume"
 	vfioDriver        = "vfio-pci"
 	devfsVolumeName   = "devfs"
+	scratchVolumeName = "scratch"
+	sysBusDsaVolume   = "sys-bus-dsa"
+	sysBusPciVolume   = "sys-bus-pci"
+	sysDevicesVolume  = "sys-devices"
 )
 
 var defaultNodeSelector = deployments.DSAPluginDaemonSet().Spec.Template.Spec.NodeSelector
@@ -76,6 +80,15 @@ func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
 	return controllers.UpgradeImages(ctx, &dp.Spec.Image, &dp.Spec.InitImage)
 }
 
+func isInitContainerVolume(name string) bool {
+	switch name {
+	case configVolumeName, sysBusDsaVolume, sysBusPciVolume, sysDevicesVolume, scratchVolumeName:
+		return true
+	default:
+		return false
+	}
+}
+
 func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 	newInitContainers := []v1.Container{}
 
@@ -91,7 +104,7 @@ func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin)
 	newVolumes := []v1.Volume{}
 
 	for _, volume := range ds.Spec.Template.Spec.Volumes {
-		if volume.Name == configVolumeName || volume.Name == "sys-bus-dsa" || volume.Name == "sys-bus-pci" || volume.Name == "sys-devices" || volume.Name == "scratch" {
+		if isInitContainerVolume(volume.Name) {
 			continue
 		}
 
@@ -140,25 +153,25 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 		},
 		VolumeMounts: []v1.VolumeMount{
 			{
-				Name:      "sys-bus-dsa",
+				Name:      sysBusDsaVolume,
 				MountPath: "/sys/bus/dsa",
 			},
 			{
-				Name:      "sys-bus-pci",
+				Name:      sysBusPciVolume,
 				MountPath: "/sys/bus/pci",
 			},
 			{
-				Name:      "sys-devices",
+				Name:      sysDevicesVolume,
 				MountPath: "/sys/devices",
 			},
 			{
-				Name:      "scratch",
+				Name:      scratchVolumeName,
 				MountPath: "/idxd-init/scratch",
 			},
 		},
 	})
 	ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
-		Name: "sys-bus-dsa",
+		Name: sysBusDsaVolume,
 		VolumeSource: v1.VolumeSource{
 			HostPath: &v1.HostPathVolumeSource{
 				Path: "/sys/bus/dsa",
@@ -166,7 +179,7 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 		},
 	})
 	ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
-		Name: "sys-bus-pci",
+		Name: sysBusPciVolume,
 		VolumeSource: v1.VolumeSource{
 			HostPath: &v1.HostPathVolumeSource{
 				Path: "/sys/bus/pci",
@@ -174,7 +187,7 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 		},
 	})
 	ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
-		Name: "sys-devices",
+		Name: sysDevicesVolume,
 		VolumeSource: v1.VolumeSource{
 			HostPath: &v1.HostPathVolumeSource{
 				Path: "/sys/devices",
@@ -182,7 +195,7 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.DsaDevicePlugin) {
 		},
 	})
 	ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
-		Name: "scratch",
+		Name: scratchVolumeName,
 		VolumeSource: v1.VolumeSource{
 			EmptyDir: &v1.EmptyDirVolumeSource{},
 		},

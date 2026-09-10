@@ -14,7 +14,6 @@ linters:
     - goconst
     - gocyclo
     - godot
-    - gomodguard
     - goprintffuncname
     - gosec
     - govet
@@ -62,6 +61,7 @@ linters:
         path: _test\.go
       - linters:
           - gocognit
+          - goconst
           - gocyclo
         path: test/e2e/
       - linters:

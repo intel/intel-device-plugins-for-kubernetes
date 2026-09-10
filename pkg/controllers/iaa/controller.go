@@ -38,6 +38,9 @@ const (
 	ownerKey          = ".metadata.controller.iaa"
 	initcontainerName = "intel-iaa-initcontainer"
 	configVolumeName  = "intel-iaa-config-volume"
+	scratchVolumeName = "scratch"
+	sysBusDsaVolume   = "sys-bus-dsa"
+	sysDevicesVolume  = "sys-devices"
 )
 
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=iaadeviceplugins,verbs=get;list;watch;create;update;patch;delete
@@ -72,6 +75,15 @@ func (c *controller) Upgrade(ctx context.Context, obj client.Object) bool {
 	return controllers.UpgradeImages(ctx, &dp.Spec.Image, &dp.Spec.InitImage)
 }
 
+func isInitContainerVolume(name string) bool {
+	switch name {
+	case configVolumeName, sysBusDsaVolume, sysDevicesVolume, scratchVolumeName:
+		return true
+	default:
+		return false
+	}
+}
+
 func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 	newInitContainers := []v1.Container{}
 
@@ -88,7 +100,7 @@ func removeInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin)
 	newVolumes := []v1.Volume{}
 
 	for _, volume := range ds.Spec.Template.Spec.Volumes {
-		if volume.Name == configVolumeName || volume.Name == "sys-bus-dsa" || volume.Name == "sys-devices" || volume.Name == "scratch" {
+		if isInitContainerVolume(volume.Name) {
 			continue
 		}
 
@@ -128,21 +140,21 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 		},
 		VolumeMounts: []v1.VolumeMount{
 			{
-				Name:      "sys-bus-dsa",
+				Name:      sysBusDsaVolume,
 				MountPath: "/sys/bus/dsa",
 			},
 			{
-				Name:      "sys-devices",
+				Name:      sysDevicesVolume,
 				MountPath: "/sys/devices",
 			},
 			{
-				Name:      "scratch",
+				Name:      scratchVolumeName,
 				MountPath: "/idxd-init/scratch",
 			},
 		},
 	})
 	ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
-		Name: "sys-bus-dsa",
+		Name: sysBusDsaVolume,
 		VolumeSource: v1.VolumeSource{
 			HostPath: &v1.HostPathVolumeSource{
 				Path: "/sys/bus/dsa",
@@ -150,7 +162,7 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 		},
 	})
 	ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
-		Name: "sys-devices",
+		Name: sysDevicesVolume,
 		VolumeSource: v1.VolumeSource{
 			HostPath: &v1.HostPathVolumeSource{
 				Path: "/sys/devices",
@@ -158,7 +170,7 @@ func addInitContainer(ds *apps.DaemonSet, dp *devicepluginv1.IaaDevicePlugin) {
 		},
 	})
 	ds.Spec.Template.Spec.Volumes = append(ds.Spec.Template.Spec.Volumes, v1.Volume{
-		Name: "scratch",
+		Name: scratchVolumeName,
 		VolumeSource: v1.VolumeSource{
 			EmptyDir: &v1.EmptyDirVolumeSource{},
 		},
