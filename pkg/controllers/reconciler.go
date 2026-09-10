@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	apps "k8s.io/api/apps/v1"
@@ -198,7 +199,7 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	if statusUpdated {
 		if err := r.Status().Update(ctx, devicePlugin); apierrors.IsConflict(err) {
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{RequeueAfter: time.Second}, nil
 		} else if err != nil {
 			log.Error(err, "unable to update device plugin status")
 			return ctrl.Result{}, err

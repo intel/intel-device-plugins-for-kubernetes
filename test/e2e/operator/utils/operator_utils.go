@@ -164,12 +164,14 @@ func CreateWorkloadKustomizationFromDir(originalDir, version string) (string, er
 			return nil
 		}
 
+		//nolint:gosec // The source is trusted test data from the repository.
 		fbytes, readErr := os.ReadFile(path)
 		if readErr != nil {
 			return readErr
 		}
 
 		destPath := filepath.Join(tempDir, filepath.Base(path))
+		//nolint:gosec // The destination is constrained to a temporary directory and a base filename.
 		writeErr := os.WriteFile(destPath, fbytes, 0600)
 		if writeErr != nil {
 			return writeErr
@@ -226,6 +228,7 @@ func CreateWorkloadKustomizationFromFile(originalFile, version string) (string, 
 	}
 
 	destFile := filepath.Join(tempDir, filepath.Base(originalFile))
+	//nolint:gosec // The destination is constrained to a temporary directory and a base filename.
 	if err = os.WriteFile(destFile, originalBytes, 0o600); err != nil {
 		os.RemoveAll(tempDir)
 		return "", err
