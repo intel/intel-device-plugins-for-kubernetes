@@ -39,15 +39,9 @@ The SGX plugin can take a number of command line arguments, summarised in the fo
 |:---- |:-------- |:------- |
 | -enclave-limit | int | the number of containers per worker node allowed to use `/dev/sgx_enclave` device node (default: `20`) |
 | -provision-limit | int | the number of containers per worker node allowed to use `/dev/sgx_provision` device node (default: `20`) |
-| -dcap-infra-resources | bool | deprecated: a boolean opt-in flag to register special `qe` and `registration` resources for Intel Data Center Attestation Primitive (DCAP) containers (default: `false`) |
 
 The plugin also accepts a number of other arguments related to logging. Please use the `-h` option to see
 the complete list of logging related options.
-
-Note: `qe` and `registration` resources are intended for a very specific use-case: every SGX enabled
-node gets only one such resource and they are consumed by a quoting daemon (e.g., `aesmd` or `tdx-qgs`)
-and a platform registration tool (e.g., PCK-ID-Retrieval-Tool), respectively. This is done so that
-these containers can run without any elevated privileges.
 
 ## Installation
 
