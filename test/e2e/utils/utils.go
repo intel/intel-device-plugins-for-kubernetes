@@ -119,6 +119,7 @@ func LocateRepoFile(repopath string) (string, error) {
 	root := os.Getenv("PLUGINS_REPO_DIR")
 	if root != "" {
 		path := filepath.Join(root, repopath)
+		//nolint:gosec // The path is repository test data selected by the e2e test.
 		if _, err := os.Stat(path); !os.IsNotExist(err) {
 			return path, nil
 		}
@@ -148,6 +149,7 @@ func copyFiles(srcDir, dstDir string) error {
 			return nil
 		}
 
+		//nolint:gosec // The source is trusted test data from the repository.
 		n, err := os.ReadFile(path)
 		if err != nil && err != io.EOF || len(n) == 0 {
 			return err
@@ -155,6 +157,7 @@ func copyFiles(srcDir, dstDir string) error {
 
 		fn := filepath.Join(dstDir, filepath.Base(path))
 
+		//nolint:gosec // The destination is constrained to the overlay directory and a base filename.
 		if err := os.WriteFile(fn, n, 0600); err != nil {
 			return err
 		}
