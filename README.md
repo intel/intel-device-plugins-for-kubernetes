@@ -253,6 +253,15 @@ the branches and releases in this repository.
 
 Starting from 0.31 release, the images (`0.31.0` etc., not `devel`) are signed with keyless signing using `cosign`. The signing proof is stored in [rekor.sigstore.dev](https://rekor.sigstore.dev) in an append-only transparency log. The signature is also stored within the dockerhub.
 
+Starting from 0.36 release, the images are signed with cosign v3, which stores the signature as a [sigstore bundle](https://docs.sigstore.dev/about/bundle/) attached to the image via the OCI 1.1 referrers API instead of the legacy `.sig` tag. Verifying these signatures requires cosign v3 or newer:
+
+```bash
+cosign verify \
+  --certificate-identity-regexp 'https://github\.com/intel/intel-device-plugins-for-kubernetes/.*' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  docker.io/intel/intel-gpu-plugin:0.36.0
+```
+
 To verify the signing in Kubernetes, one can use [policy managers](https://docs.sigstore.dev/policy-controller/overview/) with [keyless authorities](https://docs.sigstore.dev/policy-controller/overview/#configuring-keyless-authorities).
 
 ## License
