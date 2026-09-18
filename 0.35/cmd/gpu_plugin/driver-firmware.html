@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driver and firmware for Intel GPUs &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Driver and firmware for Intel GPUs</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/gpu_plugin/driver-firmware.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="driver-and-firmware-for-intel-gpus">
+<h1>Driver and firmware for Intel GPUs<a class="headerlink" href="#driver-and-firmware-for-intel-gpus" title="Permalink to this heading"></a></h1>
+<p>Access to a GPU device requires firmware, kernel and user-space
+drivers supporting it.  Firmware and kernel driver need to be on the
+host, user-space drivers in the GPU workload containers.</p>
+<p>Intel GPU devices supported by the current kernel can be listed with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ grep i915 /sys/class/drm/card?/device/uevent
+/sys/class/drm/card0/device/uevent:DRIVER=i915
+/sys/class/drm/card1/device/uevent:DRIVER=i915
+</pre></div>
+</div>
+<section id="drivers-for-discrete-gpus">
+<h2>Drivers for discrete GPUs<a class="headerlink" href="#drivers-for-discrete-gpus" title="Permalink to this heading"></a></h2>
+<blockquote>
+<div><p><strong>Note</strong>: Kernel (on host) and user-space drivers (in containers)
+should be installed from the same repository as there are some
+differences between DKMS and upstream GPU driver uAPI.</p>
+</div></blockquote>
+<section id="kernel-driver">
+<h3>Kernel driver<a class="headerlink" href="#kernel-driver" title="Permalink to this heading"></a></h3>
+<section id="intel-dkms-packages">
+<h4>Intel DKMS packages<a class="headerlink" href="#intel-dkms-packages" title="Permalink to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">i915</span></code> GPU driver DKMS<a class="reference external" href="%5Bintel-gpu-i915-backports%5D(https://github.com/intel-gpu/intel-gpu-i915-backports).">^dkms</a> package is recommended for Intel
+discrete GPUs, until their support in upstream is complete.  DKMS
+package(s) can be installed from Intel package repositories for a
+subset of older kernel versions used in enterprise / LTS
+distributions:
+https://dgpu-docs.intel.com/installation-guides/index.html</p>
+</section>
+<section id="upstream-kernel">
+<h4>Upstream kernel<a class="headerlink" href="#upstream-kernel" title="Permalink to this heading"></a></h4>
+<p>Support for first Intel discrete GPUs was added to upstream Linux kernel in v6.2,
+and expanded in later versions. For now, upstream kernel is still missing support
+for few of the features available in DKMS kernels, listed here:
+https://dgpu-docs.intel.com/driver/kernel-driver-types.html</p>
+</section>
+</section>
+<section id="gpu-version">
+<h3>GPU Version<a class="headerlink" href="#gpu-version" title="Permalink to this heading"></a></h3>
+<p>PCI IDs for the Intel GPUs on given host can be listed with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ lspci | grep -e VGA -e Display | grep Intel
+88:00.0 Display controller: Intel Corporation Device 56c1 (rev 05)
+8d:00.0 Display controller: Intel Corporation Device 56c1 (rev 05)
+</pre></div>
+</div>
+<p>(<code class="docutils literal notranslate"><span class="pre">lspci</span></code> lists GPUs with display support as “VGA compatible controller”,
+and server GPUs without display support, as “Display controller”.)</p>
+<p>A mapping between GPU PCI IDs and their Intel brand names is available here:
+https://dgpu-docs.intel.com/devices/hardware-table.html</p>
+<section id="gpu-firmware">
+<h4>GPU Firmware<a class="headerlink" href="#gpu-firmware" title="Permalink to this heading"></a></h4>
+<p>If your kernel build does not find the correct firmware version for
+a given GPU from the host (see <code class="docutils literal notranslate"><span class="pre">dmesg</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">i915</span></code> output), latest
+firmware versions are available in upstream:
+https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/tree/i915</p>
+</section>
+</section>
+<section id="user-space-drivers">
+<h3>User-space drivers<a class="headerlink" href="#user-space-drivers" title="Permalink to this heading"></a></h3>
+<p>Until new enough user-space drivers (supporting also discrete GPUs)
+are available directly from distribution package repositories, they
+can be installed to containers from Intel package repositories. See:
+https://dgpu-docs.intel.com/installation-guides/index.html</p>
+<p>Example container is listed in <a class="reference external" href="#testing-and-demos">Testing and demos</a>.</p>
+<p>Validation status against <em>upstream</em> kernel is listed in the user-space drivers release notes:</p>
+<ul class="simple">
+<li><p>Media driver: https://github.com/intel/media-driver/releases</p></li>
+<li><p>Compute driver: https://github.com/intel/compute-runtime/releases</p></li>
+</ul>
+</section>
+<section id="drivers-for-older-integrated-gpus">
+<h3>Drivers for older (integrated) GPUs<a class="headerlink" href="#drivers-for-older-integrated-gpus" title="Permalink to this heading"></a></h3>
+<p>For the older (integrated) GPUs, new enough firmware and kernel driver
+are typically included already with the host OS, and new enough
+user-space drivers (for the GPU containers) are in the host OS
+repositories.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

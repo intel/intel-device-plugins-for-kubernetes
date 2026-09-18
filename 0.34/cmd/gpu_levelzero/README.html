@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel GPU Level-Zero sidecar &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Intel GPU Level-Zero sidecar</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/gpu_levelzero/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-gpu-level-zero-sidecar">
+<h1>Intel GPU Level-Zero sidecar<a class="headerlink" href="#intel-gpu-level-zero-sidecar" title="Permalink to this heading"></a></h1>
+<p>Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#install">Install</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<p>Intel GPU Level-Zero sidecar is an extension for the Intel GPU plugin to query additional GPU details from the oneAPI/Level-Zero API. As the Level-Zero is a C/C++ API, it is preferred to keep the original GPU plugin as-is and add the additional functionality via the Level-Zero sidecar. The GPU plugin can be configured to use the Level-Zero sidecar with an overlay, see <a class="reference external" href="#install">install</a>.</p>
+<p>Intel GPU plugin and the Level-Zero sidecar communicate via gRPC on a local socket visible only to the containers.</p>
+<blockquote>
+<div><p><strong>NOTE</strong>: Intel Device Plugin Operator doesn’t yet support enabling Level-Zero sidecar in the GPU CR object.</p>
+</div></blockquote>
+</section>
+<section id="modes-and-configuration-options">
+<h2>Modes and Configuration Options<a class="headerlink" href="#modes-and-configuration-options" title="Permalink to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Flag</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">-socket</td>
+<td style="text-align: left;">unix socket path</td>
+<td style="text-align: left;">/var/lib/levelzero/server.sock</td>
+<td style="text-align: left;">Unix socket path which the server registers itself into.</td>
+</tr>
+<tr>
+<td style="text-align: left;">-wsl</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">disabled</td>
+<td style="text-align: left;">Adapt sidecar to run in the WSL environment.</td>
+</tr>
+<tr>
+<td style="text-align: left;">-v</td>
+<td style="text-align: left;">verbosity</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">Log verbosity</td>
+</tr>
+</tbody>
+</table></section>
+<section id="install">
+<h2>Install<a class="headerlink" href="#install" title="Permalink to this heading"></a></h2>
+<p>Installing the sidecar along with the GPU plugin happens via two possible overlays: <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/1a407221a18992878dca827d080f6a16095fed43/cmd/gpu_levelzero/../../deployments/gpu_plugin/overlays/health/">health</a> and <a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes/tree/1a407221a18992878dca827d080f6a16095fed43/cmd/gpu_levelzero/../../deployments/gpu_plugin/overlays/wsl/">wsl</a>.</p>
+<p>Health overlay adds the sidecar to the base GPU plugin deployment and configures GPU plugin to retrieve device health indicators from the Level-Zero API:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>-k<span class="w"> </span>deployments/gpu_plugin/overlays/health
+</pre></div>
+</div>
+<p>WSL layer enables Intel GPU detection with WSL (Windows Subsystem for Linux) Kubernetes clusters. It also leverages the Level-Zero sidecar:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>kubectl<span class="w"> </span>-k<span class="w"> </span>deployments/gpu_plugin/overlays/wsl
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
