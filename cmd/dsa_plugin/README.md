@@ -60,6 +60,13 @@ To create a custom provisioning config:
 $ kubectl create configmap --namespace=inteldeviceplugins-system intel-dsa-config --from-file=demo/dsa.conf
 ```
 
+> **Note:** A DSA device cannot be disabled while any of its work queues has active clients
+> (e.g. running workloads that have the work queue open). If the initcontainer is re-run (for
+> example, when the plugin Pod is restarted or updated) while workloads are using DSA devices,
+> the devices in use are skipped and keep their current configuration. Any changes to the
+> provisioning config take effect for those devices only after the workloads using them have
+> stopped and the initcontainer is run again.
+
 #### VFIO Support
 
 Instead of using the default `idxd` driver based device resources, some workloads (e.g., DPDK) support using DSA through `vfio-pci` too. The DSA device plugin looks for VFIO
