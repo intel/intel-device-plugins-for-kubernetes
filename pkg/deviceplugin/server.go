@@ -26,8 +26,9 @@ import (
 	"sync"
 	"time"
 
+	"errors"
+
 	"github.com/fsnotify/fsnotify"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
@@ -120,7 +121,7 @@ func (srv *server) sendDevices(stream pluginapi.DevicePlugin_ListAndWatchServer)
 
 	if err := stream.Send(resp); err != nil {
 		_ = srv.Stop()
-		return errors.Wrapf(err, "Cannot update device list")
+		return fmt.Errorf("cannot update device list: %w", err)
 	}
 
 	return nil
@@ -163,11 +164,11 @@ func (srv *server) Allocate(ctx context.Context, rqt *pluginapi.AllocateRequest)
 		for _, id := range crqt.DevicesIds {
 			dev, ok := srv.devices[id]
 			if !ok {
-				return nil, errors.Errorf("Invalid allocation request with non-existing device %s", id)
+				return nil, fmt.Errorf("invalid allocation request with non-existing device %s", id)
 			}
 
 			if dev.state != pluginapi.Healthy {
-				return nil, errors.Errorf("Invalid allocation request with unhealthy device %s", id)
+				return nil, fmt.Errorf("invalid allocation request with unhealthy device %s", id)
 			}
 
 			for i := range dev.nodes {
@@ -226,7 +227,7 @@ func (srv *server) Serve(namespace string) error {
 // Stop stops serving pluginapi.PluginInterfaceServer interface.
 func (srv *server) Stop() error {
 	if srv.grpcServer == nil {
-		return errors.New("Can't stop non-existing gRPC server. Calling Stop() before Serve()?")
+		return errors.New("can't stop non-existing gRPC server. Calling Stop() before Serve()?")
 	}
 
 	srv.setState(terminating)
@@ -265,7 +266,7 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 		pluginSocket := path.Join(devicePluginPath, pluginEndpoint)
 
 		if err := waitForServer(pluginSocket, time.Second); err == nil {
-			return errors.Errorf("Socket %s is already in use", pluginSocket)
+			return fmt.Errorf("socket %s is already in use", pluginSocket)
 		}
 		// We don't care if the plugin's socket file doesn't exist.
 		_ = os.Remove(pluginSocket)
@@ -274,7 +275,7 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 
 		lis, err := lc.Listen(context.Background(), "unix", pluginSocket)
 		if err != nil {
-			return errors.Wrap(err, "Failed to listen to plugin socket")
+			return fmt.Errorf("failed to listen to plugin socket: %w", err)
 		}
 
 		srv.grpcServer = grpc.NewServer()
@@ -322,13 +323,13 @@ func (srv *server) setupAndServe(namespace string, devicePluginPath string, kube
 func watchFile(file string) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return errors.Wrapf(err, "Failed to create watcher for %s", file)
+		return fmt.Errorf("failed to create watcher for %s: %w", file, err)
 	}
 	defer watcher.Close()
 
 	err = watcher.Add(filepath.Dir(file))
 	if err != nil {
-		return errors.Wrapf(err, "Failed to add %s to watcher", file)
+		return fmt.Errorf("failed to add %s to watcher: %w", file, err)
 	}
 
 	for {
@@ -338,7 +339,7 @@ func watchFile(file string) error {
 				return nil
 			}
 		case err := <-watcher.Errors:
-			return errors.WithStack(err)
+			return err
 		}
 	}
 }
@@ -346,7 +347,7 @@ func watchFile(file string) error {
 func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceName string) error {
 	conn, err := grpc.NewClient(filepath.Join("unix://", kubeletSocket), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return errors.Wrap(err, "Cannot create a gRPC client")
+		return fmt.Errorf("cannot create a gRPC client: %w", err)
 	}
 
 	defer conn.Close()
@@ -361,7 +362,7 @@ func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceNa
 
 	_, err = client.Register(context.Background(), reqt)
 	if err != nil {
-		return errors.Wrap(err, "Cannot register to kubelet service")
+		return fmt.Errorf("cannot register to kubelet service: %w", err)
 	}
 
 	return nil
@@ -372,7 +373,7 @@ func (srv *server) registerWithKubelet(kubeletSocket, pluginEndPoint, resourceNa
 func waitForServer(socket string, timeout time.Duration) error {
 	conn, err := grpc.NewClient(filepath.Join("unix://", socket), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return errors.Wrap(err, "Cannot create a gRPC client")
+		return fmt.Errorf("cannot create a gRPC client: %w", err)
 	}
 
 	defer conn.Close()
@@ -396,7 +397,7 @@ func waitForServer(socket string, timeout time.Duration) error {
 
 		if !conn.WaitForStateChange(ctx, state) {
 			// ctx got timeout or canceled.
-			return errors.Wrapf(ctx.Err(), "Failed dial context at %s", socket)
+			return fmt.Errorf("failed dial context at %s: %w", socket, ctx.Err())
 		}
 	}
 }

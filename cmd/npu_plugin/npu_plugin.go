@@ -24,8 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
@@ -97,7 +95,7 @@ func (dp *devicePlugin) Scan(notifier dpapi.Notifier) error {
 		devTree, err := dp.scan()
 		if err != nil {
 			klog.Errorf("NPU scan failed: %v", err)
-			return errors.Wrap(err, "NPU scan failed")
+			return fmt.Errorf("NPU scan failed: %w", err)
 		}
 
 		count := devTree.DeviceTypeCount(devType)
@@ -152,7 +150,7 @@ func (dp *devicePlugin) isCompatibleDevice(name string) bool {
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	files, err := os.ReadDir(dp.sysfsDir)
 	if err != nil {
-		return nil, errors.Wrap(err, "Can't read sysfs directory")
+		return nil, fmt.Errorf("can't read sysfs directory: %w", err)
 	}
 
 	devTree := dpapi.NewDeviceTree()

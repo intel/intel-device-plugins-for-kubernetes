@@ -23,7 +23,6 @@ import (
 	"time"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
-	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
@@ -80,7 +79,7 @@ func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 func readFile(fpath string) (string, error) {
 	data, err := os.ReadFile(fpath)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", err
 	}
 
 	return strings.TrimSpace(string(data)), nil
@@ -111,7 +110,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 	// scan sysfs tree
 	pciDevices, err := filepath.Glob(filepath.Join(dp.devDir, "????:??:??.?"))
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	devTree := dpapi.NewDeviceTree()
@@ -130,12 +129,12 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 		// device belongs to an IOMMU group
 		iommu_group, err := filepath.EvalSymlinks(filepath.Join(dpath, "iommu_group"))
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 
 		driver, err := filepath.EvalSymlinks(filepath.Join(dpath, "driver"))
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return nil, err
 		}
 
 		if filepath.Base(driver) != "vfio-pci" {
