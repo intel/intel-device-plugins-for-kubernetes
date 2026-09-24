@@ -319,7 +319,7 @@ func GetTopologyInfo(devs []string) (*pluginapi.TopologyInfo, error) {
 					}
 
 					if nNodeID < 0 {
-						return nil, errors.Wrapf(err, "numa node is negative: %d", nNodeID)
+						return nil, errors.Errorf("numa node is negative: %d", nNodeID)
 					}
 
 					if _, ok := nodeIDs[nNodeID]; !ok {
