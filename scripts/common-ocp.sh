@@ -1,4 +1,4 @@
-# Images required for the OCP e2e tests (operator + QAT + SGX + DSA plugins + workload containers).
+# Images required for the OCP e2e tests (operator + plugins + workload containers).
 OCP_IMAGES=(
     intel-deviceplugin-operator
     intel-qat-plugin
@@ -11,4 +11,5 @@ OCP_IMAGES=(
     sgx-sdk-demo
     crypto-perf
     dsa-dpdk-dmadevtest
+    accel-confing-demo
 )
