@@ -50,13 +50,22 @@ function bind_driver() {
 
 [[ "$DEV" == "dsa" && -e /sys/bus/pci/drivers/"$DSA_DRIVER" ]] && bind_driver "$DSA_DRIVER" "$DSA_PCI_IDS"
 
-for i in $(accel-config list | jq -r '.[].dev' | grep ${OPT} "dsa"); do
+while read -r DEVICE CLIENTS; do
 
-    cmd accel-config disable-device "$i"
+    # Devices with active clients (i.e. workloads using their work queues)
+    # cannot be disabled. Leave them enabled with their current configuration.
+    if [ "$CLIENTS" -gt 0 ]; then
+        echo "skipping $DEVICE: in use by $CLIENTS client(s)"
+        continue
+    fi
 
-done
+    cmd accel-config disable-device "$DEVICE"
 
-for i in $(accel-config list --idle | jq -r '.[].dev' | grep ${OPT} "dsa" | sed -e 's/.*\([0-9]\+\)/\1/'); do
+# "<device> <clients>" for each enabled device.
+done < <(accel-config list | jq -r '.[] | "\(.dev) \(.clients // 0)"' | grep ${OPT} "dsa")
+
+# Devices left enabled above (in use) are skipped by load-config.
+for i in $(accel-config list --idle | jq -r '.[].dev' | grep ${OPT} "dsa" | sed -e 's/^[a-z]*//'); do
 
     config="$DEV.conf"
 
