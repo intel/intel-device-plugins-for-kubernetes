@@ -59,6 +59,13 @@ To create a custom provisioning config:
 $ kubectl create configmap --namespace=inteldeviceplugins-system intel-iaa-config --from-file=demo/iaa.conf
 ```
 
+> **Note:** A IAA device cannot be disabled while any of its work queues has active clients
+> (e.g. running workloads that have the work queue open). If the initcontainer is re-run (for
+> example, when the plugin Pod is restarted or updated) while workloads are using IAA devices,
+> the devices in use are skipped and keep their current configuration. Any changes to the
+> provisioning config take effect for those devices only after the workloads using them have
+> stopped and the initcontainer is run again.
+
 ### Verify Plugin Registration
 
 You can verify the plugin has been registered with the expected nodes by searching for the relevant
