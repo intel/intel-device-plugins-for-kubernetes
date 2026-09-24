@@ -16,6 +16,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -24,7 +25,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pkg/errors"
+	"errors"
+
 	"k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
@@ -73,28 +75,28 @@ func (m *mockL0Service) Stop() {
 }
 func (m *mockL0Service) GetIntelIndices() ([]uint32, error) {
 	if m.fail {
-		return m.indices, errors.Errorf("error, error")
+		return m.indices, fmt.Errorf("error, error")
 	}
 
 	return m.indices, nil
 }
 func (m *mockL0Service) GetDeviceHealth(bdfAddress string) (levelzeroservice.DeviceHealth, error) {
 	if m.fail {
-		return levelzeroservice.DeviceHealth{}, errors.Errorf("error, error")
+		return levelzeroservice.DeviceHealth{}, fmt.Errorf("error, error")
 	}
 
 	return levelzeroservice.DeviceHealth{Memory: m.healthy, Bus: m.healthy, SoC: m.healthy}, nil
 }
 func (m *mockL0Service) GetDeviceTemperature(bdfAddress string) (levelzeroservice.DeviceTemperature, error) {
 	if m.fail || m.failTemp {
-		return levelzeroservice.DeviceTemperature{}, errors.Errorf("error, error")
+		return levelzeroservice.DeviceTemperature{}, fmt.Errorf("error, error")
 	}
 
 	return levelzeroservice.DeviceTemperature{Global: 35.0, GPU: 35.0, Memory: 35.0}, nil
 }
 func (m *mockL0Service) GetDeviceMemoryAmount(bdfAddress string) (uint64, error) {
 	if m.fail {
-		return m.memSize, errors.Errorf("error, error")
+		return m.memSize, fmt.Errorf("error, error")
 	}
 
 	return m.memSize, nil
@@ -131,17 +133,17 @@ func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
 
 	for _, devfsdir := range tc.devfsdirs {
 		if err := os.MkdirAll(path.Join(devfs, devfsdir), 0750); err != nil {
-			return "", "", errors.Wrap(err, "Failed to create fake device directory")
+			return "", "", fmt.Errorf("failed to create fake device directory: %w", err)
 		}
 	}
 
 	if err := os.MkdirAll(sysfs, 0750); err != nil {
-		return "", "", errors.Wrap(err, "Failed to create fake base sysfs directory")
+		return "", "", fmt.Errorf("failed to create fake base sysfs directory: %w", err)
 	}
 
 	if len(tc.pciAddresses) > 0 {
 		if err := os.MkdirAll(filepath.Join(sysfs, ".devices"), 0750); err != nil {
-			return "", "", errors.Wrap(err, "Failed to create fake PCI address base")
+			return "", "", fmt.Errorf("failed to create fake PCI address base: %w", err)
 		}
 
 		for pci, card := range tc.pciAddresses {
@@ -149,28 +151,28 @@ func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
 			cardPath := filepath.Join(sysfs, card)
 
 			if err := os.MkdirAll(fullPci, 0750); err != nil {
-				return "", "", errors.Wrap(err, "Failed to create fake PCI address entry")
+				return "", "", fmt.Errorf("failed to create fake PCI address entry: %w", err)
 			}
 
 			if err := os.MkdirAll(cardPath, 0750); err != nil {
-				return "", "", errors.Wrap(err, "Failed to create fake card entry")
+				return "", "", fmt.Errorf("failed to create fake card entry: %w", err)
 			}
 
 			if err := os.Symlink(fullPci, filepath.Join(sysfs, card, "device")); err != nil {
-				return "", "", errors.Wrap(err, "Failed to create fake PCI address symlinks")
+				return "", "", fmt.Errorf("failed to create fake PCI address symlinks: %w", err)
 			}
 		}
 	}
 
 	for _, sysfsdir := range tc.sysfsdirs {
 		if err := os.MkdirAll(path.Join(sysfs, sysfsdir), 0750); err != nil {
-			return "", "", errors.Wrap(err, "Failed to create fake device directory")
+			return "", "", fmt.Errorf("failed to create fake device directory: %w", err)
 		}
 	}
 
 	for filename, body := range tc.sysfsfiles {
 		if err := os.WriteFile(path.Join(sysfs, filename), body, 0600); err != nil {
-			return "", "", errors.Wrap(err, "Failed to create fake vendor file")
+			return "", "", fmt.Errorf("failed to create fake vendor file: %w", err)
 		}
 	}
 
@@ -179,11 +181,11 @@ func createTestFiles(root string, tc TestCaseDetails) (string, string, error) {
 		symlinkPath := path.Join(sysfs, source)
 
 		if err := os.MkdirAll(driverPath, 0750); err != nil {
-			return "", "", errors.Wrap(err, "Failed to create fake driver file.")
+			return "", "", fmt.Errorf("failed to create fake driver file: %w", err)
 		}
 
 		if err := os.Symlink(driverPath, symlinkPath); err != nil {
-			return "", "", errors.Wrap(err, "Failed to create fake driver symlink file.")
+			return "", "", fmt.Errorf("failed to create fake driver symlink file: %w", err)
 		}
 	}
 

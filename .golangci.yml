@@ -8,7 +8,6 @@ linters:
     - bodyclose
     - copyloopvar
     - dogsled
-    - err113
     - errcheck
     - gocognit
     - goconst

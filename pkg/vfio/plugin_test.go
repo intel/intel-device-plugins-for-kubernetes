@@ -16,12 +16,11 @@ package vfio
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path"
 	"slices"
 	"testing"
-
-	"github.com/pkg/errors"
 
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
@@ -36,26 +35,26 @@ func createTestFiles(prefix string, dirs []string, files map[string][]byte, syml
 	for _, dir := range dirs {
 		err := os.MkdirAll(path.Join(prefix, dir), 0750)
 		if err != nil {
-			return errors.Wrap(err, "Failed to create fake device directory")
+			return fmt.Errorf("failed to create fake device directory: %w", err)
 		}
 	}
 
 	for filename, body := range files {
 		err := os.WriteFile(path.Join(prefix, filename), body, 0600)
 		if err != nil {
-			return errors.Wrap(err, "Failed to create fake vendor file")
+			return fmt.Errorf("failed to create fake vendor file: %w", err)
 		}
 	}
 
 	for link, target := range symlinks {
 		err := os.MkdirAll(path.Join(prefix, target), 0750)
 		if err != nil {
-			return errors.Wrap(err, "Failed to create fake symlink target directory")
+			return fmt.Errorf("failed to create fake symlink target directory: %w", err)
 		}
 
 		err = os.Symlink(path.Join(prefix, target), path.Join(prefix, link))
 		if err != nil {
-			return errors.Wrap(err, "Failed to create fake symlink")
+			return fmt.Errorf("failed to create fake symlink: %w", err)
 		}
 	}
 

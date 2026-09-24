@@ -31,7 +31,6 @@ import (
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/levelzeroservice"
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/pluginutils"
-	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 )
 
@@ -114,7 +113,7 @@ func (l *labeler) scan() ([]string, error) {
 	gpuNameList := []string{}
 
 	if err != nil {
-		return gpuNameList, errors.Wrap(err, "Can't read sysfs folder")
+		return gpuNameList, fmt.Errorf("can't read sysfs folder: %w", err)
 	}
 
 	for _, f := range files {
@@ -141,7 +140,7 @@ func (l *labeler) scan() ([]string, error) {
 
 		_, err = os.ReadDir(path.Join(l.sysfsDRMDir, f.Name(), "device/drm"))
 		if err != nil {
-			return gpuNameList, errors.Wrap(err, "Can't read device folder")
+			return gpuNameList, fmt.Errorf("can't read device folder: %w", err)
 		}
 
 		gpuNameList = append(gpuNameList, f.Name())
@@ -331,7 +330,7 @@ func (l *labeler) createLabels() error {
 		// extract gpu number as a string. scan() has already checked name syntax
 		_, err = fmt.Sscanf(gpuName, "card%s", &gpuNum)
 		if err != nil {
-			return errors.Wrap(err, "gpu name parsing error")
+			return fmt.Errorf("gpu name parsing error: %w", err)
 		}
 
 		numTiles := GetTileCount(filepath.Join(l.sysfsDRMDir, gpuName))

@@ -17,6 +17,7 @@ package npu
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -31,7 +32,6 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/deployments"
 	devicepluginv1 "github.com/intel/intel-device-plugins-for-kubernetes/pkg/apis/deviceplugin/v1"
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/controllers"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -148,7 +148,7 @@ func (c *controller) UpdateStatus(rawObj client.Object, ds *apps.DaemonSet, node
 
 	dsRef, err := reference.GetReference(c.scheme, ds)
 	if err != nil {
-		return false, errors.Wrap(err, "unable to make reference to controlled daemon set")
+		return false, fmt.Errorf("unable to make reference to controlled daemon set: %w", err)
 	}
 
 	if dp.Status.ControlledDaemonSet.UID != dsRef.UID {

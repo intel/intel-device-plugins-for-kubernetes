@@ -35,11 +35,11 @@ import (
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
-	"github.com/pkg/errors"
+	"errors"
 )
 
 var (
-	errFake = errors.New("Fake error")
+	errFake = errors.New("fake error")
 )
 
 const (
@@ -103,7 +103,7 @@ func (k *kubeletStub) start() error {
 
 	s, err := lc.Listen(context.Background(), "unix", k.socket)
 	if err != nil {
-		return errors.Wrap(err, "Can't listen at the socket")
+		return fmt.Errorf("can't listen at the socket: %w", err)
 	}
 
 	k.server = grpc.NewServer()

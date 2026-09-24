@@ -27,8 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 
@@ -390,7 +388,7 @@ func (dp *devicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocatio
 		if req.AllocationSize > int32(len(req.AvailableDeviceIDs)) {
 			klog.V(3).Info("req.AllocationSize must be not greater than len(req.AvailableDeviceIDs).")
 
-			var err = errors.Errorf("AllocationSize (%d) is greater than the number of available device IDs (%d)", req.AllocationSize, len(req.AvailableDeviceIDs))
+			var err = fmt.Errorf("AllocationSize (%d) is greater than the number of available device IDs (%d)", req.AllocationSize, len(req.AvailableDeviceIDs))
 
 			return nil, err
 		}
@@ -705,7 +703,7 @@ func (dp *devicePlugin) createMountsAndCDIDevices(cardPath, name string, devSpec
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	files, err := os.ReadDir(dp.sysfsDrmDir)
 	if err != nil {
-		return nil, errors.Wrap(err, "Can't read sysfs folder")
+		return nil, fmt.Errorf("can't read sysfs folder: %w", err)
 	}
 
 	monitor := make(map[string][]pluginapi.DeviceSpec, 0)

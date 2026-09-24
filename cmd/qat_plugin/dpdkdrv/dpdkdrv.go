@@ -27,8 +27,9 @@ import (
 	"strings"
 	"time"
 
+	"errors"
+
 	"github.com/go-ini/ini"
-	"github.com/pkg/errors"
 
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
@@ -132,19 +133,19 @@ type DevicePlugin struct {
 // NewDevicePlugin returns new instance of vfio based QAT plugin.
 func NewDevicePlugin(maxDevices int, kernelVfDrivers string, dpdkDriver string, preferredAllocationPolicy string) (*DevicePlugin, error) {
 	if !isValidDpdkDeviceDriver(dpdkDriver) {
-		return nil, errors.Errorf("wrong DPDK device driver: %s", dpdkDriver)
+		return nil, fmt.Errorf("wrong DPDK device driver: %s", dpdkDriver)
 	}
 
 	kernelDrivers := strings.Split(kernelVfDrivers, ",")
 	for _, driver := range kernelDrivers {
 		if !isValidKernelDriver(driver) {
-			return nil, errors.Errorf("wrong kernel VF driver: %s", driver)
+			return nil, fmt.Errorf("wrong kernel VF driver: %s", driver)
 		}
 	}
 
 	allocationPolicyFunc := getAllocationPolicy(preferredAllocationPolicy)
 	if allocationPolicyFunc == nil {
-		return nil, errors.Errorf("wrong allocation policy: %s", preferredAllocationPolicy)
+		return nil, fmt.Errorf("wrong allocation policy: %s", preferredAllocationPolicy)
 	}
 
 	return newDevicePlugin(pciDriverDirectory, pciDeviceDirectory, maxDevices, kernelDrivers, dpdkDriver, allocationPolicyFunc), nil
@@ -217,7 +218,7 @@ func (dp *DevicePlugin) GetPreferredAllocation(rqt *pluginapi.PreferredAllocatio
 	for _, req := range rqt.ContainerRequests {
 		// Add a security check here. This should never happen unless there occurs error in kubelet device plugin manager.
 		if req.AllocationSize > int32(len(req.AvailableDeviceIDs)) {
-			var err = errors.Errorf("AllocationSize (%d) is greater than the number of available device IDs (%d)", req.AllocationSize, len(req.AvailableDeviceIDs))
+			var err = fmt.Errorf("AllocationSize (%d) is greater than the number of available device IDs (%d)", req.AllocationSize, len(req.AvailableDeviceIDs))
 			return nil, err
 		}
 
@@ -246,7 +247,7 @@ func (dp *DevicePlugin) getDpdkDevice(vfBdf string) (string, error) {
 		}
 
 		if len(files) == 0 {
-			return "", errors.New("No devices found")
+			return "", errors.New("no devices found")
 		}
 
 		return files[0].Name(), nil
@@ -256,7 +257,7 @@ func (dp *DevicePlugin) getDpdkDevice(vfBdf string) (string, error) {
 		group, err := filepath.EvalSymlinks(vfioDirPath)
 
 		if err != nil {
-			return "", errors.WithStack(err)
+			return "", err
 		}
 
 		s := filepath.Base(group)
@@ -273,7 +274,7 @@ func (dp *DevicePlugin) getDpdkDevice(vfBdf string) (string, error) {
 		return s, nil
 
 	default:
-		return "", errors.New("Unknown DPDK driver")
+		return "", errors.New("unknown DPDK driver")
 	}
 }
 
@@ -414,7 +415,7 @@ func getDeviceHealthiness(device string, lookup map[string]string) string {
 func getDeviceCapabilities(device string) (string, error) {
 	devID, err := getDeviceID(device)
 	if err != nil {
-		return "", errors.Wrapf(err, "cannot determine device capabilities")
+		return "", fmt.Errorf("cannot determine device capabilities: %w", err)
 	}
 
 	devicesWithCapabilities := map[string]struct{}{
@@ -449,7 +450,7 @@ func getDeviceCapabilities(device string) (string, error) {
 func getDeviceID(device string) (string, error) {
 	devID, err := os.ReadFile(filepath.Join(device, "device"))
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to read device ID")
+		return "", fmt.Errorf("failed to read device ID: %w", err)
 	}
 
 	return strings.TrimPrefix(string(bytes.TrimSpace(devID)), "0x"), nil
@@ -457,7 +458,7 @@ func getDeviceID(device string) (string, error) {
 
 func writeToDriver(path, value string) error {
 	if err := os.WriteFile(path, []byte(value), 0600); err != nil {
-		return errors.Wrapf(err, "write to driver failed: %s", value)
+		return fmt.Errorf("write to driver failed: %s: %w", value, err)
 	}
 
 	return nil

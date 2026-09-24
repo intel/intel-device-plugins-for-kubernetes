@@ -24,7 +24,6 @@ import (
 	"time"
 
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
-	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
@@ -87,7 +86,7 @@ func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 func readFile(fpath string) (string, error) {
 	data, err := os.ReadFile(fpath)
 	if err != nil {
-		return "", errors.WithStack(err)
+		return "", err
 	}
 
 	return strings.TrimSpace(string(data)), nil
@@ -100,11 +99,11 @@ func getDevNodes(devDir, charDevDir, wqName string) ([]pluginapi.DeviceSpec, err
 
 	stat, err := os.Stat(devPath)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 	// Check if it's a character device
 	if stat.Mode()&os.ModeCharDevice == 0 {
-		return nil, errors.Errorf("%s is not a character device", devPath)
+		return nil, fmt.Errorf("%s is not a character device", devPath)
 	}
 
 	// get /dev/char/<major>:<minor> symlink for the device node
@@ -114,20 +113,20 @@ func getDevNodes(devDir, charDevDir, wqName string) ([]pluginapi.DeviceSpec, err
 
 	stat, err = os.Lstat(charDevPath)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	if stat.Mode()&os.ModeSymlink == 0 {
-		return nil, errors.Errorf("%s is not a symlink", charDevPath)
+		return nil, fmt.Errorf("%s is not a symlink", charDevPath)
 	}
 	// Check if symlink points to the correct device node
 	destPath, err := filepath.EvalSymlinks(charDevPath)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	if destPath != devPath {
-		return nil, errors.Errorf("%s points to %s instead of device node %s", charDevPath, destPath, devPath)
+		return nil, fmt.Errorf("%s points to %s instead of device node %s", charDevPath, destPath, devPath)
 	}
 
 	// report device node and /dev/char/<major>:<minor> symlink
@@ -150,7 +149,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 	// scan sysfs tree
 	matches, err := filepath.Glob(dp.statePattern)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
 
 	devTree := dpapi.NewDeviceTree()

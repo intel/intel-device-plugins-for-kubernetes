@@ -24,8 +24,9 @@ import (
 	"strings"
 	"time"
 
+	"errors"
+
 	"github.com/onsi/gomega"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -106,7 +107,7 @@ func WaitForPodFailure(ctx context.Context, f *framework.Framework, name string,
 			case v1.PodFailed:
 				return true, nil
 			case v1.PodSucceeded:
-				return true, errors.Errorf("pod %q successed with reason: %q, message: %q", name, pod.Status.Reason, pod.Status.Message)
+				return true, fmt.Errorf("pod %q successed with reason: %q, message: %q", name, pod.Status.Reason, pod.Status.Message)
 			default:
 				return false, nil
 			}
@@ -268,15 +269,15 @@ func TestContainersRunAsNonRoot(pods []v1.Pod) error {
 	for _, p := range pods {
 		for _, c := range append(p.Spec.InitContainers, p.Spec.Containers...) {
 			if c.SecurityContext.RunAsNonRoot == nil || !*c.SecurityContext.RunAsNonRoot {
-				return errors.Errorf("%s (container: %s): RunAsNonRoot is not true", p.Name, c.Name)
+				return fmt.Errorf("%s (container: %s): RunAsNonRoot is not true", p.Name, c.Name)
 			}
 
 			if c.SecurityContext.RunAsGroup == nil || *c.SecurityContext.RunAsGroup == 0 {
-				return errors.Errorf("%s (container: %s): RunAsGroup is root (0)", p.Name, c.Name)
+				return fmt.Errorf("%s (container: %s): RunAsGroup is root (0)", p.Name, c.Name)
 			}
 
 			if c.SecurityContext.RunAsUser == nil || *c.SecurityContext.RunAsUser == 0 {
-				return errors.Errorf("%s (container: %s): RunAsUser is root (0)", p.Name, c.Name)
+				return fmt.Errorf("%s (container: %s): RunAsUser is root (0)", p.Name, c.Name)
 			}
 		}
 	}
@@ -298,7 +299,7 @@ func TestPodsFileSystemInfo(pods []v1.Pod) error {
 	for _, p := range pods {
 		for _, c := range append(p.Spec.InitContainers, p.Spec.Containers...) {
 			if c.SecurityContext.ReadOnlyRootFilesystem == nil || !*c.SecurityContext.ReadOnlyRootFilesystem {
-				return errors.Errorf("%s (container: %s): Writable root filesystem", p.Name, c.Name)
+				return fmt.Errorf("%s (container: %s): Writable root filesystem", p.Name, c.Name)
 			}
 
 			printVolumeMounts(c.VolumeMounts)
@@ -343,13 +344,13 @@ func TestWebhookServerTLS(ctx context.Context, f *framework.Framework, serviceNa
 
 	output, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, "testssl-tester", "testssl-container")
 	if err != nil {
-		return errors.Wrap(err, "failed to get output for testssl.sh run")
+		return fmt.Errorf("failed to get output for testssl.sh run: %w", err)
 	}
 
 	framework.Logf("testssl.sh output:\n %s", output)
 
 	if waitErr != nil {
-		return errors.Wrap(waitErr, "testssl.sh run did not succeed")
+		return fmt.Errorf("testssl.sh run did not succeed: %w", waitErr)
 	}
 
 	return nil

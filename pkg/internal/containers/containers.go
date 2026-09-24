@@ -15,9 +15,8 @@
 package containers
 
 import (
+	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	corev1 "k8s.io/api/core/v1"
 )
@@ -33,7 +32,7 @@ func GetRequestedResources(container corev1.Container, ns string) (map[string]in
 		}
 
 		if container.Resources.Limits[resourceName] != resourceQuantity {
-			return nil, errors.Errorf(
+			return nil, fmt.Errorf(
 				"'limits' and 'requests' for %q must be equal as extended resources cannot be overcommitted",
 				rname)
 		}
@@ -48,14 +47,14 @@ func GetRequestedResources(container corev1.Container, ns string) (map[string]in
 		}
 
 		if container.Resources.Requests[resourceName] != resourceQuantity {
-			return nil, errors.Errorf(
+			return nil, fmt.Errorf(
 				"'limits' and 'requests' for %q must be equal as extended resources cannot be overcommitted",
 				rname)
 		}
 
 		quantity, ok := resourceQuantity.AsInt64()
 		if !ok {
-			return nil, errors.Errorf("resource quantity isn't of integral type for %q", rname)
+			return nil, fmt.Errorf("resource quantity isn't of integral type for %q", rname)
 		}
 
 		resources[rname] = quantity
