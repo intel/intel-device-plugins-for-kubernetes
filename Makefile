@@ -171,11 +171,26 @@ e2e-spr:
 e2e:
 	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "$(E2E_FILTER)" $(E2E_DRYRUN) -delete-namespace-on-failure=false
 
-e2e-operator:
+e2e-operator-reminder:
 	@echo "NOTE: This depends on 'mirror-images-ocp' target but does not depend on it directly to allow running tests without building and mirroring every time."
 	@echo "For OCP: Make sure PROJECT_NAMESPACE, IMAGE_PATH and PLUGIN_VERSION env variables are set, and IMAGE_REGISTRY _not_ set."
 	@echo "For K8s: Make sure PROJECT_NAMESPACE, IMAGE_PATH, PLUGIN_VERSION and IMAGE_REGISTRY env variables are set"
-	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "operator && !(gpu || iaa)" $(E2E_DRYRUN) -delete-namespace-on-failure=false
+
+# Target to run all operator tests
+e2e-operator: e2e-operator-reminder
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "operator" $(E2E_DRYRUN) -delete-namespace-on-failure=false
+
+e2e-operator-qat: e2e-operator-reminder
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "operator && qat" $(E2E_DRYRUN) -delete-namespace-on-failure=false
+
+e2e-operator-dsa: e2e-operator-reminder
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "operator && dsa && !vfio" $(E2E_DRYRUN) -delete-namespace-on-failure=false
+
+e2e-operator-iaa: e2e-operator-reminder
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "operator && iaa" $(E2E_DRYRUN) -delete-namespace-on-failure=false
+
+e2e-operator-sgx: e2e-operator-reminder
+	@$(GO) test -v ./test/e2e/... -ginkgo.v -ginkgo.show-node-events --ginkgo.label-filter "operator && sgx" $(E2E_DRYRUN) -delete-namespace-on-failure=false
 
 pre-pull:
 ifeq ($(TAG),devel)
