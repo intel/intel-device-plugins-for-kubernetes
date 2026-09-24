@@ -349,7 +349,7 @@ func TestWebhookServerTLS(ctx context.Context, f *framework.Framework, serviceNa
 	framework.Logf("testssl.sh output:\n %s", output)
 
 	if waitErr != nil {
-		return errors.Wrap(err, "testssl.sh run did not succeed")
+		return errors.Wrap(waitErr, "testssl.sh run did not succeed")
 	}
 
 	return nil
