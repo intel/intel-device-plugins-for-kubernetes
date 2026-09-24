@@ -60,6 +60,12 @@ const (
 
 	dpdkDemoYaml = "demo/dsa-dpdk-dmadevtest.yaml"
 	dpdkPodName  = "dpdk"
+
+	dpdkDdaVfioDemoYaml = "demo/dsa-dpdk-dmadevtest-vfio.yaml"
+	dpdkDdaVfioPodName  = "dpdk-vfio"
+
+	iaaAccelConfigTestYaml = "demo/iaa-accel-config-demo-pod.yaml"
+	iaaAccelConfigPodName  = "iaa-accel-config-demo"
 )
 
 var (
@@ -200,6 +206,7 @@ func describe() {
 			"dsadeviceplugin-sample",
 			"intel-dsa-plugin",
 			[]v1.ResourceName{"dsa.intel.com/vfio"},
+			dsaVfioDpdkWorkload,
 		)
 	})
 
@@ -210,6 +217,7 @@ func describe() {
 			"iaadeviceplugin-sample",
 			"intel-iaa-plugin",
 			[]v1.ResourceName{"iaa.intel.com/wq-user-dedicated"},
+			iaaAccelConfigWorkload,
 		)
 	})
 
@@ -568,5 +576,69 @@ func dsaDpdkWorkload(ctx context.Context, f *framework.Framework) {
 			framework.Logf("logs from DSA DPDK demo pod:\n%s", logs)
 		}
 		framework.Failf("DSA DPDK demo did not finish successfully: %v", err)
+	}
+}
+
+func dsaVfioDpdkWorkload(ctx context.Context, f *framework.Framework) {
+	ginkgo.By("creating DSA Pod requesting DSA resources")
+
+	demoDpdkPath, err := e2eutils.LocateRepoFile(dpdkDdaVfioDemoYaml)
+	if err != nil {
+		framework.Failf("unable to locate %q: %v", dpdkDdaVfioDemoYaml, err)
+	}
+
+	// Create a kustomization yaml on the fly to set correct container image path and version for the deployment
+	tmpDir, err := operutils.CreateWorkloadKustomizationFromFile(demoDpdkPath, operutils.PluginVersion())
+	if err != nil {
+		framework.Failf("unable to create kustomization yaml: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	e2ekubectl.RunKubectlOrDie(operatorNS, "apply", "-k", tmpDir)
+
+	defer func() {
+		ginkgo.By("deleting the DSA DPDK VFIO test pod")
+		e2ekubectl.RunKubectlOrDie(operatorNS, "delete", "--ignore-not-found=true", "-k", tmpDir)
+	}()
+
+	ginkgo.By("waiting for the DSA DPDK demo to succeed")
+	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkDdaVfioPodName, operatorNS, 200*time.Second)
+	if err != nil {
+		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, dpdkDdaVfioPodName, dpdkDdaVfioPodName); logErr == nil {
+			framework.Logf("logs from DSA DPDK demo pod:\n%s", logs)
+		}
+		framework.Failf("DSA DPDK demo did not finish successfully: %v", err)
+	}
+}
+
+func iaaAccelConfigWorkload(ctx context.Context, f *framework.Framework) {
+	ginkgo.By("creating IAA Accel Config test pod")
+
+	demoAccelConfigPath, err := e2eutils.LocateRepoFile(iaaAccelConfigTestYaml)
+	if err != nil {
+		framework.Failf("unable to locate %q: %v", iaaAccelConfigTestYaml, err)
+	}
+
+	// Create a kustomization yaml on the fly to set correct container image path and version for the deployment
+	tmpDir, err := operutils.CreateWorkloadKustomizationFromFile(demoAccelConfigPath, operutils.PluginVersion())
+	if err != nil {
+		framework.Failf("unable to create kustomization yaml: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	e2ekubectl.RunKubectlOrDie(operatorNS, "apply", "-k", tmpDir)
+
+	defer func() {
+		ginkgo.By("deleting the IAA Accel Config test pod")
+		e2ekubectl.RunKubectlOrDie(operatorNS, "delete", "--ignore-not-found=true", "-k", tmpDir)
+	}()
+
+	ginkgo.By("waiting for the IAA Accel Config demo to succeed")
+	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, iaaAccelConfigPodName, operatorNS, 200*time.Second)
+	if err != nil {
+		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, iaaAccelConfigPodName, iaaAccelConfigPodName); logErr == nil {
+			framework.Logf("logs from IAA Accel Config demo pod:\n%s", logs)
+		}
+		framework.Failf("IAA Accel Config demo did not finish successfully: %v", err)
 	}
 }
