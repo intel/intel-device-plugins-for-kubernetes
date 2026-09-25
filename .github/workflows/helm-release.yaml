@@ -1,0 +1,40 @@
+name: Helm chart release
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/**'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Package & Push charts
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REGISTRY: ghcr.io/intel
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+      - name: Check charts
+        run: make check-charts
+      - name: Login to ghcr.io
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+      - name: Package & push charts
+        run: |
+          mkdir -p _work/charts
+          for chart in charts/*/; do
+            name=$(helm show chart "$chart" | awk '/^name:/ {print $2}')
+            version=$(helm show chart "$chart" | awk '/^version:/ {gsub(/"/, "", $2); print $2}')
+            if helm show chart "oci://${REGISTRY}/${name}" --version "$version" > /dev/null 2>&1; then
+              echo "${name} ${version} already published, skipping"
+              continue
+            fi
+            helm package "$chart" --destination _work/charts
+            helm push "_work/charts/${name}-${version}.tgz" "oci://${REGISTRY}"
+          done

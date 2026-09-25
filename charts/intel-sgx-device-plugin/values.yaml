@@ -1,0 +1,19 @@
+image:
+  repository: intel/intel-sgx-plugin
+  # -- Image tag. Defaults to the chart appVersion when empty.
+  tag: ""
+  # -- Image digest (e.g. sha256:...). When set, the image is pinned by digest
+  # and the tag is ignored. Must be updated together with appVersion.
+  digest: "sha256:0352a2edd0c98d065d95d2906569b6c44b53120f2e125a8d8ef1ba7dce6a759e"
+  pullPolicy: IfNotPresent
+
+# -- Log verbosity level passed as the -v argument.
+logLevel: 2
+
+# -- Number of SGX enclave resources advertised per node (-enclave-limit).
+# Currently also used for -provision-limit. Leave empty to use the plugin default.
+enclaveLimit: ""
+
+# -- Additional node selector labels merged with the default
+# kubernetes.io/arch: amd64 selector.
+nodeSelector: {}
