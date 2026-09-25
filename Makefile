@@ -231,12 +231,26 @@ space := $(null) #
 comma := ,
 images_json := $(subst $(space),$(comma),[$(addprefix ",$(addsuffix ",$(images) $(demos))]))
 
+charts := $(wildcard charts/*/)
+
+check-charts:
+	@for chart in $(charts); do \
+		echo "Checking $$chart"; \
+		helm lint $$chart || exit 1; \
+		helm template test $$chart > /dev/null || exit 1; \
+		version=$$(helm show chart $$chart | awk '/^version:/ {gsub(/"/, "", $$2); print $$2}'); \
+		app_version=$$(helm show chart $$chart | awk '/^appVersion:/ {gsub(/"/, "", $$2); print $$2}'); \
+		case "$$version" in $$app_version|$$app_version-*) ;; *) echo "$$chart: version ($$version) must be appVersion ($$app_version) with an optional pre-release suffix"; exit 1;; esac; \
+		helm show values $$chart | grep -Eq '^  digest: "sha256:[0-9a-f]{64}"' || (echo "$$chart: image.digest must be pinned in values.yaml"; exit 1); \
+		helm show chart $$chart | grep -q "org.opencontainers.image.version: $$version$$" || (echo "$$chart: org.opencontainers.image.version annotation must match version ($$version)"; exit 1); \
+	done
+
 check-github-actions:
 	@python3 -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin, Loader=yaml.SafeLoader), sys.stdout)' < .github/workflows/lib-build.yaml | \
 	jq -e '$(images_json) - .jobs.image.strategy.matrix.image == []' > /dev/null || \
 	(echo "Make sure all images are listed in .github/workflows/lib-build.yaml"; exit 1)
 
-.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-github-actions envtest fixture update-fixture install-tools test-image-base-layer
+.PHONY: all format test lint build images $(cmds) $(images) lock-images vendor pre-pull set-version check-charts check-github-actions envtest fixture update-fixture install-tools test-image-base-layer
 
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build

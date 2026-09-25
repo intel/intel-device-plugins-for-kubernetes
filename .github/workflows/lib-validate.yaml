@@ -48,6 +48,13 @@ jobs:
         with:
           version: v2.13.2
           args: -v --timeout 5m
+  helm:
+    name: Check Helm charts
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+      - run: make check-charts
   build:
     name: Build and check device plugins
     runs-on: ubuntu-24.04

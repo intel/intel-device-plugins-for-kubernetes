@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-sgx-plugin
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "intel-sgx-device-plugin.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: intel-sgx-plugin
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: intel-sgx-plugin
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: intel-sgx-plugin
+        image: {{ include "intel-sgx-device-plugin.image" . }}
+        args:
+        - -v
+        - {{ .Values.logLevel | quote }}
+        {{- with .Values.enclaveLimit }}
+        - -provision-limit
+        - {{ . | quote }}
+        - -enclave-limit
+        - {{ . | quote }}
+        {{- end }}
+        securityContext:
+          seLinuxOptions:
+            type: "container_device_plugin_t"
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        resources:
+          requests:
+            memory: "15Mi"
+            cpu: 40m
+          limits:
+            memory: "50Mi"
+            cpu: 100m
+        volumeMounts:
+        - name: kubeletsockets
+          mountPath: /var/lib/kubelet/device-plugins
+        - name: sgx-enclave
+          mountPath: /dev/sgx_enclave
+          readOnly: true
+        - name: sgx-provision
+          mountPath: /dev/sgx_provision
+          readOnly: true
+      volumes:
+      - name: kubeletsockets
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+      - name: sgx-enclave
+        hostPath:
+          path: /dev/sgx_enclave
+          type: CharDevice
+      - name: sgx-provision
+        hostPath:
+          path: /dev/sgx_provision
+          type: CharDevice
+      nodeSelector:
+        kubernetes.io/arch: amd64
+        {{- with .Values.nodeSelector }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
