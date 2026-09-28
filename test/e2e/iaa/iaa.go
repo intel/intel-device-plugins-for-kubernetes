@@ -45,20 +45,11 @@ func describe() {
 	f := framework.NewDefaultFramework("iaaplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	kustomizationPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationYaml, errFailedToLocateRepoFile)
-	}
+	kustomizationPath := utils.MustLocateRepoFile(kustomizationYaml)
 
-	configmap, errFailedToLocateRepoFile := utils.LocateRepoFile(configmapYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", configmapYaml, errFailedToLocateRepoFile)
-	}
+	configmap := utils.MustLocateRepoFile(configmapYaml)
 
-	demoPath, errFailedToLocateRepoFile := utils.LocateRepoFile(demoYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", demoYaml, errFailedToLocateRepoFile)
-	}
+	demoPath := utils.MustLocateRepoFile(demoYaml)
 
 	var dpPodName string
 

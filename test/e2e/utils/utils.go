@@ -24,8 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"errors"
-
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,33 +92,20 @@ func WaitForNodesWithResource(ctx context.Context, c clientset.Interface, res v1
 	return err
 }
 
-// LocateRepoFile locates a file inside this repository.
-func LocateRepoFile(repopath string) (string, error) {
-	root := os.Getenv("PLUGINS_REPO_DIR")
-	if root != "" {
-		path := filepath.Join(root, repopath)
-		//nolint:gosec // The path is repository test data selected by the e2e test.
-		if _, err := os.Stat(path); !os.IsNotExist(err) {
-			return path, nil
-		}
-	}
-
-	currentDir, err := os.Getwd()
+// MustLocateRepoFile returns the absolute path of a file inside this repository
+// and fails the test if the file does not exist. The repository root comes from
+// the e2e framework's --repo-root flag (framework.TestContext.RepoRoot).
+func MustLocateRepoFile(repopath string) string {
+	path, err := filepath.Abs(filepath.Join(framework.TestContext.RepoRoot, repopath))
 	if err != nil {
-		return "", err
+		framework.Failf("unable to resolve %q: %v", repopath, err)
 	}
 
-	path := filepath.Join(currentDir, repopath)
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		return path, nil
+	if _, err := os.Stat(path); err != nil {
+		framework.Failf("unable to locate %q: %v (check the --repo-root flag)", repopath, err)
 	}
 
-	path = filepath.Join(currentDir, "../../"+repopath)
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		return path, err
-	}
-
-	return "", errors.New("no file found, try to define PLUGINS_REPO_DIR pointing to the root of the repository")
+	return path
 }
 
 func copyFiles(srcDir, dstDir string) error {
@@ -336,10 +321,7 @@ func TestWebhookServerTLS(ctx context.Context, f *framework.Framework, serviceNa
 }
 
 func Kubectl(ns string, cmd string, opt string, file string) {
-	path, err := LocateRepoFile(file)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", file, err)
-	}
+	path := MustLocateRepoFile(file)
 
 	if opt == "-k" {
 		path = filepath.Dir(path)

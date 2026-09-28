@@ -77,20 +77,11 @@ func describe() {
 	f := framework.NewDefaultFramework("gpuplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	vanillaPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationYaml, errFailedToLocateRepoFile)
-	}
+	vanillaPath := utils.MustLocateRepoFile(kustomizationYaml)
 
-	monitoringPath, errFailedToLocateRepoFile := utils.LocateRepoFile(monitoringYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", monitoringYaml, errFailedToLocateRepoFile)
-	}
+	monitoringPath := utils.MustLocateRepoFile(monitoringYaml)
 
-	healthMgmtPath, errFailedToLocateRepoFile := utils.LocateRepoFile(healthMgmtYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", healthMgmtYaml, errFailedToLocateRepoFile)
-	}
+	healthMgmtPath := utils.MustLocateRepoFile(healthMgmtYaml)
 
 	ginkgo.Context("When GPU plugin is deployed", ginkgo.Label("i915"), func() {
 		ginkgo.AfterEach(func(ctx context.Context) {
@@ -197,10 +188,7 @@ func describe() {
 		ginkgo.It("run a small workload on the GPU", ginkgo.Label("pytorch"), func(ctx context.Context) {
 			createPluginAndVerifyExistence(f, ctx, vanillaPath, "gpu.intel.com/i915")
 
-			kustomYaml, err := utils.LocateRepoFile(ptKustomizationYaml)
-			if err != nil {
-				framework.Failf("unable to locate %q: %v", ptKustomizationYaml, err)
-			}
+			kustomYaml := utils.MustLocateRepoFile(ptKustomizationYaml)
 
 			ginkgo.By("submitting demo deployment")
 
@@ -208,7 +196,7 @@ func describe() {
 
 			ginkgo.By("waiting the pod to finish")
 
-			err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, ptPodName, f.Namespace.Name, 300*time.Second)
+			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, ptPodName, f.Namespace.Name, 300*time.Second)
 			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, ptPodName, containerName))
 
 			framework.Logf("tensorflow execution succeeded!")

@@ -51,38 +51,22 @@ func describe() {
 	f := framework.NewDefaultFramework("dsaplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	var errFailedToLocateRepoFile error
 	var dpPodName string
 	var kustomizationPath string
 	var configMapPath string
 	var expectedResource corev1.ResourceName
 
-	demoPath, errFailedToLocateRepoFile := utils.LocateRepoFile(demoYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", demoYaml, errFailedToLocateRepoFile)
-	}
+	demoPath := utils.MustLocateRepoFile(demoYaml)
 
-	demoDpdkPath, errFailedToLocateRepoFile := utils.LocateRepoFile(dpdkDemoYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", dpdkDemoYaml, errFailedToLocateRepoFile)
-	}
+	demoDpdkPath := utils.MustLocateRepoFile(dpdkDemoYaml)
 
-	demoDpdkVfioPath, errFailedToLocateRepoFile := utils.LocateRepoFile(dpdkVfioYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", dpdkDemoYaml, errFailedToLocateRepoFile)
-	}
+	demoDpdkVfioPath := utils.MustLocateRepoFile(dpdkVfioYaml)
 
 	ginkgo.Context("When DSA resources are available", ginkgo.Label("dsa"), ginkgo.Label("idxd"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
-			kustomizationPath, errFailedToLocateRepoFile = utils.LocateRepoFile(kustomizationYaml)
-			if errFailedToLocateRepoFile != nil {
-				framework.Failf("unable to locate %q: %v", kustomizationYaml, errFailedToLocateRepoFile)
-			}
+			kustomizationPath = utils.MustLocateRepoFile(kustomizationYaml)
 
-			configMapPath, errFailedToLocateRepoFile = utils.LocateRepoFile(configmapYaml)
-			if errFailedToLocateRepoFile != nil {
-				framework.Failf("unable to locate %q: %v", configmapYaml, errFailedToLocateRepoFile)
-			}
+			configMapPath = utils.MustLocateRepoFile(configmapYaml)
 
 			expectedResource = "dsa.intel.com/wq-user-dedicated"
 
@@ -139,10 +123,7 @@ func describe() {
 
 	ginkgo.Context("When DSA VFIO resources are available", ginkgo.Label("dsa"), ginkgo.Label("vfio"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
-			kustomizationPath, errFailedToLocateRepoFile = utils.LocateRepoFile(kustomVfioYaml)
-			if errFailedToLocateRepoFile != nil {
-				framework.Failf("unable to locate %q: %v", kustomVfioYaml, errFailedToLocateRepoFile)
-			}
+			kustomizationPath = utils.MustLocateRepoFile(kustomVfioYaml)
 
 			expectedResource = "dsa.intel.com/vfio"
 
