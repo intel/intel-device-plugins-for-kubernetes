@@ -109,10 +109,7 @@ func describe() {
 			overlayFile = operatorOverlay
 		}
 
-		overlayPath, err := e2eutils.LocateRepoFile(overlayFile)
-		if err != nil {
-			framework.Failf("unable to locate kustomize overlay %q: %v", overlayFile, err)
-		}
+		overlayPath := e2eutils.MustLocateRepoFile(overlayFile)
 
 		tempDir, err = os.MkdirTemp("", "operator-e2e-")
 		if err != nil {
@@ -446,10 +443,7 @@ func buildGPUPluginCR() string {
 }
 
 func qatDcWorkload(ctx context.Context, f *framework.Framework) {
-	compressTestYamlPath, errFailedToLocateRepoFile := e2eutils.LocateRepoFile(compressTestYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", compressTestYaml, errFailedToLocateRepoFile)
-	}
+	compressTestYamlPath := e2eutils.MustLocateRepoFile(compressTestYaml)
 
 	ginkgo.By("create kustomization yaml for workload Pod")
 	tmpDir, err := operutils.CreateWorkloadKustomizationFromDir(filepath.Dir(compressTestYamlPath), operutils.PluginVersion())
@@ -477,10 +471,7 @@ func qatDcWorkload(ctx context.Context, f *framework.Framework) {
 }
 
 func qatCyWorkload(ctx context.Context, f *framework.Framework) {
-	cryptoTestYamlPath, errFailedToLocateRepoFile := e2eutils.LocateRepoFile(cryptoTestYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", cryptoTestYaml, errFailedToLocateRepoFile)
-	}
+	cryptoTestYamlPath := e2eutils.MustLocateRepoFile(cryptoTestYaml)
 
 	ginkgo.By("create kustomization yaml for workload Pod")
 	tmpDir, err := operutils.CreateWorkloadKustomizationFromFile(cryptoTestYamlPath, operutils.PluginVersion())
@@ -550,10 +541,7 @@ func sgxWorkload(ctx context.Context, f *framework.Framework) {
 func dsaDpdkWorkload(ctx context.Context, f *framework.Framework) {
 	ginkgo.By("creating DSA Pod requesting DSA resources")
 
-	demoDpdkPath, err := e2eutils.LocateRepoFile(dpdkDemoYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", dpdkDemoYaml, err)
-	}
+	demoDpdkPath := e2eutils.MustLocateRepoFile(dpdkDemoYaml)
 
 	// Create a kustomization yaml on the fly to set correct container image path and version for the deployment
 	tmpDir, err := operutils.CreateWorkloadKustomizationFromFile(demoDpdkPath, operutils.PluginVersion())
@@ -582,10 +570,7 @@ func dsaDpdkWorkload(ctx context.Context, f *framework.Framework) {
 func dsaVfioDpdkWorkload(ctx context.Context, f *framework.Framework) {
 	ginkgo.By("creating DSA Pod requesting DSA resources")
 
-	demoDpdkPath, err := e2eutils.LocateRepoFile(dpdkDdaVfioDemoYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", dpdkDdaVfioDemoYaml, err)
-	}
+	demoDpdkPath := e2eutils.MustLocateRepoFile(dpdkDdaVfioDemoYaml)
 
 	// Create a kustomization yaml on the fly to set correct container image path and version for the deployment
 	tmpDir, err := operutils.CreateWorkloadKustomizationFromFile(demoDpdkPath, operutils.PluginVersion())
@@ -614,10 +599,7 @@ func dsaVfioDpdkWorkload(ctx context.Context, f *framework.Framework) {
 func iaaAccelConfigWorkload(ctx context.Context, f *framework.Framework) {
 	ginkgo.By("creating IAA Accel Config test pod")
 
-	demoAccelConfigPath, err := e2eutils.LocateRepoFile(iaaAccelConfigTestYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", iaaAccelConfigTestYaml, err)
-	}
+	demoAccelConfigPath := e2eutils.MustLocateRepoFile(iaaAccelConfigTestYaml)
 
 	// Create a kustomization yaml on the fly to set correct container image path and version for the deployment
 	tmpDir, err := operutils.CreateWorkloadKustomizationFromFile(demoAccelConfigPath, operutils.PluginVersion())

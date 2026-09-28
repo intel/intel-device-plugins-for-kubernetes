@@ -63,20 +63,11 @@ func describeQatDpdkPlugin() {
 	f := framework.NewDefaultFramework("qatplugindpdk")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	kustomizationPath, errFailedToLocateRepoFile := utils.LocateRepoFile(qatPluginKustomizationYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", qatPluginKustomizationYaml, errFailedToLocateRepoFile)
-	}
+	kustomizationPath := utils.MustLocateRepoFile(qatPluginKustomizationYaml)
 
-	cryptoTestYamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(cryptoTestYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", cryptoTestYaml, errFailedToLocateRepoFile)
-	}
+	cryptoTestYamlPath := utils.MustLocateRepoFile(cryptoTestYaml)
 
-	compressTestYamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(compressTestYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", compressTestYaml, errFailedToLocateRepoFile)
-	}
+	compressTestYamlPath := utils.MustLocateRepoFile(compressTestYaml)
 
 	var dpPodName string
 
