@@ -32,8 +32,6 @@ import (
 )
 
 const (
-	ns                = "inteldeviceplugins-system"
-	timeout           = time.Second * 120
 	kustomizationYaml = "deployments/dsa_plugin/overlays/dsa_initcontainer/dsa_initcontainer.yaml"
 	kustomVfioYaml    = "deployments/dsa_plugin/overlays/dsa_vfio_initcontainer/dsa_initcontainer.yaml"
 	configmapYaml     = "demo/dsa.conf"

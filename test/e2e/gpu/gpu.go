@@ -39,7 +39,6 @@ const (
 	kustomizationYaml   = "deployments/gpu_plugin/kustomization.yaml"
 	monitoringYaml      = "deployments/gpu_plugin/overlays/monitoring_shared-dev_nfd/kustomization.yaml"
 	healthMgmtYaml      = "deployments/gpu_plugin/overlays/health/kustomization.yaml"
-	nfdRulesYaml        = "deployments/nfd/overlays/node-feature-rules/kustomization.yaml"
 	containerName       = "testcontainer"
 	ptKustomizationYaml = "deployments/gpu_pytorch_demo/kustomization.yaml"
 	ptPodName           = "training-pod"

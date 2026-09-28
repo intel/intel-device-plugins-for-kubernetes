@@ -31,8 +31,6 @@ import (
 )
 
 const (
-	ns                = "inteldeviceplugins-system"
-	timeout           = time.Second * 120
 	kustomizationYaml = "deployments/iaa_plugin/overlays/iaa_initcontainer/iaa_initcontainer.yaml"
 	configmapYaml     = "demo/iaa.conf"
 	demoYaml          = "demo/iaa-accel-config-demo-pod.yaml"
