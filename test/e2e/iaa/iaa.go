@@ -31,8 +31,6 @@ import (
 )
 
 const (
-	ns                = "inteldeviceplugins-system"
-	timeout           = time.Second * 120
 	kustomizationYaml = "deployments/iaa_plugin/overlays/iaa_initcontainer/iaa_initcontainer.yaml"
 	configmapYaml     = "demo/iaa.conf"
 	demoYaml          = "demo/iaa-accel-config-demo-pod.yaml"
@@ -107,7 +105,7 @@ func describe() {
 
 			ginkgo.By("waiting for the IAA demo to succeed")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, podName, f.Namespace.Name, 360*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, podName, podName))
 		})
 	})
 }

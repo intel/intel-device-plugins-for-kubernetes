@@ -135,7 +135,7 @@ func describeQatDpdkPlugin() {
 
 			ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 		})
 
 		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources", ginkgo.Label("crypto-perf"), func(ctx context.Context) {
@@ -144,7 +144,7 @@ func describeQatDpdkPlugin() {
 
 			ginkgo.By("waiting the crypto pod to finish successfully")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-crypto-perf", f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-crypto-perf", "crypto-perf"))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, "qat-dpdk-test-crypto-perf", "crypto-perf"))
 		})
 
 		ginkgo.It("deploys a crypto pod (qat-engine testapp)", ginkgo.Label("qat-engine"), func(ctx context.Context) {
@@ -162,7 +162,7 @@ func describeQatDpdkPlugin() {
 
 			ginkgo.By("waiting the qat-engine-testapp pod for the resource " + resourceName.String() + " to finish successfully")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 		})
 	})
 
@@ -185,7 +185,7 @@ func describeQatDpdkPlugin() {
 
 			ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 		})
 
 		ginkgo.It("deploys a compress pod (dpdk compress-perf) requesting QAT resources", ginkgo.Label("compress-perf"), func(ctx context.Context) {
@@ -194,7 +194,7 @@ func describeQatDpdkPlugin() {
 
 			ginkgo.By("waiting the compress pod to finish successfully")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-compress-perf", f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-compress-perf", "compress-perf"))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, "qat-dpdk-test-compress-perf", "compress-perf"))
 		})
 	})
 
@@ -250,7 +250,7 @@ func describeQatDpdkPlugin() {
 
 				ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
 				err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-				gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+				gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
 			})
 		})
 	})

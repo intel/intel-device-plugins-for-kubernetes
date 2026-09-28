@@ -32,8 +32,6 @@ import (
 )
 
 const (
-	ns                = "inteldeviceplugins-system"
-	timeout           = time.Second * 120
 	kustomizationYaml = "deployments/dsa_plugin/overlays/dsa_initcontainer/dsa_initcontainer.yaml"
 	kustomVfioYaml    = "deployments/dsa_plugin/overlays/dsa_vfio_initcontainer/dsa_initcontainer.yaml"
 	configmapYaml     = "demo/dsa.conf"
@@ -127,7 +125,7 @@ func describe() {
 
 			ginkgo.By("waiting for the DSA demo to succeed")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, podName, f.Namespace.Name, 200*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, podName, podName))
 		})
 
 		ginkgo.It("deploys a demo app (dpdk-test)", ginkgo.Label("dpdk-test"), func(ctx context.Context) {
@@ -135,7 +133,7 @@ func describe() {
 
 			ginkgo.By("waiting for the DSA DPDK demo to succeed")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkPodName, f.Namespace.Name, 200*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, dpdkPodName, dpdkPodName))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, dpdkPodName, dpdkPodName))
 		})
 	})
 
@@ -186,7 +184,7 @@ func describe() {
 
 			ginkgo.By("waiting for the DSA DPDK VFIO demo to succeed")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkVfioPodName, f.Namespace.Name, 200*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, dpdkVfioPodName, dpdkVfioPodName))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, dpdkVfioPodName, dpdkVfioPodName))
 		})
 	})
 }

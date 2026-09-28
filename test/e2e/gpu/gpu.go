@@ -39,7 +39,6 @@ const (
 	kustomizationYaml   = "deployments/gpu_plugin/kustomization.yaml"
 	monitoringYaml      = "deployments/gpu_plugin/overlays/monitoring_shared-dev_nfd/kustomization.yaml"
 	healthMgmtYaml      = "deployments/gpu_plugin/overlays/health/kustomization.yaml"
-	nfdRulesYaml        = "deployments/nfd/overlays/node-feature-rules/kustomization.yaml"
 	containerName       = "testcontainer"
 	ptKustomizationYaml = "deployments/gpu_pytorch_demo/kustomization.yaml"
 	ptPodName           = "training-pod"
@@ -210,7 +209,7 @@ func describe() {
 			ginkgo.By("waiting the pod to finish")
 
 			err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, ptPodName, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, ptPodName, containerName))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, ptPodName, containerName))
 
 			framework.Logf("tensorflow execution succeeded!")
 		})
