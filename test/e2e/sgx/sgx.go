@@ -46,15 +46,9 @@ func describe() {
 	f := framework.NewDefaultFramework("sgxplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	deploymentWebhookPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationWebhook)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationWebhook, errFailedToLocateRepoFile)
-	}
+	deploymentWebhookPath := utils.MustLocateRepoFile(kustomizationWebhook)
 
-	deploymentPluginPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationPlugin)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationPlugin, errFailedToLocateRepoFile)
-	}
+	deploymentPluginPath := utils.MustLocateRepoFile(kustomizationPlugin)
 
 	ginkgo.BeforeEach(func(ctx context.Context) {
 		_ = utils.DeployWebhook(ctx, f, deploymentWebhookPath)

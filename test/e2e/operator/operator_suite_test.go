@@ -235,6 +235,10 @@ func TestMain(m *testing.M) {
 	fv := reflect.ValueOf(flag.CommandLine).Elem().FieldByName("formal")
 	reflect.NewAt(fv.Type(), unsafe.Pointer(fv.UnsafeAddr())).Elem().SetMapIndex(reflect.ValueOf("kubeconfig"), reflect.Value{})
 	framework.RegisterClusterFlags(flag.CommandLine)
+	// This suite lives one level deeper than test/e2e, so the framework's
+	// default --repo-root of "../../" would point at test/. Override the
+	// default; an explicit -repo-root on the command line still wins.
+	framework.TestContext.RepoRoot = "../../../"
 	flag.Parse()
 
 	framework.AfterReadingAllFlags(&framework.TestContext)

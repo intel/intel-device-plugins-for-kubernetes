@@ -47,10 +47,7 @@ func describe() {
 	var webhook v1.Pod
 
 	ginkgo.BeforeEach(func(ctx context.Context) {
-		kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
-		if err != nil {
-			framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
-		}
+		kustomizationPath := utils.MustLocateRepoFile(kustomizationYaml)
 		webhook = utils.DeployWebhook(ctx, f, kustomizationPath)
 	})
 
