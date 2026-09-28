@@ -34,8 +34,6 @@ import (
 )
 
 const (
-	ns                   = "inteldeviceplugins-system"
-	timeout              = time.Second * 120
 	kustomizationWebhook = "deployments/sgx_admissionwebhook/overlays/default-with-certmanager/kustomization.yaml"
 	kustomizationPlugin  = "deployments/sgx_plugin/base/kustomization.yaml"
 )
