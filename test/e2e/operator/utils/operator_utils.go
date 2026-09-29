@@ -122,6 +122,7 @@ func buildImageOverrides(registry, version string) []map[string]string {
 		"intel-deviceplugin-operator",
 		"crypto-perf",
 		"dsa-dpdk-dmadevtest",
+		"accel-config-demo",
 	}
 
 	overrides := make([]map[string]string, 0, len(containers)*2)
