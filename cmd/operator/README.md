@@ -101,6 +101,13 @@ follows the principle of least privilege:
   `DaemonSets` the operator creates and read access to their `Pods`.
 * A namespaced `Role` grants the `Lease` access needed by leader election.
 
+The device plugin DaemonSets created by the operator run under a dedicated
+`plugin` service account (passed to the operator via the
+`DEVICEPLUGIN_SERVICEACCOUNT` environment variable) and do not mount a service
+account token. Its only permission is `use` of the `privileged`
+`SecurityContextConstraints` on OpenShift, so that the plugin pods can access
+host devices. The `default` service account has no RBAC bindings.
+
 The operator only lists and watches `DaemonSets` and `Pods` in the namespace
 given by the `DEVICEPLUGIN_NAMESPACE` environment variable (defaulting to its
 own namespace in the provided manifests). If you set it to a different

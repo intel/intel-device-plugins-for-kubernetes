@@ -54,15 +54,17 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	cfg         *rest.Config
-	k8sClient   client.Client
-	testEnv     *envtest.Environment
-	ctx         context.Context
-	cancel      context.CancelFunc
-	err         error
-	ns          = metav1.NamespaceSystem
-	version     = ctr.ImageMinVersion.String()
-	prevVersion = ctr.ImageMinVersion.WithMinor(ctr.ImageMinVersion.Minor() - 1).String()
+	cfg       *rest.Config
+	k8sClient client.Client
+	testEnv   *envtest.Environment
+	ctx       context.Context
+	cancel    context.CancelFunc
+	err       error
+	ns        = metav1.NamespaceSystem
+	// The service account the reconcilers must set on the created DaemonSets.
+	pluginServiceAccount = "intel-deviceplugins-plugin"
+	version              = ctr.ImageMinVersion.String()
+	prevVersion          = ctr.ImageMinVersion.WithMinor(ctr.ImageMinVersion.Minor() - 1).String()
 )
 
 func TestAPIs(t *testing.T) {
@@ -111,7 +113,7 @@ func up() {
 	k8sManager, managerErr := ctrl.NewManager(cfg, ctrl.Options{Scheme: scheme.Scheme, Metrics: metricsserver.Options{BindAddress: "0"}, Controller: config.Controller{SkipNameValidation: &yes}})
 	Expect(managerErr).To(BeNil())
 
-	args := ctr.ControllerOptions{Namespace: ns, WithWebhook: false}
+	args := ctr.ControllerOptions{Namespace: ns, ServiceAccountName: pluginServiceAccount, WithWebhook: false}
 
 	Expect(dsactr.SetupReconciler(k8sManager, args)).To(BeNil())
 

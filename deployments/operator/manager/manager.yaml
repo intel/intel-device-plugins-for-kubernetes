@@ -71,5 +71,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
+          # Replaced with the (prefixed) plugin ServiceAccount name by kustomize.
+          - name: DEVICEPLUGIN_SERVICEACCOUNT
+            value: plugin
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 120

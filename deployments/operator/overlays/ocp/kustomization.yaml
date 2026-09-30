@@ -1,7 +1,6 @@
-# OCP-specific operator overlay.
-# Replaces cert-manager TLS with the OCP service-CA operator and grants the
-# privileged SCC to the default service account in the operator namespace so
-# that device-plugin DaemonSets can access host devices.
+# OCP-specific operator overlay used by the e2e tests (see DEVEL.md).
+# Replaces cert-manager TLS with the OCP service-CA operator. Production
+# installs on OCP use the OLM bundle instead.
 namePrefix: intel-deviceplugins-
 
 resources:
@@ -9,9 +8,6 @@ resources:
 - ../../rbac
 - ../../manager
 - ../../webhook
-# SCC privileged mode doesn't seem to be needed, so it's left out for now.
-# If we need it in the future, we can add it back in.
-#- scc-binding.yaml
 
 patches:
 - path: manager_metrics_patch.yaml
@@ -45,3 +41,18 @@ patches:
         pod-security.kubernetes.io/audit: privileged
         pod-security.kubernetes.io/warn: privileged
       name: system
+
+replacements:
+# Inject the resolved plugin ServiceAccount name (namePrefix + "plugin") into
+# the manager's DEVICEPLUGIN_SERVICEACCOUNT env var so that the DaemonSets the
+# operator creates run under it.
+- source:
+    kind: ServiceAccount
+    name: plugin
+    fieldPath: metadata.name
+  targets:
+  - select:
+      kind: Deployment
+      name: controller-manager
+    fieldPaths:
+    - spec.template.spec.containers.[name=manager].env.[name=DEVICEPLUGIN_SERVICEACCOUNT].value
