@@ -40,8 +40,8 @@ const (
 
 var defaultNodeSelector = deployments.GPUPluginDaemonSet().Spec.Template.Spec.NodeSelector
 
-// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins/status,verbs=get;update
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=gpudeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for GpuDevicePlugin objects.

@@ -42,8 +42,8 @@ const (
 
 var defaultNodeSelector = deployments.QATPluginDaemonSet().Spec.Template.Spec.NodeSelector
 
-// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins/status,verbs=get;update
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for QatDevicePlugin objects.

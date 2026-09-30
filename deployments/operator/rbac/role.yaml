@@ -18,10 +18,8 @@ rules:
   - daemonsets
   verbs:
   - create
-  - delete
   - get
   - list
-  - patch
   - update
   - watch
 - apiGroups:
@@ -49,11 +47,8 @@ rules:
   - qatdeviceplugins
   - sgxdeviceplugins
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
   - update
   - watch
 - apiGroups:
@@ -78,7 +73,6 @@ rules:
   - sgxdeviceplugins/status
   verbs:
   - get
-  - patch
   - update
 - apiGroups:
   - security.openshift.io
