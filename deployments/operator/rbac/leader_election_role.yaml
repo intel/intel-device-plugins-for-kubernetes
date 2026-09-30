@@ -1,33 +1,30 @@
 # permissions to do leader election.
+#
+# This Role is maintained by hand rather than via +kubebuilder:rbac markers:
+# controller-gen would merge the rules into the generated manager-role, whereas
+# leader election is kept as its own Role/RoleBinding following the kubebuilder
+# layout. The lease name must match LeaderElectionID in cmd/operator/main.go.
+# The events rule is for the "became leader" events controller-runtime records.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: leader-election-role
 rules:
 - apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
   - coordination.k8s.io
   resources:
   - leases
   verbs:
-  - get
-  - list
-  - watch
   - create
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  resourceNames:
+  - d1c7b6d5.intel.com
+  verbs:
+  - get
   - update
-  - patch
-  - delete
 - apiGroups:
   - ""
   resources:
