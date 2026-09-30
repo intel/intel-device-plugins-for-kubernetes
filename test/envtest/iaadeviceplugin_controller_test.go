@@ -73,6 +73,7 @@ var _ = Describe("IaaDevicePlugin Controller", func() {
 			err = k8sClient.Get(context.Background(), types.NamespacedName{Namespace: ns, Name: expectedDsName}, ds)
 			Expect(err).To(BeNil())
 			Expect(ds.Spec.Template.Spec.Containers[0].Image).To(Equal(spec.Image))
+			Expect(ds.Spec.Template.Spec.ServiceAccountName).To(Equal(pluginServiceAccount))
 			Expect(ds.Spec.Template.Spec.InitContainers).To(HaveLen(1))
 			Expect(ds.Spec.Template.Spec.InitContainers[0].Image).To(Equal(spec.InitImage))
 			Expect(ds.Spec.Template.Spec.NodeSelector).To(Equal(spec.NodeSelector))

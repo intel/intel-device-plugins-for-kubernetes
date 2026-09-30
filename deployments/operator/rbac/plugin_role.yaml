@@ -1,0 +1,17 @@
+# Permissions for the device plugin DaemonSets created by the operator.
+# The plugins do not talk to the API server; this Role only exists to grant
+# the privileged SCC on OpenShift. The rule is harmless on other distributions.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: plugin-role
+  namespace: system
+rules:
+- apiGroups:
+  - security.openshift.io
+  resourceNames:
+  - privileged
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - use

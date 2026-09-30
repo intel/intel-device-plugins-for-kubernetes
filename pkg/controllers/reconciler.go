@@ -42,7 +42,6 @@ var (
 
 // +kubebuilder:rbac:groups=apps,resources=daemonsets,namespace=system,verbs=get;list;watch;create;update
 // +kubebuilder:rbac:groups="",resources=pods,namespace=system,verbs=get;list;watch
-// +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=use
 
 // DevicePluginController provides functionality for manipulating actual device plugin CRD objects.
 type DevicePluginController interface {
@@ -56,15 +55,29 @@ type DevicePluginController interface {
 type ControllerOptions struct {
 	Namespace           string
 	ImagePullSecretName string
+	ServiceAccountName  string
 	WithWebhook         bool
 }
 
 type reconciler struct {
 	controller DevicePluginController
 	client.Client
-	scheme     *runtime.Scheme
-	pluginKind string
-	ownerKey   string
+	scheme             *runtime.Scheme
+	pluginKind         string
+	ownerKey           string
+	serviceAccountName string
+}
+
+// setServiceAccountName makes the DaemonSet's pods run under the configured
+// plugin service account. It returns true if the DaemonSet was changed.
+func (r *reconciler) setServiceAccountName(ds *apps.DaemonSet) bool {
+	if r.serviceAccountName == "" || ds.Spec.Template.Spec.ServiceAccountName == r.serviceAccountName {
+		return false
+	}
+
+	ds.Spec.Template.Spec.ServiceAccountName = r.serviceAccountName
+
+	return true
 }
 
 // Combine base and suffix with a dash.
@@ -168,7 +181,12 @@ func (r *reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	ds0 := ds.DeepCopy()
 
 	// Synchronize the DaemonSet with its owner.
-	if r.controller.UpdateDaemonSet(devicePlugin, ds) {
+	updated := r.controller.UpdateDaemonSet(devicePlugin, ds)
+	if r.setServiceAccountName(ds) {
+		updated = true
+	}
+
+	if updated {
 		log.Info("daemonset difference", "diff", diff.Diff(ds0.Spec.Template.Spec, ds.Spec.Template.Spec))
 
 		if err := r.Update(ctx, ds); err != nil {
@@ -250,13 +268,14 @@ func indexPods(ctx context.Context, mgr ctrl.Manager, _, _, ownerKey string) err
 }
 
 // SetupWithManager sets up a reconciler for a given device plugin controller.
-func SetupWithManager(mgr ctrl.Manager, controller DevicePluginController, apiGVString, pluginKind, ownerKey string) error {
+func SetupWithManager(mgr ctrl.Manager, controller DevicePluginController, apiGVString, pluginKind, ownerKey string, args ControllerOptions) error {
 	r := &reconciler{
-		Client:     mgr.GetClient(),
-		scheme:     mgr.GetScheme(),
-		ownerKey:   ownerKey,
-		controller: controller,
-		pluginKind: pluginKind,
+		Client:             mgr.GetClient(),
+		scheme:             mgr.GetScheme(),
+		ownerKey:           ownerKey,
+		controller:         controller,
+		pluginKind:         pluginKind,
+		serviceAccountName: args.ServiceAccountName,
 	}
 
 	ctx := context.Background()
@@ -279,6 +298,7 @@ func SetupWithManager(mgr ctrl.Manager, controller DevicePluginController, apiGV
 
 func (r *reconciler) createDaemonSet(ctx context.Context, dp client.Object, log logr.Logger) (ctrl.Result, error) {
 	ds := r.controller.NewDaemonSet(dp)
+	r.setServiceAccountName(ds)
 
 	if err := ctrl.SetControllerReference(dp.(metav1.Object), ds, r.scheme); err != nil {
 		log.Error(err, "unable to set controller reference")

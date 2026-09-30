@@ -41,6 +41,19 @@ patches:
     name: validating-webhook-configuration
 
 replacements:
+# Inject the resolved plugin ServiceAccount name (namePrefix + "plugin") into
+# the manager's DEVICEPLUGIN_SERVICEACCOUNT env var so that the DaemonSets the
+# operator creates run under it.
+  - source:
+      kind: ServiceAccount
+      name: plugin
+      fieldPath: metadata.name
+    targets:
+    - select:
+        kind: Deployment
+        name: controller-manager
+      fieldPaths:
+      - spec.template.spec.containers.[name=manager].env.[name=DEVICEPLUGIN_SERVICEACCOUNT].value
   - source: # Add cert-manager annotation to ValidatingWebhookConfiguration, MutatingWebhookConfiguration and CRDs
       kind: Certificate
       group: cert-manager.io
