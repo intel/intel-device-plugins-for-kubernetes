@@ -40,8 +40,8 @@ var (
 	ImageMinVersion = versionutil.MustParseSemantic("0.36.0")
 )
 
-// +kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update
-// +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch
+// +kubebuilder:rbac:groups=apps,resources=daemonsets,namespace=system,verbs=get;list;watch;create;update
+// +kubebuilder:rbac:groups="",resources=pods,namespace=system,verbs=get;list;watch
 // +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=use
 
 // DevicePluginController provides functionality for manipulating actual device plugin CRD objects.
