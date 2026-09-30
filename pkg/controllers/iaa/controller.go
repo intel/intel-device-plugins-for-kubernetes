@@ -43,8 +43,8 @@ const (
 	sysDevicesVolume  = "sys-devices"
 )
 
-// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=iaadeviceplugins,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=iaadeviceplugins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=iaadeviceplugins,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=iaadeviceplugins/status,verbs=get;update
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=iaadeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for IaaDevicePlugin objects.
