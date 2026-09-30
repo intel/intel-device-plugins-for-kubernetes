@@ -67,13 +67,16 @@ func NewDevicePlugin(statePattern, devDir string, sharedDevNum int) *DevicePlugi
 func (dp *DevicePlugin) Scan(notifier dpapi.Notifier) error {
 	defer dp.scanTicker.Stop()
 
+	v := klog.V(2)
 	for {
-		devTree, err := dp.scan()
+		devTree, err := dp.scan(v)
 		if err != nil {
 			return err
 		}
 
 		notifier.Notify(devTree)
+
+		v = klog.V(4)
 
 		select {
 		case <-dp.scanDone:
@@ -145,7 +148,7 @@ func getDevNodes(devDir, charDevDir, wqName string) ([]pluginapi.DeviceSpec, err
 }
 
 // scan collects devices by scanning sysfs and devfs entries.
-func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
+func (dp *DevicePlugin) scan(v klog.Verbose) (dpapi.DeviceTree, error) {
 	// scan sysfs tree
 	matches, err := filepath.Glob(dp.statePattern)
 	if err != nil {
@@ -194,7 +197,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 			amount = 1
 		}
 
-		klog.V(4).Infof("%s: amount: %d, type: %s, mode: %s, nodes: %+v", wqName, amount, wqType, wqMode, devNodes)
+		v.Infof("%s: amount: %d, type: %s, mode: %s, nodes: %+v", wqName, amount, wqType, wqMode, devNodes)
 
 		for i := 0; i < amount; i++ {
 			deviceType := fmt.Sprintf("wq-%s-%s", wqType, wqMode)
