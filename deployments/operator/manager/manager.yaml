@@ -71,5 +71,5 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
-      serviceAccountName: default
+      serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 120

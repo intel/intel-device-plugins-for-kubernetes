@@ -88,7 +88,8 @@ The samples for them are available [here](/deployments/operator/samples/).
 
 ### RBAC
 
-The operator follows the principle of least privilege:
+The operator runs under a dedicated `controller-manager` service account and
+follows the principle of least privilege:
 
 * A `ClusterRole` grants `get`, `list`, `watch` and `update` on the
   cluster-scoped device plugin custom resources and their `status`
