@@ -18,6 +18,7 @@ spec:
       labels:
         app: intel-npu-plugin
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: intel-npu-plugin
         env:

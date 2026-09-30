@@ -18,6 +18,7 @@ spec:
       labels:
         app: intel-gpu-plugin
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: intel-gpu-plugin
         env:
