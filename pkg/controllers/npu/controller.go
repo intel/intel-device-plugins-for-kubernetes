@@ -47,7 +47,7 @@ var defaultNodeSelector = deployments.NPUPluginDaemonSet().Spec.Template.Spec.No
 // SetupReconciler creates a new reconciler for NpuDevicePlugin objects.
 func SetupReconciler(mgr ctrl.Manager, args controllers.ControllerOptions) error {
 	c := &controller{scheme: mgr.GetScheme(), args: args}
-	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "NpuDevicePlugin", ownerKey); err != nil {
+	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "NpuDevicePlugin", ownerKey, args); err != nil {
 		return err
 	}
 

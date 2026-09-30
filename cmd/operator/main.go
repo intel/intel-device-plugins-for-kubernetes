@@ -216,6 +216,7 @@ func main() {
 	cargs := controllers.ControllerOptions{WithWebhook: true, Namespace: pluginNamespace}
 
 	cargs.ImagePullSecretName = os.Getenv("DEVICEPLUGIN_SECRET")
+	cargs.ServiceAccountName = os.Getenv("DEVICEPLUGIN_SERVICEACCOUNT")
 
 	for _, device := range devices {
 		if err = setupControllerAndWebhook[device](mgr, cargs); err != nil {

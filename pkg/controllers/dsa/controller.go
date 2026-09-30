@@ -55,7 +55,7 @@ var defaultNodeSelector = deployments.DSAPluginDaemonSet().Spec.Template.Spec.No
 // SetupReconciler creates a new reconciler for DsaDevicePlugin objects.
 func SetupReconciler(mgr ctrl.Manager, args controllers.ControllerOptions) error {
 	c := &controller{scheme: mgr.GetScheme(), args: args}
-	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "DsaDevicePlugin", ownerKey); err != nil {
+	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "DsaDevicePlugin", ownerKey, args); err != nil {
 		return err
 	}
 
