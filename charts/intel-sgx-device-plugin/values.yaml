@@ -19,6 +19,14 @@ enclaveLimit: ""
 # kubernetes.io/arch: amd64 selector. Takes precedence over global.nodeSelector.
 nodeSelector: {}
 
+nodeFeatureRule:
+  # -- Create a Node Feature Discovery NodeFeatureRule (cluster-scoped, requires
+  # the NFD CRDs) that detects SGX-capable nodes, applies the node selector labels
+  # (nodeSelector and global.nodeSelector, except kubernetes.io/arch) to them and
+  # advertises sgx.intel.com/epc. Leave disabled if an equivalent rule is already
+  # deployed, e.g. from deployments/nfd/overlays/node-feature-rules.
+  enabled: false
+
 global:
   # -- Node selector labels shared with a parent chart, merged with nodeSelector.
   nodeSelector: {}
