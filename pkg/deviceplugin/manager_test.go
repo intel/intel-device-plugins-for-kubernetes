@@ -18,6 +18,7 @@ import (
 	"flag"
 	"testing"
 
+	"google.golang.org/protobuf/proto"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 )
 
@@ -105,6 +106,17 @@ func TestNotify(t *testing.T) {
 			},
 			expectedRemoved: 1,
 		},
+		{
+			name:   "Unchanged devices already sent to kubelet",
+			oldmap: marshalledDeviceTree(),
+			newmap: fakeDeviceTree(0),
+		},
+		{
+			name:            "Changed topology",
+			oldmap:          marshalledDeviceTree(),
+			newmap:          fakeDeviceTree(1),
+			expectedUpdated: 1,
+		},
 	}
 
 	for _, tcase := range tcases {
@@ -133,6 +145,64 @@ func TestNotify(t *testing.T) {
 			t.Errorf("Test case '%s': expected %d removed device types, but got %d", tcase.name, tcase.expectedUpdated, len(update.Updated))
 		}
 	}
+}
+
+// fakeDeviceTree returns a device tree with one device that has device nodes,
+// mounts and topology information, as a scan would produce it.
+func fakeDeviceTree(numaNode int64) map[string]map[string]DeviceInfo {
+	return map[string]map[string]DeviceInfo{
+		"someDeviceType": {
+			"fake-device.0": {
+				state: pluginapi.Healthy,
+				nodes: []pluginapi.DeviceSpec{
+					{
+						HostPath:      "/dev/fake-device.0",
+						ContainerPath: "/dev/fake-device.0",
+						Permissions:   "rw",
+					},
+				},
+				mounts: []pluginapi.Mount{
+					{
+						HostPath:      "/lib/fake",
+						ContainerPath: "/lib/fake",
+						ReadOnly:      true,
+					},
+				},
+				envs:     map[string]string{"FAKE": "1"},
+				topology: &pluginapi.TopologyInfo{Nodes: []*pluginapi.NUMANode{{ID: numaNode}}},
+			},
+		},
+	}
+}
+
+// marshalledDeviceTree returns fakeDeviceTree(0) after its protobuf messages
+// have been marshalled the way ListAndWatch and Allocate do when talking to
+// kubelet. Marshalling mutates the messages' internal state, which must not
+// be seen as a device change.
+func marshalledDeviceTree() map[string]map[string]DeviceInfo {
+	tree := fakeDeviceTree(0)
+
+	for _, dev := range tree["someDeviceType"] {
+		if _, err := proto.Marshal(&pluginapi.Device{ID: "fake-device.0", Health: dev.state, Topology: dev.topology}); err != nil {
+			panic(err)
+		}
+
+		cresp := &pluginapi.ContainerAllocateResponse{}
+
+		for i := range dev.nodes {
+			cresp.Devices = append(cresp.Devices, &dev.nodes[i])
+		}
+
+		for i := range dev.mounts {
+			cresp.Mounts = append(cresp.Mounts, &dev.mounts[i])
+		}
+
+		if _, err := proto.Marshal(cresp); err != nil {
+			panic(err)
+		}
+	}
+
+	return tree
 }
 
 type serverStub struct{}
