@@ -16,5 +16,9 @@ logLevel: 2
 enclaveLimit: ""
 
 # -- Additional node selector labels merged with the default
-# kubernetes.io/arch: amd64 selector.
+# kubernetes.io/arch: amd64 selector. Takes precedence over global.nodeSelector.
 nodeSelector: {}
+
+global:
+  # -- Node selector labels shared with a parent chart, merged with nodeSelector.
+  nodeSelector: {}

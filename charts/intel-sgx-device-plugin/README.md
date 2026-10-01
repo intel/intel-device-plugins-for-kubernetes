@@ -22,3 +22,4 @@ Pre-release chart versions (e.g. `0.37.0-alpha.1`) are not picked by default; pa
 | `logLevel` | `2` | Log verbosity (`-v`) |
 | `enclaveLimit` | `""` (plugin default) | Value for `-enclave-limit` (currently also used for `-provision-limit`) |
 | `nodeSelector` | `{}` | Extra node selector labels, merged with `kubernetes.io/arch: amd64` |
+| `global.nodeSelector` | `{}` | Node selector labels shared with a parent chart; `nodeSelector` takes precedence on conflicting keys |
