@@ -71,8 +71,8 @@ spec:
         hostPath:
           path: /dev/sgx_provision
           type: CharDevice
+      {{- $global := .Values.global | default dict }}
       nodeSelector:
-        kubernetes.io/arch: amd64
-        {{- with .Values.nodeSelector }}
-        {{- toYaml . | nindent 8 }}
+        {{- range $key, $value := merge dict (.Values.nodeSelector | default dict) ($global.nodeSelector | default dict) (dict "kubernetes.io/arch" "amd64") }}
+        {{ $key | quote }}: {{ $value | quote }}
         {{- end }}
