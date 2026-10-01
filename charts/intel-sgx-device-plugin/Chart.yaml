@@ -3,7 +3,7 @@ name: intel-sgx-device-plugin
 description: A Helm chart for the Intel SGX device plugin for Kubernetes
 type: application
 # Chart version follows appVersion, optionally with a pre-release suffix (enforced by check-charts).
-version: 0.37.0-alpha.1
+version: 0.37.0-alpha.2
 appVersion: "0.37.0"
 home: https://github.com/intel/intel-device-plugins-for-kubernetes
 sources:
@@ -15,7 +15,7 @@ keywords:
 annotations:
   org.opencontainers.image.url: "https://github.com/intel/intel-device-plugins-for-kubernetes"
   org.opencontainers.image.source: "https://github.com/intel/intel-device-plugins-for-kubernetes"
-  org.opencontainers.image.version: "0.37.0-alpha.1"
+  org.opencontainers.image.version: "0.37.0-alpha.2"
   org.opencontainers.image.title: "Intel SGX Device Plugin"
   org.opencontainers.image.description: "This chart installs the Intel SGX device plugin on Kubernetes."
   org.opencontainers.image.licenses: "Apache-2.0"

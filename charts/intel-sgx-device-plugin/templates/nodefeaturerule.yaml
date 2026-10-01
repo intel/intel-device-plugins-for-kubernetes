@@ -1,0 +1,33 @@
+{{- if .Values.nodeFeatureRule.enabled }}
+{{- $global := .Values.global | default dict }}
+{{- $labels := omit (merge dict (.Values.nodeSelector | default dict) ($global.nodeSelector | default dict)) "kubernetes.io/arch" }}
+{{- if not $labels }}
+{{- fail "nodeFeatureRule.enabled requires node selector labels for the rule to apply, e.g. global.nodeSelector.intel\\.feature\\.node\\.kubernetes\\.io/sgx=true" }}
+{{- end }}
+apiVersion: nfd.k8s-sigs.io/v1alpha1
+kind: NodeFeatureRule
+metadata:
+  name: {{ printf "intel-dp-sgx-device-%s" .Release.Name | trunc 63 | trimSuffix "-" }}
+  labels:
+    {{- include "intel-sgx-device-plugin.labels" . | nindent 4 }}
+spec:
+  rules:
+    - name: "intel.sgx"
+      labels:
+        {{- range $key, $value := $labels }}
+        {{ $key | quote }}: {{ $value | quote }}
+        {{- end }}
+      extendedResources:
+        sgx.intel.com/epc: "@cpu.security.sgx.epc"
+      matchFeatures:
+        - feature: cpu.cpuid
+          matchExpressions:
+            SGX: {op: Exists}
+            SGXLC: {op: Exists}
+        - feature: cpu.security
+          matchExpressions:
+            sgx.enabled: {op: IsTrue}
+        - feature: kernel.config
+          matchExpressions:
+            X86_SGX: {op: Exists}
+{{- end }}
