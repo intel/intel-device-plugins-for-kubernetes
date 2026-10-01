@@ -194,7 +194,7 @@ func (dp *DevicePlugin) scan() (dpapi.DeviceTree, error) {
 			amount = 1
 		}
 
-		klog.V(4).Infof("%s: amount: %d, type: %s, mode: %s, nodes: %+v", wqName, amount, wqType, wqMode, devNodes)
+		klog.V(5).Infof("%s: amount: %d, type: %s, mode: %s, nodes: %+v", wqName, amount, wqType, wqMode, devNodes)
 
 		for i := 0; i < amount; i++ {
 			deviceType := fmt.Sprintf("wq-%s-%s", wqType, wqMode)
