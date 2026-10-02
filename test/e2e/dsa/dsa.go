@@ -32,8 +32,6 @@ import (
 )
 
 const (
-	ns                = "inteldeviceplugins-system"
-	timeout           = time.Second * 120
 	kustomizationYaml = "deployments/dsa_plugin/overlays/dsa_initcontainer/dsa_initcontainer.yaml"
 	kustomVfioYaml    = "deployments/dsa_plugin/overlays/dsa_vfio_initcontainer/dsa_initcontainer.yaml"
 	configmapYaml     = "demo/dsa.conf"
@@ -53,38 +51,22 @@ func describe() {
 	f := framework.NewDefaultFramework("dsaplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	var errFailedToLocateRepoFile error
 	var dpPodName string
 	var kustomizationPath string
 	var configMapPath string
 	var expectedResource corev1.ResourceName
 
-	demoPath, errFailedToLocateRepoFile := utils.LocateRepoFile(demoYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", demoYaml, errFailedToLocateRepoFile)
-	}
+	demoPath := utils.MustLocateRepoFile(demoYaml)
 
-	demoDpdkPath, errFailedToLocateRepoFile := utils.LocateRepoFile(dpdkDemoYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", dpdkDemoYaml, errFailedToLocateRepoFile)
-	}
+	demoDpdkPath := utils.MustLocateRepoFile(dpdkDemoYaml)
 
-	demoDpdkVfioPath, errFailedToLocateRepoFile := utils.LocateRepoFile(dpdkVfioYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", dpdkDemoYaml, errFailedToLocateRepoFile)
-	}
+	demoDpdkVfioPath := utils.MustLocateRepoFile(dpdkVfioYaml)
 
 	ginkgo.Context("When DSA resources are available", ginkgo.Label("dsa"), ginkgo.Label("idxd"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
-			kustomizationPath, errFailedToLocateRepoFile = utils.LocateRepoFile(kustomizationYaml)
-			if errFailedToLocateRepoFile != nil {
-				framework.Failf("unable to locate %q: %v", kustomizationYaml, errFailedToLocateRepoFile)
-			}
+			kustomizationPath = utils.MustLocateRepoFile(kustomizationYaml)
 
-			configMapPath, errFailedToLocateRepoFile = utils.LocateRepoFile(configmapYaml)
-			if errFailedToLocateRepoFile != nil {
-				framework.Failf("unable to locate %q: %v", configmapYaml, errFailedToLocateRepoFile)
-			}
+			configMapPath = utils.MustLocateRepoFile(configmapYaml)
 
 			expectedResource = "dsa.intel.com/wq-user-dedicated"
 
@@ -127,7 +109,7 @@ func describe() {
 
 			ginkgo.By("waiting for the DSA demo to succeed")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, podName, f.Namespace.Name, 200*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, podName, podName))
 		})
 
 		ginkgo.It("deploys a demo app (dpdk-test)", ginkgo.Label("dpdk-test"), func(ctx context.Context) {
@@ -135,16 +117,13 @@ func describe() {
 
 			ginkgo.By("waiting for the DSA DPDK demo to succeed")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkPodName, f.Namespace.Name, 200*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, dpdkPodName, dpdkPodName))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, dpdkPodName, dpdkPodName))
 		})
 	})
 
 	ginkgo.Context("When DSA VFIO resources are available", ginkgo.Label("dsa"), ginkgo.Label("vfio"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
-			kustomizationPath, errFailedToLocateRepoFile = utils.LocateRepoFile(kustomVfioYaml)
-			if errFailedToLocateRepoFile != nil {
-				framework.Failf("unable to locate %q: %v", kustomVfioYaml, errFailedToLocateRepoFile)
-			}
+			kustomizationPath = utils.MustLocateRepoFile(kustomVfioYaml)
 
 			expectedResource = "dsa.intel.com/vfio"
 
@@ -186,7 +165,7 @@ func describe() {
 
 			ginkgo.By("waiting for the DSA DPDK VFIO demo to succeed")
 			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkVfioPodName, f.Namespace.Name, 200*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, dpdkVfioPodName, dpdkVfioPodName))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, dpdkVfioPodName, dpdkVfioPodName))
 		})
 	})
 }

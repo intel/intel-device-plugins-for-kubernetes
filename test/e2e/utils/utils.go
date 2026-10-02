@@ -24,9 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"errors"
-
-	"github.com/onsi/gomega"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,14 +40,18 @@ const (
 	poll = time.Second
 )
 
-// GetPodLogs returns the log of the container. If not possible to get logs, it returns the error message.
-func GetPodLogs(ctx context.Context, f *framework.Framework, podName, containerName string) string {
-	log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, podName, containerName)
-	if err != nil {
-		return fmt.Sprintf("unable to get log from pod: %v", err)
-	}
+// PodLogsDescription returns a lazily evaluated Gomega assertion description
+// that fetches the log of the container. The logs are fetched only when the
+// assertion fails. If not possible to get logs, the description contains the error message.
+func PodLogsDescription(ctx context.Context, f *framework.Framework, podName, containerName string) func() string {
+	return func() string {
+		log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, podName, containerName)
+		if err != nil {
+			return fmt.Sprintf("unable to get log from pod: %v", err)
+		}
 
-	return fmt.Sprintf("log output of the container %s in the pod %s:%s", containerName, podName, log)
+		return fmt.Sprintf("log output of the container %s in the pod %s:%s", containerName, podName, log)
+	}
 }
 
 type WaitForResourceFunc func(resourceCount int) bool
@@ -72,76 +73,39 @@ func WaitForNodesWithResource(ctx context.Context, c clientset.Interface, res v1
 
 	err := wait.PollUntilContextTimeout(ctx, poll, timeout, true,
 		func(ctx context.Context) (bool, error) {
-			for t := time.Now(); time.Since(t) < timeout; time.Sleep(poll) {
-				nodelist, err := c.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
-				if err != nil {
-					return false, err
-				}
-
-				resNum := 0
-				for _, item := range nodelist.Items {
-					if q, ok := item.Status.Allocatable[res]; ok {
-						resNum = resNum + int(q.Value())
-					}
-				}
-				framework.Logf("Found %d of %q. Elapsed: %s", resNum, res, time.Since(start))
-
-				if waitForResourceFunc(resNum) {
-					return true, nil
-				}
+			nodelist, err := c.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+			if err != nil {
+				return false, err
 			}
 
-			return false, errors.New("unable to list nodes")
+			resNum := 0
+			for _, item := range nodelist.Items {
+				if q, ok := item.Status.Allocatable[res]; ok {
+					resNum = resNum + int(q.Value())
+				}
+			}
+			framework.Logf("Found %d of %q. Elapsed: %s", resNum, res, time.Since(start))
+
+			return waitForResourceFunc(resNum), nil
 		})
 
 	return err
 }
 
-// WaitForPodFailure waits for a pod to fail.
-// This function used to be a part of k8s e2e framework, but was deleted in
-// https://github.com/kubernetes/kubernetes/pull/86732.
-func WaitForPodFailure(ctx context.Context, f *framework.Framework, name string, timeout time.Duration) {
-	gomega.Expect(e2epod.WaitForPodCondition(ctx, f.ClientSet, f.Namespace.Name, name, "success or failure", timeout,
-		func(pod *v1.Pod) (bool, error) {
-			switch pod.Status.Phase {
-			case v1.PodFailed:
-				return true, nil
-			case v1.PodSucceeded:
-				return true, fmt.Errorf("pod %q successed with reason: %q, message: %q", name, pod.Status.Reason, pod.Status.Message)
-			default:
-				return false, nil
-			}
-		},
-	)).To(gomega.Succeed(), "wait for pod %q to fail", name)
-}
-
-// LocateRepoFile locates a file inside this repository.
-func LocateRepoFile(repopath string) (string, error) {
-	root := os.Getenv("PLUGINS_REPO_DIR")
-	if root != "" {
-		path := filepath.Join(root, repopath)
-		//nolint:gosec // The path is repository test data selected by the e2e test.
-		if _, err := os.Stat(path); !os.IsNotExist(err) {
-			return path, nil
-		}
-	}
-
-	currentDir, err := os.Getwd()
+// MustLocateRepoFile returns the absolute path of a file inside this repository
+// and fails the test if the file does not exist. The repository root comes from
+// the e2e framework's --repo-root flag (framework.TestContext.RepoRoot).
+func MustLocateRepoFile(repopath string) string {
+	path, err := filepath.Abs(filepath.Join(framework.TestContext.RepoRoot, repopath))
 	if err != nil {
-		return "", err
+		framework.Failf("unable to resolve %q: %v", repopath, err)
 	}
 
-	path := filepath.Join(currentDir, repopath)
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		return path, nil
+	if _, err := os.Stat(path); err != nil {
+		framework.Failf("unable to locate %q: %v (check the --repo-root flag)", repopath, err)
 	}
 
-	path = filepath.Join(currentDir, "../../"+repopath)
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		return path, err
-	}
-
-	return "", errors.New("no file found, try to define PLUGINS_REPO_DIR pointing to the root of the repository")
+	return path
 }
 
 func copyFiles(srcDir, dstDir string) error {
@@ -357,10 +321,7 @@ func TestWebhookServerTLS(ctx context.Context, f *framework.Framework, serviceNa
 }
 
 func Kubectl(ns string, cmd string, opt string, file string) {
-	path, err := LocateRepoFile(file)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", file, err)
-	}
+	path := MustLocateRepoFile(file)
 
 	if opt == "-k" {
 		path = filepath.Dir(path)

@@ -34,8 +34,6 @@ import (
 )
 
 const (
-	ns                   = "inteldeviceplugins-system"
-	timeout              = time.Second * 120
 	kustomizationWebhook = "deployments/sgx_admissionwebhook/overlays/default-with-certmanager/kustomization.yaml"
 	kustomizationPlugin  = "deployments/sgx_plugin/base/kustomization.yaml"
 )
@@ -48,15 +46,9 @@ func describe() {
 	f := framework.NewDefaultFramework("sgxplugin")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	deploymentWebhookPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationWebhook)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationWebhook, errFailedToLocateRepoFile)
-	}
+	deploymentWebhookPath := utils.MustLocateRepoFile(kustomizationWebhook)
 
-	deploymentPluginPath, errFailedToLocateRepoFile := utils.LocateRepoFile(kustomizationPlugin)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", kustomizationPlugin, errFailedToLocateRepoFile)
-	}
+	deploymentPluginPath := utils.MustLocateRepoFile(kustomizationPlugin)
 
 	ginkgo.BeforeEach(func(ctx context.Context) {
 		_ = utils.DeployWebhook(ctx, f, deploymentWebhookPath)
@@ -117,7 +109,7 @@ func describe() {
 
 			ginkgo.By("waiting the pod to finish successfully")
 			err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 60*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, "testcontainer"))
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), utils.PodLogsDescription(ctx, f, pod.ObjectMeta.Name, "testcontainer"))
 		})
 	})
 
