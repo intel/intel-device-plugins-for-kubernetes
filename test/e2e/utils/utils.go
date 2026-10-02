@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,14 +37,27 @@ import (
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 )
 
-// GetPodLogs returns the log of the container. If not possible to get logs, it returns the error message.
-func GetPodLogs(ctx context.Context, f *framework.Framework, podName, containerName string) string {
-	log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, podName, containerName)
+// podLogs returns the log of the container, or the error message if the
+// log cannot be fetched.
+func podLogs(ctx context.Context, c clientset.Interface, namespace, podName, containerName string) string {
+	log, err := e2epod.GetPodLogs(ctx, c, namespace, podName, containerName)
 	if err != nil {
 		return fmt.Sprintf("unable to get log from pod: %v", err)
 	}
 
 	return fmt.Sprintf("log output of the container %s in the pod %s:%s", containerName, podName, log)
+}
+
+// WaitForPodSuccess waits up to timeout for the Pod to succeed. If it fails,
+// never terminates or does not finish in time, the test fails and the log of
+// containerName is attached to the failure message.
+func WaitForPodSuccess(ctx context.Context, c clientset.Interface, namespace, podName, containerName string, timeout time.Duration) {
+	ginkgo.GinkgoHelper()
+
+	err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, c, podName, namespace, timeout)
+	if err != nil {
+		framework.ExpectNoError(err, "%s", podLogs(ctx, c, namespace, podName, containerName))
+	}
 }
 
 // AllocatableResource returns a function that sums the allocatable quantity
