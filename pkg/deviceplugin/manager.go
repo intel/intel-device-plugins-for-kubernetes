@@ -16,7 +16,6 @@ package deviceplugin
 
 import (
 	"os"
-	"reflect"
 
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
@@ -52,7 +51,7 @@ func (n *notifier) Notify(newDeviceTree DeviceTree) {
 
 	for devType, new := range newDeviceTree {
 		if old, ok := n.deviceTree[devType]; ok {
-			if !reflect.DeepEqual(old, new) {
+			if !devicesEqual(old, new) {
 				updated[devType] = new
 			}
 

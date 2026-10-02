@@ -5,41 +5,6 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - daemonsets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - create
-- apiGroups:
-  - coordination.k8s.io
-  resourceNames:
-  - d1c7b6d5.intel.com
-  resources:
-  - leases
-  verbs:
-  - get
-  - update
-- apiGroups:
   - deviceplugin.intel.com
   resources:
   - dsadeviceplugins
@@ -49,11 +14,8 @@ rules:
   - qatdeviceplugins
   - sgxdeviceplugins
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
   - update
   - watch
 - apiGroups:
@@ -78,11 +40,29 @@ rules:
   - sgxdeviceplugins/status
   verbs:
   - get
-  - patch
   - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: manager-role
+  namespace: system
+rules:
 - apiGroups:
-  - security.openshift.io
+  - ""
   resources:
-  - securitycontextconstraints
+  - pods
   verbs:
-  - use
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  verbs:
+  - create
+  - get
+  - list
+  - update
+  - watch

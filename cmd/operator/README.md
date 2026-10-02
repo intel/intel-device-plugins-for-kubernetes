@@ -86,6 +86,34 @@ $ kubectl apply -k 'https://github.com/intel/intel-device-plugins-for-kubernetes
 Now you can deploy the device plugins by creating corresponding custom resources.
 The samples for them are available [here](/deployments/operator/samples/).
 
+### RBAC
+
+The operator runs under a dedicated `controller-manager` service account and
+follows the principle of least privilege:
+
+* A `ClusterRole` grants `get`, `list`, `watch` and `update` on the
+  cluster-scoped device plugin custom resources and their `status`
+  subresource, and `update` on their `finalizers` subresource. The latter is
+  needed on clusters with the `OwnerReferencesPermissionEnforcement` admission
+  plugin (e.g. OpenShift) because the operator sets itself as the blocking
+  owner of the DaemonSets it creates.
+* A namespaced `Role` in the operator namespace grants access to the
+  `DaemonSets` the operator creates and read access to their `Pods`.
+* A namespaced `Role` grants the `Lease` access needed by leader election.
+
+The device plugin DaemonSets created by the operator run under a dedicated
+`plugin` service account (passed to the operator via the
+`DEVICEPLUGIN_SERVICEACCOUNT` environment variable) and do not mount a service
+account token. Its only permission is `use` of the `privileged`
+`SecurityContextConstraints` on OpenShift, so that the plugin pods can access
+host devices. The `default` service account has no RBAC bindings.
+
+The operator only lists and watches `DaemonSets` and `Pods` in the namespace
+given by the `DEVICEPLUGIN_NAMESPACE` environment variable (defaulting to its
+own namespace in the provided manifests). If you set it to a different
+namespace, create an equivalent `Role` and `RoleBinding` for the operator
+service account there.
+
 ### Device Plugin Custom Resource
 
 Deploy your device plugin by applying its custom resource, e.g.

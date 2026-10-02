@@ -134,6 +134,8 @@ type fakeClient struct {
 	updateErr    error
 	createErr    error
 	statusErr    error
+	created      *apps.DaemonSet
+	updated      *apps.DaemonSet
 	ds           []*apps.DaemonSet
 	pods         []*v1.Pod
 	createCalled bool
@@ -167,10 +169,18 @@ func (f *fakeClient) List(ctx context.Context, list client.ObjectList, opts ...c
 	return nil
 }
 func (f *fakeClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+	if ds, ok := obj.(*apps.DaemonSet); ok {
+		f.updated = ds
+	}
+
 	return f.updateErr
 }
 func (f *fakeClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
 	f.createCalled = true
+	if ds, ok := obj.(*apps.DaemonSet); ok {
+		f.created = ds
+	}
+
 	return f.createErr
 }
 func (f *fakeClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
@@ -283,6 +293,67 @@ func TestReconciler_Reconcile_CreateDaemonSet(t *testing.T) {
 	}
 	if c.createCalled == false {
 		t.Error("expected create to be called, but it was not")
+	}
+}
+
+func TestReconciler_Reconcile_ServiceAccountName(t *testing.T) {
+	// On create, the plugin service account is set on the new DaemonSet.
+	c := &fakeClient{
+		StatusWriter: &fakeStatusWriter{},
+		ds:           []*apps.DaemonSet{},
+	}
+	r := &reconciler{
+		controller:         &mockController{},
+		Client:             c,
+		scheme:             c.Scheme(),
+		pluginKind:         "MockPlugin",
+		ownerKey:           "owner",
+		serviceAccountName: "plugin-sa",
+	}
+	req := ctrl.Request{NamespacedName: types.NamespacedName{Name: "mock", Namespace: "default"}}
+
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !c.createCalled || c.created == nil {
+		t.Fatal("expected create to be called, but it was not")
+	}
+	if got := c.created.Spec.Template.Spec.ServiceAccountName; got != "plugin-sa" {
+		t.Errorf("expected service account plugin-sa on created DaemonSet, got %q", got)
+	}
+
+	// On update, an existing DaemonSet without the service account is updated.
+	c = &fakeClient{
+		StatusWriter: &fakeStatusWriter{},
+		ds:           fillDaemonSets(),
+		pods:         fillPods(),
+	}
+	r.Client = c
+
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if c.updated == nil {
+		t.Fatal("expected update to be called, but it was not")
+	}
+	if got := c.updated.Spec.Template.Spec.ServiceAccountName; got != "plugin-sa" {
+		t.Errorf("expected service account plugin-sa on updated DaemonSet, got %q", got)
+	}
+
+	// Without a configured service account, nothing is changed.
+	c = &fakeClient{
+		StatusWriter: &fakeStatusWriter{},
+		ds:           fillDaemonSets(),
+		pods:         fillPods(),
+	}
+	r.Client = c
+	r.serviceAccountName = ""
+
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if c.updated != nil {
+		t.Error("expected no update without a configured service account")
 	}
 }
 

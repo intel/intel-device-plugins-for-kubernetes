@@ -42,14 +42,14 @@ const (
 
 var defaultNodeSelector = deployments.QATPluginDaemonSet().Spec.Template.Spec.NodeSelector
 
-// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins/status,verbs=get;update
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=qatdeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for QatDevicePlugin objects.
 func SetupReconciler(mgr ctrl.Manager, args controllers.ControllerOptions) error {
 	c := &controller{scheme: mgr.GetScheme(), args: args}
-	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "QatDevicePlugin", ownerKey); err != nil {
+	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "QatDevicePlugin", ownerKey, args); err != nil {
 		return err
 	}
 

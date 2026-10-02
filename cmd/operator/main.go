@@ -22,11 +22,15 @@ import (
 	"slices"
 	"strings"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2/textlogger"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -177,6 +181,18 @@ func main() {
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
 	}
 
+	pluginNamespace := os.Getenv("DEVICEPLUGIN_NAMESPACE")
+	if pluginNamespace == "" {
+		pluginNamespace = devicePluginNamespace
+	}
+
+	// The operator only manages DaemonSets (and their Pods) in a single
+	// namespace. Restrict the cache accordingly so that a namespaced Role is
+	// sufficient for those resources instead of a cluster-wide list/watch.
+	pluginNamespaceOnly := cache.ByObject{
+		Namespaces: map[string]cache.Config{pluginNamespace: {}},
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
@@ -185,20 +201,22 @@ func main() {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "d1c7b6d5.intel.com",
+		Cache: cache.Options{
+			ByObject: map[client.Object]cache.ByObject{
+				&appsv1.DaemonSet{}: pluginNamespaceOnly,
+				&corev1.Pod{}:       pluginNamespaceOnly,
+			},
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	cargs := controllers.ControllerOptions{WithWebhook: true}
-
-	cargs.Namespace = os.Getenv("DEVICEPLUGIN_NAMESPACE")
-	if cargs.Namespace == "" {
-		cargs.Namespace = devicePluginNamespace
-	}
+	cargs := controllers.ControllerOptions{WithWebhook: true, Namespace: pluginNamespace}
 
 	cargs.ImagePullSecretName = os.Getenv("DEVICEPLUGIN_SECRET")
+	cargs.ServiceAccountName = os.Getenv("DEVICEPLUGIN_SERVICEACCOUNT")
 
 	for _, device := range devices {
 		if err = setupControllerAndWebhook[device](mgr, cargs); err != nil {

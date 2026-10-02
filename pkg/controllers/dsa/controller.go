@@ -48,14 +48,14 @@ const (
 
 var defaultNodeSelector = deployments.DSAPluginDaemonSet().Spec.Template.Spec.NodeSelector
 
-// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins,verbs=get;list;watch;update
+// +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins/status,verbs=get;update
 // +kubebuilder:rbac:groups=deviceplugin.intel.com,resources=dsadeviceplugins/finalizers,verbs=update
 
 // SetupReconciler creates a new reconciler for DsaDevicePlugin objects.
 func SetupReconciler(mgr ctrl.Manager, args controllers.ControllerOptions) error {
 	c := &controller{scheme: mgr.GetScheme(), args: args}
-	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "DsaDevicePlugin", ownerKey); err != nil {
+	if err := controllers.SetupWithManager(mgr, c, devicepluginv1.GroupVersion.String(), "DsaDevicePlugin", ownerKey, args); err != nil {
 		return err
 	}
 

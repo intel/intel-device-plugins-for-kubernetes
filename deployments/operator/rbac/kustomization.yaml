@@ -1,8 +1,15 @@
 resources:
+- service_account.yaml
 - role.yaml
 - role_binding.yaml
+- role_binding_namespaced.yaml
 - leader_election_role.yaml
 - leader_election_role_binding.yaml
+# Service account and permissions for the device plugin DaemonSets
+# created by the operator.
+- plugin_service_account.yaml
+- plugin_role.yaml
+- plugin_role_binding.yaml
 # The following RBAC configurations are used to protect
 # the metrics endpoint with authn/authz. These configurations
 # ensure that only authorized users and service accounts

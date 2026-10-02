@@ -111,7 +111,7 @@ bundle:
 	rm -rf $(BUNDLE_DIR)
 	mkdir -p $(BUNDLE_DIR)
 	$(OPERATOR_SDK) generate kustomize manifests -q --input-dir $(OLM_MANIFESTS) --output-dir $(OLM_MANIFESTS) --apis-dir pkg/apis
-	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(TAG)|" | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
+	$(KUSTOMIZE) build $(OLM_MANIFESTS) | sed "s|intel-deviceplugin-operator:devel|intel-deviceplugin-operator:$(TAG)|" | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS) --extra-service-accounts intel-deviceplugins-plugin
 	# Remove unneeded resources
 	rm manifests/*service.yaml
 	rm manifests/*clusterrole.yaml
@@ -132,7 +132,7 @@ mirror-images-ocp:
 
 ORG?=intel
 REG?=$(ORG)/
-TAG?=0.37.0
+TAG?=0.37.1
 export TAG
 
 # Set dry-run arg if E2E_DRYRUN is set

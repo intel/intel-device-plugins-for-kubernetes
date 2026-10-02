@@ -16,7 +16,11 @@
 package deviceplugin
 
 import (
+	"maps"
+	"reflect"
+
 	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/topology"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/klog/v2"
 	pluginapi "k8s.io/kubelet/pkg/apis/deviceplugin/v1beta1"
 	cdispec "tags.cncf.io/container-device-interface/specs-go"
@@ -88,8 +92,47 @@ func NewDeviceInfoWithTopologyHints(state string, nodes []pluginapi.DeviceSpec, 
 	}
 }
 
+// Equal reports whether two DeviceInfos describe the same device.
+//
+// reflect.DeepEqual must not be used for this: the protobuf fields
+// (nodes, mounts, topology) carry internal state that is mutated when
+// the message is marshalled for kubelet, which makes an already sent
+// DeviceInfo compare unequal to an identical freshly scanned one.
+func (info DeviceInfo) Equal(other DeviceInfo) bool {
+	if info.state != other.state ||
+		!maps.Equal(info.envs, other.envs) ||
+		!maps.Equal(info.annotations, other.annotations) ||
+		!proto.Equal(info.topology, other.topology) ||
+		!reflect.DeepEqual(info.cdiSpec, other.cdiSpec) {
+		return false
+	}
+
+	if len(info.nodes) != len(other.nodes) || len(info.mounts) != len(other.mounts) {
+		return false
+	}
+
+	for i := range info.nodes {
+		if !proto.Equal(&info.nodes[i], &other.nodes[i]) {
+			return false
+		}
+	}
+
+	for i := range info.mounts {
+		if !proto.Equal(&info.mounts[i], &other.mounts[i]) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // DeviceTree contains a tree-like structure of device type -> device ID -> device info.
 type DeviceTree map[string]map[string]DeviceInfo
+
+// devicesEqual reports whether two device ID -> DeviceInfo maps are equal.
+func devicesEqual(a, b map[string]DeviceInfo) bool {
+	return maps.EqualFunc(a, b, DeviceInfo.Equal)
+}
 
 // NewDeviceTree creates an instance of DeviceTree.
 func NewDeviceTree() DeviceTree {
