@@ -28,16 +28,11 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
 	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
 	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
-)
-
-const (
-	poll = time.Second
 )
 
 // GetPodLogs returns the log of the container. If not possible to get logs, it returns the error message.
@@ -50,42 +45,29 @@ func GetPodLogs(ctx context.Context, f *framework.Framework, podName, containerN
 	return fmt.Sprintf("log output of the container %s in the pod %s:%s", containerName, podName, log)
 }
 
-type WaitForResourceFunc func(resourceCount int) bool
+// AllocatableResource returns a function that sums the allocatable quantity
+// of res across all nodes. It is meant to be polled with gomega.Eventually:
+//
+//	gomega.Eventually(ctx, utils.AllocatableResource(c, res)).WithTimeout(t).Should(gomega.BeNumerically(">", 0))
+func AllocatableResource(c clientset.Interface, res v1.ResourceName) func(ctx context.Context) (int64, error) {
+	return func(ctx context.Context) (int64, error) {
+		nodelist, err := c.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return 0, err
+		}
 
-func WaitForPositiveResource(resourceCount int) bool {
-	return resourceCount > 0
-}
+		var sum int64
 
-func WaitForZeroResource(resourceCount int) bool {
-	return resourceCount == 0
-}
-
-// WaitForNodesWithResource waits for node's resources to change.
-// Depending on the waitOperation, function waits for positive resource count or a zero resource count.
-func WaitForNodesWithResource(ctx context.Context, c clientset.Interface, res v1.ResourceName, timeout time.Duration, waitForResourceFunc WaitForResourceFunc) error {
-	framework.Logf("Waiting up to %s for allocatable resource %q", timeout, res)
-
-	start := time.Now()
-
-	err := wait.PollUntilContextTimeout(ctx, poll, timeout, true,
-		func(ctx context.Context) (bool, error) {
-			nodelist, err := c.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
-			if err != nil {
-				return false, err
+		for _, item := range nodelist.Items {
+			if q, ok := item.Status.Allocatable[res]; ok {
+				sum += q.Value()
 			}
+		}
 
-			resNum := 0
-			for _, item := range nodelist.Items {
-				if q, ok := item.Status.Allocatable[res]; ok {
-					resNum = resNum + int(q.Value())
-				}
-			}
-			framework.Logf("Found %d of %q. Elapsed: %s", resNum, res, time.Since(start))
+		framework.Logf("Found %d of allocatable %q", sum, res)
 
-			return waitForResourceFunc(resNum), nil
-		})
-
-	return err
+		return sum, nil
+	}
 }
 
 // MustLocateRepoFile returns the absolute path of a file inside this repository

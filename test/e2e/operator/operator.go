@@ -35,6 +35,7 @@ import (
 	operutils "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/operator/utils"
 	e2eutils "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -276,9 +277,8 @@ func testPluginWithOperator(
 	for _, res := range resourceNames {
 		ginkgo.By(fmt.Sprintf("checking that resource %s is allocatable", res))
 
-		if err = e2eutils.WaitForNodesWithResource(ctx, f.ClientSet, res, resourceTimeout, e2eutils.WaitForPositiveResource); err != nil {
-			framework.Failf("nodes did not report allocatable resource %s: %v", res, err)
-		}
+		gomega.Eventually(ctx, e2eutils.AllocatableResource(f.ClientSet, res)).
+			WithTimeout(resourceTimeout).Should(gomega.BeNumerically(">", 0))
 	}
 
 	for _, wf := range workloadFunc {

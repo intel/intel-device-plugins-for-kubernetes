@@ -93,9 +93,8 @@ func describeQatDpdkPlugin() {
 		}
 
 		ginkgo.By("checking if the resource is allocatable")
-		if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 30*time.Second, utils.WaitForPositiveResource); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-		}
+		gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, resourceName)).
+			WithTimeout(30 * time.Second).Should(gomega.BeNumerically(">", 0))
 	})
 
 	ginkgo.AfterEach(func(ctx context.Context) {
@@ -203,9 +202,8 @@ func describeQatDpdkPlugin() {
 				injectError(ctx, f, resourceName)
 
 				ginkgo.By("waiting node resources become zero")
-				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 30*time.Second, utils.WaitForZeroResource); err != nil {
-					framework.Failf("unable to wait for nodes to have no resource: %v", err)
-				}
+				gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, resourceName)).
+					WithTimeout(30 * time.Second).Should(gomega.BeZero())
 			})
 		})
 
@@ -222,14 +220,12 @@ func describeQatDpdkPlugin() {
 				injectError(ctx, f, resourceName)
 
 				ginkgo.By("seeing if there is zero resource")
-				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 30*time.Second, utils.WaitForZeroResource); err != nil {
-					framework.Failf("unable to wait for nodes to have no resource: %v", err)
-				}
+				gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, resourceName)).
+					WithTimeout(30 * time.Second).Should(gomega.BeZero())
 
 				ginkgo.By("seeing if there is positive allocatable resource")
-				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 300*time.Second, utils.WaitForPositiveResource); err != nil {
-					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-				}
+				gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, resourceName)).
+					WithTimeout(300 * time.Second).Should(gomega.BeNumerically(">", 0))
 
 				ginkgo.By("checking if openssl pod runs successfully")
 				command := []string{
