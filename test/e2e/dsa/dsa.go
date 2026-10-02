@@ -91,9 +91,8 @@ func describe() {
 			}
 
 			ginkgo.By("checking if the resource is allocatable")
-			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, expectedResource, 300*time.Second, utils.WaitForPositiveResource); err != nil {
-				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-			}
+			gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, expectedResource)).
+				WithTimeout(300 * time.Second).Should(gomega.BeNumerically(">", 0))
 		})
 
 		ginkgo.AfterEach(func(ctx context.Context) {
@@ -147,9 +146,8 @@ func describe() {
 			}
 
 			ginkgo.By("checking if the resource is allocatable")
-			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, expectedResource, 300*time.Second, utils.WaitForPositiveResource); err != nil {
-				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-			}
+			gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, expectedResource)).
+				WithTimeout(300 * time.Second).Should(gomega.BeNumerically(">", 0))
 		})
 
 		ginkgo.AfterEach(func(ctx context.Context) {

@@ -86,9 +86,8 @@ func describe() {
 	ginkgo.Context("When IAA resources are available", ginkgo.Label("dedicated"), func() {
 		ginkgo.BeforeEach(func(ctx context.Context) {
 			ginkgo.By("checking if the resource is allocatable")
-			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "iaa.intel.com/wq-user-dedicated", 300*time.Second, utils.WaitForPositiveResource); err != nil {
-				framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-			}
+			gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, "iaa.intel.com/wq-user-dedicated")).
+				WithTimeout(300 * time.Second).Should(gomega.BeNumerically(">", 0))
 		})
 
 		ginkgo.It("deploys a demo app", ginkgo.Label("accel-config"), func(ctx context.Context) {

@@ -68,9 +68,8 @@ func createPluginAndVerifyExistence(f *framework.Framework, ctx context.Context,
 	}
 
 	ginkgo.By("checking if the resource is allocatable")
-	if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, v1.ResourceName(baseResource), 30*time.Second, utils.WaitForPositiveResource); err != nil {
-		framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-	}
+	gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, v1.ResourceName(baseResource))).
+		WithTimeout(30 * time.Second).Should(gomega.BeNumerically(">", 0))
 }
 
 func describe() {
@@ -92,9 +91,8 @@ func describe() {
 			framework.Logf("Waiting for i915 resources to go to zero")
 
 			// Wait for resources to go to zero
-			if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "gpu.intel.com/i915", 30*time.Second, utils.WaitForZeroResource); err != nil {
-				framework.Failf("unable to wait for nodes to have no resources: %v", err)
-			}
+			gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, "gpu.intel.com/i915")).
+				WithTimeout(30 * time.Second).Should(gomega.BeZero())
 		})
 
 		ginkgo.It("checks availability of GPU resources", ginkgo.Label("busybox"), func(ctx context.Context) {
@@ -173,9 +171,8 @@ func describe() {
 				createPluginAndVerifyExistence(f, ctx, monitoringPath, "gpu.intel.com/i915")
 
 				ginkgo.By("checking if the monitoring resource is allocatable")
-				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, "gpu.intel.com/i915_monitoring", 30*time.Second, utils.WaitForPositiveResource); err != nil {
-					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-				}
+				gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, "gpu.intel.com/i915_monitoring")).
+					WithTimeout(30 * time.Second).Should(gomega.BeNumerically(">", 0))
 			})
 		})
 
