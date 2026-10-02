@@ -105,8 +105,7 @@ func describe() {
 			framework.ExpectNoError(err, "pod Create API error")
 
 			ginkgo.By("waiting the pod to finish successfully")
-			err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 60*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, "testcontainer"))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, "testcontainer", 60*time.Second)
 		})
 	})
 

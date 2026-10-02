@@ -24,6 +24,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/gcustom"
+	"github.com/onsi/gomega/types"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,14 +39,49 @@ import (
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 )
 
-// GetPodLogs returns the log of the container. If not possible to get logs, it returns the error message.
-func GetPodLogs(ctx context.Context, f *framework.Framework, podName, containerName string) string {
-	log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, podName, containerName)
+// podLogs returns the log of the container, or the error message if the
+// log cannot be fetched.
+func podLogs(ctx context.Context, c clientset.Interface, namespace, podName, containerName string) string {
+	log, err := e2epod.GetPodLogs(ctx, c, namespace, podName, containerName)
 	if err != nil {
 		return fmt.Sprintf("unable to get log from pod: %v", err)
 	}
 
 	return fmt.Sprintf("log output of the container %s in the pod %s:%s", containerName, podName, log)
+}
+
+// HaveSucceeded matches a Pod whose phase is Succeeded. When used with
+// gomega.Eventually, polling stops early if the Pod has failed or can never
+// terminate because of its restart policy.
+func HaveSucceeded() types.GomegaMatcher {
+	return gcustom.MakeMatcher(func(pod *v1.Pod) (bool, error) {
+		if pod.DeletionTimestamp == nil && pod.Spec.RestartPolicy == v1.RestartPolicyAlways {
+			return false, gomega.StopTrying("pod will never terminate with a succeeded state since its restart policy is Always")
+		}
+
+		switch pod.Status.Phase {
+		case v1.PodSucceeded:
+			return true, nil
+		case v1.PodFailed:
+			return false, gomega.StopTrying("pod failed")
+		default:
+			return false, nil
+		}
+	}).WithTemplate("Expected Pod {{.To}} succeed\nGot instead:\n{{.FormattedActual}}")
+}
+
+// WaitForPodSuccess waits up to timeout for the Pod to succeed. If it fails,
+// never terminates or does not finish in time, the test fails and the log of
+// containerName is attached to the failure message.
+func WaitForPodSuccess(ctx context.Context, c clientset.Interface, namespace, podName, containerName string, timeout time.Duration) {
+	ginkgo.GinkgoHelper()
+
+	pod := framework.NamespacedName{Namespace: namespace, Name: podName}
+
+	err := framework.Gomega().Eventually(ctx, e2epod.Get(c, pod)).WithTimeout(timeout).Should(HaveSucceeded())
+	if err != nil {
+		framework.ExpectNoError(err, "%s", podLogs(ctx, c, namespace, podName, containerName))
+	}
 }
 
 // AllocatableResource returns a function that sums the allocatable quantity

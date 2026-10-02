@@ -124,8 +124,7 @@ func describeQatDpdkPlugin() {
 			pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
 
 			ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name, 300*time.Second)
 		})
 
 		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources", ginkgo.Label("crypto-perf"), func(ctx context.Context) {
@@ -133,8 +132,7 @@ func describeQatDpdkPlugin() {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
 			ginkgo.By("waiting the crypto pod to finish successfully")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-crypto-perf", f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-crypto-perf", "crypto-perf"))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, "qat-dpdk-test-crypto-perf", "crypto-perf", 300*time.Second)
 		})
 
 		ginkgo.It("deploys a crypto pod (qat-engine testapp)", ginkgo.Label("qat-engine"), func(ctx context.Context) {
@@ -151,8 +149,7 @@ func describeQatDpdkPlugin() {
 			pod := createPod(ctx, f, "qat-engine-testapp", resourceName, "intel/openssl-qat-engine:devel", command)
 
 			ginkgo.By("waiting the qat-engine-testapp pod for the resource " + resourceName.String() + " to finish successfully")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name, 300*time.Second)
 		})
 	})
 
@@ -174,8 +171,7 @@ func describeQatDpdkPlugin() {
 			pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
 
 			ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name, 300*time.Second)
 		})
 
 		ginkgo.It("deploys a compress pod (dpdk compress-perf) requesting QAT resources", ginkgo.Label("compress-perf"), func(ctx context.Context) {
@@ -183,8 +179,7 @@ func describeQatDpdkPlugin() {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
 			ginkgo.By("waiting the compress pod to finish successfully")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-compress-perf", f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-compress-perf", "compress-perf"))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, "qat-dpdk-test-compress-perf", "compress-perf", 300*time.Second)
 		})
 	})
 
@@ -236,8 +231,7 @@ func describeQatDpdkPlugin() {
 				pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
 
 				ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
-				err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-				gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+				utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name, 300*time.Second)
 			})
 		})
 	})

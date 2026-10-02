@@ -461,13 +461,7 @@ func qatDcWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting the compress pod to finish successfully")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-compress-perf", operatorNS, 300*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, "qat-dpdk-test-compress-perf", "compress-perf"); logErr == nil {
-			framework.Logf("logs from compress-perf pod:\n%s", logs)
-		}
-		framework.Failf("compress pod did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, "qat-dpdk-test-compress-perf", "compress-perf", 300*time.Second)
 }
 
 func qatCyWorkload(ctx context.Context, f *framework.Framework) {
@@ -489,13 +483,7 @@ func qatCyWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting the crypto pod to finish successfully")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-crypto-perf", operatorNS, 300*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, "qat-dpdk-test-crypto-perf", "crypto-perf"); logErr == nil {
-			framework.Logf("logs from crypto-perf pod:\n%s", logs)
-		}
-		framework.Failf("crypto pod did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, "qat-dpdk-test-crypto-perf", "crypto-perf", 300*time.Second)
 }
 
 func sgxWorkload(ctx context.Context, f *framework.Framework) {
@@ -529,13 +517,7 @@ func sgxWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting the pod to finish successfully")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, operatorNS, 60*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, pod.ObjectMeta.Name, "testcontainer"); logErr == nil {
-			framework.Logf("logs from testcontainer pod:\n%s", logs)
-		}
-		framework.Failf("testcontainer pod did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, pod.ObjectMeta.Name, "testcontainer", 60*time.Second)
 }
 
 func dsaDpdkWorkload(ctx context.Context, f *framework.Framework) {
@@ -558,13 +540,7 @@ func dsaDpdkWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting for the DSA DPDK demo to succeed")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkPodName, operatorNS, 200*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, dpdkPodName, dpdkPodName); logErr == nil {
-			framework.Logf("logs from DSA DPDK demo pod:\n%s", logs)
-		}
-		framework.Failf("DSA DPDK demo did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, dpdkPodName, dpdkPodName, 200*time.Second)
 }
 
 func dsaVfioDpdkWorkload(ctx context.Context, f *framework.Framework) {
@@ -587,13 +563,7 @@ func dsaVfioDpdkWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting for the DSA DPDK demo to succeed")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkDdaVfioPodName, operatorNS, 200*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, dpdkDdaVfioPodName, dpdkDdaVfioPodName); logErr == nil {
-			framework.Logf("logs from DSA DPDK demo pod:\n%s", logs)
-		}
-		framework.Failf("DSA DPDK demo did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, dpdkDdaVfioPodName, dpdkDdaVfioPodName, 200*time.Second)
 }
 
 func iaaAccelConfigWorkload(ctx context.Context, f *framework.Framework) {
@@ -616,11 +586,5 @@ func iaaAccelConfigWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting for the IAA Accel Config demo to succeed")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, iaaAccelConfigPodName, operatorNS, 200*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, iaaAccelConfigPodName, iaaAccelConfigPodName); logErr == nil {
-			framework.Logf("logs from IAA Accel Config demo pod:\n%s", logs)
-		}
-		framework.Failf("IAA Accel Config demo did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, iaaAccelConfigPodName, iaaAccelConfigPodName, 200*time.Second)
 }

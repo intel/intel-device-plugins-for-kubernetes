@@ -107,16 +107,14 @@ func describe() {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoPath)
 
 			ginkgo.By("waiting for the DSA demo to succeed")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, podName, f.Namespace.Name, 200*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, podName, podName))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, podName, podName, 200*time.Second)
 		})
 
 		ginkgo.It("deploys a demo app (dpdk-test)", ginkgo.Label("dpdk-test"), func(ctx context.Context) {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoDpdkPath)
 
 			ginkgo.By("waiting for the DSA DPDK demo to succeed")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkPodName, f.Namespace.Name, 200*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, dpdkPodName, dpdkPodName))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, dpdkPodName, dpdkPodName, 200*time.Second)
 		})
 	})
 
@@ -162,8 +160,7 @@ func describe() {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-f", demoDpdkVfioPath)
 
 			ginkgo.By("waiting for the DSA DPDK VFIO demo to succeed")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkVfioPodName, f.Namespace.Name, 200*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, dpdkVfioPodName, dpdkVfioPodName))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, dpdkVfioPodName, dpdkVfioPodName, 200*time.Second)
 		})
 	})
 }

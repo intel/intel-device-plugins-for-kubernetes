@@ -149,7 +149,7 @@ func describe() {
 			framework.ExpectNoError(err, "pod Create API error")
 
 			ginkgo.By("waiting the pod to finish successfully")
-			e2epod.NewPodClient(f).WaitForSuccess(ctx, pod.ObjectMeta.Name, 60*time.Second)
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, pod.Name, containerName, 60*time.Second)
 
 			ginkgo.By("checking log output")
 			log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, pod.Name, containerName)
@@ -193,8 +193,7 @@ func describe() {
 
 			ginkgo.By("waiting the pod to finish")
 
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, ptPodName, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, ptPodName, containerName))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, ptPodName, containerName, 300*time.Second)
 
 			framework.Logf("tensorflow execution succeeded!")
 		})
@@ -227,7 +226,7 @@ func describe() {
 			framework.ExpectNoError(err, "pod Create API error")
 
 			ginkgo.By("waiting the pod to finish successfully")
-			e2epod.NewPodClient(f).WaitForSuccess(ctx, pod.ObjectMeta.Name, 60*time.Second)
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, pod.Name, containerName, 60*time.Second)
 
 			ginkgo.By("checking log output")
 			log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, pod.Name, containerName)
