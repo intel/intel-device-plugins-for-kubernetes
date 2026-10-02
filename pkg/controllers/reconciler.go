@@ -37,7 +37,7 @@ import (
 )
 
 var (
-	ImageMinVersion = versionutil.MustParseSemantic("0.37.0")
+	ImageMinVersion = versionutil.MustParseSemantic("0.37.1")
 )
 
 // +kubebuilder:rbac:groups=apps,resources=daemonsets,namespace=system,verbs=get;list;watch;create;update
