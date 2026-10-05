@@ -138,7 +138,7 @@ func describeQatDpdkPlugin() {
 		ginkgo.It("deploys a crypto pod (qat-engine testapp)", ginkgo.Label("qat-engine"), func(ctx context.Context) {
 			command := []string{
 				"testapp",
-				"-engine", "qathwtest",
+				"-provider", "qatprovider",
 				"-async_jobs", "1",
 				"-c", "1",
 				"-n", "1",
@@ -238,6 +238,16 @@ func describeQatDpdkPlugin() {
 }
 
 func createPod(ctx context.Context, f *framework.Framework, name string, resourceName v1.ResourceName, image string, command []string) *v1.Pod {
+	// qatlib >= 26.02 backs its DMA buffers with 2Mi hugepages whenever the
+	// node has them and keeps a temporary file per allocation under
+	// /dev/hugepages/qat. On a host this directory is created by qat.service;
+	// here it is provided as a HugePages emptyDir mounted at that path.
+	resources := v1.ResourceList{
+		resourceName:                       resource.MustParse("1"),
+		v1.ResourceMemory:                  resource.MustParse("128Mi"),
+		v1.ResourceHugePagesPrefix + "2Mi": resource.MustParse("128Mi"),
+	}
+
 	podSpec := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 		Spec: v1.PodSpec{
@@ -252,8 +262,19 @@ func createPod(ctx context.Context, f *framework.Framework, name string, resourc
 							Add: []v1.Capability{"IPC_LOCK"}},
 					},
 					Resources: v1.ResourceRequirements{
-						Requests: v1.ResourceList{resourceName: resource.MustParse("1")},
-						Limits:   v1.ResourceList{resourceName: resource.MustParse("1")},
+						Requests: resources,
+						Limits:   resources,
+					},
+					VolumeMounts: []v1.VolumeMount{
+						{Name: "hugepage", MountPath: "/dev/hugepages/qat"},
+					},
+				},
+			},
+			Volumes: []v1.Volume{
+				{
+					Name: "hugepage",
+					VolumeSource: v1.VolumeSource{
+						EmptyDir: &v1.EmptyDirVolumeSource{Medium: v1.StorageMediumHugePages},
 					},
 				},
 			},

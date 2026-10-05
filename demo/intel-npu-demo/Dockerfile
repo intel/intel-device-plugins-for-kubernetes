@@ -1,10 +1,10 @@
-FROM ubuntu:24.04 AS build
+FROM ubuntu:26.04 AS build
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update && apt install -y build-essential git git-lfs cmake python3 && rm -rf /var/lib/apt/lists/\*
 
-ENV NPU_RELEASE=v1.19.0
+ENV NPU_RELEASE=v1.38.0
 ENV NPU_PROJECT=https://github.com/intel/linux-npu-driver/
 
 RUN mkdir /install
@@ -15,7 +15,7 @@ RUN git clone -b ${NPU_RELEASE} --recurse-submodules --depth 1 ${NPU_PROJECT} &&
   cmake --build build --parallel $(nproc) && \
   cmake --install build
 
-FROM ubuntu:24.04 AS final
+FROM ubuntu:26.04 AS final
 
 COPY --from=build /install /
 
