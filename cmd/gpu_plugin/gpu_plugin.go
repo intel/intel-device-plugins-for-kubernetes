@@ -205,9 +205,8 @@ type devicePlugin struct {
 	controlDeviceReg *regexp.Regexp
 	pciAddressReg    *regexp.Regexp
 
-	scanTicker    *time.Ticker
-	scanDone      chan bool
-	scanResources chan bool
+	scanTicker *time.Ticker
+	scanDone   chan bool
 
 	levelzeroService levelzeroservice.LevelzeroService
 	xpumdService     xpumdservice.XpumdService
@@ -238,7 +237,6 @@ func newDevicePlugin(sysfsDir, devFsDir string, options cliOptions) *devicePlugi
 		scanTicker:       time.NewTicker(scanPeriod),
 		scanDone:         make(chan bool, 1), // buffered as we may send to it before Scan starts receiving from it
 		bypathFound:      true,
-		scanResources:    make(chan bool, 1),
 		healthStatuses:   make(map[string]string),
 	}
 
@@ -484,25 +482,16 @@ func (dp *devicePlugin) sysFsGpuScan(notifier dpapi.Notifier) error {
 			klog.Warning("Failed to scan: ", err)
 		}
 
-		countChanged := false
-
 		for name, prev := range previousCount {
 			count := devTree.DeviceTypeCount(name)
 			if count != prev {
 				klog.V(1).Infof("GPU scan update: %d->%d '%s' resources found", prev, count, name)
 
 				previousCount[name] = count
-
-				countChanged = true
 			}
 		}
 
 		notifier.Notify(devTree)
-
-		// Trigger resource scan if it's enabled.
-		if countChanged {
-			dp.scanResources <- true
-		}
 
 		select {
 		case <-dp.scanDone:
