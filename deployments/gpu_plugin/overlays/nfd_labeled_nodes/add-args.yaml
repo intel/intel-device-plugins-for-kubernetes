@@ -1,12 +1,6 @@
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: intel-gpu-plugin
-spec:
-  template:
-    spec:
-      containers:
-      - name: intel-gpu-plugin
-        args:
-        - "-enable-monitoring"
-        - "-v=2"
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: "-enable-monitoring"
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: "-v=2"

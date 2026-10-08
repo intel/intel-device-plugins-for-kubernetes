@@ -1,6 +1,9 @@
 - op: add
-  path: /spec/template/spec/containers/0/args
-  value:
-    - "-xpumd-endpoint=/run/xpumd/intelxpuinfo.sock"
-    - "-xpumd-unhealthy-severity=critical"
-    - "-enable-monitoring"
+  path: /spec/template/spec/containers/0/args/-
+  value: "-xpumd-endpoint=/run/xpumd/intelxpuinfo.sock"
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: "-xpumd-unhealthy-severity=critical"
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: "-enable-monitoring"
