@@ -20,7 +20,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -47,6 +46,30 @@ type mockNotifier struct {
 	i915monitorCount int
 	xeMonitorCount   int
 	gpuMonitorCount  int
+}
+
+// deviceTreesEqual compares device trees with DeviceInfo.Equal, as
+// reflect.DeepEqual is unreliable for the protobuf fields in DeviceInfo.
+func deviceTreesEqual(a, b dpapi.DeviceTree) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for devType, devs := range a {
+		otherDevs, ok := b[devType]
+		if !ok || len(devs) != len(otherDevs) {
+			return false
+		}
+
+		for id, info := range devs {
+			other, ok := otherDevs[id]
+			if !ok || !info.Equal(other) {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 // Notify stops plugin Scan.
@@ -1053,7 +1076,6 @@ func TestCDIDeviceInclusion(t *testing.T) {
 	createSymlinks(t, devfs, devfslinks)
 
 	plugin := newDevicePlugin(sysfs, devfs, cliOptions{sharedDevNum: 1})
-	plugin.bypathFound = true
 
 	tree, err := plugin.scan()
 
@@ -1133,7 +1155,7 @@ func TestCDIDeviceInclusion(t *testing.T) {
 		},
 	}))
 
-	if !reflect.DeepEqual(tree, refTree) {
+	if !deviceTreesEqual(tree, refTree) {
 		t.Error("Received device tree isn't expected\n", tree, "\n", refTree)
 	}
 
@@ -1198,7 +1220,6 @@ func TestByPathOptions(t *testing.T) {
 	createSymlinks(t, devfs, devfslinks)
 
 	plugin := newDevicePlugin(sysfs, devfs, cliOptions{sharedDevNum: 1, bypathMount: bypathOptionAll})
-	plugin.bypathFound = true
 
 	devSpecs := []v1beta1.DeviceSpec{}
 
