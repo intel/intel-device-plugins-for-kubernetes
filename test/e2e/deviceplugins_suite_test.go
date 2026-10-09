@@ -103,9 +103,8 @@ func setupFirstNode(ctx context.Context) []byte {
 		framework.Logf("kube-apiserver version: %s", serverVersion.GitVersion)
 	}
 
-	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/kustomization.yaml")
-
-	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
+	utils.DeployNFD("node-feature-discovery")
+	utils.DeployNFDRules()
 
 	if err = e2epod.WaitForPodsRunningReady(ctx, c, "node-feature-discovery", 2,
 		300*time.Second); err != nil {

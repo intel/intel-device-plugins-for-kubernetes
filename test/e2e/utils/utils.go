@@ -24,14 +24,14 @@ import (
 	"strings"
 	"time"
 
-	"errors"
-
+	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/gcustom"
+	"github.com/onsi/gomega/types"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/kubernetes/test/e2e/framework"
 	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
@@ -39,13 +39,10 @@ import (
 	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 )
 
-const (
-	poll = time.Second
-)
-
-// GetPodLogs returns the log of the container. If not possible to get logs, it returns the error message.
-func GetPodLogs(ctx context.Context, f *framework.Framework, podName, containerName string) string {
-	log, err := e2epod.GetPodLogs(ctx, f.ClientSet, f.Namespace.Name, podName, containerName)
+// podLogs returns the log of the container, or the error message if the
+// log cannot be fetched.
+func podLogs(ctx context.Context, c clientset.Interface, namespace, podName, containerName string) string {
+	log, err := e2epod.GetPodLogs(ctx, c, namespace, podName, containerName)
 	if err != nil {
 		return fmt.Sprintf("unable to get log from pod: %v", err)
 	}
@@ -53,95 +50,109 @@ func GetPodLogs(ctx context.Context, f *framework.Framework, podName, containerN
 	return fmt.Sprintf("log output of the container %s in the pod %s:%s", containerName, podName, log)
 }
 
-type WaitForResourceFunc func(resourceCount int) bool
-
-func WaitForPositiveResource(resourceCount int) bool {
-	return resourceCount > 0
-}
-
-func WaitForZeroResource(resourceCount int) bool {
-	return resourceCount == 0
-}
-
-// WaitForNodesWithResource waits for node's resources to change.
-// Depending on the waitOperation, function waits for positive resource count or a zero resource count.
-func WaitForNodesWithResource(ctx context.Context, c clientset.Interface, res v1.ResourceName, timeout time.Duration, waitForResourceFunc WaitForResourceFunc) error {
-	framework.Logf("Waiting up to %s for allocatable resource %q", timeout, res)
-
-	start := time.Now()
-
-	err := wait.PollUntilContextTimeout(ctx, poll, timeout, true,
-		func(ctx context.Context) (bool, error) {
-			for t := time.Now(); time.Since(t) < timeout; time.Sleep(poll) {
-				nodelist, err := c.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
-				if err != nil {
-					return false, err
-				}
-
-				resNum := 0
-				for _, item := range nodelist.Items {
-					if q, ok := item.Status.Allocatable[res]; ok {
-						resNum = resNum + int(q.Value())
-					}
-				}
-				framework.Logf("Found %d of %q. Elapsed: %s", resNum, res, time.Since(start))
-
-				if waitForResourceFunc(resNum) {
-					return true, nil
-				}
-			}
-
-			return false, errors.New("unable to list nodes")
-		})
-
-	return err
-}
-
-// WaitForPodFailure waits for a pod to fail.
-// This function used to be a part of k8s e2e framework, but was deleted in
-// https://github.com/kubernetes/kubernetes/pull/86732.
-func WaitForPodFailure(ctx context.Context, f *framework.Framework, name string, timeout time.Duration) {
-	gomega.Expect(e2epod.WaitForPodCondition(ctx, f.ClientSet, f.Namespace.Name, name, "success or failure", timeout,
-		func(pod *v1.Pod) (bool, error) {
-			switch pod.Status.Phase {
-			case v1.PodFailed:
-				return true, nil
-			case v1.PodSucceeded:
-				return true, fmt.Errorf("pod %q successed with reason: %q, message: %q", name, pod.Status.Reason, pod.Status.Message)
-			default:
-				return false, nil
-			}
-		},
-	)).To(gomega.Succeed(), "wait for pod %q to fail", name)
-}
-
-// LocateRepoFile locates a file inside this repository.
-func LocateRepoFile(repopath string) (string, error) {
-	root := os.Getenv("PLUGINS_REPO_DIR")
-	if root != "" {
-		path := filepath.Join(root, repopath)
-		//nolint:gosec // The path is repository test data selected by the e2e test.
-		if _, err := os.Stat(path); !os.IsNotExist(err) {
-			return path, nil
+// HaveSucceeded matches a Pod whose phase is Succeeded. When used with
+// gomega.Eventually, polling stops early if the Pod has failed or can never
+// terminate because of its restart policy.
+func HaveSucceeded() types.GomegaMatcher {
+	return gcustom.MakeMatcher(func(pod *v1.Pod) (bool, error) {
+		if pod.DeletionTimestamp == nil && pod.Spec.RestartPolicy == v1.RestartPolicyAlways {
+			return false, gomega.StopTrying("pod will never terminate with a succeeded state since its restart policy is Always")
 		}
-	}
 
-	currentDir, err := os.Getwd()
+		switch pod.Status.Phase {
+		case v1.PodSucceeded:
+			return true, nil
+		case v1.PodFailed:
+			return false, gomega.StopTrying("pod failed")
+		default:
+			return false, nil
+		}
+	}).WithTemplate("Expected Pod {{.To}} succeed\nGot instead:\n{{.FormattedActual}}")
+}
+
+// WaitForPodSuccess waits up to timeout for the Pod to succeed. If it fails,
+// never terminates or does not finish in time, the test fails and the log of
+// containerName is attached to the failure message.
+func WaitForPodSuccess(ctx context.Context, c clientset.Interface, namespace, podName, containerName string, timeout time.Duration) {
+	ginkgo.GinkgoHelper()
+
+	pod := framework.NamespacedName{Namespace: namespace, Name: podName}
+
+	err := framework.Gomega().Eventually(ctx, e2epod.Get(c, pod)).WithTimeout(timeout).Should(HaveSucceeded())
 	if err != nil {
-		return "", err
+		framework.ExpectNoError(err, "%s", podLogs(ctx, c, namespace, podName, containerName))
+	}
+}
+
+// AllocatableResource returns a function that sums the allocatable quantity
+// of res across all nodes. It is meant to be polled with gomega.Eventually:
+//
+//	gomega.Eventually(ctx, utils.AllocatableResource(c, res)).WithTimeout(t).Should(gomega.BeNumerically(">", 0))
+func AllocatableResource(c clientset.Interface, res v1.ResourceName) func(ctx context.Context) (int64, error) {
+	return func(ctx context.Context) (int64, error) {
+		nodelist, err := c.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return 0, err
+		}
+
+		var sum int64
+
+		for _, item := range nodelist.Items {
+			if q, ok := item.Status.Allocatable[res]; ok {
+				sum += q.Value()
+			}
+		}
+
+		framework.Logf("Found %d of allocatable %q", sum, res)
+
+		return sum, nil
+	}
+}
+
+// ApplyPluginAndWait applies a plugin kustomization and waits for its Pod to
+// become ready.
+func ApplyPluginAndWait(ctx context.Context, f *framework.Framework, kustomizationPath, appLabel string, timeout time.Duration) []v1.Pod {
+	ginkgo.GinkgoHelper()
+
+	e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
+
+	ginkgo.By("waiting for plugin availability")
+	podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
+		labels.Set{"app": appLabel}.AsSelector(), 1 /* one replica */, timeout)
+	if err != nil {
+		e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+		e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
+	}
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "unable to wait for all pods to be running and ready")
+
+	return podList.Items
+}
+
+// DeletePluginAndWait deletes a plugin kustomization and waits for its Pod to
+// disappear.
+func DeletePluginAndWait(ctx context.Context, f *framework.Framework, kustomizationPath, podName string, timeout time.Duration) {
+	ginkgo.GinkgoHelper()
+
+	e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(kustomizationPath))
+	gomega.Expect(e2epod.WaitForPodNotFoundInNamespace(
+		ctx, f.ClientSet, podName, f.Namespace.Name, timeout,
+	)).To(gomega.Succeed(), "failed to terminate pod")
+}
+
+// MustLocateRepoFile returns the absolute path of a file inside this repository
+// and fails the test if the file does not exist. The repository root comes from
+// the e2e framework's --repo-root flag (framework.TestContext.RepoRoot).
+func MustLocateRepoFile(repopath string) string {
+	path, err := filepath.Abs(filepath.Join(framework.TestContext.RepoRoot, repopath))
+	if err != nil {
+		framework.Failf("unable to resolve %q: %v", repopath, err)
 	}
 
-	path := filepath.Join(currentDir, repopath)
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		return path, nil
+	if _, err := os.Stat(path); err != nil {
+		framework.Failf("unable to locate %q: %v (check the --repo-root flag)", repopath, err)
 	}
 
-	path = filepath.Join(currentDir, "../../"+repopath)
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		return path, err
-	}
-
-	return "", errors.New("no file found, try to define PLUGINS_REPO_DIR pointing to the root of the repository")
+	return path
 }
 
 func copyFiles(srcDir, dstDir string) error {
@@ -356,18 +367,21 @@ func TestWebhookServerTLS(ctx context.Context, f *framework.Framework, serviceNa
 	return nil
 }
 
-func Kubectl(ns string, cmd string, opt string, file string) {
-	path, err := LocateRepoFile(file)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", file, err)
-	}
+func applyKustomization(namespace, repopath string) {
+	path := MustLocateRepoFile(repopath)
 
-	if opt == "-k" {
-		path = filepath.Dir(path)
-	}
-
-	msg := e2ekubectl.RunKubectlOrDie(ns, cmd, opt, path)
+	msg := e2ekubectl.RunKubectlOrDie(namespace, "apply", "-k", filepath.Dir(path))
 	framework.Logf("%s", msg)
+}
+
+// DeployNFD deploys Node Feature Discovery into namespace.
+func DeployNFD(namespace string) {
+	applyKustomization(namespace, "deployments/nfd/kustomization.yaml")
+}
+
+// DeployNFDRules deploys the NodeFeatureRules used by the device plugins.
+func DeployNFDRules() {
+	applyKustomization("", "deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
 }
 
 func FindNodeAndResourceCapacity(f *framework.Framework, ctx context.Context, resourceName string) (string, int64) {

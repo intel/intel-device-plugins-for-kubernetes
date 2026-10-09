@@ -47,18 +47,15 @@ func describe() {
 	var webhook v1.Pod
 
 	ginkgo.BeforeEach(func(ctx context.Context) {
-		kustomizationPath, err := utils.LocateRepoFile(kustomizationYaml)
-		if err != nil {
-			framework.Failf("unable to locate %q: %v", kustomizationYaml, err)
-		}
+		kustomizationPath := utils.MustLocateRepoFile(kustomizationYaml)
 		webhook = utils.DeployWebhook(ctx, f, kustomizationPath)
 	})
 
 	ginkgo.It("checks the webhook pod is safely configured", func(ctx context.Context) {
 		err := utils.TestContainersRunAsNonRoot([]v1.Pod{webhook})
-		gomega.Expect(err).To(gomega.BeNil())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		err = utils.TestWebhookServerTLS(ctx, f, "https://intelsgxwebhook-webhook-service")
-		gomega.Expect(err).To(gomega.BeNil())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 	ginkgo.It("mutates created pods when no quote generation is needed", func(ctx context.Context) {
 		ginkgo.By("submitting the pod")
@@ -150,7 +147,7 @@ func describe() {
 }
 
 func checkMutatedVolumes(f *framework.Framework, pod *v1.Pod, volumeName string, volumeType any) {
-	gomega.Expect(len(pod.Spec.Volumes)).To(gomega.Equal(1))
+	gomega.Expect(pod.Spec.Volumes).To(gomega.HaveLen(1))
 
 	switch reflect.TypeOf(volumeType).String() {
 	case "v1.HostPathVolumeSource":
@@ -162,7 +159,7 @@ func checkMutatedVolumes(f *framework.Framework, pod *v1.Pod, volumeName string,
 	}
 
 	for _, c := range pod.Spec.Containers {
-		gomega.Expect(len(c.VolumeMounts)).To(gomega.Equal(1))
+		gomega.Expect(c.VolumeMounts).To(gomega.HaveLen(1))
 		gomega.Expect(c.VolumeMounts[0].Name).To(gomega.Equal(volumeName))
 	}
 }

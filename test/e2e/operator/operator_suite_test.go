@@ -132,7 +132,7 @@ func ensureNFD(ctx context.Context, c clientset.Interface) {
 
 	framework.Logf("NFD not detected in %s or %s, deploying via kustomize...", nfdNamespaceOCP, nfdNamespace)
 
-	utils.Kubectl(nfdNamespace, "apply", "-k", "deployments/nfd/kustomization.yaml")
+	utils.DeployNFD(nfdNamespace)
 
 	if waitErr := waitForNFD(ctx, c); waitErr != nil {
 		framework.Failf("NFD pods did not become ready: %v", waitErr)
@@ -151,7 +151,7 @@ func ensureNFDRules() {
 	}
 
 	framework.Logf("NodeFeatureRule intel-dp-devices not found, applying NFD rules overlay...")
-	utils.Kubectl("", "apply", "-k", "deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
+	utils.DeployNFDRules()
 }
 
 func waitForNFD(ctx context.Context, c clientset.Interface) error {
@@ -235,6 +235,10 @@ func TestMain(m *testing.M) {
 	fv := reflect.ValueOf(flag.CommandLine).Elem().FieldByName("formal")
 	reflect.NewAt(fv.Type(), unsafe.Pointer(fv.UnsafeAddr())).Elem().SetMapIndex(reflect.ValueOf("kubeconfig"), reflect.Value{})
 	framework.RegisterClusterFlags(flag.CommandLine)
+	// This suite lives one level deeper than test/e2e, so the framework's
+	// default --repo-root of "../../" would point at test/. Override the
+	// default; an explicit -repo-root on the command line still wins.
+	framework.TestContext.RepoRoot = "../../../"
 	flag.Parse()
 
 	framework.AfterReadingAllFlags(&framework.TestContext)
