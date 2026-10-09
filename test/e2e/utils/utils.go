@@ -367,15 +367,21 @@ func TestWebhookServerTLS(ctx context.Context, f *framework.Framework, serviceNa
 	return nil
 }
 
-func Kubectl(ns string, cmd string, opt string, file string) {
-	path := MustLocateRepoFile(file)
+func applyKustomization(namespace, repopath string) {
+	path := MustLocateRepoFile(repopath)
 
-	if opt == "-k" {
-		path = filepath.Dir(path)
-	}
-
-	msg := e2ekubectl.RunKubectlOrDie(ns, cmd, opt, path)
+	msg := e2ekubectl.RunKubectlOrDie(namespace, "apply", "-k", filepath.Dir(path))
 	framework.Logf("%s", msg)
+}
+
+// DeployNFD deploys Node Feature Discovery into namespace.
+func DeployNFD(namespace string) {
+	applyKustomization(namespace, "deployments/nfd/kustomization.yaml")
+}
+
+// DeployNFDRules deploys the NodeFeatureRules used by the device plugins.
+func DeployNFDRules() {
+	applyKustomization("", "deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
 }
 
 func FindNodeAndResourceCapacity(f *framework.Framework, ctx context.Context, resourceName string) (string, int64) {
