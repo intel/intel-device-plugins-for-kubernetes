@@ -1558,7 +1558,10 @@ func TestCreateMeiDeviceSpecs(t *testing.T) {
 	tcases := []struct {
 		name          string
 		meiSysfsDirs  []string
+		meiDevNodes   []string
+		meiDevFiles   []string
 		expectedCount int
+		usePrefix     bool
 	}{
 		{
 			name:          "no mei sysfs entries",
@@ -1567,6 +1570,7 @@ func TestCreateMeiDeviceSpecs(t *testing.T) {
 		{
 			name:          "one mei device",
 			meiSysfsDirs:  []string{"device/xe.mei-gscfi.1024/mei/mei1"},
+			meiDevNodes:   []string{"mei1"},
 			expectedCount: 1,
 		},
 		{
@@ -1575,7 +1579,30 @@ func TestCreateMeiDeviceSpecs(t *testing.T) {
 				"device/i915.mei-gscfi.1024/mei/mei1",
 				"device/i915.mei-gscfi.1025/mei/mei2",
 			},
+			meiDevNodes:   []string{"mei1", "mei2"},
 			expectedCount: 2,
+		},
+		{
+			name: "mei sysfs entry without device node",
+			meiSysfsDirs: []string{
+				"device/xe.mei-gscfi.1024/mei/mei1",
+				"device/xe.mei-gscfi.1025/mei/mei2",
+			},
+			meiDevNodes:   []string{"mei2"},
+			expectedCount: 1,
+		},
+		{
+			name:          "mei device file is not a character device",
+			meiSysfsDirs:  []string{"device/xe.mei-gscfi.1024/mei/mei1"},
+			meiDevFiles:   []string{"mei1"},
+			expectedCount: 0,
+		},
+		{
+			name:          "prefix is removed from host path",
+			usePrefix:     true,
+			meiSysfsDirs:  []string{"device/xe.mei-gscfi.1024/mei/mei1"},
+			meiDevNodes:   []string{"mei1"},
+			expectedCount: 1,
 		},
 	}
 
@@ -1598,7 +1625,33 @@ func TestCreateMeiDeviceSpecs(t *testing.T) {
 				}
 			}
 
-			plugin := newDevicePlugin(sysfsDir, devfsDir, cliOptions{sharedDevNum: 1})
+			if err := os.MkdirAll(devfsDir, 0750); err != nil {
+				t.Fatalf("can't create devfs dir: %+v", err)
+			}
+
+			// Unprivileged tests can't mknod, so point the nodes to an existing character device.
+			for _, node := range tc.meiDevNodes {
+				if err := os.Symlink("/dev/null", path.Join(devfsDir, node)); err != nil {
+					t.Fatalf("can't create devfs node %s: %+v", node, err)
+				}
+			}
+
+			for _, file := range tc.meiDevFiles {
+				if err := os.WriteFile(path.Join(devfsDir, file), []byte{}, 0600); err != nil {
+					t.Fatalf("can't create devfs file %s: %+v", file, err)
+				}
+			}
+
+			expectedDevfsDir := devfsDir
+			prefix := ""
+
+			// With the test root as prefix, host paths are relative to the root.
+			if tc.usePrefix {
+				prefix = root
+				expectedDevfsDir = "/dev"
+			}
+
+			plugin := newDevicePlugin(sysfsDir, devfsDir, cliOptions{sharedDevNum: 1, prefix: prefix})
 
 			specs := plugin.createMeiDeviceSpecs(cardPath)
 
@@ -1608,8 +1661,8 @@ func TestCreateMeiDeviceSpecs(t *testing.T) {
 
 			//nolint: govet
 			for _, spec := range specs {
-				if !strings.HasPrefix(spec.HostPath, devfsDir) {
-					t.Errorf("MEI device spec path '%q' does not start with devfs dir '%q'", spec.HostPath, devfsDir)
+				if !strings.HasPrefix(spec.HostPath, expectedDevfsDir+"/") {
+					t.Errorf("MEI device spec path '%q' does not start with devfs dir '%q'", spec.HostPath, expectedDevfsDir)
 				}
 
 				if spec.ContainerPath != spec.HostPath {
