@@ -625,13 +625,26 @@ func (dp *devicePlugin) createMeiDeviceSpecs(cardPath string) []pluginapi.Device
 		}
 
 		for _, entry := range entries {
-			devPath := dp.hostPath(path.Join(dp.devFsRoot, entry.Name()))
+			containerPath := path.Join(dp.devFsRoot, entry.Name())
 
-			klog.V(4).Infof("Adding MEI device %s for GPU %s", devPath, filepath.Base(cardPath))
+			// Verify that the /dev/meiX file exists and is a character device.
+			if fi, err := os.Stat(containerPath); err != nil {
+				klog.Warningf("MEI device %s does not exist: %+v", dp.hostPath(containerPath), err)
+
+				continue
+			} else if fi.Mode()&os.ModeCharDevice == 0 {
+				klog.Warningf("MEI device %s is not a character device", dp.hostPath(containerPath))
+
+				continue
+			}
+
+			hostDevPath := dp.hostPath(containerPath)
+
+			klog.V(4).Infof("Adding MEI device %s for GPU %s", hostDevPath, filepath.Base(cardPath))
 
 			specs = append(specs, pluginapi.DeviceSpec{
-				HostPath:      devPath,
-				ContainerPath: devPath,
+				HostPath:      hostDevPath,
+				ContainerPath: hostDevPath,
 				Permissions:   "rw",
 			})
 		}
