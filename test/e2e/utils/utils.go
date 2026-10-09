@@ -343,15 +343,40 @@ func TestWebhookServerTLS(ctx context.Context, f *framework.Framework, serviceNa
 	return nil
 }
 
-func Kubectl(ns string, cmd string, opt string, file string) {
-	path := MustLocateRepoFile(file)
+func applyKustomization(repopath string) {
+	path := MustLocateRepoFile(repopath)
 
-	if opt == "-k" {
-		path = filepath.Dir(path)
+	msg := e2ekubectl.RunKubectlOrDie("", "apply", "-k", filepath.Dir(path))
+	framework.Logf("%s", msg)
+}
+
+// EnsureNFDAndWait reuses an existing NFD installation or deploys one, then
+// waits for at least one master and worker, with all matching Pods ready.
+func EnsureNFDAndWait(ctx context.Context, c clientset.Interface) {
+	ginkgo.GinkgoHelper()
+
+	pods, err := c.CoreV1().Pods(metav1.NamespaceAll).List(ctx, metav1.ListOptions{
+		LabelSelector: "app in (nfd-master,nfd-worker)",
+	})
+	framework.ExpectNoError(err, "unable to detect existing NFD pods")
+
+	if len(pods.Items) == 0 {
+		framework.Logf("NFD not detected, deploying via kustomize")
+		applyKustomization("deployments/nfd/kustomization.yaml")
+	} else {
+		framework.Logf("NFD pods already present; skipping deployment")
 	}
 
-	msg := e2ekubectl.RunKubectlOrDie(ns, cmd, opt, path)
-	framework.Logf("%s", msg)
+	for _, app := range []string{"nfd-master", "nfd-worker"} {
+		_, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, c, metav1.NamespaceAll,
+			labels.Set{"app": app}.AsSelector(), 1, 5*time.Minute)
+		framework.ExpectNoError(err, "waiting for %s pods to be running and ready", app)
+	}
+}
+
+// DeployNFDRules deploys the NodeFeatureRules used by the device plugins.
+func DeployNFDRules() {
+	applyKustomization("deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
 }
 
 func FindNodeAndResourceCapacity(f *framework.Framework, ctx context.Context, resourceName string) (string, int64) {

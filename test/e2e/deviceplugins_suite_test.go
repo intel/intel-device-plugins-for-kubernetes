@@ -19,7 +19,6 @@ import (
 	"flag"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -103,14 +102,8 @@ func setupFirstNode(ctx context.Context) []byte {
 		framework.Logf("kube-apiserver version: %s", serverVersion.GitVersion)
 	}
 
-	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/kustomization.yaml")
-
-	utils.Kubectl("node-feature-discovery", "apply", "-k", "deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
-
-	if err = e2epod.WaitForPodsRunningReady(ctx, c, "node-feature-discovery", 2,
-		300*time.Second); err != nil {
-		framework.Failf("unable to wait for NFD pods to be running and ready: %v", err)
-	}
+	utils.EnsureNFDAndWait(ctx, c)
+	utils.DeployNFDRules()
 
 	return []byte{}
 }
