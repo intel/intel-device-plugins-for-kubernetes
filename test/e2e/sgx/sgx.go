@@ -16,7 +16,6 @@ package sgx
 
 import (
 	"context"
-	"path/filepath"
 	"time"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
@@ -25,11 +24,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
-	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
-	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
-	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	admissionapi "k8s.io/pod-security-admission/api"
 )
 
@@ -50,23 +45,17 @@ func describe() {
 
 	deploymentPluginPath := utils.MustLocateRepoFile(kustomizationPlugin)
 
+	var pluginPodName string
+
 	ginkgo.BeforeEach(func(ctx context.Context) {
 		_ = utils.DeployWebhook(ctx, f, deploymentWebhookPath)
 
 		ginkgo.By("deploying SGX plugin")
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(deploymentPluginPath))
-
-		ginkgo.By("waiting for SGX plugin's availability")
-		podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
-			labels.Set{"app": "intel-sgx-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
-		if err != nil {
-			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
-			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
-			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
-		}
+		pluginPods := utils.ApplyPluginAndWait(ctx, f, deploymentPluginPath, "intel-sgx-plugin", 100*time.Second)
+		pluginPodName = pluginPods[0].Name
 
 		ginkgo.By("checking SGX plugin's securityContext")
-		if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
+		if err := utils.TestPodsFileSystemInfo(pluginPods); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
 	})
@@ -109,8 +98,8 @@ func describe() {
 		})
 	})
 
-	ginkgo.AfterEach(func() {
+	ginkgo.AfterEach(func(ctx context.Context) {
 		ginkgo.By("undeploying SGX plugin")
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(deploymentPluginPath))
+		utils.DeletePluginAndWait(ctx, f, deploymentPluginPath, pluginPodName, 30*time.Second)
 	})
 }
