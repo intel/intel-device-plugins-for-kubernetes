@@ -109,6 +109,36 @@ func AllocatableResource(c clientset.Interface, res v1.ResourceName) func(ctx co
 	}
 }
 
+// ApplyPluginAndWait applies a plugin kustomization and waits for its Pod to
+// become ready.
+func ApplyPluginAndWait(ctx context.Context, f *framework.Framework, kustomizationPath, appLabel string, timeout time.Duration) []v1.Pod {
+	ginkgo.GinkgoHelper()
+
+	e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
+
+	ginkgo.By("waiting for plugin availability")
+	podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
+		labels.Set{"app": appLabel}.AsSelector(), 1 /* one replica */, timeout)
+	if err != nil {
+		e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
+		e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
+	}
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "unable to wait for all pods to be running and ready")
+
+	return podList.Items
+}
+
+// DeletePluginAndWait deletes a plugin kustomization and waits for its Pod to
+// disappear.
+func DeletePluginAndWait(ctx context.Context, f *framework.Framework, kustomizationPath, podName string, timeout time.Duration) {
+	ginkgo.GinkgoHelper()
+
+	e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(kustomizationPath))
+	gomega.Expect(e2epod.WaitForPodNotFoundInNamespace(
+		ctx, f.ClientSet, podName, f.Namespace.Name, timeout,
+	)).To(gomega.Succeed(), "failed to terminate pod")
+}
+
 // MustLocateRepoFile returns the absolute path of a file inside this repository
 // and fails the test if the file does not exist. The repository root comes from
 // the e2e framework's --repo-root flag (framework.TestContext.RepoRoot).

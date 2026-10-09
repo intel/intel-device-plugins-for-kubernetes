@@ -16,17 +16,14 @@ package iaa
 
 import (
 	"context"
-	"path/filepath"
 	"time"
 
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/labels"
+
 	"k8s.io/kubernetes/test/e2e/framework"
-	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
 	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
-	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	admissionapi "k8s.io/pod-security-admission/api"
 )
 
@@ -57,30 +54,18 @@ func describe() {
 		ginkgo.By("deploying IAA plugin")
 		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "create", "configmap", "intel-iaa-config", "--from-file="+configmap)
 
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
-
-		ginkgo.By("waiting for IAA plugin's availability")
-		podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
-			labels.Set{"app": "intel-iaa-plugin"}.AsSelector(), 1 /* one replica */, 300*time.Second)
-		if err != nil {
-			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
-			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
-			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
-		}
-		dpPodName = podList.Items[0].Name
+		pluginPods := utils.ApplyPluginAndWait(ctx, f, kustomizationPath, "intel-iaa-plugin", 300*time.Second)
+		dpPodName = pluginPods[0].Name
 
 		ginkgo.By("checking IAA plugin's securityContext")
-		if err = utils.TestPodsFileSystemInfo(podList.Items); err != nil {
+		if err := utils.TestPodsFileSystemInfo(pluginPods); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
 	})
 
 	ginkgo.AfterEach(func(ctx context.Context) {
 		ginkgo.By("undeploying IAA plugin")
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(kustomizationPath))
-		if err := e2epod.WaitForPodNotFoundInNamespace(ctx, f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
-			framework.Failf("failed to terminate pod: %v", err)
-		}
+		utils.DeletePluginAndWait(ctx, f, kustomizationPath, dpPodName, 30*time.Second)
 	})
 
 	ginkgo.Context("When IAA resources are available", ginkgo.Label("dedicated"), func() {
