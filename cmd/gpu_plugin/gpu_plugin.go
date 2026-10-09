@@ -34,6 +34,7 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/cmd/gpu_plugin/xpumdservice"
 	gpulevelzero "github.com/intel/intel-device-plugins-for-kubernetes/cmd/internal/levelzero"
 	dpapi "github.com/intel/intel-device-plugins-for-kubernetes/pkg/deviceplugin"
+	"github.com/intel/intel-device-plugins-for-kubernetes/pkg/topology"
 	cdispec "tags.cncf.io/container-device-interface/specs-go"
 )
 
@@ -77,6 +78,7 @@ const (
 )
 
 type cliOptions struct {
+	prefix                    string
 	preferredAllocationPolicy string
 	allowIDs                  string
 	denyIDs                   string
@@ -177,7 +179,7 @@ func (dp *devicePlugin) bypathMountsForPci(pciAddress, bypathDir string) []plugi
 
 	for _, f := range files {
 		if strings.HasPrefix(f.Name(), linkPrefix) {
-			absPath := path.Join(bypathDir, f.Name())
+			absPath := dp.hostPath(path.Join(bypathDir, f.Name()))
 
 			mounts = append(mounts, pluginapi.Mount{
 				ContainerPath: absPath,
@@ -193,8 +195,8 @@ func (dp *devicePlugin) bypathMountsForPci(pciAddress, bypathDir string) []plugi
 func (dp *devicePlugin) bypathMountForAll() []pluginapi.Mount {
 	return []pluginapi.Mount{
 		{
-			ContainerPath: dp.bypathDir,
-			HostPath:      dp.bypathDir,
+			ContainerPath: dp.hostPath(dp.bypathDir),
+			HostPath:      dp.hostPath(dp.bypathDir),
 			ReadOnly:      true,
 		},
 	}
@@ -205,9 +207,8 @@ type devicePlugin struct {
 	controlDeviceReg *regexp.Regexp
 	pciAddressReg    *regexp.Regexp
 
-	scanTicker    *time.Ticker
-	scanDone      chan bool
-	scanResources chan bool
+	scanTicker *time.Ticker
+	scanDone   chan bool
 
 	levelzeroService levelzeroservice.LevelzeroService
 	xpumdService     xpumdservice.XpumdService
@@ -221,8 +222,6 @@ type devicePlugin struct {
 	// Note: If restarting the plugin with a new policy, the allocations for existing pods remain with old policy.
 	policy  preferredAllocationPolicyFunc
 	options cliOptions
-
-	bypathFound bool
 }
 
 func newDevicePlugin(sysfsDir, devFsDir string, options cliOptions) *devicePlugin {
@@ -237,8 +236,6 @@ func newDevicePlugin(sysfsDir, devFsDir string, options cliOptions) *devicePlugi
 		pciAddressReg:    regexp.MustCompile(pciAddressRE),
 		scanTicker:       time.NewTicker(scanPeriod),
 		scanDone:         make(chan bool, 1), // buffered as we may send to it before Scan starts receiving from it
-		bypathFound:      true,
-		scanResources:    make(chan bool, 1),
 		healthStatuses:   make(map[string]string),
 	}
 
@@ -251,15 +248,22 @@ func newDevicePlugin(sysfsDir, devFsDir string, options cliOptions) *devicePlugi
 		dp.policy = nonePolicy
 	}
 
-	if !options.wslScan {
-		if _, err := os.ReadDir(dp.bypathDir); err != nil {
-			klog.Warningf("failed to read by-path dir: %+v", err)
+	return dp
+}
 
-			dp.bypathFound = false
-		}
+// hostPath converts a path seen by the plugin into the corresponding host path
+// by removing the devfs/sysfs prefix the host directories are mounted under.
+func (dp *devicePlugin) hostPath(p string) string {
+	prefix := strings.TrimSuffix(dp.options.prefix, "/")
+	if prefix == "" {
+		return p
 	}
 
-	return dp
+	if rest, found := strings.CutPrefix(p, prefix); found && (rest == "" || strings.HasPrefix(rest, "/")) {
+		return path.Clean("/" + rest)
+	}
+
+	return p
 }
 
 func logHealthStatusChange(card, newStatus string, statuses map[string]string) {
@@ -484,25 +488,16 @@ func (dp *devicePlugin) sysFsGpuScan(notifier dpapi.Notifier) error {
 			klog.Warning("Failed to scan: ", err)
 		}
 
-		countChanged := false
-
 		for name, prev := range previousCount {
 			count := devTree.DeviceTypeCount(name)
 			if count != prev {
 				klog.V(1).Infof("GPU scan update: %d->%d '%s' resources found", prev, count, name)
 
 				previousCount[name] = count
-
-				countChanged = true
 			}
 		}
 
 		notifier.Notify(devTree)
-
-		// Trigger resource scan if it's enabled.
-		if countChanged {
-			dp.scanResources <- true
-		}
 
 		select {
 		case <-dp.scanDone:
@@ -532,20 +527,18 @@ func (dp *devicePlugin) isCompatibleDevice(name string) bool {
 	return true
 }
 
-func (dp *devicePlugin) devPathForDrmFile(drmFile string) (devPath string, err error) {
+func (dp *devicePlugin) devPathForDrmFile(drmFile string) (string, error) {
 	if dp.controlDeviceReg.MatchString(drmFile) {
 		//Skipping possible drm control node
-		err = os.ErrInvalid
-
-		return
+		return "", os.ErrInvalid
 	}
 
-	devPath = path.Join(dp.devDriDir, drmFile)
-	if _, err = os.Stat(devPath); err != nil {
-		return
+	devPath := path.Join(dp.devDriDir, drmFile)
+	if _, err := os.Stat(devPath); err != nil {
+		return "", err
 	}
 
-	return
+	return dp.hostPath(devPath), nil
 }
 
 func (dp *devicePlugin) filterOutInvalidCards(files []fs.DirEntry) []fs.DirEntry {
@@ -618,8 +611,6 @@ func (dp *devicePlugin) createDeviceSpecsFromDrmFiles(cardPath string) []plugina
 // createMeiDeviceSpecs finds MEI devices associated with a GPU card by looking in
 // the card's *.mei-* sysfs subdirectories and returns device specs for the
 // corresponding /dev/meiX character devices.
-// Device plugin cannot mount the whole /dev/ directory so verifying the existence of each
-// /dev/meiX device is not possible.
 func (dp *devicePlugin) createMeiDeviceSpecs(cardPath string) []pluginapi.DeviceSpec {
 	specs := []pluginapi.DeviceSpec{}
 
@@ -634,13 +625,26 @@ func (dp *devicePlugin) createMeiDeviceSpecs(cardPath string) []pluginapi.Device
 		}
 
 		for _, entry := range entries {
-			devPath := path.Join(dp.devFsRoot, entry.Name())
+			containerPath := path.Join(dp.devFsRoot, entry.Name())
 
-			klog.V(4).Infof("Adding MEI device %s for GPU %s", devPath, filepath.Base(cardPath))
+			// Verify that the /dev/meiX file exists and is a character device.
+			if fi, err := os.Stat(containerPath); err != nil {
+				klog.Warningf("MEI device %s does not exist: %+v", dp.hostPath(containerPath), err)
+
+				continue
+			} else if fi.Mode()&os.ModeCharDevice == 0 {
+				klog.Warningf("MEI device %s is not a character device", dp.hostPath(containerPath))
+
+				continue
+			}
+
+			hostDevPath := dp.hostPath(containerPath)
+
+			klog.V(4).Infof("Adding MEI device %s for GPU %s", hostDevPath, filepath.Base(cardPath))
 
 			specs = append(specs, pluginapi.DeviceSpec{
-				HostPath:      devPath,
-				ContainerPath: devPath,
+				HostPath:      hostDevPath,
+				ContainerPath: hostDevPath,
 				Permissions:   "rw",
 			})
 		}
@@ -652,21 +656,19 @@ func (dp *devicePlugin) createMeiDeviceSpecs(cardPath string) []pluginapi.Device
 func (dp *devicePlugin) createMountsAndCDIDevices(cardPath, name string, devSpecs []pluginapi.DeviceSpec) ([]pluginapi.Mount, *cdispec.Spec) {
 	mounts := []pluginapi.Mount{}
 
-	if dp.bypathFound {
-		switch dp.options.bypathMount {
-		case bypathOptionAll:
-			klog.V(4).Info("Using by-path mount option: all")
-			mounts = dp.bypathMountForAll()
-		case bypathOptionNone:
-			klog.V(4).Info("Using by-path mount option: none")
-			// no mounts
-		case bypathOptionSingle:
-			fallthrough
-		default:
-			klog.V(4).Info("Using by-path mount option: single/default")
-			if pciAddr, pciErr := dp.pciAddressForCard(cardPath, name); pciErr == nil {
-				mounts = dp.bypathMountsForPci(pciAddr, dp.bypathDir)
-			}
+	switch dp.options.bypathMount {
+	case bypathOptionAll:
+		klog.V(4).Info("Using by-path mount option: all")
+		mounts = dp.bypathMountForAll()
+	case bypathOptionNone:
+		klog.V(4).Info("Using by-path mount option: none")
+		// no mounts
+	case bypathOptionSingle:
+		fallthrough
+	default:
+		klog.V(4).Info("Using by-path mount option: single/default")
+		if pciAddr, pciErr := dp.pciAddressForCard(cardPath, name); pciErr == nil {
+			mounts = dp.bypathMountsForPci(pciAddr, dp.bypathDir)
 		}
 	}
 
@@ -700,6 +702,24 @@ func (dp *devicePlugin) createMountsAndCDIDevices(cardPath, name string, devSpec
 	return mounts, spec
 }
 
+func (dp *devicePlugin) getTopologyInfoForCard(cardPath string, devSpecs []pluginapi.DeviceSpec) *pluginapi.TopologyInfo {
+	devPaths := make([]string, 0, len(devSpecs))
+
+	for i := range devSpecs {
+		// Device spec paths are host paths, stat them through the plugin's view of devfs.
+		devPaths = append(devPaths, dp.options.prefix+devSpecs[i].HostPath)
+	}
+
+	topo, err := topology.GetTopologyInfo(devPaths)
+	if err != nil {
+		klog.V(4).Infof("No topology info available for card %s: %v", cardPath, err)
+
+		return nil
+	}
+
+	return topo
+}
+
 func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 	files, err := os.ReadDir(dp.sysfsDrmDir)
 	if err != nil {
@@ -731,7 +751,8 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		health := dp.healthStatusForCard(cardPath)
 
-		deviceInfo := dpapi.NewDeviceInfo(health, devSpecs, mounts, nil, nil, cdiDevices)
+		deviceInfo := dpapi.NewDeviceInfoWithTopologyHints(health, devSpecs, mounts,
+			nil, nil, dp.getTopologyInfoForCard(cardPath, devSpecs), cdiDevices)
 
 		for i := 0; i < dp.options.sharedDevNum; i++ {
 			devID := fmt.Sprintf("%s-%d", name, i)
@@ -842,11 +863,10 @@ func checkArgs(opts cliOptions) error {
 
 func main() {
 	var (
-		prefix string
-		opts   cliOptions
+		opts cliOptions
 	)
 
-	flag.StringVar(&prefix, "prefix", "", "Prefix for devfs & sysfs paths")
+	flag.StringVar(&opts.prefix, "prefix", "", "Prefix for devfs & sysfs paths")
 	flag.BoolVar(&opts.enableMonitoring, "enable-monitoring", false, "whether to enable monitoring (= all GPUs) resource(s). See also --monitoring-mode")
 	flag.StringVar(&opts.monitoringMode, "monitoring-mode", monitoringModeSingle, "monitoring resource mode when --enable-monitoring is set: single (combined gpu.intel.com/monitoring resource) or split (per-driver i915_monitoring/xe_monitoring resources)")
 	flag.BoolVar(&opts.healthManagement, "health-management", false, "enable Level-Zero sidecar based GPU health management")
@@ -866,7 +886,7 @@ func main() {
 
 	klog.V(1).Infof("GPU device plugin started with %s preferred allocation policy", opts.preferredAllocationPolicy)
 
-	plugin := newDevicePlugin(prefix+sysFsRoot, prefix+devFsRoot, opts)
+	plugin := newDevicePlugin(sysFsRoot, opts.prefix+devFsRoot, opts)
 
 	if err := checkArgs(plugin.options); err != nil {
 		klog.Fatal("Argument check failed: ", err)

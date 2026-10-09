@@ -23,6 +23,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -796,5 +797,70 @@ func TestUpdate(t *testing.T) {
 func maybeLogError(f func() error, message string) {
 	if err := f(); err != nil {
 		klog.Errorf(message+":%+v", err)
+	}
+}
+
+func TestWriteCdiSpecToFilesystemUpdatesStaleSpec(t *testing.T) {
+	tmpRoot := t.TempDir()
+
+	newSpec := func(mountPath string) *cdispec.Spec {
+		return &cdispec.Spec{
+			Kind:    "intel.com/gpu",
+			Version: CDIVersion,
+			Devices: []cdispec.Device{
+				{
+					Name: "card0",
+					ContainerEdits: cdispec.ContainerEdits{
+						DeviceNodes: []*cdispec.DeviceNode{
+							{HostPath: "/dev/dri/card0", Path: "/dev/dri/card0", Permissions: "rw"},
+						},
+						Mounts: []*cdispec.Mount{
+							{HostPath: mountPath, ContainerPath: mountPath, Type: "none", Options: []string{"bind", "ro"}},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	specFile := filepath.Join(tmpRoot, "intel.com-gpu-card0.yaml")
+	oldMount := "/dev/dri/by-path/pci-0000:04:00.0-card"
+	newMount := "/dev/dri/by-path/pci-0000:00:02.0-card"
+
+	if _, err := writeCdiSpecToFilesystem(newSpec(oldMount), tmpRoot); err != nil {
+		t.Fatalf("initial spec write failed: %+v", err)
+	}
+
+	// Writing an identical spec must not rewrite the file.
+	before, err := os.Stat(specFile)
+	if err != nil {
+		t.Fatalf("spec file missing: %+v", err)
+	}
+
+	if _, err = writeCdiSpecToFilesystem(newSpec(oldMount), tmpRoot); err != nil {
+		t.Fatalf("identical spec write failed: %+v", err)
+	}
+
+	after, err := os.Stat(specFile)
+	if err != nil {
+		t.Fatalf("spec file missing: %+v", err)
+	}
+
+	if !os.SameFile(before, after) {
+		t.Error("identical spec was unexpectedly rewritten")
+	}
+
+	// Same device name with different content (e.g. card renumbered) must update the file.
+	if _, err = writeCdiSpecToFilesystem(newSpec(newMount), tmpRoot); err != nil {
+		t.Fatalf("updated spec write failed: %+v", err)
+	}
+
+	data, err := os.ReadFile(specFile)
+	if err != nil {
+		t.Fatalf("failed to read spec file: %+v", err)
+	}
+
+	if !strings.Contains(string(data), newMount) || strings.Contains(string(data), oldMount) {
+		t.Errorf("stale CDI spec was not updated:\n%s", data)
 	}
 }

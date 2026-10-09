@@ -41,6 +41,8 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 	yes := true
 	no := false
 	directoryOrCreate := v1.HostPathDirectoryOrCreate
+	directory := v1.HostPathDirectory
+	recursiveReadOnly := v1.RecursiveReadOnlyIfPossible
 	maxUnavailable := intstr.FromInt(1)
 	maxSurge := intstr.FromInt(0)
 
@@ -122,14 +124,10 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							},
 							VolumeMounts: []v1.VolumeMount{
 								{
-									Name:      "devfs",
-									MountPath: "/dev/dri",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "sysfsdrm",
-									MountPath: "/sys/class/drm",
-									ReadOnly:  true,
+									Name:              "devfs",
+									MountPath:         "/host/dev",
+									ReadOnly:          true,
+									RecursiveReadOnly: &recursiveReadOnly,
 								},
 								{
 									Name:      "kubeletsockets",
@@ -148,15 +146,8 @@ func (c *controller) newDaemonSetExpected(rawObj client.Object) *apps.DaemonSet 
 							Name: "devfs",
 							VolumeSource: v1.VolumeSource{
 								HostPath: &v1.HostPathVolumeSource{
-									Path: "/dev/dri",
-								},
-							},
-						},
-						{
-							Name: "sysfsdrm",
-							VolumeSource: v1.VolumeSource{
-								HostPath: &v1.HostPathVolumeSource{
-									Path: "/sys/class/drm",
+									Path: "/dev",
+									Type: &directory,
 								},
 							},
 						},
