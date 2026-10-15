@@ -2,4 +2,7 @@ resources:
   - ../../base
 patches:
   - path: add-nodeselector-intel-gpu.yaml
-  - path: add-args.yaml
+  - target:
+      kind: DaemonSet
+      name: intel-gpu-plugin
+    path: add-args.yaml
