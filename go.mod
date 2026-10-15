@@ -13,7 +13,7 @@ require (
 	github.com/onsi/gomega v1.44.0
 	github.com/prometheus/client_model v0.6.3
 	github.com/prometheus/common v0.71.0
-	golang.org/x/sys v0.48.0
+	golang.org/x/sys v0.49.0
 	golang.org/x/text v0.42.0
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.12
