@@ -16,6 +16,7 @@ package main
 
 // #cgo CFLAGS: "-I/usr/include/level_zero" "-Wall" "-Wextra" "-O2"
 // #cgo LDFLAGS: "-lze_loader"
+// #include <stdlib.h>
 // #include "ze.h"
 import "C"
 
@@ -56,6 +57,7 @@ func (s *server) GetDeviceHealth(c context.Context, deviceid *levelzero.DeviceId
 	var errorVal uint32 = 0
 
 	cBdfAddress := C.CString(deviceid.BdfAddress)
+	defer C.free(unsafe.Pointer(cBdfAddress))
 
 	memHealth := bool(C.zes_device_memory_is_healthy(cBdfAddress, (*C.uint32_t)(unsafe.Pointer(&errorVal))))
 
@@ -93,20 +95,30 @@ func (s *server) GetDeviceTemperature(c context.Context, deviceid *levelzero.Dev
 	var errorVal uint32 = 0
 
 	cBdfAddress := C.CString(deviceid.BdfAddress)
+	cGlobal := C.CString("global")
+	cGpu := C.CString("gpu")
+	cMemory := C.CString("memory")
 
-	globalTemp := float64(C.zes_device_temp_max(cBdfAddress, C.CString("global"), (*C.uint32_t)(unsafe.Pointer(&errorVal))))
+	defer func() {
+		C.free(unsafe.Pointer(cBdfAddress))
+		C.free(unsafe.Pointer(cGlobal))
+		C.free(unsafe.Pointer(cGpu))
+		C.free(unsafe.Pointer(cMemory))
+	}()
+
+	globalTemp := float64(C.zes_device_temp_max(cBdfAddress, cGlobal, (*C.uint32_t)(unsafe.Pointer(&errorVal))))
 
 	if errorVal != 0 {
 		klog.Warningf("global temperature read returned an error: 0x%X", errorVal)
 	}
 
-	gpuTemp := float64(C.zes_device_temp_max(cBdfAddress, C.CString("gpu"), (*C.uint32_t)(unsafe.Pointer(&errorVal))))
+	gpuTemp := float64(C.zes_device_temp_max(cBdfAddress, cGpu, (*C.uint32_t)(unsafe.Pointer(&errorVal))))
 
 	if errorVal != 0 {
 		klog.Warningf("gpu temperature read returned an error: 0x%X", errorVal)
 	}
 
-	memTemp := float64(C.zes_device_temp_max(cBdfAddress, C.CString("memory"), (*C.uint32_t)(unsafe.Pointer(&errorVal))))
+	memTemp := float64(C.zes_device_temp_max(cBdfAddress, cMemory, (*C.uint32_t)(unsafe.Pointer(&errorVal))))
 
 	if errorVal != 0 {
 		klog.Warningf("memory temperature read returned an error: 0x%X", errorVal)
@@ -160,7 +172,10 @@ func (s *server) GetDeviceMemoryAmount(c context.Context, deviceid *levelzero.De
 
 	errorVal := uint32(0)
 
-	memSize := C.zes_device_memory_amount(C.CString(deviceid.BdfAddress), (*C.uint32_t)(unsafe.Pointer(&errorVal)))
+	cBdfAddress := C.CString(deviceid.BdfAddress)
+	defer C.free(unsafe.Pointer(cBdfAddress))
+
+	memSize := C.zes_device_memory_amount(cBdfAddress, (*C.uint32_t)(unsafe.Pointer(&errorVal)))
 
 	if errorVal != 0 {
 		klog.Warningf("device memory amount read returned an error: 0x%X", errorVal)
