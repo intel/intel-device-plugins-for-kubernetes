@@ -35,6 +35,7 @@ import (
 	operutils "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/operator/utils"
 	e2eutils "github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -109,10 +110,7 @@ func describe() {
 			overlayFile = operatorOverlay
 		}
 
-		overlayPath, err := e2eutils.LocateRepoFile(overlayFile)
-		if err != nil {
-			framework.Failf("unable to locate kustomize overlay %q: %v", overlayFile, err)
-		}
+		overlayPath := e2eutils.MustLocateRepoFile(overlayFile)
 
 		tempDir, err = os.MkdirTemp("", "operator-e2e-")
 		if err != nil {
@@ -279,9 +277,8 @@ func testPluginWithOperator(
 	for _, res := range resourceNames {
 		ginkgo.By(fmt.Sprintf("checking that resource %s is allocatable", res))
 
-		if err = e2eutils.WaitForNodesWithResource(ctx, f.ClientSet, res, resourceTimeout, e2eutils.WaitForPositiveResource); err != nil {
-			framework.Failf("nodes did not report allocatable resource %s: %v", res, err)
-		}
+		gomega.Eventually(ctx, e2eutils.AllocatableResource(f.ClientSet, res)).
+			WithTimeout(resourceTimeout).Should(gomega.BeNumerically(">", 0))
 	}
 
 	for _, wf := range workloadFunc {
@@ -446,10 +443,7 @@ func buildGPUPluginCR() string {
 }
 
 func qatDcWorkload(ctx context.Context, f *framework.Framework) {
-	compressTestYamlPath, errFailedToLocateRepoFile := e2eutils.LocateRepoFile(compressTestYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", compressTestYaml, errFailedToLocateRepoFile)
-	}
+	compressTestYamlPath := e2eutils.MustLocateRepoFile(compressTestYaml)
 
 	ginkgo.By("create kustomization yaml for workload Pod")
 	tmpDir, err := operutils.CreateWorkloadKustomizationFromDir(filepath.Dir(compressTestYamlPath), operutils.PluginVersion())
@@ -467,20 +461,11 @@ func qatDcWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting the compress pod to finish successfully")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-compress-perf", operatorNS, 300*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, "qat-dpdk-test-compress-perf", "compress-perf"); logErr == nil {
-			framework.Logf("logs from compress-perf pod:\n%s", logs)
-		}
-		framework.Failf("compress pod did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, "qat-dpdk-test-compress-perf", "compress-perf", 300*time.Second)
 }
 
 func qatCyWorkload(ctx context.Context, f *framework.Framework) {
-	cryptoTestYamlPath, errFailedToLocateRepoFile := e2eutils.LocateRepoFile(cryptoTestYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", cryptoTestYaml, errFailedToLocateRepoFile)
-	}
+	cryptoTestYamlPath := e2eutils.MustLocateRepoFile(cryptoTestYaml)
 
 	ginkgo.By("create kustomization yaml for workload Pod")
 	tmpDir, err := operutils.CreateWorkloadKustomizationFromFile(cryptoTestYamlPath, operutils.PluginVersion())
@@ -498,13 +483,7 @@ func qatCyWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting the crypto pod to finish successfully")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-crypto-perf", operatorNS, 300*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, "qat-dpdk-test-crypto-perf", "crypto-perf"); logErr == nil {
-			framework.Logf("logs from crypto-perf pod:\n%s", logs)
-		}
-		framework.Failf("crypto pod did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, "qat-dpdk-test-crypto-perf", "crypto-perf", 300*time.Second)
 }
 
 func sgxWorkload(ctx context.Context, f *framework.Framework) {
@@ -538,22 +517,13 @@ func sgxWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting the pod to finish successfully")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, operatorNS, 60*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, pod.ObjectMeta.Name, "testcontainer"); logErr == nil {
-			framework.Logf("logs from testcontainer pod:\n%s", logs)
-		}
-		framework.Failf("testcontainer pod did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, pod.ObjectMeta.Name, "testcontainer", 60*time.Second)
 }
 
 func dsaDpdkWorkload(ctx context.Context, f *framework.Framework) {
 	ginkgo.By("creating DSA Pod requesting DSA resources")
 
-	demoDpdkPath, err := e2eutils.LocateRepoFile(dpdkDemoYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", dpdkDemoYaml, err)
-	}
+	demoDpdkPath := e2eutils.MustLocateRepoFile(dpdkDemoYaml)
 
 	// Create a kustomization yaml on the fly to set correct container image path and version for the deployment
 	tmpDir, err := operutils.CreateWorkloadKustomizationFromFile(demoDpdkPath, operutils.PluginVersion())
@@ -570,22 +540,13 @@ func dsaDpdkWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting for the DSA DPDK demo to succeed")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkPodName, operatorNS, 200*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, dpdkPodName, dpdkPodName); logErr == nil {
-			framework.Logf("logs from DSA DPDK demo pod:\n%s", logs)
-		}
-		framework.Failf("DSA DPDK demo did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, dpdkPodName, dpdkPodName, 200*time.Second)
 }
 
 func dsaVfioDpdkWorkload(ctx context.Context, f *framework.Framework) {
 	ginkgo.By("creating DSA Pod requesting DSA resources")
 
-	demoDpdkPath, err := e2eutils.LocateRepoFile(dpdkDdaVfioDemoYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", dpdkDdaVfioDemoYaml, err)
-	}
+	demoDpdkPath := e2eutils.MustLocateRepoFile(dpdkDdaVfioDemoYaml)
 
 	// Create a kustomization yaml on the fly to set correct container image path and version for the deployment
 	tmpDir, err := operutils.CreateWorkloadKustomizationFromFile(demoDpdkPath, operutils.PluginVersion())
@@ -602,22 +563,13 @@ func dsaVfioDpdkWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting for the DSA DPDK demo to succeed")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, dpdkDdaVfioPodName, operatorNS, 200*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, dpdkDdaVfioPodName, dpdkDdaVfioPodName); logErr == nil {
-			framework.Logf("logs from DSA DPDK demo pod:\n%s", logs)
-		}
-		framework.Failf("DSA DPDK demo did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, dpdkDdaVfioPodName, dpdkDdaVfioPodName, 200*time.Second)
 }
 
 func iaaAccelConfigWorkload(ctx context.Context, f *framework.Framework) {
 	ginkgo.By("creating IAA Accel Config test pod")
 
-	demoAccelConfigPath, err := e2eutils.LocateRepoFile(iaaAccelConfigTestYaml)
-	if err != nil {
-		framework.Failf("unable to locate %q: %v", iaaAccelConfigTestYaml, err)
-	}
+	demoAccelConfigPath := e2eutils.MustLocateRepoFile(iaaAccelConfigTestYaml)
 
 	// Create a kustomization yaml on the fly to set correct container image path and version for the deployment
 	tmpDir, err := operutils.CreateWorkloadKustomizationFromFile(demoAccelConfigPath, operutils.PluginVersion())
@@ -634,11 +586,5 @@ func iaaAccelConfigWorkload(ctx context.Context, f *framework.Framework) {
 	}()
 
 	ginkgo.By("waiting for the IAA Accel Config demo to succeed")
-	err = e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, iaaAccelConfigPodName, operatorNS, 200*time.Second)
-	if err != nil {
-		if logs, logErr := e2epod.GetPodLogs(ctx, f.ClientSet, operatorNS, iaaAccelConfigPodName, iaaAccelConfigPodName); logErr == nil {
-			framework.Logf("logs from IAA Accel Config demo pod:\n%s", logs)
-		}
-		framework.Failf("IAA Accel Config demo did not finish successfully: %v", err)
-	}
+	e2eutils.WaitForPodSuccess(ctx, f.ClientSet, operatorNS, iaaAccelConfigPodName, iaaAccelConfigPodName, 200*time.Second)
 }

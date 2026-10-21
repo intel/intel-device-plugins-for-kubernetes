@@ -27,12 +27,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/kubernetes/test/e2e/framework"
-	e2edebug "k8s.io/kubernetes/test/e2e/framework/debug"
 	e2ejob "k8s.io/kubernetes/test/e2e/framework/job"
 	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
-	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 	admissionapi "k8s.io/pod-security-admission/api"
 )
 
@@ -63,20 +60,11 @@ func describeQatDpdkPlugin() {
 	f := framework.NewDefaultFramework("qatplugindpdk")
 	f.NamespacePodSecurityEnforceLevel = admissionapi.LevelPrivileged
 
-	kustomizationPath, errFailedToLocateRepoFile := utils.LocateRepoFile(qatPluginKustomizationYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", qatPluginKustomizationYaml, errFailedToLocateRepoFile)
-	}
+	kustomizationPath := utils.MustLocateRepoFile(qatPluginKustomizationYaml)
 
-	cryptoTestYamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(cryptoTestYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", cryptoTestYaml, errFailedToLocateRepoFile)
-	}
+	cryptoTestYamlPath := utils.MustLocateRepoFile(cryptoTestYaml)
 
-	compressTestYamlPath, errFailedToLocateRepoFile := utils.LocateRepoFile(compressTestYaml)
-	if errFailedToLocateRepoFile != nil {
-		framework.Failf("unable to locate %q: %v", compressTestYaml, errFailedToLocateRepoFile)
-	}
+	compressTestYamlPath := utils.MustLocateRepoFile(compressTestYaml)
 
 	var dpPodName string
 
@@ -84,35 +72,22 @@ func describeQatDpdkPlugin() {
 
 	ginkgo.JustBeforeEach(func(ctx context.Context) {
 		ginkgo.By("deploying QAT plugin in DPDK mode")
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(kustomizationPath))
-
-		ginkgo.By("waiting for QAT plugin's availability")
-		podList, err := e2epod.WaitForPodsWithLabelRunningReady(ctx, f.ClientSet, f.Namespace.Name,
-			labels.Set{"app": "intel-qat-plugin"}.AsSelector(), 1 /* one replica */, 100*time.Second)
-		if err != nil {
-			e2edebug.DumpAllNamespaceInfo(ctx, f.ClientSet, f.Namespace.Name)
-			e2ekubectl.LogFailedContainers(ctx, f.ClientSet, f.Namespace.Name, framework.Logf)
-			framework.Failf("unable to wait for all pods to be running and ready: %v", err)
-		}
-		dpPodName = podList.Items[0].Name
+		pluginPods := utils.ApplyPluginAndWait(ctx, f, kustomizationPath, "intel-qat-plugin", 100*time.Second)
+		dpPodName = pluginPods[0].Name
 
 		ginkgo.By("checking QAT plugin's securityContext")
-		if err := utils.TestPodsFileSystemInfo(podList.Items); err != nil {
+		if err := utils.TestPodsFileSystemInfo(pluginPods); err != nil {
 			framework.Failf("container filesystem info checks failed: %v", err)
 		}
 
 		ginkgo.By("checking if the resource is allocatable")
-		if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 30*time.Second, utils.WaitForPositiveResource); err != nil {
-			framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-		}
+		gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, resourceName)).
+			WithTimeout(30 * time.Second).Should(gomega.BeNumerically(">", 0))
 	})
 
 	ginkgo.AfterEach(func(ctx context.Context) {
 		ginkgo.By("undeploying QAT plugin")
-		e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "delete", "-k", filepath.Dir(kustomizationPath))
-		if err := e2epod.WaitForPodNotFoundInNamespace(ctx, f.ClientSet, dpPodName, f.Namespace.Name, 30*time.Second); err != nil {
-			framework.Failf("failed to terminate pod: %v", err)
-		}
+		utils.DeletePluginAndWait(ctx, f, kustomizationPath, dpPodName, 30*time.Second)
 	})
 
 	ginkgo.Context("When QAT resources are continuously available with crypto (cy) services enabled", ginkgo.Label("cy"), func() {
@@ -134,8 +109,7 @@ func describeQatDpdkPlugin() {
 			pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
 
 			ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name, 300*time.Second)
 		})
 
 		ginkgo.It("deploys a crypto pod (dpdk crypto-perf) requesting QAT resources", ginkgo.Label("crypto-perf"), func(ctx context.Context) {
@@ -143,14 +117,13 @@ func describeQatDpdkPlugin() {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(cryptoTestYamlPath))
 
 			ginkgo.By("waiting the crypto pod to finish successfully")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-crypto-perf", f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-crypto-perf", "crypto-perf"))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, "qat-dpdk-test-crypto-perf", "crypto-perf", 300*time.Second)
 		})
 
 		ginkgo.It("deploys a crypto pod (qat-engine testapp)", ginkgo.Label("qat-engine"), func(ctx context.Context) {
 			command := []string{
 				"testapp",
-				"-engine", "qathwtest",
+				"-provider", "qatprovider",
 				"-async_jobs", "1",
 				"-c", "1",
 				"-n", "1",
@@ -161,8 +134,7 @@ func describeQatDpdkPlugin() {
 			pod := createPod(ctx, f, "qat-engine-testapp", resourceName, "intel/openssl-qat-engine:devel", command)
 
 			ginkgo.By("waiting the qat-engine-testapp pod for the resource " + resourceName.String() + " to finish successfully")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name, 300*time.Second)
 		})
 	})
 
@@ -184,8 +156,7 @@ func describeQatDpdkPlugin() {
 			pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
 
 			ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name, 300*time.Second)
 		})
 
 		ginkgo.It("deploys a compress pod (dpdk compress-perf) requesting QAT resources", ginkgo.Label("compress-perf"), func(ctx context.Context) {
@@ -193,8 +164,7 @@ func describeQatDpdkPlugin() {
 			e2ekubectl.RunKubectlOrDie(f.Namespace.Name, "apply", "-k", filepath.Dir(compressTestYamlPath))
 
 			ginkgo.By("waiting the compress pod to finish successfully")
-			err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, "qat-dpdk-test-compress-perf", f.Namespace.Name, 300*time.Second)
-			gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, "qat-dpdk-test-compress-perf", "compress-perf"))
+			utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, "qat-dpdk-test-compress-perf", "compress-perf", 300*time.Second)
 		})
 	})
 
@@ -212,9 +182,8 @@ func describeQatDpdkPlugin() {
 				injectError(ctx, f, resourceName)
 
 				ginkgo.By("waiting node resources become zero")
-				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 30*time.Second, utils.WaitForZeroResource); err != nil {
-					framework.Failf("unable to wait for nodes to have no resource: %v", err)
-				}
+				gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, resourceName)).
+					WithTimeout(30 * time.Second).Should(gomega.BeZero())
 			})
 		})
 
@@ -231,14 +200,12 @@ func describeQatDpdkPlugin() {
 				injectError(ctx, f, resourceName)
 
 				ginkgo.By("seeing if there is zero resource")
-				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 30*time.Second, utils.WaitForZeroResource); err != nil {
-					framework.Failf("unable to wait for nodes to have no resource: %v", err)
-				}
+				gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, resourceName)).
+					WithTimeout(30 * time.Second).Should(gomega.BeZero())
 
 				ginkgo.By("seeing if there is positive allocatable resource")
-				if err := utils.WaitForNodesWithResource(ctx, f.ClientSet, resourceName, 300*time.Second, utils.WaitForPositiveResource); err != nil {
-					framework.Failf("unable to wait for nodes to have positive allocatable resource: %v", err)
-				}
+				gomega.Eventually(ctx, utils.AllocatableResource(f.ClientSet, resourceName)).
+					WithTimeout(300 * time.Second).Should(gomega.BeNumerically(">", 0))
 
 				ginkgo.By("checking if openssl pod runs successfully")
 				command := []string{
@@ -249,14 +216,23 @@ func describeQatDpdkPlugin() {
 				pod := createPod(ctx, f, "cpa-sample-code", resourceName, "intel/openssl-qat-engine:devel", command)
 
 				ginkgo.By("waiting the cpa-sample-code pod for the resource " + resourceName.String() + " to finish successfully")
-				err := e2epod.WaitForPodSuccessInNamespaceTimeout(ctx, f.ClientSet, pod.ObjectMeta.Name, f.Namespace.Name, 300*time.Second)
-				gomega.Expect(err).To(gomega.BeNil(), utils.GetPodLogs(ctx, f, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name))
+				utils.WaitForPodSuccess(ctx, f.ClientSet, f.Namespace.Name, pod.ObjectMeta.Name, pod.Spec.Containers[0].Name, 300*time.Second)
 			})
 		})
 	})
 }
 
 func createPod(ctx context.Context, f *framework.Framework, name string, resourceName v1.ResourceName, image string, command []string) *v1.Pod {
+	// qatlib >= 26.02 backs its DMA buffers with 2Mi hugepages whenever the
+	// node has them and keeps a temporary file per allocation under
+	// /dev/hugepages/qat. On a host this directory is created by qat.service;
+	// here it is provided as a HugePages emptyDir mounted at that path.
+	resources := v1.ResourceList{
+		resourceName:                       resource.MustParse("1"),
+		v1.ResourceMemory:                  resource.MustParse("128Mi"),
+		v1.ResourceHugePagesPrefix + "2Mi": resource.MustParse("128Mi"),
+	}
+
 	podSpec := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 		Spec: v1.PodSpec{
@@ -271,8 +247,19 @@ func createPod(ctx context.Context, f *framework.Framework, name string, resourc
 							Add: []v1.Capability{"IPC_LOCK"}},
 					},
 					Resources: v1.ResourceRequirements{
-						Requests: v1.ResourceList{resourceName: resource.MustParse("1")},
-						Limits:   v1.ResourceList{resourceName: resource.MustParse("1")},
+						Requests: resources,
+						Limits:   resources,
+					},
+					VolumeMounts: []v1.VolumeMount{
+						{Name: "hugepage", MountPath: "/dev/hugepages/qat"},
+					},
+				},
+			},
+			Volumes: []v1.Volume{
+				{
+					Name: "hugepage",
+					VolumeSource: v1.VolumeSource{
+						EmptyDir: &v1.EmptyDirVolumeSource{Medium: v1.StorageMediumHugePages},
 					},
 				},
 			},

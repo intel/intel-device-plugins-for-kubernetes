@@ -8,14 +8,14 @@ RUN echo "deb-src http://deb.debian.org/debian unstable main" >> \
 RUN apt-get update && apt-get install -y --no-install-recommends wget build-essential meson ninja-build python3-pyelftools libnuma-dev python3-pip pkg-config dpkg-dev libipsec-mb-dev
 
 # Download & unpack DPDK tarball
-ARG DPDK_TARBALL=dpdk-25.03.tar.xz
-ARG DPDK_TARBALL_SHA256="6a40a731328286ebd79685b18ffa5992e6b770c13843d65fd0d1157cfccff63d"
+ARG DPDK_TARBALL=dpdk-26.07.tar.xz
+ARG DPDK_TARBALL_SHA256="7141a8b5bad9d7d965483ac0d75317ac0c21dcee1d13d373693c655f9e3fabe6"
 
 RUN wget -q https://fast.dpdk.org/rel/$DPDK_TARBALL \
     && echo "$DPDK_TARBALL_SHA256 $DPDK_TARBALL" | sha256sum -c - \
     && tar -xf $DPDK_TARBALL && rm $DPDK_TARBALL
 
-ARG SOVERSION=25
+ARG SOVERSION=26
 RUN cd dpdk-* && meson setup \
     -Dplatform=generic \
     -Dcpu_instruction_set=westmere \
@@ -31,16 +31,20 @@ RUN cd dpdk-* && \
     install -d /install_root/usr/lib/x86_64-linux-gnu/ && \
     for r in log bus_pci eal kvargs hash security telemetry pci mbuf mempool ring net rcu ipsec cryptodev compressdev common_qat; do \
        install installdir/lib/x86_64-linux-gnu/librte_${r}.so.${SOVERSION} /install_root/usr/lib/x86_64-linux-gnu/; \
-    done
+    done && \
+    cp -a /usr/lib/x86_64-linux-gnu/libIPSec_MB.so.* /install_root/usr/lib/x86_64-linux-gnu/
 
 RUN mkdir -p /install_root/licenses/dpdk && \
     cp dpdk-*/license/bsd-3-clause.txt /install_root/licenses/dpdk && \
     cd /install_root/licenses/dpdk && \
-    apt-get source --download-only -y libatomic1 libnuma1
+    apt-get source --download-only -y libatomic1 libnuma1 libipsec-mb-dev
 
 FROM debian:sid-slim
-RUN apt-get update && apt-get install -y --no-install-recommends libipsec-mb2 libnuma1 libatomic1 && ldconfig -v
+RUN apt-get update && apt-get install -y --no-install-recommends libnuma1 libatomic1
 COPY --from=builder /install_root /
+RUN ldconfig && \
+    dpdk-test-crypto-perf --help > /dev/null && \
+    dpdk-test-compress-perf --help > /dev/null
 COPY run-dpdk-test /usr/bin/
 
 ENTRYPOINT /usr/bin/run-dpdk-test

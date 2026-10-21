@@ -1,4 +1,4 @@
-FROM ubuntu:24.04 AS builder
+FROM ubuntu:26.04 AS builder
 
 WORKDIR /root
 
@@ -16,6 +16,7 @@ RUN apt-get update && \
     python3 \
     git \
     gnupg \
+    openssl \
  && apt-get -y -q upgrade \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
@@ -23,12 +24,15 @@ RUN apt-get update && \
 # SGX SDK is installed in /opt/intel directory.
 WORKDIR /opt/intel
 
-ARG DCAP_VERSION=DCAP_1.23
+ARG DCAP_VERSION=DCAP_1.27.101
+# Pins the SGX PSW/DCAP packages to the versions matching SGX_SDK_URL and DCAP_VERSION
+ARG SGX_APT_PREFERENCES=99sgx_2_30_100_resolute_custom_version.cfg
 
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu noble main" | \
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu resolute main" | \
     tee -a /etc/apt/sources.list.d/intel-sgx.list \
  && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | \
     gpg --dearmor --output /usr/share/keyrings/intel-sgx.gpg \
+ && wget -qO /etc/apt/preferences.d/intel-sgx https://download.01.org/intel-sgx/sgx_repo/ubuntu/apt_preference_files/${SGX_APT_PREFERENCES} \
  && apt-get update \
  && env DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libsgx-dcap-ql-dev \
@@ -37,7 +41,7 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://d
     libsgx-quote-ex-dev
 
 # Install SGX SDK
-ARG SGX_SDK_URL=https://download.01.org/intel-sgx/sgx-linux/2.26/distro/ubuntu24.04-server/sgx_linux_x64_sdk_2.26.100.0.bin
+ARG SGX_SDK_URL=https://download.01.org/intel-sgx/sgx-linux/2.30/distro/ubuntu26.04-server/sgx_linux_x64_sdk_2.30.100.1.bin
 RUN wget ${SGX_SDK_URL} \
  && export SGX_SDK_INSTALLER=$(basename $SGX_SDK_URL) \
  && chmod +x $SGX_SDK_INSTALLER \
@@ -49,7 +53,7 @@ RUN cd sgxsdk/SampleCode/SampleEnclave \
     && make \
     && cd -
 
-ARG DCAP_TARBALL_SHA256="9284ac7223f72daaeed8fb3c5bb3e4b1ccee6c2deafd0e7398c95c9fa50ffe8a"
+ARG DCAP_TARBALL_SHA256="433dd48679131feb7af1783fc6710218806e36332b00115ff09d6397f9cb3620"
 
 RUN wget -q https://github.com/intel/confidential-computing.tee.dcap/archive/$DCAP_VERSION.tar.gz && \
     echo "$DCAP_TARBALL_SHA256 $DCAP_VERSION.tar.gz" | sha256sum -c - && \
@@ -63,21 +67,23 @@ RUN cd SGXDataCenterAttestationPrimitives/SampleCode/QuoteGenerationSample \
 RUN cd SGXDataCenterAttestationPrimitives/SampleCode/QuoteVerificationSample \
     && . /opt/intel/sgxsdk/environment \
     && make HW_RELEASE=1 \
-    && sgx_sign sign -key ../QuoteGenerationSample/Enclave/Enclave_private_sample.pem -enclave enclave.so -out enclave.signed.so -config Enclave/Enclave.config.xml \
     && cd -
 
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 RUN apt-get update && \
     apt-get install -y \
     wget \
     gnupg
 
+ARG SGX_APT_PREFERENCES=99sgx_2_30_100_resolute_custom_version.cfg
+
 # Add 01.org to apt for SGX packages and install SGX runtime components
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu noble main" | \
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx.gpg] https://download.01.org/intel-sgx/sgx_repo/ubuntu resolute main" | \
     tee -a /etc/apt/sources.list.d/intel-sgx.list \
  && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | \
     gpg --dearmor --output /usr/share/keyrings/intel-sgx.gpg \
+ && wget -qO /etc/apt/preferences.d/intel-sgx https://download.01.org/intel-sgx/sgx_repo/ubuntu/apt_preference_files/${SGX_APT_PREFERENCES} \
  && apt-get update \
  && env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     libsgx-enclave-common \

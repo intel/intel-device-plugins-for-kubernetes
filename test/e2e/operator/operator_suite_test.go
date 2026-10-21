@@ -32,7 +32,6 @@ import (
 	"github.com/intel/intel-device-plugins-for-kubernetes/test/e2e/utils"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/component-base/logs"
 	"k8s.io/component-base/version"
@@ -41,15 +40,9 @@ import (
 	"k8s.io/kubernetes/test/e2e/framework/config"
 	e2ekubectl "k8s.io/kubernetes/test/e2e/framework/kubectl"
 	e2enode "k8s.io/kubernetes/test/e2e/framework/node"
-	e2epod "k8s.io/kubernetes/test/e2e/framework/pod"
 )
 
-const (
-	nfdNamespace     = "node-feature-discovery"
-	nfdNamespaceOCP  = "openshift-nfd"
-	nfdTimeout       = 5 * time.Minute
-	nodeReadyTimeout = 30 * time.Second
-)
+const nodeReadyTimeout = 30 * time.Second
 
 var (
 	isOCP bool
@@ -81,7 +74,7 @@ func setupCluster(ctx context.Context) []byte {
 	isOCP = operutils.IsRunningOnOCP(ctx, c)
 
 	ensureProjectNamespace(ctx, c, !isOCP)
-	ensureNFD(ctx, c)
+	utils.EnsureNFDAndWait(ctx, c)
 	ensureNFDRules()
 
 	if !isOCP {
@@ -111,34 +104,6 @@ func waitForNodes(ctx context.Context, c clientset.Interface, timeout time.Durat
 	return nil
 }
 
-// nfdRunningInNamespace returns true when the given namespace contains at
-// least one NFD pod.
-func nfdRunningInNamespace(ctx context.Context, c clientset.Interface, ns string) bool {
-	podList, err := c.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{})
-	return err == nil && len(podList.Items) > 0
-}
-
-// ensureNFD checks whether NFD is already running in either the OCP-standard
-// namespace (openshift-nfd) or the upstream namespace (node-feature-discovery).
-// If NFD is not found in either, it is deployed via the standard kustomize
-// manifests.
-func ensureNFD(ctx context.Context, c clientset.Interface) {
-	for _, ns := range []string{nfdNamespaceOCP, nfdNamespace} {
-		if nfdRunningInNamespace(ctx, c, ns) {
-			framework.Logf("NFD already running in %s; skipping deployment", ns)
-			return
-		}
-	}
-
-	framework.Logf("NFD not detected in %s or %s, deploying via kustomize...", nfdNamespaceOCP, nfdNamespace)
-
-	utils.Kubectl(nfdNamespace, "apply", "-k", "deployments/nfd/kustomization.yaml")
-
-	if waitErr := waitForNFD(ctx, c); waitErr != nil {
-		framework.Failf("NFD pods did not become ready: %v", waitErr)
-	}
-}
-
 // ensureNFDRules checks whether the intel-dp-devices NodeFeatureRule already
 // exists on the cluster.  If it is absent (NFD may have been installed without
 // the device-plugin rules, e.g. via the OCP NFD Operator), the rules overlay
@@ -151,19 +116,7 @@ func ensureNFDRules() {
 	}
 
 	framework.Logf("NodeFeatureRule intel-dp-devices not found, applying NFD rules overlay...")
-	utils.Kubectl("", "apply", "-k", "deployments/nfd/overlays/node-feature-rules/kustomization.yaml")
-}
-
-func waitForNFD(ctx context.Context, c clientset.Interface) error {
-	framework.Logf("waiting up to %s for NFD pods to be ready", nfdTimeout)
-
-	_, err := e2epod.WaitForPodsWithLabelRunningReady(
-		ctx, c, nfdNamespace,
-		labels.Set{"app": "nfd-master"}.AsSelector(),
-		1, nfdTimeout,
-	)
-
-	return err
+	utils.DeployNFDRules()
 }
 
 // ensureProjectNamespace checks that the namespace specified by the PROJECT_NAMESPACE exists.
@@ -235,6 +188,10 @@ func TestMain(m *testing.M) {
 	fv := reflect.ValueOf(flag.CommandLine).Elem().FieldByName("formal")
 	reflect.NewAt(fv.Type(), unsafe.Pointer(fv.UnsafeAddr())).Elem().SetMapIndex(reflect.ValueOf("kubeconfig"), reflect.Value{})
 	framework.RegisterClusterFlags(flag.CommandLine)
+	// This suite lives one level deeper than test/e2e, so the framework's
+	// default --repo-root of "../../" would point at test/. Override the
+	// default; an explicit -repo-root on the command line still wins.
+	framework.TestContext.RepoRoot = "../../../"
 	flag.Parse()
 
 	framework.AfterReadingAllFlags(&framework.TestContext)
