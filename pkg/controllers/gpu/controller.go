@@ -259,7 +259,9 @@ func (c *controller) UpdateStatus(rawObj client.Object, ds *apps.DaemonSet, node
 
 func getPodArgs(gdp *devicepluginv1.GpuDevicePlugin) []string {
 	args := make([]string, 0, 8)
-	args = append(args, "-v", strconv.Itoa(gdp.Spec.LogLevel))
+
+	// Add verbose and prefix defaults.
+	args = append(args, "-v", strconv.Itoa(gdp.Spec.LogLevel), "-prefix=/host")
 
 	if gdp.Spec.EnableMonitoring {
 		args = append(args, "-enable-monitoring")

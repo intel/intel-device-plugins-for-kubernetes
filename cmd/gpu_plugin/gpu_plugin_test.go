@@ -20,7 +20,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -47,6 +46,30 @@ type mockNotifier struct {
 	i915monitorCount int
 	xeMonitorCount   int
 	gpuMonitorCount  int
+}
+
+// deviceTreesEqual compares device trees with DeviceInfo.Equal, as
+// reflect.DeepEqual is unreliable for the protobuf fields in DeviceInfo.
+func deviceTreesEqual(a, b dpapi.DeviceTree) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for devType, devs := range a {
+		otherDevs, ok := b[devType]
+		if !ok || len(devs) != len(otherDevs) {
+			return false
+		}
+
+		for id, info := range devs {
+			other, ok := otherDevs[id]
+			if !ok || !info.Equal(other) {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 // Notify stops plugin Scan.
@@ -230,6 +253,9 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+			},
 			devfsdirs: []string{
 				"card0",
 				"by-path/pci-0000:00:00.0-card",
@@ -395,6 +421,9 @@ func TestScan(t *testing.T) {
 				"card0/device/vendor":       []byte("0x8086"),
 				"card0/device/sriov_numvfs": []byte("0"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+			},
 			devfsdirs:            []string{"card0"},
 			options:              cliOptions{enableMonitoring: true},
 			expectedI915Devs:     1,
@@ -409,6 +438,10 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 				"card1/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+				"card1/device/driver": "drivers/i915",
 			},
 			devfsdirs:        []string{"card0"},
 			expectedI915Devs: 1,
@@ -426,6 +459,11 @@ func TestScan(t *testing.T) {
 				"card1/device/vendor":       []byte("0x8086"),
 				"card2/device/vendor":       []byte("0x8086"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+				"card1/device/driver": "drivers/i915",
+				"card2/device/driver": "drivers/i915",
+			},
 			devfsdirs:        []string{"card0", "card1", "card2"},
 			expectedI915Devs: 2,
 		},
@@ -438,6 +476,10 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 				"card1/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+				"card1/device/driver": "drivers/i915",
 			},
 			devfsdirs:            []string{"card0", "card1"},
 			options:              cliOptions{sharedDevNum: 13, enableMonitoring: true},
@@ -567,6 +609,76 @@ func TestScan(t *testing.T) {
 	}
 }
 
+// TestScanDriverUnbindRebind mimics unbinding a GPU from the xe driver and
+// binding it back while the plugin keeps scanning. A card without a driver
+// must not be advertised under any resource.
+func TestScanDriverUnbindRebind(t *testing.T) {
+	tc := TestCaseDetails{
+		sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
+		sysfsfiles: map[string][]byte{
+			"card0/device/vendor": []byte("0x8086"),
+		},
+		symlinkfiles: map[string]string{
+			"card0/device/driver": "drivers/xe",
+		},
+		devfsdirs: []string{"card0"},
+	}
+
+	root := t.TempDir()
+
+	sysfs, devfs, err := createTestFiles(root, tc)
+	if err != nil {
+		t.Fatalf("Unexpected error: %+v", err)
+	}
+
+	const sharedDevNum = 5
+
+	plugin := newDevicePlugin(sysfs, devfs, cliOptions{sharedDevNum: sharedDevNum})
+	driverLink := path.Join(sysfs, "class", "drm", "card0", "device", "driver")
+	xeDriver := path.Join(sysfs, "class", "drm", "drivers", "xe")
+
+	steps := []struct {
+		change       func() error
+		name         string
+		expectedXe   int
+		expectedI915 int
+	}{
+		{
+			name:       "bound to xe",
+			change:     func() error { return nil },
+			expectedXe: sharedDevNum,
+		},
+		{
+			name:   "unbound",
+			change: func() error { return os.Remove(driverLink) },
+		},
+		{
+			name:       "rebound to xe",
+			change:     func() error { return os.Symlink(xeDriver, driverLink) },
+			expectedXe: sharedDevNum,
+		},
+	}
+
+	for _, step := range steps {
+		if err := step.change(); err != nil {
+			t.Fatalf("%s: failed to modify sysfs: %+v", step.name, err)
+		}
+
+		tree, err := plugin.scan()
+		if err != nil {
+			t.Fatalf("%s: unexpected scan error: %+v", step.name, err)
+		}
+
+		if count := tree.DeviceTypeCount(deviceTypeXe); count != step.expectedXe {
+			t.Errorf("%s: expected %d xe devices, got %d", step.name, step.expectedXe, count)
+		}
+
+		if count := tree.DeviceTypeCount(deviceTypeI915); count != step.expectedI915 {
+			t.Errorf("%s: expected %d i915 devices, got %d", step.name, step.expectedI915, count)
+		}
+	}
+}
+
 func TestScanWithHealth(t *testing.T) {
 	tcases := []TestCaseDetails{
 		{
@@ -574,6 +686,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",
@@ -588,6 +703,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",
@@ -605,6 +723,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",
@@ -624,6 +745,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+			},
 			devfsdirs: []string{
 				"card0",
 				"by-path/pci-0000:00:00.0-card",
@@ -640,6 +764,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",
@@ -1053,7 +1180,6 @@ func TestCDIDeviceInclusion(t *testing.T) {
 	createSymlinks(t, devfs, devfslinks)
 
 	plugin := newDevicePlugin(sysfs, devfs, cliOptions{sharedDevNum: 1})
-	plugin.bypathFound = true
 
 	tree, err := plugin.scan()
 
@@ -1133,7 +1259,7 @@ func TestCDIDeviceInclusion(t *testing.T) {
 		},
 	}))
 
-	if !reflect.DeepEqual(tree, refTree) {
+	if !deviceTreesEqual(tree, refTree) {
 		t.Error("Received device tree isn't expected\n", tree, "\n", refTree)
 	}
 
@@ -1198,7 +1324,6 @@ func TestByPathOptions(t *testing.T) {
 	createSymlinks(t, devfs, devfslinks)
 
 	plugin := newDevicePlugin(sysfs, devfs, cliOptions{sharedDevNum: 1, bypathMount: bypathOptionAll})
-	plugin.bypathFound = true
 
 	devSpecs := []v1beta1.DeviceSpec{}
 
@@ -1537,7 +1662,10 @@ func TestCreateMeiDeviceSpecs(t *testing.T) {
 	tcases := []struct {
 		name          string
 		meiSysfsDirs  []string
+		meiDevNodes   []string
+		meiDevFiles   []string
 		expectedCount int
+		usePrefix     bool
 	}{
 		{
 			name:          "no mei sysfs entries",
@@ -1546,6 +1674,7 @@ func TestCreateMeiDeviceSpecs(t *testing.T) {
 		{
 			name:          "one mei device",
 			meiSysfsDirs:  []string{"device/xe.mei-gscfi.1024/mei/mei1"},
+			meiDevNodes:   []string{"mei1"},
 			expectedCount: 1,
 		},
 		{
@@ -1554,7 +1683,30 @@ func TestCreateMeiDeviceSpecs(t *testing.T) {
 				"device/i915.mei-gscfi.1024/mei/mei1",
 				"device/i915.mei-gscfi.1025/mei/mei2",
 			},
+			meiDevNodes:   []string{"mei1", "mei2"},
 			expectedCount: 2,
+		},
+		{
+			name: "mei sysfs entry without device node",
+			meiSysfsDirs: []string{
+				"device/xe.mei-gscfi.1024/mei/mei1",
+				"device/xe.mei-gscfi.1025/mei/mei2",
+			},
+			meiDevNodes:   []string{"mei2"},
+			expectedCount: 1,
+		},
+		{
+			name:          "mei device file is not a character device",
+			meiSysfsDirs:  []string{"device/xe.mei-gscfi.1024/mei/mei1"},
+			meiDevFiles:   []string{"mei1"},
+			expectedCount: 0,
+		},
+		{
+			name:          "prefix is removed from host path",
+			usePrefix:     true,
+			meiSysfsDirs:  []string{"device/xe.mei-gscfi.1024/mei/mei1"},
+			meiDevNodes:   []string{"mei1"},
+			expectedCount: 1,
 		},
 	}
 
@@ -1577,7 +1729,33 @@ func TestCreateMeiDeviceSpecs(t *testing.T) {
 				}
 			}
 
-			plugin := newDevicePlugin(sysfsDir, devfsDir, cliOptions{sharedDevNum: 1})
+			if err := os.MkdirAll(devfsDir, 0750); err != nil {
+				t.Fatalf("can't create devfs dir: %+v", err)
+			}
+
+			// Unprivileged tests can't mknod, so point the nodes to an existing character device.
+			for _, node := range tc.meiDevNodes {
+				if err := os.Symlink("/dev/null", path.Join(devfsDir, node)); err != nil {
+					t.Fatalf("can't create devfs node %s: %+v", node, err)
+				}
+			}
+
+			for _, file := range tc.meiDevFiles {
+				if err := os.WriteFile(path.Join(devfsDir, file), []byte{}, 0600); err != nil {
+					t.Fatalf("can't create devfs file %s: %+v", file, err)
+				}
+			}
+
+			expectedDevfsDir := devfsDir
+			prefix := ""
+
+			// With the test root as prefix, host paths are relative to the root.
+			if tc.usePrefix {
+				prefix = root
+				expectedDevfsDir = "/dev"
+			}
+
+			plugin := newDevicePlugin(sysfsDir, devfsDir, cliOptions{sharedDevNum: 1, prefix: prefix})
 
 			specs := plugin.createMeiDeviceSpecs(cardPath)
 
@@ -1587,8 +1765,8 @@ func TestCreateMeiDeviceSpecs(t *testing.T) {
 
 			//nolint: govet
 			for _, spec := range specs {
-				if !strings.HasPrefix(spec.HostPath, devfsDir) {
-					t.Errorf("MEI device spec path '%q' does not start with devfs dir '%q'", spec.HostPath, devfsDir)
+				if !strings.HasPrefix(spec.HostPath, expectedDevfsDir+"/") {
+					t.Errorf("MEI device spec path '%q' does not start with devfs dir '%q'", spec.HostPath, expectedDevfsDir)
 				}
 
 				if spec.ContainerPath != spec.HostPath {
