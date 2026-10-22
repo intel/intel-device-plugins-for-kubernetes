@@ -253,6 +253,9 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+			},
 			devfsdirs: []string{
 				"card0",
 				"by-path/pci-0000:00:00.0-card",
@@ -418,6 +421,9 @@ func TestScan(t *testing.T) {
 				"card0/device/vendor":       []byte("0x8086"),
 				"card0/device/sriov_numvfs": []byte("0"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+			},
 			devfsdirs:            []string{"card0"},
 			options:              cliOptions{enableMonitoring: true},
 			expectedI915Devs:     1,
@@ -432,6 +438,10 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 				"card1/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+				"card1/device/driver": "drivers/i915",
 			},
 			devfsdirs:        []string{"card0"},
 			expectedI915Devs: 1,
@@ -449,6 +459,11 @@ func TestScan(t *testing.T) {
 				"card1/device/vendor":       []byte("0x8086"),
 				"card2/device/vendor":       []byte("0x8086"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+				"card1/device/driver": "drivers/i915",
+				"card2/device/driver": "drivers/i915",
+			},
 			devfsdirs:        []string{"card0", "card1", "card2"},
 			expectedI915Devs: 2,
 		},
@@ -461,6 +476,10 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 				"card1/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+				"card1/device/driver": "drivers/i915",
 			},
 			devfsdirs:            []string{"card0", "card1"},
 			options:              cliOptions{sharedDevNum: 13, enableMonitoring: true},
@@ -590,6 +609,76 @@ func TestScan(t *testing.T) {
 	}
 }
 
+// TestScanDriverUnbindRebind mimics unbinding a GPU from the xe driver and
+// binding it back while the plugin keeps scanning. A card without a driver
+// must not be advertised under any resource.
+func TestScanDriverUnbindRebind(t *testing.T) {
+	tc := TestCaseDetails{
+		sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
+		sysfsfiles: map[string][]byte{
+			"card0/device/vendor": []byte("0x8086"),
+		},
+		symlinkfiles: map[string]string{
+			"card0/device/driver": "drivers/xe",
+		},
+		devfsdirs: []string{"card0"},
+	}
+
+	root := t.TempDir()
+
+	sysfs, devfs, err := createTestFiles(root, tc)
+	if err != nil {
+		t.Fatalf("Unexpected error: %+v", err)
+	}
+
+	const sharedDevNum = 5
+
+	plugin := newDevicePlugin(sysfs, devfs, cliOptions{sharedDevNum: sharedDevNum})
+	driverLink := path.Join(sysfs, "class", "drm", "card0", "device", "driver")
+	xeDriver := path.Join(sysfs, "class", "drm", "drivers", "xe")
+
+	steps := []struct {
+		change       func() error
+		name         string
+		expectedXe   int
+		expectedI915 int
+	}{
+		{
+			name:       "bound to xe",
+			change:     func() error { return nil },
+			expectedXe: sharedDevNum,
+		},
+		{
+			name:   "unbound",
+			change: func() error { return os.Remove(driverLink) },
+		},
+		{
+			name:       "rebound to xe",
+			change:     func() error { return os.Symlink(xeDriver, driverLink) },
+			expectedXe: sharedDevNum,
+		},
+	}
+
+	for _, step := range steps {
+		if err := step.change(); err != nil {
+			t.Fatalf("%s: failed to modify sysfs: %+v", step.name, err)
+		}
+
+		tree, err := plugin.scan()
+		if err != nil {
+			t.Fatalf("%s: unexpected scan error: %+v", step.name, err)
+		}
+
+		if count := tree.DeviceTypeCount(deviceTypeXe); count != step.expectedXe {
+			t.Errorf("%s: expected %d xe devices, got %d", step.name, step.expectedXe, count)
+		}
+
+		if count := tree.DeviceTypeCount(deviceTypeI915); count != step.expectedI915 {
+			t.Errorf("%s: expected %d i915 devices, got %d", step.name, step.expectedI915, count)
+		}
+	}
+}
+
 func TestScanWithHealth(t *testing.T) {
 	tcases := []TestCaseDetails{
 		{
@@ -597,6 +686,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",
@@ -611,6 +703,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",
@@ -628,6 +723,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",
@@ -647,6 +745,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+			},
 			devfsdirs: []string{
 				"card0",
 				"by-path/pci-0000:00:00.0-card",
@@ -663,6 +764,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",
