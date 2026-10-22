@@ -253,6 +253,9 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+			},
 			devfsdirs: []string{
 				"card0",
 				"by-path/pci-0000:00:00.0-card",
@@ -418,6 +421,9 @@ func TestScan(t *testing.T) {
 				"card0/device/vendor":       []byte("0x8086"),
 				"card0/device/sriov_numvfs": []byte("0"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+			},
 			devfsdirs:            []string{"card0"},
 			options:              cliOptions{enableMonitoring: true},
 			expectedI915Devs:     1,
@@ -432,6 +438,10 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 				"card1/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+				"card1/device/driver": "drivers/i915",
 			},
 			devfsdirs:        []string{"card0"},
 			expectedI915Devs: 1,
@@ -449,6 +459,11 @@ func TestScan(t *testing.T) {
 				"card1/device/vendor":       []byte("0x8086"),
 				"card2/device/vendor":       []byte("0x8086"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+				"card1/device/driver": "drivers/i915",
+				"card2/device/driver": "drivers/i915",
+			},
 			devfsdirs:        []string{"card0", "card1", "card2"},
 			expectedI915Devs: 2,
 		},
@@ -461,6 +476,10 @@ func TestScan(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 				"card1/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+				"card1/device/driver": "drivers/i915",
 			},
 			devfsdirs:            []string{"card0", "card1"},
 			options:              cliOptions{sharedDevNum: 13, enableMonitoring: true},
@@ -590,6 +609,154 @@ func TestScan(t *testing.T) {
 	}
 }
 
+// TestScanDriverUnbindRebind mimics unbinding GPUs from their driver and
+// binding them back, possibly to another driver, while the plugin keeps
+// scanning. A card without a driver must not be advertised under any resource,
+// and a card must not inherit the driver of the card scanned before it.
+func TestScanDriverUnbindRebind(t *testing.T) {
+	cards := []string{"card0", "card1", "card2"}
+
+	tc := TestCaseDetails{
+		sysfsfiles:   map[string][]byte{},
+		symlinkfiles: map[string]string{},
+	}
+
+	for i, card := range cards {
+		tc.sysfsdirs = append(tc.sysfsdirs, card+"/device/drm/"+card, fmt.Sprintf("%s/device/drm/controlD%d", card, 64+i))
+		tc.sysfsfiles[card+"/device/vendor"] = []byte("0x8086")
+		tc.symlinkfiles[card+"/device/driver"] = "drivers/xe"
+		tc.devfsdirs = append(tc.devfsdirs, card)
+	}
+
+	root := t.TempDir()
+
+	sysfs, devfs, err := createTestFiles(root, tc)
+	if err != nil {
+		t.Fatalf("Unexpected error: %+v", err)
+	}
+
+	drmDir := path.Join(sysfs, "class", "drm")
+	for _, driver := range []string{deviceTypeXe, deviceTypeI915} {
+		if err := os.MkdirAll(path.Join(drmDir, "drivers", driver), 0750); err != nil {
+			t.Fatalf("failed to create fake driver dir: %+v", err)
+		}
+	}
+
+	unbind := func(cards ...string) func() error {
+		return func() error {
+			for _, card := range cards {
+				if err := os.Remove(path.Join(drmDir, card, "device", "driver")); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}
+	}
+
+	bind := func(driver string, cards ...string) func() error {
+		return func() error {
+			for _, card := range cards {
+				if err := os.Symlink(path.Join(drmDir, "drivers", driver), path.Join(drmDir, card, "device", "driver")); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		}
+	}
+
+	const sharedDevNum = 5
+
+	plugin := newDevicePlugin(sysfs, devfs, cliOptions{
+		sharedDevNum:     sharedDevNum,
+		enableMonitoring: true,
+		monitoringMode:   monitoringModeSplit,
+	})
+
+	xeMonitor := deviceTypeXe + monitorSuffix
+	i915Monitor := deviceTypeI915 + monitorSuffix
+
+	steps := []struct {
+		change   func() error
+		expected map[string]int
+		name     string
+	}{
+		{
+			name:     "all bound to xe",
+			change:   func() error { return nil },
+			expected: map[string]int{deviceTypeXe: 3 * sharedDevNum, xeMonitor: 1},
+		},
+		{
+			name:     "middle card unbound",
+			change:   unbind("card1"),
+			expected: map[string]int{deviceTypeXe: 2 * sharedDevNum, xeMonitor: 1},
+		},
+		{
+			name:   "middle card bound to i915",
+			change: bind(deviceTypeI915, "card1"),
+			expected: map[string]int{
+				deviceTypeXe: 2 * sharedDevNum, xeMonitor: 1,
+				deviceTypeI915: sharedDevNum, i915Monitor: 1,
+			},
+		},
+		{
+			name:     "middle card unbound from i915",
+			change:   unbind("card1"),
+			expected: map[string]int{deviceTypeXe: 2 * sharedDevNum, xeMonitor: 1},
+		},
+		{
+			name:     "middle card bound back to xe",
+			change:   bind(deviceTypeXe, "card1"),
+			expected: map[string]int{deviceTypeXe: 3 * sharedDevNum, xeMonitor: 1},
+		},
+		{
+			name:     "all unbound",
+			change:   unbind(cards...),
+			expected: map[string]int{},
+		},
+		{
+			name:     "all bound to i915",
+			change:   bind(deviceTypeI915, cards...),
+			expected: map[string]int{deviceTypeI915: 3 * sharedDevNum, i915Monitor: 1},
+		},
+		{
+			name:     "all unbound from i915",
+			change:   unbind(cards...),
+			expected: map[string]int{},
+		},
+		{
+			name:     "all bound back to xe",
+			change:   bind(deviceTypeXe, cards...),
+			expected: map[string]int{deviceTypeXe: 3 * sharedDevNum, xeMonitor: 1},
+		},
+	}
+
+	for _, step := range steps {
+		if err := step.change(); err != nil {
+			t.Fatalf("%s: failed to modify sysfs: %+v", step.name, err)
+		}
+
+		tree, err := plugin.scan()
+		if err != nil {
+			t.Fatalf("%s: unexpected scan error: %+v", step.name, err)
+		}
+
+		for res, expected := range step.expected {
+			if count := tree.DeviceTypeCount(res); count != expected {
+				t.Errorf("%s: expected %d %s devices, got %d", step.name, expected, res, count)
+			}
+		}
+
+		// Catches also devices advertised under unexpected resources, e.g. an empty driver name.
+		for res := range tree {
+			if _, ok := step.expected[res]; !ok {
+				t.Errorf("%s: unexpected resource %q with %d devices", step.name, res, tree.DeviceTypeCount(res))
+			}
+		}
+	}
+}
+
 func TestScanWithHealth(t *testing.T) {
 	tcases := []TestCaseDetails{
 		{
@@ -597,6 +764,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs: []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",
@@ -611,6 +781,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",
@@ -628,6 +801,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",
@@ -647,6 +823,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
 			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
+			},
 			devfsdirs: []string{
 				"card0",
 				"by-path/pci-0000:00:00.0-card",
@@ -663,6 +842,9 @@ func TestScanWithHealth(t *testing.T) {
 			sysfsdirs:    []string{"card0/device/drm/card0", "card0/device/drm/controlD64"},
 			sysfsfiles: map[string][]byte{
 				"card0/device/vendor": []byte("0x8086"),
+			},
+			symlinkfiles: map[string]string{
+				"card0/device/driver": "drivers/i915",
 			},
 			devfsdirs: []string{
 				"card0",

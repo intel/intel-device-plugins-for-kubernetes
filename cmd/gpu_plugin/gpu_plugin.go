@@ -738,7 +738,8 @@ func (dp *devicePlugin) scan() (dpapi.DeviceTree, error) {
 
 		devProps.fetch(cardPath)
 
-		if devProps.isPfWithVfs {
+		// Skip devices that are PFs with VFs or have no driver associated.
+		if devProps.isPfWithVfs || devProps.driver() == "" {
 			continue
 		}
 
