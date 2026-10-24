@@ -18,17 +18,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
-	"regexp"
 	"strings"
 
+	"github.com/distribution/reference"
 	"k8s.io/apimachinery/pkg/util/version"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
-
-const sha256RE = "@sha256:[0-9a-f]{64}$"
 
 var errValidation = errors.New("invalid resource")
 
@@ -39,26 +36,26 @@ type validatorConfig struct {
 }
 
 func validatePluginImage(image, expectedImageName string, expectedMinVersion *version.Version) error {
-	imageRe := regexp.MustCompile(expectedImageName + sha256RE)
-	if imageRe.MatchString(image) {
-		return nil
+	ref, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		return fmt.Errorf("%w: invalid image %q: %w", errValidation, image, err)
 	}
 
-	// Ignore registry, vendor and extract the image name with the tag
-	parts := strings.SplitN(filepath.Base(image), ":", 2)
-	if len(parts) != 2 {
-		return fmt.Errorf("%w: incorrect image field %q", errValidation, image)
-	}
-
-	imageName := parts[0]
-	versionStr := parts[1]
-
-	// If user provided faulty SHA digest, the image name may include @sha256 suffix so strip it.
-	if strings.TrimSuffix(imageName, "@sha256") != expectedImageName {
+	imageName := reference.Path(ref)
+	if imageName != expectedImageName && !strings.HasSuffix(imageName, "/"+expectedImageName) {
 		return fmt.Errorf("%w: incorrect image name %q. Make sure you use '<vendor>/%s'", errValidation, imageName, expectedImageName)
 	}
 
-	ver, err := version.ParseSemantic(versionStr)
+	tagged, ok := ref.(reference.Tagged)
+	if !ok {
+		if _, ok := ref.(reference.Digested); ok {
+			return nil
+		}
+
+		return fmt.Errorf("%w: incorrect image field %q", errValidation, image)
+	}
+
+	ver, err := version.ParseSemantic(tagged.Tag())
 	if err != nil {
 		return fmt.Errorf("%w: %w: Make sure it's either valid SHA digest or semver tag", errValidation, err)
 	}
