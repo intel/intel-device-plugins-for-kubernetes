@@ -23,6 +23,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -164,7 +165,9 @@ func pciDeviceIDForCard(cardPath string) (string, error) {
 
 // Returns a slice of by-path Mounts for a pciAddress.
 // by-path files are searched from the given bypathDir.
-// In the by-path dir, any files that start with "pci-<pci addr>" will be added to mounts.
+// In the by-path dir, only "pci-<pci addr>-card" and "pci-<pci addr>-render" files are added
+// to mounts. Other files, e.g. "pci-<pci addr>-platform-simple-framebuffer.0-card", are ignored
+// as they can be stale symlinks, which would break container creation.
 func (dp *devicePlugin) bypathMountsForPci(pciAddress, bypathDir string) []pluginapi.Mount {
 	files, err := os.ReadDir(bypathDir)
 	if err != nil {
@@ -173,12 +176,15 @@ func (dp *devicePlugin) bypathMountsForPci(pciAddress, bypathDir string) []plugi
 		return nil
 	}
 
-	linkPrefix := "pci-" + pciAddress
+	linkNames := []string{
+		"pci-" + pciAddress + "-card",
+		"pci-" + pciAddress + "-render",
+	}
 
 	var mounts []pluginapi.Mount
 
 	for _, f := range files {
-		if strings.HasPrefix(f.Name(), linkPrefix) {
+		if slices.Contains(linkNames, f.Name()) {
 			absPath := dp.convertToHostPath(path.Join(bypathDir, f.Name()))
 
 			mounts = append(mounts, pluginapi.Mount{

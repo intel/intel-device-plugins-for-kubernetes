@@ -1047,6 +1047,13 @@ func TestBypath(t *testing.T) {
 			0,
 		},
 		{
+			"card with extra by-path files",
+			"00.10.2/00.334.302/0.0.1.00/0000:0f:05.0/drm/" + cardName,
+			[]string{"pci-0000:0f:05.0-card", "pci-0000:0f:05.0-render", "pci-0000:0f:05.0-platform-simple-framebuffer.0-card"},
+			true,
+			2,
+		},
+		{
 			"no by-path files",
 			"00.10.2/00.334.302/0.0.1.00/0000:0f:05.0/drm/" + cardName,
 			[]string{},
