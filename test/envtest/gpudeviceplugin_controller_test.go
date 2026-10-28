@@ -103,6 +103,7 @@ var _ = Describe("GpuDevicePlugin Controller", func() {
 			expectArgs := []string{
 				"-v",
 				strconv.Itoa(updatedLogLevel),
+				"-prefix=/host",
 				"-shared-dev-num",
 				strconv.Itoa(updatedSharedDevNum),
 				"-allocation-policy",

@@ -15,7 +15,9 @@
 package deviceplugin
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"maps"
 	"net"
@@ -402,7 +404,8 @@ func waitForServer(socket string, timeout time.Duration) error {
 	}
 }
 
-// Writes CDI spec to filesystem if not found from the CDI cache.
+// Writes CDI spec to filesystem if not found from the CDI cache or if the cached
+// device differs from the given one (e.g. device names were reassigned).
 // Returns a list of CDI device names.
 func writeCdiSpecToFilesystem(spec *cdispec.Spec, cdiDir string) ([]*pluginapi.CDIDevice, error) {
 	names := make([]*pluginapi.CDIDevice, 0, 1)
@@ -426,8 +429,8 @@ func writeCdiSpecToFilesystem(spec *cdispec.Spec, cdiDir string) ([]*pluginapi.C
 
 	names = append(names, &pluginapi.CDIDevice{Name: fqName})
 
-	// The device is found in the cache.
-	if cache.GetDevice(fqName) != nil {
+	// The device is found in the cache and is up to date.
+	if cached := cache.GetDevice(fqName); cached != nil && cdiDevicesEqual(cached.Device, &spec.Devices[0]) {
 		return names, nil
 	}
 
@@ -445,4 +448,13 @@ func writeCdiSpecToFilesystem(spec *cdispec.Spec, cdiDir string) ([]*pluginapi.C
 	}
 
 	return names, nil
+}
+
+// cdiDevicesEqual compares two CDI devices by their serialized form so that
+// nil and empty fields are treated as equal.
+func cdiDevicesEqual(a, b *cdispec.Device) bool {
+	aj, aErr := json.Marshal(a)
+	bj, bErr := json.Marshal(b)
+
+	return aErr == nil && bErr == nil && bytes.Equal(aj, bj)
 }
