@@ -20,6 +20,11 @@ spec:
         app: intel-sgx-plugin
     spec:
       automountServiceAccountToken: false
+      securityContext:
+        seLinuxOptions:
+          type: "container_device_plugin_t"
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: intel-sgx-plugin
         image: {{ include "intel-sgx-device-plugin.image" . }}
@@ -33,15 +38,11 @@ spec:
         - {{ . | quote }}
         {{- end }}
         securityContext:
-          seLinuxOptions:
-            type: "container_device_plugin_t"
           readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
           capabilities:
             drop:
             - ALL
-          seccompProfile:
-            type: RuntimeDefault
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         resources:
           requests:

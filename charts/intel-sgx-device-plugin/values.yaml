@@ -5,7 +5,7 @@ image:
   # -- Image digest (e.g. sha256:...). When set, it is appended to the tagged
   # reference (repository:tag@digest) so the image is pinned by digest while the
   # tag remains visible. Must be updated together with appVersion.
-  digest: "sha256:0352a2edd0c98d065d95d2906569b6c44b53120f2e125a8d8ef1ba7dce6a759e"
+  digest: "sha256:88862198dad6a914b06d1d43dcd5bb93e144d2a468af6ccd25944c5edc3aff4b"
   pullPolicy: IfNotPresent
 
 # -- Log verbosity level passed as the -v argument.
