@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitoring GPUs &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Monitoring GPUs</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/gpu_plugin/monitoring.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="monitoring-gpus">
+<h1>Monitoring GPUs<a class="headerlink" href="#monitoring-gpus" title="Permalink to this heading"></a></h1>
+<section id="i915-monitoring-resource">
+<h2>i915_monitoring resource<a class="headerlink" href="#i915-monitoring-resource" title="Permalink to this heading"></a></h2>
+<p>GPU plugin can be configured to register a monitoring resource for the nodes that have Intel GPUs on them. <code class="docutils literal notranslate"><span class="pre">gpu.intel.com/i915_monitoring</span></code> (or <code class="docutils literal notranslate"><span class="pre">gpu.intel.com/xe_monitoring</span></code>) is a singular resource on the nodes. A container requesting it, will get access to <em>all</em> the Intel GPUs (<code class="docutils literal notranslate"><span class="pre">i915</span></code> or <code class="docutils literal notranslate"><span class="pre">xe</span></code> KMD device files) on the node. The idea behind this resource is to allow the container to <em>monitor</em> the GPUs. A container requesting the <code class="docutils literal notranslate"><span class="pre">i915_monitoring</span></code> resource would typically export data to some metrics consumer. An example for such a consumer is <a class="reference external" href="https://prometheus.io/">Prometheus</a>.</p>
+<figure>
+  <img src="monitoring.png"/>
+  <figcaption>Monitoring Pod listening to all GPUs while one Pod is using a GPU.</figcaption>
+</figure><p>For the monitoring applications, there are two possibilities: <a class="reference external" href="https://github.com/intel/xpumanager/">Intel XPU Manager</a> and <a class="reference external" href="https://github.com/collectd/collectd/tree/collectd-6.0">collectd</a>. Intel XPU Manager is readily available as a container and with a deployment yaml. collectd has Intel GPU support in its 6.0 branch, but there are no public containers available for it.</p>
+<p>To deploy XPU Manager to a cluster, one has to run the following kubectl:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -k https://github.com/intel/xpumanager/deployment/kubernetes/daemonset/base
+</pre></div>
+</div>
+<p>This will deploy an XPU Manager daemonset to run on all the nodes having the <code class="docutils literal notranslate"><span class="pre">i915_monitoring</span></code> resource.</p>
+</section>
+<section id="prometheus-integration-with-xpu-manager">
+<h2>Prometheus integration with XPU Manager<a class="headerlink" href="#prometheus-integration-with-xpu-manager" title="Permalink to this heading"></a></h2>
+<p>For deploying Prometheus to a cluster, see <a class="reference external" href="https://prometheus-operator.dev/docs/user-guides/getting-started/">this page</a>. One can also use Prometheus’ <a class="reference external" href="https://github.com/prometheus-community/helm-charts">helm chart</a>.</p>
+<p>Prometheus requires additional Kubernetes configuration so it can fetch GPU metrics. The following steps will add a Kubernetes Service and a ServiceMonitor components. The components instruct Prometheus how and where from to retrieve the metrics.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ kubectl apply -f https://raw.githubusercontent.com/intel/xpumanager/master/deployment/kubernetes/monitoring/service-intel-xpum.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/intel/xpumanager/master/deployment/kubernetes/monitoring/servicemonitor-intel-xpum.yaml
+</pre></div>
+</div>
+<p>With those components in place, one can query Intel GPU metrics from Prometheus with <code class="docutils literal notranslate"><span class="pre">xpum_</span></code> prefix.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
