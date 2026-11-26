@@ -3,7 +3,7 @@ kind: SgxDevicePlugin
 metadata:
   name: sgxdeviceplugin-sample
 spec:
-  image: intel/intel-sgx-plugin:0.37.1
+  image: intel/intel-sgx-plugin:0.37.2
   enclaveLimit: 110
   provisionLimit: 110
   logLevel: 4
