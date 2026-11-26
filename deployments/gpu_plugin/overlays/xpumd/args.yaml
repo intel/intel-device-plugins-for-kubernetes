@@ -1,6 +1,6 @@
 - op: add
   path: /spec/template/spec/containers/0/args/-
-  value: "-xpumd-endpoint=/run/xpumd/intelxpuinfo.sock"
+  value: "-xpumd-endpoint=/run/xpumd/intel_xpu_info.sock"
 - op: add
   path: /spec/template/spec/containers/0/args/-
   value: "-xpumd-unhealthy-severity=critical"
