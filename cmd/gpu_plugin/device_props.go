@@ -33,9 +33,7 @@ func (d *DeviceProperties) fetch(cardPath string) {
 
 	driverName, err := pluginutils.ReadDeviceDriver(cardPath)
 	if err != nil {
-		klog.Warningf("card (%s) doesn't have driver, using default: %s", cardPath, deviceTypeDefault)
-
-		driverName = deviceTypeDefault
+		klog.Warningf("card (%s) doesn't have driver", cardPath)
 	}
 
 	d.currentDriver = driverName
