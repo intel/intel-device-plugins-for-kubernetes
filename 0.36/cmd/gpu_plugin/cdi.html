@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CDI specifications with Intel GPU devices &mdash; Intel® Device Plugins for Kubernetes  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Device Plugins for Kubernetes
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../DEVEL.html">Instructions for Device Plugin Development and Maintenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/extensions.html">Extensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../demo/readme.html">Demo</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/intel-device-plugins-for-kubernetes">Project GitHub repository</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Device Plugins for Kubernetes</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">CDI specifications with Intel GPU devices</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/cmd/gpu_plugin/cdi.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cdi-specifications-with-intel-gpu-devices">
+<h1>CDI specifications with Intel GPU devices<a class="headerlink" href="#cdi-specifications-with-intel-gpu-devices" title="Permalink to this heading"></a></h1>
+<p>Container Device Interface (CDI) enables defining specifications that allow greater control on how devices are exposed to containers. The most common way to expose GPU devices to containers is to use privileged mode: <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">run</span> <span class="pre">--privileged</span></code>. The problem with that is it exposes every device in the host as well as gives unlimited access to the host. It also lacks some details from the GPU device files; for example, the <code class="docutils literal notranslate"><span class="pre">by-path</span></code> symlinks under <code class="docutils literal notranslate"><span class="pre">/dev/dri/by-path</span></code> are not included in the container. A slightly better way to expose GPU devices is to expose the device files one by one: <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">run</span> <span class="pre">--device</span> <span class="pre">/dev/dri/card0</span> <span class="pre">--device</span> <span class="pre">/dev/dri/renderD128</span></code>. That has better control on which devices are exposed, but it creates long and error-prone command lines.</p>
+<section id="cdi-specification">
+<h2>CDI specification<a class="headerlink" href="#cdi-specification" title="Permalink to this heading"></a></h2>
+<p>An improved way to access Intel GPUs is to use CDI and its device specifications to expose Intel GPUs to containers. CDI uses predefined YAML or JSON specification files to describe which device files, mounts and environment variables should be exposed to the container. An example is shown below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">---</span>
+<span class="n">cdiVersion</span><span class="p">:</span> <span class="mf">0.5.0</span>
+<span class="n">kind</span><span class="p">:</span> <span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">gpu</span>
+<span class="n">devices</span><span class="p">:</span>
+    <span class="o">-</span> <span class="n">name</span><span class="p">:</span> <span class="n">gpu0</span>
+      <span class="n">containerEdits</span><span class="p">:</span>
+        <span class="n">deviceNodes</span><span class="p">:</span>
+            <span class="o">-</span> <span class="n">path</span><span class="p">:</span> <span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">dri</span><span class="o">/</span><span class="n">card0</span>
+              <span class="n">hostPath</span><span class="p">:</span> <span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">dri</span><span class="o">/</span><span class="n">card0</span>
+              <span class="nb">type</span><span class="p">:</span> <span class="n">c</span>
+            <span class="o">-</span> <span class="n">path</span><span class="p">:</span> <span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">dri</span><span class="o">/</span><span class="n">renderD128</span>
+              <span class="n">hostPath</span><span class="p">:</span> <span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">dri</span><span class="o">/</span><span class="n">renderD128</span>
+              <span class="nb">type</span><span class="p">:</span> <span class="n">c</span>
+        <span class="n">mounts</span><span class="p">:</span>
+            <span class="o">-</span> <span class="n">hostPath</span><span class="p">:</span> <span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">dri</span><span class="o">/</span><span class="n">by</span><span class="o">-</span><span class="n">path</span>
+              <span class="n">containerPath</span><span class="p">:</span> <span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">dri</span><span class="o">/</span><span class="n">by</span><span class="o">-</span><span class="n">path</span>
+              <span class="n">options</span><span class="p">:</span>
+                <span class="o">-</span> <span class="n">rw</span>
+                <span class="o">-</span> <span class="n">rbind</span>
+              <span class="nb">type</span><span class="p">:</span> <span class="n">bind</span>
+</pre></div>
+</div>
+<p>Docker’s <code class="docutils literal notranslate"><span class="pre">--device</span></code> argument can use the CDI device name:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">run</span> <span class="o">--</span><span class="n">rm</span> <span class="o">-</span><span class="n">it</span> <span class="o">--</span><span class="n">device</span> <span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">gpu</span><span class="o">=</span><span class="n">gpu0</span> <span class="n">ubuntu</span><span class="p">:</span><span class="mf">24.04</span>
+</pre></div>
+</div>
+</section>
+<section id="generating-cdi-specs-automatically">
+<h2>Generating CDI specs automatically<a class="headerlink" href="#generating-cdi-specs-automatically" title="Permalink to this heading"></a></h2>
+<p>Intel GPU DRA driver uses CDI specs extensively as DRA’s functionality is based on it. It has <a class="reference external" href="https://github.com/intel/intel-resource-drivers-for-kubernetes/tree/main/cmd/cdi-specs-generator">a tool</a> that can generate CDI specs for the devices it detects in the host.</p>
+<p>Build it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">go</span> <span class="n">install</span> <span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">intel</span><span class="o">/</span><span class="n">intel</span><span class="o">-</span><span class="n">resource</span><span class="o">-</span><span class="n">drivers</span><span class="o">-</span><span class="k">for</span><span class="o">-</span><span class="n">kubernetes</span><span class="o">/</span><span class="n">cmd</span><span class="o">/</span><span class="n">cdi</span><span class="o">-</span><span class="n">specs</span><span class="o">-</span><span class="n">generator</span><span class="nd">@gpu</span><span class="o">-</span><span class="n">v0</span><span class="mf">.8.0</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>NOTE: Using newer tags is possible, but there are extra dependencies needed for the build to succeed.</p>
+</div></blockquote>
+<p>And run it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">cdi</span><span class="o">-</span><span class="n">specs</span><span class="o">-</span><span class="n">generator</span> <span class="o">--</span><span class="n">naming</span> <span class="n">classic</span> <span class="o">--</span><span class="n">cdi</span><span class="o">-</span><span class="nb">dir</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">cdi</span> <span class="n">gpu</span>
+</pre></div>
+</div>
+<p>The tool creates a <code class="docutils literal notranslate"><span class="pre">intel.com-gpu.yaml</span></code> file under <code class="docutils literal notranslate"><span class="pre">/etc/cdi</span></code> and uses <code class="docutils literal notranslate"><span class="pre">cardX</span></code> names for the CDI devices. To use them, the docker command is as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">run</span> <span class="o">--</span><span class="n">rm</span> <span class="o">-</span><span class="n">it</span> <span class="o">--</span><span class="n">device</span> <span class="n">intel</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">gpu</span><span class="o">=</span><span class="n">card1</span> <span class="n">ubuntu</span><span class="p">:</span><span class="mf">24.04</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, various.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
